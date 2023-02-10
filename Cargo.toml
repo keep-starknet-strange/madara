@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "node",
+    "pallets/cairo-execution-engine",
+    "runtime",
+]
+[profile.release]
+panic = "unwind"

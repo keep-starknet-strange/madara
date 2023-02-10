@@ -1,0 +1,17 @@
+version: "3.2"
+
+services:
+  dev:
+    container_name: kaioshin
+    image: paritytech/ci-linux:production
+    working_dir: /var/www/kaioshin
+    ports:
+      - "9944:9944"
+    environment:
+      - CARGO_HOME=/var/www/kaioshin/.cargo
+    volumes:
+      - .:/var/www/kaioshin
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: bash -c "cargo build --release && ./target/release/kaioshin --dev --ws-external"
