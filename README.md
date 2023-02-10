@@ -29,6 +29,7 @@ Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and wr
 - `node`: services for the blockchain node implementation (chain specification, rpc, ...)
 - `pallets`: custom FRAME pallets
   - `pallet-cairo-execution-engine`: Cairo execution engine pallet.
+  - `pallet-starknet`: Starknet pallet.
 - `runtime`: assemble Kaioshin custom logic with the configured pallets.
 
 Here is a high level overview of the architecture of Kaioshin.
@@ -384,3 +385,24 @@ It means that you don't have `wasm32-unknown-unknown` target installed on your m
 </details>
 
 ## Acknowledgements
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abdelhamidbakhta"><img src="https://avatars.githubusercontent.com/u/45264458?v=4?s=100" width="100px;" alt="Abdel @ StarkWare "/><br /><sub><b>Abdel @ StarkWare </b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=abdelhamidbakhta" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
