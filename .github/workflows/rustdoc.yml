@@ -17,6 +17,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Set-Up
+        run: sudo apt install -y git clang curl libssl-dev llvm libudev-dev protobuf-compiler
+
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
