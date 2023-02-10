@@ -55,8 +55,6 @@ impl system::Config for Test {
 impl pallet_cairo_execution_engine::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
-	type MaxCairoAssemblyProgramLength = ConstU32<1024>;
-	type MaxSierraProgramLength = ConstU32<1024>;
 }
 
 // Build genesis storage according to the mock runtime.

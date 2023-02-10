@@ -11,6 +11,9 @@ pub use pallet::*;
 pub mod compilation;
 /// Module related to the execution of Cairo assembly programs.
 pub mod execution;
+/// Hashing functions.
+/// This module contains the implementation of the hashing functions used by Cairo and Starknet.
+pub mod hash;
 /// The Cairo Execution Engine pallet's runtime custom types.
 pub mod types;
 
@@ -28,6 +31,7 @@ pub mod pallet {
 	use crate::{
 		compilation::{mock::SierraCompilerMock, SierraCompiler},
 		execution::{mock::CairoExecutorMock, CairoExecutor},
+		hash,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
 			CairoAssemblyProgramOutput, SierraProgram, SierraProgramId,
@@ -241,6 +245,8 @@ pub mod pallet {
 			// Turns into a byte array.
 			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
+			// TODO: use poseidon hash when it is available.
+			let _hash = hash::poseidon(&encoded_payload);
 			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
 		}
 
@@ -347,6 +353,8 @@ pub mod pallet {
 			// Turns into a byte array.
 			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
+			// TODO: use poseidon hash when it is available.
+			let _hash = hash::poseidon(&encoded_payload);
 			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
 		}
 	}
