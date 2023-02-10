@@ -59,16 +59,20 @@ pub mod pallet {
 	/// STORAGE
 
 	/// List of all deployed Sierra programs.
+	/// Since the key of the map is computed using a hash function, we can use the `Identity`
+	/// hasher.
 	#[pallet::storage]
 	#[pallet::getter(fn sierra_programs)]
 	pub(super) type SierraPrograms<T: Config> =
-		StorageMap<_, Twox64Concat, SierraProgramId, SierraProgram<T>>;
+		StorageMap<_, Identity, SierraProgramId, SierraProgram<T>>;
 
 	/// List of all compilied Cairo assembly programs.
+	/// Since the key of the map is computed using a hash function, we can use the `Identity`
+	/// hasher.
 	#[pallet::storage]
 	#[pallet::getter(fn cairo_assembly_programs)]
 	pub(super) type CairoAssemblyPrograms<T: Config> =
-		StorageMap<_, Twox64Concat, CairoAssemblyProgamId, CairoAssemblyProgram<T>>;
+		StorageMap<_, Identity, CairoAssemblyProgamId, CairoAssemblyProgram<T>>;
 
 	/// The Cairo Execution Engine pallet events.
 	/// EVENTS
