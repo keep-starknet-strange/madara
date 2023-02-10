@@ -1,0 +1,44 @@
+name: Deploy Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: GitHub Pages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: rustfmt, rust-src
+
+      - name: Build Documentation
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all --no-deps
+
+      - name: Prepare index
+        run: |
+          echo '<meta http-equiv="refresh" content="0; url=kaioshin/index.html" />' > target/doc/index.html
+
+      - name: Deploy Documentation
+        uses: peaceiris/actions-gh-pages@v3.9.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./target/doc
+          keep_files: true
