@@ -2689,6 +2689,7 @@ dependencies = [
  "pallet-cairo-execution-engine",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
+ "pallet-starknet",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -3915,6 +3916,22 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "sp-trie",
+]
+
+[[package]]
+name = "pallet-starknet"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-randomness-collective-flip",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
 ]
 
 [[package]]

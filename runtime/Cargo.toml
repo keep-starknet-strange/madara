@@ -49,6 +49,7 @@ frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, g
 
 # Local Dependencies
 pallet-cairo-execution-engine = { version = "4.0.0-dev", default-features = false, path = "../pallets/cairo-execution-engine" }
+pallet-starknet = { version = "4.0.0-dev", default-features = false, path = "../pallets/starknet" }
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", " branch" = "polkadot-v0.9.35" }

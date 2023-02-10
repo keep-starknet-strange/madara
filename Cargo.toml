@@ -2,6 +2,7 @@
 members = [
     "node",
     "pallets/cairo-execution-engine",
+    "pallets/starknet",
     "runtime",
 ]
 [profile.release]
