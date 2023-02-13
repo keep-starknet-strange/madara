@@ -23,8 +23,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+// TODO: Uncomment when benchmarking is implemented.
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
+
 #[frame_support::pallet]
 pub mod pallet {
 

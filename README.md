@@ -29,7 +29,6 @@ Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and wr
 - `node`: services for the blockchain node implementation (chain specification, rpc, ...)
 - `pallets`: custom FRAME pallets
   - `pallet-cairo-execution-engine`: Cairo execution engine pallet.
-  - `pallet-starknet`: Starknet pallet.
 - `runtime`: assemble Kaioshin custom logic with the configured pallets.
 
 Here is a high level overview of the architecture of Kaioshin.
