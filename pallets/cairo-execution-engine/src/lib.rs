@@ -82,7 +82,7 @@ pub mod pallet {
 
 	/// The Cairo Execution Engine pallet events.
 	/// EVENTS
-	/// See: https://docs.substrate.io/main-docs/build/events-errors/
+	/// See: `<https://docs.substrate.io/main-docs/build/events-errors/>`
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
