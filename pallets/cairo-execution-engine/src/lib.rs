@@ -32,7 +32,7 @@ pub mod pallet {
 
 	use crate::{
 		compilation::{mock::SierraCompilerMock, SierraCompiler},
-		execution::{mock::CairoExecutorMock, CairoExecutor},
+		execution::{cairo_vm_executor::CairoVmExecutor, mock::CairoExecutorMock, CairoExecutor},
 		hash,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
@@ -325,7 +325,8 @@ pub mod pallet {
 			// Create an instance of the Cairo executor.
 			// For now, we use a mock executor.
 			// When the Cairo VM will be integrated, we will use it.
-			let cairo_executor = CairoExecutorMock::default();
+			//let cairo_executor = CairoExecutorMock::default();
+			let cairo_executor = CairoVmExecutor::default();
 			// Execute the Cairo assembly program.
 			let output = cairo_executor.execute(&cairo_assembly_program, &input)?;
 

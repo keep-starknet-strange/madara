@@ -29,9 +29,9 @@ log = "0.4.17"
 # Cairo compiler dependencies
 # TODO: wait for no-std support
 #cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo", branch = "main" }
-#cairo-vm = { git = "https://github.com/abdelhamidbakhta/cairo-rs", rev = "e6e4b10a", default-features = false }
-#starknet-crypto = { git = "https://github.com/abdelhamidbakhta/starknet-rs", rev = "421a9b7", default-features = false }
-#num-traits = {version = "0.2.15", default-features = false}
+cairo-vm = { git = "https://github.com/abdelhamidbakhta/cairo-rs", rev = "91f1ef3", default-features = false }
+#cairo-vm = { path = "../../../../misc/cairo-rs", default-features = false }
+
 [dev-dependencies]
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -47,7 +47,7 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "scale-info/std",
-  #"cairo-vm/std",
+  "cairo-vm/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

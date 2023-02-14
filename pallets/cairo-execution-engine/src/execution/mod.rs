@@ -1,4 +1,7 @@
 //! Module for executing Cairo programs.
+/// Actual Cairo executor.
+pub mod cairo_vm_executor;
+/// Mock Cairo executor.
 pub mod mock;
 
 use crate::{
