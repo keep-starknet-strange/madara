@@ -48,7 +48,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 /// Import the Cairo Execution Engine pallet.
-pub use pallet_cairo_execution_engine;
+pub use pallet_cairo;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -276,7 +276,7 @@ impl pallet_sudo::Config for Runtime {
 }
 
 /// Configure the Cairo Execution Engine pallet in pallets/cairo-execution-engine.
-impl pallet_cairo_execution_engine::Config for Runtime {
+impl pallet_cairo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	/// Define the maximum length of a Cairo assembly program, denominated in number of bytes.
@@ -302,7 +302,8 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from pallets in the runtime.
-		CairoExecutionEngine: pallet_cairo_execution_engine,
+		// Include Cairo pallet.
+		Cairo: pallet_cairo,
 	}
 );
 
@@ -349,7 +350,7 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		[pallet_cairo_execution_engine, CairoExecutionEngine]
+		[pallet_cairo, Cairo]
 	);
 }
 

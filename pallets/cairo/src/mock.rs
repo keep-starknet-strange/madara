@@ -1,4 +1,4 @@
-use crate as pallet_cairo_execution_engine;
+use crate as pallet_cairo;
 use frame_support::traits::{ConstU16, ConstU32, ConstU64};
 use frame_system as system;
 use sp_core::H256;
@@ -19,7 +19,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		CairoExecutionEngine: pallet_cairo_execution_engine,
+		Cairo: pallet_cairo,
 	}
 );
 
@@ -52,7 +52,7 @@ impl system::Config for Test {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_cairo_execution_engine::Config for Test {
+impl pallet_cairo::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type MaxCairoAssemblyProgramLength = ConstU32<1024>;

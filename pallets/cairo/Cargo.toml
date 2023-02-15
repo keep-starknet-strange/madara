@@ -1,5 +1,5 @@
 [package]
-name = "pallet-cairo-execution-engine"
+name = "pallet-cairo"
 version = "0.1.0-dev"
 description = "FRAME pallet to execute Cairo programs."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]

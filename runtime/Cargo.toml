@@ -55,7 +55,7 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 frame-system-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate.git", optional = true, branch = "polkadot-v0.9.37" }
 
 # Local Dependencies
-pallet-cairo-execution-engine = { default-features = false, path = "../pallets/cairo-execution-engine" }
+pallet-cairo = { default-features = false, path = "../pallets/cairo" }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
@@ -78,7 +78,7 @@ std = [
   "pallet-grandpa/std",
   "pallet-randomness-collective-flip/std",
   "pallet-sudo/std",
-  "pallet-cairo-execution-engine/std",
+  "pallet-cairo/std",
   "pallet-timestamp/std",
   "pallet-transaction-payment-rpc-runtime-api/std",
   "pallet-transaction-payment/std",
@@ -101,7 +101,7 @@ runtime-benchmarks = [
   "frame-system/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
   "pallet-grandpa/runtime-benchmarks",
-  "pallet-cairo-execution-engine/runtime-benchmarks",
+  "pallet-cairo/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
 ]
@@ -115,7 +115,7 @@ try-runtime = [
   "pallet-grandpa/try-runtime",
   "pallet-randomness-collective-flip/try-runtime",
   "pallet-sudo/try-runtime",
-  "pallet-cairo-execution-engine/try-runtime",
+  "pallet-cairo/try-runtime",
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
 ]

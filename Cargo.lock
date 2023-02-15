@@ -3164,7 +3164,7 @@ dependencies = [
  "frame-try-runtime",
  "pallet-aura",
  "pallet-balances",
- "pallet-cairo-execution-engine",
+ "pallet-cairo",
  "pallet-grandpa",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
@@ -4469,7 +4469,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-cairo-execution-engine"
+name = "pallet-cairo"
 version = "0.1.0-dev"
 dependencies = [
  "cairo-vm",

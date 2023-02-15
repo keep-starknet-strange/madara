@@ -1,6 +1,6 @@
 # About
 
-`pallet-cairo-execution-engine` is a pallet that provides a way to execute Cairo programs in a Substrate environment.
+`pallet-cairo` is a pallet that provides a way to execute Cairo programs in a Substrate environment.
 
 # Configuration
 
