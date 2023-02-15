@@ -3110,7 +3110,7 @@ dependencies = [
 
 [[package]]
 name = "kaioshin"
-version = "4.0.0-dev"
+version = "0.1.0-dev"
 dependencies = [
  "clap 4.1.4",
  "frame-benchmarking",
@@ -3153,7 +3153,7 @@ dependencies = [
 
 [[package]]
 name = "kaioshin-runtime"
-version = "4.0.0-dev"
+version = "0.1.0-dev"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",
@@ -4470,7 +4470,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-cairo-execution-engine"
-version = "4.0.0-dev"
+version = "0.1.0-dev"
 dependencies = [
  "cairo-vm",
  "frame-benchmarking",

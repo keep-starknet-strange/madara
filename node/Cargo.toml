@@ -1,10 +1,10 @@
 [package]
 name = "kaioshin"
-version = "4.0.0-dev"
-description = "A fresh FRAME-based Substrate node, ready for hacking."
+version = "0.1.0-dev"
+description = "Kaioshin node."
 authors = [
-	"Abdelhamid Bakhta <@keep-starknet-strange>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Abdelhamid Bakhta <@keep-starknet-strange>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/kaioshin"
 edition = "2021"
@@ -73,9 +73,9 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate.
 default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-	"kaioshin-runtime/runtime-benchmarks",
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-benchmarking-cli/runtime-benchmarks",
+  "kaioshin-runtime/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
