@@ -50,6 +50,9 @@ pub use sp_runtime::{Perbill, Permill};
 /// Import the Cairo Execution Engine pallet.
 pub use pallet_cairo;
 
+/// Import the StarkNet pallet.
+pub use pallet_starknet;
+
 /// An index to a block.
 pub type BlockNumber = u32;
 
@@ -275,7 +278,7 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-/// Configure the Cairo Execution Engine pallet in pallets/cairo-execution-engine.
+/// Configure the Cairo Execution Engine pallet in pallets/cairo.
 impl pallet_cairo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
@@ -283,6 +286,12 @@ impl pallet_cairo::Config for Runtime {
 	type MaxCairoAssemblyProgramLength = ConstU32<1073741824>;
 	/// Define the maximum length of a Sierra program, denominated in number of bytes.
 	type MaxSierraProgramLength = ConstU32<1073741824>;
+}
+
+/// Configure the Starknet pallet in pallets/starknet.
+impl pallet_starknet::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Randomness = RandomnessCollectiveFlip;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -304,6 +313,8 @@ construct_runtime!(
 		// Include the custom logic from pallets in the runtime.
 		// Include Cairo pallet.
 		Cairo: pallet_cairo,
+		// Include Starknet pallet.
+		Starknet: pallet_starknet,
 	}
 );
 
