@@ -56,7 +56,7 @@ frame-system-benchmarking = { default-features = false, git = "https://github.co
 
 # Local Dependencies
 pallet-cairo = { default-features = false, path = "../pallets/cairo" }
-pallet-starknet = { default-features = false, path = "../pallets/starknet" }
+pallet-starknet = { default-features = false, path = "../pallets/starknet"}
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
