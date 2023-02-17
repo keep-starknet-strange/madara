@@ -25,6 +25,8 @@ pub mod pallet {
 
 	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
+	//use kp_starknet::crypto::hash;
+	//use starknet_crypto::FieldElement;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -68,10 +70,22 @@ pub mod pallet {
 			let _deployer_account = ensure_signed(origin)?;
 
 			log::info!("Keep Starknet Strange!");
+
+			Self::health_check()?;
+
 			Ok(())
 		}
 	}
 
 	/// The Starknet pallet internal functions.
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		fn health_check() -> Result<(), DispatchError> {
+			// Compute a random hash.
+			/*let input_1 = FieldElement::from(1_u32);
+			let input_2 = FieldElement::from(2_u32);
+			let hash = hash::hash(hash::HashType::Pedersen, &input_1, &input_2);
+			log::info!("Random hash: {:?}", hash);*/
+			Ok(())
+		}
+	}
 }
