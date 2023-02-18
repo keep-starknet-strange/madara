@@ -4852,7 +4852,7 @@ dependencies = [
 [[package]]
 name = "poseidon"
 version = "0.0.1"
-source = "git+https://github.com/keep-starknet-strange/poseidon-rs?branch=feature/no-std#6a6a3f12cabca4356bf759ea6c3d28f6d9f9759b"
+source = "git+https://github.com/keep-starknet-strange/poseidon-rs#927d7e5e9760ad633c3d3d16e5540f91d1fef406"
 dependencies = [
  "ff 0.13.0",
  "libc",
