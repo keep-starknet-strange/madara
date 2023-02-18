@@ -247,9 +247,8 @@ pub mod pallet {
 			// Turns into a byte array.
 			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
-			// TODO: use poseidon hash when it is available.
 			let _hash = hash::poseidon(&encoded_payload);
-			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
+			Ok(_hash)
 		}
 
 		/// Validate the Sierra program code.
@@ -358,7 +357,7 @@ pub mod pallet {
 			// Compute the hash and return as id.
 			// TODO: use poseidon hash when it is available.
 			let _hash = hash::poseidon(&encoded_payload);
-			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
+			Ok(_hash)
 		}
 	}
 }

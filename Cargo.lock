@@ -13,6 +13,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "addchain"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b2e69442aa5628ea6951fa33e24efe8313f4321a91bd729fc2f75bdfc858570"
+dependencies = [
+ "num-bigint 0.3.3",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "addr2line"
 version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1328,7 +1339,7 @@ dependencies = [
  "asn1-rs 0.3.1",
  "displaydoc",
  "nom",
- "num-bigint",
+ "num-bigint 0.4.3",
  "num-traits",
  "rusticata-macros",
 ]
@@ -1342,7 +1353,7 @@ dependencies = [
  "asn1-rs 0.5.1",
  "displaydoc",
  "nom",
- "num-bigint",
+ "num-bigint 0.4.3",
  "num-traits",
  "rusticata-macros",
 ]
@@ -1586,7 +1597,7 @@ dependencies = [
  "crypto-bigint",
  "der",
  "digest 0.10.6",
- "ff",
+ "ff 0.12.1",
  "generic-array 0.14.6",
  "group",
  "hkdf",
@@ -1703,6 +1714,35 @@ checksum = "d013fc25338cc558c5c2cfbad646908fb23591e2404481826742b651c9af7160"
 dependencies = [
  "rand_core 0.6.4",
  "subtle",
+]
+
+[[package]]
+name = "ff"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
+dependencies = [
+ "bitvec",
+ "byteorder",
+ "ff_derive",
+ "rand_core 0.6.4",
+ "subtle",
+]
+
+[[package]]
+name = "ff_derive"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9f54704be45ed286151c5e11531316eaef5b8f5af7d597b806fdb8af108d84a"
+dependencies = [
+ "addchain",
+ "cfg-if",
+ "num-bigint 0.3.3",
+ "num-integer",
+ "num-traits",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -2313,7 +2353,7 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5dfbfb3a6cfbd390d5c9564ab283a0349b9b9fcd46a706c1eb10e0db70bfbac7"
 dependencies = [
- "ff",
+ "ff 0.12.1",
  "rand_core 0.6.4",
  "subtle",
 ]
@@ -4081,6 +4121,17 @@ checksum = "61807f77802ff30975e01f4f071c8ba10c022052f98b3294119f3e615d13e5be"
 
 [[package]]
 name = "num-bigint"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f6f7833f2cbf2360a6cfd58cd41a53aa7a90bd4c202f5b1c7dd2ed73c57b2c3"
+dependencies = [
+ "autocfg",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-bigint"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
@@ -4126,7 +4177,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
- "num-bigint",
+ "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
 ]
@@ -4308,6 +4359,7 @@ dependencies = [
  "log",
  "pallet-randomness-collective-flip",
  "parity-scale-codec",
+ "poseidon",
  "scale-info",
  "sp-core",
  "sp-io",
@@ -4796,6 +4848,15 @@ dependencies = [
  "cpufeatures",
  "opaque-debug 0.3.0",
  "universal-hash",
+]
+
+[[package]]
+name = "poseidon"
+version = "0.0.1"
+source = "git+https://github.com/keep-starknet-strange/poseidon-rs#f01ff35ab4dca63a9d6feb7ff3f46c9b04b28b04"
+dependencies = [
+ "ff 0.13.0",
+ "libc",
 ]
 
 [[package]]
