@@ -1722,7 +1722,6 @@ version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ded41244b729663b1e574f1b4fb731469f69f79c17667b5d776b16cda0479449"
 dependencies = [
- "bitvec",
  "byteorder",
  "ff_derive",
  "rand_core 0.6.4",
@@ -4853,7 +4852,7 @@ dependencies = [
 [[package]]
 name = "poseidon"
 version = "0.0.1"
-source = "git+https://github.com/keep-starknet-strange/poseidon-rs#f01ff35ab4dca63a9d6feb7ff3f46c9b04b28b04"
+source = "git+https://github.com/keep-starknet-strange/poseidon-rs?branch=feature/no-std#6a6a3f12cabca4356bf759ea6c3d28f6d9f9759b"
 dependencies = [
  "ff 0.13.0",
  "libc",

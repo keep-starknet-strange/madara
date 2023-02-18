@@ -33,7 +33,7 @@ pub mod pallet {
 	use crate::{
 		compilation::{mock::SierraCompilerMock, SierraCompiler},
 		execution::{mock::CairoExecutorMock, CairoExecutor},
-		hash,
+		hash::Hasher,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
 			CairoAssemblyProgramOutput, SierraProgram, SierraProgramId,
@@ -59,6 +59,9 @@ pub mod pallet {
 		/// The maximum length of a Cairo assembly program.
 		/// This is used to bound the size of the Cairo assembly program code.
 		type MaxCairoAssemblyProgramLength: Get<u32>;
+
+		/// The hashing function to use.
+		type SystemHash: Hasher;
 	}
 
 	/// The Cairo Execution Engine pallet storage items.
@@ -247,7 +250,7 @@ pub mod pallet {
 			// Turns into a byte array.
 			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
-			let _hash = hash::poseidon(&encoded_payload);
+			let _hash = T::SystemHash::hash(&encoded_payload);
 			Ok(_hash)
 		}
 
@@ -355,8 +358,7 @@ pub mod pallet {
 			// Turns into a byte array.
 			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
-			// TODO: use poseidon hash when it is available.
-			let _hash = hash::poseidon(&encoded_payload);
+			let _hash = T::SystemHash::hash(&encoded_payload);
 			Ok(_hash)
 		}
 	}

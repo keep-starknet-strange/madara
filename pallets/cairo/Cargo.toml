@@ -23,7 +23,7 @@ frame-benchmarking = { default-features = false, optional = true, git = "https:/
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 log = "0.4.17"
-poseidon = { default-features = false, git = "https://github.com/keep-starknet-strange/poseidon-rs" }
+poseidon = { default-features = false, git = "https://github.com/keep-starknet-strange/poseidon-rs", branch = "feature/no-std" }
 # Cairo Virtual Machine
 # TODO: wait for no-std support
 #cairo-vm = {version="0.1.1", default-features = false}
