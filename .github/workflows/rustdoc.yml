@@ -20,19 +20,17 @@ jobs:
       - name: Set-Up
         run: sudo apt install -y git clang curl libssl-dev llvm libudev-dev protobuf-compiler
 
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
-          components: rustfmt, rust-src
+      - name: Install Rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source ~/.cargo/env
+          rustup default stable
+          rustup update nightly
+          rustup update stable
+          rustup target add wasm32-unknown-unknown --toolchain nightly
 
       - name: Build Documentation
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --all --no-deps
+        run: cargo doc --all --no-deps
 
       - name: Prepare index
         run: |

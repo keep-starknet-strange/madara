@@ -14,6 +14,13 @@ use crate::{
 	Config, Error,
 };
 
+lazy_static! {
+	/// The Cairo VM executor.
+	pub static ref CAIRO_VM_EXECUTOR: CairoVmExecutor = CairoVmExecutor::default();
+	/// The Fibonacci Cairo program, hardcoded in JSON format.
+	static ref FIBONACCI_PROGRAM: Program = Program::from_bytes(include_bytes!("./samples/fib.json"), Some("main")).unwrap();
+}
+
 /// Cairo VM executor.
 #[derive(Default)]
 pub struct CairoVmExecutor;
@@ -37,13 +44,15 @@ impl<T: Config> CairoExecutor<T> for CairoVmExecutor {
 		_input: &CairoAssemblyProgramInput,
 	) -> Result<CairoAssemblyProgramOutput, Error<T>> {
 		log::info!("executing  Cairo program in Cairo VM");
-		const PROGRAM_JSON: &str = include_str!("./fib0.json");
-		let program = Program::from_bytes(PROGRAM_JSON.as_bytes(), Some("main")).unwrap();
+
 		let cairo_run_config = CairoRunConfig::default();
 		let mut hint_executor = BuiltinHintProcessor::new_empty();
-		let mut cairo_runner =
-			CairoRunner::new(&program, cairo_run_config.layout, cairo_run_config.proof_mode)
-				.unwrap();
+		let mut cairo_runner = CairoRunner::new(
+			&FIBONACCI_PROGRAM,
+			cairo_run_config.layout,
+			cairo_run_config.proof_mode,
+		)
+		.unwrap();
 		let mut vm = VirtualMachine::new(cairo_run_config.trace_enabled);
 		let end = cairo_runner.initialize(&mut vm).unwrap();
 		cairo_runner

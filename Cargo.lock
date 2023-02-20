@@ -4503,6 +4503,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "lazy_static",
  "log",
  "pallet-randomness-collective-flip",
  "parity-scale-codec",

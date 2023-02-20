@@ -25,6 +25,7 @@ frame-system = { default-features = false, git = "https://github.com/paritytech/
 log = "0.4.17"
 poseidon = { default-features = false, git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = ["alloc"]}
 starknet-crypto = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
+lazy_static = {version = "1.4.0", default-features = false}
 # Cairo Virtual Machine
 # TODO: wait for no-std support on official repo
 cairo-vm = { git = "https://github.com/open-dust/cairo-rs", branch= "wasm32-support", default-features = false, features = ["alloc"] }
