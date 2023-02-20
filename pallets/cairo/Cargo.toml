@@ -24,12 +24,10 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 log = "0.4.17"
 # Cairo Virtual Machine
-# TODO: wait for no-std support
-#cairo-vm = {version="0.1.1", default-features = false}
+# TODO: wait for no-std support on official repo
+cairo-vm = { git = "https://github.com/open-dust/cairo-rs", branch= "wasm32-support", default-features = false, features = ["alloc"] }
 # Cairo compiler dependencies
 # TODO: wait for no-std support
-#cairo-vm = { git = "https://github.com/open-dust/cairo-rs", branch= "wasm32-support", default-features = false, features = ["alloc"] }
-cairo-vm = { path = "../../../cairo-rs", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }

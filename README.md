@@ -22,6 +22,7 @@
 
 Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
 
+![](docs/images/kaioshin-demo-fib-cairo-execution-in-pallet.gif)
 
 ## Architecture
 
