@@ -1,5 +1,5 @@
 use crate as pallet_starknet;
-use frame_support::traits::{ConstU16, ConstU32, ConstU64};
+use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -19,7 +19,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system,
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
-		Cairo: pallet_cairo,
+		Starknet: pallet_starknet,
 	}
 );
 

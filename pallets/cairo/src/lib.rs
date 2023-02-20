@@ -1,4 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 /// Cairo Execution Engine pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
@@ -32,7 +34,7 @@ pub mod pallet {
 
 	use crate::{
 		compilation::{mock::SierraCompilerMock, SierraCompiler},
-		execution::{mock::CairoExecutorMock, CairoExecutor},
+		execution::{cairo_vm_executor::CairoVmExecutor, CairoExecutor},
 		hash::Hasher,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
@@ -325,10 +327,7 @@ pub mod pallet {
 			let cairo_assembly_program = CairoAssemblyPrograms::<T>::get(cairo_assembly_program_id)
 				.ok_or(Error::<T>::CairoAssemblyProgramNotFound)?;
 			// Create an instance of the Cairo executor.
-			// For now, we use a mock executor.
-			// When the Cairo VM will be integrated, we will use it.
-			let cairo_executor = CairoExecutorMock::default();
-			//let cairo_executor = CairoVmExecutor::default();
+			let cairo_executor = CairoVmExecutor::default();
 			// Execute the Cairo assembly program.
 			let output = cairo_executor.execute(&cairo_assembly_program, &input)?;
 

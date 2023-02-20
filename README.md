@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Kaioshin</h1>
-  <img src="docs/images/logo.png" height="512">
+  <img src="docs/images/logo_small.png" height="512">
   <br />
   <a href="https://github.com/keep-starknet-strange/kaioshin/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
   -
@@ -22,6 +22,7 @@
 
 Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
 
+![](docs/images/kaioshin-demo-fib-cairo-execution-in-pallet.gif)
 
 ## Architecture
 
