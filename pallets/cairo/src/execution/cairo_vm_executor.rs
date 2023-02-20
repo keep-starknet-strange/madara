@@ -1,3 +1,13 @@
+use cairo_vm::{
+	cairo_run::CairoRunConfig,
+	hint_processor::builtin_hint_processor::builtin_hint_processor_definition::BuiltinHintProcessor,
+	types::program::Program,
+	vm::{
+		errors::vm_exception::VmException, runners::cairo_runner::CairoRunner,
+		vm_core::VirtualMachine,
+	},
+};
+
 use crate::{
 	execution::CairoExecutor,
 	types::{CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput},
@@ -27,35 +37,25 @@ impl<T: Config> CairoExecutor<T> for CairoVmExecutor {
 		_input: &CairoAssemblyProgramInput,
 	) -> Result<CairoAssemblyProgramOutput, Error<T>> {
 		log::info!("executing  Cairo program in Cairo VM");
-		// Read the Cairo program from hardcoded file.
-		// TODO: Replace with the actual Cairo program from the `cairo_program` argument.
-		//const PROGRAM_JSON: &str = include_str!("./array_sum.json");
-		//let program = Program::from_reader(Cursor::new(PROGRAM_JSON), Some("main")).unwrap();
-
-		// Instantiate the Virtual Machine.
-		//let mut vm = VirtualMachine::new(false);
-		// Instantiate the Cairo runner.
-		/*let mut cairo_runner = CairoRunner::new(&program, "all", false).unwrap();
-		let mut hint_processor = BuiltinHintProcessor::new_empty();
-		let func_name = "main";
-		let entrypoint = program
-			.identifiers
-			.get(&format!("__main__.{}", &func_name))
-			.unwrap()
-			.pc
-			.unwrap();
-		cairo_runner.initialize_builtins(&mut vm).unwrap();
-		cairo_runner.initialize_segments(&mut vm, None);
-		let args = vec![];
-		// Execute the Cairo program.
+		const PROGRAM_JSON: &str = include_str!("./fib0.json");
+		let program = Program::from_bytes(PROGRAM_JSON.as_bytes(), Some("main")).unwrap();
+		let cairo_run_config = CairoRunConfig::default();
+		let mut hint_executor = BuiltinHintProcessor::new_empty();
+		let mut cairo_runner =
+			CairoRunner::new(&program, cairo_run_config.layout, cairo_run_config.proof_mode)
+				.unwrap();
+		let mut vm = VirtualMachine::new(cairo_run_config.trace_enabled);
+		let end = cairo_runner.initialize(&mut vm).unwrap();
 		cairo_runner
-			.run_from_entrypoint(entrypoint, &args, false, &mut vm, &mut hint_processor)
+			.run_until_pc(end, &mut vm, &mut hint_executor)
+			.map_err(|err| VmException::from_vm_error(&cairo_runner, &vm, err))
 			.unwrap();
-		let mut buffer = Cursor::new(Vec::new());
-		// Read the output and write it to the buffer.
-		cairo_runner.write_output(&mut vm, &mut buffer).unwrap();
-		// Print the output.
-		//log::info!("{}", String::from_utf8(buffer.into_inner()).unwrap().as_str());*/
+		cairo_runner.end_run(false, false, &mut vm, &mut hint_executor).unwrap();
+
+		vm.verify_auto_deductions().unwrap();
+		cairo_runner.read_return_values(&mut vm).unwrap();
+		cairo_runner.relocate(&mut vm).unwrap();
+		log::info!("finished execution of Cairo program in Cairo VM");
 		Ok(CairoAssemblyProgramOutput::empty())
 	}
 }
