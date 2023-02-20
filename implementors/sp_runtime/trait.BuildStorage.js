@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"kaioshin_runtime":[["impl <a class=\"trait\" href=\"kaioshin_runtime/trait.BuildStorage.html\" title=\"trait kaioshin_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"kaioshin_runtime/struct.GenesisConfig.html\" title=\"struct kaioshin_runtime::GenesisConfig\">GenesisConfig</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
