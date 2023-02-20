@@ -32,17 +32,17 @@ pub trait Hasher {
 }
 
 #[derive(PartialEq, Eq, Clone)]
-pub struct Poseidon;
+pub struct PoseidonHash;
 #[derive(PartialEq, Eq, Clone)]
-pub struct Pedersen;
+pub struct PedersenHash;
 
-impl Hasher for Poseidon {
+impl Hasher for PoseidonHash {
 	fn hash(data: &[u8]) -> [u8; 32] {
 		poseidon(data)
 	}
 }
 
-impl Hasher for Pedersen {
+impl Hasher for PedersenHash {
 	fn hash(_data: &[u8]) -> [u8; 32] {
 		pedersen(_data)
 	}

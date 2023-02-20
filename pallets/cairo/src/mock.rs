@@ -57,7 +57,7 @@ impl pallet_cairo::Config for Test {
 	type Randomness = RandomnessCollectiveFlip;
 	type MaxCairoAssemblyProgramLength = ConstU32<1024>;
 	type MaxSierraProgramLength = ConstU32<1024>;
-	type SystemHash = pallet_cairo::hash::Poseidon;
+	type SystemHash = pallet_cairo::hash::PoseidonHash;
 }
 
 // Build genesis storage according to the mock runtime.
