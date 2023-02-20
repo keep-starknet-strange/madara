@@ -3,6 +3,7 @@ use poseidon::{
 	hash_sw8,
 	parameters::sw8::GF,
 };
+use starknet_crypto::pedersen_hash;
 
 /// Hash input using Poseidon with starkware's parameters and a rate of 8.
 /// # Arguments
@@ -20,9 +21,8 @@ fn poseidon(_data: &[u8]) -> [u8; 32] {
 /// * `data` - The data to hash.
 /// # Returns
 /// The hash of the data.
-/// TODO: Implement Pedersen hash.
 fn pedersen(_data: &[u8]) -> [u8; 32] {
-	[0; 32]
+	pedersen_hash(0, _data).into()
 }
 
 pub trait Hasher {
