@@ -194,6 +194,23 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		/// Execute a hardcoded Cairo assembly program. (testing purposes only)
+		/// # Arguments
+		/// - `origin`: The origin of the call
+		/// - `program_id`: The id of the Cairo assembly program to execute.
+		#[pallet::call_index(3)]
+		#[pallet::weight(0)]
+		pub fn execute_hardcoded_cairo_assembly_program(
+			origin: OriginFor<T>,
+			program_id: u8,
+		) -> DispatchResult {
+			// Make sure the caller is from a signed origin and retrieve the signer.
+			let caller_account = ensure_signed(origin)?;
+			// Call internal function to do the actual execution.
+			Self::do_execute_hardcoded_cairo_assembly_program(&caller_account, program_id)?;
+			Ok(())
+		}
 	}
 
 	/// The Cairo Execution Engine pallet internal functions.
@@ -363,6 +380,18 @@ pub mod pallet {
 			// TODO: use poseidon hash when it is available.
 			let _hash = hash::poseidon(&encoded_payload);
 			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
+		}
+
+		/// Execute a hardcoded Cairo assembly program. (testing purposes only)
+		/// # Arguments
+		/// - `caller_account`: The account identifier of the caller.
+		/// - `program_id`: The id of the Cairo assembly program to execute.
+		pub fn do_execute_hardcoded_cairo_assembly_program(
+			_caller_account: &T::AccountId,
+			program_id: u8,
+		) -> Result<(), DispatchError> {
+			CairoVmExecutor::run_hardcoded_program(program_id);
+			Ok(())
 		}
 	}
 }

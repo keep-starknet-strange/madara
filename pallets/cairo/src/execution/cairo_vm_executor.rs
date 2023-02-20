@@ -19,6 +19,7 @@ lazy_static! {
 	pub static ref CAIRO_VM_EXECUTOR: CairoVmExecutor = CairoVmExecutor::default();
 	/// The Fibonacci Cairo program, hardcoded in JSON format.
 	static ref FIBONACCI_PROGRAM: Program = Program::from_bytes(include_bytes!("./samples/fib.json"), Some("main")).unwrap();
+	static ref ADD_PROGRAM: Program = Program::from_bytes(include_bytes!("./samples/add.json"), Some("main")).unwrap();
 }
 
 /// Cairo VM executor.
@@ -43,16 +44,34 @@ impl<T: Config> CairoExecutor<T> for CairoVmExecutor {
 		_cairo_program: &CairoAssemblyProgram<T>,
 		_input: &CairoAssemblyProgramInput,
 	) -> Result<CairoAssemblyProgramOutput, Error<T>> {
-		log::info!("executing  Cairo program in Cairo VM");
+		CairoVmExecutor::run_program(&FIBONACCI_PROGRAM).unwrap();
+		Ok(CairoAssemblyProgramOutput::empty())
+	}
+}
+
+impl CairoVmExecutor {
+	pub fn run_hardcoded_program(id: u8) {
+		match id {
+			0 => {
+				log::info!("Running fibonacci program");
+				CairoVmExecutor::run_program(&FIBONACCI_PROGRAM).unwrap();
+			},
+			1 => {
+				log::info!("Running add program");
+				CairoVmExecutor::run_program(&ADD_PROGRAM).unwrap();
+			},
+			_ => log::info!("Invalid program id"),
+		};
+	}
+
+	fn run_program(program: &Program) -> Result<(), ()> {
+		log::info!("starting execution of Cairo program in Cairo VM");
 
 		let cairo_run_config = CairoRunConfig::default();
 		let mut hint_executor = BuiltinHintProcessor::new_empty();
-		let mut cairo_runner = CairoRunner::new(
-			&FIBONACCI_PROGRAM,
-			cairo_run_config.layout,
-			cairo_run_config.proof_mode,
-		)
-		.unwrap();
+		let mut cairo_runner =
+			CairoRunner::new(program, cairo_run_config.layout, cairo_run_config.proof_mode)
+				.unwrap();
 		let mut vm = VirtualMachine::new(cairo_run_config.trace_enabled);
 		let end = cairo_runner.initialize(&mut vm).unwrap();
 		cairo_runner
@@ -65,6 +84,7 @@ impl<T: Config> CairoExecutor<T> for CairoVmExecutor {
 		cairo_runner.read_return_values(&mut vm).unwrap();
 		cairo_runner.relocate(&mut vm).unwrap();
 		log::info!("finished execution of Cairo program in Cairo VM");
-		Ok(CairoAssemblyProgramOutput::empty())
+
+		Ok(())
 	}
 }
