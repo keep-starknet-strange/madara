@@ -361,9 +361,16 @@
 <a href="#361" id="361">361</a>
 <a href="#362" id="362">362</a>
 <a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
 </pre><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
 </span><span class="kw">extern crate </span>alloc;
+<span class="attr">#[macro_use]
+</span><span class="kw">extern crate </span>lazy_static;
 
 <span class="doccomment">/// Cairo Execution Engine pallet.
 /// Definition of the pallet&#39;s runtime storage items, events, errors, and dispatchable
@@ -397,7 +404,10 @@
 
 	<span class="kw">use crate</span>::{
 		compilation::{mock::SierraCompilerMock, SierraCompiler},
-		execution::{cairo_vm_executor::CairoVmExecutor, CairoExecutor},
+		execution::{
+			cairo_vm_executor::{CairoVmExecutor, CAIRO_VM_EXECUTOR},
+			CairoExecutor,
+		},
 		hash,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
@@ -688,9 +698,9 @@
 			</span><span class="kw">let </span>cairo_assembly_program = CairoAssemblyPrograms::&lt;T&gt;::get(cairo_assembly_program_id)
 				.ok_or(Error::&lt;T&gt;::CairoAssemblyProgramNotFound)<span class="question-mark">?</span>;
 			<span class="comment">// Create an instance of the Cairo executor.
-			</span><span class="kw">let </span>cairo_executor = CairoVmExecutor::default();
-			<span class="comment">// Execute the Cairo assembly program.
-			</span><span class="kw">let </span>output = cairo_executor.execute(<span class="kw-2">&amp;</span>cairo_assembly_program, <span class="kw-2">&amp;</span>input)<span class="question-mark">?</span>;
+			//let cairo_executor = CairoVmExecutor::default();
+			// Execute the Cairo assembly program.
+			</span><span class="kw">let </span>output = CAIRO_VM_EXECUTOR.execute(<span class="kw-2">&amp;</span>cairo_assembly_program, <span class="kw-2">&amp;</span>input)<span class="question-mark">?</span>;
 
 			<span class="comment">// Emit events.
 			</span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramExecuted {

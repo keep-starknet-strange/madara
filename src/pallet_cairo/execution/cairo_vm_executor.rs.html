@@ -59,6 +59,15 @@
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre><pre class="rust"><code><span class="kw">use </span>cairo_vm::{
 	cairo_run::CairoRunConfig,
 	hint_processor::builtin_hint_processor::builtin_hint_processor_definition::BuiltinHintProcessor,
@@ -74,6 +83,13 @@
 	types::{CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput},
 	Config, Error,
 };
+
+<span class="macro">lazy_static! </span>{
+	<span class="doccomment">/// The Cairo VM executor.
+	</span><span class="kw">pub static </span><span class="kw-2">ref </span>CAIRO_VM_EXECUTOR: CairoVmExecutor = CairoVmExecutor::default();
+	<span class="doccomment">/// The Fibonacci Cairo program, hardcoded in JSON format.
+	</span><span class="kw">static </span><span class="kw-2">ref </span>FIBONACCI_PROGRAM: Program = Program::from_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;./samples/fib.json&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>)).unwrap();
+}
 
 <span class="doccomment">/// Cairo VM executor.
 </span><span class="attr">#[derive(Default)]
@@ -98,13 +114,15 @@
 		_input: <span class="kw-2">&amp;</span>CairoAssemblyProgramInput,
 	) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, Error&lt;T&gt;&gt; {
 		<span class="macro">log::info!</span>(<span class="string">&quot;executing  Cairo program in Cairo VM&quot;</span>);
-		<span class="kw">const </span>PROGRAM_JSON: <span class="kw-2">&amp;</span>str = <span class="macro">include_str!</span>(<span class="string">&quot;./fib0.json&quot;</span>);
-		<span class="kw">let </span>program = Program::from_bytes(PROGRAM_JSON.as_bytes(), <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>)).unwrap();
+
 		<span class="kw">let </span>cairo_run_config = CairoRunConfig::default();
 		<span class="kw">let </span><span class="kw-2">mut </span>hint_executor = BuiltinHintProcessor::new_empty();
-		<span class="kw">let </span><span class="kw-2">mut </span>cairo_runner =
-			CairoRunner::new(<span class="kw-2">&amp;</span>program, cairo_run_config.layout, cairo_run_config.proof_mode)
-				.unwrap();
+		<span class="kw">let </span><span class="kw-2">mut </span>cairo_runner = CairoRunner::new(
+			<span class="kw-2">&amp;</span>FIBONACCI_PROGRAM,
+			cairo_run_config.layout,
+			cairo_run_config.proof_mode,
+		)
+		.unwrap();
 		<span class="kw">let </span><span class="kw-2">mut </span>vm = VirtualMachine::new(cairo_run_config.trace_enabled);
 		<span class="kw">let </span>end = cairo_runner.initialize(<span class="kw-2">&amp;mut </span>vm).unwrap();
 		cairo_runner
