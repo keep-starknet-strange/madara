@@ -2,14 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 config:
-  target: "ws://127.0.0.1:9944"
   processor: "./functions.js"
-  phases:
-    - duration: 4
-      arrivalCount: 7 # Number of users
-      name: Users Connection
-    - pause: 60
-      name: Performance Testing
+  environments:
+    local:
+      target: "ws://127.0.0.1:9944"
+      phases:
+        - duration: 4
+          arrivalCount: 7 # Number of users
+          name: Users Connection
+        - pause: 60
+          name: Performance Testing
   variables:
     programId:
       - 0

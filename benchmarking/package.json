@@ -5,8 +5,9 @@
   "description": "Benchmarking of Kaioshin.",
   "main": "index.js",
   "scripts": {
-    "test-basic": "artillery run ./scripts/script-basic.yml",
-    "test": "artillery run ./scripts/script.yml --output report.json",
+    "test-chain": "artillery run -e local ./scripts/chain.yml",
+    "test-execution": "artillery run -e local ./scripts/cairo-execution.yml --output report.json",
+    "test-storage": "artillery run -e local ./scripts/cairo-storage.yml --output report-storage.json",
     "report": "artillery report report.json"
   },
   "keywords": [
