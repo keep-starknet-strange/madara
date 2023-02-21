@@ -40,7 +40,6 @@ pub mod pallet {
 			cairo_vm_executor::{CairoVmExecutor, CAIRO_VM_EXECUTOR},
 			CairoExecutor,
 		},
-		hash,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
 			CairoAssemblyProgramOutput, SierraProgram, SierraProgramId,
@@ -100,6 +99,8 @@ pub mod pallet {
 			sierra_program_id: SierraProgramId,
 			cairo_assembly_program_id: CairoAssemblyProgamId,
 		},
+		/// A new Cairo assembly program has been successfully deployed.
+		CairoAssemblyProgramDeployed { id: CairoAssemblyProgamId, deployer_account: T::AccountId },
 		/// A Cairo assembly program has been successfully executed.
 		CairoAssemblyProgramExecuted {
 			cairo_assembly_program_id: CairoAssemblyProgamId,
@@ -118,6 +119,8 @@ pub mod pallet {
 		SierraProgramNotFound,
 		/// The Cairo assembly program does not exist.
 		CairoAssemblyProgramNotFound,
+		/// The Cairo assembly program already exists.
+		CairoAssemblyProgramAlreadyExists,
 	}
 
 	/// The Cairo Execution Engine pallet external functions.
@@ -149,13 +152,36 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Deploy a new Cairo assembly program.
+		/// # Arguments
+		/// - `origin`: The origin of the call
+		/// - `cairo_assembly_program`: The Cairo assembly code of the program to deploy.
+		/// # TODO
+		/// - do benchmarking to determine the appropriate `weight` for this call.
+		#[pallet::call_index(1)]
+		#[pallet::weight(0)]
+		pub fn deploy_cairo_assembly_program(
+			origin: OriginFor<T>,
+			cairo_assembly_program: BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
+		) -> DispatchResult {
+			// Make sure the caller is from a signed origin and retrieve the signer.
+			let deployer_account = ensure_signed(origin)?;
+
+			log::info!("Deploying Cairo assembly program from account: {:?}", deployer_account);
+
+			// Call internal function to do the actual deployment.
+			Self::do_deploy_cairo_assembly_program(&deployer_account, cairo_assembly_program)?;
+
+			Ok(())
+		}
+
 		/// Compile a Sierra program into a Cairo assembly program and store it in storage.
 		/// # Arguments
 		/// - `origin`: The origin of the call
 		/// - `sierra_program_id`: The id of the Sierra program to compile.
 		/// # TODO
 		/// - do benchmarking to determine the appropriate `weight` for this call.
-		#[pallet::call_index(1)]
+		#[pallet::call_index(2)]
 		#[pallet::weight(0)]
 		pub fn compile_sierra_program(
 			origin: OriginFor<T>,
@@ -177,7 +203,7 @@ pub mod pallet {
 		/// - do benchmarking to determine the appropriate `weight` for this call.
 		/// - implement the actual execution of the Cairo assembly program.
 		/// - implement the return value of the execution.
-		#[pallet::call_index(2)]
+		#[pallet::call_index(3)]
 		#[pallet::weight(0)]
 		pub fn execute_cairo_assembly_program(
 			origin: OriginFor<T>,
@@ -199,7 +225,7 @@ pub mod pallet {
 		/// # Arguments
 		/// - `origin`: The origin of the call
 		/// - `program_id`: The id of the Cairo assembly program to execute.
-		#[pallet::call_index(3)]
+		#[pallet::call_index(4)]
 		#[pallet::weight(0)]
 		pub fn execute_hardcoded_cairo_assembly_program(
 			origin: OriginFor<T>,
@@ -252,28 +278,55 @@ pub mod pallet {
 			Ok(sierra_program_id)
 		}
 
+		/// Deploy a new Cairo assembly program.
+		/// # Arguments
+		/// - `deployer_account`: The account identifier of the deployer.
+		/// - `cairo_assembly_program`: The Cairo assembly program to deploy.
+		fn do_deploy_cairo_assembly_program(
+			deployer_account: &T::AccountId,
+			cairo_assembly_program: BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
+		) -> Result<SierraProgramId, DispatchError> {
+			// Generate Cairo assembly program id.
+			let cairo_assembly_program_id =
+				Self::gen_cairo_assembly_program_id(&cairo_assembly_program)?;
+
+			// Check if the Cairo assembly program already exists in storage.
+			ensure!(
+				!CairoAssemblyPrograms::<T>::contains_key(cairo_assembly_program_id),
+				Error::<T>::CairoAssemblyProgramAlreadyExists
+			);
+
+			// Validate the Cairo assembly program
+			Self::validate_cairo_assembly_program(&cairo_assembly_program)?;
+
+			// Create the Cairo assembly program instance.
+			let cairo_assembly_program = CairoAssemblyProgram::<T> {
+				id: cairo_assembly_program_id,
+				code: cairo_assembly_program,
+				sierra_program_id: None,
+			};
+
+			// Insert the Cairo assembly program in storage.
+			CairoAssemblyPrograms::<T>::insert(cairo_assembly_program_id, &cairo_assembly_program);
+
+			// Emit events.
+			Self::deposit_event(Event::CairoAssemblyProgramDeployed {
+				id: cairo_assembly_program_id,
+				deployer_account: deployer_account.clone(),
+			});
+
+			Ok(cairo_assembly_program_id)
+		}
+
 		/// Compute the id of a Sierra program from it's code.
 		/// TODO: move to hash of the code
 		pub fn gen_sierra_program_id(
 			_deployer_account: &T::AccountId,
-			_sierra_code: &BoundedVec<u8, T::MaxSierraProgramLength>,
+			sierra_code: &BoundedVec<u8, T::MaxSierraProgramLength>,
 		) -> Result<SierraProgramId, DispatchError> {
-			// Create some randomness.
-			let random = T::Randomness::random(&b"sierra"[..]).0;
-
-			// Add some uniqueness because multiple ids can generated in the same block.
-			let unique_payload = (
-				random,
-				frame_system::Pallet::<T>::extrinsic_index().unwrap_or_default(),
-				frame_system::Pallet::<T>::block_number(),
-			);
-
-			// Turns into a byte array.
-			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
 			// TODO: use poseidon hash when it is available.
-			let _hash = hash::poseidon(&encoded_payload);
-			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
+			Ok(frame_support::Hashable::blake2_256(&sierra_code.encode()))
 		}
 
 		/// Validate the Sierra program code.
@@ -284,6 +337,19 @@ pub mod pallet {
 			// Check that the program is not too big.
 			ensure!(
 				sierra_code.len() <= T::MaxSierraProgramLength::get() as usize,
+				Error::<T>::ProgramTooBig
+			);
+			Ok(())
+		}
+
+		/// Validate the Cairo assembly program.
+		/// TODO: implement proper validation.
+		pub fn validate_cairo_assembly_program(
+			cairo_assembly_program: &BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
+		) -> Result<(), DispatchError> {
+			// Check that the program is not too big.
+			ensure!(
+				cairo_assembly_program.len() <= T::MaxCairoAssemblyProgramLength::get() as usize,
 				Error::<T>::ProgramTooBig
 			);
 			Ok(())
@@ -307,26 +373,22 @@ pub mod pallet {
 			// Create an instance of the Cairo compiler.
 			let compiler = SierraCompilerMock::default();
 			// Compile the Sierra program into a Cairo assembly program.
-			let mut cairo_assembly_program = compiler.compile(&sierra_program)?;
-			// Generate a unique id for the Cairo assembly program.
-			let cairo_assembly_program_id =
-				Self::gen_cairo_assembly_program_id(&cairo_assembly_program.code)?;
-			// Set the id of the Cairo assembly program.
-			cairo_assembly_program.id = Some(cairo_assembly_program_id);
+			let cairo_assembly_program = compiler.compile(&sierra_program)?;
+
 			// Store the Cairo assembly program in storage.
-			CairoAssemblyPrograms::<T>::insert(cairo_assembly_program_id, &cairo_assembly_program);
+			CairoAssemblyPrograms::<T>::insert(cairo_assembly_program.id, &cairo_assembly_program);
 			// Update the Sierra program with the id of the Cairo assembly program.
-			sierra_program.cairo_assembly_program_id = Some(cairo_assembly_program_id);
+			sierra_program.cairo_assembly_program_id = Some(cairo_assembly_program.id);
 			// Update the Sierra program in storage.
 			SierraPrograms::<T>::insert(sierra_program_id, &sierra_program);
 
 			// Emit events.
 			Self::deposit_event(Event::CairoAssemblyProgramCompiled {
 				sierra_program_id,
-				cairo_assembly_program_id,
+				cairo_assembly_program_id: cairo_assembly_program.id,
 			});
 			// Return the id of the Cairo assembly program.
-			Ok(cairo_assembly_program_id)
+			Ok(cairo_assembly_program.id)
 		}
 
 		/// Execute a Cairo assembly program.
@@ -346,8 +408,6 @@ pub mod pallet {
 			// Retrieve the Cairo assembly program from storage.
 			let cairo_assembly_program = CairoAssemblyPrograms::<T>::get(cairo_assembly_program_id)
 				.ok_or(Error::<T>::CairoAssemblyProgramNotFound)?;
-			// Create an instance of the Cairo executor.
-			//let cairo_executor = CairoVmExecutor::default();
 			// Execute the Cairo assembly program.
 			let output = CAIRO_VM_EXECUTOR.execute(&cairo_assembly_program, &input)?;
 
@@ -362,24 +422,11 @@ pub mod pallet {
 		/// Compute the id of a Sierra program from it's code.
 		/// TODO: move to hash of the code
 		pub fn gen_cairo_assembly_program_id(
-			_cairo_assembly_code: &BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
+			cairo_assembly_code: &BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
 		) -> Result<CairoAssemblyProgamId, DispatchError> {
-			// Create some randomness.
-			let random = T::Randomness::random(&b"casm"[..]).0;
-
-			// Add some uniqueness because multiple ids can generated in the same block.
-			let unique_payload = (
-				random,
-				frame_system::Pallet::<T>::extrinsic_index().unwrap_or_default(),
-				frame_system::Pallet::<T>::block_number(),
-			);
-
-			// Turns into a byte array.
-			let encoded_payload = unique_payload.encode();
 			// Compute the hash and return as id.
 			// TODO: use poseidon hash when it is available.
-			let _hash = hash::poseidon(&encoded_payload);
-			Ok(frame_support::Hashable::blake2_256(&encoded_payload))
+			Ok(frame_support::Hashable::blake2_256(&cairo_assembly_code.encode()))
 		}
 
 		/// Execute a hardcoded Cairo assembly program. (testing purposes only)
