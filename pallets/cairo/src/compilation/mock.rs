@@ -16,8 +16,9 @@ impl<T: Config> SierraCompiler<T> for SierraCompilerMock {
 	) -> Result<CairoAssemblyProgram<T>, Error<T>> {
 		Ok(CairoAssemblyProgram {
 			// TODO: Think if we should generate id during compilation or not.
-			id: None,
-			sierra_program_id: sierra_program.id,
+			// For mock it is ok to use the same id as the sierra program.
+			id: sierra_program.id.clone(),
+			sierra_program_id: Some(sierra_program.id),
 			code: BoundedVec::with_bounded_capacity(0),
 		})
 	}
