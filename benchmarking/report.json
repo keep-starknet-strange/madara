@@ -2,44 +2,48 @@
   "aggregate": {
     "counters": {
       "vusers.created_by_name.cairo_program": 1,
-      "vusers.created": 1,
+      "vusers.created": 2,
+      "vusers.created_by_name.headers_blocks": 1,
+      "ws.messages_sent": 4,
       "vusers.failed": 0,
-      "vusers.completed": 1
+      "vusers.completed": 2
     },
-    "rates": {},
-    "firstCounterAt": 1676987463014,
-    "firstHistogramAt": 1676987467153,
-    "lastCounterAt": 1676987467153,
-    "lastHistogramAt": 1676987467153,
-    "firstMetricAt": 1676987463014,
-    "lastMetricAt": 1676987467153,
-    "period": 1676987460000,
+    "rates": {
+      "ws.send_rate": 1
+    },
+    "firstCounterAt": 1676988869490,
+    "firstHistogramAt": 1676988870555,
+    "lastCounterAt": 1676988885981,
+    "lastHistogramAt": 1676988885981,
+    "firstMetricAt": 1676988869490,
+    "lastMetricAt": 1676988885981,
+    "period": 1676988880000,
     "summaries": {
       "vusers.session_length": {
-        "min": 4139.3,
-        "max": 4139.3,
-        "count": 1,
-        "p50": 4147.4,
-        "median": 4147.4,
-        "p75": 4147.4,
-        "p90": 4147.4,
-        "p95": 4147.4,
-        "p99": 4147.4,
-        "p999": 4147.4
+        "min": 61.7,
+        "max": 16491.2,
+        "count": 2,
+        "p50": 62.2,
+        "median": 62.2,
+        "p75": 62.2,
+        "p90": 62.2,
+        "p95": 62.2,
+        "p99": 62.2,
+        "p999": 62.2
       }
     },
     "histograms": {
       "vusers.session_length": {
-        "min": 4139.3,
-        "max": 4139.3,
-        "count": 1,
-        "p50": 4147.4,
-        "median": 4147.4,
-        "p75": 4147.4,
-        "p90": 4147.4,
-        "p95": 4147.4,
-        "p99": 4147.4,
-        "p999": 4147.4
+        "min": 61.7,
+        "max": 16491.2,
+        "count": 2,
+        "p50": 62.2,
+        "median": 62.2,
+        "p75": 62.2,
+        "p90": 62.2,
+        "p95": 62.2,
+        "p99": 62.2,
+        "p999": 62.2
       }
     }
   },
@@ -47,14 +51,70 @@
     {
       "counters": {},
       "rates": {},
-      "period": 1676987460000,
+      "period": 1676988870000,
       "summaries": {},
       "histograms": {}
     },
     {
+      "counters": {
+        "vusers.created_by_name.cairo_program": 1,
+        "vusers.created": 1
+      },
+      "rates": {},
+      "firstCounterAt": 1676988869490,
+      "lastCounterAt": 1676988869490,
+      "firstMetricAt": 1676988869490,
+      "lastMetricAt": 1676988869490,
+      "period": "1676988860000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.failed": 0,
+        "vusers.completed": 1
+      },
+      "rates": {},
+      "firstCounterAt": 1676988885981,
+      "firstHistogramAt": 1676988885981,
+      "lastCounterAt": 1676988885981,
+      "lastHistogramAt": 1676988885981,
+      "firstMetricAt": 1676988885981,
+      "lastMetricAt": 1676988885981,
+      "period": "1676988880000",
+      "summaries": {
+        "vusers.session_length": {
+          "min": 16491.2,
+          "max": 16491.2,
+          "count": 1,
+          "p50": 16486.1,
+          "median": 16486.1,
+          "p75": 16486.1,
+          "p90": 16486.1,
+          "p95": 16486.1,
+          "p99": 16486.1,
+          "p999": 16486.1
+        }
+      },
+      "histograms": {
+        "vusers.session_length": {
+          "min": 16491.2,
+          "max": 16491.2,
+          "count": 1,
+          "p50": 16486.1,
+          "median": 16486.1,
+          "p75": 16486.1,
+          "p90": 16486.1,
+          "p95": 16486.1,
+          "p99": 16486.1,
+          "p999": 16486.1
+        }
+      }
+    },
+    {
       "counters": {},
       "rates": {},
-      "period": 1676987490000,
+      "period": 1676988930000,
       "summaries": {},
       "histograms": {}
     }

@@ -12,16 +12,30 @@ function rpcMethods(userContext, events, done) {
 }
 
 async function runCairoProgram(userContext, events, done) {
-  const { programId } = userContext.vars;
+  const { programId, accountName } = userContext.vars;
 
    const keyring = new Keyring({ type: "sr25519" });
-   const alice = keyring.addFromUri("//Alice");
+   const alice = keyring.addFromUri(`//${accountName}`);
 
   const extrisinc = userContext.api.tx.cairo.executeHardcodedCairoAssemblyProgram(
     programId
   );
   // console.log(extrisinc)
   await extrisinc.signAndSend(alice, {nonce: -1})
+
+  return done();
+}
+
+async function deployCairoProgram(userContext, events, done) {
+  const { accountName } = userContext.vars;
+
+  const keyring = new Keyring({ type: "sr25519" });
+  const alice = keyring.addFromUri(`//${accountName}`);
+
+  const extrisinc =
+    userContext.api.tx.cairo.deployCairoAssemblyProgram(programId);
+  // console.log(extrisinc)
+  await extrisinc.signAndSend(alice, { nonce: -1 });
 
   return done();
 }
