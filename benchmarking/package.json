@@ -5,13 +5,16 @@
   "description": "Benchmarking of Kaioshin.",
   "main": "index.js",
   "scripts": {
-    "test": "artillery run ./scripts/script-basic.yml"
+    "test-basic": "artillery run ./scripts/script-basic.yml",
+    "test": "artillery run ./scripts/script.yml --output report.json",
+    "report": "artillery report report.json"
   },
   "keywords": [
     "kaioshin",
     "benchmark"
   ],
   "devDependencies": {
+    "@polkadot/keyring": "^10.4.2",
     "artillery": "^2.0.0-30",
     "artillery-engine-substrate": "^1.0.6-2"
   }

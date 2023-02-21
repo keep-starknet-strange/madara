@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 config:
-  target: "wss://127.0.0.1:9944"
+  target: "ws://127.0.0.1:9944"
   phases:
     - duration: 3
       arrivalRate: 1
