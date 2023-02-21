@@ -1,0 +1,38 @@
+# Copyright 2021-2022 Dwellir AB authors & contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config:
+  target: "wss://westend-rpc.dwellir.com"
+  processor: "./functions.js"
+  phases:
+    - duration: 5
+      arrivalRate: 2
+      name: Engine test phase
+  engines:
+   substrate: {}
+scenarios:
+  - engine: substrate
+    name: headers_blocks
+    flow:
+      - connect: "{{ target }}"
+      - loop:
+        - call:
+            method: api.rpc.chain.getHeader()
+            saveTo: header
+        - log: "Current hash: {{ header.hash }}"
+        - call:
+            method: api.rpc.chain.getBlock({{ header.hash }})
+            saveTo: block
+        - log: "Current Block Number: {{ block.block.header.number }}"
+        count: 2
+  - engine: substrate
+    name: alice
+    flow:
+      - send: api.query.system.account('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY')
+      - log: "Alice Account balance= {{ data }}"
+  - engine: substrate
+    name: complex_call
+    flow:
+      - function: "someComplexCall"
+      - log: "Account Nonce {{ accountNonce }}"
+      - log: "Last block timestamp {{ now }}"
