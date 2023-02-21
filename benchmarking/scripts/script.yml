@@ -6,7 +6,7 @@ config:
   processor: "./functions.js"
   phases:
     - duration: 4
-      arrivalCount: 5 # Number of users
+      arrivalCount: 7 # Number of users
       name: Users Connection
     - pause: 60
       name: Performance Testing
@@ -30,20 +30,6 @@ config:
   engines:
    substrate: {}
 scenarios:
-  - engine: substrate
-    name: headers_blocks
-    flow:
-      - connect: "{{ target }}"
-      - loop:
-        - call:
-            method: api.rpc.chain.getHeader()
-            saveTo: header
-        - log: "Current hash: {{ header.hash }}"
-        - call:
-            method: api.rpc.chain.getBlock({{ header.hash }})
-            saveTo: block
-        - log: "Current Block Number: {{ block.block.header.number }}"
-        count: 2
   - engine: substrate
     name: cairo_program
     flow:
