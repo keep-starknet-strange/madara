@@ -84,6 +84,7 @@
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Cairo Execution Engine pallet custom types.
 </span><span class="kw">use </span><span class="kw">crate</span>::Config;
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
@@ -130,9 +131,10 @@
 	/// from the generation of the Cairo assembly program identifier.
 	/// If at some point that it does not make sense, we can remove the `Option` and make this
 	/// field mandatory.
-	</span><span class="kw">pub </span>id: <span class="prelude-ty">Option</span>&lt;CairoAssemblyProgamId&gt;,
+	</span><span class="kw">pub </span>id: CairoAssemblyProgamId,
 	<span class="doccomment">/// The identifier of the Sierra program that was compiled to the Cairo assembly program.
-	</span><span class="kw">pub </span>sierra_program_id: SierraProgramId,
+	/// None if the Cairo assembly program was not compiled from a Sierra program.
+	</span><span class="kw">pub </span>sierra_program_id: <span class="prelude-ty">Option</span>&lt;SierraProgramId&gt;,
 	<span class="doccomment">/// The code of the Cairo assembly program.
 	</span><span class="kw">pub </span>code: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
 }

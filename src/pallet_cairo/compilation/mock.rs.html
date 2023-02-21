@@ -22,6 +22,7 @@
 <a href="#22" id="22">22</a>
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 
 <span class="kw">use crate</span>::{types::CairoAssemblyProgram, Config, Error};
@@ -40,8 +41,9 @@
 	) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgram&lt;T&gt;, Error&lt;T&gt;&gt; {
 		<span class="prelude-val">Ok</span>(CairoAssemblyProgram {
 			<span class="comment">// TODO: Think if we should generate id during compilation or not.
-			</span>id: <span class="prelude-val">None</span>,
-			sierra_program_id: sierra_program.id,
+			// For mock it is ok to use the same id as the sierra program.
+			</span>id: sierra_program.id.clone(),
+			sierra_program_id: <span class="prelude-val">Some</span>(sierra_program.id),
 			code: BoundedVec::with_bounded_capacity(<span class="number">0</span>),
 		})
 	}
