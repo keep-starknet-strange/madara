@@ -13,8 +13,8 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 # TODO: investigate why those dependencies cause again the
 # duplicate lang item in crate `std` issue.
-#starknet-crypto = {workspace = true,  default-features = false, features = ["alloc"]}
-#starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
+starknet-crypto = {workspace = true,  default-features = false, features = ["alloc"]}
+starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive", "max-encoded-len"] }
 either = { version = "1.5", default-features = false }
 hash256-std-hasher = { version = "0.15.2", default-features = false }
@@ -49,8 +49,8 @@ std = [
 	# Starknet
 	# TODO: investigate why those dependencies cause again the
 	# duplicate lang item in crate `std` issue.
-	#"starknet-crypto/std",
-	#"starknet-ff/std",
+	"starknet-crypto/std",
+	"starknet-ff/std",
 	# Substrate
 	"frame-support/std",
 	"sp-core/std",
