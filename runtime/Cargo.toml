@@ -54,9 +54,12 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate.git", optional = true, branch = "polkadot-v0.9.37" }
 frame-system-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate.git", optional = true, branch = "polkadot-v0.9.37" }
 
-# Local Dependencies
+# Kaioshin Local Dependencies
+# Kaioshin Pallets
 pallet-cairo = { default-features = false, path = "../pallets/cairo" }
 pallet-starknet = { default-features = false, path = "../pallets/starknet"}
+# Kaioshin Primitives
+kp-starknet = {workspace = true, default-features = false}
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }

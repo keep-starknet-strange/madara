@@ -11,29 +11,49 @@ repository = { workspace = true }
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-starknet-crypto = { workspace = true, default-features = false, features = [
-	"alloc",
-] }
-starknet-ff = { workspace = true, default-features = false, features = [
-	"alloc",
-] }
-poseidon_hash = { workspace = true, default-features = false, features = [
-	"alloc",
-] }
-hex = { workspace = true, default-features = false, features = ["alloc"] }
+# TODO: investigate why those dependencies cause again the
+# duplicate lang item in crate `std` issue.
+#starknet-crypto = {workspace = true,  default-features = false, features = ["alloc"]}
+#starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive", "max-encoded-len"] }
+either = { version = "1.5", default-features = false }
+hash256-std-hasher = { version = "0.15.2", default-features = false }
+impl-trait-for-tuples = "0.2.2"
+log = { version = "0.4.17", default-features = false }
+paste = "1.0"
+rand = { version = "0.8.5", optional = true }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+serde = { version = "1.0.136", features = ["derive"], optional = true}
 # Substrate
 frame-support = { workspace = true }
 sp-core = { workspace = true }
+sp-io = { workspace = true }
 sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+
+[dev-dependencies]
+rand = "0.8.5"
+serde_json = "1.0.85"
+zstd = { version = "0.11.2", default-features = false }
 
 [features]
 default = ["std"]
 std = [
+	"codec/std",
+	"either/use_std",
+	"hash256-std-hasher/std",
+	"log/std",
+	"rand",
+	"scale-info/std",
+	"serde",
+	# Starknet
+	# TODO: investigate why those dependencies cause again the
+	# duplicate lang item in crate `std` issue.
+	#"starknet-crypto/std",
+	#"starknet-ff/std",
 	# Substrate
 	"frame-support/std",
 	"sp-core/std",
 	"sp-std/std",
-	"starknet-crypto/std",
-	"starknet-ff/std",
-	"hex/std",
+	"sp-io/std",
 ]

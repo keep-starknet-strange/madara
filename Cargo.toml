@@ -32,6 +32,9 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 # Substrate Primitives
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+
 
 # Kaioshin primtitives
 kp-starknet = { version = "0.1.0-dev", path = "primitives/starknet", default-features = false }
