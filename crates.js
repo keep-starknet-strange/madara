@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["kaioshin","kaioshin_runtime","pallet_cairo","pallet_starknet"];
+window.ALL_CRATES = ["kaioshin","kaioshin_runtime","kp_starknet","pallet_cairo","pallet_starknet"];

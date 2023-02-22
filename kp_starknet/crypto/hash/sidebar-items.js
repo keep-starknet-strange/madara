@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["HashType","The type of hash function used in the StarkNet protocol."]],"fn":[["hash","Hashes two field elements using the specified hash function."],["hash_bytes","Hashes two byte arrays using the specified hash function."]]};
