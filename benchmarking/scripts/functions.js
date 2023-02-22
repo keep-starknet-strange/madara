@@ -43,6 +43,7 @@ async function executeCairoProgram(userContext, events, done) {
   const keyring = new Keyring({ type: "sr25519" });
   const user = keyring.addFromUri(`//${accountName}`);
 
+  // TODO: change this to a switch statement
   const cairoProgramId =
     programId === 0
       ? "0xd46a8b84ce2ec2be26482f551b619f5826d0d79cbb7b4685945c13badbb7383d"
