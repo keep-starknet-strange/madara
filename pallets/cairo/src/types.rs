@@ -44,9 +44,10 @@ pub struct CairoAssemblyProgram<T: Config> {
 	/// from the generation of the Cairo assembly program identifier.
 	/// If at some point that it does not make sense, we can remove the `Option` and make this
 	/// field mandatory.
-	pub id: Option<CairoAssemblyProgamId>,
+	pub id: CairoAssemblyProgamId,
 	/// The identifier of the Sierra program that was compiled to the Cairo assembly program.
-	pub sierra_program_id: SierraProgramId,
+	/// None if the Cairo assembly program was not compiled from a Sierra program.
+	pub sierra_program_id: Option<SierraProgramId>,
 	/// The code of the Cairo assembly program.
 	pub code: BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
 }

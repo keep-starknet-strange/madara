@@ -757,7 +757,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.6",
  "sha3",
- "starknet-crypto",
+ "starknet-crypto 0.2.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
  "thiserror",
  "thiserror-no-std",
 ]
@@ -3216,6 +3216,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "kp-starknet"
+version = "0.1.0-dev"
+dependencies = [
+ "frame-support",
+ "hex",
+ "sp-core",
+ "sp-std",
+ "starknet-crypto 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-ff 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+]
+
+[[package]]
 name = "kvdb"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4580,6 +4592,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "kp-starknet",
  "log",
  "pallet-randomness-collective-flip",
  "parity-scale-codec",
@@ -4587,6 +4600,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
+ "starknet-crypto 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
 ]
 
 [[package]]
@@ -7780,6 +7794,27 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "starknet-crypto"
 version = "0.2.0"
+source = "git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal#ff3906f61d7bba86b712aa76c984ad3306c252d9"
+dependencies = [
+ "crypto-bigint",
+ "hashbrown 0.13.2",
+ "hex",
+ "hmac 0.12.1",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "rfc6979",
+ "sha2 0.10.6",
+ "starknet-crypto-codegen 0.1.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-curve 0.1.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-ff 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+ "thiserror-no-std",
+ "zeroize",
+]
+
+[[package]]
+name = "starknet-crypto"
+version = "0.2.0"
 source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
 dependencies = [
  "crypto-bigint",
@@ -7791,9 +7826,9 @@ dependencies = [
  "num-traits",
  "rfc6979",
  "sha2 0.10.6",
- "starknet-crypto-codegen",
- "starknet-curve",
- "starknet-ff",
+ "starknet-crypto-codegen 0.1.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-curve 0.1.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-ff 0.2.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
  "thiserror-no-std",
  "zeroize",
 ]
@@ -7801,11 +7836,29 @@ dependencies = [
 [[package]]
 name = "starknet-crypto-codegen"
 version = "0.1.0"
+source = "git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal#ff3906f61d7bba86b712aa76c984ad3306c252d9"
+dependencies = [
+ "starknet-curve 0.1.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-ff 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
+ "syn",
+]
+
+[[package]]
+name = "starknet-crypto-codegen"
+version = "0.1.0"
 source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
 dependencies = [
- "starknet-curve",
- "starknet-ff",
+ "starknet-curve 0.1.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
+ "starknet-ff 0.2.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
  "syn",
+]
+
+[[package]]
+name = "starknet-curve"
+version = "0.1.0"
+source = "git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal#ff3906f61d7bba86b712aa76c984ad3306c252d9"
+dependencies = [
+ "starknet-ff 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
 ]
 
 [[package]]
@@ -7813,7 +7866,20 @@ name = "starknet-curve"
 version = "0.1.0"
 source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
 dependencies = [
- "starknet-ff",
+ "starknet-ff 0.2.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
+]
+
+[[package]]
+name = "starknet-ff"
+version = "0.2.0"
+source = "git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal#ff3906f61d7bba86b712aa76c984ad3306c252d9"
+dependencies = [
+ "ark-ff",
+ "crypto-bigint",
+ "getrandom 0.2.8",
+ "hex",
+ "serde",
+ "thiserror-no-std",
 ]
 
 [[package]]

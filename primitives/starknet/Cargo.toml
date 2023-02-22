@@ -1,0 +1,32 @@
+[package]
+name = "kp-starknet"
+version = "0.1.0-dev"
+license = "MIT"
+description = "Starknet primitives for Substrate."
+authors = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+starknet-crypto = {workspace = true,  default-features = false, features = ["alloc"]}
+starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
+hex = { workspace = true, default-features = false, features = ["alloc"] }
+# Substrate
+frame-support = { workspace = true }
+sp-core = { workspace = true }
+sp-std = { workspace = true }
+
+[features]
+default = ["std"]
+std = [
+	# Substrate
+	"frame-support/std",
+	"sp-core/std",
+	"sp-std/std",
+    "starknet-crypto/std",
+    "starknet-ff/std",
+    "hex/std",
+]
