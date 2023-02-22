@@ -52,7 +52,7 @@ jobs:
         run: cd benchmarking && yarn
 
       - name: Execute smoke tests
-        run: yarn run test-storage
+        run: yarn run full-test
 
       - name: Stop Substrate node
         run: ../scripts/stop_node.sh
