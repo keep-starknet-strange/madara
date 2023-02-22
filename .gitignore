@@ -17,3 +17,8 @@
 
 # Javascript dependencies
 **/node_modules/
+
+# Benchmarking artifacts
+benchmarking/report.json
+benchmarking/report-storage.json
+benchmarking/report.json.html

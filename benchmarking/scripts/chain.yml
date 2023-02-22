@@ -1,0 +1,26 @@
+# Copyright 2021-2022 Dwellir AB authors & contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config:
+  environments:
+    local:
+      target: "ws://127.0.0.1:9944"
+      phases:
+        - duration: 10
+          arrivalCount: 99
+          name: Engine test phase
+  engines:
+   substrate: {}
+scenarios:
+  - engine: substrate
+    name: headers_blocks
+    flow:
+      - connect: "{{ target }}"
+      - call:
+          method: api.rpc.chain.getHeader()
+          saveTo: header
+      - log: "Current hash: {{ header.hash }}"
+      - call:
+          method: api.rpc.chain.getBlock({{ header.hash }})
+          saveTo: block
+      - log: "Current Block Number: {{ block.block.header.number }}"
