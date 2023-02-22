@@ -286,7 +286,7 @@ impl pallet_cairo::Config for Runtime {
 	type MaxCairoAssemblyProgramLength = ConstU32<1073741824>;
 	/// Define the maximum length of a Sierra program, denominated in number of bytes.
 	type MaxSierraProgramLength = ConstU32<1073741824>;
-	type SystemHash = pallet_cairo::hash::PoseidonHash;
+	type SystemHash = pallet_cairo::hash::PedersenHash;
 }
 
 /// Configure the Starknet pallet in pallets/starknet.
