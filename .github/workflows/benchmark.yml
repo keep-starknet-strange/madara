@@ -39,6 +39,9 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
 
+      - name: Enable scripts run
+        run: chmod +x ./scripts/start-node.sh ./scripts/wait-for-node.sh ./scripts/stop-node.sh
+
       - name: Start Substrate node
         run: ./scripts/start_node.sh
 
