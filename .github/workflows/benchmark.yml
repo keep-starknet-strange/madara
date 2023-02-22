@@ -1,8 +1,6 @@
 name: Benchmark
 
-# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [main]
   pull_request:
@@ -11,15 +9,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   benchmark:
-    # The type of runner that the job will run on
     runs-on: ubuntu-22.04
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: Install Node.js
@@ -27,8 +20,13 @@ jobs:
         with:
           node-version: '16.x'
 
+      - name: Install dependencies
+        working-directory: ./benchmarking
+        run: |
+          yarn install --frozen-lockfile
+
       - name: Set-Up
-        run: sudo apt install -y git clang curl libssl-dev llvm libudev-dev protobuf-compiler
+        run: sudo apt-get update && sudo apt-get install -y curl git clang libssl-dev llvm libudev-dev
 
       - name: Install Rustup
         run: |
@@ -40,20 +38,17 @@ jobs:
           rustup target add wasm32-unknown-unknown --toolchain nightly
 
       - name: Enable scripts run
-        run: chmod +x ./scripts/start-node.sh ./scripts/wait-for-node.sh ./scripts/stop-node.sh
+        run: chmod +x ./scripts/*.sh
 
       - name: Start Substrate node
-        run: ./scripts/start_node.sh
+        run: ./scripts/start_node.sh &
 
       - name: Wait for Substrate node to be ready
         run: ./scripts/wait_for_node.sh
 
-      - name: Install dependencies
-        run: cd benchmarking && yarn
-
       - name: Execute smoke tests
+        working-directory: ./benchmarking
         run: yarn run full-test
 
       - name: Stop Substrate node
-        run: ../scripts/stop_node.sh
-
+        run: ./scripts/stop_node.sh
