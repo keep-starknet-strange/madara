@@ -41,7 +41,7 @@ jobs:
         run: chmod +x ./scripts/*.sh
 
       - name: Start Substrate node
-        run: ./scripts/start_node.sh &
+        run: cargo run --release -- --dev &
 
       - name: Wait for Substrate node to be ready
         run: ./scripts/wait_for_node.sh
