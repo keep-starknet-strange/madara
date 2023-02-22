@@ -17,10 +17,10 @@ pub enum HashType {
 /// * `y`: The y coordinate
 /// ### Returns
 /// The hash of the two field elements.
-pub fn hash(hash_type: HashType, x: &FieldElement, y: &FieldElement) -> FieldElement {
+pub fn hash(hash_type: HashType, data: &[u8]) -> [u8; 32] {
 	match hash_type {
-		HashType::Poseidon => poseidon::hash(x, y),
-		HashType::Pedersen => pedersen::hash(x, y),
+		HashType::Poseidon => poseidon::hash(data),
+		HashType::Pedersen => pedersen::hash(data),
 	}
 }
 
@@ -31,12 +31,12 @@ pub fn hash(hash_type: HashType, x: &FieldElement, y: &FieldElement) -> FieldEle
 /// * `y`: The y coordinate
 /// ### Returns
 /// The hash of the two field elements.
-pub fn hash_bytes(hash_type: HashType, x: &[u8], y: &[u8]) -> Result<[u8; 32], FromByteSliceError> {
+pub fn hash_field(hash_type: HashType, x: &FieldElement, y: &FieldElement) -> Result<FieldElement, FromByteSliceError> {
 	// Convert the byte arrays to field elements.
-	let x = FieldElement::from_byte_slice_be(x)?;
-	let y = FieldElement::from_byte_slice_be(y)?;
+	let x = FieldElement::to_bytes_be(x);
+	let y = FieldElement::to_bytes_be(y);
 	// Hash the field elements.
-	let hash = hash(hash_type, &x, &y);
+	let hash = hash(hash_type, [x, y].concat().as_slice());
 	// Return the hash as a byte array.
-	Ok(hash.to_bytes_be())
+	FieldElement::from_byte_slice_be(&hash)
 }

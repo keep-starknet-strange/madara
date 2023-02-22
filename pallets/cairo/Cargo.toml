@@ -13,6 +13,7 @@ repository = "https://github.com/keep-starknet-strange/kaioshin"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+kp-starknet = {workspace = true, default-features = false}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
 	"derive",
 ] }

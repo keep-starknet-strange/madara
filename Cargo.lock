@@ -3221,6 +3221,7 @@ version = "0.1.0-dev"
 dependencies = [
  "frame-support",
  "hex",
+ "poseidon",
  "sp-core",
  "sp-std",
  "starknet-crypto 0.2.0 (git+https://github.com/abdelhamidbakhta/starknet-rs?branch=feature/manual-no-std-bigdecimal)",
@@ -4515,6 +4516,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "kp-starknet",
  "lazy_static",
  "log",
  "pallet-randomness-collective-flip",
@@ -4524,7 +4526,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "starknet-crypto",
+ "starknet-crypto 0.2.0 (git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal)",
 ]
 
 [[package]]
@@ -7800,7 +7802,7 @@ dependencies = [
  "hashbrown 0.13.2",
  "hex",
  "hmac 0.12.1",
- "num-bigint",
+ "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
  "rfc6979",

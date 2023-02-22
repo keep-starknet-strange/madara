@@ -329,7 +329,7 @@ pub mod pallet {
 			sierra_code: &BoundedVec<u8, T::MaxSierraProgramLength>,
 		) -> Result<SierraProgramId, DispatchError> {
 			// Compute the hash and return as id.
-			let _hash = T::SystemHash::hash(&encoded_payload);
+			let _hash = T::SystemHash::hash(&sierra_code);
 			Ok(_hash)
 		}
 
@@ -429,7 +429,7 @@ pub mod pallet {
 			cairo_assembly_code: &BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
 		) -> Result<CairoAssemblyProgamId, DispatchError> {
 			// Compute the hash and return as id.
-			let _hash = T::SystemHash::hash(&encoded_payload);
+			let _hash = T::SystemHash::hash(&cairo_assembly_code);
 			Ok(_hash)
 		}
 
