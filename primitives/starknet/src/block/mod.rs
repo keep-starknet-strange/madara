@@ -1,4 +1,8 @@
 //! StarkNet block primitives.
 
-/// The block header related functionality.
-pub mod header;
+/// Substrate extension for the StarkNet block header.
+pub mod substrate_extension;
+
+/// Wrapper block definition.
+/// See: `https://corepaper.org/substrate/wrapper/`
+pub mod wrapper;
