@@ -63,6 +63,7 @@ jobs:
 
       - name: Save kaioshin binary
         run: |
+          popd &&
           mkdir -p build
           cp target/release/kaioshin build/kaioshin;
       - name: Upload binary
