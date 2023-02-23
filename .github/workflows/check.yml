@@ -36,6 +36,7 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
           cargo test --all
+          cargo build --release --all
 
   bench:
     # The type of runner that the job will run on
@@ -63,20 +64,20 @@ jobs:
 
       - name: Save kaioshin binary
         run: |
-          popd &&
           mkdir -p build
-          cp target/release/kaioshin build/kaioshin;
+          cp ./target/release/kaioshin ./build/kaioshin;
+
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
           name: kaioshin
           path: build
-      - name: Save runtime wasm
-        run: |
-          mkdir -p runtimes
-          cp target/release/wbuild/kaioshin-runtime/kaioshin_runtime.compact.compressed.wasm runtimes/;
-      - name: Upload runtimes
-        uses: actions/upload-artifact@v2
-        with:
-          name: runtimes
-          path: runtimes
+      # - name: Save runtime wasm
+      #   run: |
+      #     mkdir -p runtimes
+      #     cp target/release/wbuild/kaioshin-runtime/kaioshin_runtime.compact.compressed.wasm runtimes/;
+      # - name: Upload runtimes
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: runtimes
+      #     path: runtimes
