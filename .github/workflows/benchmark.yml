@@ -1,0 +1,51 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'
+
+      - name: Install dependencies
+        working-directory: ./benchmarking
+        run: yarn --no-progress --non-interactive --frozen-lockfile
+
+      - name: Set-Up
+        run: sudo apt-get update && sudo apt-get install -y curl git clang libssl-dev llvm libudev-dev
+
+      - name: Install Rustup
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source ~/.cargo/env
+          rustup default stable
+          rustup update nightly
+          rustup update stable
+          rustup target add wasm32-unknown-unknown --toolchain nightly
+
+      - name: Enable scripts run
+        run: chmod +x ./scripts/*.sh
+
+      - name: Run smoke tests
+        working-directory: ./benchmarking
+        run: yarn test:ci
+
+      - name: Archive test report
+        uses: actions/upload-artifact@v2
+        with:
+          name: artillery-test-report
+          working-directory: ./benchmarking
+          path: reports/*
