@@ -40,6 +40,10 @@
 <a href="#40" id="40">40</a>
 <a href="#41" id="41">41</a>
 <a href="#42" id="42">42</a>
+<a href="#43" id="43">43</a>
+<a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
 </pre><pre class="rust"><code><span class="kw">use </span>starknet_crypto::FieldElement;
 <span class="kw">use </span>starknet_ff::FromByteSliceError;
 
@@ -59,10 +63,10 @@
 /// * `y`: The y coordinate
 /// ### Returns
 /// The hash of the two field elements.
-</span><span class="kw">pub fn </span>hash(hash_type: HashType, x: <span class="kw-2">&amp;</span>FieldElement, y: <span class="kw-2">&amp;</span>FieldElement) -&gt; FieldElement {
+</span><span class="kw">pub fn </span>hash(hash_type: HashType, data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
 	<span class="kw">match </span>hash_type {
-		HashType::Poseidon =&gt; poseidon::hash(x, y),
-		HashType::Pedersen =&gt; pedersen::hash(x, y),
+		HashType::Poseidon =&gt; poseidon::hash(data),
+		HashType::Pedersen =&gt; pedersen::hash(data),
 	}
 }
 
@@ -73,14 +77,18 @@
 /// * `y`: The y coordinate
 /// ### Returns
 /// The hash of the two field elements.
-</span><span class="kw">pub fn </span>hash_bytes(hash_type: HashType, x: <span class="kw-2">&amp;</span>[u8], y: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], FromByteSliceError&gt; {
+</span><span class="kw">pub fn </span>hash_field(
+	hash_type: HashType,
+	x: <span class="kw-2">&amp;</span>FieldElement,
+	y: <span class="kw-2">&amp;</span>FieldElement,
+) -&gt; <span class="prelude-ty">Result</span>&lt;FieldElement, FromByteSliceError&gt; {
 	<span class="comment">// Convert the byte arrays to field elements.
-	</span><span class="kw">let </span>x = FieldElement::from_byte_slice_be(x)<span class="question-mark">?</span>;
-	<span class="kw">let </span>y = FieldElement::from_byte_slice_be(y)<span class="question-mark">?</span>;
+	</span><span class="kw">let </span>x = FieldElement::to_bytes_be(x);
+	<span class="kw">let </span>y = FieldElement::to_bytes_be(y);
 	<span class="comment">// Hash the field elements.
-	</span><span class="kw">let </span>hash = hash(hash_type, <span class="kw-2">&amp;</span>x, <span class="kw-2">&amp;</span>y);
+	</span><span class="kw">let </span>hash = hash(hash_type, [x, y].concat().as_slice());
 	<span class="comment">// Return the hash as a byte array.
-	</span><span class="prelude-val">Ok</span>(hash.to_bytes_be())
+	</span>FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>hash)
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
