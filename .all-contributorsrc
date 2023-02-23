@@ -27,6 +27,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "EvolveArt",
+      "name": "0xevolve",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12902455?v=4",
+      "profile": "https://github.com/EvolveArt",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
