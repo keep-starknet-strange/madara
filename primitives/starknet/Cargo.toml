@@ -11,9 +11,15 @@ repository = { workspace = true }
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-starknet-crypto = {workspace = true,  default-features = false, features = ["alloc"]}
-starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
-poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = ["alloc"]}
+starknet-crypto = { workspace = true, default-features = false, features = [
+	"alloc",
+] }
+starknet-ff = { workspace = true, default-features = false, features = [
+	"alloc",
+] }
+poseidon_hash = { workspace = true, default-features = false, features = [
+	"alloc",
+] }
 hex = { workspace = true, default-features = false, features = ["alloc"] }
 # Substrate
 frame-support = { workspace = true }
@@ -27,7 +33,7 @@ std = [
 	"frame-support/std",
 	"sp-core/std",
 	"sp-std/std",
-    "starknet-crypto/std",
-    "starknet-ff/std",
-    "hex/std",
+	"starknet-crypto/std",
+	"starknet-ff/std",
+	"hex/std",
 ]

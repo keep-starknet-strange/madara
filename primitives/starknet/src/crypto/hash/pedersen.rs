@@ -1,4 +1,4 @@
-use starknet_crypto::{FieldElement, pedersen_hash};
+use starknet_crypto::{pedersen_hash, FieldElement};
 
 /// The Pedersen hash function.
 /// ### Arguments

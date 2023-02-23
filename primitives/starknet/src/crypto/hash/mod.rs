@@ -31,7 +31,11 @@ pub fn hash(hash_type: HashType, data: &[u8]) -> [u8; 32] {
 /// * `y`: The y coordinate
 /// ### Returns
 /// The hash of the two field elements.
-pub fn hash_field(hash_type: HashType, x: &FieldElement, y: &FieldElement) -> Result<FieldElement, FromByteSliceError> {
+pub fn hash_field(
+	hash_type: HashType,
+	x: &FieldElement,
+	y: &FieldElement,
+) -> Result<FieldElement, FromByteSliceError> {
 	// Convert the byte arrays to field elements.
 	let x = FieldElement::to_bytes_be(x);
 	let y = FieldElement::to_bytes_be(y);

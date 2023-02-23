@@ -15,7 +15,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 # Kaioshin primitives
 kp-starknet = {workspace = true, default-features = false}
-starknet-crypto = {workspace = true, default-features = false,  features = ["alloc"]}
+starknet-crypto = {workspace = true, git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false,  features = ["alloc"]}
 #starknet-crypto = { git = "https://github.com/abdelhamidbakhta/starknet-rs", branch = "feature/manual-no-std-bigdecimal", default-features = false, features = ["alloc"] }
 
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
