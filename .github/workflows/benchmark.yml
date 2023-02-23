@@ -41,6 +41,9 @@ jobs:
       - name: Enable scripts run
         run: chmod +x ./scripts/*.sh
 
+      - name: Build node
+        run: cargo build --release
+
       - name: Run smoke tests
         working-directory: ./benchmarking
         run: yarn test:ci
