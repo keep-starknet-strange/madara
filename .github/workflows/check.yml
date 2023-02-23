@@ -60,3 +60,22 @@ jobs:
         run: >
           pushd crates/node &&
           cargo check --features=runtime-benchmarks --release
+
+      - name: Save kaioshin binary
+        run: |
+          mkdir -p build
+          cp target/release/kaioshin build/kaioshin;
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: kaioshin
+          path: build
+      - name: Save runtime wasm
+        run: |
+          mkdir -p runtimes
+          cp target/release/wbuild/kaioshin-runtime/kaioshin_runtime.compact.compressed.wasm runtimes/;
+      - name: Upload runtimes
+        uses: actions/upload-artifact@v2
+        with:
+          name: runtimes
+          path: runtimes

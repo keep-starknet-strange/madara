@@ -8,7 +8,7 @@ config:
       target: "ws://127.0.0.1:9944"
       phases:
         - duration: 4
-          arrivalCount: 5 # Number of users
+          arrivalCount: 3 # Number of users
           name: Users Connection
         - pause: 60
           name: Performance Testing
