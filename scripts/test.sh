@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd benchmarking && yarn test:wait
+yarn test:wait
 
 if [ $? -eq 0 ]
 then
