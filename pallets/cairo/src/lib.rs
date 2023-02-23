@@ -40,6 +40,7 @@ pub mod pallet {
 			cairo_vm_executor::{CairoVmExecutor, CAIRO_VM_EXECUTOR},
 			CairoExecutor,
 		},
+		hash::Hasher,
 		types::{
 			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
 			CairoAssemblyProgramOutput, SierraProgram, SierraProgramId,
@@ -65,6 +66,9 @@ pub mod pallet {
 		/// The maximum length of a Cairo assembly program.
 		/// This is used to bound the size of the Cairo assembly program code.
 		type MaxCairoAssemblyProgramLength: Get<u32>;
+
+		/// The hashing function to use.
+		type SystemHash: Hasher;
 	}
 
 	/// The Cairo Execution Engine pallet storage items.
@@ -325,8 +329,8 @@ pub mod pallet {
 			sierra_code: &BoundedVec<u8, T::MaxSierraProgramLength>,
 		) -> Result<SierraProgramId, DispatchError> {
 			// Compute the hash and return as id.
-			// TODO: use poseidon hash when it is available.
-			Ok(frame_support::Hashable::blake2_256(&sierra_code.encode()))
+			let _hash = T::SystemHash::hash(&sierra_code);
+			Ok(_hash)
 		}
 
 		/// Validate the Sierra program code.
@@ -425,8 +429,8 @@ pub mod pallet {
 			cairo_assembly_code: &BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
 		) -> Result<CairoAssemblyProgamId, DispatchError> {
 			// Compute the hash and return as id.
-			// TODO: use poseidon hash when it is available.
-			Ok(frame_support::Hashable::blake2_256(&cairo_assembly_code.encode()))
+			let _hash = T::SystemHash::hash(&cairo_assembly_code);
+			Ok(_hash)
 		}
 
 		/// Execute a hardcoded Cairo assembly program. (testing purposes only)
