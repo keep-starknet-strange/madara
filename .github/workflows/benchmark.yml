@@ -25,7 +25,7 @@ jobs:
         run: yarn --no-progress --non-interactive --frozen-lockfile
 
       - name: Set-Up
-        run: sudo apt-get update && sudo apt-get install -y curl git clang libssl-dev llvm libudev-dev
+        run: sudo apt-get update && sudo apt-get install -y curl git clang libssl-dev llvm libudev-dev protobuf-compiler
 
       - name: Install Rustup
         run: |
