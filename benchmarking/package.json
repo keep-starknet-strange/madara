@@ -11,7 +11,7 @@
     "report": "artillery report --output reports/report reports/report-storage.json",
     "metrics": "node scripts/metrics.js",
     "test": "yarn test:storage && yarn metrics",
-    "chain:dev": "../scripts/docker_run.sh",
+    "chain:dev": "../scripts/run_node.sh",
     "test:wait": "wait-on tcp:9944 && yarn test",
 		"test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
   },
