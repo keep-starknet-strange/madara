@@ -5,12 +5,15 @@
   "description": "Benchmarking of Kaioshin.",
   "main": "index.js",
   "scripts": {
-    "test-chain": "artillery run -e local ./scripts/chain.yml",
-    "test-execution": "artillery run -e local ./scripts/cairo-execution.yml --output report.json",
-    "test-storage": "artillery run -e local ./scripts/cairo-storage.yml --output report-storage.json",
-    "report": "artillery report report.json",
+    "test:chain": "artillery run -e local ./scripts/chain.yml",
+    "test:execution": "artillery run -e local ./scripts/cairo-execution.yml --output reports/report.json",
+    "test:storage": "artillery run -e local ./scripts/cairo-storage.yml --output reports/report-storage.json",
+    "report": "artillery report --output reports/report reports/report-storage.json",
     "metrics": "node scripts/metrics.js",
-    "full-test": "yarn test-storage && yarn metrics"
+    "test": "yarn test:storage && yarn metrics",
+    "chain:dev": "../scripts/devnet.sh",
+    "test:wait": "wait-on tcp:9944 && yarn test",
+		"test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
   },
   "keywords": [
     "kaioshin",
@@ -19,6 +22,8 @@
   "devDependencies": {
     "@polkadot/keyring": "^10.4.2",
     "artillery": "^2.0.0-30",
-    "artillery-engine-substrate": "^1.0.6-2"
+    "artillery-engine-substrate": "^1.0.6-2",
+    "concurrently": "^7.6.0",
+    "wait-on": "^6.0.1"
   }
 }
