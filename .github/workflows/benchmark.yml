@@ -36,14 +36,10 @@ jobs:
           rustup update stable
           rustup target add wasm32-unknown-unknown --toolchain nightly
 
+      - uses: Swatinem/rust-cache@v2
+
       - name: Enable scripts run
         run: chmod +x ./scripts/*.sh
-
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: kaioshin # name of the artifact to download
-          path: ./target/release # path to extract the artifact
 
       - name: Run smoke tests
         working-directory: ./benchmarking
