@@ -18,3 +18,6 @@ pub use sp_std;
 pub mod block;
 /// Starknet crypto related functionality.
 pub mod crypto;
+
+/// Serializations and deserializations.
+pub mod starknet_serde;
