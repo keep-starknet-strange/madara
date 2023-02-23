@@ -16,8 +16,17 @@ use sp_runtime::{
 	},
 };
 use sp_std::fmt::Debug;
+use starknet_crypto::FieldElement;
 
-/// Abstraction over a block header for a substrate chain.
+/// Starknet block header.
+/// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/header/`.
+/// # TODO
+/// - add all relevant Starknet block header fields.
+/// - add serialization/deserialization for all relevant fields.
+/// - add tests.
+/// - add documentation.
+/// - think about how to abstract over some types and avoid strong coupling with the
+///  `starknet_crypto` crate.
 #[derive(Encode, Decode, PartialEq, Eq, Clone, sp_core::RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
@@ -38,40 +47,8 @@ pub struct Header<Number: Copy + Into<U256> + TryFrom<U256>, Hash: HashT> {
 	pub extrinsics_root: Hash::Output,
 	/// A chain-specific digest of data useful for light clients or referencing auxiliary data.
 	pub digest: Digest,
-}
-
-/// Serializes a number as a U256.
-/// # Arguments
-/// * `val` - The number to serialize.
-/// * `s` - The serializer.
-/// # Returns
-/// The serialized number.
-#[cfg(feature = "std")]
-pub fn serialize_number<S, T: Copy + Into<U256> + TryFrom<U256>>(
-	val: &T,
-	s: S,
-) -> Result<S::Ok, S::Error>
-where
-	S: serde::Serializer,
-{
-	let u256: U256 = (*val).into();
-	serde::Serialize::serialize(&u256, s)
-}
-
-/// Deserializes a number from the given deserializer.
-///
-/// This function is only available when the `std` feature is enabled.
-/// # Arguments
-/// * `d` - The deserializer.
-/// # Returns
-/// The deserialized number.
-#[cfg(feature = "std")]
-pub fn deserialize_number<'a, D, T: Copy + Into<U256> + TryFrom<U256>>(d: D) -> Result<T, D::Error>
-where
-	D: serde::Deserializer<'a>,
-{
-	let u256: U256 = serde::Deserialize::deserialize(d)?;
-	TryFrom::try_from(u256).map_err(|_| serde::de::Error::custom("Try from failed"))
+	/// The address of the sequencer.
+	pub sequencer_address: U256,
 }
 
 impl<Number, Hash> traits::Header for Header<Number, Hash>
@@ -136,11 +113,10 @@ where
 	}
 
 	fn digest_mut(&mut self) -> &mut Digest {
-		#[cfg(feature = "std")]
-		log::debug!(target: "header", "Retrieving mutable reference to digest");
 		&mut self.digest
 	}
 
+	#[must_use]
 	fn new(
 		number: Self::Number,
 		extrinsics_root: Self::Hash,
@@ -148,7 +124,16 @@ where
 		parent_hash: Self::Hash,
 		digest: Digest,
 	) -> Self {
-		Self { number, extrinsics_root, state_root, parent_hash, digest }
+		Self {
+			number,
+			extrinsics_root,
+			state_root,
+			parent_hash,
+			digest,
+			// For now, we hardcode the sequencer address to be 1.
+			// TODO: change this to be the actual sequencer address.
+			sequencer_address: U256::from(FieldElement::ONE.to_bytes_be()),
+		}
 	}
 }
 
@@ -171,4 +156,38 @@ where
 	pub fn hash(&self) -> Hash::Output {
 		Hash::hash_of(self)
 	}
+}
+
+/// Serializes a number as a U256.
+/// # Arguments
+/// * `val` - The number to serialize.
+/// * `s` - The serializer.
+/// # Returns
+/// The serialized number.
+#[cfg(feature = "std")]
+pub fn serialize_number<S, T: Copy + Into<U256> + TryFrom<U256>>(
+	val: &T,
+	s: S,
+) -> Result<S::Ok, S::Error>
+where
+	S: serde::Serializer,
+{
+	let u256: U256 = (*val).into();
+	serde::Serialize::serialize(&u256, s)
+}
+
+/// Deserializes a number from the given deserializer.
+///
+/// This function is only available when the `std` feature is enabled.
+/// # Arguments
+/// * `d` - The deserializer.
+/// # Returns
+/// The deserialized number.
+#[cfg(feature = "std")]
+pub fn deserialize_number<'a, D, T: Copy + Into<U256> + TryFrom<U256>>(d: D) -> Result<T, D::Error>
+where
+	D: serde::Deserializer<'a>,
+{
+	let u256: U256 = serde::Deserialize::deserialize(d)?;
+	TryFrom::try_from(u256).map_err(|_| serde::de::Error::custom("Try from failed"))
 }
