@@ -1,0 +1,43 @@
+# Copyright 2021-2022 Dwellir AB authors & contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config:
+  processor: "./functions.js"
+  environments:
+    local:
+      target: "ws://127.0.0.1:9944"
+      phases:
+        - duration: 4
+          arrivalCount: 5 # Number of users
+          name: Users Connection
+        - pause: 60
+          name: Performance Testing
+  variables:
+    programs: {}
+    programId:
+      - 0
+    # - 1
+    accountName:
+      - "Alice"
+      - "Bob"
+      - "Charlie"
+      - "Dave"
+      - "Eve"
+      - "Ferdie"
+      - "Alice//stash"
+      - "Bob//stash"
+      - "Charlie//stash"
+      - "Dave//stash"
+      - "Eve//stash"
+      - "Ferdie//stash"
+  engines:
+   substrate: {}
+scenarios:
+  - engine: substrate
+    name: cairo_program
+    flow:
+      - loop:
+        - function: "executeCairoProgram"
+        - log: "Executed cairo program {{ programId }} by {{ accountName }}"
+        count: 5000
+
