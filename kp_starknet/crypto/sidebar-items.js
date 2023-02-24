@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["hash",""]]};
+window.SIDEBAR_ITEMS = {"mod":[["hash","This module contains the hash functions used in the StarkNet protocol."]]};

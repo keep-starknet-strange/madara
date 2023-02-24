@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["ensure_starknet_transaction","Ensure that the origin is a Starknet transaction. See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`"]],"struct":[["EnsureStarknetTransaction","Ensure that the origin is a Starknet transaction. See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`"]]};

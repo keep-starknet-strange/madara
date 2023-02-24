@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Transaction","Representation of a Starknet transaction."]]};

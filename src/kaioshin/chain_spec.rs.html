@@ -154,6 +154,8 @@
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
 <a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
 </pre><pre class="rust"><code><span class="kw">use </span>kaioshin_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 	SystemConfig, WASM_BINARY,
@@ -308,6 +310,8 @@
 			</span>key: <span class="prelude-val">Some</span>(root_key),
 		},
 		transaction_payment: Default::default(),
+		<span class="doccomment">/// Starknet Genesis configuration.
+		</span>starknet: kaioshin_runtime::pallet_starknet::GenesisConfig {},
 	}
 }
 </code></pre></div>

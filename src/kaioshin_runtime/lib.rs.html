@@ -613,6 +613,11 @@
 <a href="#613" id="613">613</a>
 <a href="#614" id="614">614</a>
 <a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
 </pre><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 </span><span class="comment">// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 </span><span class="attr">#![recursion_limit = <span class="string">&quot;256&quot;</span>]
@@ -621,7 +626,10 @@
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/wasm_binary.rs&quot;</span>));
 
-<span class="kw">use </span>pallet_grandpa::{
+<span class="comment">// Kaioshin primitives.
+// TODO: import the primitives.
+
+</span><span class="kw">use </span>pallet_grandpa::{
 	fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList,
 };
 <span class="kw">use </span>sp_api::impl_runtime_apis;
@@ -908,6 +916,8 @@
 </span><span class="kw">impl </span>pallet_starknet::Config <span class="kw">for </span>Runtime {
 	<span class="kw">type </span>RuntimeEvent = RuntimeEvent;
 	<span class="kw">type </span>Randomness = RandomnessCollectiveFlip;
+	<span class="kw">type </span>StateRoot = pallet_starknet::state_root::IntermediateStateRoot&lt;<span class="self">Self</span>&gt;;
+	<span class="kw">type </span>SystemHash = pallet_starknet::hash::PedersenHash;
 }
 
 <span class="comment">// Create the runtime by composing the FRAME pallets that were previously configured.
