@@ -28,3 +28,6 @@ pub mod storage;
 
 /// Serializations and deserializations.
 pub mod starknet_serde;
+
+/// Starknet primitives traits.
+pub mod traits;

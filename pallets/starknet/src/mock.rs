@@ -1,7 +1,7 @@
 use crate as pallet_starknet;
 use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
-use sp_core::H256;
+use sp_core::{ConstU32, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -55,6 +55,8 @@ impl system::Config for Test {
 impl pallet_starknet::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
+	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
+	type SystemHash = pallet_starknet::hash::PedersenHash;
 }
 
 // Build genesis storage according to the mock runtime.
