@@ -14,8 +14,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Kaioshin primitives
-kp-starknet = {workspace = true, default-features = false}
-starknet-crypto = {workspace = true, default-features = false,  features = ["alloc"]}
+kp-starknet = { workspace = true, default-features = false }
+starknet-crypto = { workspace = true, default-features = false, features = [
+  "alloc",
+] }
 
 # Substrate frame
 frame-support = { workspace = true }
@@ -38,22 +40,21 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-log = {workspace = true}
+log = { workspace = true }
 lazy_static = { workspace = true }
 
 [dev-dependencies]
 
 
-
 [features]
 default = ["std"]
 std = [
-	# Substrate
-	"frame-support/std",
-	"frame-system/std",
-	"sp-io/std",
-	"sp-runtime/std",
-	"sp-std/std",
+  # Substrate
+  "frame-support/std",
+  "frame-system/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
   "frame-benchmarking?/std",
   "scale-info/std",
   # Kaioshin
