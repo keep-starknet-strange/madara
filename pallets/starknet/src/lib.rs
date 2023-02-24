@@ -43,6 +43,7 @@ pub mod pallet {
 		transaction::Transaction,
 	};
 	use sp_core::{H256, U256};
+	use sp_runtime::traits::UniqueSaturatedInto;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -65,8 +66,15 @@ pub mod pallet {
 	/// * Implement the hooks.
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		/// The block is being finalized. Implement to have something happen.
-		fn on_finalize(_n: T::BlockNumber) {}
+		/// The block is being finalized.
+		fn on_finalize(_n: T::BlockNumber) {
+			// Create a new Starknet block and store it.
+			<Pallet<T>>::store_block(U256::from(
+				UniqueSaturatedInto::<u128>::unique_saturated_into(
+					frame_system::Pallet::<T>::block_number(),
+				),
+			));
+		}
 
 		/// The block is being initialized. Implement to have something happen.
 		fn on_initialize(_: T::BlockNumber) -> Weight {
@@ -157,7 +165,7 @@ pub mod pallet {
 		fn store_block(block_number: U256) {
 			// TODO: Use actual values.
 			let sequencer_address = U256::zero();
-			let block = Block::new(Header::new(sequencer_address));
+			let block = Block::new(Header::new(block_number, sequencer_address));
 			// Save the current block.
 			CurrentBlock::<T>::put(block.clone());
 			// Save the block number <> hash mapping.
