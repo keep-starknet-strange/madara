@@ -1,14 +1,22 @@
+// Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 
-/// Cairo Execution Engine pallet.
+/// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
+use sp_core::ConstU32;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
+
+/// Transaction validation logic.
+pub mod transaction_validation;
+
+/// State root logic.
+pub mod state_root;
 
 #[cfg(test)]
 mod mock;
@@ -20,12 +28,17 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+/// Make this configurable.
+type MaxTransactionsPendingBlock = ConstU32<1073741824>;
+
+pub use self::pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
-
+	use super::*;
 	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
-	use kp_starknet::crypto::hash;
+	use kp_starknet::{crypto::hash, transaction::Transaction};
+	use sp_core::U256;
 	use starknet_crypto::FieldElement;
 
 	#[pallet::pallet]
@@ -39,10 +52,37 @@ pub mod pallet {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The type of Randomness we want to specify for this pallet.
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
+		/// How Starknet state root is calculated.
+		type StateRoot: Get<U256>;
+	}
+
+	/// The Starknet pallet hooks.
+	/// HOOKS
+	/// # TODO
+	/// * Implement the hooks.
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// The block is being finalized. Implement to have something happen.
+		fn on_finalize(_n: T::BlockNumber) {}
+
+		/// The block is being initialized. Implement to have something happen.
+		fn on_initialize(_: T::BlockNumber) -> Weight {
+			Weight::zero()
+		}
+
+		/// Perform a module upgrade.
+		fn on_runtime_upgrade() -> Weight {
+			Weight::zero()
+		}
 	}
 
 	/// The Starknet pallet storage items.
 	/// STORAGE
+	/// Current building block's transactions.
+	#[pallet::storage]
+	#[pallet::getter(fn pending)]
+	pub(super) type Pending<T: Config> =
+		StorageValue<_, BoundedVec<Transaction, MaxTransactionsPendingBlock>, ValueQuery>;
 
 	/// The Starknet pallet events.
 	/// EVENTS

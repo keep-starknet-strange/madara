@@ -17,34 +17,51 @@ targets = ["x86_64-unknown-linux-gnu"]
 kp-starknet = {workspace = true, default-features = false}
 starknet-crypto = {workspace = true, default-features = false,  features = ["alloc"]}
 
+# Substrate frame
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+
+# Substrate primitives
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+
+# Frame pallets
+pallet-randomness-collective-flip = { workspace = true }
+
+# Other third party dependencies
+ethereum-types = {workspace = true}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-log = "0.4.17"
+log = {workspace = true}
 
 [dev-dependencies]
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-pallet-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+
 
 
 [features]
 default = ["std"]
 std = [
-  "codec/std",
+	# Substrate
+	"frame-support/std",
+	"frame-system/std",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
   "frame-benchmarking?/std",
-  "frame-support/std",
-  "frame-system/std",
   "scale-info/std",
+  # Kaioshin
   "kp-starknet/std",
+  # Starknet
   "starknet-crypto/std",
+  # Other third party dependencies
+  "codec/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]
