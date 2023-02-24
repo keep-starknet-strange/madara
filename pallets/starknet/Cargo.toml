@@ -32,7 +32,6 @@ sp-runtime = { workspace = true }
 pallet-randomness-collective-flip = { workspace = true }
 
 # Other third party dependencies
-ethereum-types = {workspace = true}
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }

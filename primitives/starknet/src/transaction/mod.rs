@@ -1,6 +1,6 @@
 //! Starknet transaction related functionality.
 
-use ethereum_types::U256;
+use sp_core::U256;
 
 /// Representation of a Starknet transaction.
 #[derive(
