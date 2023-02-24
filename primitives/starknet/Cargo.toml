@@ -11,10 +11,19 @@ repository = { workspace = true }
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-# TODO: investigate why those dependencies cause again the
-# duplicate lang item in crate `std` issue.
+# Substrate
+frame-support = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+
+# Starknet
 starknet-crypto = {workspace = true,  default-features = false, features = ["alloc"]}
 starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
+
+# Other third party dependencies
+ethereum-types = {workspace = true}
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive", "max-encoded-len"] }
 either = { version = "1.5", default-features = false }
 hash256-std-hasher = { version = "0.15.2", default-features = false }
@@ -23,13 +32,7 @@ log = { version = "0.4.17", default-features = false }
 paste = "1.0"
 rand = { version = "0.8.5", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
-serde = { version = "1.0.136", features = ["derive"], optional = true}
-# Substrate
-frame-support = { workspace = true }
-sp-core = { workspace = true }
-sp-io = { workspace = true }
-sp-std = { workspace = true }
-sp-runtime = { workspace = true }
+serde = { version = "1.0.136", features = ["derive"], optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
@@ -47,8 +50,6 @@ std = [
 	"scale-info/std",
 	"serde",
 	# Starknet
-	# TODO: investigate why those dependencies cause again the
-	# duplicate lang item in crate `std` issue.
 	"starknet-crypto/std",
 	"starknet-ff/std",
 	# Substrate

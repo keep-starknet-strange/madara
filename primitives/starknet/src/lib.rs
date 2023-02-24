@@ -16,6 +16,10 @@ pub use sp_std;
 // Include modules.
 /// Starknet block related functionality.
 pub mod block;
+
+/// Starknet transaction related functionality.
+pub mod transaction;
+
 /// Starknet crypto related functionality.
 pub mod crypto;
 

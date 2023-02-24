@@ -296,6 +296,7 @@ impl pallet_cairo::Config for Runtime {
 impl pallet_starknet::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
+	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
