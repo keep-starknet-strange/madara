@@ -1,11 +1,11 @@
 [workspace]
 members = [
-    "node",
-    "runtime",
-     "pallets/cairo",
-      "pallets/starknet",
-      "primitives/starknet",
-      ]
+  "node",
+  "runtime",
+  "pallets/cairo",
+  "pallets/starknet",
+  "primitives/starknet",
+]
 [profile.release]
 panic = "unwind"
 
@@ -36,10 +36,12 @@ kp-starknet = { version = "0.1.0-dev", path = "primitives/starknet", default-fea
 # Starknet dependencies
 starknet-crypto = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
 starknet-ff = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
-poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = ["alloc"]}
+poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
+  "alloc",
+] }
 
 # Other third party dependencies
-lazy_static = {version = "1.4.0", default-features = false}
+lazy_static = { version = "1.4.0", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
@@ -47,4 +49,4 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 log = "0.4.17"
-hex = {version = "0.4.3", default-features = false}
+hex = { version = "0.4.3", default-features = false }

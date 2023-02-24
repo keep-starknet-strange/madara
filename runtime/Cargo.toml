@@ -57,9 +57,9 @@ frame-system-benchmarking = { default-features = false, git = "https://github.co
 # Kaioshin Local Dependencies
 # Kaioshin Pallets
 pallet-cairo = { default-features = false, path = "../pallets/cairo" }
-pallet-starknet = { default-features = false, path = "../pallets/starknet"}
+pallet-starknet = { default-features = false, path = "../pallets/starknet" }
 # Kaioshin Primitives
-kp-starknet = {workspace = true, default-features = false}
+kp-starknet = { workspace = true, default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
