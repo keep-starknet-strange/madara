@@ -1,3 +1,4 @@
+//! Poseidon hash module.
 use poseidon_hash::{
 	convert::{felts_from_u8s, u8s_from_felts},
 	hash_sw8,

@@ -2,8 +2,8 @@
 use starknet_crypto::FieldElement;
 use starknet_ff::FromByteSliceError;
 
-mod pedersen;
-mod poseidon;
+pub mod pedersen;
+pub mod poseidon;
 
 /// The type of hash function used in the StarkNet protocol.
 pub enum HashType {

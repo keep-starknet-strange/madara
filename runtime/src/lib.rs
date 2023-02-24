@@ -297,6 +297,7 @@ impl pallet_starknet::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Randomness = RandomnessCollectiveFlip;
 	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
+	type SystemHash = pallet_starknet::hash::PedersenHash;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

@@ -18,6 +18,9 @@ pub mod transaction_validation;
 /// State root logic.
 pub mod state_root;
 
+/// Hashing logic.
+pub mod hash;
+
 #[cfg(test)]
 mod mock;
 
@@ -37,6 +40,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
+	use hash::Hasher;
 	use kp_starknet::{
 		block::wrapper::{block::Block, header::Header},
 		storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA},
@@ -58,6 +62,8 @@ pub mod pallet {
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
 		/// How Starknet state root is calculated.
 		type StateRoot: Get<U256>;
+		/// The hashing function to use.
+		type SystemHash: Hasher;
 	}
 
 	/// The Starknet pallet hooks.
