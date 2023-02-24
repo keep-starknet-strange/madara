@@ -1,4 +1,5 @@
 const { ApiPromise, WsProvider } = require("@polkadot/api");
+const fs = require("fs");
 
 async function main() {
   const wsProvider = new WsProvider("ws://localhost:9944");
@@ -16,6 +17,12 @@ async function main() {
   }
 
   const avgExtrinsicsPerBlock = totalExtrinsics / 10;
+
+  // Save avgExtrinsicsPerBlock to file reports/metrics.json
+  fs.writeFileSync(
+    "reports/metrics.json",
+    JSON.stringify({ avgExtrinsicsPerBlock })
+  );
 
   console.log(
     `Average extrinsics per block in the last 10 blocks: ${avgExtrinsicsPerBlock}`
