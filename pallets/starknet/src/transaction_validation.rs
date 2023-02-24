@@ -40,6 +40,6 @@ impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn successful_origin() -> O {
-		O::from(RawOrigin::StarknetTransaction(Default::default()))
+		O::from(RawOrigin::StarknetTransaction)
 	}
 }
