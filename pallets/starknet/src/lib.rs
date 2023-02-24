@@ -144,6 +144,11 @@ pub mod pallet {
 
 	/// The Starknet pallet internal functions.
 	impl<T: Config> Pallet<T> {
+		/// Get current block hash
+		pub fn current_block_hash() -> Option<H256> {
+			Self::current_block().map(|block| block.header.hash())
+		}
+
 		/// Store a Starknet block in the blockchain.
 		/// # Arguments
 		/// * `block_number` - The block number.
