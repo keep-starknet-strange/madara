@@ -2,8 +2,7 @@
 
 use core::marker::PhantomData;
 
-use ethereum_types::U256;
-use sp_core::Get;
+use sp_core::{Get, U256};
 use starknet_crypto::FieldElement;
 
 use crate::Config;

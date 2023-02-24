@@ -37,9 +37,12 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
-	use kp_starknet::{crypto::hash, transaction::Transaction};
-	use sp_core::U256;
-	use starknet_crypto::FieldElement;
+	use kp_starknet::{
+		block::wrapper::{block::Block, header::Header},
+		storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA},
+		transaction::Transaction,
+	};
+	use sp_core::{H256, U256};
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -84,14 +87,38 @@ pub mod pallet {
 	pub(super) type Pending<T: Config> =
 		StorageValue<_, BoundedVec<Transaction, MaxTransactionsPendingBlock>, ValueQuery>;
 
+	/// The current Starknet block.
+	#[pallet::storage]
+	#[pallet::getter(fn current_block)]
+	pub(super) type CurrentBlock<T: Config> = StorageValue<_, Block>;
+
+	// Mapping for block number and hashes.
+	#[pallet::storage]
+	#[pallet::getter(fn block_hash)]
+	pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
+
+	/// Starknet genesis configuration.
+	#[pallet::genesis_config]
+	#[derive(Default)]
+	pub struct GenesisConfig {}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+		fn build(&self) {
+			<Pallet<T>>::store_block(U256::zero());
+			frame_support::storage::unhashed::put::<StarknetStorageSchema>(
+				PALLET_STARKNET_SCHEMA,
+				&StarknetStorageSchema::V1,
+			);
+		}
+	}
+
 	/// The Starknet pallet events.
 	/// EVENTS
 	/// See: `<https://docs.substrate.io/main-docs/build/events-errors/>`
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		HealthCheckHashComputed { x: [u8; 32], y: [u8; 32], hash: [u8; 32] },
-	}
+	pub enum Event<T: Config> {}
 
 	/// The Starknet pallet custom errors.
 	/// ERRORS
@@ -110,28 +137,26 @@ pub mod pallet {
 		pub fn ping(origin: OriginFor<T>) -> DispatchResult {
 			// Make sure the caller is from a signed origin and retrieve the signer.
 			let _deployer_account = ensure_signed(origin)?;
-
 			log::info!("Keep Starknet Strange!");
-
-			Self::health_check()?;
-
 			Ok(())
 		}
 	}
 
 	/// The Starknet pallet internal functions.
 	impl<T: Config> Pallet<T> {
-		fn health_check() -> Result<(), DispatchError> {
-			// Compute a hash of known values to check if the pallet is alive.
-			let x = FieldElement::from(1_u32);
-			let y = FieldElement::from(2_u32);
-			let hash = hash::hash(hash::HashType::Pedersen, &x, &y);
-			let x = x.to_bytes_be();
-			let y = y.to_bytes_be();
-			let hash = hash.to_bytes_be();
-			// Emit an event to notify the user.
-			Self::deposit_event(Event::HealthCheckHashComputed { x, y, hash });
-			Ok(())
+		/// Store a Starknet block in the blockchain.
+		/// # Arguments
+		/// * `block_number` - The block number.
+		/// # TODO
+		/// * Implement the function.
+		fn store_block(block_number: U256) {
+			// TODO: Use actual values.
+			let sequencer_address = U256::zero();
+			let block = Block::new(Header::new(sequencer_address));
+			// Save the current block.
+			CurrentBlock::<T>::put(block.clone());
+			// Save the block number <> hash mapping.
+			BlockHash::<T>::insert(block_number, block.header.hash());
 		}
 	}
 }

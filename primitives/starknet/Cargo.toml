@@ -23,7 +23,6 @@ starknet-crypto = {workspace = true,  default-features = false, features = ["all
 starknet-ff = {workspace = true,  default-features = false, features = ["alloc"]}
 
 # Other third party dependencies
-ethereum-types = {workspace = true}
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive", "max-encoded-len"] }
 either = { version = "1.5", default-features = false }
 hash256-std-hasher = { version = "0.15.2", default-features = false }
