@@ -37,6 +37,8 @@ type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 pub use self::pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::types::{ContractAddress, ContractClassHash};
+
 	use super::*;
 	use frame_support::{pallet_prelude::*, traits::Randomness};
 	use frame_system::pallet_prelude::*;
@@ -126,6 +128,12 @@ pub mod pallet {
 	#[pallet::getter(fn block_hash)]
 	pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
 
+	/// Mapping from Starknet contract address to the contract's class hash.
+	#[pallet::storage]
+	#[pallet::getter(fn contract_class)]
+	pub(super) type ContractClassHashes<T: Config> =
+		StorageMap<_, Twox64Concat, ContractAddress, ContractClassHash, ValueQuery>;
+
 	/// Starknet genesis configuration.
 	#[pallet::genesis_config]
 	#[derive(Default)]
@@ -191,6 +199,21 @@ pub mod pallet {
 			CurrentBlock::<T>::put(block.clone());
 			// Save the block number <> hash mapping.
 			BlockHash::<T>::insert(block_number, block.header.hash());
+		}
+
+		/// Associate a contract address with a contract class hash.
+		/// # Arguments
+		/// * `contract_address` - The contract address.
+		/// * `contract_class_hash` - The contract class hash.
+		/// # TODO
+		/// * Check if the contract address is already associated with a contract class hash.
+		/// * Check if the contract class hash is known.
+		fn associate_contract_class(
+			contract_address: ContractAddress,
+			contract_class_hash: ContractClassHash,
+		) -> Result<(), DispatchError> {
+			ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
+			Ok(())
 		}
 	}
 }
