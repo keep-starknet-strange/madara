@@ -723,8 +723,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-felt"
-version = "0.1.3"
-source = "git+https://github.com/open-dust/cairo-rs?branch=wasm32-support#6ddeb09b577727f0ca5578010d0858f6954be0e9"
+version = "0.2.0"
+source = "git+https://github.com/open-dust/cairo-rs?rev=ebeae18#ebeae1862f3b41f048b4a2e8929233a6eb0a0fdb"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.3",
@@ -735,8 +735,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-vm"
-version = "0.1.3"
-source = "git+https://github.com/open-dust/cairo-rs?branch=wasm32-support#6ddeb09b577727f0ca5578010d0858f6954be0e9"
+version = "0.2.0"
+source = "git+https://github.com/open-dust/cairo-rs?rev=ebeae18#ebeae1862f3b41f048b4a2e8929233a6eb0a0fdb"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
@@ -4812,7 +4812,7 @@ dependencies = [
 [[package]]
 name = "parse-hyperlinks"
 version = "0.23.4"
-source = "git+https://github.com/open-dust/cairo-rs?branch=wasm32-support#6ddeb09b577727f0ca5578010d0858f6954be0e9"
+source = "git+https://github.com/open-dust/cairo-rs?rev=ebeae18#ebeae1862f3b41f048b4a2e8929233a6eb0a0fdb"
 dependencies = [
  "nom",
 ]
