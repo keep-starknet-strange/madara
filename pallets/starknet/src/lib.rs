@@ -91,6 +91,21 @@ pub mod pallet {
 		fn on_runtime_upgrade() -> Weight {
 			Weight::zero()
 		}
+
+		/// Run offchain tasks.
+		/// See: `<https://docs.substrate.io/reference/how-to-guides/offchain-workers/>`
+		/// # Arguments
+		/// * `n` - The block number.
+		/// # TODO
+		/// * Investigate how we can use offchain workers for Starknet specific tasks. An example
+		///   might be the communication with the prover.
+		fn offchain_worker(n: T::BlockNumber) {
+			log::trace!(
+				target: "runtime::starknet",
+				"Running offchain worker at block {:?}.",
+				n,
+			)
+		}
 	}
 
 	/// The Starknet pallet storage items.

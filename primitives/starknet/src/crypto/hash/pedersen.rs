@@ -7,8 +7,10 @@ use crate::traits::hash::Hasher;
 /// ### Arguments
 /// * `x`: The x coordinate
 /// * `y`: The y coordinate
-pub fn hash(_data: &[u8]) -> [u8; 32] {
-	let field_element = FieldElement::from_byte_slice_be(_data).unwrap();
+pub fn hash(data: &[u8]) -> [u8; 32] {
+	// For now we use the first 31 bytes of the data as the field element, to avoid any panics.
+	// TODO: have proper error handling and think about how to hash efficiently big chunks of data.
+	let field_element = FieldElement::from_byte_slice_be(&data[..31]).unwrap();
 	let result = FieldElement::to_bytes_be(&pedersen_hash(&FieldElement::ZERO, &field_element));
 	result
 }
