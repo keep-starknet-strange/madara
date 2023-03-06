@@ -179,6 +179,21 @@
 <a href="#179" id="179">179</a>
 <a href="#180" id="180">180</a>
 <a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -271,6 +286,21 @@
 		<span class="doccomment">/// Perform a module upgrade.
 		</span><span class="kw">fn </span>on_runtime_upgrade() -&gt; Weight {
 			Weight::zero()
+		}
+
+		<span class="doccomment">/// Run offchain tasks.
+		/// See: `&lt;https://docs.substrate.io/reference/how-to-guides/offchain-workers/&gt;`
+		/// # Arguments
+		/// * `n` - The block number.
+		/// # TODO
+		/// * Investigate how we can use offchain workers for Starknet specific tasks. An example
+		///   might be the communication with the prover.
+		</span><span class="kw">fn </span>offchain_worker(n: T::BlockNumber) {
+			<span class="macro">log::trace!</span>(
+				target: <span class="string">&quot;runtime::starknet&quot;</span>,
+				<span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>,
+				n,
+			)
 		}
 	}
 

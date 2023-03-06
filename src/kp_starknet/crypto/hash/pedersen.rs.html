@@ -28,6 +28,8 @@
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Pedersen hash module.
 </span><span class="kw">use </span>starknet_crypto::{pedersen_hash, FieldElement};
 
@@ -37,8 +39,10 @@
 /// ### Arguments
 /// * `x`: The x coordinate
 /// * `y`: The y coordinate
-</span><span class="kw">pub fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
-	<span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(_data).unwrap();
+</span><span class="kw">pub fn </span>hash(data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
+	<span class="comment">// For now we use the first 31 bytes of the data as the field element, to avoid any panics.
+	// TODO: have proper error handling and think about how to hash efficiently big chunks of data.
+	</span><span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>data[..<span class="number">31</span>]).unwrap();
 	<span class="kw">let </span>result = FieldElement::to_bytes_be(<span class="kw-2">&amp;</span>pedersen_hash(<span class="kw-2">&amp;</span>FieldElement::ZERO, <span class="kw-2">&amp;</span>field_element));
 	result
 }
