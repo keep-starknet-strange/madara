@@ -194,6 +194,29 @@
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -233,6 +256,8 @@
 <span class="kw">pub use </span><span class="self">self</span>::pallet::<span class="kw-2">*</span>;
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
+	<span class="kw">use </span><span class="kw">crate</span>::types::{ContractAddress, ContractClassHash};
+
 	<span class="kw">use super</span>::<span class="kw-2">*</span>;
 	<span class="kw">use </span>frame_support::{pallet_prelude::<span class="kw-2">*</span>, traits::Randomness};
 	<span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
@@ -322,6 +347,12 @@
 	#[pallet::getter(<span class="kw">fn </span>block_hash)]
 	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Twox64Concat, U256, H256, ValueQuery&gt;;
 
+	<span class="doccomment">/// Mapping from Starknet contract address to the contract&#39;s class hash.
+	</span><span class="attr">#[pallet::storage]
+	#[pallet::getter(<span class="kw">fn </span>contract_class)]
+	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClassHashes&lt;T: Config&gt; =
+		StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractAddress, ContractClassHash, ValueQuery&gt;;
+
 	<span class="doccomment">/// Starknet genesis configuration.
 	</span><span class="attr">#[pallet::genesis_config]
 	#[derive(Default)]
@@ -387,6 +418,21 @@
 			</span>CurrentBlock::&lt;T&gt;::put(block.clone());
 			<span class="comment">// Save the block number &lt;&gt; hash mapping.
 			</span>BlockHash::&lt;T&gt;::insert(block_number, block.header.hash());
+		}
+
+		<span class="doccomment">/// Associate a contract address with a contract class hash.
+		/// # Arguments
+		/// * `contract_address` - The contract address.
+		/// * `contract_class_hash` - The contract class hash.
+		/// # TODO
+		/// * Check if the contract address is already associated with a contract class hash.
+		/// * Check if the contract class hash is known.
+		</span><span class="kw">fn </span>associate_contract_class(
+			contract_address: ContractAddress,
+			contract_class_hash: ContractClassHash,
+		) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
+			ContractClassHashes::&lt;T&gt;::insert(contract_address, contract_class_hash);
+			<span class="prelude-val">Ok</span>(())
 		}
 	}
 }
