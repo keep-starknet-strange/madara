@@ -4,6 +4,7 @@ members = [
   "runtime",
   "pallets/cairo",
   "pallets/starknet",
+  "pallets/randomness",
   "primitives/starknet",
 ]
 [profile.release]
@@ -17,23 +18,32 @@ repository = "https://github.com/keep-starknet-strange/kaioshin/"
 
 [workspace.dependencies]
 # Substrate Frame
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+frame-support = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+frame-benchmarking = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+frame-system = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 # Substrate Primitives
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+sp-core = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-std = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-io = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-runtime = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 # Substrate Frame pallet
-pallet-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.37" }
+
+# Kaioshin pallets
+pallet-cairo = { version = "0.1.0-dev", path = "pallets/cairo", default-features = false }
+pallet-starknet = { version = "0.1.0-dev", path = "pallets/starknet", default-features = false }
+pallet-kaioshin-randomness = { version = "0.1.0-dev", path = "pallets/randomness", default-features = false }
 
 # Kaioshin primtitives
 kp-starknet = { version = "0.1.0-dev", path = "primitives/starknet", default-features = false }
 
 # Starknet dependencies
+# Cairo Virtual Machine
+# TODO: wait for no-std support on official repo
+cairo-vm = { git = "https://github.com/open-dust/cairo-rs", branch = "wasm32-support", default-features = false, features = [
+  "alloc",
+] }
 starknet-crypto = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
 starknet-ff = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
@@ -50,3 +60,4 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 log = "0.4.17"
 hex = { version = "0.4.3", default-features = false }
+safe-mix = { version = "1.0", default-features = false }
