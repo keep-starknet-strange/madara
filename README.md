@@ -33,10 +33,9 @@ Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and wr
   - `pallet-starknet`: Starknet pallet.
 - `runtime`: assemble Kaioshin custom logic with the configured pallets.
 
-Here is a high level overview of the architecture of Kaioshin.
+Here is a high level overview of the current architecture of Starknet sequencer.
 
-> **[TODO]** Add architecture diagram.
-
+![](docs/images/starknet-sequencer-architecture.png)
 ### Pallets
 
 #### `pallet-cairo`
