@@ -20,6 +20,7 @@ repository = "https://github.com/keep-starknet-strange/kaioshin/"
 # Substrate Frame
 frame-support = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 frame-benchmarking = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+frame-benchmarking-cli = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 frame-system = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 # Substrate Primitives
@@ -27,8 +28,35 @@ sp-core = { default-features = false, git = "https://github.com/keep-starknet-st
 sp-std = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 sp-io = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 sp-runtime = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-cli = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-executor = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-service = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-telemetry = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-keystore = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-transaction-pool = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-transaction-pool-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-consensus-aura = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-consensus-aura = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-consensus = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-consensus = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-finality-grandpa = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-finality-grandpa = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-client-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-timestamp = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-inherents = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-keyring = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-rpc = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-rpc-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-blockchain = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-block-builder = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-basic-authorship = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+substrate-frame-rpc-system = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+substrate-build-script-utils = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 # Substrate Frame pallet
+pallet-transaction-payment = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 # Kaioshin pallets
 pallet-cairo = { version = "0.1.0-dev", path = "pallets/cairo", default-features = false }
