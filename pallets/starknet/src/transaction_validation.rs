@@ -22,7 +22,7 @@ where
 /// Ensure that the origin is a Starknet transaction.
 /// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
 pub struct EnsureStarknetTransaction;
-impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
+impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> EnsureOrigin<OuterOrigin>
 	for EnsureStarknetTransaction
 {
 	type Success = ();
@@ -32,14 +32,14 @@ impl<O: Into<Result<RawOrigin, O>> + From<RawOrigin>> EnsureOrigin<O>
 	/// * `o` - The origin to check.
 	/// # Returns
 	/// * `Result<Self::Success, O>` - The result of the check.
-	fn try_origin(o: O) -> Result<Self::Success, O> {
+	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
 		o.into().map(|o| match o {
 			RawOrigin::StarknetTransaction => (),
 		})
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]
-	fn successful_origin() -> O {
-		O::from(RawOrigin::StarknetTransaction)
+	fn try_successful_origin() -> Result<OuterOrigin, ()> {
+		Ok(OuterOrigin::from(RawOrigin::StarknetTransaction))
 	}
 }
