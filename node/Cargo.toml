@@ -23,42 +23,42 @@ name = "kaioshin"
 clap = { version = "4.0.9", features = ["derive"] }
 futures = { version = "0.3.21", features = ["thread-pool"] }
 
-sc-cli = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-core = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-executor = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-service = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-telemetry = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-keystore = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-transaction-pool = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-transaction-pool-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-consensus-aura = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-consensus-aura = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-consensus = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-consensus = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-finality-grandpa = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-finality-grandpa = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-client-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-runtime = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-timestamp = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-inherents = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-keyring = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-frame-system = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-cli = { workspace = true }
+sp-core = { workspace = true }
+sc-executor = { workspace = true }
+sc-service = { workspace = true }
+sc-telemetry = { workspace = true }
+sc-keystore = { workspace = true }
+sc-transaction-pool = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
+sc-consensus-aura = { workspace = true }
+sp-consensus-aura = { workspace = true }
+sp-consensus = { workspace = true }
+sc-consensus = { workspace = true }
+sc-finality-grandpa = { workspace = true }
+sp-finality-grandpa = { workspace = true }
+sc-client-api = { workspace = true }
+sp-runtime = { workspace = true }
+sp-timestamp = { workspace = true }
+sp-inherents = { workspace = true }
+sp-keyring = { workspace = true }
+frame-system = { workspace = true }
+pallet-transaction-payment = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { version = "0.16.2", features = ["server"] }
-sc-rpc = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-rpc-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-blockchain = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-block-builder = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-basic-authorship = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-substrate-frame-rpc-system = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-pallet-transaction-payment-rpc = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-rpc = { workspace = true }
+sp-api = { workspace = true }
+sc-rpc-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-block-builder = { workspace = true }
+sc-basic-authorship = { workspace = true }
+substrate-frame-rpc-system = { workspace = true }
+pallet-transaction-payment-rpc = { workspace = true }
 
 # These dependencies are used for runtime benchmarking
-frame-benchmarking = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-frame-benchmarking-cli = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+frame-benchmarking = { workspace = true }
+frame-benchmarking-cli = { workspace = true }
 
 # Local Dependencies
 kaioshin-runtime = { path = "../runtime" }
@@ -67,7 +67,7 @@ kaioshin-runtime = { path = "../runtime" }
 try-runtime-cli = { optional = true, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+substrate-build-script-utils = { workspace = true }
 
 [features]
 default = []
