@@ -345,11 +345,11 @@
 <span class="kw">pub use </span>sc_executor::NativeElseWasmExecutor;
 <span class="kw">use </span>sc_finality_grandpa::SharedVoterState;
 <span class="kw">use </span>sc_keystore::LocalKeystore;
+<span class="kw">use </span>sc_network_common::sync::warp::WarpSyncParams;
 <span class="kw">use </span>sc_service::{error::Error <span class="kw">as </span>ServiceError, Configuration, TaskManager};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryWorker};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
 <span class="kw">use </span>std::{sync::Arc, time::Duration};
-
 <span class="comment">// Our native executor instance.
 </span><span class="kw">pub struct </span>ExecutorDispatch;
 
@@ -538,7 +538,7 @@
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: <span class="prelude-val">None</span>,
-			warp_sync: <span class="prelude-val">Some</span>(warp_sync),
+			warp_sync_params: <span class="prelude-val">Some</span>(WarpSyncParams::WithProvider(warp_sync)),
 		})<span class="question-mark">?</span>;
 
 	<span class="kw">if </span>config.offchain_worker.enabled {
