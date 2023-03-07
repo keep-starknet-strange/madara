@@ -1,7 +1,7 @@
 [package]
-name = "pallet-cairo"
+name = "pallet-kaioshin-randomness"
 version = "0.1.0-dev"
-description = "FRAME pallet to execute Cairo programs."
+description = "FRAME pallet to provide randomness for Starknet."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 homepage = "https://github.com/keep-starknet-strange/kaioshin"
 edition = "2021"
@@ -13,42 +13,47 @@ repository = "https://github.com/keep-starknet-strange/kaioshin"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-# Kaioshin dependencies
-kp-starknet = { workspace = true }
-pallet-kaioshin-randomness = { workspace = true }
-# Starknet related dependencies
-poseidon_hash = { workspace = true }
-starknet-crypto = { workspace = true }
-cairo-vm = { workspace = true }
-# Cairo compiler dependencies
-# TODO: wait for no-std support
-
-# Frame dependencies
-frame-benchmarking = { workspace = true, optional = true }
+# Kaioshin primitives
+# Substrate frame
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-# 3rd party dependencies
+frame-benchmarking = { workspace = true, optional = true }
+
+# Substrate primitives
+sp-core = { workspace = true }
+sp-io = { workspace = true }
+sp-std = { workspace = true }
+sp-runtime = { workspace = true }
+
+# Frame pallets
+
+# Other third party dependencies
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
 scale-info = { workspace = true }
-lazy_static = { workspace = true }
 log = { workspace = true }
+lazy_static = { workspace = true }
+safe-mix = { workspace = true }
 
 [dev-dependencies]
-sp-core = { workspace = true }
-sp-io = { workspace = true }
-sp-runtime = { workspace = true }
+
 
 [features]
 default = ["std"]
 std = [
-  "codec/std",
-  "frame-benchmarking?/std",
+  # Substrate
   "frame-support/std",
   "frame-system/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "frame-benchmarking?/std",
   "scale-info/std",
-  "cairo-vm/std",
+  # Kaioshin
+  # Starknet
+  # Other third party dependencies
+  "codec/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

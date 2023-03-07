@@ -18,12 +18,12 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		KaioshinRandomness: pallet_kaioshin_randomness,
 		Cairo: pallet_cairo,
 	}
 );
 
-impl pallet_randomness_collective_flip::Config for Test {}
+impl pallet_kaioshin_randomness::Config for Test {}
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -54,7 +54,7 @@ impl system::Config for Test {
 
 impl pallet_cairo::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type Randomness = RandomnessCollectiveFlip;
+	type Randomness = KaioshinRandomness;
 	type MaxCairoAssemblyProgramLength = ConstU32<1024>;
 	type MaxSierraProgramLength = ConstU32<1024>;
 	type SystemHash = pallet_cairo::hash::PedersenHash;

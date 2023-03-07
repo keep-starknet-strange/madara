@@ -211,8 +211,6 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
-
 impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
@@ -284,7 +282,7 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the Cairo Execution Engine pallet in pallets/cairo.
 impl pallet_cairo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Randomness = RandomnessCollectiveFlip;
+	type Randomness = KaioshinRandomness;
 	/// Define the maximum length of a Cairo assembly program, denominated in number of bytes.
 	type MaxCairoAssemblyProgramLength = ConstU32<1073741824>;
 	/// Define the maximum length of a Sierra program, denominated in number of bytes.
@@ -295,10 +293,13 @@ impl pallet_cairo::Config for Runtime {
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Randomness = RandomnessCollectiveFlip;
+	type Randomness = KaioshinRandomness;
 	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
 	type SystemHash = pallet_starknet::hash::PedersenHash;
 }
+
+/// Configure the Kaioshin Randomness pallet in pallets/kaioshin-randomness.
+impl pallet_kaioshin_randomness::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -309,7 +310,6 @@ construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
 		Timestamp: pallet_timestamp,
 		Aura: pallet_aura,
 		Grandpa: pallet_grandpa,
@@ -321,6 +321,8 @@ construct_runtime!(
 		Cairo: pallet_cairo,
 		// Include Starknet pallet.
 		Starknet: pallet_starknet,
+		// Include pallet for randomness.
+		KaioshinRandomness: pallet_kaioshin_randomness,
 	}
 );
 

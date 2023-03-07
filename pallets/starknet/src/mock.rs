@@ -1,7 +1,7 @@
 use crate as pallet_starknet;
 use frame_support::traits::{ConstU16, ConstU64};
 use frame_system as system;
-use sp_core::{ConstU32, H256};
+use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -18,12 +18,12 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		RandomnessCollectiveFlip: pallet_randomness_collective_flip,
+		KaioshinRandomness: pallet_kaioshin_randomness,
 		Starknet: pallet_starknet,
 	}
 );
 
-impl pallet_randomness_collective_flip::Config for Test {}
+impl pallet_kaioshin_randomness::Config for Test {}
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -54,7 +54,7 @@ impl system::Config for Test {
 
 impl pallet_starknet::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type Randomness = RandomnessCollectiveFlip;
+	type Randomness = KaioshinRandomness;
 	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
 	type SystemHash = pallet_starknet::hash::PedersenHash;
 }
