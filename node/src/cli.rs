@@ -9,6 +9,7 @@ pub struct Cli {
     pub run: RunCmd,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommand {
     /// Key management cli utilities
