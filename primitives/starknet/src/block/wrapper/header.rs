@@ -25,7 +25,7 @@ pub struct Header {
 	/// The Starknet address of the sequencer who created this block.
 	pub sequencer_address: U256,
 	/// The time the sequencer created this block before executing transactions
-	pub block_timestamp: u128,
+	pub block_timestamp: u64,
 	/// The number of transactions in a block
 	pub transaction_count: u128,
 	/// A commitment to the transactions included in the block
@@ -48,7 +48,7 @@ impl Header {
 		block_number: U256,
 		global_state_root: U256,
 		sequencer_address: U256,
-		block_timestamp: u128,
+		block_timestamp: u64,
 		transaction_count: u128,
 		transaction_commitment: U256,
 		event_count: u128,

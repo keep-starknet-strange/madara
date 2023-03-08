@@ -40,7 +40,10 @@ pub mod pallet {
 	use crate::types::{ContractAddress, ContractClassHash};
 
 	use super::*;
-	use frame_support::{pallet_prelude::*, traits::Randomness};
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{Randomness, Time},
+	};
 	use frame_system::pallet_prelude::*;
 	use hash::Hasher;
 	use kp_starknet::{
@@ -66,6 +69,8 @@ pub mod pallet {
 		type StateRoot: Get<U256>;
 		/// The hashing function to use.
 		type SystemHash: Hasher;
+		/// The time idk what.
+		type TimestampProvider: Time;
 	}
 
 	/// The Starknet pallet hooks.
@@ -197,7 +202,7 @@ pub mod pallet {
 
 			let global_state_root = U256::zero();
 			let sequencer_address = U256::zero();
-			let block_timestamp = 0_u128;
+			let block_timestamp = T::TimestampProvider::now().unique_saturated_into();
 			let transaction_count = 0_u128;
 			let transaction_commitment = U256::zero();
 			let event_count = 0_u128;
