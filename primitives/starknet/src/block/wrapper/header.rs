@@ -34,6 +34,7 @@ pub struct Header {
 
 impl Header {
     /// Creates a new header.
+    #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(
         parent_block_hash: U256,

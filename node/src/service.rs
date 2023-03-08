@@ -39,6 +39,7 @@ pub(crate) type FullClient = sc_service::TFullClient<Block, RuntimeApi, NativeEl
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
+#[allow(clippy::type_complexity)]
 pub fn new_partial(
     config: &Configuration,
 ) -> Result<
@@ -102,7 +103,7 @@ pub fn new_partial(
 
     let (grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
         client.clone(),
-        &(client.clone() as Arc<_>),
+        &client as &Arc<_>,
         select_chain.clone(),
         telemetry.as_ref().map(|x| x.handle()),
     )?;

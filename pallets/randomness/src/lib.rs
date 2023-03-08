@@ -76,7 +76,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::Encode;
-use frame_support::pallet_prelude::Weight;
 use frame_support::traits::Randomness;
 use safe_mix::TripletMix;
 use sp_runtime::traits::{Hash, Saturating};
