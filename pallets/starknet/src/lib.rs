@@ -193,8 +193,31 @@ pub mod pallet {
 		/// * Implement the function.
 		fn store_block(block_number: U256) {
 			// TODO: Use actual values.
+			let parent_block_hash = U256::zero();
+
+			let global_state_root = U256::zero();
 			let sequencer_address = U256::zero();
-			let block = Block::new(Header::new(block_number, sequencer_address));
+			let block_timestamp = 0_u128;
+			let transaction_count = 0_u128;
+			let transaction_commitment = U256::zero();
+			let event_count = 0_u128;
+			let event_commitment = U256::zero();
+			let protocol_version = None;
+			let extra_data = None;
+
+			let block = Block::new(Header::new(
+				parent_block_hash,
+				block_number,
+				global_state_root,
+				sequencer_address,
+				block_timestamp,
+				transaction_count,
+				transaction_commitment,
+				event_count,
+				event_commitment,
+				protocol_version,
+				extra_data,
+			));
 			// Save the current block.
 			CurrentBlock::<T>::put(block.clone());
 			// Save the block number <> hash mapping.
