@@ -297,6 +297,7 @@ impl pallet_starknet::Config for Runtime {
 	type Randomness = KaioshinRandomness;
 	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
 	type SystemHash = pallet_starknet::hash::PedersenHash;
+	type TimestampProvider = Timestamp;
 }
 
 /// Configure the Kaioshin Randomness pallet in pallets/kaioshin-randomness.
