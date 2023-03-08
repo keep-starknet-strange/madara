@@ -35,6 +35,20 @@ mod benchmarking;
 type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 
 pub use self::pallet::*;
+
+pub(crate) const LOG_TARGET: &str = "runtime::starknet";
+
+// syntactic sugar for logging.
+#[macro_export]
+macro_rules! log {
+	($level:tt, $patter:expr $(, $values:expr)* $(,)?) => {
+		log::$level!(
+			target: crate::LOG_TARGET,
+			concat!("[{:?}] 🐺 ", $patter), <frame_system::Pallet<T>>::block_number() $(, $values)*
+		)
+	};
+}
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{ContractAddress, ContractClassHash};
@@ -102,11 +116,7 @@ pub mod pallet {
 		/// * Investigate how we can use offchain workers for Starknet specific tasks. An example
 		///   might be the communication with the prover.
 		fn offchain_worker(n: T::BlockNumber) {
-			log::trace!(
-				target: "runtime::starknet",
-				"Running offchain worker at block {:?}.",
-				n,
-			)
+			log!(trace, "Running offchain worker at block {:?}.", n,)
 		}
 	}
 
@@ -155,7 +165,9 @@ pub mod pallet {
 	/// See: `<https://docs.substrate.io/main-docs/build/events-errors/>`
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		KeepStarknetStrange,
+	}
 
 	/// The Starknet pallet custom errors.
 	/// ERRORS
@@ -174,7 +186,8 @@ pub mod pallet {
 		pub fn ping(origin: OriginFor<T>) -> DispatchResult {
 			// Make sure the caller is from a signed origin and retrieve the signer.
 			let _deployer_account = ensure_signed(origin)?;
-			log::info!("Keep Starknet Strange!");
+			log!(info, "Keep Starknet Strange!");
+			Self::deposit_event(Event::KeepStarknetStrange);
 			Ok(())
 		}
 	}
@@ -231,7 +244,7 @@ pub mod pallet {
 		/// # TODO
 		/// * Check if the contract address is already associated with a contract class hash.
 		/// * Check if the contract class hash is known.
-		fn associate_contract_class(
+		fn _associate_contract_class(
 			contract_address: ContractAddress,
 			contract_class_hash: ContractClassHash,
 		) -> Result<(), DispatchError> {
