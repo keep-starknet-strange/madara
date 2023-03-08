@@ -63,6 +63,7 @@ substrate-build-script-utils = { git = "https://github.com/keep-starknet-strange
 # Substrate Frame pallet
 pallet-transaction-payment = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+pallet-timestamp = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 
 # Kaioshin pallets
 pallet-cairo = { version = "0.1.0-dev", path = "pallets/cairo", default-features = false }

@@ -4738,6 +4738,7 @@ dependencies = [
  "lazy_static",
  "log",
  "pallet-kaioshin-randomness",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-core",

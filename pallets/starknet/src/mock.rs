@@ -1,11 +1,13 @@
 use crate as pallet_starknet;
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::traits::{ConstU16, ConstU64, Hooks};
 use frame_system as system;
+use pallet_timestamp;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use system::Origin;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -20,10 +22,19 @@ frame_support::construct_runtime!(
 		System: frame_system,
 		KaioshinRandomness: pallet_kaioshin_randomness,
 		Starknet: pallet_starknet,
+		Timestamp: pallet_timestamp,
 	}
 );
 
 impl pallet_kaioshin_randomness::Config for Test {}
+
+impl pallet_timestamp::Config for Test {
+	/// A timestamp: milliseconds since the unix epoch.
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = ConstU64<{ 6_000 / 2 }>;
+	type WeightInfo = ();
+}
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -57,9 +68,20 @@ impl pallet_starknet::Config for Test {
 	type Randomness = KaioshinRandomness;
 	type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
 	type SystemHash = pallet_starknet::hash::PedersenHash;
+	type TimestampProvider = Timestamp;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+}
+
+pub(crate) fn run_to_block(n: u64) {
+	for b in (System::block_number() + 1)..=n {
+		System::set_block_number(b);
+		// TODO: Fix set timestamp call.
+		// FIXME: #33
+		// Timestamp::set_timestamp(System::block_number() * 6_000);
+		Starknet::on_finalize(b);
+	}
 }
