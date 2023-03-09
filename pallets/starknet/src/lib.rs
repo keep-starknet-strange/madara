@@ -233,6 +233,14 @@ pub mod pallet {
             T::TimestampProvider::now().unique_saturated_into()
         }
 
+        /// Get the number of transactions in the block.
+        ///
+        /// # Returns
+        #[inline(always)]
+        pub fn transaction_count() -> u128 {
+            Self::pending().len() as u128
+        }
+
         /// Store a Starknet block in the blockchain.
         ///
         /// # Arguments
@@ -249,7 +257,7 @@ pub mod pallet {
             let global_state_root = U256::zero();
             let sequencer_address = U256::zero();
             let block_timestamp = Self::block_timestamp();
-            let transaction_count = 0_u128;
+            let transaction_count = Self::transaction_count();
             let transaction_commitment = U256::zero();
             let event_count = 0_u128;
             let event_commitment = U256::zero();
