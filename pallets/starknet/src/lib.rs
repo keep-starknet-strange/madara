@@ -194,15 +194,12 @@ pub mod pallet {
 
     /// The Starknet pallet internal functions.
     impl<T: Config> Pallet<T> {
-        /// Get current block hash
+        /// Get current block hash.
         pub fn current_block_hash() -> Option<H256> {
             Self::current_block().map(|block| block.header.hash())
         }
 
-        pub fn current_block_number() -> Option<U256> {
-            Self::current_block().map(|block| block.header.block_number)
-        }
-
+        /// Get the block hash of the previous block.
         pub fn parent_block_hash(current_block_number: &U256) -> H256 {
             if current_block_number == &U256::zero() {
                 H256::zero()
