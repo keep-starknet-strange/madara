@@ -724,7 +724,7 @@
             };
 
             <span class="comment">// Insert the Cairo assembly program in storage.
-            </span>CairoAssemblyPrograms::&lt;T&gt;::insert(cairo_assembly_program_id, <span class="kw-2">&amp;</span>cairo_assembly_program);
+            </span>CairoAssemblyPrograms::&lt;T&gt;::insert(cairo_assembly_program_id, cairo_assembly_program);
 
             <span class="comment">// Emit events.
             </span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramDeployed {
@@ -742,7 +742,7 @@
             sierra_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
             <span class="comment">// Compute the hash and return as id.
-            </span><span class="kw">let </span>_hash = T::SystemHash::hash(<span class="kw-2">&amp;</span>sierra_code);
+            </span><span class="kw">let </span>_hash = T::SystemHash::hash(sierra_code);
             <span class="prelude-val">Ok</span>(_hash)
         }
 
@@ -839,7 +839,7 @@
             cairo_assembly_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgamId, DispatchError&gt; {
             <span class="comment">// Compute the hash and return as id.
-            </span><span class="kw">let </span>_hash = T::SystemHash::hash(<span class="kw-2">&amp;</span>cairo_assembly_code);
+            </span><span class="kw">let </span>_hash = T::SystemHash::hash(cairo_assembly_code);
             <span class="prelude-val">Ok</span>(_hash)
         }
 

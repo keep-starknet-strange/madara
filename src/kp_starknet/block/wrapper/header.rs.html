@@ -71,6 +71,7 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet header definition.
 </span><span class="kw">use </span>codec::Encode;
 <span class="kw">use </span>sp_core::{H256, U256};
@@ -107,7 +108,8 @@
 
 <span class="kw">impl </span>Header {
     <span class="doccomment">/// Creates a new header.
-    </span><span class="attr">#[must_use]
+    </span><span class="attr">#[allow(clippy::too_many_arguments)]
+    #[must_use]
     </span><span class="kw">pub fn </span>new(
         parent_block_hash: U256,
         block_number: U256,
