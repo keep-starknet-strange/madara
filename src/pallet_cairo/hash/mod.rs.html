@@ -23,7 +23,7 @@
 </pre><pre class="rust"><code><span class="kw">use </span>kp_starknet::crypto::hash::{hash, HashType};
 
 <span class="kw">pub trait </span>Hasher {
-	<span class="kw">fn </span>hash(data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>];
+    <span class="kw">fn </span>hash(data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>];
 }
 
 <span class="attr">#[derive(PartialEq, Eq, Clone)]
@@ -32,15 +32,15 @@
 </span><span class="kw">pub struct </span>PedersenHash;
 
 <span class="kw">impl </span>Hasher <span class="kw">for </span>PoseidonHash {
-	<span class="kw">fn </span>hash(data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
-		hash(HashType::Poseidon, data)
-	}
+    <span class="kw">fn </span>hash(data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
+        hash(HashType::Poseidon, data)
+    }
 }
 
 <span class="kw">impl </span>Hasher <span class="kw">for </span>PedersenHash {
-	<span class="kw">fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
-		hash(HashType::Pedersen, _data)
-	}
+    <span class="kw">fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
+        hash(HashType::Pedersen, _data)
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pallet_cairo" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

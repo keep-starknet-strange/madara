@@ -253,11 +253,6 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -311,212 +306,207 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
-	<span class="kw">use </span><span class="kw">crate</span>::types::{ContractAddress, ContractClassHash};
+    <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>frame_support::traits::{Randomness, Time};
+    <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>hash::Hasher;
+    <span class="kw">use </span>kp_starknet::block::wrapper::block::Block;
+    <span class="kw">use </span>kp_starknet::block::wrapper::header::Header;
+    <span class="kw">use </span>kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
+    <span class="kw">use </span>kp_starknet::transaction::Transaction;
+    <span class="kw">use </span>sp_core::{H256, U256};
+    <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
 
-	<span class="kw">use super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use </span>frame_support::{
-		pallet_prelude::<span class="kw-2">*</span>,
-		traits::{Randomness, Time},
-	};
-	<span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
-	<span class="kw">use </span>hash::Hasher;
-	<span class="kw">use </span>kp_starknet::{
-		block::wrapper::{block::Block, header::Header},
-		storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA},
-		transaction::Transaction,
-	};
-	<span class="kw">use </span>sp_core::{H256, U256};
-	<span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::types::{ContractAddress, ContractClassHash};
 
-	<span class="attr">#[pallet::pallet]
-	#[pallet::generate_store(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Store)]
-	</span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
+    <span class="attr">#[pallet::pallet]
+    #[pallet::generate_store(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Store)]
+    </span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
 
-	<span class="doccomment">/// Configure the pallet by specifying the parameters and types on which it depends.
-	</span><span class="attr">#[pallet::config]
-	</span><span class="kw">pub trait </span>Config: frame_system::Config {
-		<span class="doccomment">/// Because this pallet emits events, it depends on the runtime&#39;s definition of an event.
-		</span><span class="kw">type </span>RuntimeEvent: From&lt;Event&lt;<span class="self">Self</span>&gt;&gt; + IsType&lt;&lt;<span class="self">Self </span><span class="kw">as </span>frame_system::Config&gt;::RuntimeEvent&gt;;
-		<span class="doccomment">/// The type of Randomness we want to specify for this pallet.
-		</span><span class="kw">type </span>Randomness: Randomness&lt;<span class="self">Self</span>::Hash, <span class="self">Self</span>::BlockNumber&gt;;
-		<span class="doccomment">/// How Starknet state root is calculated.
-		</span><span class="kw">type </span>StateRoot: Get&lt;U256&gt;;
-		<span class="doccomment">/// The hashing function to use.
-		</span><span class="kw">type </span>SystemHash: Hasher;
-		<span class="doccomment">/// The time idk what.
-		</span><span class="kw">type </span>TimestampProvider: Time;
-	}
+    <span class="doccomment">/// Configure the pallet by specifying the parameters and types on which it depends.
+    </span><span class="attr">#[pallet::config]
+    </span><span class="kw">pub trait </span>Config: frame_system::Config {
+        <span class="doccomment">/// Because this pallet emits events, it depends on the runtime&#39;s definition of an event.
+        </span><span class="kw">type </span>RuntimeEvent: From&lt;Event&lt;<span class="self">Self</span>&gt;&gt; + IsType&lt;&lt;<span class="self">Self </span><span class="kw">as </span>frame_system::Config&gt;::RuntimeEvent&gt;;
+        <span class="doccomment">/// The type of Randomness we want to specify for this pallet.
+        </span><span class="kw">type </span>Randomness: Randomness&lt;<span class="self">Self</span>::Hash, <span class="self">Self</span>::BlockNumber&gt;;
+        <span class="doccomment">/// How Starknet state root is calculated.
+        </span><span class="kw">type </span>StateRoot: Get&lt;U256&gt;;
+        <span class="doccomment">/// The hashing function to use.
+        </span><span class="kw">type </span>SystemHash: Hasher;
+        <span class="doccomment">/// The time idk what.
+        </span><span class="kw">type </span>TimestampProvider: Time;
+    }
 
-	<span class="doccomment">/// The Starknet pallet hooks.
-	/// HOOKS
-	/// # TODO
-	/// * Implement the hooks.
-	</span><span class="attr">#[pallet::hooks]
-	</span><span class="kw">impl</span>&lt;T: Config&gt; Hooks&lt;BlockNumberFor&lt;T&gt;&gt; <span class="kw">for </span>Pallet&lt;T&gt; {
-		<span class="doccomment">/// The block is being finalized.
-		</span><span class="kw">fn </span>on_finalize(_n: T::BlockNumber) {
-			<span class="comment">// Create a new Starknet block and store it.
-			</span>&lt;Pallet&lt;T&gt;&gt;::store_block(U256::from(
-				UniqueSaturatedInto::&lt;u128&gt;::unique_saturated_into(
-					frame_system::Pallet::&lt;T&gt;::block_number(),
-				),
-			));
-		}
+    <span class="doccomment">/// The Starknet pallet hooks.
+    /// HOOKS
+    /// # TODO
+    /// * Implement the hooks.
+    </span><span class="attr">#[pallet::hooks]
+    </span><span class="kw">impl</span>&lt;T: Config&gt; Hooks&lt;BlockNumberFor&lt;T&gt;&gt; <span class="kw">for </span>Pallet&lt;T&gt; {
+        <span class="doccomment">/// The block is being finalized.
+        </span><span class="kw">fn </span>on_finalize(_n: T::BlockNumber) {
+            <span class="comment">// Create a new Starknet block and store it.
+            </span>&lt;Pallet&lt;T&gt;&gt;::store_block(U256::from(UniqueSaturatedInto::&lt;u128&gt;::unique_saturated_into(
+                frame_system::Pallet::&lt;T&gt;::block_number(),
+            )));
+        }
 
-		<span class="doccomment">/// The block is being initialized. Implement to have something happen.
-		</span><span class="kw">fn </span>on_initialize(<span class="kw">_</span>: T::BlockNumber) -&gt; Weight {
-			Weight::zero()
-		}
+        <span class="doccomment">/// The block is being initialized. Implement to have something happen.
+        </span><span class="kw">fn </span>on_initialize(<span class="kw">_</span>: T::BlockNumber) -&gt; Weight {
+            Weight::zero()
+        }
 
-		<span class="doccomment">/// Perform a module upgrade.
-		</span><span class="kw">fn </span>on_runtime_upgrade() -&gt; Weight {
-			Weight::zero()
-		}
+        <span class="doccomment">/// Perform a module upgrade.
+        </span><span class="kw">fn </span>on_runtime_upgrade() -&gt; Weight {
+            Weight::zero()
+        }
 
-		<span class="doccomment">/// Run offchain tasks.
-		/// See: `&lt;https://docs.substrate.io/reference/how-to-guides/offchain-workers/&gt;`
-		/// # Arguments
-		/// * `n` - The block number.
-		/// # TODO
-		/// * Investigate how we can use offchain workers for Starknet specific tasks. An example
-		///   might be the communication with the prover.
-		</span><span class="kw">fn </span>offchain_worker(n: T::BlockNumber) {
-			<span class="macro">log!</span>(trace, <span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>, n,)
-		}
-	}
+        <span class="doccomment">/// Run offchain tasks.
+        /// See: `&lt;https://docs.substrate.io/reference/how-to-guides/offchain-workers/&gt;`
+        /// # Arguments
+        /// * `n` - The block number.
+        /// # TODO
+        /// * Investigate how we can use offchain workers for Starknet specific tasks. An example
+        ///   might be the communication with the prover.
+        </span><span class="kw">fn </span>offchain_worker(n: T::BlockNumber) {
+            <span class="macro">log!</span>(trace, <span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>, n,)
+        }
+    }
 
-	<span class="doccomment">/// The Starknet pallet storage items.
-	/// STORAGE
-	/// Current building block&#39;s transactions.
-	</span><span class="attr">#[pallet::storage]
-	#[pallet::getter(<span class="kw">fn </span>pending)]
-	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>Pending&lt;T: Config&gt; =
-		StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;Transaction, MaxTransactionsPendingBlock&gt;, ValueQuery&gt;;
+    <span class="doccomment">/// The Starknet pallet storage items.
+    /// STORAGE
+    /// Current building block&#39;s transactions.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>pending)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>Pending&lt;T: Config&gt; =
+        StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;Transaction, MaxTransactionsPendingBlock&gt;, ValueQuery&gt;;
 
-	<span class="doccomment">/// The current Starknet block.
-	</span><span class="attr">#[pallet::storage]
-	#[pallet::getter(<span class="kw">fn </span>current_block)]
-	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CurrentBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, Block&gt;;
+    <span class="doccomment">/// The current Starknet block.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>current_block)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CurrentBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, Block&gt;;
 
-	<span class="comment">// Mapping for block number and hashes.
-	</span><span class="attr">#[pallet::storage]
-	#[pallet::getter(<span class="kw">fn </span>block_hash)]
-	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Twox64Concat, U256, H256, ValueQuery&gt;;
+    <span class="comment">// Mapping for block number and hashes.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>block_hash)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Twox64Concat, U256, H256, ValueQuery&gt;;
 
-	<span class="doccomment">/// Mapping from Starknet contract address to the contract&#39;s class hash.
-	</span><span class="attr">#[pallet::storage]
-	#[pallet::getter(<span class="kw">fn </span>contract_class)]
-	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClassHashes&lt;T: Config&gt; =
-		StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractAddress, ContractClassHash, ValueQuery&gt;;
+    <span class="doccomment">/// Mapping from Starknet contract address to the contract&#39;s class hash.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>contract_class)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClassHashes&lt;T: Config&gt; =
+        StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractAddress, ContractClassHash, ValueQuery&gt;;
 
-	<span class="doccomment">/// Starknet genesis configuration.
-	</span><span class="attr">#[pallet::genesis_config]
-	#[derive(Default)]
-	</span><span class="kw">pub struct </span>GenesisConfig {}
+    <span class="doccomment">/// Starknet genesis configuration.
+    </span><span class="attr">#[pallet::genesis_config]
+    #[derive(Default)]
+    </span><span class="kw">pub struct </span>GenesisConfig {}
 
-	<span class="attr">#[pallet::genesis_build]
-	</span><span class="kw">impl</span>&lt;T: Config&gt; GenesisBuild&lt;T&gt; <span class="kw">for </span>GenesisConfig {
-		<span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-			&lt;Pallet&lt;T&gt;&gt;::store_block(U256::zero());
-			frame_support::storage::unhashed::put::&lt;StarknetStorageSchema&gt;(
-				PALLET_STARKNET_SCHEMA,
-				<span class="kw-2">&amp;</span>StarknetStorageSchema::V1,
-			);
-		}
-	}
+    <span class="attr">#[pallet::genesis_build]
+    </span><span class="kw">impl</span>&lt;T: Config&gt; GenesisBuild&lt;T&gt; <span class="kw">for </span>GenesisConfig {
+        <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+            &lt;Pallet&lt;T&gt;&gt;::store_block(U256::zero());
+            frame_support::storage::unhashed::put::&lt;StarknetStorageSchema&gt;(
+                PALLET_STARKNET_SCHEMA,
+                <span class="kw-2">&amp;</span>StarknetStorageSchema::V1,
+            );
+        }
+    }
 
-	<span class="doccomment">/// The Starknet pallet events.
-	/// EVENTS
-	/// See: `&lt;https://docs.substrate.io/main-docs/build/events-errors/&gt;`
-	</span><span class="attr">#[pallet::event]
-	#[pallet::generate_deposit(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>deposit_event)]
-	</span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {
-		KeepStarknetStrange,
-	}
+    <span class="doccomment">/// The Starknet pallet events.
+    /// EVENTS
+    /// See: `&lt;https://docs.substrate.io/main-docs/build/events-errors/&gt;`
+    </span><span class="attr">#[pallet::event]
+    #[pallet::generate_deposit(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>deposit_event)]
+    </span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {
+        KeepStarknetStrange,
+    }
 
-	<span class="doccomment">/// The Starknet pallet custom errors.
-	/// ERRORS
-	</span><span class="attr">#[pallet::error]
-	</span><span class="kw">pub enum </span>Error&lt;T&gt; {}
+    <span class="doccomment">/// The Starknet pallet custom errors.
+    /// ERRORS
+    </span><span class="attr">#[pallet::error]
+    </span><span class="kw">pub enum </span>Error&lt;T&gt; {}
 
-	<span class="doccomment">/// The Starknet pallet external functions.
-	/// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	/// These functions materialize as &quot;extrinsics&quot;, which are often compared to transactions.
-	/// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
-	</span><span class="attr">#[pallet::call]
-	</span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-		<span class="doccomment">/// Ping the pallet to check if it is alive.
-		</span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
-		#[pallet::weight(<span class="number">0</span>)]
-		</span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
-			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-			</span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
-			<span class="macro">log!</span>(info, <span class="string">&quot;Keep Starknet Strange!&quot;</span>);
-			<span class="self">Self</span>::deposit_event(Event::KeepStarknetStrange);
-			<span class="prelude-val">Ok</span>(())
-		}
-	}
+    <span class="doccomment">/// The Starknet pallet external functions.
+    /// Dispatchable functions allows users to interact with the pallet and invoke state changes.
+    /// These functions materialize as &quot;extrinsics&quot;, which are often compared to transactions.
+    /// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
+    </span><span class="attr">#[pallet::call]
+    </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
+        <span class="doccomment">/// Ping the pallet to check if it is alive.
+        </span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
+        #[pallet::weight(<span class="number">0</span>)]
+        </span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
+            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
+            </span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
+            <span class="macro">log!</span>(info, <span class="string">&quot;Keep Starknet Strange!&quot;</span>);
+            <span class="self">Self</span>::deposit_event(Event::KeepStarknetStrange);
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
 
-	<span class="doccomment">/// The Starknet pallet internal functions.
-	</span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-		<span class="doccomment">/// Get current block hash
-		</span><span class="kw">pub fn </span>current_block_hash() -&gt; <span class="prelude-ty">Option</span>&lt;H256&gt; {
-			<span class="self">Self</span>::current_block().map(|block| block.header.hash())
-		}
+    <span class="doccomment">/// The Starknet pallet internal functions.
+    </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
+        <span class="doccomment">/// Get current block hash
+        </span><span class="kw">pub fn </span>current_block_hash() -&gt; <span class="prelude-ty">Option</span>&lt;H256&gt; {
+            <span class="self">Self</span>::current_block().map(|block| block.header.hash())
+        }
 
-		<span class="doccomment">/// Store a Starknet block in the blockchain.
-		/// # Arguments
-		/// * `block_number` - The block number.
-		/// # TODO
-		/// * Implement the function.
-		</span><span class="kw">fn </span>store_block(block_number: U256) {
-			<span class="comment">// TODO: Use actual values.
-			</span><span class="kw">let </span>parent_block_hash = U256::zero();
+        <span class="doccomment">/// Store a Starknet block in the blockchain.
+        /// # Arguments
+        /// * `block_number` - The block number.
+        /// # TODO
+        /// * Implement the function.
+        </span><span class="kw">fn </span>store_block(block_number: U256) {
+            <span class="comment">// TODO: Use actual values.
+            </span><span class="kw">let </span>parent_block_hash = U256::zero();
 
-			<span class="kw">let </span>global_state_root = U256::zero();
-			<span class="kw">let </span>sequencer_address = U256::zero();
-			<span class="kw">let </span>block_timestamp = T::TimestampProvider::now().unique_saturated_into();
-			<span class="kw">let </span>transaction_count = <span class="number">0_u128</span>;
-			<span class="kw">let </span>transaction_commitment = U256::zero();
-			<span class="kw">let </span>event_count = <span class="number">0_u128</span>;
-			<span class="kw">let </span>event_commitment = U256::zero();
-			<span class="kw">let </span>protocol_version = <span class="prelude-val">None</span>;
-			<span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
+            <span class="kw">let </span>global_state_root = U256::zero();
+            <span class="kw">let </span>sequencer_address = U256::zero();
+            <span class="kw">let </span>block_timestamp = T::TimestampProvider::now().unique_saturated_into();
+            <span class="kw">let </span>transaction_count = <span class="number">0_u128</span>;
+            <span class="kw">let </span>transaction_commitment = U256::zero();
+            <span class="kw">let </span>event_count = <span class="number">0_u128</span>;
+            <span class="kw">let </span>event_commitment = U256::zero();
+            <span class="kw">let </span>protocol_version = <span class="prelude-val">None</span>;
+            <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
-			<span class="kw">let </span>block = Block::new(Header::new(
-				parent_block_hash,
-				block_number,
-				global_state_root,
-				sequencer_address,
-				block_timestamp,
-				transaction_count,
-				transaction_commitment,
-				event_count,
-				event_commitment,
-				protocol_version,
-				extra_data,
-			));
-			<span class="comment">// Save the current block.
-			</span>CurrentBlock::&lt;T&gt;::put(block.clone());
-			<span class="comment">// Save the block number &lt;&gt; hash mapping.
-			</span>BlockHash::&lt;T&gt;::insert(block_number, block.header.hash());
-		}
+            <span class="kw">let </span>block = Block::new(Header::new(
+                parent_block_hash,
+                block_number,
+                global_state_root,
+                sequencer_address,
+                block_timestamp,
+                transaction_count,
+                transaction_commitment,
+                event_count,
+                event_commitment,
+                protocol_version,
+                extra_data,
+            ));
+            <span class="comment">// Save the current block.
+            </span>CurrentBlock::&lt;T&gt;::put(block.clone());
+            <span class="comment">// Save the block number &lt;&gt; hash mapping.
+            </span>BlockHash::&lt;T&gt;::insert(block_number, block.header.hash());
+        }
 
-		<span class="doccomment">/// Associate a contract address with a contract class hash.
-		/// # Arguments
-		/// * `contract_address` - The contract address.
-		/// * `contract_class_hash` - The contract class hash.
-		/// # TODO
-		/// * Check if the contract address is already associated with a contract class hash.
-		/// * Check if the contract class hash is known.
-		</span><span class="kw">fn </span>_associate_contract_class(
-			contract_address: ContractAddress,
-			contract_class_hash: ContractClassHash,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
-			ContractClassHashes::&lt;T&gt;::insert(contract_address, contract_class_hash);
-			<span class="prelude-val">Ok</span>(())
-		}
-	}
+        <span class="doccomment">/// Associate a contract address with a contract class hash.
+        /// # Arguments
+        /// * `contract_address` - The contract address.
+        /// * `contract_class_hash` - The contract class hash.
+        /// # TODO
+        /// * Check if the contract address is already associated with a contract class hash.
+        /// * Check if the contract class hash is known.
+        </span><span class="kw">fn </span>_associate_contract_class(
+            contract_address: ContractAddress,
+            contract_class_hash: ContractClassHash,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
+            ContractClassHashes::&lt;T&gt;::insert(contract_address, contract_class_hash);
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pallet_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

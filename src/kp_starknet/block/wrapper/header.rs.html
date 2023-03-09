@@ -71,98 +71,78 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet header definition.
 </span><span class="kw">use </span>codec::Encode;
 <span class="kw">use </span>sp_core::{H256, U256};
 
 <span class="attr">#[derive(
-	Clone,
-	Debug,
-	PartialEq,
-	Eq,
-	codec::Encode,
-	codec::Decode,
-	scale_info::TypeInfo,
-	Default,
-	codec::MaxEncodedLen,
+    Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, Default, codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="doccomment">/// Starknet header definition.
 </span><span class="kw">pub struct </span>Header {
-	<span class="doccomment">/// The hash of this block’s parent.
-	</span><span class="kw">pub </span>parent_block_hash: U256,
-	<span class="doccomment">/// The number (height) of this block.
-	</span><span class="kw">pub </span>block_number: U256,
-	<span class="doccomment">/// The state commitment after this block.
-	</span><span class="kw">pub </span>global_state_root: U256,
-	<span class="doccomment">/// The Starknet address of the sequencer who created this block.
-	</span><span class="kw">pub </span>sequencer_address: U256,
-	<span class="doccomment">/// The time the sequencer created this block before executing transactions
-	</span><span class="kw">pub </span>block_timestamp: u64,
-	<span class="doccomment">/// The number of transactions in a block
-	</span><span class="kw">pub </span>transaction_count: u128,
-	<span class="doccomment">/// A commitment to the transactions included in the block
-	</span><span class="kw">pub </span>transaction_commitment: U256,
-	<span class="doccomment">/// The number of events
-	</span><span class="kw">pub </span>event_count: u128,
-	<span class="doccomment">/// A commitment to the events produced in this block
-	</span><span class="kw">pub </span>event_commitment: U256,
-	<span class="doccomment">/// The version of the Starknet protocol used when creating this block
-	</span><span class="kw">pub </span>protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,
-	<span class="doccomment">/// Extraneous data that might be useful for running transactions
-	</span><span class="kw">pub </span>extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
+    <span class="doccomment">/// The hash of this block’s parent.
+    </span><span class="kw">pub </span>parent_block_hash: U256,
+    <span class="doccomment">/// The number (height) of this block.
+    </span><span class="kw">pub </span>block_number: U256,
+    <span class="doccomment">/// The state commitment after this block.
+    </span><span class="kw">pub </span>global_state_root: U256,
+    <span class="doccomment">/// The Starknet address of the sequencer who created this block.
+    </span><span class="kw">pub </span>sequencer_address: U256,
+    <span class="doccomment">/// The time the sequencer created this block before executing transactions
+    </span><span class="kw">pub </span>block_timestamp: u64,
+    <span class="doccomment">/// The number of transactions in a block
+    </span><span class="kw">pub </span>transaction_count: u128,
+    <span class="doccomment">/// A commitment to the transactions included in the block
+    </span><span class="kw">pub </span>transaction_commitment: U256,
+    <span class="doccomment">/// The number of events
+    </span><span class="kw">pub </span>event_count: u128,
+    <span class="doccomment">/// A commitment to the events produced in this block
+    </span><span class="kw">pub </span>event_commitment: U256,
+    <span class="doccomment">/// The version of the Starknet protocol used when creating this block
+    </span><span class="kw">pub </span>protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,
+    <span class="doccomment">/// Extraneous data that might be useful for running transactions
+    </span><span class="kw">pub </span>extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
 }
 
 <span class="kw">impl </span>Header {
-	<span class="doccomment">/// Creates a new header.
-	</span><span class="attr">#[must_use]
-	</span><span class="kw">pub fn </span>new(
-		parent_block_hash: U256,
-		block_number: U256,
-		global_state_root: U256,
-		sequencer_address: U256,
-		block_timestamp: u64,
-		transaction_count: u128,
-		transaction_commitment: U256,
-		event_count: u128,
-		event_commitment: U256,
-		protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,
-		extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
-	) -&gt; <span class="self">Self </span>{
-		<span class="self">Self </span>{
-			parent_block_hash,
-			block_number,
-			global_state_root,
-			sequencer_address,
-			block_timestamp,
-			transaction_count,
-			transaction_commitment,
-			event_count,
-			event_commitment,
-			protocol_version,
-			extra_data,
-		}
-	}
+    <span class="doccomment">/// Creates a new header.
+    </span><span class="attr">#[must_use]
+    </span><span class="kw">pub fn </span>new(
+        parent_block_hash: U256,
+        block_number: U256,
+        global_state_root: U256,
+        sequencer_address: U256,
+        block_timestamp: u64,
+        transaction_count: u128,
+        transaction_commitment: U256,
+        event_count: u128,
+        event_commitment: U256,
+        protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,
+        extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            parent_block_hash,
+            block_number,
+            global_state_root,
+            sequencer_address,
+            block_timestamp,
+            transaction_count,
+            transaction_commitment,
+            event_count,
+            event_commitment,
+            protocol_version,
+            extra_data,
+        }
+    }
 
-	<span class="doccomment">/// Compute the hash of the header.
-	/// # TODO
-	/// - Implement this function.
-	</span><span class="attr">#[must_use]
-	</span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; H256 {
-		H256::from_slice(
-			frame_support::Hashable::blake2_256(<span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode()).as_slice(),
-		)
-	}
+    <span class="doccomment">/// Compute the hash of the header.
+    /// # TODO
+    /// - Implement this function.
+    </span><span class="attr">#[must_use]
+    </span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; H256 {
+        H256::from_slice(frame_support::Hashable::blake2_256(<span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode()).as_slice())
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

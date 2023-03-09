@@ -80,14 +80,10 @@
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Cairo Execution Engine pallet custom types.
-</span><span class="kw">use </span><span class="kw">crate</span>::Config;
-<span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
+</span><span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
+
+<span class="kw">use </span><span class="kw">crate</span>::Config;
 
 <span class="doccomment">/// Identifier of a Cairo assembly program.
 </span><span class="kw">pub type </span>CairoAssemblyProgamId = [u8; <span class="number">32</span>];
@@ -108,17 +104,17 @@
 </span><span class="attr">#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 </span><span class="kw">pub struct </span>SierraProgram&lt;T: Config&gt; {
-	<span class="doccomment">/// The identifier of the Sierra program.
-	</span><span class="kw">pub </span>id: SierraProgramId,
-	<span class="doccomment">/// The code of the Sierra program.
-	</span><span class="kw">pub </span>code: BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
-	<span class="doccomment">/// The account that deployed the Sierra program.
-	</span><span class="kw">pub </span>deployer_account: T::AccountId,
-	<span class="doccomment">/// Id of the compiled Cairo assembly program if it has been compiled.
-	/// If the Sierra program has not been compiled, this field is set to `None`.
-	/// If the Sierra program has been compiled, this field is set to
-	/// `Some(cairo_assembly_program_id)`.
-	</span><span class="kw">pub </span>cairo_assembly_program_id: <span class="prelude-ty">Option</span>&lt;CairoAssemblyProgamId&gt;,
+    <span class="doccomment">/// The identifier of the Sierra program.
+    </span><span class="kw">pub </span>id: SierraProgramId,
+    <span class="doccomment">/// The code of the Sierra program.
+    </span><span class="kw">pub </span>code: BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
+    <span class="doccomment">/// The account that deployed the Sierra program.
+    </span><span class="kw">pub </span>deployer_account: T::AccountId,
+    <span class="doccomment">/// Id of the compiled Cairo assembly program if it has been compiled.
+    /// If the Sierra program has not been compiled, this field is set to `None`.
+    /// If the Sierra program has been compiled, this field is set to
+    /// `Some(cairo_assembly_program_id)`.
+    </span><span class="kw">pub </span>cairo_assembly_program_id: <span class="prelude-ty">Option</span>&lt;CairoAssemblyProgamId&gt;,
 }
 
 <span class="doccomment">/// Cairo assembly program representation.
@@ -126,17 +122,17 @@
 </span><span class="attr">#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 </span><span class="kw">pub struct </span>CairoAssemblyProgram&lt;T: Config&gt; {
-	<span class="doccomment">/// The identifier of the Cairo assembly program.
-	/// We allow this field to be `None` because we might want to separate the compilation step
-	/// from the generation of the Cairo assembly program identifier.
-	/// If at some point that it does not make sense, we can remove the `Option` and make this
-	/// field mandatory.
-	</span><span class="kw">pub </span>id: CairoAssemblyProgamId,
-	<span class="doccomment">/// The identifier of the Sierra program that was compiled to the Cairo assembly program.
-	/// None if the Cairo assembly program was not compiled from a Sierra program.
-	</span><span class="kw">pub </span>sierra_program_id: <span class="prelude-ty">Option</span>&lt;SierraProgramId&gt;,
-	<span class="doccomment">/// The code of the Cairo assembly program.
-	</span><span class="kw">pub </span>code: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
+    <span class="doccomment">/// The identifier of the Cairo assembly program.
+    /// We allow this field to be `None` because we might want to separate the compilation step
+    /// from the generation of the Cairo assembly program identifier.
+    /// If at some point that it does not make sense, we can remove the `Option` and make this
+    /// field mandatory.
+    </span><span class="kw">pub </span>id: CairoAssemblyProgamId,
+    <span class="doccomment">/// The identifier of the Sierra program that was compiled to the Cairo assembly program.
+    /// None if the Cairo assembly program was not compiled from a Sierra program.
+    </span><span class="kw">pub </span>sierra_program_id: <span class="prelude-ty">Option</span>&lt;SierraProgramId&gt;,
+    <span class="doccomment">/// The code of the Cairo assembly program.
+    </span><span class="kw">pub </span>code: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
 }
 
 <span class="doccomment">/// Cairo assembly program input.
@@ -147,10 +143,7 @@
 /// `MaxCairoAssemblyProgramInputNumber`.
 </span><span class="attr">#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 </span><span class="kw">pub struct </span>CairoAssemblyProgramInput(
-	BoundedVec&lt;
-		BoundedVec&lt;u8, MaxCairoAssemblyProgramInputLength&gt;,
-		MaxCairoAssemblyProgramInputNumber,
-	&gt;,
+    BoundedVec&lt;BoundedVec&lt;u8, MaxCairoAssemblyProgramInputLength&gt;, MaxCairoAssemblyProgramInputNumber&gt;,
 );
 
 <span class="doccomment">/// Cairo assembly program output.
@@ -161,16 +154,13 @@
 /// `MaxCairoAssemblyProgramInputNumber`.
 </span><span class="attr">#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 </span><span class="kw">pub struct </span>CairoAssemblyProgramOutput(
-	BoundedVec&lt;
-		BoundedVec&lt;u8, MaxCairoAssemblyProgramInputLength&gt;,
-		MaxCairoAssemblyProgramInputNumber,
-	&gt;,
+    BoundedVec&lt;BoundedVec&lt;u8, MaxCairoAssemblyProgramInputLength&gt;, MaxCairoAssemblyProgramInputNumber&gt;,
 );
 
 <span class="kw">impl </span>CairoAssemblyProgramOutput {
-	<span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
-		CairoAssemblyProgramOutput(BoundedVec::with_bounded_capacity(<span class="number">0</span>))
-	}
+    <span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
+        CairoAssemblyProgramOutput(BoundedVec::with_bounded_capacity(<span class="number">0</span>))
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pallet_cairo" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

@@ -8,19 +8,15 @@
 <a href="#8" id="8">8</a>
 <a href="#9" id="9">9</a>
 <a href="#10" id="10">10</a>
-<a href="#11" id="11">11</a>
-<a href="#12" id="12">12</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
-</span><span class="kw">use </span>poseidon_hash::{
-	convert::{felts_from_u8s, u8s_from_felts},
-	hash_sw8,
-	parameters::sw8::GF,
-};
+</span><span class="kw">use </span>poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
+<span class="kw">use </span>poseidon_hash::hash_sw8;
+<span class="kw">use </span>poseidon_hash::parameters::sw8::GF;
 <span class="doccomment">/// The Poseidon hash function.
 </span><span class="kw">pub fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
-	<span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(<span class="kw-2">&amp;</span>_data);
-	<span class="kw">let </span>result = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
-	result.try_into().unwrap()
+    <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(<span class="kw-2">&amp;</span>_data);
+    <span class="kw">let </span>result = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
+    result.try_into().unwrap()
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

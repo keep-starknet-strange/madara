@@ -427,25 +427,6 @@
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
 <a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
 </pre><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
 </span><span class="kw">extern crate </span>alloc;
@@ -482,417 +463,398 @@
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
 
-	<span class="kw">use crate</span>::{
-		compilation::{mock::SierraCompilerMock, SierraCompiler},
-		execution::{
-			cairo_vm_executor::{CairoVmExecutor, CAIRO_VM_EXECUTOR},
-			CairoExecutor,
-		},
-		hash::Hasher,
-		types::{
-			CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput,
-			CairoAssemblyProgramOutput, SierraProgram, SierraProgramId,
-		},
-	};
-	<span class="kw">use </span>frame_support::{pallet_prelude::<span class="kw-2">*</span>, traits::Randomness};
-	<span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>frame_support::traits::Randomness;
+    <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 
-	<span class="attr">#[pallet::pallet]
-	#[pallet::generate_store(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Store)]
-	</span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
+    <span class="kw">use </span><span class="kw">crate</span>::compilation::mock::SierraCompilerMock;
+    <span class="kw">use </span><span class="kw">crate</span>::compilation::SierraCompiler;
+    <span class="kw">use </span><span class="kw">crate</span>::execution::cairo_vm_executor::{CairoVmExecutor, CAIRO_VM_EXECUTOR};
+    <span class="kw">use </span><span class="kw">crate</span>::execution::CairoExecutor;
+    <span class="kw">use </span><span class="kw">crate</span>::hash::Hasher;
+    <span class="kw">use </span><span class="kw">crate</span>::types::{
+        CairoAssemblyProgamId, CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput,
+        SierraProgram, SierraProgramId,
+    };
 
-	<span class="doccomment">/// Configure the pallet by specifying the parameters and types on which it depends.
-	</span><span class="attr">#[pallet::config]
-	</span><span class="kw">pub trait </span>Config: frame_system::Config {
-		<span class="doccomment">/// Because this pallet emits events, it depends on the runtime&#39;s definition of an event.
-		</span><span class="kw">type </span>RuntimeEvent: From&lt;Event&lt;<span class="self">Self</span>&gt;&gt; + IsType&lt;&lt;<span class="self">Self </span><span class="kw">as </span>frame_system::Config&gt;::RuntimeEvent&gt;;
-		<span class="doccomment">/// The type of Randomness we want to specify for this pallet.
-		</span><span class="kw">type </span>Randomness: Randomness&lt;<span class="self">Self</span>::Hash, <span class="self">Self</span>::BlockNumber&gt;;
-		<span class="doccomment">/// The maximum length of a Sierra program.
-		/// This is used to bound the size of the Sierra program code.
-		</span><span class="kw">type </span>MaxSierraProgramLength: Get&lt;u32&gt;;
-		<span class="doccomment">/// The maximum length of a Cairo assembly program.
-		/// This is used to bound the size of the Cairo assembly program code.
-		</span><span class="kw">type </span>MaxCairoAssemblyProgramLength: Get&lt;u32&gt;;
+    <span class="attr">#[pallet::pallet]
+    #[pallet::generate_store(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Store)]
+    </span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
 
-		<span class="doccomment">/// The hashing function to use.
-		</span><span class="kw">type </span>SystemHash: Hasher;
-	}
+    <span class="doccomment">/// Configure the pallet by specifying the parameters and types on which it depends.
+    </span><span class="attr">#[pallet::config]
+    </span><span class="kw">pub trait </span>Config: frame_system::Config {
+        <span class="doccomment">/// Because this pallet emits events, it depends on the runtime&#39;s definition of an event.
+        </span><span class="kw">type </span>RuntimeEvent: From&lt;Event&lt;<span class="self">Self</span>&gt;&gt; + IsType&lt;&lt;<span class="self">Self </span><span class="kw">as </span>frame_system::Config&gt;::RuntimeEvent&gt;;
+        <span class="doccomment">/// The type of Randomness we want to specify for this pallet.
+        </span><span class="kw">type </span>Randomness: Randomness&lt;<span class="self">Self</span>::Hash, <span class="self">Self</span>::BlockNumber&gt;;
+        <span class="doccomment">/// The maximum length of a Sierra program.
+        /// This is used to bound the size of the Sierra program code.
+        </span><span class="kw">type </span>MaxSierraProgramLength: Get&lt;u32&gt;;
+        <span class="doccomment">/// The maximum length of a Cairo assembly program.
+        /// This is used to bound the size of the Cairo assembly program code.
+        </span><span class="kw">type </span>MaxCairoAssemblyProgramLength: Get&lt;u32&gt;;
 
-	<span class="doccomment">/// The Cairo Execution Engine pallet storage items.
-	/// STORAGE
+        <span class="doccomment">/// The hashing function to use.
+        </span><span class="kw">type </span>SystemHash: Hasher;
+    }
 
-	/// List of all deployed Sierra programs.
-	/// Since the key of the map is computed using a hash function, we can use the `Identity`
-	/// hasher.
-	</span><span class="attr">#[pallet::storage]
-	#[pallet::getter(<span class="kw">fn </span>sierra_programs)]
-	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>SierraPrograms&lt;T: Config&gt; =
-		StorageMap&lt;<span class="kw">_</span>, Identity, SierraProgramId, SierraProgram&lt;T&gt;&gt;;
+    <span class="doccomment">/// The Cairo Execution Engine pallet storage items.
+    /// STORAGE
 
-	<span class="doccomment">/// List of all compilied Cairo assembly programs.
-	/// Since the key of the map is computed using a hash function, we can use the `Identity`
-	/// hasher.
-	</span><span class="attr">#[pallet::storage]
-	#[pallet::getter(<span class="kw">fn </span>cairo_assembly_programs)]
-	</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CairoAssemblyPrograms&lt;T: Config&gt; =
-		StorageMap&lt;<span class="kw">_</span>, Identity, CairoAssemblyProgamId, CairoAssemblyProgram&lt;T&gt;&gt;;
+    /// List of all deployed Sierra programs.
+    /// Since the key of the map is computed using a hash function, we can use the `Identity`
+    /// hasher.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>sierra_programs)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>SierraPrograms&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, SierraProgramId, SierraProgram&lt;T&gt;&gt;;
 
-	<span class="doccomment">/// The Cairo Execution Engine pallet events.
-	/// EVENTS
-	/// See: `&lt;https://docs.substrate.io/main-docs/build/events-errors/&gt;`
-	</span><span class="attr">#[pallet::event]
-	#[pallet::generate_deposit(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>deposit_event)]
-	</span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {
-		<span class="doccomment">/// A new Sierra program has been successfully deployed.
-		</span>SierraProgramDeployed { id: SierraProgramId, deployer_account: T::AccountId },
-		<span class="doccomment">/// A new Cairo assembly program has been successfully compiled.
-		</span>CairoAssemblyProgramCompiled {
-			sierra_program_id: SierraProgramId,
-			cairo_assembly_program_id: CairoAssemblyProgamId,
-		},
-		<span class="doccomment">/// A new Cairo assembly program has been successfully deployed.
-		</span>CairoAssemblyProgramDeployed { id: CairoAssemblyProgamId, deployer_account: T::AccountId },
-		<span class="doccomment">/// A Cairo assembly program has been successfully executed.
-		</span>CairoAssemblyProgramExecuted {
-			cairo_assembly_program_id: CairoAssemblyProgamId,
-			caller_account: T::AccountId,
-		},
-	}
+    <span class="doccomment">/// List of all compilied Cairo assembly programs.
+    /// Since the key of the map is computed using a hash function, we can use the `Identity`
+    /// hasher.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>cairo_assembly_programs)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CairoAssemblyPrograms&lt;T: Config&gt; =
+        StorageMap&lt;<span class="kw">_</span>, Identity, CairoAssemblyProgamId, CairoAssemblyProgram&lt;T&gt;&gt;;
 
-	<span class="doccomment">/// The Cairo Execution Engine pallet custom errors.
-	/// ERRORS
-	</span><span class="attr">#[pallet::error]
-	</span><span class="kw">pub enum </span>Error&lt;T&gt; {
-		<span class="doccomment">/// The program is too big and does not comply with maximum size restrictions set in
-		/// config.
-		</span>ProgramTooBig,
-		<span class="doccomment">/// The Sierra program does not exist.
-		</span>SierraProgramNotFound,
-		<span class="doccomment">/// The Cairo assembly program does not exist.
-		</span>CairoAssemblyProgramNotFound,
-		<span class="doccomment">/// The Cairo assembly program already exists.
-		</span>CairoAssemblyProgramAlreadyExists,
-	}
+    <span class="doccomment">/// The Cairo Execution Engine pallet events.
+    /// EVENTS
+    /// See: `&lt;https://docs.substrate.io/main-docs/build/events-errors/&gt;`
+    </span><span class="attr">#[pallet::event]
+    #[pallet::generate_deposit(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>deposit_event)]
+    </span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {
+        <span class="doccomment">/// A new Sierra program has been successfully deployed.
+        </span>SierraProgramDeployed { id: SierraProgramId, deployer_account: T::AccountId },
+        <span class="doccomment">/// A new Cairo assembly program has been successfully compiled.
+        </span>CairoAssemblyProgramCompiled {
+            sierra_program_id: SierraProgramId,
+            cairo_assembly_program_id: CairoAssemblyProgamId,
+        },
+        <span class="doccomment">/// A new Cairo assembly program has been successfully deployed.
+        </span>CairoAssemblyProgramDeployed { id: CairoAssemblyProgamId, deployer_account: T::AccountId },
+        <span class="doccomment">/// A Cairo assembly program has been successfully executed.
+        </span>CairoAssemblyProgramExecuted { cairo_assembly_program_id: CairoAssemblyProgamId, caller_account: T::AccountId },
+    }
 
-	<span class="doccomment">/// The Cairo Execution Engine pallet external functions.
-	/// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	/// These functions materialize as &quot;extrinsics&quot;, which are often compared to transactions.
-	/// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
-	</span><span class="attr">#[pallet::call]
-	</span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-		<span class="doccomment">/// Deploy a new Sierra program.
-		/// # Arguments
-		/// - `origin`: The origin of the call
-		/// - `sierra_code`: The Sierra code of the program to deploy.
-		/// # TODO
-		/// - do benchmarking to determine the appropriate `weight` for this call.
-		</span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
-		#[pallet::weight(<span class="number">0</span>)]
-		</span><span class="kw">pub fn </span>deploy_sierra_program(
-			origin: OriginFor&lt;T&gt;,
-			sierra_code: BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
-		) -&gt; DispatchResult {
-			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-			</span><span class="kw">let </span>deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
+    <span class="doccomment">/// The Cairo Execution Engine pallet custom errors.
+    /// ERRORS
+    </span><span class="attr">#[pallet::error]
+    </span><span class="kw">pub enum </span>Error&lt;T&gt; {
+        <span class="doccomment">/// The program is too big and does not comply with maximum size restrictions set in
+        /// config.
+        </span>ProgramTooBig,
+        <span class="doccomment">/// The Sierra program does not exist.
+        </span>SierraProgramNotFound,
+        <span class="doccomment">/// The Cairo assembly program does not exist.
+        </span>CairoAssemblyProgramNotFound,
+        <span class="doccomment">/// The Cairo assembly program already exists.
+        </span>CairoAssemblyProgramAlreadyExists,
+    }
 
-			<span class="macro">log::info!</span>(<span class="string">&quot;Deploying Sierra program from account: {:?}&quot;</span>, deployer_account);
+    <span class="doccomment">/// The Cairo Execution Engine pallet external functions.
+    /// Dispatchable functions allows users to interact with the pallet and invoke state changes.
+    /// These functions materialize as &quot;extrinsics&quot;, which are often compared to transactions.
+    /// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
+    </span><span class="attr">#[pallet::call]
+    </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
+        <span class="doccomment">/// Deploy a new Sierra program.
+        /// # Arguments
+        /// - `origin`: The origin of the call
+        /// - `sierra_code`: The Sierra code of the program to deploy.
+        /// # TODO
+        /// - do benchmarking to determine the appropriate `weight` for this call.
+        </span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
+        #[pallet::weight(<span class="number">0</span>)]
+        </span><span class="kw">pub fn </span>deploy_sierra_program(
+            origin: OriginFor&lt;T&gt;,
+            sierra_code: BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
+        ) -&gt; DispatchResult {
+            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
+            </span><span class="kw">let </span>deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
 
-			<span class="comment">// Call internal function to do the actual deployment.
-			</span><span class="self">Self</span>::do_deploy_sierra_program(<span class="kw-2">&amp;</span>deployer_account, sierra_code)<span class="question-mark">?</span>;
+            <span class="macro">log::info!</span>(<span class="string">&quot;Deploying Sierra program from account: {:?}&quot;</span>, deployer_account);
 
-			<span class="prelude-val">Ok</span>(())
-		}
+            <span class="comment">// Call internal function to do the actual deployment.
+            </span><span class="self">Self</span>::do_deploy_sierra_program(<span class="kw-2">&amp;</span>deployer_account, sierra_code)<span class="question-mark">?</span>;
 
-		<span class="doccomment">/// Deploy a new Cairo assembly program.
-		/// # Arguments
-		/// - `origin`: The origin of the call
-		/// - `cairo_assembly_program`: The Cairo assembly code of the program to deploy.
-		/// # TODO
-		/// - do benchmarking to determine the appropriate `weight` for this call.
-		</span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
-		#[pallet::weight(<span class="number">0</span>)]
-		</span><span class="kw">pub fn </span>deploy_cairo_assembly_program(
-			origin: OriginFor&lt;T&gt;,
-			cairo_assembly_program: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
-		) -&gt; DispatchResult {
-			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-			</span><span class="kw">let </span>deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        }
 
-			<span class="macro">log::info!</span>(<span class="string">&quot;Deploying Cairo assembly program from account: {:?}&quot;</span>, deployer_account);
+        <span class="doccomment">/// Deploy a new Cairo assembly program.
+        /// # Arguments
+        /// - `origin`: The origin of the call
+        /// - `cairo_assembly_program`: The Cairo assembly code of the program to deploy.
+        /// # TODO
+        /// - do benchmarking to determine the appropriate `weight` for this call.
+        </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
+        #[pallet::weight(<span class="number">0</span>)]
+        </span><span class="kw">pub fn </span>deploy_cairo_assembly_program(
+            origin: OriginFor&lt;T&gt;,
+            cairo_assembly_program: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
+        ) -&gt; DispatchResult {
+            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
+            </span><span class="kw">let </span>deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
 
-			<span class="comment">// Call internal function to do the actual deployment.
-			</span><span class="self">Self</span>::do_deploy_cairo_assembly_program(<span class="kw-2">&amp;</span>deployer_account, cairo_assembly_program)<span class="question-mark">?</span>;
+            <span class="macro">log::info!</span>(<span class="string">&quot;Deploying Cairo assembly program from account: {:?}&quot;</span>, deployer_account);
 
-			<span class="prelude-val">Ok</span>(())
-		}
+            <span class="comment">// Call internal function to do the actual deployment.
+            </span><span class="self">Self</span>::do_deploy_cairo_assembly_program(<span class="kw-2">&amp;</span>deployer_account, cairo_assembly_program)<span class="question-mark">?</span>;
 
-		<span class="doccomment">/// Compile a Sierra program into a Cairo assembly program and store it in storage.
-		/// # Arguments
-		/// - `origin`: The origin of the call
-		/// - `sierra_program_id`: The id of the Sierra program to compile.
-		/// # TODO
-		/// - do benchmarking to determine the appropriate `weight` for this call.
-		</span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
-		#[pallet::weight(<span class="number">0</span>)]
-		</span><span class="kw">pub fn </span>compile_sierra_program(
-			origin: OriginFor&lt;T&gt;,
-			sierra_program_id: SierraProgramId,
-		) -&gt; DispatchResult {
-			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-			</span><span class="kw">let </span>deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
-			<span class="comment">// Call internal function to do the actual compilation.
-			</span><span class="self">Self</span>::do_compile_sierra_program(<span class="kw-2">&amp;</span>deployer_account, sierra_program_id)<span class="question-mark">?</span>;
-			<span class="prelude-val">Ok</span>(())
-		}
+            <span class="prelude-val">Ok</span>(())
+        }
 
-		<span class="doccomment">/// Execute a Cairo assembly program.
-		/// # Arguments
-		/// - `origin`: The origin of the call
-		/// - `cairo_assembly_program_id`: The id of the Cairo assembly program to execute.
-		/// - `input`: The input to the Cairo assembly program.
-		/// # TODO
-		/// - do benchmarking to determine the appropriate `weight` for this call.
-		/// - implement the actual execution of the Cairo assembly program.
-		/// - implement the return value of the execution.
-		</span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
-		#[pallet::weight(<span class="number">0</span>)]
-		</span><span class="kw">pub fn </span>execute_cairo_assembly_program(
-			origin: OriginFor&lt;T&gt;,
-			cairo_assembly_program_id: CairoAssemblyProgamId,
-			input: CairoAssemblyProgramInput,
-		) -&gt; DispatchResult {
-			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-			</span><span class="kw">let </span>caller_account = ensure_signed(origin)<span class="question-mark">?</span>;
-			<span class="comment">// Call internal function to do the actual execution.
-			</span><span class="self">Self</span>::do_execute_cairo_assembly_program(
-				<span class="kw-2">&amp;</span>caller_account,
-				cairo_assembly_program_id,
-				input,
-			)<span class="question-mark">?</span>;
-			<span class="prelude-val">Ok</span>(())
-		}
+        <span class="doccomment">/// Compile a Sierra program into a Cairo assembly program and store it in storage.
+        /// # Arguments
+        /// - `origin`: The origin of the call
+        /// - `sierra_program_id`: The id of the Sierra program to compile.
+        /// # TODO
+        /// - do benchmarking to determine the appropriate `weight` for this call.
+        </span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
+        #[pallet::weight(<span class="number">0</span>)]
+        </span><span class="kw">pub fn </span>compile_sierra_program(origin: OriginFor&lt;T&gt;, sierra_program_id: SierraProgramId) -&gt; DispatchResult {
+            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
+            </span><span class="kw">let </span>deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
+            <span class="comment">// Call internal function to do the actual compilation.
+            </span><span class="self">Self</span>::do_compile_sierra_program(<span class="kw-2">&amp;</span>deployer_account, sierra_program_id)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        }
 
-		<span class="doccomment">/// Execute a hardcoded Cairo assembly program. (testing purposes only)
-		/// # Arguments
-		/// - `origin`: The origin of the call
-		/// - `program_id`: The id of the Cairo assembly program to execute.
-		</span><span class="attr">#[pallet::call_index(<span class="number">4</span>)]
-		#[pallet::weight(<span class="number">0</span>)]
-		</span><span class="kw">pub fn </span>execute_hardcoded_cairo_assembly_program(
-			origin: OriginFor&lt;T&gt;,
-			program_id: u8,
-		) -&gt; DispatchResult {
-			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-			</span><span class="kw">let </span>caller_account = ensure_signed(origin)<span class="question-mark">?</span>;
-			<span class="comment">// Call internal function to do the actual execution.
-			</span><span class="self">Self</span>::do_execute_hardcoded_cairo_assembly_program(<span class="kw-2">&amp;</span>caller_account, program_id)<span class="question-mark">?</span>;
-			<span class="prelude-val">Ok</span>(())
-		}
-	}
+        <span class="doccomment">/// Execute a Cairo assembly program.
+        /// # Arguments
+        /// - `origin`: The origin of the call
+        /// - `cairo_assembly_program_id`: The id of the Cairo assembly program to execute.
+        /// - `input`: The input to the Cairo assembly program.
+        /// # TODO
+        /// - do benchmarking to determine the appropriate `weight` for this call.
+        /// - implement the actual execution of the Cairo assembly program.
+        /// - implement the return value of the execution.
+        </span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
+        #[pallet::weight(<span class="number">0</span>)]
+        </span><span class="kw">pub fn </span>execute_cairo_assembly_program(
+            origin: OriginFor&lt;T&gt;,
+            cairo_assembly_program_id: CairoAssemblyProgamId,
+            input: CairoAssemblyProgramInput,
+        ) -&gt; DispatchResult {
+            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
+            </span><span class="kw">let </span>caller_account = ensure_signed(origin)<span class="question-mark">?</span>;
+            <span class="comment">// Call internal function to do the actual execution.
+            </span><span class="self">Self</span>::do_execute_cairo_assembly_program(<span class="kw-2">&amp;</span>caller_account, cairo_assembly_program_id, input)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        }
 
-	<span class="doccomment">/// The Cairo Execution Engine pallet internal functions.
-	</span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-		<span class="doccomment">/// Deploy a new Sierra program.
-		/// # Arguments
-		/// - `deployer_account`: The account identifier of the deployer.
-		/// - `sierra_code`: The Sierra code of the program to deploy.
-		</span><span class="kw">fn </span>do_deploy_sierra_program(
-			deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
-			sierra_code: BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
-			<span class="comment">// TODO: the Sierra program id must be the hash of the code, so that we can find
-			// duplicate programs and save storage space.
-			</span><span class="kw">let </span>sierra_program_id = <span class="self">Self</span>::gen_sierra_program_id(deployer_account, <span class="kw-2">&amp;</span>sierra_code)<span class="question-mark">?</span>;
+        <span class="doccomment">/// Execute a hardcoded Cairo assembly program. (testing purposes only)
+        /// # Arguments
+        /// - `origin`: The origin of the call
+        /// - `program_id`: The id of the Cairo assembly program to execute.
+        </span><span class="attr">#[pallet::call_index(<span class="number">4</span>)]
+        #[pallet::weight(<span class="number">0</span>)]
+        </span><span class="kw">pub fn </span>execute_hardcoded_cairo_assembly_program(origin: OriginFor&lt;T&gt;, program_id: u8) -&gt; DispatchResult {
+            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
+            </span><span class="kw">let </span>caller_account = ensure_signed(origin)<span class="question-mark">?</span>;
+            <span class="comment">// Call internal function to do the actual execution.
+            </span><span class="self">Self</span>::do_execute_hardcoded_cairo_assembly_program(<span class="kw-2">&amp;</span>caller_account, program_id)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
 
-			<span class="comment">// Validate the Sierra program
-			</span><span class="self">Self</span>::validate_sierra_code(<span class="kw-2">&amp;</span>sierra_code)<span class="question-mark">?</span>;
+    <span class="doccomment">/// The Cairo Execution Engine pallet internal functions.
+    </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
+        <span class="doccomment">/// Deploy a new Sierra program.
+        /// # Arguments
+        /// - `deployer_account`: The account identifier of the deployer.
+        /// - `sierra_code`: The Sierra code of the program to deploy.
+        </span><span class="kw">fn </span>do_deploy_sierra_program(
+            deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
+            sierra_code: BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
+            <span class="comment">// TODO: the Sierra program id must be the hash of the code, so that we can find
+            // duplicate programs and save storage space.
+            </span><span class="kw">let </span>sierra_program_id = <span class="self">Self</span>::gen_sierra_program_id(deployer_account, <span class="kw-2">&amp;</span>sierra_code)<span class="question-mark">?</span>;
 
-			<span class="comment">// Create the Sierra program instance.
-			</span><span class="kw">let </span>sierra_program = SierraProgram::&lt;T&gt; {
-				id: sierra_program_id,
-				code: sierra_code,
-				deployer_account: deployer_account.clone(),
-				<span class="comment">// The Cairo assembly program id is not known yet.
-				// It will be set when the Sierra program is compiled to Cairo assembly.
-				</span>cairo_assembly_program_id: <span class="prelude-val">None</span>,
-			};
+            <span class="comment">// Validate the Sierra program
+            </span><span class="self">Self</span>::validate_sierra_code(<span class="kw-2">&amp;</span>sierra_code)<span class="question-mark">?</span>;
 
-			<span class="comment">// Insert the Sierra program in storage.
-			</span>SierraPrograms::&lt;T&gt;::insert(sierra_program_id, <span class="kw-2">&amp;</span>sierra_program);
+            <span class="comment">// Create the Sierra program instance.
+            </span><span class="kw">let </span>sierra_program = SierraProgram::&lt;T&gt; {
+                id: sierra_program_id,
+                code: sierra_code,
+                deployer_account: deployer_account.clone(),
+                <span class="comment">// The Cairo assembly program id is not known yet.
+                // It will be set when the Sierra program is compiled to Cairo assembly.
+                </span>cairo_assembly_program_id: <span class="prelude-val">None</span>,
+            };
 
-			<span class="comment">// Emit events.
-			</span><span class="self">Self</span>::deposit_event(Event::SierraProgramDeployed {
-				id: sierra_program_id,
-				deployer_account: deployer_account.clone(),
-			});
+            <span class="comment">// Insert the Sierra program in storage.
+            </span>SierraPrograms::&lt;T&gt;::insert(sierra_program_id, <span class="kw-2">&amp;</span>sierra_program);
 
-			<span class="prelude-val">Ok</span>(sierra_program_id)
-		}
+            <span class="comment">// Emit events.
+            </span><span class="self">Self</span>::deposit_event(Event::SierraProgramDeployed {
+                id: sierra_program_id,
+                deployer_account: deployer_account.clone(),
+            });
 
-		<span class="doccomment">/// Deploy a new Cairo assembly program.
-		/// # Arguments
-		/// - `deployer_account`: The account identifier of the deployer.
-		/// - `cairo_assembly_program`: The Cairo assembly program to deploy.
-		</span><span class="kw">fn </span>do_deploy_cairo_assembly_program(
-			deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
-			cairo_assembly_program: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
-			<span class="comment">// Generate Cairo assembly program id.
-			</span><span class="kw">let </span>cairo_assembly_program_id =
-				<span class="self">Self</span>::gen_cairo_assembly_program_id(<span class="kw-2">&amp;</span>cairo_assembly_program)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(sierra_program_id)
+        }
 
-			<span class="comment">// Check if the Cairo assembly program already exists in storage.
-			</span><span class="macro">ensure!</span>(
-				!CairoAssemblyPrograms::&lt;T&gt;::contains_key(cairo_assembly_program_id),
-				Error::&lt;T&gt;::CairoAssemblyProgramAlreadyExists
-			);
+        <span class="doccomment">/// Deploy a new Cairo assembly program.
+        /// # Arguments
+        /// - `deployer_account`: The account identifier of the deployer.
+        /// - `cairo_assembly_program`: The Cairo assembly program to deploy.
+        </span><span class="kw">fn </span>do_deploy_cairo_assembly_program(
+            deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
+            cairo_assembly_program: BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
+            <span class="comment">// Generate Cairo assembly program id.
+            </span><span class="kw">let </span>cairo_assembly_program_id = <span class="self">Self</span>::gen_cairo_assembly_program_id(<span class="kw-2">&amp;</span>cairo_assembly_program)<span class="question-mark">?</span>;
 
-			<span class="comment">// Validate the Cairo assembly program
-			</span><span class="self">Self</span>::validate_cairo_assembly_program(<span class="kw-2">&amp;</span>cairo_assembly_program)<span class="question-mark">?</span>;
+            <span class="comment">// Check if the Cairo assembly program already exists in storage.
+            </span><span class="macro">ensure!</span>(
+                !CairoAssemblyPrograms::&lt;T&gt;::contains_key(cairo_assembly_program_id),
+                Error::&lt;T&gt;::CairoAssemblyProgramAlreadyExists
+            );
 
-			<span class="comment">// Create the Cairo assembly program instance.
-			</span><span class="kw">let </span>cairo_assembly_program = CairoAssemblyProgram::&lt;T&gt; {
-				id: cairo_assembly_program_id,
-				code: cairo_assembly_program,
-				sierra_program_id: <span class="prelude-val">None</span>,
-			};
+            <span class="comment">// Validate the Cairo assembly program
+            </span><span class="self">Self</span>::validate_cairo_assembly_program(<span class="kw-2">&amp;</span>cairo_assembly_program)<span class="question-mark">?</span>;
 
-			<span class="comment">// Insert the Cairo assembly program in storage.
-			</span>CairoAssemblyPrograms::&lt;T&gt;::insert(cairo_assembly_program_id, <span class="kw-2">&amp;</span>cairo_assembly_program);
+            <span class="comment">// Create the Cairo assembly program instance.
+            </span><span class="kw">let </span>cairo_assembly_program = CairoAssemblyProgram::&lt;T&gt; {
+                id: cairo_assembly_program_id,
+                code: cairo_assembly_program,
+                sierra_program_id: <span class="prelude-val">None</span>,
+            };
 
-			<span class="comment">// Emit events.
-			</span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramDeployed {
-				id: cairo_assembly_program_id,
-				deployer_account: deployer_account.clone(),
-			});
+            <span class="comment">// Insert the Cairo assembly program in storage.
+            </span>CairoAssemblyPrograms::&lt;T&gt;::insert(cairo_assembly_program_id, <span class="kw-2">&amp;</span>cairo_assembly_program);
 
-			<span class="prelude-val">Ok</span>(cairo_assembly_program_id)
-		}
+            <span class="comment">// Emit events.
+            </span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramDeployed {
+                id: cairo_assembly_program_id,
+                deployer_account: deployer_account.clone(),
+            });
 
-		<span class="doccomment">/// Compute the id of a Sierra program from it&#39;s code.
-		/// TODO: move to hash of the code
-		</span><span class="kw">pub fn </span>gen_sierra_program_id(
-			_deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
-			sierra_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
-			<span class="comment">// Compute the hash and return as id.
-			</span><span class="kw">let </span>_hash = T::SystemHash::hash(<span class="kw-2">&amp;</span>sierra_code);
-			<span class="prelude-val">Ok</span>(_hash)
-		}
+            <span class="prelude-val">Ok</span>(cairo_assembly_program_id)
+        }
 
-		<span class="doccomment">/// Validate the Sierra program code.
-		/// TODO: implement proper validation, use the cairo compiler to check.
-		</span><span class="kw">pub fn </span>validate_sierra_code(
-			sierra_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
-			<span class="comment">// Check that the program is not too big.
-			</span><span class="macro">ensure!</span>(
-				sierra_code.len() &lt;= T::MaxSierraProgramLength::get() <span class="kw">as </span>usize,
-				Error::&lt;T&gt;::ProgramTooBig
-			);
-			<span class="prelude-val">Ok</span>(())
-		}
+        <span class="doccomment">/// Compute the id of a Sierra program from it&#39;s code.
+        /// TODO: move to hash of the code
+        </span><span class="kw">pub fn </span>gen_sierra_program_id(
+            _deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
+            sierra_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;SierraProgramId, DispatchError&gt; {
+            <span class="comment">// Compute the hash and return as id.
+            </span><span class="kw">let </span>_hash = T::SystemHash::hash(<span class="kw-2">&amp;</span>sierra_code);
+            <span class="prelude-val">Ok</span>(_hash)
+        }
 
-		<span class="doccomment">/// Validate the Cairo assembly program.
-		/// TODO: implement proper validation.
-		</span><span class="kw">pub fn </span>validate_cairo_assembly_program(
-			cairo_assembly_program: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
-			<span class="comment">// Check that the program is not too big.
-			</span><span class="macro">ensure!</span>(
-				cairo_assembly_program.len() &lt;= T::MaxCairoAssemblyProgramLength::get() <span class="kw">as </span>usize,
-				Error::&lt;T&gt;::ProgramTooBig
-			);
-			<span class="prelude-val">Ok</span>(())
-		}
+        <span class="doccomment">/// Validate the Sierra program code.
+        /// TODO: implement proper validation, use the cairo compiler to check.
+        </span><span class="kw">pub fn </span>validate_sierra_code(
+            sierra_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxSierraProgramLength&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
+            <span class="comment">// Check that the program is not too big.
+            </span><span class="macro">ensure!</span>(sierra_code.len() &lt;= T::MaxSierraProgramLength::get() <span class="kw">as </span>usize, Error::&lt;T&gt;::ProgramTooBig);
+            <span class="prelude-val">Ok</span>(())
+        }
 
-		<span class="doccomment">/// Compile a Sierra program into a Cairo assembly program and store it in storage.
-		/// # Arguments
-		/// - `deployer_account`: The account identifier of the deployer.
-		/// - `sierra_program_id`: The id of the Sierra program to compile.
-		/// # Returns
-		/// - `CairoAssemblyProgamId`: The id of the compiled Cairo assembly program.
-		/// # TODO
-		/// - implement the compilation.
-		</span><span class="kw">pub fn </span>do_compile_sierra_program(
-			_deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
-			sierra_program_id: SierraProgramId,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgamId, DispatchError&gt; {
-			<span class="comment">// Retrieve the Sierra program from storage.
-			</span><span class="kw">let </span><span class="kw-2">mut </span>sierra_program = SierraPrograms::&lt;T&gt;::get(sierra_program_id)
-				.ok_or(Error::&lt;T&gt;::SierraProgramNotFound)<span class="question-mark">?</span>;
-			<span class="comment">// Create an instance of the Cairo compiler.
-			</span><span class="kw">let </span>compiler = SierraCompilerMock::default();
-			<span class="comment">// Compile the Sierra program into a Cairo assembly program.
-			</span><span class="kw">let </span>cairo_assembly_program = compiler.compile(<span class="kw-2">&amp;</span>sierra_program)<span class="question-mark">?</span>;
+        <span class="doccomment">/// Validate the Cairo assembly program.
+        /// TODO: implement proper validation.
+        </span><span class="kw">pub fn </span>validate_cairo_assembly_program(
+            cairo_assembly_program: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
+            <span class="comment">// Check that the program is not too big.
+            </span><span class="macro">ensure!</span>(
+                cairo_assembly_program.len() &lt;= T::MaxCairoAssemblyProgramLength::get() <span class="kw">as </span>usize,
+                Error::&lt;T&gt;::ProgramTooBig
+            );
+            <span class="prelude-val">Ok</span>(())
+        }
 
-			<span class="comment">// Store the Cairo assembly program in storage.
-			</span>CairoAssemblyPrograms::&lt;T&gt;::insert(cairo_assembly_program.id, <span class="kw-2">&amp;</span>cairo_assembly_program);
-			<span class="comment">// Update the Sierra program with the id of the Cairo assembly program.
-			</span>sierra_program.cairo_assembly_program_id = <span class="prelude-val">Some</span>(cairo_assembly_program.id);
-			<span class="comment">// Update the Sierra program in storage.
-			</span>SierraPrograms::&lt;T&gt;::insert(sierra_program_id, <span class="kw-2">&amp;</span>sierra_program);
+        <span class="doccomment">/// Compile a Sierra program into a Cairo assembly program and store it in storage.
+        /// # Arguments
+        /// - `deployer_account`: The account identifier of the deployer.
+        /// - `sierra_program_id`: The id of the Sierra program to compile.
+        /// # Returns
+        /// - `CairoAssemblyProgamId`: The id of the compiled Cairo assembly program.
+        /// # TODO
+        /// - implement the compilation.
+        </span><span class="kw">pub fn </span>do_compile_sierra_program(
+            _deployer_account: <span class="kw-2">&amp;</span>T::AccountId,
+            sierra_program_id: SierraProgramId,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgamId, DispatchError&gt; {
+            <span class="comment">// Retrieve the Sierra program from storage.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>sierra_program =
+                SierraPrograms::&lt;T&gt;::get(sierra_program_id).ok_or(Error::&lt;T&gt;::SierraProgramNotFound)<span class="question-mark">?</span>;
+            <span class="comment">// Create an instance of the Cairo compiler.
+            </span><span class="kw">let </span>compiler = SierraCompilerMock::default();
+            <span class="comment">// Compile the Sierra program into a Cairo assembly program.
+            </span><span class="kw">let </span>cairo_assembly_program = compiler.compile(<span class="kw-2">&amp;</span>sierra_program)<span class="question-mark">?</span>;
 
-			<span class="comment">// Emit events.
-			</span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramCompiled {
-				sierra_program_id,
-				cairo_assembly_program_id: cairo_assembly_program.id,
-			});
-			<span class="comment">// Return the id of the Cairo assembly program.
-			</span><span class="prelude-val">Ok</span>(cairo_assembly_program.id)
-		}
+            <span class="comment">// Store the Cairo assembly program in storage.
+            </span>CairoAssemblyPrograms::&lt;T&gt;::insert(cairo_assembly_program.id, <span class="kw-2">&amp;</span>cairo_assembly_program);
+            <span class="comment">// Update the Sierra program with the id of the Cairo assembly program.
+            </span>sierra_program.cairo_assembly_program_id = <span class="prelude-val">Some</span>(cairo_assembly_program.id);
+            <span class="comment">// Update the Sierra program in storage.
+            </span>SierraPrograms::&lt;T&gt;::insert(sierra_program_id, <span class="kw-2">&amp;</span>sierra_program);
 
-		<span class="doccomment">/// Execute a Cairo assembly program.
-		/// # Arguments
-		/// - `caller_account`: The account identifier of the caller.
-		/// - `cairo_assembly_program_id`: The id of the Cairo assembly program to execute.
-		/// - `input`: The input to pass to the Cairo assembly program.
-		/// # Returns
-		/// - `CairoAssemblyProgramOutput`: The output of the Cairo assembly program.
-		/// # TODO
-		/// - implement the execution.
-		</span><span class="kw">pub fn </span>do_execute_cairo_assembly_program(
-			caller_account: <span class="kw-2">&amp;</span>T::AccountId,
-			cairo_assembly_program_id: CairoAssemblyProgamId,
-			input: CairoAssemblyProgramInput,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, DispatchError&gt; {
-			<span class="comment">// Retrieve the Cairo assembly program from storage.
-			</span><span class="kw">let </span>cairo_assembly_program = CairoAssemblyPrograms::&lt;T&gt;::get(cairo_assembly_program_id)
-				.ok_or(Error::&lt;T&gt;::CairoAssemblyProgramNotFound)<span class="question-mark">?</span>;
-			<span class="comment">// Execute the Cairo assembly program.
-			</span><span class="kw">let </span>output = CAIRO_VM_EXECUTOR.execute(<span class="kw-2">&amp;</span>cairo_assembly_program, <span class="kw-2">&amp;</span>input)<span class="question-mark">?</span>;
+            <span class="comment">// Emit events.
+            </span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramCompiled {
+                sierra_program_id,
+                cairo_assembly_program_id: cairo_assembly_program.id,
+            });
+            <span class="comment">// Return the id of the Cairo assembly program.
+            </span><span class="prelude-val">Ok</span>(cairo_assembly_program.id)
+        }
 
-			<span class="comment">// Emit events.
-			</span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramExecuted {
-				cairo_assembly_program_id,
-				caller_account: caller_account.clone(),
-			});
-			<span class="prelude-val">Ok</span>(output)
-		}
+        <span class="doccomment">/// Execute a Cairo assembly program.
+        /// # Arguments
+        /// - `caller_account`: The account identifier of the caller.
+        /// - `cairo_assembly_program_id`: The id of the Cairo assembly program to execute.
+        /// - `input`: The input to pass to the Cairo assembly program.
+        /// # Returns
+        /// - `CairoAssemblyProgramOutput`: The output of the Cairo assembly program.
+        /// # TODO
+        /// - implement the execution.
+        </span><span class="kw">pub fn </span>do_execute_cairo_assembly_program(
+            caller_account: <span class="kw-2">&amp;</span>T::AccountId,
+            cairo_assembly_program_id: CairoAssemblyProgamId,
+            input: CairoAssemblyProgramInput,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, DispatchError&gt; {
+            <span class="comment">// Retrieve the Cairo assembly program from storage.
+            </span><span class="kw">let </span>cairo_assembly_program = CairoAssemblyPrograms::&lt;T&gt;::get(cairo_assembly_program_id)
+                .ok_or(Error::&lt;T&gt;::CairoAssemblyProgramNotFound)<span class="question-mark">?</span>;
+            <span class="comment">// Execute the Cairo assembly program.
+            </span><span class="kw">let </span>output = CAIRO_VM_EXECUTOR.execute(<span class="kw-2">&amp;</span>cairo_assembly_program, <span class="kw-2">&amp;</span>input)<span class="question-mark">?</span>;
 
-		<span class="doccomment">/// Compute the id of a Sierra program from it&#39;s code.
-		/// TODO: move to hash of the code
-		</span><span class="kw">pub fn </span>gen_cairo_assembly_program_id(
-			cairo_assembly_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgamId, DispatchError&gt; {
-			<span class="comment">// Compute the hash and return as id.
-			</span><span class="kw">let </span>_hash = T::SystemHash::hash(<span class="kw-2">&amp;</span>cairo_assembly_code);
-			<span class="prelude-val">Ok</span>(_hash)
-		}
+            <span class="comment">// Emit events.
+            </span><span class="self">Self</span>::deposit_event(Event::CairoAssemblyProgramExecuted {
+                cairo_assembly_program_id,
+                caller_account: caller_account.clone(),
+            });
+            <span class="prelude-val">Ok</span>(output)
+        }
 
-		<span class="doccomment">/// Execute a hardcoded Cairo assembly program. (testing purposes only)
-		/// # Arguments
-		/// - `caller_account`: The account identifier of the caller.
-		/// - `program_id`: The id of the Cairo assembly program to execute.
-		</span><span class="kw">pub fn </span>do_execute_hardcoded_cairo_assembly_program(
-			_caller_account: <span class="kw-2">&amp;</span>T::AccountId,
-			program_id: u8,
-		) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
-			CairoVmExecutor::run_hardcoded_program(program_id);
-			<span class="prelude-val">Ok</span>(())
-		}
-	}
+        <span class="doccomment">/// Compute the id of a Sierra program from it&#39;s code.
+        /// TODO: move to hash of the code
+        </span><span class="kw">pub fn </span>gen_cairo_assembly_program_id(
+            cairo_assembly_code: <span class="kw-2">&amp;</span>BoundedVec&lt;u8, T::MaxCairoAssemblyProgramLength&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgamId, DispatchError&gt; {
+            <span class="comment">// Compute the hash and return as id.
+            </span><span class="kw">let </span>_hash = T::SystemHash::hash(<span class="kw-2">&amp;</span>cairo_assembly_code);
+            <span class="prelude-val">Ok</span>(_hash)
+        }
+
+        <span class="doccomment">/// Execute a hardcoded Cairo assembly program. (testing purposes only)
+        /// # Arguments
+        /// - `caller_account`: The account identifier of the caller.
+        /// - `program_id`: The id of the Cairo assembly program to execute.
+        </span><span class="kw">pub fn </span>do_execute_hardcoded_cairo_assembly_program(
+            _caller_account: <span class="kw-2">&amp;</span>T::AccountId,
+            program_id: u8,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
+            CairoVmExecutor::run_hardcoded_program(program_id);
+            <span class="prelude-val">Ok</span>(())
+        }
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pallet_cairo" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

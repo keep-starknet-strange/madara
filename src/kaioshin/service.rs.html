@@ -314,367 +314,321 @@
 <a href="#314" id="314">314</a>
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-</span><span class="kw">use </span>kaioshin_runtime::{<span class="self">self</span>, opaque::Block, RuntimeApi};
+</span><span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>std::time::Duration;
+
+<span class="kw">use </span>kaioshin_runtime::opaque::Block;
+<span class="kw">use </span>kaioshin_runtime::{<span class="self">self</span>, RuntimeApi};
 <span class="kw">use </span>sc_client_api::BlockBackend;
 <span class="kw">use </span>sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 <span class="kw">pub use </span>sc_executor::NativeElseWasmExecutor;
 <span class="kw">use </span>sc_finality_grandpa::SharedVoterState;
 <span class="kw">use </span>sc_keystore::LocalKeystore;
 <span class="kw">use </span>sc_network_common::sync::warp::WarpSyncParams;
-<span class="kw">use </span>sc_service::{error::Error <span class="kw">as </span>ServiceError, Configuration, TaskManager};
+<span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
+<span class="kw">use </span>sc_service::{Configuration, TaskManager};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryWorker};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
-<span class="kw">use </span>std::{sync::Arc, time::Duration};
 <span class="comment">// Our native executor instance.
 </span><span class="kw">pub struct </span>ExecutorDispatch;
 
 <span class="kw">impl </span>sc_executor::NativeExecutionDispatch <span class="kw">for </span>ExecutorDispatch {
-	<span class="doccomment">/// Only enable the benchmarking host functions when we actually want to benchmark.
-	</span><span class="attr">#[cfg(feature = <span class="string">&quot;runtime-benchmarks&quot;</span>)]
-	</span><span class="kw">type </span>ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	<span class="doccomment">/// Otherwise we only use the default Substrate host functions.
-	</span><span class="attr">#[cfg(not(feature = <span class="string">&quot;runtime-benchmarks&quot;</span>))]
-	</span><span class="kw">type </span>ExtendHostFunctions = ();
+    <span class="doccomment">/// Only enable the benchmarking host functions when we actually want to benchmark.
+    </span><span class="attr">#[cfg(feature = <span class="string">&quot;runtime-benchmarks&quot;</span>)]
+    </span><span class="kw">type </span>ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+    <span class="doccomment">/// Otherwise we only use the default Substrate host functions.
+    </span><span class="attr">#[cfg(not(feature = <span class="string">&quot;runtime-benchmarks&quot;</span>))]
+    </span><span class="kw">type </span>ExtendHostFunctions = ();
 
-	<span class="kw">fn </span>dispatch(method: <span class="kw-2">&amp;</span>str, data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
-		kaioshin_runtime::api::dispatch(method, data)
-	}
+    <span class="kw">fn </span>dispatch(method: <span class="kw-2">&amp;</span>str, data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt; {
+        kaioshin_runtime::api::dispatch(method, data)
+    }
 
-	<span class="kw">fn </span>native_version() -&gt; sc_executor::NativeVersion {
-		kaioshin_runtime::native_version()
-	}
+    <span class="kw">fn </span>native_version() -&gt; sc_executor::NativeVersion {
+        kaioshin_runtime::native_version()
+    }
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>FullClient =
-	sc_service::TFullClient&lt;Block, RuntimeApi, NativeElseWasmExecutor&lt;ExecutorDispatch&gt;&gt;;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>FullClient = sc_service::TFullClient&lt;Block, RuntimeApi, NativeElseWasmExecutor&lt;ExecutorDispatch&gt;&gt;;
 <span class="kw">type </span>FullBackend = sc_service::TFullBackend&lt;Block&gt;;
 <span class="kw">type </span>FullSelectChain = sc_consensus::LongestChain&lt;FullBackend, Block&gt;;
 
 <span class="kw">pub fn </span>new_partial(
-	config: <span class="kw-2">&amp;</span>Configuration,
+    config: <span class="kw-2">&amp;</span>Configuration,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;
-	sc_service::PartialComponents&lt;
-		FullClient,
-		FullBackend,
-		FullSelectChain,
-		sc_consensus::DefaultImportQueue&lt;Block, FullClient&gt;,
-		sc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
-		(
-			sc_finality_grandpa::GrandpaBlockImport&lt;
-				FullBackend,
-				Block,
-				FullClient,
-				FullSelectChain,
-			&gt;,
-			sc_finality_grandpa::LinkHalf&lt;Block, FullClient, FullSelectChain&gt;,
-			<span class="prelude-ty">Option</span>&lt;Telemetry&gt;,
-		),
-	&gt;,
-	ServiceError,
+    sc_service::PartialComponents&lt;
+        FullClient,
+        FullBackend,
+        FullSelectChain,
+        sc_consensus::DefaultImportQueue&lt;Block, FullClient&gt;,
+        sc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
+        (
+            sc_finality_grandpa::GrandpaBlockImport&lt;FullBackend, Block, FullClient, FullSelectChain&gt;,
+            sc_finality_grandpa::LinkHalf&lt;Block, FullClient, FullSelectChain&gt;,
+            <span class="prelude-ty">Option</span>&lt;Telemetry&gt;,
+        ),
+    &gt;,
+    ServiceError,
 &gt; {
-	<span class="kw">if </span>config.keystore_remote.is_some() {
-		<span class="kw">return </span><span class="prelude-val">Err</span>(ServiceError::Other(<span class="string">&quot;Remote Keystores are not supported.&quot;</span>.into()))
-	}
+    <span class="kw">if </span>config.keystore_remote.is_some() {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(ServiceError::Other(<span class="string">&quot;Remote Keystores are not supported.&quot;</span>.into()));
+    }
 
-	<span class="kw">let </span>telemetry = config
-		.telemetry_endpoints
-		.clone()
-		.filter(|x| !x.is_empty())
-		.map(|endpoints| -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, sc_telemetry::Error&gt; {
-			<span class="kw">let </span>worker = TelemetryWorker::new(<span class="number">16</span>)<span class="question-mark">?</span>;
-			<span class="kw">let </span>telemetry = worker.handle().new_telemetry(endpoints);
-			<span class="prelude-val">Ok</span>((worker, telemetry))
-		})
-		.transpose()<span class="question-mark">?</span>;
+    <span class="kw">let </span>telemetry = config
+        .telemetry_endpoints
+        .clone()
+        .filter(|x| !x.is_empty())
+        .map(|endpoints| -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, sc_telemetry::Error&gt; {
+            <span class="kw">let </span>worker = TelemetryWorker::new(<span class="number">16</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span>telemetry = worker.handle().new_telemetry(endpoints);
+            <span class="prelude-val">Ok</span>((worker, telemetry))
+        })
+        .transpose()<span class="question-mark">?</span>;
 
-	<span class="kw">let </span>executor = NativeElseWasmExecutor::&lt;ExecutorDispatch&gt;::new(
-		config.wasm_method,
-		config.default_heap_pages,
-		config.max_runtime_instances,
-		config.runtime_cache_size,
-	);
+    <span class="kw">let </span>executor = NativeElseWasmExecutor::&lt;ExecutorDispatch&gt;::new(
+        config.wasm_method,
+        config.default_heap_pages,
+        config.max_runtime_instances,
+        config.runtime_cache_size,
+    );
 
-	<span class="kw">let </span>(client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::&lt;Block, RuntimeApi, <span class="kw">_</span>&gt;(
-			config,
-			telemetry.as_ref().map(|(<span class="kw">_</span>, telemetry)| telemetry.handle()),
-			executor,
-		)<span class="question-mark">?</span>;
-	<span class="kw">let </span>client = Arc::new(client);
+    <span class="kw">let </span>(client, backend, keystore_container, task_manager) = sc_service::new_full_parts::&lt;Block, RuntimeApi, <span class="kw">_</span>&gt;(
+        config,
+        telemetry.as_ref().map(|(<span class="kw">_</span>, telemetry)| telemetry.handle()),
+        executor,
+    )<span class="question-mark">?</span>;
+    <span class="kw">let </span>client = Arc::new(client);
 
-	<span class="kw">let </span>telemetry = telemetry.map(|(worker, telemetry)| {
-		task_manager.spawn_handle().spawn(<span class="string">&quot;telemetry&quot;</span>, <span class="prelude-val">None</span>, worker.run());
-		telemetry
-	});
+    <span class="kw">let </span>telemetry = telemetry.map(|(worker, telemetry)| {
+        task_manager.spawn_handle().spawn(<span class="string">&quot;telemetry&quot;</span>, <span class="prelude-val">None</span>, worker.run());
+        telemetry
+    });
 
-	<span class="kw">let </span>select_chain = sc_consensus::LongestChain::new(backend.clone());
+    <span class="kw">let </span>select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-	<span class="kw">let </span>transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.role.is_authority().into(),
-		config.prometheus_registry(),
-		task_manager.spawn_essential_handle(),
-		client.clone(),
-	);
+    <span class="kw">let </span>transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
+        config.role.is_authority().into(),
+        config.prometheus_registry(),
+        task_manager.spawn_essential_handle(),
+        client.clone(),
+    );
 
-	<span class="kw">let </span>(grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
-		client.clone(),
-		<span class="kw-2">&amp;</span>(client.clone() <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;),
-		select_chain.clone(),
-		telemetry.as_ref().map(|x| x.handle()),
-	)<span class="question-mark">?</span>;
+    <span class="kw">let </span>(grandpa_block_import, grandpa_link) = sc_finality_grandpa::block_import(
+        client.clone(),
+        <span class="kw-2">&amp;</span>(client.clone() <span class="kw">as </span>Arc&lt;<span class="kw">_</span>&gt;),
+        select_chain.clone(),
+        telemetry.as_ref().map(|x| x.handle()),
+    )<span class="question-mark">?</span>;
 
-	<span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
+    <span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
 
-	<span class="kw">let </span>import_queue =
-		sc_consensus_aura::import_queue::&lt;AuraPair, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(ImportQueueParams {
-			block_import: grandpa_block_import.clone(),
-			justification_import: <span class="prelude-val">Some</span>(Box::new(grandpa_block_import.clone())),
-			client: client.clone(),
-			create_inherent_data_providers: <span class="kw">move </span>|<span class="kw">_</span>, ()| <span class="kw">async move </span>{
-				<span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+    <span class="kw">let </span>import_queue = sc_consensus_aura::import_queue::&lt;AuraPair, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(ImportQueueParams {
+        block_import: grandpa_block_import.clone(),
+        justification_import: <span class="prelude-val">Some</span>(Box::new(grandpa_block_import.clone())),
+        client: client.clone(),
+        create_inherent_data_providers: <span class="kw">move </span>|<span class="kw">_</span>, ()| <span class="kw">async move </span>{
+            <span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
-				<span class="kw">let </span>slot =
-					sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-						<span class="kw-2">*</span>timestamp,
-						slot_duration,
-					);
+            <span class="kw">let </span>slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                <span class="kw-2">*</span>timestamp,
+                slot_duration,
+            );
 
-				<span class="prelude-val">Ok</span>((slot, timestamp))
-			},
-			spawner: <span class="kw-2">&amp;</span>task_manager.spawn_essential_handle(),
-			registry: config.prometheus_registry(),
-			check_for_equivocation: Default::default(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-			compatibility_mode: Default::default(),
-		})<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>((slot, timestamp))
+        },
+        spawner: <span class="kw-2">&amp;</span>task_manager.spawn_essential_handle(),
+        registry: config.prometheus_registry(),
+        check_for_equivocation: Default::default(),
+        telemetry: telemetry.as_ref().map(|x| x.handle()),
+        compatibility_mode: Default::default(),
+    })<span class="question-mark">?</span>;
 
-	<span class="prelude-val">Ok</span>(sc_service::PartialComponents {
-		client,
-		backend,
-		task_manager,
-		import_queue,
-		keystore_container,
-		select_chain,
-		transaction_pool,
-		other: (grandpa_block_import, grandpa_link, telemetry),
-	})
+    <span class="prelude-val">Ok</span>(sc_service::PartialComponents {
+        client,
+        backend,
+        task_manager,
+        import_queue,
+        keystore_container,
+        select_chain,
+        transaction_pool,
+        other: (grandpa_block_import, grandpa_link, telemetry),
+    })
 }
 
 <span class="kw">fn </span>remote_keystore(_url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;LocalKeystore&gt;, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
-	<span class="comment">// FIXME: here would the concrete keystore be built,
-	//        must return a concrete type (NOT `LocalKeystore`) that
-	//        implements `CryptoStore` and `SyncCryptoStore`
-	</span><span class="prelude-val">Err</span>(<span class="string">&quot;Remote Keystore not supported.&quot;</span>)
+    <span class="comment">// FIXME: here would the concrete keystore be built,
+    //        must return a concrete type (NOT `LocalKeystore`) that
+    //        implements `CryptoStore` and `SyncCryptoStore`
+    </span><span class="prelude-val">Err</span>(<span class="string">&quot;Remote Keystore not supported.&quot;</span>)
 }
 
 <span class="doccomment">/// Builds a new service for a full client.
 </span><span class="kw">pub fn </span>new_full(<span class="kw-2">mut </span>config: Configuration) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
-	<span class="kw">let </span>sc_service::PartialComponents {
-		client,
-		backend,
-		<span class="kw-2">mut </span>task_manager,
-		import_queue,
-		<span class="kw-2">mut </span>keystore_container,
-		select_chain,
-		transaction_pool,
-		other: (block_import, grandpa_link, <span class="kw-2">mut </span>telemetry),
-	} = new_partial(<span class="kw-2">&amp;</span>config)<span class="question-mark">?</span>;
+    <span class="kw">let </span>sc_service::PartialComponents {
+        client,
+        backend,
+        <span class="kw-2">mut </span>task_manager,
+        import_queue,
+        <span class="kw-2">mut </span>keystore_container,
+        select_chain,
+        transaction_pool,
+        other: (block_import, grandpa_link, <span class="kw-2">mut </span>telemetry),
+    } = new_partial(<span class="kw-2">&amp;</span>config)<span class="question-mark">?</span>;
 
-	<span class="kw">if let </span><span class="prelude-val">Some</span>(url) = <span class="kw-2">&amp;</span>config.keystore_remote {
-		<span class="kw">match </span>remote_keystore(url) {
-			<span class="prelude-val">Ok</span>(k) =&gt; keystore_container.set_remote_keystore(k),
-			<span class="prelude-val">Err</span>(e) =&gt;
-				<span class="kw">return </span><span class="prelude-val">Err</span>(ServiceError::Other(<span class="macro">format!</span>(
-					<span class="string">&quot;Error hooking up remote keystore for {url}: {e}&quot;
-				</span>))),
-		};
-	}
-	<span class="kw">let </span>grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
-		<span class="kw-2">&amp;</span>client.block_hash(<span class="number">0</span>).ok().flatten().expect(<span class="string">&quot;Genesis block exists; qed&quot;</span>),
-		<span class="kw-2">&amp;</span>config.chain_spec,
-	);
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(url) = <span class="kw-2">&amp;</span>config.keystore_remote {
+        <span class="kw">match </span>remote_keystore(url) {
+            <span class="prelude-val">Ok</span>(k) =&gt; keystore_container.set_remote_keystore(k),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ServiceError::Other(<span class="macro">format!</span>(<span class="string">&quot;Error hooking up remote keystore for {url}: {e}&quot;</span>))),
+        };
+    }
+    <span class="kw">let </span>grandpa_protocol_name = sc_finality_grandpa::protocol_standard_name(
+        <span class="kw-2">&amp;</span>client.block_hash(<span class="number">0</span>).ok().flatten().expect(<span class="string">&quot;Genesis block exists; qed&quot;</span>),
+        <span class="kw-2">&amp;</span>config.chain_spec,
+    );
 
-	config
-		.network
-		.extra_sets
-		.push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
-	<span class="kw">let </span>warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
-		backend.clone(),
-		grandpa_link.shared_authority_set().clone(),
-		Vec::default(),
-	));
+    config.network.extra_sets.push(sc_finality_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+    <span class="kw">let </span>warp_sync = Arc::new(sc_finality_grandpa::warp_proof::NetworkProvider::new(
+        backend.clone(),
+        grandpa_link.shared_authority_set().clone(),
+        Vec::default(),
+    ));
 
-	<span class="kw">let </span>(network, system_rpc_tx, tx_handler_controller, network_starter) =
-		sc_service::build_network(sc_service::BuildNetworkParams {
-			config: <span class="kw-2">&amp;</span>config,
-			client: client.clone(),
-			transaction_pool: transaction_pool.clone(),
-			spawn_handle: task_manager.spawn_handle(),
-			import_queue,
-			block_announce_validator_builder: <span class="prelude-val">None</span>,
-			warp_sync_params: <span class="prelude-val">Some</span>(WarpSyncParams::WithProvider(warp_sync)),
-		})<span class="question-mark">?</span>;
+    <span class="kw">let </span>(network, system_rpc_tx, tx_handler_controller, network_starter) =
+        sc_service::build_network(sc_service::BuildNetworkParams {
+            config: <span class="kw-2">&amp;</span>config,
+            client: client.clone(),
+            transaction_pool: transaction_pool.clone(),
+            spawn_handle: task_manager.spawn_handle(),
+            import_queue,
+            block_announce_validator_builder: <span class="prelude-val">None</span>,
+            warp_sync_params: <span class="prelude-val">Some</span>(WarpSyncParams::WithProvider(warp_sync)),
+        })<span class="question-mark">?</span>;
 
-	<span class="kw">if </span>config.offchain_worker.enabled {
-		sc_service::build_offchain_workers(
-			<span class="kw-2">&amp;</span>config,
-			task_manager.spawn_handle(),
-			client.clone(),
-			network.clone(),
-		);
-	}
+    <span class="kw">if </span>config.offchain_worker.enabled {
+        sc_service::build_offchain_workers(<span class="kw-2">&amp;</span>config, task_manager.spawn_handle(), client.clone(), network.clone());
+    }
 
-	<span class="kw">let </span>role = config.role.clone();
-	<span class="kw">let </span>force_authoring = config.force_authoring;
-	<span class="kw">let </span>backoff_authoring_blocks: <span class="prelude-ty">Option</span>&lt;()&gt; = <span class="prelude-val">None</span>;
-	<span class="kw">let </span>name = config.network.node_name.clone();
-	<span class="kw">let </span>enable_grandpa = !config.disable_grandpa;
-	<span class="kw">let </span>prometheus_registry = config.prometheus_registry().cloned();
+    <span class="kw">let </span>role = config.role.clone();
+    <span class="kw">let </span>force_authoring = config.force_authoring;
+    <span class="kw">let </span>backoff_authoring_blocks: <span class="prelude-ty">Option</span>&lt;()&gt; = <span class="prelude-val">None</span>;
+    <span class="kw">let </span>name = config.network.node_name.clone();
+    <span class="kw">let </span>enable_grandpa = !config.disable_grandpa;
+    <span class="kw">let </span>prometheus_registry = config.prometheus_registry().cloned();
 
-	<span class="kw">let </span>rpc_extensions_builder = {
-		<span class="kw">let </span>client = client.clone();
-		<span class="kw">let </span>pool = transaction_pool.clone();
+    <span class="kw">let </span>rpc_extensions_builder = {
+        <span class="kw">let </span>client = client.clone();
+        <span class="kw">let </span>pool = transaction_pool.clone();
 
-		Box::new(<span class="kw">move </span>|deny_unsafe, <span class="kw">_</span>| {
-			<span class="kw">let </span>deps =
-				<span class="kw">crate</span>::rpc::FullDeps { client: client.clone(), pool: pool.clone(), deny_unsafe };
-			<span class="kw">crate</span>::rpc::create_full(deps).map_err(Into::into)
-		})
-	};
+        Box::new(<span class="kw">move </span>|deny_unsafe, <span class="kw">_</span>| {
+            <span class="kw">let </span>deps = <span class="kw">crate</span>::rpc::FullDeps { client: client.clone(), pool: pool.clone(), deny_unsafe };
+            <span class="kw">crate</span>::rpc::create_full(deps).map_err(Into::into)
+        })
+    };
 
-	<span class="kw">let </span>_rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		network: network.clone(),
-		client: client.clone(),
-		keystore: keystore_container.sync_keystore(),
-		task_manager: <span class="kw-2">&amp;mut </span>task_manager,
-		transaction_pool: transaction_pool.clone(),
-		rpc_builder: rpc_extensions_builder,
-		backend,
-		system_rpc_tx,
-		tx_handler_controller,
-		config,
-		telemetry: telemetry.as_mut(),
-	})<span class="question-mark">?</span>;
+    <span class="kw">let </span>_rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
+        network: network.clone(),
+        client: client.clone(),
+        keystore: keystore_container.sync_keystore(),
+        task_manager: <span class="kw-2">&amp;mut </span>task_manager,
+        transaction_pool: transaction_pool.clone(),
+        rpc_builder: rpc_extensions_builder,
+        backend,
+        system_rpc_tx,
+        tx_handler_controller,
+        config,
+        telemetry: telemetry.as_mut(),
+    })<span class="question-mark">?</span>;
 
-	<span class="kw">if </span>role.is_authority() {
-		<span class="kw">let </span>proposer_factory = sc_basic_authorship::ProposerFactory::new(
-			task_manager.spawn_handle(),
-			client.clone(),
-			transaction_pool,
-			prometheus_registry.as_ref(),
-			telemetry.as_ref().map(|x| x.handle()),
-		);
+    <span class="kw">if </span>role.is_authority() {
+        <span class="kw">let </span>proposer_factory = sc_basic_authorship::ProposerFactory::new(
+            task_manager.spawn_handle(),
+            client.clone(),
+            transaction_pool,
+            prometheus_registry.as_ref(),
+            telemetry.as_ref().map(|x| x.handle()),
+        );
 
-		<span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
+        <span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
 
-		<span class="kw">let </span>aura = sc_consensus_aura::start_aura::&lt;AuraPair, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(
-			StartAuraParams {
-				slot_duration,
-				client,
-				select_chain,
-				block_import,
-				proposer_factory,
-				create_inherent_data_providers: <span class="kw">move </span>|<span class="kw">_</span>, ()| <span class="kw">async move </span>{
-					<span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+        <span class="kw">let </span>aura = sc_consensus_aura::start_aura::&lt;AuraPair, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(StartAuraParams {
+            slot_duration,
+            client,
+            select_chain,
+            block_import,
+            proposer_factory,
+            create_inherent_data_providers: <span class="kw">move </span>|<span class="kw">_</span>, ()| <span class="kw">async move </span>{
+                <span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
-					<span class="kw">let </span>slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							<span class="kw-2">*</span>timestamp,
-							slot_duration,
-						);
+                <span class="kw">let </span>slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                    <span class="kw-2">*</span>timestamp,
+                    slot_duration,
+                );
 
-					<span class="prelude-val">Ok</span>((slot, timestamp))
-				},
-				force_authoring,
-				backoff_authoring_blocks,
-				keystore: keystore_container.sync_keystore(),
-				sync_oracle: network.clone(),
-				justification_sync_link: network.clone(),
-				block_proposal_slot_portion: SlotProportion::new(<span class="number">2f32 </span>/ <span class="number">3f32</span>),
-				max_block_proposal_slot_portion: <span class="prelude-val">None</span>,
-				telemetry: telemetry.as_ref().map(|x| x.handle()),
-				compatibility_mode: Default::default(),
-			},
-		)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>((slot, timestamp))
+            },
+            force_authoring,
+            backoff_authoring_blocks,
+            keystore: keystore_container.sync_keystore(),
+            sync_oracle: network.clone(),
+            justification_sync_link: network.clone(),
+            block_proposal_slot_portion: SlotProportion::new(<span class="number">2f32 </span>/ <span class="number">3f32</span>),
+            max_block_proposal_slot_portion: <span class="prelude-val">None</span>,
+            telemetry: telemetry.as_ref().map(|x| x.handle()),
+            compatibility_mode: Default::default(),
+        })<span class="question-mark">?</span>;
 
-		<span class="comment">// the AURA authoring task is considered essential, i.e. if it
-		// fails we take down the service with it.
-		</span>task_manager
-			.spawn_essential_handle()
-			.spawn_blocking(<span class="string">&quot;aura&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">&quot;block-authoring&quot;</span>), aura);
-	}
+        <span class="comment">// the AURA authoring task is considered essential, i.e. if it
+        // fails we take down the service with it.
+        </span>task_manager.spawn_essential_handle().spawn_blocking(<span class="string">&quot;aura&quot;</span>, <span class="prelude-val">Some</span>(<span class="string">&quot;block-authoring&quot;</span>), aura);
+    }
 
-	<span class="kw">if </span>enable_grandpa {
-		<span class="comment">// if the node isn&#39;t actively participating in consensus then it doesn&#39;t
-		// need a keystore, regardless of which protocol we use below.
-		</span><span class="kw">let </span>keystore =
-			<span class="kw">if </span>role.is_authority() { <span class="prelude-val">Some</span>(keystore_container.sync_keystore()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
+    <span class="kw">if </span>enable_grandpa {
+        <span class="comment">// if the node isn&#39;t actively participating in consensus then it doesn&#39;t
+        // need a keystore, regardless of which protocol we use below.
+        </span><span class="kw">let </span>keystore = <span class="kw">if </span>role.is_authority() { <span class="prelude-val">Some</span>(keystore_container.sync_keystore()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
 
-		<span class="kw">let </span>grandpa_config = sc_finality_grandpa::Config {
-			<span class="comment">// FIXME #1578 make this available through chainspec
-			</span>gossip_duration: Duration::from_millis(<span class="number">333</span>),
-			justification_period: <span class="number">512</span>,
-			name: <span class="prelude-val">Some</span>(name),
-			observer_enabled: <span class="bool-val">false</span>,
-			keystore,
-			local_role: role,
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-			protocol_name: grandpa_protocol_name,
-		};
+        <span class="kw">let </span>grandpa_config = sc_finality_grandpa::Config {
+            <span class="comment">// FIXME #1578 make this available through chainspec
+            </span>gossip_duration: Duration::from_millis(<span class="number">333</span>),
+            justification_period: <span class="number">512</span>,
+            name: <span class="prelude-val">Some</span>(name),
+            observer_enabled: <span class="bool-val">false</span>,
+            keystore,
+            local_role: role,
+            telemetry: telemetry.as_ref().map(|x| x.handle()),
+            protocol_name: grandpa_protocol_name,
+        };
 
-		<span class="comment">// start the full GRANDPA voter
-		// NOTE: non-authorities could run the GRANDPA observer protocol, but at
-		// this point the full voter should provide better guarantees of block
-		// and vote data availability than the observer. The observer has not
-		// been tested extensively yet and having most nodes in a network run it
-		// could lead to finality stalls.
-		</span><span class="kw">let </span>grandpa_config = sc_finality_grandpa::GrandpaParams {
-			config: grandpa_config,
-			link: grandpa_link,
-			network,
-			voting_rule: sc_finality_grandpa::VotingRulesBuilder::default().build(),
-			prometheus_registry,
-			shared_voter_state: SharedVoterState::empty(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-		};
+        <span class="comment">// start the full GRANDPA voter
+        // NOTE: non-authorities could run the GRANDPA observer protocol, but at
+        // this point the full voter should provide better guarantees of block
+        // and vote data availability than the observer. The observer has not
+        // been tested extensively yet and having most nodes in a network run it
+        // could lead to finality stalls.
+        </span><span class="kw">let </span>grandpa_config = sc_finality_grandpa::GrandpaParams {
+            config: grandpa_config,
+            link: grandpa_link,
+            network,
+            voting_rule: sc_finality_grandpa::VotingRulesBuilder::default().build(),
+            prometheus_registry,
+            shared_voter_state: SharedVoterState::empty(),
+            telemetry: telemetry.as_ref().map(|x| x.handle()),
+        };
 
-		<span class="comment">// the GRANDPA voter task is considered infallible, i.e.
-		// if it fails we take down the service with it.
-		</span>task_manager.spawn_essential_handle().spawn_blocking(
-			<span class="string">&quot;grandpa-voter&quot;</span>,
-			<span class="prelude-val">None</span>,
-			sc_finality_grandpa::run_grandpa_voter(grandpa_config)<span class="question-mark">?</span>,
-		);
-	}
+        <span class="comment">// the GRANDPA voter task is considered infallible, i.e.
+        // if it fails we take down the service with it.
+        </span>task_manager.spawn_essential_handle().spawn_blocking(
+            <span class="string">&quot;grandpa-voter&quot;</span>,
+            <span class="prelude-val">None</span>,
+            sc_finality_grandpa::run_grandpa_voter(grandpa_config)<span class="question-mark">?</span>,
+        );
+    }
 
-	network_starter.start_network();
-	<span class="prelude-val">Ok</span>(task_manager)
+    network_starter.start_network();
+    <span class="prelude-val">Ok</span>(task_manager)
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="kaioshin" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

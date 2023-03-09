@@ -23,13 +23,9 @@
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
-<a href="#26" id="26">26</a>
-<a href="#27" id="27">27</a>
-</pre><pre class="rust"><code><span class="kw">use crate</span>::{
-	execution::CairoExecutor,
-	types::{CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput},
-	Config, Error,
-};
+</pre><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::execution::CairoExecutor;
+<span class="kw">use </span><span class="kw">crate</span>::types::{CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput};
+<span class="kw">use crate</span>::{Config, Error};
 
 <span class="doccomment">/// Mocks the `CairoExecutor` trait for testing purposes.
 </span><span class="attr">#[derive(Default)]
@@ -38,19 +34,19 @@
 <span class="doccomment">/// Implementation of the `CairoExecutor` trait for the `CairoExecutorMock`.
 /// This implementation is used for testing purposes.
 </span><span class="kw">impl</span>&lt;T: Config&gt; CairoExecutor&lt;T&gt; <span class="kw">for </span>CairoExecutorMock {
-	<span class="doccomment">/// Executes a Cairo program.
-	/// # Arguments
-	/// * `cairo_program` - The Cairo program to execute.
-	/// * `input` - The input to pass to the Cairo program.
-	/// # Returns
-	/// The result of executing the Cairo program.
-	</span><span class="kw">fn </span>execute(
-		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		_cairo_program: <span class="kw-2">&amp;</span>CairoAssemblyProgram&lt;T&gt;,
-		_input: <span class="kw-2">&amp;</span>CairoAssemblyProgramInput,
-	) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, Error&lt;T&gt;&gt; {
-		<span class="prelude-val">Ok</span>(CairoAssemblyProgramOutput::empty())
-	}
+    <span class="doccomment">/// Executes a Cairo program.
+    /// # Arguments
+    /// * `cairo_program` - The Cairo program to execute.
+    /// * `input` - The input to pass to the Cairo program.
+    /// # Returns
+    /// The result of executing the Cairo program.
+    </span><span class="kw">fn </span>execute(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        _cairo_program: <span class="kw-2">&amp;</span>CairoAssemblyProgram&lt;T&gt;,
+        _input: <span class="kw-2">&amp;</span>CairoAssemblyProgramInput,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, Error&lt;T&gt;&gt; {
+        <span class="prelude-val">Ok</span>(CairoAssemblyProgramOutput::empty())
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pallet_cairo" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

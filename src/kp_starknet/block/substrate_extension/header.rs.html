@@ -174,42 +174,21 @@
 <a href="#174" id="174">174</a>
 <a href="#175" id="175">175</a>
 <a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
-<a href="#192" id="192">192</a>
-<a href="#193" id="193">193</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet implementation of a block header.
 
-</span><span class="kw">use crate</span>::{
-	codec::{Codec, Decode, Encode},
-	scale_info::TypeInfo,
-};
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_core::U256;
-<span class="kw">use </span>sp_runtime::{
-	generic::Digest,
-	traits::{
-		<span class="self">self</span>, AtLeast32BitUnsigned, Hash <span class="kw">as </span>HashT, MaybeDisplay, MaybeSerialize,
-		MaybeSerializeDeserialize, Member, SimpleBitOps,
-	},
+<span class="kw">use </span>sp_runtime::generic::Digest;
+<span class="kw">use </span>sp_runtime::traits::{
+    <span class="self">self</span>, AtLeast32BitUnsigned, Hash <span class="kw">as </span>HashT, MaybeDisplay, MaybeSerialize, MaybeSerializeDeserialize, Member,
+    SimpleBitOps,
 };
 <span class="kw">use </span>sp_std::fmt::Debug;
 <span class="kw">use </span>starknet_crypto::FieldElement;
+
+<span class="kw">use </span><span class="kw">crate</span>::codec::{Codec, Decode, Encode};
+<span class="kw">use </span><span class="kw">crate</span>::scale_info::TypeInfo;
 
 <span class="doccomment">/// Starknet block header.
 /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/header/`.
@@ -225,130 +204,120 @@
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, serde(rename_all = <span class="string">&quot;camelCase&quot;</span>))]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, serde(deny_unknown_fields))]
 </span><span class="kw">pub struct </span>Header&lt;Number: Copy + Into&lt;U256&gt; + TryFrom&lt;U256&gt;, Hash: HashT&gt; {
-	<span class="doccomment">/// The parent hash.
-	</span><span class="kw">pub </span>parent_hash: Hash::Output,
-	<span class="doccomment">/// The block number.
-	</span><span class="attr">#[cfg_attr(
-		feature = <span class="string">&quot;std&quot;</span>,
-		serde(serialize_with = <span class="string">&quot;serialize_number&quot;</span>, deserialize_with = <span class="string">&quot;deserialize_number&quot;</span>)
-	)]
-	#[codec(compact)]
-	</span><span class="kw">pub </span>number: Number,
-	<span class="doccomment">/// The state trie merkle root
-	</span><span class="kw">pub </span>state_root: Hash::Output,
-	<span class="doccomment">/// The merkle root of the extrinsics.
-	</span><span class="kw">pub </span>extrinsics_root: Hash::Output,
-	<span class="doccomment">/// A chain-specific digest of data useful for light clients or referencing auxiliary data.
-	</span><span class="kw">pub </span>digest: Digest,
-	<span class="doccomment">/// The address of the sequencer.
-	</span><span class="kw">pub </span>sequencer_address: U256,
+    <span class="doccomment">/// The parent hash.
+    </span><span class="kw">pub </span>parent_hash: Hash::Output,
+    <span class="doccomment">/// The block number.
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, serde(serialize_with = <span class="string">&quot;serialize_number&quot;</span>, deserialize_with = <span class="string">&quot;deserialize_number&quot;</span>))]
+    #[codec(compact)]
+    </span><span class="kw">pub </span>number: Number,
+    <span class="doccomment">/// The state trie merkle root
+    </span><span class="kw">pub </span>state_root: Hash::Output,
+    <span class="doccomment">/// The merkle root of the extrinsics.
+    </span><span class="kw">pub </span>extrinsics_root: Hash::Output,
+    <span class="doccomment">/// A chain-specific digest of data useful for light clients or referencing auxiliary data.
+    </span><span class="kw">pub </span>digest: Digest,
+    <span class="doccomment">/// The address of the sequencer.
+    </span><span class="kw">pub </span>sequencer_address: U256,
 }
 
 <span class="kw">impl</span>&lt;Number, Hash&gt; traits::Header <span class="kw">for </span>Header&lt;Number, Hash&gt;
 <span class="kw">where
-	</span>Number: Member
-		+ MaybeSerializeDeserialize
-		+ Debug
-		+ sp_std::hash::Hash
-		+ MaybeDisplay
-		+ AtLeast32BitUnsigned
-		+ Codec
-		+ Copy
-		+ Into&lt;U256&gt;
-		+ TryFrom&lt;U256&gt;
-		+ sp_std::str::FromStr,
-	Hash: HashT,
-	Hash::Output: Default
-		+ sp_std::hash::Hash
-		+ Copy
-		+ Member
-		+ Ord
-		+ MaybeSerialize
-		+ Debug
-		+ MaybeDisplay
-		+ SimpleBitOps
-		+ Codec,
+    </span>Number: Member
+        + MaybeSerializeDeserialize
+        + Debug
+        + sp_std::hash::Hash
+        + MaybeDisplay
+        + AtLeast32BitUnsigned
+        + Codec
+        + Copy
+        + Into&lt;U256&gt;
+        + TryFrom&lt;U256&gt;
+        + sp_std::str::FromStr,
+    Hash: HashT,
+    Hash::Output: Default
+        + sp_std::hash::Hash
+        + Copy
+        + Member
+        + Ord
+        + MaybeSerialize
+        + Debug
+        + MaybeDisplay
+        + SimpleBitOps
+        + Codec,
 {
-	<span class="kw">type </span>Number = Number;
-	<span class="kw">type </span>Hash = &lt;Hash <span class="kw">as </span>HashT&gt;::Output;
-	<span class="kw">type </span>Hashing = Hash;
+    <span class="kw">type </span>Number = Number;
+    <span class="kw">type </span>Hash = &lt;Hash <span class="kw">as </span>HashT&gt;::Output;
+    <span class="kw">type </span>Hashing = Hash;
 
-	<span class="kw">fn </span>number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Number {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.number
-	}
-	<span class="kw">fn </span>set_number(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num: <span class="self">Self</span>::Number) {
-		<span class="self">self</span>.number = num
-	}
+    <span class="kw">fn </span>number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Number {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.number
+    }
+    <span class="kw">fn </span>set_number(<span class="kw-2">&amp;mut </span><span class="self">self</span>, num: <span class="self">Self</span>::Number) {
+        <span class="self">self</span>.number = num
+    }
 
-	<span class="kw">fn </span>extrinsics_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Hash {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.extrinsics_root
-	}
-	<span class="kw">fn </span>set_extrinsics_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, root: <span class="self">Self</span>::Hash) {
-		<span class="self">self</span>.extrinsics_root = root
-	}
+    <span class="kw">fn </span>extrinsics_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Hash {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.extrinsics_root
+    }
+    <span class="kw">fn </span>set_extrinsics_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, root: <span class="self">Self</span>::Hash) {
+        <span class="self">self</span>.extrinsics_root = root
+    }
 
-	<span class="kw">fn </span>state_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Hash {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.state_root
-	}
-	<span class="kw">fn </span>set_state_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, root: <span class="self">Self</span>::Hash) {
-		<span class="self">self</span>.state_root = root
-	}
+    <span class="kw">fn </span>state_root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Hash {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.state_root
+    }
+    <span class="kw">fn </span>set_state_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>, root: <span class="self">Self</span>::Hash) {
+        <span class="self">self</span>.state_root = root
+    }
 
-	<span class="kw">fn </span>parent_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Hash {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.parent_hash
-	}
-	<span class="kw">fn </span>set_parent_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: <span class="self">Self</span>::Hash) {
-		<span class="self">self</span>.parent_hash = hash
-	}
+    <span class="kw">fn </span>parent_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Hash {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.parent_hash
+    }
+    <span class="kw">fn </span>set_parent_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: <span class="self">Self</span>::Hash) {
+        <span class="self">self</span>.parent_hash = hash
+    }
 
-	<span class="kw">fn </span>digest(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Digest {
-		<span class="kw-2">&amp;</span><span class="self">self</span>.digest
-	}
+    <span class="kw">fn </span>digest(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Digest {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.digest
+    }
 
-	<span class="kw">fn </span>digest_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Digest {
-		<span class="kw-2">&amp;mut </span><span class="self">self</span>.digest
-	}
+    <span class="kw">fn </span>digest_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Digest {
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.digest
+    }
 
-	<span class="attr">#[must_use]
-	</span><span class="kw">fn </span>new(
-		number: <span class="self">Self</span>::Number,
-		extrinsics_root: <span class="self">Self</span>::Hash,
-		state_root: <span class="self">Self</span>::Hash,
-		parent_hash: <span class="self">Self</span>::Hash,
-		digest: Digest,
-	) -&gt; <span class="self">Self </span>{
-		<span class="self">Self </span>{
-			number,
-			extrinsics_root,
-			state_root,
-			parent_hash,
-			digest,
-			<span class="comment">// For now, we hardcode the sequencer address to be 1.
-			// TODO: change this to be the actual sequencer address.
-			</span>sequencer_address: U256::from(FieldElement::ONE.to_bytes_be()),
-		}
-	}
+    <span class="attr">#[must_use]
+    </span><span class="kw">fn </span>new(
+        number: <span class="self">Self</span>::Number,
+        extrinsics_root: <span class="self">Self</span>::Hash,
+        state_root: <span class="self">Self</span>::Hash,
+        parent_hash: <span class="self">Self</span>::Hash,
+        digest: Digest,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            number,
+            extrinsics_root,
+            state_root,
+            parent_hash,
+            digest,
+            <span class="comment">// For now, we hardcode the sequencer address to be 1.
+            // TODO: change this to be the actual sequencer address.
+            </span>sequencer_address: U256::from(FieldElement::ONE.to_bytes_be()),
+        }
+    }
 }
 
 <span class="kw">impl</span>&lt;Number, Hash&gt; Header&lt;Number, Hash&gt;
 <span class="kw">where
-	</span>Number: Member
-		+ sp_std::hash::Hash
-		+ Copy
-		+ MaybeDisplay
-		+ AtLeast32BitUnsigned
-		+ Codec
-		+ Into&lt;U256&gt;
-		+ TryFrom&lt;U256&gt;,
-	Hash: HashT,
-	Hash::Output:
-		Default + sp_std::hash::Hash + Copy + Member + MaybeDisplay + SimpleBitOps + Codec,
+    </span>Number:
+        Member + sp_std::hash::Hash + Copy + MaybeDisplay + AtLeast32BitUnsigned + Codec + Into&lt;U256&gt; + TryFrom&lt;U256&gt;,
+    Hash: HashT,
+    Hash::Output: Default + sp_std::hash::Hash + Copy + Member + MaybeDisplay + SimpleBitOps + Codec,
 {
-	<span class="doccomment">/// Convenience helper for computing the hash of the header without having
-	/// to import the trait.
-	</span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Hash::Output {
-		Hash::hash_of(<span class="self">self</span>)
-	}
+    <span class="doccomment">/// Convenience helper for computing the hash of the header without having
+    /// to import the trait.
+    </span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Hash::Output {
+        Hash::hash_of(<span class="self">self</span>)
+    }
 }
 
 <span class="doccomment">/// Serializes a number as a U256.
@@ -358,15 +327,12 @@
 /// # Returns
 /// The serialized number.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">pub fn </span>serialize_number&lt;S, T: Copy + Into&lt;U256&gt; + TryFrom&lt;U256&gt;&gt;(
-	val: <span class="kw-2">&amp;</span>T,
-	s: S,
-) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
+</span><span class="kw">pub fn </span>serialize_number&lt;S, T: Copy + Into&lt;U256&gt; + TryFrom&lt;U256&gt;&gt;(val: <span class="kw-2">&amp;</span>T, s: S) -&gt; <span class="prelude-ty">Result</span>&lt;S::Ok, S::Error&gt;
 <span class="kw">where
-	</span>S: serde::Serializer,
+    </span>S: serde::Serializer,
 {
-	<span class="kw">let </span>u256: U256 = (<span class="kw-2">*</span>val).into();
-	serde::Serialize::serialize(<span class="kw-2">&amp;</span>u256, s)
+    <span class="kw">let </span>u256: U256 = (<span class="kw-2">*</span>val).into();
+    serde::Serialize::serialize(<span class="kw-2">&amp;</span>u256, s)
 }
 
 <span class="doccomment">/// Deserializes a number from the given deserializer.
@@ -379,10 +345,10 @@
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">pub fn </span>deserialize_number&lt;<span class="lifetime">&#39;a</span>, D, T: Copy + Into&lt;U256&gt; + TryFrom&lt;U256&gt;&gt;(d: D) -&gt; <span class="prelude-ty">Result</span>&lt;T, D::Error&gt;
 <span class="kw">where
-	</span>D: serde::Deserializer&lt;<span class="lifetime">&#39;a</span>&gt;,
+    </span>D: serde::Deserializer&lt;<span class="lifetime">&#39;a</span>&gt;,
 {
-	<span class="kw">let </span>u256: U256 = serde::Deserialize::deserialize(d)<span class="question-mark">?</span>;
-	TryFrom::try_from(u256).map_err(|<span class="kw">_</span>| serde::de::Error::custom(<span class="string">&quot;Try from failed&quot;</span>))
+    <span class="kw">let </span>u256: U256 = serde::Deserialize::deserialize(d)<span class="question-mark">?</span>;
+    TryFrom::try_from(u256).map_err(|<span class="kw">_</span>| serde::de::Error::custom(<span class="string">&quot;Try from failed&quot;</span>))
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

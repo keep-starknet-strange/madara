@@ -110,37 +110,25 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-</pre><pre class="rust"><code><span class="kw">use </span>cairo_vm::{
-	cairo_run::CairoRunConfig,
-	hint_processor::builtin_hint_processor::builtin_hint_processor_definition::BuiltinHintProcessor,
-	types::program::Program,
-	vm::{
-		errors::vm_exception::VmException, runners::cairo_runner::CairoRunner,
-		vm_core::VirtualMachine,
-	},
-};
+</pre><pre class="rust"><code><span class="kw">use </span>cairo_vm::cairo_run::CairoRunConfig;
+<span class="kw">use </span>cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::BuiltinHintProcessor;
+<span class="kw">use </span>cairo_vm::types::program::Program;
+<span class="kw">use </span>cairo_vm::vm::errors::vm_exception::VmException;
+<span class="kw">use </span>cairo_vm::vm::runners::cairo_runner::CairoRunner;
+<span class="kw">use </span>cairo_vm::vm::vm_core::VirtualMachine;
 
-<span class="kw">use crate</span>::{
-	execution::CairoExecutor,
-	types::{CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput},
-	Config, Error,
-};
+<span class="kw">use </span><span class="kw">crate</span>::execution::CairoExecutor;
+<span class="kw">use </span><span class="kw">crate</span>::types::{CairoAssemblyProgram, CairoAssemblyProgramInput, CairoAssemblyProgramOutput};
+<span class="kw">use crate</span>::{Config, Error};
 
 <span class="macro">lazy_static! </span>{
-	<span class="doccomment">/// The Cairo VM executor.
-	</span><span class="kw">pub static </span><span class="kw-2">ref </span>CAIRO_VM_EXECUTOR: CairoVmExecutor = CairoVmExecutor::default();
-	<span class="doccomment">/// The Cairo run configuration.
-	</span><span class="kw">pub static </span><span class="kw-2">ref </span>CAIRO_RUN_CONFIG: CairoRunConfig&lt;<span class="lifetime">&#39;static</span>&gt; = CairoRunConfig::default();
-	<span class="doccomment">/// The Fibonacci Cairo program, hardcoded in JSON format.
-	</span><span class="kw">static </span><span class="kw-2">ref </span>FIBONACCI_PROGRAM: Program = Program::from_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;./samples/fib.json&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>)).unwrap();
-	<span class="kw">static </span><span class="kw-2">ref </span>ADD_PROGRAM: Program = Program::from_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;./samples/add.json&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>)).unwrap();
+    <span class="doccomment">/// The Cairo VM executor.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>CAIRO_VM_EXECUTOR: CairoVmExecutor = CairoVmExecutor::default();
+    <span class="doccomment">/// The Cairo run configuration.
+    </span><span class="kw">pub static </span><span class="kw-2">ref </span>CAIRO_RUN_CONFIG: CairoRunConfig&lt;<span class="lifetime">&#39;static</span>&gt; = CairoRunConfig::default();
+    <span class="doccomment">/// The Fibonacci Cairo program, hardcoded in JSON format.
+    </span><span class="kw">static </span><span class="kw-2">ref </span>FIBONACCI_PROGRAM: Program = Program::from_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;./samples/fib.json&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>)).unwrap();
+    <span class="kw">static </span><span class="kw-2">ref </span>ADD_PROGRAM: Program = Program::from_bytes(<span class="macro">include_bytes!</span>(<span class="string">&quot;./samples/add.json&quot;</span>), <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>)).unwrap();
 }
 
 <span class="kw">const </span>ENTRY_POINT_MAIN: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; = <span class="prelude-val">Some</span>(<span class="string">&quot;main&quot;</span>);
@@ -152,89 +140,87 @@
 <span class="doccomment">/// Implementation of the `CairoExecutor` trait for the `CairoExecutorMock`.
 /// This implementation is used for testing purposes.
 </span><span class="kw">impl</span>&lt;T: Config&gt; CairoExecutor&lt;T&gt; <span class="kw">for </span>CairoVmExecutor {
-	<span class="doccomment">/// Executes a Cairo program.
-	/// # Arguments
-	/// * `cairo_program` - The Cairo program to execute.
-	/// * `input` - The input to pass to the Cairo program.
-	/// # Returns
-	/// The result of executing the Cairo program.
-	/// # TODO
-	/// * Replace the hardcoded input with the actual input.
-	/// * Proper error handling (remove `unwrap()` calls).
-	</span><span class="kw">fn </span>execute(
-		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		cairo_program: <span class="kw-2">&amp;</span>CairoAssemblyProgram&lt;T&gt;,
-		_input: <span class="kw-2">&amp;</span>CairoAssemblyProgramInput,
-	) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, Error&lt;T&gt;&gt; {
-		<span class="comment">// Instantiate the Cairo program.
-		</span><span class="kw">let </span>program = Program::from_bytes(<span class="kw-2">&amp;</span>cairo_program.code, ENTRY_POINT_MAIN).unwrap();
-		<span class="comment">// Run the Cairo program.
-		</span>CairoVmExecutor::run_program(<span class="kw-2">&amp;</span>program).unwrap();
-		<span class="comment">// TODO: retrieve the output from the execution of the Cairo program.
-		</span><span class="prelude-val">Ok</span>(CairoAssemblyProgramOutput::empty())
-	}
+    <span class="doccomment">/// Executes a Cairo program.
+    /// # Arguments
+    /// * `cairo_program` - The Cairo program to execute.
+    /// * `input` - The input to pass to the Cairo program.
+    /// # Returns
+    /// The result of executing the Cairo program.
+    /// # TODO
+    /// * Replace the hardcoded input with the actual input.
+    /// * Proper error handling (remove `unwrap()` calls).
+    </span><span class="kw">fn </span>execute(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        cairo_program: <span class="kw-2">&amp;</span>CairoAssemblyProgram&lt;T&gt;,
+        _input: <span class="kw-2">&amp;</span>CairoAssemblyProgramInput,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgramOutput, Error&lt;T&gt;&gt; {
+        <span class="comment">// Instantiate the Cairo program.
+        </span><span class="kw">let </span>program = Program::from_bytes(<span class="kw-2">&amp;</span>cairo_program.code, ENTRY_POINT_MAIN).unwrap();
+        <span class="comment">// Run the Cairo program.
+        </span>CairoVmExecutor::run_program(<span class="kw-2">&amp;</span>program).unwrap();
+        <span class="comment">// TODO: retrieve the output from the execution of the Cairo program.
+        </span><span class="prelude-val">Ok</span>(CairoAssemblyProgramOutput::empty())
+    }
 }
 
 <span class="kw">impl </span>CairoVmExecutor {
-	<span class="doccomment">/// Runs the program with the given id.
-	///
-	/// This function is used for testing purposes. It is not used in the production version of the
-	/// app.
-	///
-	/// # Arguments
-	///
-	/// * `id` - The id of the program to run.
-	///
-	/// # Notes
-	///
-	/// This function is only used for testing purposes. It is not used in production.
-	</span><span class="kw">pub fn </span>run_hardcoded_program(id: u8) {
-		<span class="kw">match </span>id {
-			<span class="number">0 </span>=&gt; {
-				<span class="macro">log::info!</span>(<span class="string">&quot;Running fibonacci program&quot;</span>);
-				CairoVmExecutor::run_program(<span class="kw-2">&amp;</span>FIBONACCI_PROGRAM).unwrap();
-			},
-			<span class="number">1 </span>=&gt; {
-				<span class="macro">log::info!</span>(<span class="string">&quot;Running add program&quot;</span>);
-				CairoVmExecutor::run_program(<span class="kw-2">&amp;</span>ADD_PROGRAM).unwrap();
-			},
-			<span class="kw">_ </span>=&gt; <span class="macro">log::info!</span>(<span class="string">&quot;Invalid program id&quot;</span>),
-		};
-	}
+    <span class="doccomment">/// Runs the program with the given id.
+    ///
+    /// This function is used for testing purposes. It is not used in the production version of the
+    /// app.
+    ///
+    /// # Arguments
+    ///
+    /// * `id` - The id of the program to run.
+    ///
+    /// # Notes
+    ///
+    /// This function is only used for testing purposes. It is not used in production.
+    </span><span class="kw">pub fn </span>run_hardcoded_program(id: u8) {
+        <span class="kw">match </span>id {
+            <span class="number">0 </span>=&gt; {
+                <span class="macro">log::info!</span>(<span class="string">&quot;Running fibonacci program&quot;</span>);
+                CairoVmExecutor::run_program(<span class="kw-2">&amp;</span>FIBONACCI_PROGRAM).unwrap();
+            }
+            <span class="number">1 </span>=&gt; {
+                <span class="macro">log::info!</span>(<span class="string">&quot;Running add program&quot;</span>);
+                CairoVmExecutor::run_program(<span class="kw-2">&amp;</span>ADD_PROGRAM).unwrap();
+            }
+            <span class="kw">_ </span>=&gt; <span class="macro">log::info!</span>(<span class="string">&quot;Invalid program id&quot;</span>),
+        };
+    }
 
-	<span class="doccomment">/// Runs a Cairo program in the Cairo VM
-	///
-	/// # Arguments
-	/// * `program` - the Cairo program to run
-	///
-	/// # Returns
-	/// * `Result&lt;(), ()&gt;` - the result of running the Cairo program
-	///
-	/// # Errors
-	/// * `()` - if the Cairo program fails to run
-	</span><span class="kw">fn </span>run_program(program: <span class="kw-2">&amp;</span>Program) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
-		<span class="macro">log::info!</span>(<span class="string">&quot;starting execution of Cairo program in Cairo VM&quot;</span>);
+    <span class="doccomment">/// Runs a Cairo program in the Cairo VM
+    ///
+    /// # Arguments
+    /// * `program` - the Cairo program to run
+    ///
+    /// # Returns
+    /// * `Result&lt;(), ()&gt;` - the result of running the Cairo program
+    ///
+    /// # Errors
+    /// * `()` - if the Cairo program fails to run
+    </span><span class="kw">fn </span>run_program(program: <span class="kw-2">&amp;</span>Program) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
+        <span class="macro">log::info!</span>(<span class="string">&quot;starting execution of Cairo program in Cairo VM&quot;</span>);
 
-		<span class="kw">let </span><span class="kw-2">mut </span>hint_executor = BuiltinHintProcessor::new_empty();
-		<span class="kw">let </span><span class="kw-2">mut </span>cairo_runner =
-			CairoRunner::new(program, CAIRO_RUN_CONFIG.layout, CAIRO_RUN_CONFIG.proof_mode)
-				.unwrap();
-		<span class="kw">let </span><span class="kw-2">mut </span>vm = VirtualMachine::new(CAIRO_RUN_CONFIG.trace_enabled);
+        <span class="kw">let </span><span class="kw-2">mut </span>hint_executor = BuiltinHintProcessor::new_empty();
+        <span class="kw">let </span><span class="kw-2">mut </span>cairo_runner = CairoRunner::new(program, CAIRO_RUN_CONFIG.layout, CAIRO_RUN_CONFIG.proof_mode).unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>vm = VirtualMachine::new(CAIRO_RUN_CONFIG.trace_enabled);
 
-		<span class="kw">let </span>end = cairo_runner.initialize(<span class="kw-2">&amp;mut </span>vm).unwrap();
-		cairo_runner
-			.run_until_pc(end, <span class="kw-2">&amp;mut </span>vm, <span class="kw-2">&amp;mut </span>hint_executor)
-			.map_err(|err| VmException::from_vm_error(<span class="kw-2">&amp;</span>cairo_runner, <span class="kw-2">&amp;</span>vm, err))
-			.unwrap();
-		cairo_runner.end_run(<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="kw-2">&amp;mut </span>vm, <span class="kw-2">&amp;mut </span>hint_executor).unwrap();
+        <span class="kw">let </span>end = cairo_runner.initialize(<span class="kw-2">&amp;mut </span>vm).unwrap();
+        cairo_runner
+            .run_until_pc(end, <span class="kw-2">&amp;mut </span>vm, <span class="kw-2">&amp;mut </span>hint_executor)
+            .map_err(|err| VmException::from_vm_error(<span class="kw-2">&amp;</span>cairo_runner, <span class="kw-2">&amp;</span>vm, err))
+            .unwrap();
+        cairo_runner.end_run(<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="kw-2">&amp;mut </span>vm, <span class="kw-2">&amp;mut </span>hint_executor).unwrap();
 
-		vm.verify_auto_deductions().unwrap();
-		cairo_runner.read_return_values(<span class="kw-2">&amp;mut </span>vm).unwrap();
-		cairo_runner.relocate(<span class="kw-2">&amp;mut </span>vm).unwrap();
-		<span class="macro">log::info!</span>(<span class="string">&quot;finished execution of Cairo program in Cairo VM&quot;</span>);
+        vm.verify_auto_deductions().unwrap();
+        cairo_runner.read_return_values(<span class="kw-2">&amp;mut </span>vm).unwrap();
+        cairo_runner.relocate(<span class="kw-2">&amp;mut </span>vm).unwrap();
+        <span class="macro">log::info!</span>(<span class="string">&quot;finished execution of Cairo program in Cairo VM&quot;</span>);
 
-		<span class="prelude-val">Ok</span>(())
-	}
+        <span class="prelude-val">Ok</span>(())
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pallet_cairo" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

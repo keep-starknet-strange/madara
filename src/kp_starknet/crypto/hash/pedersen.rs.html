@@ -40,11 +40,11 @@
 /// * `x`: The x coordinate
 /// * `y`: The y coordinate
 </span><span class="kw">pub fn </span>hash(data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
-	<span class="comment">// For now we use the first 31 bytes of the data as the field element, to avoid any panics.
-	// TODO: have proper error handling and think about how to hash efficiently big chunks of data.
-	</span><span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>data[..<span class="number">31</span>]).unwrap();
-	<span class="kw">let </span>result = FieldElement::to_bytes_be(<span class="kw-2">&amp;</span>pedersen_hash(<span class="kw-2">&amp;</span>FieldElement::ZERO, <span class="kw-2">&amp;</span>field_element));
-	result
+    <span class="comment">// For now we use the first 31 bytes of the data as the field element, to avoid any panics.
+    // TODO: have proper error handling and think about how to hash efficiently big chunks of data.
+    </span><span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>data[..<span class="number">31</span>]).unwrap();
+    <span class="kw">let </span>result = FieldElement::to_bytes_be(<span class="kw-2">&amp;</span>pedersen_hash(<span class="kw-2">&amp;</span>FieldElement::ZERO, <span class="kw-2">&amp;</span>field_element));
+    result
 }
 
 <span class="doccomment">/// The Pedersen hasher.
@@ -53,14 +53,14 @@
 
 <span class="doccomment">/// The Pedersen hasher implementation.
 </span><span class="kw">impl </span>Hasher <span class="kw">for </span>PedersenHasher {
-	<span class="doccomment">/// Hashes the given data.
-	/// # Arguments
-	/// * `data` - The data to hash.
-	/// # Returns
-	/// The hash of the data.
-	</span><span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
-		hash(data)
-	}
+    <span class="doccomment">/// Hashes the given data.
+    /// # Arguments
+    /// * `data` - The data to hash.
+    /// # Returns
+    /// The hash of the data.
+    </span><span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
+        hash(data)
+    }
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

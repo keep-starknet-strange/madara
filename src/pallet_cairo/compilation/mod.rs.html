@@ -15,32 +15,22 @@
 <a href="#15" id="15">15</a>
 <a href="#16" id="16">16</a>
 <a href="#17" id="17">17</a>
-<a href="#18" id="18">18</a>
-<a href="#19" id="19">19</a>
-<a href="#20" id="20">20</a>
-<a href="#21" id="21">21</a>
-<a href="#22" id="22">22</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Module for compiling Sierra programs into Cairo assembly programs.
 
 /// Mock implementation of the Sierra compiler.
 </span><span class="kw">pub mod </span>mock;
 
-<span class="kw">use crate</span>::{
-	types::{CairoAssemblyProgram, SierraProgram},
-	Config, Error,
-};
+<span class="kw">use </span><span class="kw">crate</span>::types::{CairoAssemblyProgram, SierraProgram};
+<span class="kw">use crate</span>::{Config, Error};
 
 <span class="kw">pub trait </span>SierraCompiler&lt;T: Config&gt; {
-	<span class="doccomment">/// Compiles a Sierra program into a Cairo assembly program.
-	/// # Arguments
-	/// * `sierra_program` - The Sierra program to compile.
-	/// # Returns
-	/// * `Ok(CairoAssemblyProgram)` - The compiled Cairo assembly program.
-	/// * `Err(Error)` - The error that occurred during compilation.
-	</span><span class="kw">fn </span>compile(
-		<span class="kw-2">&amp;</span><span class="self">self</span>,
-		sierra_program: <span class="kw-2">&amp;</span>SierraProgram&lt;T&gt;,
-	) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgram&lt;T&gt;, Error&lt;T&gt;&gt;;
+    <span class="doccomment">/// Compiles a Sierra program into a Cairo assembly program.
+    /// # Arguments
+    /// * `sierra_program` - The Sierra program to compile.
+    /// # Returns
+    /// * `Ok(CairoAssemblyProgram)` - The compiled Cairo assembly program.
+    /// * `Err(Error)` - The error that occurred during compilation.
+    </span><span class="kw">fn </span>compile(<span class="kw-2">&amp;</span><span class="self">self</span>, sierra_program: <span class="kw-2">&amp;</span>SierraProgram&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;CairoAssemblyProgram&lt;T&gt;, Error&lt;T&gt;&gt;;
 }
 </code></pre></div>
 </section></div></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="pallet_cairo" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
