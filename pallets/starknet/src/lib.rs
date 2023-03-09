@@ -51,6 +51,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -195,23 +196,47 @@ pub mod pallet {
     /// The Starknet pallet internal functions.
     impl<T: Config> Pallet<T> {
         /// Get current block hash.
+        ///
+        /// # Returns
+        ///
+        /// The current block hash.
+        #[inline(always)]
         pub fn current_block_hash() -> Option<H256> {
             Self::current_block().map(|block| block.header.hash())
         }
 
         /// Get the block hash of the previous block.
+        ///
+        /// # Arguments
+        ///
+        /// * `current_block_number` - The number of the current block.
+        ///
+        /// # Returns
+        ///
+        /// The block hash of the parent (previous) block or 0 if the current block is 0.
+        #[inline(always)]
         pub fn parent_block_hash(current_block_number: &U256) -> H256 {
-            if current_block_number == &U256::zero() {
-                H256::zero()
-            } else {
-                Self::block_hash(current_block_number - 1)
-            }
+            Self::block_hash(current_block_number - 1)
+        }
+
+        /// Get the current block timestamp.
+        ///
+        /// # Returns
+        ///
+        /// The current block timestamp.
+        #[inline(always)]
+        pub fn block_timestamp() -> u64 {
+            T::TimestampProvider::now().unique_saturated_into()
         }
 
         /// Store a Starknet block in the blockchain.
+        ///
         /// # Arguments
+        ///
         /// * `block_number` - The block number.
+        ///
         /// # TODO
+        ///
         /// * Implement the function.
         fn store_block(block_number: U256) {
             // TODO: Use actual values.
@@ -219,7 +244,7 @@ pub mod pallet {
 
             let global_state_root = U256::zero();
             let sequencer_address = U256::zero();
-            let block_timestamp = T::TimestampProvider::now().unique_saturated_into();
+            let block_timestamp = Self::block_timestamp();
             let transaction_count = 0_u128;
             let transaction_commitment = U256::zero();
             let event_count = 0_u128;
@@ -247,10 +272,14 @@ pub mod pallet {
         }
 
         /// Associate a contract address with a contract class hash.
+        ///
         /// # Arguments
+        ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
+        ///
         /// # TODO
+        ///
         /// * Check if the contract address is already associated with a contract class hash.
         /// * Check if the contract class hash is known.
         fn _associate_contract_class(
