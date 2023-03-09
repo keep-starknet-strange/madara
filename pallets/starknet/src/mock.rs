@@ -1,4 +1,4 @@
-use frame_support::traits::{ConstU16, ConstU64};
+use frame_support::traits::{ConstU16, ConstU64, Hooks};
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
@@ -69,4 +69,12 @@ impl pallet_starknet::Config for Test {
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
     system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+}
+
+pub(crate) fn run_to_block(n: u64) {
+    for b in System::block_number()..=n {
+        System::set_block_number(b);
+        Timestamp::set_timestamp(System::block_number() * 6_000);
+        Starknet::on_finalize(b);
+    }
 }

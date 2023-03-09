@@ -1,6 +1,8 @@
+use core::str::FromStr;
+
 use frame_support::assert_ok;
-use frame_support::traits::Hooks;
 use kp_starknet::block::wrapper::header::Header;
+use sp_core::{H256, U256};
 
 use crate::mock::*;
 
@@ -19,11 +21,15 @@ fn given_normal_conditions_when_deploy_sierra_program_then_it_works() {
 #[test]
 fn given_normal_conditions_when_current_block_then_returns_correct_block() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        Timestamp::set_timestamp(10);
-        Starknet::on_finalize(0);
+        run_to_block(1);
         let current_block = Starknet::current_block();
-        let expected_current_block = Header { block_timestamp: 10_u64, ..Header::default() };
+        let expected_current_block = Header {
+            block_timestamp: 6_000,
+            block_number: U256::one(),
+            parent_block_hash: H256::from_str("0xaf7bedde1fea222230b82d63d5b665ac75afbe4ad3f75999bb3386cf994a6963")
+                .unwrap(),
+            ..Header::default()
+        };
         assert!(current_block.is_some());
         pretty_assertions::assert_eq!(current_block.unwrap().header, expected_current_block)
     });
