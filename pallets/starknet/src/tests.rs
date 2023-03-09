@@ -1,4 +1,5 @@
 use frame_support::assert_ok;
+use frame_support::traits::Hooks;
 use kp_starknet::block::wrapper::header::Header;
 
 use crate::mock::*;
@@ -18,10 +19,12 @@ fn given_normal_conditions_when_deploy_sierra_program_then_it_works() {
 #[test]
 fn given_normal_conditions_when_current_block_then_returns_correct_block() {
     new_test_ext().execute_with(|| {
-        run_to_block(2);
+        System::set_block_number(0);
+        Timestamp::set_timestamp(10);
+        Starknet::on_finalize(0);
         let current_block = Starknet::current_block();
         let expected_current_block = Header { block_timestamp: 10_u64, ..Header::default() };
         assert!(current_block.is_some());
-        // assert_eq!(current_block.unwrap().header, expected_current_block)
+        pretty_assertions::assert_eq!(current_block.unwrap().header, expected_current_block)
     });
 }
