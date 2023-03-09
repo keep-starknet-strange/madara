@@ -9,7 +9,7 @@ use sp_core::{H256, U256};
 /// Starknet header definition.
 pub struct Header {
     /// The hash of this block’s parent.
-    pub parent_block_hash: U256,
+    pub parent_block_hash: H256,
     /// The number (height) of this block.
     pub block_number: U256,
     /// The state commitment after this block.
@@ -37,7 +37,7 @@ impl Header {
     #[allow(clippy::too_many_arguments)]
     #[must_use]
     pub fn new(
-        parent_block_hash: U256,
+        parent_block_hash: H256,
         block_number: U256,
         global_state_root: U256,
         sequencer_address: U256,

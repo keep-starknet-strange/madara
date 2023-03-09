@@ -199,6 +199,18 @@ pub mod pallet {
             Self::current_block().map(|block| block.header.hash())
         }
 
+        pub fn current_block_number() -> Option<U256> {
+            Self::current_block().map(|block| block.header.block_number)
+        }
+
+        pub fn parent_block_hash(current_block_number: &U256) -> H256 {
+            if current_block_number == &U256::zero() {
+                H256::zero()
+            } else {
+                Self::block_hash(current_block_number - 1)
+            }
+        }
+
         /// Store a Starknet block in the blockchain.
         /// # Arguments
         /// * `block_number` - The block number.
@@ -206,7 +218,7 @@ pub mod pallet {
         /// * Implement the function.
         fn store_block(block_number: U256) {
             // TODO: Use actual values.
-            let parent_block_hash = U256::zero();
+            let parent_block_hash = Self::parent_block_hash(&block_number);
 
             let global_state_root = U256::zero();
             let sequencer_address = U256::zero();
