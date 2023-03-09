@@ -22,20 +22,18 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+          target: wasm32-unknown-unknown
       - name: Set-Up
         run: >
           sudo apt-get update && sudo apt-get install -y 
           clang llvm libudev-dev protobuf-compiler
-
-      - name: Install Rustup
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-
+      - uses: Swatinem/rust-cache@v2
       - name: Check Build and run tests
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
