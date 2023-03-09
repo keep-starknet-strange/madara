@@ -216,7 +216,11 @@ pub mod pallet {
         /// The block hash of the parent (previous) block or 0 if the current block is 0.
         #[inline(always)]
         pub fn parent_block_hash(current_block_number: &U256) -> H256 {
-            Self::block_hash(current_block_number - 1)
+            if current_block_number == &U256::zero() {
+                H256::zero()
+            } else {
+                Self::block_hash(current_block_number - 1)
+            }
         }
 
         /// Get the current block timestamp.
