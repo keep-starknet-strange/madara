@@ -1,6 +1,7 @@
 //! Cairo Execution Engine pallet custom types.
-use crate::Config;
 use frame_support::pallet_prelude::*;
+
+use crate::Config;
 
 /// Identifier of a Cairo assembly program.
 pub type CairoAssemblyProgamId = [u8; 32];
@@ -21,17 +22,17 @@ type MaxCairoAssemblyProgramInputNumber = ConstU32<1073741824>;
 #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct SierraProgram<T: Config> {
-	/// The identifier of the Sierra program.
-	pub id: SierraProgramId,
-	/// The code of the Sierra program.
-	pub code: BoundedVec<u8, T::MaxSierraProgramLength>,
-	/// The account that deployed the Sierra program.
-	pub deployer_account: T::AccountId,
-	/// Id of the compiled Cairo assembly program if it has been compiled.
-	/// If the Sierra program has not been compiled, this field is set to `None`.
-	/// If the Sierra program has been compiled, this field is set to
-	/// `Some(cairo_assembly_program_id)`.
-	pub cairo_assembly_program_id: Option<CairoAssemblyProgamId>,
+    /// The identifier of the Sierra program.
+    pub id: SierraProgramId,
+    /// The code of the Sierra program.
+    pub code: BoundedVec<u8, T::MaxSierraProgramLength>,
+    /// The account that deployed the Sierra program.
+    pub deployer_account: T::AccountId,
+    /// Id of the compiled Cairo assembly program if it has been compiled.
+    /// If the Sierra program has not been compiled, this field is set to `None`.
+    /// If the Sierra program has been compiled, this field is set to
+    /// `Some(cairo_assembly_program_id)`.
+    pub cairo_assembly_program_id: Option<CairoAssemblyProgamId>,
 }
 
 /// Cairo assembly program representation.
@@ -39,17 +40,17 @@ pub struct SierraProgram<T: Config> {
 #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 #[scale_info(skip_type_params(T))]
 pub struct CairoAssemblyProgram<T: Config> {
-	/// The identifier of the Cairo assembly program.
-	/// We allow this field to be `None` because we might want to separate the compilation step
-	/// from the generation of the Cairo assembly program identifier.
-	/// If at some point that it does not make sense, we can remove the `Option` and make this
-	/// field mandatory.
-	pub id: CairoAssemblyProgamId,
-	/// The identifier of the Sierra program that was compiled to the Cairo assembly program.
-	/// None if the Cairo assembly program was not compiled from a Sierra program.
-	pub sierra_program_id: Option<SierraProgramId>,
-	/// The code of the Cairo assembly program.
-	pub code: BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
+    /// The identifier of the Cairo assembly program.
+    /// We allow this field to be `None` because we might want to separate the compilation step
+    /// from the generation of the Cairo assembly program identifier.
+    /// If at some point that it does not make sense, we can remove the `Option` and make this
+    /// field mandatory.
+    pub id: CairoAssemblyProgamId,
+    /// The identifier of the Sierra program that was compiled to the Cairo assembly program.
+    /// None if the Cairo assembly program was not compiled from a Sierra program.
+    pub sierra_program_id: Option<SierraProgramId>,
+    /// The code of the Cairo assembly program.
+    pub code: BoundedVec<u8, T::MaxCairoAssemblyProgramLength>,
 }
 
 /// Cairo assembly program input.
@@ -60,10 +61,7 @@ pub struct CairoAssemblyProgram<T: Config> {
 /// `MaxCairoAssemblyProgramInputNumber`.
 #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct CairoAssemblyProgramInput(
-	BoundedVec<
-		BoundedVec<u8, MaxCairoAssemblyProgramInputLength>,
-		MaxCairoAssemblyProgramInputNumber,
-	>,
+    BoundedVec<BoundedVec<u8, MaxCairoAssemblyProgramInputLength>, MaxCairoAssemblyProgramInputNumber>,
 );
 
 /// Cairo assembly program output.
@@ -74,14 +72,11 @@ pub struct CairoAssemblyProgramInput(
 /// `MaxCairoAssemblyProgramInputNumber`.
 #[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 pub struct CairoAssemblyProgramOutput(
-	BoundedVec<
-		BoundedVec<u8, MaxCairoAssemblyProgramInputLength>,
-		MaxCairoAssemblyProgramInputNumber,
-	>,
+    BoundedVec<BoundedVec<u8, MaxCairoAssemblyProgramInputLength>, MaxCairoAssemblyProgramInputNumber>,
 );
 
 impl CairoAssemblyProgramOutput {
-	pub fn empty() -> Self {
-		CairoAssemblyProgramOutput(BoundedVec::with_bounded_capacity(0))
-	}
+    pub fn empty() -> Self {
+        CairoAssemblyProgramOutput(BoundedVec::with_bounded_capacity(0))
+    }
 }

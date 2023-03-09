@@ -11,35 +11,35 @@ use crate::types::RawOrigin;
 /// * `Result<(), &'static str>` - The result of the check.
 pub fn ensure_starknet_transaction<OuterOrigin>(o: OuterOrigin) -> Result<(), &'static str>
 where
-	OuterOrigin: Into<Result<RawOrigin, OuterOrigin>>,
+    OuterOrigin: Into<Result<RawOrigin, OuterOrigin>>,
 {
-	match o.into() {
-		Ok(RawOrigin::StarknetTransaction) => Ok(()),
-		_ => Err("bad origin: expected to be an Starknet transaction"),
-	}
+    match o.into() {
+        Ok(RawOrigin::StarknetTransaction) => Ok(()),
+        _ => Err("bad origin: expected to be an Starknet transaction"),
+    }
 }
 
 /// Ensure that the origin is a Starknet transaction.
 /// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
 pub struct EnsureStarknetTransaction;
 impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> EnsureOrigin<OuterOrigin>
-	for EnsureStarknetTransaction
+    for EnsureStarknetTransaction
 {
-	type Success = ();
+    type Success = ();
 
-	/// Try to convert the origin into a `RawOrigin::StarknetTransaction`.
-	/// # Arguments
-	/// * `o` - The origin to check.
-	/// # Returns
-	/// * `Result<Self::Success, O>` - The result of the check.
-	fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
-		o.into().map(|o| match o {
-			RawOrigin::StarknetTransaction => (),
-		})
-	}
+    /// Try to convert the origin into a `RawOrigin::StarknetTransaction`.
+    /// # Arguments
+    /// * `o` - The origin to check.
+    /// # Returns
+    /// * `Result<Self::Success, O>` - The result of the check.
+    fn try_origin(o: OuterOrigin) -> Result<Self::Success, OuterOrigin> {
+        o.into().map(|o| match o {
+            RawOrigin::StarknetTransaction => (),
+        })
+    }
 
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<OuterOrigin, ()> {
-		Ok(OuterOrigin::from(RawOrigin::StarknetTransaction))
-	}
+    #[cfg(feature = "runtime-benchmarks")]
+    fn try_successful_origin() -> Result<OuterOrigin, ()> {
+        Ok(OuterOrigin::from(RawOrigin::StarknetTransaction))
+    }
 }

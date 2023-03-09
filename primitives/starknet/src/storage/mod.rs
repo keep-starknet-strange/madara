@@ -18,14 +18,14 @@ pub const STARKNET_CURRENT_BLOCK: &[u8] = b"CurrentBlock";
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum StarknetStorageSchema {
-	/// Undefined schema.
-	Undefined,
-	/// Schema V1.
-	V1,
+    /// Undefined schema.
+    Undefined,
+    /// Schema V1.
+    V1,
 }
 
 impl Default for StarknetStorageSchema {
-	fn default() -> Self {
-		Self::Undefined
-	}
+    fn default() -> Self {
+        Self::Undefined
+    }
 }
