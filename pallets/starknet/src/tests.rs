@@ -21,12 +21,13 @@ fn given_normal_conditions_when_deploy_sierra_program_then_it_works() {
 #[test]
 fn given_normal_conditions_when_current_block_then_returns_correct_block() {
     new_test_ext().execute_with(|| {
-        run_to_block(1);
+        System::set_block_number(1);
+        run_to_block(2);
         let current_block = Starknet::current_block();
         let expected_current_block = Header {
-            block_timestamp: 6_000,
-            block_number: U256::one(),
-            parent_block_hash: H256::from_str("0xaf7bedde1fea222230b82d63d5b665ac75afbe4ad3f75999bb3386cf994a6963")
+            block_timestamp: 12_000,
+            block_number: U256::from(2),
+            parent_block_hash: H256::from_str("0x1c2b97b7b9ea91c2cde45bfb115058628c2e1c7aa3fecb51a0cdaf256dc8a310")
                 .unwrap(),
             ..Header::default()
         };
