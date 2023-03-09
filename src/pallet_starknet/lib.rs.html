@@ -253,6 +253,44 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -306,6 +344,7 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
+
     <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
     <span class="kw">use </span>frame_support::traits::{Randomness, Time};
     <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
@@ -449,23 +488,56 @@
 
     <span class="doccomment">/// The Starknet pallet internal functions.
     </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
-        <span class="doccomment">/// Get current block hash
+        <span class="doccomment">/// Get current block hash.
+        ///
+        /// # Returns
+        ///
+        /// The current block hash.
+        </span><span class="attr">#[inline(always)]
         </span><span class="kw">pub fn </span>current_block_hash() -&gt; <span class="prelude-ty">Option</span>&lt;H256&gt; {
             <span class="self">Self</span>::current_block().map(|block| block.header.hash())
         }
 
-        <span class="doccomment">/// Store a Starknet block in the blockchain.
+        <span class="doccomment">/// Get the block hash of the previous block.
+        ///
         /// # Arguments
+        ///
+        /// * `current_block_number` - The number of the current block.
+        ///
+        /// # Returns
+        ///
+        /// The block hash of the parent (previous) block or 0 if the current block is 0.
+        </span><span class="attr">#[inline(always)]
+        </span><span class="kw">pub fn </span>parent_block_hash(current_block_number: <span class="kw-2">&amp;</span>U256) -&gt; H256 {
+            <span class="self">Self</span>::block_hash(current_block_number - <span class="number">1</span>)
+        }
+
+        <span class="doccomment">/// Get the current block timestamp.
+        ///
+        /// # Returns
+        ///
+        /// The current block timestamp.
+        </span><span class="attr">#[inline(always)]
+        </span><span class="kw">pub fn </span>block_timestamp() -&gt; u64 {
+            T::TimestampProvider::now().unique_saturated_into()
+        }
+
+        <span class="doccomment">/// Store a Starknet block in the blockchain.
+        ///
+        /// # Arguments
+        ///
         /// * `block_number` - The block number.
+        ///
         /// # TODO
+        ///
         /// * Implement the function.
         </span><span class="kw">fn </span>store_block(block_number: U256) {
             <span class="comment">// TODO: Use actual values.
-            </span><span class="kw">let </span>parent_block_hash = U256::zero();
+            </span><span class="kw">let </span>parent_block_hash = <span class="self">Self</span>::parent_block_hash(<span class="kw-2">&amp;</span>block_number);
 
             <span class="kw">let </span>global_state_root = U256::zero();
             <span class="kw">let </span>sequencer_address = U256::zero();
-            <span class="kw">let </span>block_timestamp = T::TimestampProvider::now().unique_saturated_into();
+            <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
             <span class="kw">let </span>transaction_count = <span class="number">0_u128</span>;
             <span class="kw">let </span>transaction_commitment = U256::zero();
             <span class="kw">let </span>event_count = <span class="number">0_u128</span>;
@@ -493,10 +565,14 @@
         }
 
         <span class="doccomment">/// Associate a contract address with a contract class hash.
+        ///
         /// # Arguments
+        ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
+        ///
         /// # TODO
+        ///
         /// * Check if the contract address is already associated with a contract class hash.
         /// * Check if the contract class hash is known.
         </span><span class="kw">fn </span>_associate_contract_class(

@@ -83,7 +83,7 @@
 </span><span class="doccomment">/// Starknet header definition.
 </span><span class="kw">pub struct </span>Header {
     <span class="doccomment">/// The hash of this block’s parent.
-    </span><span class="kw">pub </span>parent_block_hash: U256,
+    </span><span class="kw">pub </span>parent_block_hash: H256,
     <span class="doccomment">/// The number (height) of this block.
     </span><span class="kw">pub </span>block_number: U256,
     <span class="doccomment">/// The state commitment after this block.
@@ -111,7 +111,7 @@
     </span><span class="attr">#[allow(clippy::too_many_arguments)]
     #[must_use]
     </span><span class="kw">pub fn </span>new(
-        parent_block_hash: U256,
+        parent_block_hash: H256,
         block_number: U256,
         global_state_root: U256,
         sequencer_address: U256,
