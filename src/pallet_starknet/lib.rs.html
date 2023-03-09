@@ -217,6 +217,47 @@
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -254,12 +295,29 @@
 </span><span class="kw">type </span>MaxTransactionsPendingBlock = ConstU32&lt;<span class="number">1073741824</span>&gt;;
 
 <span class="kw">pub use </span><span class="self">self</span>::pallet::<span class="kw-2">*</span>;
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;runtime::starknet&quot;</span>;
+
+<span class="comment">// syntactic sugar for logging.
+</span><span class="attr">#[macro_export]
+</span><span class="macro">macro_rules! </span>log {
+	(<span class="macro-nonterminal">$level</span>:tt, <span class="macro-nonterminal">$patter</span>:expr $(, <span class="macro-nonterminal">$values</span>:expr)* $(,)<span class="question-mark">?</span>) =&gt; {
+		log::<span class="macro-nonterminal">$</span><span class="macro">level!</span>(
+			<span class="macro-nonterminal">target</span>: <span class="kw">crate</span>::LOG_TARGET,
+			<span class="macro">concat!</span>(<span class="string">&quot;[{:?}] 🐺 &quot;</span>, <span class="macro-nonterminal">$patter</span>), &lt;frame_system::Pallet&lt;T&gt;&gt;::block_number() $(, <span class="macro-nonterminal">$values</span>)*
+		)
+	};
+}
+
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
 	<span class="kw">use </span><span class="kw">crate</span>::types::{ContractAddress, ContractClassHash};
 
 	<span class="kw">use super</span>::<span class="kw-2">*</span>;
-	<span class="kw">use </span>frame_support::{pallet_prelude::<span class="kw-2">*</span>, traits::Randomness};
+	<span class="kw">use </span>frame_support::{
+		pallet_prelude::<span class="kw-2">*</span>,
+		traits::{Randomness, Time},
+	};
 	<span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 	<span class="kw">use </span>hash::Hasher;
 	<span class="kw">use </span>kp_starknet::{
@@ -285,6 +343,8 @@
 		</span><span class="kw">type </span>StateRoot: Get&lt;U256&gt;;
 		<span class="doccomment">/// The hashing function to use.
 		</span><span class="kw">type </span>SystemHash: Hasher;
+		<span class="doccomment">/// The time idk what.
+		</span><span class="kw">type </span>TimestampProvider: Time;
 	}
 
 	<span class="doccomment">/// The Starknet pallet hooks.
@@ -321,11 +381,7 @@
 		/// * Investigate how we can use offchain workers for Starknet specific tasks. An example
 		///   might be the communication with the prover.
 		</span><span class="kw">fn </span>offchain_worker(n: T::BlockNumber) {
-			<span class="macro">log::trace!</span>(
-				target: <span class="string">&quot;runtime::starknet&quot;</span>,
-				<span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>,
-				n,
-			)
+			<span class="macro">log!</span>(trace, <span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>, n,)
 		}
 	}
 
@@ -374,7 +430,9 @@
 	/// See: `&lt;https://docs.substrate.io/main-docs/build/events-errors/&gt;`
 	</span><span class="attr">#[pallet::event]
 	#[pallet::generate_deposit(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>deposit_event)]
-	</span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {}
+	</span><span class="kw">pub enum </span>Event&lt;T: Config&gt; {
+		KeepStarknetStrange,
+	}
 
 	<span class="doccomment">/// The Starknet pallet custom errors.
 	/// ERRORS
@@ -393,7 +451,8 @@
 		</span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
 			<span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
 			</span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
-			<span class="macro">log::info!</span>(<span class="string">&quot;Keep Starknet Strange!&quot;</span>);
+			<span class="macro">log!</span>(info, <span class="string">&quot;Keep Starknet Strange!&quot;</span>);
+			<span class="self">Self</span>::deposit_event(Event::KeepStarknetStrange);
 			<span class="prelude-val">Ok</span>(())
 		}
 	}
@@ -412,8 +471,31 @@
 		/// * Implement the function.
 		</span><span class="kw">fn </span>store_block(block_number: U256) {
 			<span class="comment">// TODO: Use actual values.
-			</span><span class="kw">let </span>sequencer_address = U256::zero();
-			<span class="kw">let </span>block = Block::new(Header::new(block_number, sequencer_address));
+			</span><span class="kw">let </span>parent_block_hash = U256::zero();
+
+			<span class="kw">let </span>global_state_root = U256::zero();
+			<span class="kw">let </span>sequencer_address = U256::zero();
+			<span class="kw">let </span>block_timestamp = T::TimestampProvider::now().unique_saturated_into();
+			<span class="kw">let </span>transaction_count = <span class="number">0_u128</span>;
+			<span class="kw">let </span>transaction_commitment = U256::zero();
+			<span class="kw">let </span>event_count = <span class="number">0_u128</span>;
+			<span class="kw">let </span>event_commitment = U256::zero();
+			<span class="kw">let </span>protocol_version = <span class="prelude-val">None</span>;
+			<span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
+
+			<span class="kw">let </span>block = Block::new(Header::new(
+				parent_block_hash,
+				block_number,
+				global_state_root,
+				sequencer_address,
+				block_timestamp,
+				transaction_count,
+				transaction_commitment,
+				event_count,
+				event_commitment,
+				protocol_version,
+				extra_data,
+			));
 			<span class="comment">// Save the current block.
 			</span>CurrentBlock::&lt;T&gt;::put(block.clone());
 			<span class="comment">// Save the block number &lt;&gt; hash mapping.
@@ -427,7 +509,7 @@
 		/// # TODO
 		/// * Check if the contract address is already associated with a contract class hash.
 		/// * Check if the contract class hash is known.
-		</span><span class="kw">fn </span>associate_contract_class(
+		</span><span class="kw">fn </span>_associate_contract_class(
 			contract_address: ContractAddress,
 			contract_class_hash: ContractClassHash,
 		) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
