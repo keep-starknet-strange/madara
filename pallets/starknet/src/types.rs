@@ -1,10 +1,7 @@
 //! Starknet pallet custom types.
+use frame_support::codec::{Decode, Encode, MaxEncodedLen};
+use frame_support::scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
-
-use frame_support::{
-	codec::{Decode, Encode, MaxEncodedLen},
-	scale_info::TypeInfo,
-};
 
 /// TODO: Replace with a proper type for field element.
 /// The address of a Starknet contract.
@@ -19,5 +16,5 @@ pub type ContractClassHash = [u8; 32];
 /// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum RawOrigin {
-	StarknetTransaction,
+    StarknetTransaction,
 }
