@@ -187,6 +187,7 @@ pub mod pallet {
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             // Make sure the caller is from a signed origin and retrieve the signer.
             let _deployer_account = ensure_signed(origin)?;
+            Pending::<T>::try_append(Transaction { version: U256::one() }).unwrap();
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
@@ -281,6 +282,7 @@ pub mod pallet {
             CurrentBlock::<T>::put(block.clone());
             // Save the block number <> hash mapping.
             BlockHash::<T>::insert(block_number, block.header.hash());
+            Pending::<T>::kill();
         }
 
         /// Associate a contract address with a contract class hash.
