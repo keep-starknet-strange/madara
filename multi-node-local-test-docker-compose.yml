@@ -1,0 +1,38 @@
+version: "3.2"
+
+services:
+  validator-a:
+    container_name: validator-a
+    image: paritytech/ci-linux:production
+    working_dir: /var/www/validator-a
+    ports:
+      # WebSockets port
+      - "9944:9944"
+      # JSON-RPC port
+      - "9934:9934"
+    environment:
+      - CARGO_HOME=/var/www/validator-a/.cargo
+    volumes:
+      - .:/var/www/validator-a
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: bash -c "cargo build --release && ./target/release/kaioshin --chain=local --force-authoring --rpc-cors=all --alice --port 30334 --ws-port 9944 --rpc-port 9934 --base-path /var/www/validator-a --ws-external"
+
+  validator-b:
+    container_name: validator-b
+    image: paritytech/ci-linux:production
+    working_dir: /var/www/validator-b
+    ports:
+      # WebSockets port
+      - "10944:10944"
+      # JSON-RPC port
+      - "10934:10934"
+    environment:
+      - CARGO_HOME=/var/www/validator-b/.cargo
+    volumes:
+      - .:/var/www/validator-b
+      - type: bind
+        source: ./.local
+        target: /root/.local
+    command: bash -c "cargo build --release && ./target/release/kaioshin --chain=local --force-authoring --rpc-cors=all --bob --port 31344 --ws-port 10944 --rpc-port 10934 --base-path /var/www/validator-b --ws-external"
