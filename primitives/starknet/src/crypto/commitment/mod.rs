@@ -1,5 +1,3 @@
-use alloc::vec::Vec;
-
 use bitvec::vec::BitVec;
 use sp_core::H256;
 use starknet_crypto::FieldElement;
@@ -8,6 +6,7 @@ use super::hash::pedersen;
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::traits::hash::CryptoHasher;
+use crate::transaction::Transaction;
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -37,21 +36,12 @@ impl CommitmentTree {
     }
 }
 
-/// Represents a transaction, for now we define a type here but we'll later use the global tx type
-/// which will be easier to handle.
-pub struct Transaction {
-    /// The transaction hash.
-    pub tx_hash: H256,
-    /// The signature of the transaction (might be empty).
-    pub signature: Vec<H256>,
-}
-
 /// Calculate transaction commitment hash value.
 ///
 /// The transaction commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the (transaction_index, transaction_hash_with_signature)
 /// key-value pairs to the tree and computing the root hash.
-pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> FieldElement {
+pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> H256 {
     let mut tree = CommitmentTree::default();
 
     transactions.iter().enumerate().for_each(|(idx, tx)| {
@@ -59,7 +49,7 @@ pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> FieldEl
         let final_hash = calculate_transaction_hash_with_signature(tx);
         tree.set(idx, final_hash);
     });
-    tree.commit()
+    H256::from_slice(&tree.commit().to_bytes_be())
 }
 
 /// Compute the combined hash of the transaction hash and the signature.
@@ -86,7 +76,7 @@ fn calculate_transaction_hash_with_signature(tx: &Transaction) -> FieldElement {
         hash.finalize()
     };
 
-    pedersen::PedersenHasher::hash(FieldElement::from_byte_slice_be(tx.tx_hash.as_bytes()).unwrap(), signature_hash)
+    pedersen::PedersenHasher::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
 }
 
 /// HashChain is the structure used over at cairo side to represent the hash construction needed

@@ -21,7 +21,7 @@ pub struct Header {
     /// The number of transactions in a block
     pub transaction_count: u128,
     /// A commitment to the transactions included in the block
-    pub transaction_commitment: U256,
+    pub transaction_commitment: H256,
     /// The number of events
     pub event_count: u128,
     /// A commitment to the events produced in this block
@@ -43,7 +43,7 @@ impl Header {
         sequencer_address: U256,
         block_timestamp: u64,
         transaction_count: u128,
-        transaction_commitment: U256,
+        transaction_commitment: H256,
         event_count: u128,
         event_commitment: U256,
         protocol_version: Option<u8>,

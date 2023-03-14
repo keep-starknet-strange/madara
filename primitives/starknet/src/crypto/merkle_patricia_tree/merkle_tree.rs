@@ -1,57 +1,9 @@
-//! Starknet utilises a custom Binary Merkle-Patricia Tree to store and organise its state.
-//!
-//! From an external perspective the tree is similar to a key-value store, where both key
-//! and value are [Felts](FieldElement). The difference is that each tree is immutable,
-//! and any mutations result in a new tree with a new root. This mutated variant can then
-//! be accessed via the new root, and the old variant via the old root.
-//!
-//! Trees share common nodes to be efficient. These nodes perform reference counting and
-//! will get deleted once all references are gone. State can therefore be tracked over time
-//! by mutating the current state, and storing the new root. Old states can be dropped by
-//! deleting old roots which are no longer required.
-//!
-//! #### Tree definition
-//!
-//! It is important to understand that since all keys are [Felts](FieldElement), this means
-//! all paths to a key are equally long - 251 bits.
-//!
-//! Starknet defines three node types for a tree.
-//!
-//! `Leaf nodes` which represent an actual value stored.
-//!
-//! `Edge nodes` which connect two nodes, and __must be__ a maximal subtree (i.e. be as
-//! long as possible). This latter condition is important as it strictly defines a tree (i.e. all
-//! trees with the same leaves must have the same nodes). The path of an edge node can therefore
-//! be many bits long.
-//!
-//! `Binary nodes` is a branch node with two children, left and right. This represents
-//! only a single bit on the path to a leaf.
-//!
-//! A tree storing a single key-value would consist of two nodes. The root node would be an edge
-//! node with a path equal to the key. This edge node is connected to a leaf node storing the value.
-//!
-//! #### Implementation details
-//!
-//! We've defined an additional node type, an `Unresolved node`. This is used to
-//! represent a node who's hash is known, but has not yet been retrieved from storage (and we
-//! therefore have no further details about it).
-//!
-//! Our implementation is a mix of nodes from persistent storage and any mutations are kept
-//! in-memory. It is done this way to allow many mutations to a tree before committing only the
-//! final result to storage. This may be confusing since we just said trees are immutable -- but
-//! since we are only changing the in-memory tree, the immutable tree still exists in storage. One
-//! can therefore think of the in-memory tree as containing the state changes between tree `N` and
-//! `N + 1`.
-//!
-//! The in-memory tree is built using a graph of `Rc<RefCell<Node>>` which is a bit painful.
-
+//! This is a gigantic copy pasta from https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree Thanks to the equilibrium team and whoever else contributed for the code.
 use alloc::rc::Rc;
-use alloc::vec;
 use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::iter::once;
 use core::marker::PhantomData;
-use core::ops::ControlFlow;
 
 use bitvec::prelude::{BitSlice, BitVec, Msb0};
 use starknet_crypto::FieldElement;
@@ -228,31 +180,29 @@ impl<H: CryptoHasher> MerkleTree<H> {
                         // The new leaf branch of the binary node.
                         // (this may be edge -> leaf, or just leaf depending).
                         let new_leaf = Node::Leaf(value);
-                        let new = match new_path.is_empty() {
-                            true => Rc::new(RefCell::new(new_leaf)),
-                            false => {
-                                let new_edge = Node::Edge(EdgeNode {
-                                    hash: None,
-                                    height: child_height,
-                                    path: new_path,
-                                    child: Rc::new(RefCell::new(new_leaf)),
-                                });
-                                Rc::new(RefCell::new(new_edge))
-                            }
+                        let new = if new_path.is_empty() {
+                            Rc::new(RefCell::new(new_leaf))
+                        } else {
+                            let new_edge = Node::Edge(EdgeNode {
+                                hash: None,
+                                height: child_height,
+                                path: new_path,
+                                child: Rc::new(RefCell::new(new_leaf)),
+                            });
+                            Rc::new(RefCell::new(new_edge))
                         };
 
                         // The existing child branch of the binary node.
-                        let old = match old_path.is_empty() {
-                            true => edge.child.clone(),
-                            false => {
-                                let old_edge = Node::Edge(EdgeNode {
-                                    hash: None,
-                                    height: child_height,
-                                    path: old_path,
-                                    child: edge.child.clone(),
-                                });
-                                Rc::new(RefCell::new(old_edge))
-                            }
+                        let old = if old_path.is_empty() {
+                            edge.child.clone()
+                        } else {
+                            let old_edge = Node::Edge(EdgeNode {
+                                hash: None,
+                                height: child_height,
+                                path: old_path,
+                                child: edge.child.clone(),
+                            });
+                            Rc::new(RefCell::new(old_edge))
                         };
 
                         let new_direction = Direction::from(key[branch_height]);
@@ -264,14 +214,15 @@ impl<H: CryptoHasher> MerkleTree<H> {
                         let branch = Node::Binary(BinaryNode { hash: None, height: branch_height, left, right });
 
                         // We may require an edge leading to the binary node.
-                        match common.is_empty() {
-                            true => branch,
-                            false => Node::Edge(EdgeNode {
+                        if common.is_empty() {
+                            branch
+                        } else {
+                            Node::Edge(EdgeNode {
                                 hash: None,
                                 height: edge.height,
                                 path: common.to_vec(),
                                 child: Rc::new(RefCell::new(branch)),
-                            }),
+                            })
                         }
                     }
                     // Leaf exists, we replace its value.
@@ -485,96 +436,6 @@ impl<H: CryptoHasher> MerkleTree<H> {
             parent.path.extend_from_slice(&child_edge.path);
             parent.child = child_edge.child;
         }
-    }
-
-    /// Visits all of the nodes in the tree in pre-order using the given visitor function.
-    ///
-    /// For each node, there will first be a visit for `Node::Unresolved(hash)` followed by visit
-    /// at the loaded node when [`Visit::ContinueDeeper`] is returned. At any time the visitor
-    /// function can also return `ControlFlow::Break` to stop the visit with the given return
-    /// value, which will be returned as `Some(value))` to the caller.
-    ///
-    /// The visitor function receives the node being visited, as well as the full path to that node.
-    ///
-    /// Upon successful non-breaking visit of the tree, `None` will be returned.
-    #[allow(dead_code)]
-    pub fn dfs<X, VisitorFn>(&self, visitor_fn: &mut VisitorFn) -> Option<X>
-    where
-        VisitorFn: FnMut(&Node, &BitSlice<Msb0, u8>) -> ControlFlow<X, Visit>,
-    {
-        use bitvec::prelude::bitvec;
-
-        #[allow(dead_code)]
-        struct VisitedNode {
-            node: Rc<RefCell<Node>>,
-            path: BitVec<Msb0, u8>,
-        }
-
-        let mut visiting = vec![VisitedNode { node: self.root.clone(), path: bitvec![Msb0, u8;] }];
-
-        loop {
-            match visiting.pop() {
-                None => break,
-                Some(VisitedNode { node, path }) => {
-                    let current_node = &*node.borrow();
-                    let _zero = FieldElement::from(0_u32);
-                    if !matches!(current_node, Node::Unresolved(_zero)) {
-                        match visitor_fn(current_node, &path) {
-                            ControlFlow::Continue(Visit::ContinueDeeper) => {
-                                // the default, no action, just continue deeper
-                            }
-                            ControlFlow::Continue(Visit::StopSubtree) => {
-                                // make sure we don't add any more to `visiting` on this subtree
-                                continue;
-                            }
-                            ControlFlow::Break(x) => {
-                                // early exit
-                                return Some(x);
-                            }
-                        }
-                    }
-                    match current_node {
-                        Node::Binary(b) => {
-                            visiting.push(VisitedNode {
-                                node: b.right.clone(),
-                                path: {
-                                    let mut path_right = path.clone();
-                                    path_right.push(Direction::Right.into());
-                                    path_right
-                                },
-                            });
-                            visiting.push(VisitedNode {
-                                node: b.left.clone(),
-                                path: {
-                                    let mut path_left = path.clone();
-                                    path_left.push(Direction::Left.into());
-                                    path_left
-                                },
-                            });
-                        }
-                        Node::Edge(e) => {
-                            visiting.push(VisitedNode {
-                                node: e.child.clone(),
-                                path: {
-                                    let mut extended_path = path.clone();
-                                    extended_path.extend_from_slice(&e.path);
-                                    extended_path
-                                },
-                            });
-                        }
-                        Node::Leaf(_) => {}
-                        Node::Unresolved(hash) => {
-                            // Zero means empty tree, so nothing to resolve
-                            if hash != &FieldElement::ZERO {
-                                panic!("Resolve is useless");
-                            }
-                        }
-                    };
-                }
-            }
-        }
-
-        None
     }
 }
 
