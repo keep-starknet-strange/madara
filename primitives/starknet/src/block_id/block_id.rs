@@ -53,7 +53,7 @@ impl<'a> Visitor<'a> for BlockIdVisitor {
 
         loop {
             let key_str: Option<String> = visitor.next_key()?;
-            
+
             match key_str {
                 Some(key) => match key.as_str() {
                     "blockNumber" => {
