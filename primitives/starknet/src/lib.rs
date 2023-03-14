@@ -12,7 +12,8 @@ pub use scale_info;
 pub use serde;
 #[doc(hidden)]
 pub use sp_std;
-
+#[doc(hidden)]
+pub extern crate alloc;
 // Include modules.
 /// Starknet block related functionality.
 pub mod block;
