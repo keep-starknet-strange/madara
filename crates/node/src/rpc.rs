@@ -37,7 +37,7 @@ where
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {
-    use kaioshin_rpc::StarkNetRpc;
+    use kaioshin_rpc::StarkNetImpl;
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 
@@ -46,7 +46,7 @@ where
 
     module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
     module.merge(TransactionPayment::new(client).into_rpc())?;
-    module.merge(StarkNetRpc::new(client.clone(), pool).into_rpc())?;
+    module.merge(StarkNetImpl::new(client.clone(), pool).into_rpc())?;
 
     // io.merge(MoonbeamFinality::new(client.clone(), frontier_backend.clone()).into_rpc())?;
 

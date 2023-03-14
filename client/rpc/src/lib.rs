@@ -1,34 +1,32 @@
-use jsonrpsee::core::{async_trait, RpcResult as Result};
-use std::{marker::PhantomData, sync::Arc};
+use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
+use std::sync::Arc;
 
-use kaioshin_rpc_core::StarkNetRpc;
+use kaioshin_rpc_core::StarkNetRpcServer;
 use kaioshin_runtime::opaque::Block;
 use kaioshin_runtime::{AccountId, Balance, Index};
-use kp_starknet::{BlockId, Block};
 
+use sp_core::U256;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 
-pub struct StarkNet<C, P, B> {
-    pub client: Arc<C>.
-    pub pool: FullPool<P>
-    _phdata: PhantomData<B>,
+pub struct StarkNetImpl<C, P> {
+    pub client: Arc<C>,
+    pub pool: Arc<P>,
 }
 
-impl<C, P> StarkNet<C, P> {
+impl<C, P> StarkNetImpl<C, P> {
     pub fn new(client: Arc<C>, pool: Arc<P>) -> Self {
         Self {
             client,
             pool,
-            _marker: PhantomData,
         }
     }
 }
 
-#[async_trait]
-impl <C, P> StarkNetRpcServer<C, P> for StarkNet<C, P>
+// #[async_trait]
+impl<C, P> StarkNetRpcServer for StarkNetImpl<C, P>
 where
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
@@ -38,7 +36,7 @@ where
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {
-    pub fn get_block_with_tx_hashes(&self, block_id: BlockId) -> Result<Option<Block>> {
-        self.get_block_with_tx_hashes(block_id).await
+    fn get_block_with_tx_hashes(&self, block_id: U256) -> Result<Option<Block>> {
+        self.get_block_with_tx_hashes(block_id)
     }
 }

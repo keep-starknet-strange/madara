@@ -8,7 +8,8 @@ edition = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
+serde = { version = "1.0.136", features = ["derive"], optional = true }
+serde_json = "1.0.85"
+sp-core = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
-serde = { workspace = true }
-serde_json = { workspace = true }
-kp-starknet = { workspace = true }
+kaioshin-runtime = { path = "../../runtime" }
