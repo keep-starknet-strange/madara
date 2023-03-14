@@ -94,34 +94,6 @@ impl From<&EdgeNode> for ProofNode {
         })
     }
 }
-/// A binary node which can be read / written from an [RcNodeStorage].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PersistedBinaryNode {
-    /// Left node that's saved into db (soon gone I guess).
-    pub left: FieldElement,
-    /// Right node that's saved into db (soon gone I guess).
-    pub right: FieldElement,
-}
-
-/// An edge node which can be read / written from an [RcNodeStorage].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PersistedEdgeNode {
-    /// Path of the node that's saved into db (soon gone I guess).
-    pub path: BitVec<Msb0, u8>,
-    /// Hash of the child node that's saved into db (soon gone I guess).
-    pub child: FieldElement,
-}
-
-/// A node which can be read / written from an [RcNodeStorage].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PersistedNode {
-    /// Persistent binary node.
-    Binary(PersistedBinaryNode),
-    /// Persistent edge node.
-    Edge(PersistedEdgeNode),
-    /// Persistent leaf.
-    Leaf,
-}
 
 /// [ProofNode] s are lightweight versions of their `Node` counterpart.
 /// They only consist of [BinaryProofNode] and [EdgeProofNode] because `Leaf`
@@ -141,62 +113,23 @@ pub enum ProofNode {
 ///
 /// For more information on how this functions internally, see [here](super::merkle_tree).
 #[derive(Debug, Clone)]
-pub struct MerkleTree<T, H: CryptoHasher> {
-    storage: T,
+pub struct MerkleTree<H: CryptoHasher> {
     root: Rc<RefCell<Node>>,
-    max_height: u8,
     _hasher: PhantomData<H>,
 }
-/// Backing storage for Starknet Binary Merkle Patricia Tree.
-///
-/// Default implementation and persistent implementation is the `RcNodeStorage`. Testing/future
-/// implementations include [`HashMap`](std::collections::HashMap) and `()` based implementations
-/// where the backing storage is not persistent, or doesn't exist at all. The nodes will still be
-/// visitable in-memory.
-pub trait NodeStorage {
-    /// Find a persistent node during a traversal from the storage.
-    fn get(&self, key: FieldElement) -> Option<PersistedNode>;
 
-    /// Insert or ignore if already exists `node` to storage under the given `key`.
-    ///
-    /// This does not imply incrementing the nodes ref count.
-    fn upsert(&self, key: FieldElement, node: PersistedNode);
-
-    /// Decrement previously stored `key`'s reference count. This shouldn't fail for key not found.
-    #[cfg(any(feature = "test-utils", test))]
-    fn decrement_ref_count(&self, key: FieldElement);
-
-    /// Increment previously stored `key`'s reference count. This shouldn't fail for key not found.
-    fn increment_ref_count(&self, key: FieldElement);
-}
-
-impl NodeStorage for () {
-    fn get(&self, _key: FieldElement) -> Option<PersistedNode> {
-        // the rc<refcell> impl will do just fine by without any backing for transaction tree
-        // building
-        None
-    }
-
-    fn upsert(&self, _key: FieldElement, _node: PersistedNode) {}
-
-    #[cfg(any(feature = "test-utils", test))]
-    fn decrement_ref_count(&self, _key: FieldElement) {}
-
-    fn increment_ref_count(&self, _key: FieldElement) {}
-}
-
-impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
+impl<H: CryptoHasher> MerkleTree<H> {
     /// Less visible initialization for `MerkleTree<T>` as the main entry points should be
     /// [`MerkleTree::<RcNodeStorage>::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.
-    fn new(storage: T, root: FieldElement, max_height: u8) -> Self {
+    fn new(root: FieldElement) -> Self {
         let root_node = Rc::new(RefCell::new(Node::Unresolved(root)));
-        Self { storage, root: root_node, max_height, _hasher: PhantomData }
+        Self { root: root_node, _hasher: PhantomData }
     }
 
     /// Empty tree.
-    pub fn empty(storage: T, max_height: u8) -> Self {
-        Self::new(storage, FieldElement::ZERO, max_height)
+    pub fn empty() -> Self {
+        Self::new(FieldElement::ZERO)
     }
 
     /// Persists all changes to storage and returns the new root hash.
@@ -211,14 +144,9 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
         // Go through tree, collect dirty nodes, calculate their hashes and
         // persist them. Take care to increment ref counts of child nodes. So in order
         // to do this correctly, will have to start back-to-front.
-        self.commit_subtree(&mut self.root.borrow_mut());
+        Self::commit_subtree(&mut self.root.borrow_mut());
         // unwrap is safe as `commit_subtree` will set the hash.
-        let root = self.root.borrow().hash().unwrap();
-        self.storage.increment_ref_count(root);
-
-        // TODO: (debug only) expand tree assert that no edge node has edge node as child
-
-        root
+        self.root.borrow().hash().unwrap()
     }
 
     /// Persists any changes in this subtree to storage.
@@ -228,7 +156,7 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
     /// as the parent node's hash relies on its childrens hashes.
     ///
     /// In effect, the entire subtree gets persisted.
-    fn commit_subtree(&self, node: &mut Node) {
+    fn commit_subtree(node: &mut Node) {
         use Node::*;
         match node {
             Unresolved(_) => { /* Unresolved nodes are already persisted. */ }
@@ -237,28 +165,16 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
             Edge(edge) if edge.hash.is_some() => { /* not dirty, already persisted */ }
 
             Binary(binary) => {
-                self.commit_subtree(&mut binary.left.borrow_mut());
-                self.commit_subtree(&mut binary.right.borrow_mut());
+                Self::commit_subtree(&mut binary.left.borrow_mut());
+                Self::commit_subtree(&mut binary.right.borrow_mut());
                 // This will succeed as `commit_subtree` will set the child hashes.
                 binary.calculate_hash::<H>();
-                // unwrap is safe as `commit_subtree` will set the hashes.
-                let left = binary.left.borrow().hash().unwrap();
-                let right = binary.right.borrow().hash().unwrap();
-                let persisted_node = PersistedNode::Binary(PersistedBinaryNode { left, right });
-                // unwrap is safe as we just set the hash.
-                self.storage.upsert(binary.hash.unwrap(), persisted_node);
             }
 
             Edge(edge) => {
-                self.commit_subtree(&mut edge.child.borrow_mut());
+                Self::commit_subtree(&mut edge.child.borrow_mut());
                 // This will succeed as `commit_subtree` will set the child's hash.
                 edge.calculate_hash::<H>();
-
-                // unwrap is safe as `commit_subtree` will set the hash.
-                let child = edge.child.borrow().hash().unwrap();
-                let persisted_node = PersistedNode::Edge(PersistedEdgeNode { path: edge.path.clone(), child });
-                // unwrap is safe as we just set the hash.
-                self.storage.upsert(edge.hash.unwrap(), persisted_node);
             }
         }
     }
@@ -520,6 +436,7 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
         }
 
         let mut current = self.root.clone();
+        #[allow(unused_variables)]
         let mut height = 0;
         let mut nodes = Vec::new();
         loop {
@@ -528,11 +445,7 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
             let current_tmp = current.borrow().clone();
 
             let next = match current_tmp {
-                Unresolved(hash) => {
-                    let node = self.resolve(hash, height);
-                    current.swap(&RefCell::new(node));
-                    current
-                }
+                Unresolved(_hash) => panic!("Resolve is useless"),
                 Binary(binary) => {
                     nodes.push(current.clone());
                     let next = binary.direction(dst);
@@ -555,45 +468,6 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
         }
     }
 
-    /// Retrieves the requested node from storage.
-    ///
-    /// Result will be either a [Binary](Node::Binary), [Edge](Node::Edge) or [Leaf](Node::Leaf)
-    /// node.
-    fn resolve(&self, hash: FieldElement, height: usize) -> Node {
-        if height == self.max_height as usize {
-            #[cfg(debug_assertions)]
-            match self.storage.get(hash) {
-                Some(PersistedNode::Edge(_) | PersistedNode::Binary(_)) | None => {
-                    // some cases are because of collisions, none is the common outcome
-                }
-                Some(PersistedNode::Leaf) => {
-                    // they exist in some databases, but in general we run only release builds
-                    // against real databases
-                    unreachable!("leaf nodes should no longer exist");
-                }
-            }
-            return Node::Leaf(hash);
-        }
-
-        match self.storage.get(hash).unwrap() {
-            PersistedNode::Binary(binary) => Node::Binary(BinaryNode {
-                hash: Some(hash),
-                height,
-                left: Rc::new(RefCell::new(Node::Unresolved(binary.left))),
-                right: Rc::new(RefCell::new(Node::Unresolved(binary.right))),
-            }),
-            PersistedNode::Edge(edge) => Node::Edge(EdgeNode {
-                hash: Some(hash),
-                height,
-                path: edge.path,
-                child: Rc::new(RefCell::new(Node::Unresolved(edge.child))),
-            }),
-            PersistedNode::Leaf => {
-                panic!("Retrieved node {hash} is a leaf at {height} out of {}", self.max_height)
-            }
-        }
-    }
-
     /// This is a convenience function which merges the edge node with its child __iff__ it is also
     /// an edge.
     ///
@@ -603,7 +477,7 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
     /// illegal state (since edge nodes __must be__ maximal subtrees).
     fn merge_edges(&self, parent: &mut EdgeNode) {
         let resolved_child = match &*parent.child.borrow() {
-            Node::Unresolved(hash) => self.resolve(*hash, parent.height + parent.path.len()),
+            Node::Unresolved(_hash) => panic!("Resolve is useless"),
             other => other.clone(),
         };
 
@@ -692,10 +566,7 @@ impl<T: NodeStorage, H: CryptoHasher> MerkleTree<T, H> {
                         Node::Unresolved(hash) => {
                             // Zero means empty tree, so nothing to resolve
                             if hash != &FieldElement::ZERO {
-                                visiting.push(VisitedNode {
-                                    node: Rc::new(RefCell::new(self.resolve(*hash, path.len()))),
-                                    path,
-                                });
+                                panic!("Resolve is useless");
                             }
                         }
                     };

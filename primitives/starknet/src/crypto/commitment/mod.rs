@@ -17,12 +17,12 @@ use crate::traits::hash::CryptoHasher;
 ///
 /// The tree height is 64 in our case since our set operation takes u64 index values.
 struct CommitmentTree {
-    tree: MerkleTree<(), PedersenHasher>,
+    tree: MerkleTree<PedersenHasher>,
 }
 
 impl Default for CommitmentTree {
     fn default() -> Self {
-        Self { tree: MerkleTree::empty((), 64) }
+        Self { tree: MerkleTree::empty() }
     }
 }
 
