@@ -39,15 +39,16 @@ where
     P: TransactionPool + 'static,
 {
     use kaioshin_rpc::StarkNetImpl;
+    use kaioshin_rpc_core::StarkNetRpcServer;
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 
     let mut module = RpcModule::new(());
     let FullDeps { client, pool, deny_unsafe } = deps;
 
-    module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
-    module.merge(TransactionPayment::new(client).into_rpc())?;
-    module.merge(StarkNetImpl::new(client.clone(), pool).into_rpc())?;
+    module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
+    module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
+    module.merge(StarkNetImpl::new(client.clone(), pool.clone()).into_rpc())?;
 
     // io.merge(MoonbeamFinality::new(client.clone(), frontier_backend.clone()).into_rpc())?;
 

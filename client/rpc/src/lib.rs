@@ -1,4 +1,4 @@
-use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
+use jsonrpsee::core::{RpcResult as Result, async_trait};
 use std::sync::Arc;
 
 use kaioshin_rpc_core::StarkNetRpcServer;
@@ -25,7 +25,7 @@ impl<C, P> StarkNetImpl<C, P> {
     }
 }
 
-// #[async_trait]
+#[async_trait]
 impl<C, P> StarkNetRpcServer for StarkNetImpl<C, P>
 where
     C: ProvideRuntimeApi<Block>,

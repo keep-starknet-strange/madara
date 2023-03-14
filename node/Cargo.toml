@@ -72,6 +72,7 @@ kaioshin-runtime = { path = "../runtime" }
 
 # Rpc Extension
 kaioshin-rpc = { workspace = true }
+kaioshin-rpc-core = { workspace = true }
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }

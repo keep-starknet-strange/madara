@@ -3196,6 +3196,7 @@ dependencies = [
  "futures",
  "jsonrpsee",
  "kaioshin-rpc",
+ "kaioshin-rpc-core",
  "kaioshin-runtime",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
