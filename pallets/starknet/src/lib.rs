@@ -187,7 +187,7 @@ pub mod pallet {
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             // Make sure the caller is from a signed origin and retrieve the signer.
             let _deployer_account = ensure_signed(origin)?;
-            Pending::<T>::try_append(Transaction { version: U256::one() }).unwrap();
+            Pending::<T>::try_append(Transaction::default()).unwrap();
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
@@ -254,12 +254,13 @@ pub mod pallet {
         fn store_block(block_number: U256) {
             // TODO: Use actual values.
             let parent_block_hash = Self::parent_block_hash(&block_number);
+            let pending = Self::pending();
 
             let global_state_root = U256::zero();
             let sequencer_address = U256::zero();
             let block_timestamp = Self::block_timestamp();
-            let transaction_count = Self::transaction_count();
-            let transaction_commitment = U256::zero();
+            let transaction_count = pending.len() as u128;
+            let transaction_commitment = kp_starknet::crypto::commitment::calculate_transaction_commitment(&pending);
             let event_count = 0_u128;
             let event_commitment = U256::zero();
             let protocol_version = None;
