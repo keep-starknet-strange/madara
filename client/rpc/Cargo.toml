@@ -10,6 +10,14 @@ repository = { workspace = true }
 [dependencies]
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
 tokio = { version = "1.24", features = ["sync"] }
+sp-core = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+kaioshin-runtime = { path = "../../runtime" }
 kaioshin-rpc-core = { workspace = true }
 sc-transaction-pool = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
 kp-starknet = { workspace = true }
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-blockchain = { workspace = true }
+pallet-transaction-payment-rpc = { workspace = true }
+substrate-frame-rpc-system = { workspace = true }

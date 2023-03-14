@@ -3195,6 +3195,7 @@ dependencies = [
  "frame-system",
  "futures",
  "jsonrpsee",
+ "kaioshin-rpc",
  "kaioshin-runtime",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
@@ -3228,6 +3229,36 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "try-runtime-cli",
+]
+
+[[package]]
+name = "kaioshin-rpc"
+version = "0.1.0-dev"
+dependencies = [
+ "jsonrpsee",
+ "kaioshin-rpc-core",
+ "kaioshin-runtime",
+ "kp-starknet",
+ "pallet-transaction-payment-rpc",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-core",
+ "substrate-frame-rpc-system",
+ "tokio",
+]
+
+[[package]]
+name = "kaioshin-rpc-core"
+version = "0.1.0-dev"
+dependencies = [
+ "jsonrpsee",
+ "kaioshin-runtime",
+ "serde",
+ "serde_json",
+ "sp-core",
 ]
 
 [[package]]
