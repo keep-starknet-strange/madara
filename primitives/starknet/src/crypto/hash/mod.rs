@@ -38,7 +38,7 @@ pub fn hash_field(hash_type: HashType, x: &FieldElement, y: &FieldElement) -> Re
     // Convert the byte arrays to field elements.
     let x = FieldElement::to_bytes_be(x);
     let y = FieldElement::to_bytes_be(y);
-    // Hash the field elements.
+    // Hasher the field elements.
     let hash = hash(hash_type, [x, y].concat().as_slice());
     // Return the hash as a byte array.
     FieldElement::from_byte_slice_be(&hash)

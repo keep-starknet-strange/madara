@@ -1,7 +1,7 @@
 //! Pedersen hash module.
 use starknet_crypto::{pedersen_hash, FieldElement};
 
-use crate::traits::hash::Hasher;
+use crate::traits::hash::{CryptoHasher, Hasher};
 
 /// The Pedersen hash function.
 /// ### Arguments
@@ -27,5 +27,11 @@ impl Hasher for PedersenHasher {
     /// The hash of the data.
     fn hash(&self, data: &[u8]) -> [u8; 32] {
         hash(data)
+    }
+}
+
+impl CryptoHasher for PedersenHasher {
+    fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
+        pedersen_hash(&a, &b)
     }
 }
