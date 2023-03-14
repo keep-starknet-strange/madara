@@ -84,6 +84,10 @@ pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", def
 # Madara primtitives
 mp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
 
+# Kaioshin client
+kaioshin-rpc = { version = "0.1.0-dev", path = "client/kaioshin-rpc" }
+kaioshin-rpc-core = { version = "0.1.0-dev", path = "client/kaioshin-rpc-core" }
+
 # Starknet dependencies
 # Cairo Virtual Machine
 # TODO: wait for no-std support on official repo
