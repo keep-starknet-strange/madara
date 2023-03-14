@@ -11,3 +11,4 @@ repository = { workspace = true }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+kp-starknet = { workspace = true }

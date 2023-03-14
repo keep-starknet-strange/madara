@@ -1,6 +1,7 @@
 use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
 
-use crate::types::*;
+use kp_starknet::{BlockId, Block};
+
 
 #[rpc(server, namespace = "starknet")]
 pub trait StarkNetRpc {
