@@ -1,0 +1,13 @@
+[package]
+name = "kaioshin-rpc-core"
+version = "0.1.0-dev"
+license = "MIT"
+description = "Starknet primitives for Substrate."
+authors = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
+serde = { workspace = true }
+serde_json = { workspace = true }
