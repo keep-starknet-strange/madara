@@ -4,7 +4,9 @@ This is a collection of scripts and tools to benchmark Kaioshin leveraging artil
 
 Steps to follow :
 - Install the dependencies using `yarn install`
-- Run the benchmark using `yarn test:ci`
+- Make sure you've built the project using `cd .. && cargo build release`
+- Run the benchmark using `yarn test:ci`.
+  If it does not work, just run `sh ../scripts/run_node.sh` and in another terminal run `yarn test` where x is the benchmark you want to run.
 
 The following benchmarks are available :
 - `yarn test:chain` : Simple stresstest of the chain
