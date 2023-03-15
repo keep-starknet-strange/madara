@@ -25,6 +25,17 @@
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
 <a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Traits for hashing.
 
 </span><span class="kw">use </span>starknet_crypto::FieldElement;
@@ -51,6 +62,17 @@
     ///
     /// The hash of the 2 values.
     </span><span class="kw">fn </span>hash(a: FieldElement, b: FieldElement) -&gt; FieldElement;
+
+    <span class="doccomment">/// Computes the hash of an array.
+    ///
+    /// # Arguments
+    ///
+    /// * `elements` - The array to hash.
+    ///
+    /// # Returns
+    ///
+    /// The hash of the array.
+    </span><span class="kw">fn </span>compute_hash_on_elements(elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

@@ -24,6 +24,9 @@
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
 </span><span class="kw">use </span>poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
 <span class="kw">use </span>poseidon_hash::hash_sw8;
@@ -48,6 +51,9 @@
     <span class="kw">fn </span>hash(a: FieldElement, b: FieldElement) -&gt; FieldElement {
         <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(<span class="kw-2">&amp;</span>[a.to_bytes_be(), b.to_bytes_be()].concat());
         FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>u8s_from_felts(<span class="kw-2">&amp;</span>poseidon_hash::hash_sw8(<span class="kw-2">&amp;</span>input))).unwrap()
+    }
+    <span class="kw">fn </span>compute_hash_on_elements(_elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
+        <span class="macro">todo!</span>()
     }
 }
 </code></pre></div>
