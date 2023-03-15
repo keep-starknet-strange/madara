@@ -108,6 +108,10 @@ impl<H: CryptoHasher> MerkleTree<H> {
     /// as the parent node's hash relies on its childrens hashes.
     ///
     /// In effect, the entire subtree gets persisted.
+    ///
+    /// # Arguments
+    ///
+    /// * `node` - The top node from the subtree to commit.
     fn commit_subtree(node: &mut Node) {
         use Node::*;
         match node {
@@ -132,6 +136,11 @@ impl<H: CryptoHasher> MerkleTree<H> {
     }
 
     /// Sets the value of a key. To delete a key, set the value to [FieldElement::ZERO].
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to set.
+    /// * `value` - The value to set.
     pub fn set(&mut self, key: &BitSlice<Msb0, u8>, value: FieldElement) {
         if value == FieldElement::ZERO {
             return self.delete_leaf(key);
@@ -256,6 +265,10 @@ impl<H: CryptoHasher> MerkleTree<H> {
     ///
     /// This is not an external facing API; the functionality is instead accessed by calling
     /// [`MerkleTree::set`] with value set to [`FieldElement::ZERO`].
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to delete.
     fn delete_leaf(&mut self, key: &BitSlice<Msb0, u8>) {
         // Algorithm explanation:
         //
@@ -327,6 +340,14 @@ impl<H: CryptoHasher> MerkleTree<H> {
     }
 
     /// Returns the value stored at key, or `None` if it does not exist.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key of the value to get.
+    ///
+    /// # Returns
+    ///
+    /// The value of the key.
     pub fn get(&self, key: &BitSlice<Msb0, u8>) -> Option<FieldElement> {
         self.traverse(key).last().and_then(|node| match &*node.borrow() {
             Node::Leaf(value) if !value.eq(&FieldElement::ZERO) => Some(*value),
@@ -345,6 +366,14 @@ impl<H: CryptoHasher> MerkleTree<H> {
     ///   1. the chain follows the path of `key`, and
     ///   2. the hashes are correct, and
     ///   3. the root hash matches the known root
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to get the merkle proof of.
+    ///
+    /// # Returns
+    ///
+    /// The merkle proof and all the child nodes hashes.
     pub fn get_proof(&self, key: &BitSlice<Msb0, u8>) -> Vec<ProofNode> {
         let mut nodes = self.traverse(key);
 
@@ -381,6 +410,14 @@ impl<H: CryptoHasher> MerkleTree<H> {
     /// possible to continue on towards the destination. Nor can it be an
     /// [Unresolved](Node::Unresolved) node since this would be resolved to check if we can
     /// travel further.
+    ///
+    /// # Arguments
+    ///
+    /// * `dst` - The node to get to.
+    ///
+    /// # Returns
+    ///
+    /// The list of nodes along the path.
     fn traverse(&self, dst: &BitSlice<Msb0, u8>) -> Vec<Rc<RefCell<Node>>> {
         if self.root.borrow().is_empty() {
             return Vec::new();
@@ -426,6 +463,10 @@ impl<H: CryptoHasher> MerkleTree<H> {
     ///
     /// This can occur when mutating the tree (e.g. deleting a child of a binary node), and is an
     /// illegal state (since edge nodes __must be__ maximal subtrees).
+    ///
+    /// # Arguments
+    ///
+    /// * `parent` - The parent node to merge the child with.
     fn merge_edges(&self, parent: &mut EdgeNode) {
         let resolved_child = match &*parent.child.borrow() {
             Node::Unresolved(_hash) => panic!("Resolve is useless"),

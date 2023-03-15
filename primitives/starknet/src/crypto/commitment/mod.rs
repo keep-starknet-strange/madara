@@ -4,7 +4,6 @@ use bitvec::vec::BitVec;
 use sp_core::H256;
 use starknet_crypto::FieldElement;
 
-use super::hash::pedersen;
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::traits::hash::CryptoHasher;
@@ -28,14 +27,22 @@ impl<T: CryptoHasher> Default for CommitmentTree<T> {
 }
 
 impl<T: CryptoHasher> CommitmentTree<T> {
+    /// Sets the value of a key in the merkle tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index of the value to set.
+    /// * `value` - The value to set.
     pub fn set(&mut self, index: u64, value: FieldElement) {
         let key = index.to_be_bytes();
         self.tree.set(&BitVec::from(key.to_vec()), value)
     }
 
+    /// Get the merkle root of the tree.
     pub fn commit(self) -> FieldElement {
         self.tree.commit()
     }
+
     /// Compute the combined hash of the transaction hash and the signature.
     ///
     /// Since the transaction hash doesn't take the signature values as its input
@@ -56,7 +63,7 @@ impl<T: CryptoHasher> CommitmentTree<T> {
                 .map(|elt| FieldElement::from_byte_slice_be(elt.as_bytes()).unwrap())
                 .collect::<Vec<FieldElement>>(),
         );
-        pedersen::PedersenHasher::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
+        <T as CryptoHasher>::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
     }
 
     /// Compute hash on elements, base on the [python implementation](https://github.com/starkware-libs/cairo-lang/blob/12ca9e91bbdc8a423c63280949c7e34382792067/src/starkware/cairo/common/hash_state.py#L6-L15).
@@ -72,11 +79,8 @@ impl<T: CryptoHasher> CommitmentTree<T> {
         if elements.is_empty() {
             <T as CryptoHasher>::hash(FieldElement::ZERO, FieldElement::ZERO)
         } else {
-            let hash = elements.iter().fold(FieldElement::ZERO, |a, b| pedersen::PedersenHasher::hash(a, *b));
-            pedersen::PedersenHasher::hash(
-                hash,
-                FieldElement::from_byte_slice_be(&elements.len().to_be_bytes()).unwrap(),
-            )
+            let hash = elements.iter().fold(FieldElement::ZERO, |a, b| <T as CryptoHasher>::hash(a, *b));
+            <T as CryptoHasher>::hash(hash, FieldElement::from_byte_slice_be(&elements.len().to_be_bytes()).unwrap())
         }
     }
 }
@@ -86,6 +90,14 @@ impl<T: CryptoHasher> CommitmentTree<T> {
 /// The transaction commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the (transaction_index, transaction_hash_with_signature)
 /// key-value pairs to the tree and computing the root hash.
+///
+/// # Arguments
+///
+/// * `transactions` - The transactions to get the root from.
+///
+/// # Returns
+///
+/// The merkle root of the merkle tree built from the transactions.
 pub fn calculate_transaction_commitment(transactions: &[Transaction]) -> H256 {
     let mut tree = CommitmentTree::<PedersenHasher>::default();
 

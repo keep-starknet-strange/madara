@@ -58,6 +58,7 @@ pub mod pallet {
     use hash::Hasher;
     use kp_starknet::block::wrapper::block::Block;
     use kp_starknet::block::wrapper::header::Header;
+    use kp_starknet::crypto::commitment;
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use kp_starknet::transaction::Transaction;
     use sp_core::{H256, U256};
@@ -260,7 +261,7 @@ pub mod pallet {
             let sequencer_address = U256::zero();
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
-            let transaction_commitment = kp_starknet::crypto::commitment::calculate_transaction_commitment(&pending);
+            let transaction_commitment = commitment::calculate_transaction_commitment(&pending);
             let event_count = 0_u128;
             let event_commitment = U256::zero();
             let protocol_version = None;

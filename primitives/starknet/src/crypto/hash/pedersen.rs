@@ -30,6 +30,7 @@ impl Hasher for PedersenHasher {
     }
 }
 
+/// The pedersen CryptoHasher implementation.
 impl CryptoHasher for PedersenHasher {
     fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
         pedersen_hash(&a, &b)
