@@ -24,4 +24,15 @@ pub trait CryptoHasher {
     ///
     /// The hash of the 2 values.
     fn hash(a: FieldElement, b: FieldElement) -> FieldElement;
+
+    /// Computes the hash of an array.
+    ///
+    /// # Arguments
+    ///
+    /// * `elements` - The array to hash.
+    ///
+    /// # Returns
+    ///
+    /// The hash of the array.
+    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement;
 }

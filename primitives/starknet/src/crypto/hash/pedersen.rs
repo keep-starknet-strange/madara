@@ -32,7 +32,30 @@ impl Hasher for PedersenHasher {
 
 /// The pedersen CryptoHasher implementation.
 impl CryptoHasher for PedersenHasher {
+    #[inline(always)]
     fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
         pedersen_hash(&a, &b)
+    }
+
+    /// Compute hash on elements, base on the [python implementation](https://github.com/starkware-libs/cairo-lang/blob/12ca9e91bbdc8a423c63280949c7e34382792067/src/starkware/cairo/common/hash_state.py#L6-L15).
+    ///
+    /// # Arguments
+    ///
+    /// * `elements` - The elements to hash.
+    ///
+    /// # Returns
+    ///
+    /// h(h(h(h(0, data[0]), data[1]), ...), data[n-1]), n).
+    #[inline]
+    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
+        if elements.is_empty() {
+            <PedersenHasher as CryptoHasher>::hash(FieldElement::ZERO, FieldElement::ZERO)
+        } else {
+            let hash = elements.iter().fold(FieldElement::ZERO, |a, b| <PedersenHasher as CryptoHasher>::hash(a, *b));
+            <PedersenHasher as CryptoHasher>::hash(
+                hash,
+                FieldElement::from_byte_slice_be(&elements.len().to_be_bytes()).unwrap(),
+            )
+        }
     }
 }
