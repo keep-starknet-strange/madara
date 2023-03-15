@@ -33,10 +33,16 @@ impl Default for Transaction {
     fn default() -> Self {
         Self {
             version: U256::default(),
-            hash: H256::from_slice(&1_u32.to_be_bytes()),
+            hash: H256::from_slice(&[
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+            ]),
             signature: BoundedVec::try_from(vec![
-                H256::from_slice(&1_u32.to_be_bytes()),
-                H256::from_slice(&1_u32.to_be_bytes()),
+                H256::from_slice(&[
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ]),
+                H256::from_slice(&[
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                ]),
             ])
             .unwrap(),
         }

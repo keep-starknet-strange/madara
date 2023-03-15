@@ -13,6 +13,7 @@ use bitvec::slice::BitSlice;
 use starknet_crypto::FieldElement;
 
 use crate::traits::hash::CryptoHasher;
+
 /// A node in a Binary Merkle-Patricia Tree graph.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Node {
@@ -106,6 +107,14 @@ impl BinaryNode {
     /// This can be used to check which direction the key descibes in the context
     /// of this binary node i.e. which direction the child along the key's path would
     /// take.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to get the direction of.
+    ///
+    /// # Returns
+    ///
+    /// The direction of the key.
     pub fn direction(&self, key: &BitSlice<Msb0, u8>) -> Direction {
         key[self.height].into()
     }
@@ -114,6 +123,14 @@ impl BinaryNode {
     ///
     /// [Left]: Direction::Left
     /// [Right]: Direction::Right
+    ///
+    /// # Arguments
+    ///
+    /// `direction` - The direction where to get the child from.
+    ///
+    /// # Returns
+    ///
+    /// The child in the specified direction.
     pub fn get_child(&self, direction: Direction) -> Rc<RefCell<Node>> {
         match direction {
             Direction::Left => self.left.clone(),
@@ -204,6 +221,10 @@ impl Node {
 
 impl EdgeNode {
     /// Returns true if the edge node's path matches the same path given by the key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to check if the path matches with the edge node.
     pub fn path_matches(&self, key: &BitSlice<Msb0, u8>) -> bool {
         self.path == key[self.height..self.height + self.path.len()]
     }
@@ -211,6 +232,10 @@ impl EdgeNode {
     /// Returns the common bit prefix between the edge node's path and the given key.
     ///
     /// This is calculated with the edge's height taken into account.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key to get the common path from.
     pub fn common_path(&self, key: &BitSlice<Msb0, u8>) -> &BitSlice<Msb0, u8> {
         let key_path = key.iter().skip(self.height);
         let common_length = key_path.zip(self.path.iter()).take_while(|(a, b)| a == b).count();
