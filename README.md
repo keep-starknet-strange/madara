@@ -159,10 +159,18 @@ local node template.
 
 ### Multi-Node Local Testnet
 
-If you want to see the multi-node consensus algorithm in action, refer to our
-[Simulate a network tutorial](https://docs.substrate.io/tutorials/get-started/simulate-network/).
+Build custom chain spec:
 
-## Template Structure
+```bash
+# Build plain chain spec
+cargo run --release -- build-spec --chain local > chain-specs/kaioshin-local-testnet-plain.json
+# Build final raw chain spec
+cargo run --release -- build-spec --chain chain-specs/kaioshin-local-testnet-plain.json --raw > chain-specs/kaioshin-local-testnet.json
+```
+
+See more details about [custom chain specs](https://docs.substrate.io/reference/how-to-guides/basics/customize-a-chain-specification/).
+
+## Project Structure
 
 A Substrate project such as this consists of a number of components that are spread across a few
 directories.
