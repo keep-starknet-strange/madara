@@ -2,7 +2,7 @@ use frame_support::traits::{ConstU16, ConstU64, Hooks};
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
-use {crate as pallet_starknet, frame_system as system, pallet_timestamp};
+use {crate as pallet_starknet, frame_system as system, pallet_timestamp, pallet_kaioshin_proxy};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -18,8 +18,15 @@ frame_support::construct_runtime!(
         KaioshinRandomness: pallet_kaioshin_randomness,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
+		Proxy: pallet_kaioshin_proxy
     }
 );
+
+impl pallet_kaioshin_proxy::Config for Test {
+	type RuntimeCall = RuntimeCall;
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeOrigin = RuntimeOrigin;
+}
 
 impl pallet_kaioshin_randomness::Config for Test {}
 
@@ -64,6 +71,7 @@ impl pallet_starknet::Config for Test {
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = pallet_starknet::hash::PedersenHash;
     type TimestampProvider = Timestamp;
+	type StarknetOrigin = pallet_kaioshin_proxy::types::RawOrigin::StarknetTransaction;
 }
 
 // Build genesis storage according to the mock runtime.

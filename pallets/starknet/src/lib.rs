@@ -12,9 +12,6 @@ use sp_core::ConstU32;
 /// The Starknet pallet's runtime custom types.
 pub mod types;
 
-/// Transaction validation logic.
-pub mod transaction_validation;
-
 /// State root logic.
 pub mod state_root;
 
@@ -34,8 +31,6 @@ mod benchmarking;
 /// Make this configurable.
 type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 
-pub use self::pallet::*;
-
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
 // syntactic sugar for logging.
@@ -53,7 +48,7 @@ macro_rules! log {
 pub mod pallet {
 
     use frame_support::pallet_prelude::*;
-    use frame_support::traits::{Randomness, Time};
+    use frame_support::traits::{Randomness, Time, EnsureOrigin};
     use frame_system::pallet_prelude::*;
     use hash::Hasher;
     use kp_starknet::block::wrapper::block::Block;
@@ -83,6 +78,8 @@ pub mod pallet {
         type SystemHash: Hasher;
         /// The time idk what.
         type TimestampProvider: Time;
+		/// Starknet Origin
+		type StarknetOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
     }
 
     /// The Starknet pallet hooks.
@@ -192,6 +189,18 @@ pub mod pallet {
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
         }
+
+		/// Execute + Validate Transaction
+		/// TODO: Compute actual weight
+        #[pallet::call_index(1)]
+        #[pallet::weight(1)]
+        pub fn execute_transaction(origin: OriginFor<T>) -> DispatchResult {
+            T::StarknetOrigin::ensure_origin(origin)?;
+
+
+            Ok(())
+        }
+
     }
 
     /// The Starknet pallet internal functions.

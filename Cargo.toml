@@ -69,6 +69,7 @@ pallet-timestamp = { default-features = false, git = "https://github.com/keep-st
 pallet-cairo = { version = "0.1.0-dev", path = "pallets/cairo", default-features = false }
 pallet-starknet = { version = "0.1.0-dev", path = "pallets/starknet", default-features = false }
 pallet-kaioshin-randomness = { version = "0.1.0-dev", path = "pallets/randomness", default-features = false }
+pallet-kaioshin-proxy = { version = "0.1.0-dev", path = "pallets/proxy", default-features = false }
 
 # Kaioshin primtitives
 kp-starknet = { version = "0.1.0-dev", path = "primitives/starknet", default-features = false }

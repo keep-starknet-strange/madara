@@ -4728,6 +4728,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-kaioshin-proxy"
+version = "0.1.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "lazy_static",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-kaioshin-randomness"
 version = "0.1.0-dev"
 dependencies = [
@@ -4776,6 +4793,7 @@ dependencies = [
  "kp-starknet",
  "lazy_static",
  "log",
+ "pallet-kaioshin-proxy",
  "pallet-kaioshin-randomness",
  "pallet-timestamp",
  "parity-scale-codec",
