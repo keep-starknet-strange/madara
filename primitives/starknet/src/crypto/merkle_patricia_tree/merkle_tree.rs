@@ -438,16 +438,3 @@ impl<H: CryptoHasher> MerkleTree<H> {
         }
     }
 }
-
-/// Direction for the [`MerkleTree::dfs`] as the return value of the visitor function.
-#[derive(Default)]
-pub enum Visit {
-    /// Instructs that the visit should visit any subtrees of the current node. This is a no-op for
-    /// [`Node::Leaf`].
-    #[default]
-    ContinueDeeper,
-    /// Returning this value for [`Node::Binary`] or [`Node::Edge`] will ignore all of the children
-    /// of the node for the rest of the iteration. This is useful because two trees often share a
-    /// number of subtrees with earlier blocks. Returning this for [`Node::Leaf`] is a no-op.
-    StopSubtree,
-}

@@ -32,6 +32,12 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             parent_block_hash: H256::from_str("0x1c2b97b7b9ea91c2cde45bfb115058628c2e1c7aa3fecb51a0cdaf256dc8a310")
                 .unwrap(),
             transaction_count: 1,
+            // This expected value has been computed in the sequencer test (commitment on a tx hash 0 without
+            // signature).
+            transaction_commitment: H256::from_str(
+                "0x039050b107da7374213fffb38becd5f2d76e51ffa0734bf5c7f8f0477a6f2c22",
+            )
+            .unwrap(),
             ..Header::default()
         };
 

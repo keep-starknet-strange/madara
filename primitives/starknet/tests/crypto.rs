@@ -20,5 +20,6 @@ fn test_merkle_tree() {
         },
     ];
     let com = calculate_transaction_commitment(&txs);
+    // The value we test ours against is computed from the sequencer test.
     assert_eq!(H256::from_str("0x054c0fddf3aaf1ca03271712b323822647b66042ccc418ba1d7fb852aebfd2da").unwrap(), com)
 }
