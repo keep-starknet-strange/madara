@@ -36,6 +36,11 @@ Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and wr
 Here is a high level overview of the current architecture of Starknet sequencer.
 
 ![](docs/images/starknet-sequencer-architecture.png)
+
+### Benchmarking
+
+You can run benchmarks to get an idea of the performance of the pallets. To run the benchmarks, follow the steps within the [benchmarking](./benchmarking/README.md) document.
+
 ### Pallets
 
 #### `pallet-cairo`
@@ -356,7 +361,7 @@ See [LICENSE](LICENSE) for more information.
 <details>
 <summary>Click to expand</summary>
 
-#### Error 
+#### Error
 ```text
 error: failed to run custom build command for `libp2p-core v0.37.0`
 
@@ -383,7 +388,7 @@ It means that you don't have `protoc` installed on your machine. You can install
 <details>
 <summary>Click to expand</summary>
 
-#### Error 
+#### Error
 ```text
 error: failed to run custom build command for `kaioshin-runtime v4.0.0-dev (/Users/abdel/dev/me/kaioshin/runtime)`
 
