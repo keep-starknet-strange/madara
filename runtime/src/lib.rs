@@ -277,7 +277,7 @@ impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Randomness = KaioshinRandomness;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
-    type SystemHash = pallet_starknet::hash::PedersenHash;
+    type SystemHash = kp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
 }
 

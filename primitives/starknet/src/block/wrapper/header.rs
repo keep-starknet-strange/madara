@@ -25,7 +25,7 @@ pub struct Header {
     /// The number of events
     pub event_count: u128,
     /// A commitment to the events produced in this block
-    pub event_commitment: U256,
+    pub event_commitment: H256,
     /// The version of the Starknet protocol used when creating this block
     pub protocol_version: Option<u8>,
     /// Extraneous data that might be useful for running transactions
@@ -45,7 +45,7 @@ impl Header {
         transaction_count: u128,
         transaction_commitment: H256,
         event_count: u128,
-        event_commitment: U256,
+        event_commitment: H256,
         protocol_version: Option<u8>,
         extra_data: Option<U256>,
     ) -> Self {

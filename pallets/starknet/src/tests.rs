@@ -38,6 +38,9 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
                 "0x039050b107da7374213fffb38becd5f2d76e51ffa0734bf5c7f8f0477a6f2c22",
             )
             .unwrap(),
+            event_count: 2,
+            event_commitment: H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02")
+                .unwrap(),
             ..Header::default()
         };
 

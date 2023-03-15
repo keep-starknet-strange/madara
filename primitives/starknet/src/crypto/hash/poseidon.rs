@@ -23,4 +23,7 @@ impl CryptoHasher for PoseidonHasher {
         let input = felts_from_u8s::<GF>(&[a.to_bytes_be(), b.to_bytes_be()].concat());
         FieldElement::from_byte_slice_be(&u8s_from_felts(&poseidon_hash::hash_sw8(&input))).unwrap()
     }
+    fn compute_hash_on_elements(_elements: &[FieldElement]) -> FieldElement {
+        todo!()
+    }
 }

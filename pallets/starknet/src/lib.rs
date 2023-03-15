@@ -18,9 +18,6 @@ pub mod transaction_validation;
 /// State root logic.
 pub mod state_root;
 
-/// Hashing logic.
-pub mod hash;
-
 #[cfg(test)]
 mod mock;
 
@@ -55,12 +52,13 @@ pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
     use frame_system::pallet_prelude::*;
-    use hash::Hasher;
     use kp_starknet::block::wrapper::block::Block;
     use kp_starknet::block::wrapper::header::Header;
     use kp_starknet::crypto::commitment;
+    use kp_starknet::crypto::hash::pedersen::PedersenHasher;
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
-    use kp_starknet::transaction::Transaction;
+    use kp_starknet::traits::hash::Hasher;
+    use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
     use sp_core::{H256, U256};
     use sp_runtime::traits::UniqueSaturatedInto;
 
@@ -169,6 +167,8 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         KeepStarknetStrange,
+        /// Regular Starknet event
+        StarknetEvent(StarknetEventType),
     }
 
     /// The Starknet pallet custom errors.
@@ -236,11 +236,14 @@ pub mod pallet {
         }
 
         /// Get the number of transactions in the block.
-        ///
-        /// # Returns
         #[inline(always)]
         pub fn transaction_count() -> u128 {
             Self::pending().len() as u128
+        }
+
+        /// Get the number of events in the block.
+        pub fn event_count() -> u128 {
+            Self::pending().iter().flat_map(|tx| tx.events.iter()).count() as u128
         }
 
         /// Store a Starknet block in the blockchain.
@@ -261,9 +264,9 @@ pub mod pallet {
             let sequencer_address = U256::zero();
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
-            let transaction_commitment = commitment::calculate_transaction_commitment(&pending);
-            let event_count = 0_u128;
-            let event_commitment = U256::zero();
+            let transaction_commitment = commitment::calculate_transaction_commitment::<PedersenHasher>(&pending);
+            let event_count = Self::event_count();
+            let event_commitment = commitment::calculate_event_commitment::<PedersenHasher>(&pending);
             let protocol_version = None;
             let extra_data = None;
 
