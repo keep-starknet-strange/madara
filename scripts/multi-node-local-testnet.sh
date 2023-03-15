@@ -35,10 +35,10 @@ function menu(){
 
 function start_nodes(){
     # Run validator node A
-    start_validator_node "validator-node-a" 30334 9944 9934 "alice"
+    start_validator_node "validator-node-a" 30334 9944 9934 9615 "alice"
 
     # Run validator node B
-    start_validator_node "validator-node-b" 30335 9945 9935 "bob"
+    start_validator_node "validator-node-b" 30335 9945 9935 9715 "bob"
 
     # Run light client node C
     start_full_node "full-node-c" 30336 9946 9936 "0000000000000000000000000000000000000000000000000000000000000001"
@@ -54,7 +54,8 @@ function start_validator_node(){
     port=$2
     ws_port=$3
     rpc_port=$4
-    key_alias=$5
+    prometheus_port=$5
+    key_alias=$6
     base_path=$ROOT_DIR/$name
     log_file=$LOG_DIR/$name.log
 
@@ -62,7 +63,7 @@ function start_validator_node(){
     mkdir -p $base_path
 
     echo "Starting $name"
-    run_cmd="$CMD_VALIDATOR --$key_alias --port $port --ws-port $ws_port --rpc-port $rpc_port --base-path $base_path &> $log_file &"
+    run_cmd="$CMD_VALIDATOR --$key_alias --port $port --ws-port $ws_port --rpc-port $rpc_port --prometheus-port $prometheus_port --base-path $base_path &> $log_file &"
     echo "Running: $run_cmd"
     eval $run_cmd
 }
