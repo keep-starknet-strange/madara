@@ -305,6 +305,8 @@
 <a href="#305" id="305">305</a>
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -365,6 +367,7 @@
     <span class="kw">use </span>hash::Hasher;
     <span class="kw">use </span>kp_starknet::block::wrapper::block::Block;
     <span class="kw">use </span>kp_starknet::block::wrapper::header::Header;
+    <span class="kw">use </span>kp_starknet::crypto::commitment;
     <span class="kw">use </span>kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>kp_starknet::transaction::Transaction;
     <span class="kw">use </span>sp_core::{H256, U256};
@@ -494,7 +497,7 @@
         </span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
             <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
             </span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
-            Pending::&lt;T&gt;::try_append(Transaction { version: U256::one() }).unwrap();
+            Pending::&lt;T&gt;::try_append(Transaction::default()).unwrap();
             <span class="macro">log!</span>(info, <span class="string">&quot;Keep Starknet Strange!&quot;</span>);
             <span class="self">Self</span>::deposit_event(Event::KeepStarknetStrange);
             <span class="prelude-val">Ok</span>(())
@@ -561,12 +564,13 @@
         </span><span class="kw">fn </span>store_block(block_number: U256) {
             <span class="comment">// TODO: Use actual values.
             </span><span class="kw">let </span>parent_block_hash = <span class="self">Self</span>::parent_block_hash(<span class="kw-2">&amp;</span>block_number);
+            <span class="kw">let </span>pending = <span class="self">Self</span>::pending();
 
             <span class="kw">let </span>global_state_root = U256::zero();
             <span class="kw">let </span>sequencer_address = U256::zero();
             <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
-            <span class="kw">let </span>transaction_count = <span class="self">Self</span>::transaction_count();
-            <span class="kw">let </span>transaction_commitment = U256::zero();
+            <span class="kw">let </span>transaction_count = pending.len() <span class="kw">as </span>u128;
+            <span class="kw">let </span>transaction_commitment = commitment::calculate_transaction_commitment(<span class="kw-2">&amp;</span>pending);
             <span class="kw">let </span>event_count = <span class="number">0_u128</span>;
             <span class="kw">let </span>event_commitment = U256::zero();
             <span class="kw">let </span>protocol_version = <span class="prelude-val">None</span>;

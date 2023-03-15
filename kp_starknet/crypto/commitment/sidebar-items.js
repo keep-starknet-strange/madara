@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["calculate_transaction_commitment","Calculate transaction commitment hash value."]]};

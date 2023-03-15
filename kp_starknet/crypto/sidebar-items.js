@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["hash","This module contains the hash functions used in the StarkNet protocol."]]};
+window.SIDEBAR_ITEMS = {"mod":[["commitment","Compute the various commitments."],["hash","Hasher related functionality. This module contains the hash functions used in the StarkNet protocol."],["merkle_patricia_tree","Merkle patricia tree for starknet."]]};

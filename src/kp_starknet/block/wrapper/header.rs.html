@@ -95,7 +95,7 @@
     <span class="doccomment">/// The number of transactions in a block
     </span><span class="kw">pub </span>transaction_count: u128,
     <span class="doccomment">/// A commitment to the transactions included in the block
-    </span><span class="kw">pub </span>transaction_commitment: U256,
+    </span><span class="kw">pub </span>transaction_commitment: H256,
     <span class="doccomment">/// The number of events
     </span><span class="kw">pub </span>event_count: u128,
     <span class="doccomment">/// A commitment to the events produced in this block
@@ -117,7 +117,7 @@
         sequencer_address: U256,
         block_timestamp: u64,
         transaction_count: u128,
-        transaction_commitment: U256,
+        transaction_commitment: H256,
         event_count: u128,
         event_commitment: U256,
         protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,

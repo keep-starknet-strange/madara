@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["Transaction","A trait to be able to compute the tx commitment for different tx struct definition."]]};

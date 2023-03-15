@@ -8,15 +8,47 @@
 <a href="#8" id="8">8</a>
 <a href="#9" id="9">9</a>
 <a href="#10" id="10">10</a>
+<a href="#11" id="11">11</a>
+<a href="#12" id="12">12</a>
+<a href="#13" id="13">13</a>
+<a href="#14" id="14">14</a>
+<a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
+<a href="#17" id="17">17</a>
+<a href="#18" id="18">18</a>
+<a href="#19" id="19">19</a>
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
 </span><span class="kw">use </span>poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
 <span class="kw">use </span>poseidon_hash::hash_sw8;
 <span class="kw">use </span>poseidon_hash::parameters::sw8::GF;
+<span class="kw">use </span>starknet_crypto::FieldElement;
+
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasher;
+
+<span class="doccomment">/// The poseidon hasher.
+</span><span class="attr">#[derive(Default)]
+</span><span class="kw">pub struct </span>PoseidonHasher;
+
 <span class="doccomment">/// The Poseidon hash function.
 </span><span class="kw">pub fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
     <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(_data);
     <span class="kw">let </span>result = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
     result.try_into().unwrap()
+}
+
+<span class="doccomment">/// The poseidon CryptoHasher implementation.
+</span><span class="kw">impl </span>CryptoHasher <span class="kw">for </span>PoseidonHasher {
+    <span class="kw">fn </span>hash(a: FieldElement, b: FieldElement) -&gt; FieldElement {
+        <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(<span class="kw-2">&amp;</span>[a.to_bytes_be(), b.to_bytes_be()].concat());
+        FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>u8s_from_felts(<span class="kw-2">&amp;</span>poseidon_hash::hash_sw8(<span class="kw-2">&amp;</span>input))).unwrap()
+    }
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="kp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.0 (2c8cc3432 2023-03-06)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
