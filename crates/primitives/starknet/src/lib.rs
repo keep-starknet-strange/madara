@@ -32,3 +32,6 @@ pub mod starknet_serde;
 
 /// Starknet primitives traits.
 pub mod traits;
+
+/// Starknet Execution related functionality.
+pub mod execution;

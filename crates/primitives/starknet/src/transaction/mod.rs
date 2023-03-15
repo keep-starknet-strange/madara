@@ -4,6 +4,7 @@ use alloc::vec;
 
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
+use crate::execution::ContractAddress;
 
 type MaxArraySize = ConstU32<4294967295>;
 
@@ -59,6 +60,8 @@ pub struct Transaction {
     pub signature: BoundedVec<H256, MaxArraySize>,
     /// Events.
     pub events: BoundedVec<Event, MaxArraySize>,
+	/// Sender Address
+	pub sender_address: ContractAddress,
 }
 
 impl Transaction {
@@ -68,8 +71,9 @@ impl Transaction {
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
         events: BoundedVec<Event, MaxArraySize>,
+		sender_address: ContractAddress
     ) -> Self {
-        Self { version, hash, signature, events }
+        Self { version, hash, signature, events, sender_address }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -88,6 +92,7 @@ impl Default for Transaction {
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
             events: BoundedVec::try_from(vec![Event::default(), Event::default()]).unwrap(),
+			sender_address: ContractAddress::default(),
         }
     }
 }
