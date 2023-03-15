@@ -14,11 +14,11 @@ frame_support::construct_runtime!(
         NodeBlock = Block,
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
-        System: frame_system,
-        KaioshinRandomness: pallet_kaioshin_randomness,
-        Starknet: pallet_starknet,
-        Timestamp: pallet_timestamp,
-		Proxy: pallet_kaioshin_proxy
+        System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+        KaioshinRandomness: pallet_kaioshin_randomness::{Pallet, Storage},
+        Starknet: pallet_starknet::{Pallet, Call, Storage, Event<T>},
+        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+		Proxy: pallet_kaioshin_proxy::{Pallet, Call, Storage, Event<T>},
     }
 );
 
@@ -71,7 +71,7 @@ impl pallet_starknet::Config for Test {
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = pallet_starknet::hash::PedersenHash;
     type TimestampProvider = Timestamp;
-	type StarknetOrigin = pallet_kaioshin_proxy::types::RawOrigin::StarknetTransaction;
+	type StarknetOrigin = pallet_kaioshin_proxy::origin::EnsureStarknetTransaction;
 }
 
 // Build genesis storage according to the mock runtime.

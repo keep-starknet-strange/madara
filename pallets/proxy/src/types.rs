@@ -8,6 +8,6 @@ use sp_runtime::RuntimeDebug;
 /// For now, we just use a dummy origin.
 /// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
 #[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub enum RawOrigin {
+pub enum RuntimeOrigin {
     StarknetTransaction,
 }
