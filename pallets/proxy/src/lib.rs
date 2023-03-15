@@ -26,7 +26,7 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The runtime origin type.
-		type RuntimeOrigin: From<crate::types::RawOrigin>;
+		type RuntimeOrigin: From<crate::types::Origin>;
 
 		/// A sudo-able call.
 		type RuntimeCall: Parameter
@@ -60,7 +60,7 @@ pub mod pallet {
 		#[pallet::weight(10_000 + T::DbWeight::get().writes(1).ref_time())]
 		pub fn starknet_call(origin: OriginFor<T>, call: Box<<T as Config>::RuntimeCall>) -> DispatchResult {
 			ensure_none(origin)?;
-			let res = call.dispatch_bypass_filter(crate::types::RawOrigin::StarknetTransaction.into());
+			let res = call.dispatch_bypass_filter(crate::types::Origin::StarknetTransaction.into());
 			Self::deposit_event(Event::StarknetCall{ result: res.map(|_| ()).map_err(|e| e.error) });
 			Ok(())
 		}
