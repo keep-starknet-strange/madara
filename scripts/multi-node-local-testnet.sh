@@ -4,7 +4,7 @@ LOG_DIR="$ROOT_DIR/logs"
 
 # Build the command to run the validator node
 CMD_VALIDATOR="cargo run --release -- --chain=local --validator --force-authoring --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
-CMD_LIGHTCLIENT="cargo run --release -- --chain=local --light --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
+CMD_FULLNODE="cargo run --release -- --chain=local --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
 
 function initialize(){
     # Create the root directory
@@ -41,7 +41,7 @@ function start_nodes(){
     start_validator_node "validator-node-b" 30335 9945 9935 "bob"
 
     # Run light client node C
-    #start_lightclient_node "lightclient-node-c" 30336 9946 9936 "0000000000000000000000000000000000000000000000000000000000000001"
+    start_full_node "full-node-c" 30336 9946 9936 "0000000000000000000000000000000000000000000000000000000000000001"
 }
 
 function stop_nodes(){
@@ -67,7 +67,7 @@ function start_validator_node(){
     eval $run_cmd
 }
 
-function start_lightclient_node(){
+function start_full_node(){
     name=$1
     port=$2
     ws_port=$3
@@ -80,7 +80,7 @@ function start_lightclient_node(){
     mkdir -p $base_path
 
     echo "Starting $name"
-    run_cmd="$CMD_LIGHTCLIENT --node-key $node_key --port $port --ws-port $ws_port --rpc-port $rpc_port --base-path $base_path &> $log_file &"
+    run_cmd="$CMD_FULLNODE --node-key $node_key --port $port --ws-port $ws_port --rpc-port $rpc_port --base-path $base_path &> $log_file &"
     echo "Running: $run_cmd"
     eval $run_cmd
 }
