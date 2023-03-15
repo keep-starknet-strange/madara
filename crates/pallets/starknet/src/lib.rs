@@ -173,7 +173,9 @@ pub mod pallet {
     /// The Starknet pallet custom errors.
     /// ERRORS
     #[pallet::error]
-    pub enum Error<T> {}
+    pub enum Error<T> {
+		ContractNotDeployed,
+	}
 
     /// The Starknet pallet external functions.
     /// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -192,6 +194,40 @@ pub mod pallet {
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
         }
+
+		/// Submit a Starknet transaction.
+		/// # Arguments
+		/// * `origin` - The origin of the transaction.
+		/// * `transaction` - The Starknet transaction.
+		/// # Returns
+		/// * `DispatchResult` - The result of the transaction.
+		/// # TODO
+		/// * Compute weight
+		#[pallet::call_index(1)]
+		#[pallet::weight(0)]
+		pub fn submit_transaction(
+			origin: OriginFor<T>,
+			transaction: Transaction,
+		) -> DispatchResult {
+			/// TODO: add origin check when proxy pallet added
+
+			/// Check if contract is deployed
+			ensure!(
+				ContractClassHashes::<T>::contains_key(transaction.sender_address),
+				Error::<T>::ContractNotDeployed
+			);
+			// Validate Transaction
+			// transaction.validate()?;
+
+			// // Execute Transaction
+			// transaction.execute()?;
+
+			// Append the transaction to the pending transactions.
+			Pending::<T>::try_append(transaction).unwrap();
+
+			Ok(())
+		}
+
     }
 
     /// The Starknet pallet internal functions.

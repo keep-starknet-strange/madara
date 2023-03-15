@@ -109,4 +109,36 @@ impl CairoVmExecutor {
 
         Ok(())
     }
+
+    /// Runs a Cairo program in the Cairo VM
+    ///
+    /// # Arguments
+    /// * `program` - the Cairo program to run
+    ///
+    /// # Returns
+    /// * `Result<(), ()>` - the result of running the Cairo program
+    ///
+    /// # Errors
+    /// * `()` - if the Cairo program fails to run
+    fn run_program_entrypoint(program: &Program, entrypoint: usize) -> Result<(), ()> {
+        log::info!("starting execution of Cairo program in Cairo VM");
+
+        let mut hint_executor = BuiltinHintProcessor::new_empty();
+        let mut cairo_runner = CairoRunner::new(program, CAIRO_RUN_CONFIG.layout, CAIRO_RUN_CONFIG.proof_mode).unwrap();
+        let mut vm = VirtualMachine::new(CAIRO_RUN_CONFIG.trace_enabled);
+
+        cairo_runner.initialize(&mut vm);
+        cairo_runner
+            .run_from_entrypoint(entrypoint, &[0; 32], true, &mut vm, &mut hint_executor)
+            .map_err(|err| VmException::from_vm_error(&cairo_runner, &vm, err))
+            .unwrap();
+        cairo_runner.end_run(false, false, &mut vm, &mut hint_executor).unwrap();
+
+        vm.verify_auto_deductions().unwrap();
+        cairo_runner.read_return_values(&mut vm).unwrap();
+        cairo_runner.relocate(&mut vm).unwrap();
+        log::info!("finished execution of Cairo program in Cairo VM");
+
+        Ok(())
+    }
 }
