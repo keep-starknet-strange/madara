@@ -58,5 +58,5 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Check Build for Benchmarking
         run: >
-          pushd node &&
+          pushd crates/node &&
           cargo check --features=runtime-benchmarks --release
