@@ -174,7 +174,7 @@ pub mod pallet {
     /// ERRORS
     #[pallet::error]
     pub enum Error<T> {
-		ContractNotDeployed,
+		AccountNotDeployed,
 	}
 
     /// The Starknet pallet external functions.
@@ -205,7 +205,7 @@ pub mod pallet {
 		/// * Compute weight
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
-		pub fn submit_transaction(
+		pub fn add_invoke_transaction(
 			origin: OriginFor<T>,
 			transaction: Transaction,
 		) -> DispatchResult {
@@ -214,7 +214,7 @@ pub mod pallet {
 			/// Check if contract is deployed
 			ensure!(
 				ContractClassHashes::<T>::contains_key(transaction.sender_address),
-				Error::<T>::ContractNotDeployed
+				Error::<T>::AccountNotDeployed
 			);
 			// Validate Transaction
 			// transaction.validate()?;

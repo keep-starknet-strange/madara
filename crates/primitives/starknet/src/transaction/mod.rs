@@ -2,8 +2,12 @@
 
 use alloc::vec;
 
+use blockifier::transaction::objects::AccountTransactionContext;
+use starknet_api::{transaction::{TransactionHash, Fee, TransactionVersion, TransactionSignature}, hash::StarkFelt};
+use starknet_api::api_core::{Nonce, ContractAddress as StarknetContractAddress};
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
+
 use crate::execution::ContractAddress;
 
 type MaxArraySize = ConstU32<4294967295>;
@@ -60,8 +64,10 @@ pub struct Transaction {
     pub signature: BoundedVec<H256, MaxArraySize>,
     /// Events.
     pub events: BoundedVec<Event, MaxArraySize>,
-	/// Sender Address
-	pub sender_address: ContractAddress,
+    /// Sender Address
+    pub sender_address: ContractAddress,
+	/// Nonce
+	pub nonce: U256,
 }
 
 impl Transaction {
@@ -71,14 +77,35 @@ impl Transaction {
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
         events: BoundedVec<Event, MaxArraySize>,
-		sender_address: ContractAddress
+        sender_address: ContractAddress,
+		nonce: U256,
     ) -> Self {
-        Self { version, hash, signature, events, sender_address }
+        Self { version, hash, signature, events, sender_address, nonce }
     }
 
     /// Creates a new instance of a transaction without signature.
     pub fn from_tx_hash(hash: H256) -> Self {
         Self { hash, ..Self::default() }
+    }
+
+    /// Converts a transaction to a blockifier transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to convert
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The converted transaction
+    pub fn to_blockifier(self: &Self) -> AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
+            max_fee: Fee(2),
+            version: TransactionVersion(StarkFelt::new(self.version.into()).unwrap()),
+            signature: TransactionSignature(self.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect()),
+            nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
+            sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
+        }
     }
 }
 
@@ -92,7 +119,8 @@ impl Default for Transaction {
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
             events: BoundedVec::try_from(vec![Event::default(), Event::default()]).unwrap(),
-			sender_address: ContractAddress::default(),
+			nonce: U256::default(),
+            sender_address: ContractAddress::default(),
         }
     }
 }

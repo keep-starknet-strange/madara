@@ -97,7 +97,11 @@ starknet-ff = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "f
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
   "alloc",
 ] }
-blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "feature/no_std-support", default-features = false, path='crates/blockifier' }
+blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "no_std-support", default-features = false }
+starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "starkware/no_std-support", features = [
+    "testing",
+    "alloc",
+], default-features = false }
 
 # Other third party dependencies
 lazy_static = { version = "1.4.0", default-features = false }
