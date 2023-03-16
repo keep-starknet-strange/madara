@@ -1,8 +1,6 @@
 //! Starknet execution functionality.
 
-use sp_std::sync::Arc;
-
-use alloc::vec;
+use alloc::{vec, sync::Arc};
 
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256};

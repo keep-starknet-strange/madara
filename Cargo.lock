@@ -4808,6 +4808,7 @@ dependencies = [
 name = "pallet-starknet"
 version = "0.1.0-dev"
 dependencies = [
+ "blockifier",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
