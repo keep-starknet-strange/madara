@@ -5,8 +5,10 @@ use alloc::vec;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256};
 
-type MaxCalldataSize = ConstU32<32>;
+/// The address of a contract.
 pub type ContractAddress = [u8; 32];
+
+type MaxCalldataSize = ConstU32<32>;
 type ContractClassHash = [u8; 32];
 type EntryPointType = u8;
 
