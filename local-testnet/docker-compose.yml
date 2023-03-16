@@ -17,5 +17,5 @@ services:
       - 3001:3000
     volumes:
       - ./grafana/provisioning/:/etc/grafana/provisioning
-      - ../monitoring/grafana-dashboards/:/etc/grafana/provisioning/dashboard-definitions
+      - ./monitoring/grafana-dashboards/:/etc/grafana/provisioning/dashboard-definitions
     restart: always
