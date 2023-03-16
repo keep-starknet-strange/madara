@@ -3,8 +3,8 @@ ROOT_DIR="/tmp/kaioshin"
 LOG_DIR="$ROOT_DIR/logs"
 
 # Build the command to run the validator node
-CMD_VALIDATOR="cargo run --release -- --chain=local --validator --force-authoring --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
-CMD_FULLNODE="cargo run --release -- --chain=local --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
+CMD_VALIDATOR="./target/release/kaioshin --chain=local --validator --force-authoring --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
+CMD_FULLNODE="./target/release/kaioshin --chain=local --rpc-cors=all --ws-external --rpc-external --rpc-methods=unsafe"
 
 function initialize(){
     # Create the root directory
