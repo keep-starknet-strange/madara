@@ -25,7 +25,9 @@ starknet-crypto = { workspace = true, default-features = false, features = [
 starknet-ff = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
-poseidon_hash = { workspace = true }
+poseidon_hash = { workspace = true, default-features = false}
+blockifier = { workspace = true, default-features = false}
+starknet_api = { workspace = true, default-features = false}
 
 # Other third party dependencies
 lazy_static = { workspace = true }
@@ -44,8 +46,6 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 bitvec = { version = "0.17.4", features = ["alloc"], default-features = false }
-blockifier = { workspace = true }
-starknet_api = { workspace = true }
 
 [dev-dependencies]
 rand = "0.8.5"
@@ -65,6 +65,8 @@ std = [
   # Starknet
   "starknet-crypto/std",
   "starknet-ff/std",
+  "blockifier/std",
+  "starknet_api/std",
   # Substrate
   "frame-support/std",
   "sp-core/std",

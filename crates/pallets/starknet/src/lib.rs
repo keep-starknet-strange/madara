@@ -8,6 +8,7 @@
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
 use sp_core::ConstU32;
+use blockifier::transaction::transactions::ExecutableTransaction;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -216,10 +217,13 @@ pub mod pallet {
 				ContractClassHashes::<T>::contains_key(transaction.sender_address),
 				Error::<T>::AccountNotDeployed
 			);
-			// Validate Transaction
-			// transaction.validate()?;
 
-			// // Execute Transaction
+			let tx = transaction.to_invoke_tx();
+			// let state = <Pallet<T>>::get_state();
+			// let block_context = <Pallet<T>>::get_block_context();
+			// // Validate Transaction
+			// tx.execute(state, block_context);
+			// Execute Transaction
 			// transaction.execute()?;
 
 			// Append the transaction to the pending transactions.
