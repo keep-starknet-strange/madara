@@ -2,13 +2,14 @@
 
 use alloc::vec;
 
-use blockifier::transaction::objects::AccountTransactionContext;
-use starknet_api::{transaction::{TransactionHash, Fee, TransactionVersion, TransactionSignature}, hash::StarkFelt};
-use starknet_api::api_core::{Nonce, ContractAddress as StarknetContractAddress};
+use blockifier::transaction::account_transaction::AccountTransaction;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
+use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Fee, InvokeTransaction, TransactionHash, TransactionSignature, TransactionVersion};
 
-use crate::execution::ContractAddress;
+use crate::execution::{ContractAddress, CallEntryPoint};
 
 type MaxArraySize = ConstU32<4294967295>;
 
@@ -66,8 +67,10 @@ pub struct Transaction {
     pub events: BoundedVec<Event, MaxArraySize>,
     /// Sender Address
     pub sender_address: ContractAddress,
-	/// Nonce
-	pub nonce: U256,
+    /// Nonce
+    pub nonce: U256,
+	/// Call entrypoint
+	pub call_entrypoint: CallEntryPoint
 }
 
 impl Transaction {
@@ -78,9 +81,10 @@ impl Transaction {
         signature: BoundedVec<H256, MaxArraySize>,
         events: BoundedVec<Event, MaxArraySize>,
         sender_address: ContractAddress,
-		nonce: U256,
+        nonce: U256,
+		call_entrypoint: CallEntryPoint
     ) -> Self {
-        Self { version, hash, signature, events, sender_address, nonce }
+        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -96,16 +100,20 @@ impl Transaction {
     ///
     /// # Returns
     ///
-    /// * `AccountTransactionContext` - The converted transaction
-    pub fn to_blockifier(self: &Self) -> AccountTransactionContext {
-        AccountTransactionContext {
+    /// * `AccountTransaction` - The converted transaction
+    pub fn to_invoke_tx(self: &Self) -> AccountTransaction {
+        AccountTransaction::Invoke(InvokeTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
             max_fee: Fee(2),
             version: TransactionVersion(StarkFelt::new(self.version.into()).unwrap()),
-            signature: TransactionSignature(self.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect()),
+            signature: TransactionSignature(
+                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect(),
+            ),
             nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
-        }
+			calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+			entry_point_selector: Some(self.call_entrypoint.to_starknet_call_entry_point().entry_point_selector),
+        })
     }
 }
 
@@ -119,8 +127,9 @@ impl Default for Transaction {
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
             events: BoundedVec::try_from(vec![Event::default(), Event::default()]).unwrap(),
-			nonce: U256::default(),
+            nonce: U256::default(),
             sender_address: ContractAddress::default(),
+			call_entrypoint: CallEntryPoint::default()
         }
     }
 }
