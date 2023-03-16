@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":[["CryptoHasher","A trait for hashing with pedersen."],["Hasher","A trait for hashing."]]};
+window.SIDEBAR_ITEMS = {"trait":["CryptoHasher","Hasher"]};

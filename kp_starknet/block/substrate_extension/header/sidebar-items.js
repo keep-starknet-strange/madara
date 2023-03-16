@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["deserialize_number","Deserializes a number from the given deserializer."],["serialize_number","Serializes a number as a U256."]],"struct":[["Header","Starknet block header. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/header/`."]]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize_number","serialize_number"],"struct":["Header"]};

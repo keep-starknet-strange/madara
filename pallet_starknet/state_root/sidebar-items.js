@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["IntermediateStateRoot",""]]};
+window.SIDEBAR_ITEMS = {"struct":["IntermediateStateRoot"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["merkle_node","Contains constructs for describing the nodes in a Binary Merkle Patricia Tree used by Starknet."],["merkle_tree","This is a gigantic copy pasta from https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree Thanks to the equilibrium team and whoever else contributed for the code."]]};
+window.SIDEBAR_ITEMS = {"mod":["merkle_node","merkle_tree"]};

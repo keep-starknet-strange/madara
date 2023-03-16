@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["SierraCompilerMock","Mocks the `SierraCompiler` trait for testing purposes."]]};
+window.SIDEBAR_ITEMS = {"struct":["SierraCompilerMock"]};

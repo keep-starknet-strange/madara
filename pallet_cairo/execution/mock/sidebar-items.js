@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CairoExecutorMock","Mocks the `CairoExecutor` trait for testing purposes."]]};
+window.SIDEBAR_ITEMS = {"struct":["CairoExecutorMock"]};

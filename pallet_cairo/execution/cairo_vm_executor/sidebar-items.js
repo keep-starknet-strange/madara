@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["CAIRO_RUN_CONFIG","The Cairo run configuration."],["CAIRO_VM_EXECUTOR","The Cairo VM executor."],["CairoVmExecutor","Cairo VM executor."]]};
+window.SIDEBAR_ITEMS = {"struct":["CAIRO_RUN_CONFIG","CAIRO_VM_EXECUTOR","CairoVmExecutor"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["hash","The Pedersen hash function."]],"struct":[["PedersenHasher","The Pedersen hasher."]]};
+window.SIDEBAR_ITEMS = {"fn":["hash"],"struct":["PedersenHasher"]};

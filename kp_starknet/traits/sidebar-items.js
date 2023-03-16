@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["hash","Define traits related to hash functions. Traits for hashing."],["transaction","Define traits related to transaction."]]};
+window.SIDEBAR_ITEMS = {"mod":["hash","transaction"]};

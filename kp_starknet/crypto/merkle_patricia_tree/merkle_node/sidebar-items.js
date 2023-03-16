@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["Direction","Describes the direction a child of a [BinaryNode] may have."],["Node","A node in a Binary Merkle-Patricia Tree graph."]],"struct":[["BinaryNode","Describes the [Node::Binary] variant."],["EdgeNode","Node that is an edge."]]};
+window.SIDEBAR_ITEMS = {"enum":["Direction","Node"],"struct":["BinaryNode","EdgeNode"]};

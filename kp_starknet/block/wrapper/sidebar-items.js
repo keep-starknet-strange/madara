@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["block","Starknet block definition."],["header","Starknet header definition."]]};
+window.SIDEBAR_ITEMS = {"mod":["block","header"]};

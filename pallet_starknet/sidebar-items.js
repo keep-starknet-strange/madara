@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":[["log",""]],"mod":[["pallet","The module that hosts all the FRAME types needed to add this pallet to a runtime."],["state_root","State root logic. Starknet state root logic."],["transaction_validation","Transaction validation logic. Transaction validation logic."],["types","The Starknet pallet’s runtime custom types. Starknet pallet custom types."]]};
+window.SIDEBAR_ITEMS = {"macro":["log"],"mod":["pallet","state_root","transaction_validation","types"]};

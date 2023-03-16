@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":[["substrate_extension","Substrate extension for the StarkNet block header."],["wrapper","Wrapper block definition. See: `https://corepaper.org/substrate/wrapper/`"]]};
+window.SIDEBAR_ITEMS = {"mod":["substrate_extension","wrapper"]};

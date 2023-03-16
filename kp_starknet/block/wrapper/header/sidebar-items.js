@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Header","Starknet header definition."]]};
+window.SIDEBAR_ITEMS = {"struct":["Header"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Block","Starknet block definition."]]};
+window.SIDEBAR_ITEMS = {"struct":["Block"]};
