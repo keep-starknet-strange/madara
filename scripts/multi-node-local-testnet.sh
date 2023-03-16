@@ -21,6 +21,8 @@ function menu(){
     echo "3. Exit"
     echo "4. Cleanup"
     echo "5. Show logs"
+    echo "6. Monitor nodes"
+    echo "7. Stop monitoring nodes"
     echo -n "Enter your choice: "
     read choice
     case $choice in
@@ -29,6 +31,8 @@ function menu(){
         3) exit 0 ;;
         4) cleanup ;;
         5) show_logs ;;
+        6) monitor_nodes ;;
+        7) stop_monitoring_nodes ;;
         *) echo "Invalid choice" ;;
     esac
 }
@@ -92,7 +96,7 @@ function show_logs(){
     echo "Select the node to show logs for"
     echo "1. Validator node A"
     echo "2. Validator node B"
-    echo "3. Light client node C"
+    echo "3. Full node C"
     echo -n "Enter your choice: "
     read choice
     case $choice in
@@ -109,6 +113,24 @@ function show_node_logs(){
     log_file=$LOG_DIR/$name.log
     echo "Showing logs for $name"
     tail -f $log_file
+}
+
+function monitor_nodes(){
+    echo "Starting prometheus"
+    prometheus --config.file local-testnet/prometheus/prometheus.yml &> $LOG_DIR/prometheus.log &
+    echo "Prometheus started"
+    echo "Starting grafana"
+    brew services start grafana
+    echo "Grafana started"
+}
+
+function stop_monitoring_nodes(){
+    echo "Stopping prometheus"
+    killall prometheus
+    echo "Prometheus stopped"
+    echo "Stopping grafana"
+    brew services stop grafana
+    echo "Grafana stopped"
 }
 
 function cleanup {
