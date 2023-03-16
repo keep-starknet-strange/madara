@@ -71,7 +71,7 @@ frame-benchmarking-cli = { workspace = true }
 kaioshin-runtime = { path = "../runtime" }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }

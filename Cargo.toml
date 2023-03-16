@@ -1,11 +1,11 @@
 [workspace]
 members = [
-  "node",
-  "runtime",
-  "pallets/cairo",
-  "pallets/starknet",
-  "pallets/randomness",
-  "primitives/starknet",
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/cairo",
+  "crates/pallets/starknet",
+  "crates/pallets/randomness",
+  "crates/primitives/starknet",
 ]
 [profile.release]
 panic = "unwind"
@@ -18,60 +18,60 @@ repository = "https://github.com/keep-starknet-strange/kaioshin/"
 
 [workspace.dependencies]
 # Substrate frame dependencies
-frame-support = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-frame-benchmarking = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-frame-benchmarking-cli = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-frame-system = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-substrate-frame-rpc-system = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+frame-benchmarking-cli = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 # Substrate pimitives dependencies
-sp-core = { version = "7.0.0", default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-std = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-io = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-runtime = { version = "7.0.0", default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-consensus-aura = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-consensus = { version = "0.10.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-finality-grandpa = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-inherents = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-keyring = { version = "7.0.0", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-api = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-blockchain = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sp-block-builder = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sp-core = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-runtime = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-consensus = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-inherents = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-keyring = { version = "7.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 # Substrate client dependencies
-sc-network = { version = "0.10.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-network-common = { version = "0.10.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-consensus = { version = "0.10.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-finality-grandpa = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-rpc = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-rpc-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-basic-authorship = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-client-api = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-cli = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-executor = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-service = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-telemetry = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-keystore = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-transaction-pool = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-transaction-pool-api = { version = "4.0.0-dev", git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-sc-consensus-aura = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+sc-network = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-network-common = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-consensus = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-rpc = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-telemetry = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-transaction-pool = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-transaction-pool-api = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 # Substrate tools dependencies
-substrate-build-script-utils = { git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 # Substrate Frame pallet
-pallet-transaction-payment = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-pallet-timestamp = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 # Kaioshin pallets
-pallet-cairo = { version = "0.1.0-dev", path = "pallets/cairo", default-features = false }
-pallet-starknet = { version = "0.1.0-dev", path = "pallets/starknet", default-features = false }
-pallet-kaioshin-randomness = { version = "0.1.0-dev", path = "pallets/randomness", default-features = false }
+pallet-cairo = { version = "0.1.0-dev", path = "crates/pallets/cairo", default-features = false }
+pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", default-features = false }
+pallet-kaioshin-randomness = { version = "0.1.0-dev", path = "crates/pallets/randomness", default-features = false }
 
 # Kaioshin primtitives
-kp-starknet = { version = "0.1.0-dev", path = "primitives/starknet", default-features = false }
+kp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
 
 # Starknet dependencies
 # Cairo Virtual Machine
