@@ -29,14 +29,13 @@ jobs:
           target: wasm32-unknown-unknown
       - name: Set-Up
         run: >
-          sudo apt-get update && sudo apt-get install -y 
+          sudo apt-get update && sudo apt-get install -y
           clang llvm libudev-dev protobuf-compiler
       - uses: Swatinem/rust-cache@v2
       - name: Check Build and run tests
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
           cargo test --all
-          cargo build --release --all
 
   bench:
     # The type of runner that the job will run on
@@ -54,30 +53,10 @@ jobs:
           target: wasm32-unknown-unknown
       - name: Set-Up
         run: >
-          sudo apt-get update && sudo apt-get install -y 
+          sudo apt-get update && sudo apt-get install -y
           clang llvm libudev-dev protobuf-compiler
       - uses: Swatinem/rust-cache@v2
       - name: Check Build for Benchmarking
         run: >
           pushd crates/node &&
           cargo check --features=runtime-benchmarks --release
-
-      - name: Save kaioshin binary
-        run: |
-          mkdir -p build
-          cp ./target/release/kaioshin ./build/kaioshin;
-
-      - name: Upload binary
-        uses: actions/upload-artifact@v2
-        with:
-          name: kaioshin
-          path: build
-      # - name: Save runtime wasm
-      #   run: |
-      #     mkdir -p runtimes
-      #     cp target/release/wbuild/kaioshin-runtime/kaioshin_runtime.compact.compressed.wasm runtimes/;
-      # - name: Upload runtimes
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: runtimes
-      #     path: runtimes
