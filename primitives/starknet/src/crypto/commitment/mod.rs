@@ -43,30 +43,17 @@ impl<T: CryptoHasher> CommitmentTree<T> {
     }
 }
 
-/// Compute the combined hash of the transaction hash and the signature.
-///
-/// Since the transaction hash doesn't take the signature values as its input
-/// computing the transaction commitent uses a hash value that combines
-/// the transaction hash with the array of signature values.
+/// Calculate the transaction commitment, the event commitment and the event count.
 ///
 /// # Arguments
 ///
-/// * `tx` - The transaction to compute the hash of.
+/// * `transactions` - The transactions of the block
 ///
 /// # Returns
 ///
-/// The transaction hash with signature.
-fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> FieldElement
-where
-    T: CryptoHasher,
-{
-    let signature_hash = <T as CryptoHasher>::compute_hash_on_elements(
-        &tx.signature
-            .iter()
-            .map(|elt| FieldElement::from_byte_slice_be(elt.as_bytes()).unwrap())
-            .collect::<Vec<FieldElement>>(),
-    );
-    <T as CryptoHasher>::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
+/// The transaction commitment, the event commitment and the event count.
+pub fn calculate_commitments<T: CryptoHasher>(transactions: &[Transaction]) -> (H256, (H256, u128)) {
+    (calculate_transaction_commitment::<T>(transactions), calculate_event_commitment::<T>(transactions))
 }
 
 /// Calculate transaction commitment hash value.
@@ -106,14 +93,41 @@ pub fn calculate_transaction_commitment<T: CryptoHasher>(transactions: &[Transac
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-pub fn calculate_event_commitment<T: CryptoHasher>(txs: &[Transaction]) -> H256 {
+pub fn calculate_event_commitment<T: CryptoHasher>(transactions: &[Transaction]) -> (H256, u128) {
     let mut tree = CommitmentTree::<T>::default();
-    txs.iter().flat_map(|tx| tx.events.iter()).enumerate().for_each(|(idx, event)| {
-        let idx: u64 = idx.try_into().expect("too many transactions while calculating commitment");
+    let mut len = 0_u64;
+    transactions.iter().flat_map(|tx| tx.events.iter()).for_each(|event| {
+        len += 1;
         let final_hash = calculate_event_hash::<T>(event);
-        tree.set(idx, final_hash);
+        tree.set(len - 1, final_hash);
     });
-    H256::from_slice(&tree.commit().to_bytes_be())
+    (H256::from_slice(&tree.commit().to_bytes_be()), len as u128)
+}
+
+/// Compute the combined hash of the transaction hash and the signature.
+///
+/// Since the transaction hash doesn't take the signature values as its input
+/// computing the transaction commitent uses a hash value that combines
+/// the transaction hash with the array of signature values.
+///
+/// # Arguments
+///
+/// * `tx` - The transaction to compute the hash of.
+///
+/// # Returns
+///
+/// The transaction hash with signature.
+fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> FieldElement
+where
+    T: CryptoHasher,
+{
+    let signature_hash = <T as CryptoHasher>::compute_hash_on_elements(
+        &tx.signature
+            .iter()
+            .map(|elt| FieldElement::from_byte_slice_be(elt.as_bytes()).unwrap())
+            .collect::<Vec<FieldElement>>(),
+    );
+    <T as CryptoHasher>::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
 }
 
 /// Calculate the hash of an event.

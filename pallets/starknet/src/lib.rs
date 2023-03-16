@@ -242,6 +242,7 @@ pub mod pallet {
         }
 
         /// Get the number of events in the block.
+        #[inline(always)]
         pub fn event_count() -> u128 {
             Self::pending().iter().flat_map(|tx| tx.events.iter()).count() as u128
         }
@@ -264,9 +265,8 @@ pub mod pallet {
             let sequencer_address = U256::zero();
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
-            let transaction_commitment = commitment::calculate_transaction_commitment::<PedersenHasher>(&pending);
-            let event_count = Self::event_count();
-            let event_commitment = commitment::calculate_event_commitment::<PedersenHasher>(&pending);
+            let (transaction_commitment, (event_commitment, event_count)) =
+                commitment::calculate_commitments::<PedersenHasher>(&pending);
             let protocol_version = None;
             let extra_data = None;
 
