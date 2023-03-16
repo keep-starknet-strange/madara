@@ -150,6 +150,14 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
 </pre><pre class="rust"><code><span class="kw">use </span>kaioshin_runtime::{
     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
     WASM_BINARY,
@@ -206,8 +214,16 @@
                 </span><span class="macro">vec!</span>[
                     get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
                     get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Bob&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Charlie&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Dave&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Eve&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Ferdie&quot;</span>),
                     get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice//stash&quot;</span>),
                     get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Bob//stash&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Charlie//stash&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Dave//stash&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Eve//stash&quot;</span>),
+                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Ferdie//stash&quot;</span>),
                 ],
                 <span class="bool-val">true</span>,
             )
