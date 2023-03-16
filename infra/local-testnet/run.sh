@@ -23,6 +23,8 @@ function menu(){
     echo "5. Show logs"
     echo "6. Monitor nodes"
     echo "7. Stop monitoring nodes"
+    echo "8. Kill everything and cleanup"
+    echo "9. Run testnet and monitoring"
     echo -n "Enter your choice: "
     read choice
     case $choice in
@@ -33,6 +35,8 @@ function menu(){
         5) show_logs ;;
         6) monitor_nodes ;;
         7) stop_monitoring_nodes ;;
+        8) stop_nodes; stop_monitoring_nodes; cleanup; exit 0 ;;
+        9) start_nodes; monitor_nodes; exit 0 ;;
         *) echo "Invalid choice" ;;
     esac
 }
@@ -117,9 +121,13 @@ function show_node_logs(){
 
 function monitor_nodes(){
     echo "Starting prometheus"
-    prometheus --config.file local-testnet/prometheus/prometheus.yml &> $LOG_DIR/prometheus.log &
+    prometheus --config.file infra/local-testnet/prometheus/prometheus.yml &> $LOG_DIR/prometheus.log &
     echo "Prometheus started"
     echo "Starting grafana"
+    # Warning: this command assumes that grafana is installed using brew
+    # and that the program is run on MacOS.
+    # It does not impact the script if you don't run monitoring features.
+    # TODO: make this more generic and cross-platform.
     brew services start grafana
     echo "Grafana started"
 }
