@@ -15,12 +15,12 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system,
-        KaioshinRandomness: pallet_kaioshin_randomness,
+        KaioshinRandomness: pallet_insecure_randomness_collective_flip,
         Cairo: pallet_cairo,
     }
 );
 
-impl pallet_kaioshin_randomness::Config for Test {}
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 impl system::Config for Test {
     type BaseCallFilter = frame_support::traits::Everything;

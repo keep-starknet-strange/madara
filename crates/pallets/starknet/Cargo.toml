@@ -14,7 +14,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Kaiohsin pallets
-pallet-kaioshin-randomness = { workspace = true }
 # Kaioshin primitives
 kp-starknet = { workspace = true, default-features = false }
 starknet-crypto = { workspace = true, default-features = false, features = [
@@ -33,9 +32,10 @@ sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Frame pallets
+pallet-insecure-randomness-collective-flip = { workspace = true }
 
 # Other third party dependencies
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
   "derive",
 ] }
 scale-info = { workspace = true }

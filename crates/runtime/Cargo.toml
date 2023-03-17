@@ -23,46 +23,50 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
-pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-try-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.39" }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+# For an unknown reason, we can't use workspace dependencies for the following crates.
+# Sticking to the git version for now.
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-offchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-session = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-transaction-pool = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 sp-version = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+# End of problematic dependencies.
+
+pallet-aura = { workspace = true }
+pallet-insecure-randomness-collective-flip = { workspace = true }
+pallet-balances = { workspace = true }
+frame-support = { workspace = true }
+pallet-grandpa = { workspace = true }
+pallet-sudo = { workspace = true }
+frame-system = { workspace = true }
+frame-try-runtime = { workspace = true, optional = true }
+pallet-timestamp = { workspace = true }
+pallet-transaction-payment = { workspace = true }
+frame-executive = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 # Used for the node template's RPCs
-frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+frame-system-rpc-runtime-api = { workspace = true }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 
 # Used for runtime benchmarking
-frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.39" }
-frame-system-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.39" }
+frame-benchmarking = { workspace = true, optional = true }
+frame-system-benchmarking = { workspace = true, optional = true }
 
 # Kaioshin Local Dependencies
 # Kaioshin Pallets
 pallet-cairo = { workspace = true }
 pallet-starknet = { workspace = true }
-pallet-kaioshin-randomness = { workspace = true }
 # Kaioshin Primitives
 kp-starknet = { workspace = true, default-features = false }
 
 [build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+substrate-wasm-builder = { workspace = true }
 
 [features]
 default = ["std"]
@@ -70,7 +74,6 @@ std = [
   # Kaioshin pallets
   "pallet-cairo/std",
   "pallet-starknet/std",
-  "pallet-kaioshin-randomness/std",
   # Frame dependencies
   "frame-try-runtime?/std",
   "frame-system-benchmarking?/std",
@@ -88,6 +91,7 @@ std = [
   "pallet-timestamp/std",
   "pallet-transaction-payment-rpc-runtime-api/std",
   "pallet-transaction-payment/std",
+  "pallet-insecure-randomness-collective-flip/std",
   # Substrate primitives dependencies
   "sp-api/std",
   "sp-block-builder/std",
@@ -119,7 +123,6 @@ runtime-benchmarks = [
 try-runtime = [
   # Kaiohsin pallets
   "pallet-timestamp/try-runtime",
-  "pallet-kaioshin-randomness/try-runtime",
   "pallet-transaction-payment/try-runtime",
   "frame-try-runtime/try-runtime",
   "frame-executive/try-runtime",
@@ -127,6 +130,7 @@ try-runtime = [
   "frame-support/try-runtime",
   "pallet-aura/try-runtime",
   "pallet-balances/try-runtime",
+  "pallet-insecure-randomness-collective-flip/try-runtime",
   "pallet-grandpa/try-runtime",
   "pallet-sudo/try-runtime",
   "pallet-cairo/try-runtime",
