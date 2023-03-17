@@ -2,6 +2,7 @@
 
 use alloc::vec;
 
+use blockifier::block_context::BlockContext;
 use blockifier::state::state_api::State;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
@@ -13,6 +14,8 @@ use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Fee, InvokeTransaction, TransactionHash, TransactionSignature, TransactionVersion};
 
+use crate::block::wrapper::block::Block;
+use crate::block::serialize::SerializeBlockContext;
 use crate::execution::{ContractAddress, CallEntryPoint};
 
 type MaxArraySize = ConstU32<4294967295>;
@@ -120,11 +123,11 @@ impl Transaction {
         })
     }
 
-	pub fn execute(self: &Self, state: &mut dyn State) -> TransactionExecutionResult<TransactionExecutionInfo> {
+	pub fn execute(self: &Self, state: &mut dyn State, block: Block) -> TransactionExecutionResult<TransactionExecutionInfo> {
 		let tx = self.to_invoke_tx();
-		// let result = tx.execute_raw(state, block_context);
-		// result
-		// Ok(())
+		let block_context = BlockContext::serialize(block.header);
+		let result = tx.execute_raw(state, &block_context);
+		result
 	}
 }
 

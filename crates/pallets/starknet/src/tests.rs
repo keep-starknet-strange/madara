@@ -63,7 +63,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 			sender_address: 0,
 			nonce: U256::from(0),
 			call_entrypoint: CallEntryPoint::default(),
-		}
+		};
 
 		assert_ok!(Starknet::add_invoke_transaction(None, transaction));
 	});
