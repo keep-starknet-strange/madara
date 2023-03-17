@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use starknet_api::stdlib::collections::HashMap;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::{ContractClassMapping, ContractStorageKey};
 use blockifier::state::errors::StateError;
