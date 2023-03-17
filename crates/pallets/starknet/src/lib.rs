@@ -48,6 +48,10 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+    extern crate alloc;
+    use alloc::string::String;
+    use alloc::vec;
+    use alloc::vec::Vec;
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{
@@ -65,7 +69,9 @@ pub mod pallet {
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use kp_starknet::traits::hash::Hasher;
     use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
+    use serde::Deserialize;
     use sp_core::{H256, U256};
+    use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
     use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
     use starknet_api::hash::StarkFelt as StarknetStarkFelt;
@@ -125,7 +131,75 @@ pub mod pallet {
         /// * Investigate how we can use offchain workers for Starknet specific tasks. An example
         ///   might be the communication with the prover.
         fn offchain_worker(n: T::BlockNumber) {
-            log!(trace, "Running offchain worker at block {:?}.", n,)
+            let req = vec![
+                r#"{
+                "jsonrpc": "2.0",
+                "method": "eth_getBlockByNumber",
+                "params": [
+                    "finalized",
+                    true
+                ],
+                "id": 0
+            }"#,
+            ];
+
+            #[derive(Deserialize, Encode, Decode, Default, Debug)]
+            struct Res {
+                result: Num,
+            }
+            #[derive(Deserialize, Encode, Decode, Default, Debug)]
+            struct Num {
+                number: String,
+            }
+            let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", req)
+                .add_header("content-type", "application/json")
+                .send()
+                .expect("Couldn't send req")
+                .wait()
+                .expect("Couldn't wait tx");
+            let res: Res = serde_json::from_str(sp_std::str::from_utf8(&res.body().collect::<Vec<u8>>()).unwrap())
+                .expect("Invalid body");
+            let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
+            if last_finalized_block > Self::last_known_eth_block().unwrap() {
+                #[derive(Deserialize, Encode, Decode, Default, Debug)]
+                struct ResFilter {
+                    result: Vec<Message>,
+                }
+                #[derive(Deserialize, Encode, Decode, Default, Debug)]
+                struct Message {
+                    address: String,
+                    topics: Vec<String>,
+                    data: String,
+                }
+
+                let filter = vec![
+                    r#"{
+                    "jsonrpc": "2.0",
+                    "method": "eth_getLogs",
+                    "params": [
+                        {
+                            "fromBlock": "0x1016400",
+                            "toBlock": "0x101640e",
+                            "address": "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4",
+                            "topics": [
+                                "0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b"
+                            ]
+                        }
+                    ],
+                    "id": 0
+                }"#,
+                ];
+                let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", filter)
+                    .add_header("content-type", "application/json")
+                    .send()
+                    .expect("Couldn't send req")
+                    .wait()
+                    .expect("Couldn't wait tx");
+                let res: ResFilter =
+                    serde_json::from_str(sp_std::str::from_utf8(&res.body().collect::<Vec<u8>>()).unwrap())
+                        .expect("Invalid body");
+                log!(info, "Running offchain worker at block {:?}, {:?}.", n, res.result);
+            }
         }
     }
 
@@ -163,6 +237,10 @@ pub mod pallet {
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> = StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn last_known_eth_block)]
+    pub(super) type LastKnownEthBlock<T: Config> = StorageValue<_, u64>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -185,9 +263,12 @@ pub mod pallet {
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchema::V1,
             );
+
             for (address, class_hash) in self.contracts.iter() {
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
+
+            LastKnownEthBlock::<T>::set(Some(1));
         }
     }
 
