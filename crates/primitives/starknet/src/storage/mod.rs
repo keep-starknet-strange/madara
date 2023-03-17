@@ -1,5 +1,4 @@
 //! StarkNet storage primitives.
-#![cfg_attr(not(feature = "std"), no_std)]
 
 use codec::{Decode, Encode};
 
