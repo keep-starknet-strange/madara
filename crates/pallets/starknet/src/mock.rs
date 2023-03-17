@@ -15,13 +15,13 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system,
-        KaioshinRandomness: pallet_kaioshin_randomness,
+        KaioshinRandomness: pallet_insecure_randomness_collective_flip,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
     }
 );
 
-impl pallet_kaioshin_randomness::Config for Test {}
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
 
 impl pallet_timestamp::Config for Test {
     /// A timestamp: milliseconds since the unix epoch.

@@ -281,8 +281,8 @@ impl pallet_starknet::Config for Runtime {
     type TimestampProvider = Timestamp;
 }
 
-/// Configure the Kaioshin Randomness pallet in pallets/kaioshin-randomness.
-impl pallet_kaioshin_randomness::Config for Runtime {}
+/// Configure the Randomness pallet.
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -305,7 +305,7 @@ construct_runtime!(
         // Include Starknet pallet.
         Starknet: pallet_starknet,
         // Include pallet for randomness.
-        KaioshinRandomness: pallet_kaioshin_randomness,
+        KaioshinRandomness: pallet_insecure_randomness_collective_flip,
     }
 );
 
