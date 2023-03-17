@@ -3,7 +3,8 @@
 use alloc::vec;
 
 use blockifier::block_context::BlockContext;
-use blockifier::state::state_api::State;
+use blockifier::state::cached_state::TransactionalState;
+use blockifier::state::state_api::{State, StateReader};
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
@@ -123,7 +124,18 @@ impl Transaction {
         })
     }
 
-	pub fn execute(self: &Self, state: &mut dyn State, block: Block) -> TransactionExecutionResult<TransactionExecutionInfo> {
+	/// Executes a transaction
+	///
+	/// # Arguments
+	///
+	/// * `self` - The transaction to execute
+	/// * `state` - The state to execute the transaction on
+	/// * `block` - The block to execute the transaction on
+	///
+	/// # Returns
+	///
+	/// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction execution
+	pub fn execute<S: StateReader>(self: &Self, state: &mut TransactionalState<'_, S>, block: Block) -> TransactionExecutionResult<TransactionExecutionInfo> {
 		let tx = self.to_invoke_tx();
 		let block_context = BlockContext::serialize(block.header);
 		let result = tx.execute_raw(state, &block_context);

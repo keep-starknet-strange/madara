@@ -7,12 +7,24 @@ use starknet_api::hash::StarkFelt;
 
 use super::wrapper::header::Header;
 
+/// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {
     fn serialize(block_header: Header) -> BlockContext;
 }
 
+/// Implementation of the `SerializeBlockContext` trait.
 impl SerializeBlockContext for BlockContext {
+	/// Serializes a block header into a `BlockContext`.
+	///
+	/// # Arguments
+	///
+	/// * `block_header` - The block header to serialize.
+	///
+	/// # Returns
+	///
+	/// The serialized block context.
     fn serialize(block_header: Header) -> BlockContext {
+		/// TODO: use actual values
         BlockContext {
             chain_id: ChainId("SN_GOERLI".to_string()),
             block_number: BlockNumber(block_header.block_number.as_u64()),
