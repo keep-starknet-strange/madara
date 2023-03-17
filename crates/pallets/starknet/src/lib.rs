@@ -221,7 +221,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(0)]
 		pub fn add_invoke_transaction(
-			origin: OriginFor<T>,
+			_origin: OriginFor<T>,
 			transaction: Transaction,
 		) -> DispatchResult {
 			/// TODO: add origin check when proxy pallet added
