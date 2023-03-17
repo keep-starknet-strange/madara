@@ -55,16 +55,13 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 		System::set_block_number(0);
         run_to_block(2);
 
+        let none_origin = RuntimeOrigin::none();
+
 		let transaction = Transaction {
 			version: U256::from(1),
-			hash: H256::from_str("0x0000000"),
-			events: vec![],
-			signature: vec![],
-			sender_address: 0,
-			nonce: U256::from(0),
-			call_entrypoint: CallEntryPoint::default(),
+			..Transaction::default()
 		};
 
-		assert_ok!(Starknet::add_invoke_transaction(None, transaction));
+		assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
 	});
 }

@@ -49,6 +49,7 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
+    use blockifier::state::cached_state::CachedState;
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -56,6 +57,7 @@ pub mod pallet {
     use kp_starknet::block::wrapper::header::Header;
     use kp_starknet::crypto::commitment;
     use kp_starknet::crypto::hash::pedersen::PedersenHasher;
+    use kp_starknet::state::DictStateReader;
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use kp_starknet::traits::hash::Hasher;
     use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
@@ -63,7 +65,7 @@ pub mod pallet {
     use sp_runtime::traits::UniqueSaturatedInto;
 
     use super::*;
-    use crate::types::{ContractAddress, ContractClassHash};
+    use crate::types::{ContractAddress, ContractClassHash, Nonce, ContractStorageKey, StarkFelt};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -143,6 +145,18 @@ pub mod pallet {
     pub(super) type ContractClassHashes<T: Config> =
         StorageMap<_, Twox64Concat, ContractAddress, ContractClassHash, ValueQuery>;
 
+    /// Mapping from Starknet contract address to its nonce.
+    #[pallet::storage]
+    #[pallet::getter(fn nonce)]
+    pub(super) type Nonces<T: Config> =
+        StorageMap<_, Twox64Concat, ContractAddress, Nonce, ValueQuery>;
+
+	/// Mapping from Starknet contract storage key to its value.
+    #[pallet::storage]
+    #[pallet::getter(fn storage)]
+    pub(super) type StorageView<T: Config> =
+        StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     #[derive(Default)]
@@ -175,6 +189,7 @@ pub mod pallet {
     #[pallet::error]
     pub enum Error<T> {
 		AccountNotDeployed,
+		TransactionExecutionFailed
 	}
 
     /// The Starknet pallet external functions.
@@ -218,10 +233,19 @@ pub mod pallet {
 			);
 
 			let block = Self::current_block().unwrap();
-			// transaction.execute(state, block_context);
+			let state = &mut Self::create_state_reader();
+			match transaction.execute(state, block) {
+				Ok(_) => {}
+				Err(e) => {
+					log!(error, "Transaction execution failed: {:?}", e);
+					return Err(Error::<T>::TransactionExecutionFailed.into());
+				}
+			}
 
 			// Append the transaction to the pending transactions.
 			Pending::<T>::try_append(transaction).unwrap();
+
+			/// TODO: Apply state diff and update state root
 
 			Ok(())
 		}
@@ -295,7 +319,7 @@ pub mod pallet {
             let pending = Self::pending();
 
             let global_state_root = U256::zero();
-            let sequencer_address = U256::zero();
+            let sequencer_address = [0; 32];
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
             let (transaction_commitment, (event_commitment, event_count)) =
@@ -341,5 +365,11 @@ pub mod pallet {
             ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
             Ok(())
         }
+
+		fn create_state_reader() -> CachedState<DictStateReader> {
+			CachedState::new(DictStateReader {
+				..Default::default()
+			})
+		}
     }
 }

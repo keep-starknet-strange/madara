@@ -12,6 +12,7 @@ pub type ContractAddress = [u8; 32];
 
 type MaxCalldataSize = ConstU32<4294967295>;
 type ContractClassHash = [u8; 32];
+/// TODO: define enum
 type StarknetEntryPointType = u8;
 
 /// Representation of a Starknet transaction.

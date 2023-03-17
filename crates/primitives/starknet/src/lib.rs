@@ -27,6 +27,9 @@ pub mod crypto;
 /// Starknet storage primitives.
 pub mod storage;
 
+/// Starknet state related functionality.
+pub mod state;
+
 /// Serializations and deserializations.
 pub mod starknet_serde;
 
