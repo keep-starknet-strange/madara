@@ -1,7 +1,7 @@
 use core::str::FromStr;
 
 use frame_support::assert_ok;
-use kp_starknet::block::wrapper::header::Header;
+use kp_starknet::{block::wrapper::header::Header, transaction::Transaction, execution::CallEntryPoint};
 use sp_core::{H256, U256};
 
 use crate::mock::*;
@@ -47,4 +47,24 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
         assert!(current_block.is_some());
         pretty_assertions::assert_eq!(current_block.unwrap().header, expected_current_block)
     });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(0);
+        run_to_block(2);
+
+		let transaction = Transaction {
+			version: U256::from(1),
+			hash: H256::from_str("0x0000000"),
+			events: vec![],
+			signature: vec![],
+			sender_address: 0,
+			nonce: U256::from(0),
+			call_entrypoint: CallEntryPoint::default(),
+		}
+
+		assert_ok!(Starknet::add_invoke_transaction(None, transaction));
+	});
 }

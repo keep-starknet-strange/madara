@@ -2,6 +2,8 @@
 use codec::Encode;
 use sp_core::{H256, U256};
 
+use crate::execution::ContractAddress;
+
 #[derive(
     Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, Default, codec::MaxEncodedLen,
 )]
@@ -15,8 +17,8 @@ pub struct Header {
     /// The state commitment after this block.
     pub global_state_root: U256,
     /// The Starknet address of the sequencer who created this block.
-    pub sequencer_address: U256,
-    /// The time the sequencer created this block before executing transactions
+    pub sequencer_address: ContractAddress,
+/// The time the sequencer created this block before executing transactions
     pub block_timestamp: u64,
     /// The number of transactions in a block
     pub transaction_count: u128,
@@ -40,7 +42,7 @@ impl Header {
         parent_block_hash: H256,
         block_number: U256,
         global_state_root: U256,
-        sequencer_address: U256,
+        sequencer_address: ContractAddress,
         block_timestamp: u64,
         transaction_count: u128,
         transaction_commitment: H256,

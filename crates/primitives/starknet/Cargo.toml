@@ -27,7 +27,7 @@ starknet-ff = { workspace = true, default-features = false, features = [
 ] }
 poseidon_hash = { workspace = true, default-features = false}
 blockifier = { workspace = true, default-features = false}
-starknet_api = { workspace = true, default-features = false}
+starknet_api = { workspace = true, default-features = false }
 
 # Other third party dependencies
 lazy_static = { workspace = true }

@@ -2,7 +2,11 @@
 
 use alloc::vec;
 
+use blockifier::state::state_api::State;
 use blockifier::transaction::account_transaction::AccountTransaction;
+use blockifier::transaction::transactions::ExecutableTransaction;
+use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
+
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
@@ -115,6 +119,13 @@ impl Transaction {
 			entry_point_selector: Some(self.call_entrypoint.to_starknet_call_entry_point().entry_point_selector),
         })
     }
+
+	pub fn execute(self: &Self, state: &mut dyn State) -> TransactionExecutionResult<TransactionExecutionInfo> {
+		let tx = self.to_invoke_tx();
+		// let result = tx.execute_raw(state, block_context);
+		// result
+		// Ok(())
+	}
 }
 
 impl Default for Transaction {
