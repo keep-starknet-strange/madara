@@ -309,7 +309,6 @@
 <a href="#309" id="309">309</a>
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
-<a href="#312" id="312">312</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
@@ -378,7 +377,6 @@
     <span class="kw">use </span><span class="kw">crate</span>::types::{ContractAddress, ContractClassHash};
 
     <span class="attr">#[pallet::pallet]
-    #[pallet::generate_store(<span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Store)]
     </span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
 
     <span class="doccomment">/// Configure the pallet by specifying the parameters and types on which it depends.
