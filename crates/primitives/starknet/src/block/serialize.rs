@@ -7,7 +7,7 @@ use starknet_api::hash::StarkFelt;
 
 use super::wrapper::header::Header;
 
-trait SerializeBlockContext {
+pub trait SerializeBlockContext {
     fn serialize(block_header: Header) -> BlockContext;
 }
 

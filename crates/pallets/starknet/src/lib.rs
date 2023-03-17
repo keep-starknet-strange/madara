@@ -217,6 +217,7 @@ pub mod pallet {
 				Error::<T>::AccountNotDeployed
 			);
 
+			let block = Self::current_block().unwrap();
 			// transaction.execute(state, block_context);
 
 			// Append the transaction to the pending transactions.
