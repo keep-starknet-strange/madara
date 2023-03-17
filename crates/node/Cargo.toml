@@ -35,8 +35,8 @@ sc-consensus-aura = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-consensus = { workspace = true }
 sc-consensus = { workspace = true }
-sc-finality-grandpa = { workspace = true }
-sp-finality-grandpa = { workspace = true }
+sc-consensus-grandpa = { workspace = true }
+sp-consensus-grandpa = { workspace = true }
 sc-client-api = { workspace = true }
 sp-runtime = { workspace = true }
 sp-timestamp = { workspace = true }
@@ -71,7 +71,7 @@ frame-benchmarking-cli = { workspace = true }
 kaioshin-runtime = { path = "../runtime" }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
