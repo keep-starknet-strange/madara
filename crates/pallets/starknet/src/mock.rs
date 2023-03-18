@@ -1,4 +1,4 @@
-use frame_support::traits::{ConstU16, ConstU64, Hooks};
+use frame_support::traits::{ConstU16, ConstU64, Hooks, GenesisBuild};
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
@@ -68,7 +68,14 @@ impl pallet_starknet::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+    let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_starknet::GenesisConfig::<Test> {
+		contracts: vec![],
+	}
+	.assimilate_storage(&mut t)
+	.unwrap();
+
+	t.into()
 }
 
 pub(crate) fn run_to_block(n: u64) {

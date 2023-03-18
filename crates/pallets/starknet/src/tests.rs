@@ -1,7 +1,7 @@
 use core::str::FromStr;
 
 use frame_support::assert_ok;
-use kp_starknet::{block::wrapper::header::Header, transaction::Transaction, execution::CallEntryPoint};
+use kp_starknet::{block::wrapper::header::Header, transaction::Transaction};
 use sp_core::{H256, U256};
 
 use crate::mock::*;
