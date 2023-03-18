@@ -3,8 +3,8 @@
 use alloc::vec;
 
 use blockifier::block_context::BlockContext;
-use blockifier::state::cached_state::{TransactionalState, CachedState};
-use blockifier::state::state_api::{State, StateReader};
+use blockifier::state::cached_state::CachedState;
+use blockifier::state::state_api::StateReader;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::transactions::ExecutableTransaction;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};

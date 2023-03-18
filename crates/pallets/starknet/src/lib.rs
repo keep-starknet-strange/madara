@@ -65,7 +65,7 @@ pub mod pallet {
     use sp_runtime::traits::UniqueSaturatedInto;
 
     use super::*;
-    use crate::types::{ContractAddress, ContractClassHash, Nonce, ContractStorageKey, StarkFelt};
+    use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, Nonce, StarkFelt};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -148,19 +148,19 @@ pub mod pallet {
     /// Mapping from Starknet contract address to its nonce.
     #[pallet::storage]
     #[pallet::getter(fn nonce)]
-    pub(super) type Nonces<T: Config> =
-        StorageMap<_, Twox64Concat, ContractAddress, Nonce, ValueQuery>;
+    pub(super) type Nonces<T: Config> = StorageMap<_, Twox64Concat, ContractAddress, Nonce, ValueQuery>;
 
-	/// Mapping from Starknet contract storage key to its value.
+    /// Mapping from Starknet contract storage key to its value.
     #[pallet::storage]
     #[pallet::getter(fn storage)]
-    pub(super) type StorageView<T: Config> =
-        StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
+    pub(super) type StorageView<T: Config> = StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     #[derive(Default)]
-    pub struct GenesisConfig {}
+    pub struct GenesisConfig {
+		pub contracts: Vec<(ContractAddress, ContractClassHash)>,
+    }
 
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig {
@@ -170,6 +170,9 @@ pub mod pallet {
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchema::V1,
             );
+			for (address, class_hash) in self.contracts.iter() {
+				<ContractClassHashes<T>>::insert(address, class_hash);
+			}
         }
     }
 
@@ -188,9 +191,11 @@ pub mod pallet {
     /// ERRORS
     #[pallet::error]
     pub enum Error<T> {
-		AccountNotDeployed,
-		TransactionExecutionFailed
-	}
+        AccountNotDeployed,
+        TransactionExecutionFailed,
+        ContractClassHashAlreadyAssociated,
+        ContractClassHashUnknown,
+    }
 
     /// The Starknet pallet external functions.
     /// Dispatchable functions allows users to interact with the pallet and invoke state changes.
@@ -210,46 +215,39 @@ pub mod pallet {
             Ok(())
         }
 
-		/// Submit a Starknet transaction.
-		/// # Arguments
-		/// * `origin` - The origin of the transaction.
-		/// * `transaction` - The Starknet transaction.
-		/// # Returns
-		/// * `DispatchResult` - The result of the transaction.
-		/// # TODO
-		/// * Compute weight
-		#[pallet::call_index(1)]
-		#[pallet::weight(0)]
-		pub fn add_invoke_transaction(
-			_origin: OriginFor<T>,
-			transaction: Transaction,
-		) -> DispatchResult {
-			/// TODO: add origin check when proxy pallet added
+        /// Submit a Starknet transaction.
+        /// # Arguments
+        /// * `origin` - The origin of the transaction.
+        /// * `transaction` - The Starknet transaction.
+        /// # Returns
+        /// * `DispatchResult` - The result of the transaction.
+        /// # TODO
+        /// * Compute weight
+        #[pallet::call_index(1)]
+        #[pallet::weight(0)]
+        pub fn add_invoke_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // TODO: add origin check when proxy pallet added
 
-			/// Check if contract is deployed
-			ensure!(
-				ContractClassHashes::<T>::contains_key(transaction.sender_address),
-				Error::<T>::AccountNotDeployed
-			);
+            // Check if contract is deployed
+            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-			let block = Self::current_block().unwrap();
-			let state = &mut Self::create_state_reader();
-			match transaction.execute(state, block) {
-				Ok(_) => {}
-				Err(e) => {
-					log!(error, "Transaction execution failed: {:?}", e);
-					return Err(Error::<T>::TransactionExecutionFailed.into());
-				}
-			}
+            let block = Self::current_block().unwrap();
+            let state = &mut Self::create_state_reader();
+            match transaction.execute(state, block) {
+                Ok(_) => {}
+                Err(e) => {
+                    log!(error, "Transaction execution failed: {:?}", e);
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                }
+            }
 
-			// Append the transaction to the pending transactions.
-			Pending::<T>::try_append(transaction).unwrap();
+            // Append the transaction to the pending transactions.
+            Pending::<T>::try_append(transaction).unwrap();
 
-			/// TODO: Apply state diff and update state root
+            // TODO: Apply state diff and update state root
 
-			Ok(())
-		}
-
+            Ok(())
+        }
     }
 
     /// The Starknet pallet internal functions.
@@ -353,23 +351,25 @@ pub mod pallet {
         ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
-        ///
-        /// # TODO
-        ///
-        /// * Check if the contract address is already associated with a contract class hash.
-        /// * Check if the contract class hash is known.
         fn _associate_contract_class(
             contract_address: ContractAddress,
             contract_class_hash: ContractClassHash,
         ) -> Result<(), DispatchError> {
+            // Check if the contract address is already associated with a contract class hash.
+            ensure!(
+                !ContractClassHashes::<T>::contains_key(contract_address),
+                Error::<T>::ContractClassHashAlreadyAssociated
+            );
+
+            // Check if the contract class hash is known.
+            ensure!(ContractClassHashes::<T>::contains_key(contract_class_hash), Error::<T>::ContractClassHashUnknown);
+
             ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
             Ok(())
         }
 
-		fn create_state_reader() -> CachedState<DictStateReader> {
-			CachedState::new(DictStateReader {
-				..Default::default()
-			})
-		}
+        fn create_state_reader() -> CachedState<DictStateReader> {
+            CachedState::new(DictStateReader { ..Default::default() })
+        }
     }
 }

@@ -10,9 +10,13 @@ use starknet_api::state::StorageKey;
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]
 pub struct DictStateReader {
+	/// The storage layout.
     pub storage_view: HashMap<ContractStorageKey, StarkFelt>,
+	/// The nonce of each contract.
     pub address_to_nonce: HashMap<ContractAddress, Nonce>,
+	/// The class hash of each contract.
     pub address_to_class_hash: HashMap<ContractAddress, ClassHash>,
+	/// The class of each class hash.
     pub class_hash_to_class: ContractClassMapping,
 }
 
