@@ -9,7 +9,7 @@ use crate::alloc::string::ToString;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {
-	/// Serializes a block header into a `BlockContext`.
+    /// Serializes a block header into a `BlockContext`.
     fn serialize(block_header: Header) -> BlockContext;
 }
 
@@ -24,7 +24,7 @@ impl SerializeBlockContext for BlockContext {
     /// # Returns
     ///
     /// The serialized block context.
-	/// TODO: use actual values
+    /// TODO: use actual values
     fn serialize(block_header: Header) -> BlockContext {
         BlockContext {
             chain_id: ChainId("SN_GOERLI".to_string()),

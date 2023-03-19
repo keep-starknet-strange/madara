@@ -1,4 +1,3 @@
-use starknet_api::stdlib::collections::HashMap;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::{ContractClassMapping, ContractStorageKey};
 use blockifier::state::errors::StateError;
@@ -6,17 +5,18 @@ use blockifier::state::state_api::{StateReader, StateResult};
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
+use starknet_api::stdlib::collections::HashMap;
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]
 pub struct DictStateReader {
-	/// The storage layout.
+    /// The storage layout.
     pub storage_view: HashMap<ContractStorageKey, StarkFelt>,
-	/// The nonce of each contract.
+    /// The nonce of each contract.
     pub address_to_nonce: HashMap<ContractAddress, Nonce>,
-	/// The class hash of each contract.
+    /// The class hash of each contract.
     pub address_to_class_hash: HashMap<ContractAddress, ClassHash>,
-	/// The class of each class hash.
+    /// The class of each class hash.
     pub class_hash_to_class: ContractClassMapping,
 }
 

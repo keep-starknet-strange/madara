@@ -1,7 +1,7 @@
 //! Starknet pallet custom types.
 use frame_support::codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::scale_info::TypeInfo;
-use sp_core::{U256, H256};
+use sp_core::{H256, U256};
 use sp_runtime::RuntimeDebug;
 
 /// TODO: Replace with a proper type for field element.

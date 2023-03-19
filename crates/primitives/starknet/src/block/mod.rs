@@ -7,6 +7,5 @@ pub mod substrate_extension;
 /// See: `https://corepaper.org/substrate/wrapper/`
 pub mod wrapper;
 
-
 /// Serializer
 pub mod serialize;
