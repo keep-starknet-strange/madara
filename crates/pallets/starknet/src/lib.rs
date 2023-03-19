@@ -52,7 +52,7 @@ pub mod pallet {
     use blockifier::state::cached_state::CachedState;
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
-    use frame_system::pallet_prelude::*;
+    use frame_system::{pallet_prelude::*};
     use kp_starknet::block::wrapper::block::Block;
     use kp_starknet::block::wrapper::header::Header;
     use kp_starknet::crypto::commitment;
@@ -157,13 +157,20 @@ pub mod pallet {
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
-    #[derive(Default)]
-    pub struct GenesisConfig {
+    pub struct GenesisConfig<T: Config> {
 		pub contracts: Vec<(ContractAddress, ContractClassHash)>,
+		pub _phantom: PhantomData<T>,
     }
 
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { contracts: vec![], _phantom: PhantomData }
+		}
+	}
+
     #[pallet::genesis_build]
-    impl<T: Config> GenesisBuild<T> for GenesisConfig {
+    impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(U256::zero());
             frame_support::storage::unhashed::put::<StarknetStorageSchema>(

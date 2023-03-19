@@ -4812,6 +4812,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex",
  "kp-starknet",
  "lazy_static",
  "log",

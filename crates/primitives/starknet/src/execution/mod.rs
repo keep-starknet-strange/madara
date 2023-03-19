@@ -58,7 +58,7 @@ impl Default for CallEntryPoint {
         Self {
             class_hash: ContractClassHash::default(),
             entrypoint_type: 0,
-            entrypoint_selector: None,
+            entrypoint_selector: Some(H256::default()),
             calldata: BoundedVec::try_from(vec![0; 32]).unwrap(),
             storage_address: ContractAddress::default(),
             caller_address: ContractAddress::default(),
