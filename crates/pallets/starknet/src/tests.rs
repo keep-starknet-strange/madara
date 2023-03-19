@@ -1,8 +1,9 @@
 use core::str::FromStr;
 
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
 use kp_starknet::block::wrapper::header::Header;
+use kp_starknet::execution::CallEntryPoint;
 use kp_starknet::transaction::Transaction;
 use sp_core::{H256, U256};
 
@@ -85,8 +86,30 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
-        let transaction =
-            Transaction { version: U256::from(1), sender_address: contract_address_bytes, ..Transaction::default() };
+        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
+        let transaction = Transaction {
+            version: U256::from(1),
+            sender_address: contract_address_bytes,
+            hash: H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
+            signature: bounded_vec![
+                H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
+                H256::from_str("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap()
+            ],
+            events: bounded_vec!(),
+            nonce: U256::from(0),
+            call_entrypoint: CallEntryPoint {
+                class_hash: class_hash_bytes,
+                entrypoint_type: 0,
+                entrypoint_selector: None,
+                calldata: bounded_vec![
+                    H256::from_str("0x00121108c052bbd5b273223043ad58a7e51c55ef454f3e02b0a0b4c559a925d4").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000001bc16d674ec80000").unwrap(),
+                    H256::zero()
+                ],
+                storage_address: contract_address_bytes,
+                caller_address: contract_address_bytes,
+            },
+        };
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
     });

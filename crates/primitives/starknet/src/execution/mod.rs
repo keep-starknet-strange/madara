@@ -31,7 +31,7 @@ pub struct CallEntryPoint {
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
     pub entrypoint_selector: Option<H256>,
     /// The Calldata
-    pub calldata: BoundedVec<u8, MaxCalldataSize>,
+    pub calldata: BoundedVec<H256, MaxCalldataSize>,
     /// The storage address
     pub storage_address: ContractAddress,
     /// The caller address
@@ -50,9 +50,9 @@ impl CallEntryPoint {
             class_hash: Some(ClassHash(StarkFelt::new(self.class_hash).unwrap())),
             /// TODO: Change this to use self.entrypoint_type
             entry_point_type: EntryPointType::External,
-            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap().0).unwrap()),
+            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap_or_default().0).unwrap()),
             calldata: Calldata(Arc::new(
-                self.calldata.clone().into_inner().iter().map(|x| StarkFelt::from(*x as u64)).collect(),
+                self.calldata.clone().into_inner().iter().map(|x| StarkFelt::new(*(*x).as_fixed_bytes()).unwrap()).collect(),
             )),
             storage_address: StarknetContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: StarknetContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
@@ -65,7 +65,7 @@ impl Default for CallEntryPoint {
             class_hash: ContractClassHash::default(),
             entrypoint_type: 0,
             entrypoint_selector: Some(H256::default()),
-            calldata: BoundedVec::try_from(vec![0; 32]).unwrap(),
+            calldata: BoundedVec::try_from(vec![H256::zero(); 32]).unwrap(),
             storage_address: ContractAddress::default(),
             caller_address: ContractAddress::default(),
         }

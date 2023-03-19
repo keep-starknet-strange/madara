@@ -8,9 +8,6 @@
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
 use sp_core::ConstU32;
-use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
-use starknet_api::hash::StarkFelt as StarknetStarkFelt;
-use starknet_api::stdlib::collections::HashMap;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -67,6 +64,9 @@ pub mod pallet {
     use sp_core::{H256, U256};
     use sp_runtime::traits::UniqueSaturatedInto;
     use starknet_api::state::StorageKey;
+	use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
+	use starknet_api::hash::StarkFelt as StarknetStarkFelt;
+	use starknet_api::stdlib::collections::HashMap;
 
     use super::*;
     use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, Nonce, StarkFelt};
@@ -385,10 +385,6 @@ pub mod pallet {
         /// # Returns
         ///
         /// The state reader.
-        ///
-        /// # TODO
-        ///
-        /// * Implement the function.
         fn create_state_reader() -> CachedState<DictStateReader> {
             let address_to_class_hash: HashMap<StarknetContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
                 .map(|(key, value)| {
