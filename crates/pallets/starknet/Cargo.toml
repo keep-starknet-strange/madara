@@ -20,6 +20,7 @@ starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
 blockifier = { workspace = true, default-features = false}
+starknet_api = { workspace = true, default-features = false }
 
 # Substrate frame
 frame-support = { workspace = true }
