@@ -1,12 +1,13 @@
 use core::str::FromStr;
 
-use frame_support::{assert_ok, assert_err};
+use frame_support::{assert_err, assert_ok};
 use hex::FromHex;
 use kp_starknet::block::wrapper::header::Header;
 use kp_starknet::transaction::Transaction;
 use sp_core::{H256, U256};
 
-use crate::{mock::*, Error};
+use crate::mock::*;
+use crate::Error;
 
 #[test]
 fn given_normal_conditions_when_deploy_sierra_program_then_it_works() {

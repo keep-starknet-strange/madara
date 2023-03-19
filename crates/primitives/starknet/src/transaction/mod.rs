@@ -6,18 +6,17 @@ use blockifier::block_context::BlockContext;
 use blockifier::state::cached_state::CachedState;
 use blockifier::state::state_api::StateReader;
 use blockifier::transaction::account_transaction::AccountTransaction;
-use blockifier::transaction::transactions::ExecutableTransaction;
 use blockifier::transaction::objects::{TransactionExecutionInfo, TransactionExecutionResult};
-
+use blockifier::transaction::transactions::ExecutableTransaction;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Fee, InvokeTransaction, TransactionHash, TransactionSignature, TransactionVersion};
 
-use crate::block::wrapper::block::Block;
 use crate::block::serialize::SerializeBlockContext;
-use crate::execution::{ContractAddress, CallEntryPoint};
+use crate::block::wrapper::block::Block;
+use crate::execution::{CallEntryPoint, ContractAddress};
 
 type MaxArraySize = ConstU32<4294967295>;
 
@@ -77,8 +76,8 @@ pub struct Transaction {
     pub sender_address: ContractAddress,
     /// Nonce
     pub nonce: U256,
-	/// Call entrypoint
-	pub call_entrypoint: CallEntryPoint
+    /// Call entrypoint
+    pub call_entrypoint: CallEntryPoint,
 }
 
 impl Transaction {
@@ -90,7 +89,7 @@ impl Transaction {
         events: BoundedVec<Event, MaxArraySize>,
         sender_address: ContractAddress,
         nonce: U256,
-		call_entrypoint: CallEntryPoint
+        call_entrypoint: CallEntryPoint,
     ) -> Self {
         Self { version, hash, signature, events, sender_address, nonce, call_entrypoint }
     }
@@ -119,28 +118,33 @@ impl Transaction {
             ),
             nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
-			calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
-			entry_point_selector: Some(self.call_entrypoint.to_starknet_call_entry_point().entry_point_selector),
+            calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+            entry_point_selector: Some(self.call_entrypoint.to_starknet_call_entry_point().entry_point_selector),
         })
     }
 
-	/// Executes a transaction
-	///
-	/// # Arguments
-	///
-	/// * `self` - The transaction to execute
-	/// * `state` - The state to execute the transaction on
-	/// * `block` - The block to execute the transaction on
-	///
-	/// # Returns
-	///
-	/// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction execution
-	pub fn execute<S: StateReader>(self: &Self, state: &mut CachedState<S>, block: Block) -> TransactionExecutionResult<TransactionExecutionInfo> {
-		let tx = self.to_invoke_tx();
-		let block_context = BlockContext::serialize(block.header);
-		let result = tx.execute(state, &block_context);
-		result
-	}
+    /// Executes a transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to execute
+    /// * `state` - The state to execute the transaction on
+    /// * `block` - The block to execute the transaction on
+    ///
+    /// # Returns
+    ///
+    /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
+    ///   execution
+    pub fn execute<S: StateReader>(
+        self: &Self,
+        state: &mut CachedState<S>,
+        block: Block,
+    ) -> TransactionExecutionResult<TransactionExecutionInfo> {
+        let tx = self.to_invoke_tx();
+        let block_context = BlockContext::serialize(block.header);
+        let result = tx.execute(state, &block_context);
+        result
+    }
 }
 
 impl Default for Transaction {
@@ -155,7 +159,7 @@ impl Default for Transaction {
             events: BoundedVec::try_from(vec![Event::default(), Event::default()]).unwrap(),
             nonce: U256::default(),
             sender_address: ContractAddress::default(),
-			call_entrypoint: CallEntryPoint::default()
+            call_entrypoint: CallEntryPoint::default(),
         }
     }
 }

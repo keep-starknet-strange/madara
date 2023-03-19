@@ -52,7 +52,7 @@ pub mod pallet {
     use blockifier::state::cached_state::CachedState;
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
-    use frame_system::{pallet_prelude::*};
+    use frame_system::pallet_prelude::*;
     use kp_starknet::block::wrapper::block::Block;
     use kp_starknet::block::wrapper::header::Header;
     use kp_starknet::crypto::commitment;
@@ -158,16 +158,16 @@ pub mod pallet {
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
-		pub contracts: Vec<(ContractAddress, ContractClassHash)>,
-		pub _phantom: PhantomData<T>,
+        pub contracts: Vec<(ContractAddress, ContractClassHash)>,
+        pub _phantom: PhantomData<T>,
     }
 
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self { contracts: vec![], _phantom: PhantomData }
-		}
-	}
+    #[cfg(feature = "std")]
+    impl<T: Config> Default for GenesisConfig<T> {
+        fn default() -> Self {
+            Self { contracts: vec![], _phantom: PhantomData }
+        }
+    }
 
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
@@ -177,9 +177,9 @@ pub mod pallet {
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchema::V1,
             );
-			for (address, class_hash) in self.contracts.iter() {
-				<ContractClassHashes<T>>::insert(address, class_hash);
-			}
+            for (address, class_hash) in self.contracts.iter() {
+                <ContractClassHashes<T>>::insert(address, class_hash);
+            }
         }
     }
 

@@ -1,11 +1,15 @@
 //! Starknet execution functionality.
 
-use alloc::{vec, sync::Arc};
+use alloc::sync::Arc;
+use alloc::vec;
 
+use blockifier::execution::entry_point::CallEntryPoint as StarknetCallEntryPoint;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256};
-use blockifier::execution::entry_point::{CallEntryPoint as StarknetCallEntryPoint};
-use starknet_api::{api_core::{ClassHash, EntryPointSelector, ContractAddress as StarknetContractAddress}, hash::StarkFelt, state::EntryPointType, transaction::Calldata};
+use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector};
+use starknet_api::hash::StarkFelt;
+use starknet_api::state::EntryPointType;
+use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
 pub type ContractAddress = [u8; 32];
@@ -40,18 +44,20 @@ impl CallEntryPoint {
         Self { class_hash, entrypoint_type, ..Self::default() }
     }
 
-	/// Convert to Starknet CallEntryPoint
-	pub fn to_starknet_call_entry_point(&self) -> StarknetCallEntryPoint {
-		StarknetCallEntryPoint {
-			class_hash: Some(ClassHash(StarkFelt::new(self.class_hash).unwrap())),
-			/// TODO: Change this to use self.entrypoint_type
-			entry_point_type: EntryPointType::External,
-			entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap().0).unwrap()),
-			calldata: Calldata(Arc::new(self.calldata.clone().into_inner().iter().map(|x| StarkFelt::from(*x as u64)).collect())),
+    /// Convert to Starknet CallEntryPoint
+    pub fn to_starknet_call_entry_point(&self) -> StarknetCallEntryPoint {
+        StarknetCallEntryPoint {
+            class_hash: Some(ClassHash(StarkFelt::new(self.class_hash).unwrap())),
+            /// TODO: Change this to use self.entrypoint_type
+            entry_point_type: EntryPointType::External,
+            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap().0).unwrap()),
+            calldata: Calldata(Arc::new(
+                self.calldata.clone().into_inner().iter().map(|x| StarkFelt::from(*x as u64)).collect(),
+            )),
             storage_address: StarknetContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: StarknetContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
-		}
-	}
+        }
+    }
 }
 impl Default for CallEntryPoint {
     fn default() -> Self {
