@@ -49,7 +49,11 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
-    use blockifier::state::cached_state::{CachedState, ContractStorageKey as StarknetContractStorageKey};
+    // use blockifier::execution::contract_class::ContractClass;
+    use blockifier::state::cached_state::{
+        CachedState, ContractClassMapping, ContractStorageKey as StarknetContractStorageKey,
+    };
+    use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, get_test_contract_class};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -63,10 +67,10 @@ pub mod pallet {
     use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
     use sp_core::{H256, U256};
     use sp_runtime::traits::UniqueSaturatedInto;
+    use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
+    use starknet_api::hash::StarkFelt as StarknetStarkFelt;
     use starknet_api::state::StorageKey;
-	use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
-	use starknet_api::hash::StarkFelt as StarknetStarkFelt;
-	use starknet_api::stdlib::collections::HashMap;
+    use starknet_api::stdlib::collections::HashMap;
 
     use super::*;
     use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, Nonce, StarkFelt};
@@ -159,6 +163,12 @@ pub mod pallet {
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> = StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
 
+    /// Mapping from Starknet class hash to class
+    // #[pallet::storage]
+    // #[pallet::getter(fn class)]
+    // pub(super) type ContractClasses<T: Config> = StorageMap<_, Twox64Concat, ContractClassHash, ClassInfo,
+    // ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -182,7 +192,8 @@ pub mod pallet {
                 &StarknetStorageSchema::V1,
             );
             for (address, class_hash) in self.contracts.iter() {
-                <ContractClassHashes<T>>::insert(address, class_hash);
+				println!("Deploying contract at address {:?} with class hash {:?}.", address, class_hash);
+                ContractClassHashes::<T>::insert(address, class_hash);
             }
         }
     }
@@ -416,7 +427,39 @@ pub mod pallet {
                 })
                 .collect();
 
-            CachedState::new(DictStateReader { address_to_class_hash, address_to_nonce, storage_view, ..Default::default() })
+            // let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter().map(|(key, value)| {
+            // 	let class_hash = ClassHash(StarknetStarkFelt::new(key).unwrap());
+            // 	let contract_class = ContractClass::try_from(value).unwrap();
+            // 	(class_hash, contract_class)
+            // }).collect();
+            // TODO: remove this when declare is implemented
+            let class_hash_to_class: ContractClassMapping = HashMap::from([
+                (
+                    ClassHash(
+                        StarknetStarkFelt::try_from(
+                            "0x0000000000000000000000000000000001110000000000000000000000000000", // TEST ACCOUNT CONTRACT CLASS HASH
+                        )
+                        .unwrap(),
+                    ),
+                    get_contract_class(ACCOUNT_CONTRACT_PATH),
+                ),
+                (
+                    ClassHash(
+                        StarknetStarkFelt::try_from(
+                            "0x0000000000000000000000000000000000000000011100000000000000000000", // TEST FEATURES CONTRACT CLASS HASH
+                        )
+                        .unwrap(),
+                    ),
+                    get_test_contract_class()
+                ),
+            ]);
+
+            CachedState::new(DictStateReader {
+                address_to_class_hash,
+                address_to_nonce,
+                storage_view,
+                class_hash_to_class,
+            })
         }
     }
 }
