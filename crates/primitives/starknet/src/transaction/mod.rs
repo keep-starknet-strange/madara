@@ -119,7 +119,7 @@ impl Transaction {
             nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
             calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
-            entry_point_selector: Some(self.call_entrypoint.to_starknet_call_entry_point().entry_point_selector),
+            entry_point_selector: None,
         })
     }
 
