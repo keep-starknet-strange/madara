@@ -62,7 +62,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         let none_origin = RuntimeOrigin::none();
 
         // Wrong address (not deployed)
-        let contract_address_str = "0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c";
+        let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
         let transaction =
@@ -102,9 +102,10 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 entrypoint_type: 0,
                 entrypoint_selector: None,
                 calldata: bounded_vec![
-                    H256::from_str("0x00121108c052bbd5b273223043ad58a7e51c55ef454f3e02b0a0b4c559a925d4").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000001bc16d674ec80000").unwrap(),
-                    H256::zero()
+                    H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
+                    H256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
                 ],
                 storage_address: contract_address_bytes,
                 caller_address: contract_address_bytes,

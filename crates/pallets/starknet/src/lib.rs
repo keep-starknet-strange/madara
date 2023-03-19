@@ -437,7 +437,7 @@ pub mod pallet {
                 (
                     ClassHash(
                         StarknetStarkFelt::try_from(
-                            "0x0000000000000000000000000000000001110000000000000000000000000000", // TEST ACCOUNT CONTRACT CLASS HASH
+                            "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918", // TEST ACCOUNT CONTRACT CLASS HASH
                         )
                         .unwrap(),
                     ),
@@ -446,7 +446,7 @@ pub mod pallet {
                 (
                     ClassHash(
                         StarknetStarkFelt::try_from(
-                            "0x0000000000000000000000000000000000000000011100000000000000000000", // TEST FEATURES CONTRACT CLASS HASH
+                            "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918", // TEST FEATURES CONTRACT CLASS HASH
                         )
                         .unwrap(),
                     ),

@@ -71,14 +71,25 @@ impl pallet_starknet::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
+    // ACCOUNT CONTRACT
     let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
     let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
     let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
     let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
+    // TEST CONTRACT
+    let other_contract_address_str = "0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c";
+    let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
+
+    let other_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+    let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
+
     pallet_starknet::GenesisConfig::<Test> {
-        contracts: vec![(contract_address_bytes, class_hash_bytes)],
+        contracts: vec![
+            (contract_address_bytes, class_hash_bytes),
+            (other_contract_address_bytes, other_class_hash_bytes),
+        ],
         ..Default::default()
     }
     .assimilate_storage(&mut t)
