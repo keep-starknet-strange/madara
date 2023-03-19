@@ -8,6 +8,9 @@
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
 use sp_core::ConstU32;
+use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
+use starknet_api::hash::StarkFelt as StarknetStarkFelt;
+use starknet_api::stdlib::collections::HashMap;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -49,7 +52,7 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
-    use blockifier::state::cached_state::CachedState;
+    use blockifier::state::cached_state::{CachedState, ContractStorageKey as StarknetContractStorageKey};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -63,6 +66,7 @@ pub mod pallet {
     use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
     use sp_core::{H256, U256};
     use sp_runtime::traits::UniqueSaturatedInto;
+    use starknet_api::state::StorageKey;
 
     use super::*;
     use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, Nonce, StarkFelt};
@@ -372,11 +376,51 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(contract_class_hash), Error::<T>::ContractClassHashUnknown);
 
             ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
+
             Ok(())
         }
 
+        /// Create a state reader.
+        ///
+        /// # Returns
+        ///
+        /// The state reader.
+        ///
+        /// # TODO
+        ///
+        /// * Implement the function.
         fn create_state_reader() -> CachedState<DictStateReader> {
-            CachedState::new(DictStateReader { ..Default::default() })
+            let address_to_class_hash: HashMap<StarknetContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
+                .map(|(key, value)| {
+                    (
+                        StarknetContractAddress::try_from(StarknetStarkFelt::new(key).unwrap()).unwrap(),
+                        ClassHash(StarknetStarkFelt::new(value).unwrap()),
+                    )
+                })
+                .collect();
+
+            let address_to_nonce: HashMap<StarknetContractAddress, StarknetNonce> = Nonces::<T>::iter()
+                .map(|(key, value)| {
+                    (
+                        StarknetContractAddress::try_from(StarknetStarkFelt::new(key).unwrap()).unwrap(),
+                        StarknetNonce(StarknetStarkFelt::new(value.into()).unwrap()),
+                    )
+                })
+                .collect();
+
+            let storage_view: HashMap<StarknetContractStorageKey, StarknetStarkFelt> = StorageView::<T>::iter()
+                .map(|(key, value)| {
+                    (
+                        (
+                            StarknetContractAddress::try_from(StarknetStarkFelt::new(key.0).unwrap()).unwrap(),
+                            StorageKey::try_from(StarknetStarkFelt::new(key.1.into()).unwrap()).unwrap(),
+                        ),
+                        StarknetStarkFelt::new(value.into()).unwrap(),
+                    )
+                })
+                .collect();
+
+            CachedState::new(DictStateReader { address_to_class_hash, address_to_nonce, storage_view, ..Default::default() })
         }
     }
 }

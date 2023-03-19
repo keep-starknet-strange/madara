@@ -4900,6 +4900,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "starknet-crypto 0.2.0",
+ "starknet_api",
 ]
 
 [[package]]
