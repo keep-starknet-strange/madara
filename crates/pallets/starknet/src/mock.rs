@@ -1,8 +1,9 @@
-use frame_support::traits::{ConstU16, ConstU64, Hooks, GenesisBuild};
+use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use {crate as pallet_starknet, frame_system as system, pallet_timestamp};
+use hex::FromHex;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -69,13 +70,16 @@ impl pallet_starknet::Config for Test {
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
-	pallet_starknet::GenesisConfig::<Test> {
-		contracts: vec![],
-	}
-	.assimilate_storage(&mut t)
-	.unwrap();
 
-	t.into()
+	let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+	let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+	let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+	let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+	pallet_starknet::GenesisConfig::<Test> { contracts: vec![(contract_address_bytes, class_hash_bytes)], ..Default::default() }.assimilate_storage(&mut t).unwrap();
+
+    t.into()
 }
 
 pub(crate) fn run_to_block(n: u64) {
