@@ -163,12 +163,6 @@ pub mod pallet {
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> = StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
 
-    /// Mapping from Starknet class hash to class
-    // #[pallet::storage]
-    // #[pallet::getter(fn class)]
-    // pub(super) type ContractClasses<T: Config> = StorageMap<_, Twox64Concat, ContractClassHash, ClassInfo,
-    // ValueQuery>;
-
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -338,7 +332,7 @@ pub mod pallet {
             let pending = Self::pending();
 
             let global_state_root = U256::zero();
-            let sequencer_address = [0; 32];
+            let sequencer_address = ContractAddress::default();
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
             let (transaction_commitment, (event_commitment, event_count)) =
