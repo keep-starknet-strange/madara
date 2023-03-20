@@ -49,9 +49,9 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
     extern crate alloc;
-    use alloc::string::String;
-    use alloc::vec;
+    use alloc::string::{String, ToString};
     use alloc::vec::Vec;
+    use alloc::{format, vec};
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{
@@ -69,7 +69,7 @@ pub mod pallet {
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use kp_starknet::traits::hash::Hasher;
     use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
-    use serde::Deserialize;
+    use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
@@ -80,6 +80,11 @@ pub mod pallet {
 
     use super::*;
     use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, Nonce, StarkFelt};
+    use sp_std::str::from_utf8;
+    use types::{EthBlockNumber, OffchainWorkerError};
+
+    use super::*;
+    use crate::types::{ContractAddress, ContractClassHash, EthLogs};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -131,73 +136,57 @@ pub mod pallet {
         /// * Investigate how we can use offchain workers for Starknet specific tasks. An example
         ///   might be the communication with the prover.
         fn offchain_worker(n: T::BlockNumber) {
-            let req = vec![
-                r#"{
-                "jsonrpc": "2.0",
-                "method": "eth_getBlockByNumber",
-                "params": [
-                    "finalized",
-                    true
-                ],
-                "id": 0
-            }"#,
-            ];
-
-            #[derive(Deserialize, Encode, Decode, Default, Debug)]
-            struct Res {
-                result: Num,
-            }
-            #[derive(Deserialize, Encode, Decode, Default, Debug)]
-            struct Num {
-                number: String,
-            }
-            let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", req)
-                .add_header("content-type", "application/json")
-                .send()
-                .expect("Couldn't send req")
-                .wait()
-                .expect("Couldn't wait tx");
-            let res: Res = serde_json::from_str(sp_std::str::from_utf8(&res.body().collect::<Vec<u8>>()).unwrap())
-                .expect("Invalid body");
+            let req = r#"{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["finalized", true], "id": 0}"#;
+            let body_str = match Self::query_eth(req) {
+                Ok(res) => res,
+                Err(err) => {
+                    log!(error, "{:?}", err);
+                    return;
+                }
+            };
+            let res: EthBlockNumber = match from_str(&body_str) {
+                Ok(res) => res,
+                Err(err) => {
+                    log!(error, "{:?}", err);
+                    return;
+                }
+            };
             let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
-            if last_finalized_block > Self::last_known_eth_block().unwrap() {
-                #[derive(Deserialize, Encode, Decode, Default, Debug)]
-                struct ResFilter {
-                    result: Vec<Message>,
-                }
-                #[derive(Deserialize, Encode, Decode, Default, Debug)]
-                struct Message {
-                    address: String,
-                    topics: Vec<String>,
-                    data: String,
-                }
-
-                let filter = vec![
-                    r#"{
-                    "jsonrpc": "2.0",
-                    "method": "eth_getLogs",
-                    "params": [
-                        {
-                            "fromBlock": "0x1016400",
-                            "toBlock": "0x101640e",
-                            "address": "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4",
-                            "topics": [
-                                "0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b"
+            let last_known_eth_block = Self::last_known_eth_block().unwrap();
+            if last_finalized_block > last_known_eth_block {
+                let req = format!(
+                    "{{
+                        \"jsonrpc\": \"2.0\",
+                    \"method\": \"eth_getLogs\",
+                    \"params\": [
+                        {{
+                            \"fromBlock\": \"0x{:x}\",
+                            \"toBlock\": \"0x{:x}\",
+                            \"address\": \"0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4\",
+                            \"topics\": [
+                                \"0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b\"
                             ]
-                        }
+                        }}
                     ],
-                    "id": 0
-                }"#,
-                ];
-                let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", filter)
-                    .add_header("content-type", "application/json")
-                    .send()
-                    .expect("Couldn't send req")
-                    .wait()
-                    .expect("Couldn't wait tx");
-                let res: ResFilter =
-                    serde_json::from_str(sp_std::str::from_utf8(&res.body().collect::<Vec<u8>>()).unwrap())
-                        .expect("Invalid body");
+                    \"id\": 0
+                }}",
+                    last_known_eth_block, last_finalized_block
+                );
+                let body_str = match Self::query_eth(&req) {
+                    Ok(res) => res,
+                    Err(err) => {
+                        log!(error, "{:?}", err);
+                        return;
+                    }
+                };
+
+                let res: EthLogs = match from_str(&body_str) {
+                    Ok(res) => res,
+                    Err(err) => {
+                        log!(error, "{:?}", err);
+                        return;
+                    }
+                };
                 log!(info, "Running offchain worker at block {:?}, {:?}.", n, res.result);
             }
         }
@@ -269,6 +258,7 @@ pub mod pallet {
             }
 
             LastKnownEthBlock::<T>::set(Some(1));
+            LastKnownEthBlock::<T>::set(Some(16868366));
         }
     }
 
@@ -540,6 +530,15 @@ pub mod pallet {
                 storage_view,
                 class_hash_to_class,
             })
+        fn query_eth(request: &str) -> Result<String, OffchainWorkerError> {
+            let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", vec![request])
+                .add_header("content-type", "application/json")
+                .send()
+                .map_err(OffchainWorkerError::HttpError)?
+                .wait()
+                .map_err(OffchainWorkerError::RequestError)?;
+            let body_bytes = res.body().collect::<Vec<u8>>();
+            Ok(from_utf8(&body_bytes).map_err(OffchainWorkerError::ToBytesError)?.to_string())
         }
     }
 }
