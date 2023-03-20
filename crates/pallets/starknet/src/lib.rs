@@ -1,6 +1,6 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
-
+#![allow(clippy::large_enum_variant)]
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -68,23 +68,20 @@ pub mod pallet {
     use kp_starknet::state::DictStateReader;
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use kp_starknet::traits::hash::Hasher;
-    use kp_starknet::transaction::{Event as StarknetEventType, Transaction};
+    use kp_starknet::transaction::types::{Event as StarknetEventType, Transaction, TxType};
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
+    use sp_std::str::from_utf8;
     use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
     use starknet_api::hash::StarkFelt as StarknetStarkFelt;
     use starknet_api::state::StorageKey;
     use starknet_api::stdlib::collections::HashMap;
-
-    use super::*;
-    use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, Nonce, StarkFelt};
-    use sp_std::str::from_utf8;
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
-    use crate::types::{ContractAddress, ContractClassHash, EthLogs};
+    use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, EthLogs, Nonce, StarkFelt};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -319,7 +316,7 @@ pub mod pallet {
 
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
-            match transaction.execute(state, block) {
+            match transaction.execute(state, block, TxType::InvokeTx) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -530,6 +527,8 @@ pub mod pallet {
                 storage_view,
                 class_hash_to_class,
             })
+        }
+
         fn query_eth(request: &str) -> Result<String, OffchainWorkerError> {
             let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", vec![request])
                 .add_header("content-type", "application/json")

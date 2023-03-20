@@ -6,7 +6,7 @@ use kp_starknet::crypto::commitment::{
 };
 use kp_starknet::crypto::hash::pedersen::PedersenHasher;
 use kp_starknet::execution::{CallEntryPoint, ContractAddress};
-use kp_starknet::transaction::{Event, Transaction};
+use kp_starknet::transaction::types::{Event, Transaction};
 use sp_core::{H256, U256};
 use starknet_crypto::FieldElement;
 
@@ -21,6 +21,7 @@ fn test_merkle_tree() {
             sender_address: ContractAddress::from([0; 32]),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPoint::default(),
+            selector: H256::default(),
         },
         Transaction {
             version: U256::zero(),
@@ -30,6 +31,7 @@ fn test_merkle_tree() {
             sender_address: ContractAddress::from([1; 32]),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPoint::default(),
+            selector: H256::default(),
         },
     ];
     let tx_com = calculate_transaction_commitment::<PedersenHasher>(&txs);

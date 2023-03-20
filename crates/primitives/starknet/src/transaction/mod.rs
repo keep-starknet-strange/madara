@@ -1,4 +1,6 @@
 //! Starknet transaction related functionality.
+/// Types related to transactions.
+pub mod types;
 
 use alloc::vec;
 
@@ -11,28 +13,17 @@ use blockifier::transaction::errors::InvokeTransactionError;
 use blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
-use sp_core::{ConstU32, H256, U256};
-use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Fee, InvokeTransaction, TransactionHash, TransactionSignature, TransactionVersion};
+use sp_core::{H256, U256};
+use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::hash::{StarkFelt, StarkHash};
+use starknet_api::transaction::{
+    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
+};
 
+use self::types::{Event, MaxArraySize, Transaction, TxType};
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::wrapper::block::Block;
 use crate::execution::{CallEntryPoint, ContractAddress};
-
-type MaxArraySize = ConstU32<4294967295>;
-
-/// Representation of a Starknet event.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct Event {
-    /// The keys (topics) of the event.
-    pub keys: BoundedVec<H256, MaxArraySize>,
-    /// The data of the event.
-    pub data: BoundedVec<H256, MaxArraySize>,
-    /// The address that emited the event
-    pub from_address: H256,
-}
 
 impl Event {
     /// Creates a new instance of an event.
@@ -62,28 +53,9 @@ impl Default for Event {
     }
 }
 
-/// Representation of a Starknet transaction.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct Transaction {
-    /// The version of the transaction.
-    pub version: U256,
-    /// Transaction hash.
-    pub hash: H256,
-    /// Signature.
-    pub signature: BoundedVec<H256, MaxArraySize>,
-    /// Events.
-    pub events: BoundedVec<Event, MaxArraySize>,
-    /// Sender Address
-    pub sender_address: ContractAddress,
-    /// Nonce
-    pub nonce: U256,
-    /// Call entrypoint
-    pub call_entrypoint: CallEntryPoint,
-}
-
 impl Transaction {
     /// Creates a new instance of a transaction.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         version: U256,
         hash: H256,
@@ -92,8 +64,9 @@ impl Transaction {
         sender_address: ContractAddress,
         nonce: U256,
         call_entrypoint: CallEntryPoint,
+        selector: H256,
     ) -> Self {
-        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint }
+        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, selector }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -125,6 +98,26 @@ impl Transaction {
         })
     }
 
+    /// Converts a transaction to a blockifier l1 handler transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to convert
+    ///
+    /// # Returns
+    ///
+    /// * `L1HandlerTransaction` - The converted transaction
+    pub fn to_l1_handler_tx(&self) -> L1HandlerTransaction {
+        L1HandlerTransaction {
+            transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
+            version: TransactionVersion(StarkFelt::new(self.version.into()).unwrap()),
+            nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
+            contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
+            calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+            entry_point_selector: EntryPointSelector(StarkHash::new(*self.selector.as_fixed_bytes()).unwrap()),
+        }
+    }
+
     /// Executes a transaction
     ///
     /// # Arguments
@@ -141,44 +134,55 @@ impl Transaction {
         &self,
         state: &mut CachedState<S>,
         block: Block,
+        tx_type: TxType,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
-        let tx = self.to_invoke_tx();
         let block_context = BlockContext::serialize(block.header);
-        let account_context = self.get_account_transaction_context(&tx);
+        match tx_type {
+            TxType::InvokeTx => match self.to_invoke_tx() {
+                AccountTransaction::Invoke(ref tx) => {
+                    let account_context = self.get_invoke_transaction_context(tx);
+                    // Specifying an entry point selector is not allowed; `__execute__` is called, and
+                    // the inner selector appears in the calldata.
+                    if tx.entry_point_selector.is_some() {
+                        return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
+                    }
 
-        // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
-        // Going one lower level gives us more flexibility like not validating the tx as we could do it
-        // before the tx lands in the mempool.
-        // However it also means we need to copy/paste internal code from the tx.execute() method.
-
-        match tx {
-            AccountTransaction::Invoke(ref tx) => {
-                // Specifying an entry point selector is not allowed; `__execute__` is called, and
-                // the inner selector appears in the calldata.
-                if tx.entry_point_selector.is_some() {
-                    return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
+                    tx.run_execute(state, &block_context, &account_context, None)
                 }
-                tx.run_execute(state, &block_context, &account_context, None)
-            }
-            _ => {
-                panic!("Only invoke transactions are supported");
+                _ => {
+                    panic!("Only invoke transactions are supported");
+                }
+            },
+            TxType::L1HandlerTx => {
+                let tx = self.to_l1_handler_tx();
+                tx.run_execute(state, &block_context, &self.get_l1_handler_transaction_context(&tx), None)
             }
         }
+
+        // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
+        // Going one lower level gives us more flexibility like not validating the tx as we could do
+        // it before the tx lands in the mempool.
+        // However it also means we need to copy/paste internal code from the tx.execute() method.
     }
 
-    fn get_account_transaction_context(&self, tx: &AccountTransaction) -> AccountTransactionContext {
-        match tx {
-            AccountTransaction::Invoke(tx) => AccountTransactionContext {
-                transaction_hash: tx.transaction_hash,
-                max_fee: tx.max_fee,
-                version: tx.version,
-                signature: tx.signature.clone(),
-                nonce: tx.nonce,
-                sender_address: tx.sender_address,
-            },
-            _ => {
-                panic!("Only invoke transactions are supported");
-            }
+    fn get_l1_handler_transaction_context(&self, tx: &L1HandlerTransaction) -> AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: tx.transaction_hash,
+            max_fee: Fee::default(),
+            version: tx.version,
+            signature: TransactionSignature::default(),
+            nonce: tx.nonce,
+            sender_address: tx.contract_address,
+        }
+    }
+    fn get_invoke_transaction_context(&self, tx: &InvokeTransaction) -> AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: tx.transaction_hash,
+            max_fee: tx.max_fee,
+            version: tx.version,
+            signature: tx.signature.clone(),
+            nonce: tx.nonce,
+            sender_address: tx.sender_address,
         }
     }
 }
@@ -196,6 +200,7 @@ impl Default for Transaction {
             nonce: U256::default(),
             sender_address: ContractAddress::default(),
             call_entrypoint: CallEntryPoint::default(),
+            selector: H256::default(),
         }
     }
 }

@@ -6,7 +6,7 @@ use starknet_crypto::FieldElement;
 
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
 use crate::traits::hash::CryptoHasher;
-use crate::transaction::{Event, Transaction};
+use crate::transaction::types::{Event, Transaction};
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
