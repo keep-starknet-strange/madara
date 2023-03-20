@@ -16,8 +16,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 # Kaioshin dependencies
 kp-starknet = { workspace = true }
 # Starknet related dependencies
-poseidon_hash = { workspace = true }
-starknet-crypto = { workspace = true }
 cairo-vm = { workspace = true }
 # Cairo compiler dependencies
 # TODO: wait for no-std support

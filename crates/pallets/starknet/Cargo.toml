@@ -30,7 +30,6 @@ frame-benchmarking = { workspace = true, optional = true }
 # Substrate primitives
 sp-core = { workspace = true }
 sp-io = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Frame pallets
@@ -42,7 +41,6 @@ codec = { package = "parity-scale-codec", version = "3.2.2", default-features = 
 ] }
 scale-info = { workspace = true }
 log = { workspace = true }
-lazy_static = { workspace = true }
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
@@ -58,7 +56,6 @@ std = [
   "frame-system/std",
   "sp-io/std",
   "sp-runtime/std",
-  "sp-std/std",
   "frame-benchmarking?/std",
   "scale-info/std",
   "pallet-timestamp/std",
