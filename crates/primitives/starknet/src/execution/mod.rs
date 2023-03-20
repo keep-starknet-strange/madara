@@ -40,8 +40,15 @@ pub struct CallEntryPoint {
 
 impl CallEntryPoint {
     /// Creates a new instance of a call entrypoint.
-    pub fn new(class_hash: ContractClassHash, entrypoint_type: StarknetEntryPointType) -> Self {
-        Self { class_hash, entrypoint_type, ..Self::default() }
+    pub fn new(
+        class_hash: ContractClassHash,
+        entrypoint_type: StarknetEntryPointType,
+        entrypoint_selector: Option<H256>,
+        calldata: BoundedVec<H256, MaxCalldataSize>,
+        storage_address: ContractAddress,
+        caller_address: ContractAddress,
+    ) -> Self {
+        Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
     }
 
     /// Convert to Starknet CallEntryPoint
@@ -50,9 +57,16 @@ impl CallEntryPoint {
             class_hash: Some(ClassHash(StarkFelt::new(self.class_hash).unwrap())),
             /// TODO: Change this to use self.entrypoint_type
             entry_point_type: EntryPointType::External,
-            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap_or_default().0).unwrap()),
+            entry_point_selector: EntryPointSelector(
+                StarkFelt::new(self.entrypoint_selector.unwrap_or_default().0).unwrap(),
+            ),
             calldata: Calldata(Arc::new(
-                self.calldata.clone().into_inner().iter().map(|x| StarkFelt::new(*(*x).as_fixed_bytes()).unwrap()).collect(),
+                self.calldata
+                    .clone()
+                    .into_inner()
+                    .iter()
+                    .map(|x| StarkFelt::new(*(*x).as_fixed_bytes()).unwrap())
+                    .collect(),
             )),
             storage_address: StarknetContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: StarknetContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
