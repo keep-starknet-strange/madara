@@ -4,7 +4,7 @@ use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use kp_starknet::block::wrapper::header::Header;
 use kp_starknet::execution::CallEntryPoint;
-use kp_starknet::transaction::Transaction;
+use kp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
@@ -110,6 +110,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 				contract_address_bytes.clone(),
 				contract_address_bytes.clone()
 			),
+            H256::default()
 		);
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
