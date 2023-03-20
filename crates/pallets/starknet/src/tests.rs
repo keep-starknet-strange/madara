@@ -1,6 +1,6 @@
 use core::str::FromStr;
 
-use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
+use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use kp_starknet::block::wrapper::header::Header;
 use kp_starknet::execution::CallEntryPoint;
@@ -87,30 +87,30 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction {
-            version: U256::from(1),
-            sender_address: contract_address_bytes,
-            hash: H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
-            signature: bounded_vec![
+        let transaction = Transaction::new(
+            U256::from(1),
+            H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
+            bounded_vec![
                 H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
                 H256::from_str("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap()
             ],
-            events: bounded_vec!(),
-            nonce: U256::from(0),
-            call_entrypoint: CallEntryPoint {
-                class_hash: class_hash_bytes,
-                entrypoint_type: 0,
-                entrypoint_selector: None,
-                calldata: bounded_vec![
+            bounded_vec!(),
+			contract_address_bytes.clone(),
+            U256::from(0),
+            CallEntryPoint::new(
+				class_hash_bytes.clone(),
+				0,
+				None,
+				bounded_vec![
                     H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
                     H256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
                 ],
-                storage_address: contract_address_bytes,
-                caller_address: contract_address_bytes,
-            },
-        };
+				contract_address_bytes.clone(),
+				contract_address_bytes.clone()
+			),
+		);
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
     });

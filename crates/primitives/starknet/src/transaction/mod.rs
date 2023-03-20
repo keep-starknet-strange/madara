@@ -142,6 +142,8 @@ impl Transaction {
     ) -> TransactionExecutionResult<TransactionExecutionInfo> {
         let tx = self.to_invoke_tx();
         let block_context = BlockContext::serialize(block.header);
+		println!("tx: {:?}", tx);
+		println!("state: {:?}", state.get_class_hash_at(StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap()));
         let result = tx.execute(state, &block_context);
         result
     }

@@ -53,7 +53,7 @@ pub mod pallet {
     use blockifier::state::cached_state::{
         CachedState, ContractClassMapping, ContractStorageKey as StarknetContractStorageKey,
     };
-    use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, get_test_contract_class};
+    use blockifier::test_utils::{get_contract_class, get_test_contract_class, ACCOUNT_CONTRACT_PATH};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -192,7 +192,6 @@ pub mod pallet {
                 &StarknetStorageSchema::V1,
             );
             for (address, class_hash) in self.contracts.iter() {
-				println!("Deploying contract at address {:?} with class hash {:?}.", address, class_hash);
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
         }
@@ -437,7 +436,9 @@ pub mod pallet {
                 (
                     ClassHash(
                         StarknetStarkFelt::try_from(
-                            "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918", // TEST ACCOUNT CONTRACT CLASS HASH
+                            "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918", /* TEST ACCOUNT
+                                                                                                   * CONTRACT CLASS
+                                                                                                   * HASH */
                         )
                         .unwrap(),
                     ),
@@ -446,11 +447,13 @@ pub mod pallet {
                 (
                     ClassHash(
                         StarknetStarkFelt::try_from(
-                            "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918", // TEST FEATURES CONTRACT CLASS HASH
+                            "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918", /* TEST FEATURES
+                                                                                                   * CONTRACT CLASS
+                                                                                                   * HASH */
                         )
                         .unwrap(),
                     ),
-                    get_test_contract_class()
+                    get_test_contract_class(),
                 ),
             ]);
 
