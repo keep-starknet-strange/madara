@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["ping"]};
+window.SIDEBAR_ITEMS = {"fn":["add_invoke_transaction","ping"]};

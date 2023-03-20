@@ -72,9 +72,13 @@
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet header definition.
 </span><span class="kw">use </span>codec::Encode;
 <span class="kw">use </span>sp_core::{H256, U256};
+
+<span class="kw">use </span><span class="kw">crate</span>::execution::ContractAddress;
 
 <span class="attr">#[derive(
     Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, Default, codec::MaxEncodedLen,
@@ -89,7 +93,7 @@
     <span class="doccomment">/// The state commitment after this block.
     </span><span class="kw">pub </span>global_state_root: U256,
     <span class="doccomment">/// The Starknet address of the sequencer who created this block.
-    </span><span class="kw">pub </span>sequencer_address: U256,
+    </span><span class="kw">pub </span>sequencer_address: ContractAddress,
     <span class="doccomment">/// The time the sequencer created this block before executing transactions
     </span><span class="kw">pub </span>block_timestamp: u64,
     <span class="doccomment">/// The number of transactions in a block
@@ -114,7 +118,7 @@
         parent_block_hash: H256,
         block_number: U256,
         global_state_root: U256,
-        sequencer_address: U256,
+        sequencer_address: ContractAddress,
         block_timestamp: u64,
         transaction_count: u128,
         transaction_commitment: H256,

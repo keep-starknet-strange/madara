@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["substrate_extension","wrapper"]};
+window.SIDEBAR_ITEMS = {"mod":["serialize","substrate_extension","wrapper"]};

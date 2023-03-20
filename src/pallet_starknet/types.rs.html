@@ -18,9 +18,19 @@
 <a href="#18" id="18">18</a>
 <a href="#19" id="19">19</a>
 <a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet pallet custom types.
 </span><span class="kw">use </span>frame_support::codec::{Decode, Encode, MaxEncodedLen};
 <span class="kw">use </span>frame_support::scale_info::TypeInfo;
+<span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>sp_runtime::RuntimeDebug;
 
 <span class="doccomment">/// TODO: Replace with a proper type for field element.
@@ -28,6 +38,14 @@
 </span><span class="kw">pub type </span>ContractAddress = [u8; <span class="number">32</span>];
 <span class="doccomment">/// The hash of a Starknet contract class.
 </span><span class="kw">pub type </span>ContractClassHash = [u8; <span class="number">32</span>];
+<span class="doccomment">/// Nonce of a Starknet transaction.
+</span><span class="kw">pub type </span>Nonce = U256;
+<span class="doccomment">/// Storage Key
+</span><span class="kw">pub type </span>StorageKey = H256;
+<span class="doccomment">/// Contract Storage Key
+</span><span class="kw">pub type </span>ContractStorageKey = (ContractAddress, StorageKey);
+<span class="doccomment">/// Felt
+</span><span class="kw">pub type </span>StarkFelt = U256;
 
 <span class="doccomment">/// Representation of the origin of a Starknet transaction.
 /// For now, we still don&#39;t know how to represent the origin of a Starknet transaction,

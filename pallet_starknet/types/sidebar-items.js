@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RawOrigin"],"type":["ContractAddress","ContractClassHash"]};
+window.SIDEBAR_ITEMS = {"enum":["RawOrigin"],"type":["ContractAddress","ContractClassHash","ContractStorageKey","Nonce","StarkFelt","StorageKey"]};

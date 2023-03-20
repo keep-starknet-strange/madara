@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["block","crypto","starknet_serde","storage","traits","transaction"]};
+window.SIDEBAR_ITEMS = {"mod":["block","crypto","execution","starknet_serde","state","storage","traits","transaction"]};
