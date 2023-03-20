@@ -249,7 +249,9 @@ pub mod pallet {
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
             match transaction.execute(state, block) {
-                Ok(_) => {}
+                Ok(v) => {
+					log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+				}
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
