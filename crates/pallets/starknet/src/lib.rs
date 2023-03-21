@@ -57,9 +57,7 @@ pub mod pallet {
     pub use alloc::{format, vec};
 
     // use blockifier::execution::contract_class::ContractClass;
-    use blockifier::state::cached_state::{
-        CachedState, ContractClassMapping, ContractStorageKey as StarknetContractStorageKey,
-    };
+    use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     use blockifier::test_utils::{get_contract_class, get_test_contract_class, ACCOUNT_CONTRACT_PATH};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{OriginTrait, Randomness, Time};
@@ -78,14 +76,14 @@ pub mod pallet {
     use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
     use sp_std::str::from_utf8;
-    use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, Nonce as StarknetNonce};
-    use starknet_api::hash::StarkFelt as StarknetStarkFelt;
+    use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+    use starknet_api::hash::StarkFelt;
     use starknet_api::state::StorageKey;
     use starknet_api::stdlib::collections::HashMap;
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
-    use crate::types::{ContractStorageKey, EthLogs, NonceWrapper, StarkFeltWrapper};
+    use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -229,7 +227,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> =
-        StorageMap<_, Twox64Concat, ContractStorageKey, StarkFeltWrapper, ValueQuery>;
+        StorageMap<_, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn last_known_eth_block)]
@@ -504,38 +502,38 @@ pub mod pallet {
         ///
         /// The state reader.
         fn create_state_reader() -> CachedState<DictStateReader> {
-            let address_to_class_hash: HashMap<StarknetContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
+            let address_to_class_hash: HashMap<ContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
                 .map(|(key, value)| {
                     (
-                        StarknetContractAddress::try_from(StarknetStarkFelt::new(key).unwrap()).unwrap(),
-                        ClassHash(StarknetStarkFelt::new(value).unwrap()),
+                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
+                        ClassHash(StarkFelt::new(value).unwrap()),
                     )
                 })
                 .collect();
 
-            let address_to_nonce: HashMap<StarknetContractAddress, StarknetNonce> = Nonces::<T>::iter()
+            let address_to_nonce: HashMap<ContractAddress, Nonce> = Nonces::<T>::iter()
                 .map(|(key, value)| {
                     (
-                        StarknetContractAddress::try_from(StarknetStarkFelt::new(key).unwrap()).unwrap(),
-                        StarknetNonce(StarknetStarkFelt::new(value.into()).unwrap()),
+                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
+                        Nonce(StarkFelt::new(value.into()).unwrap()),
                     )
                 })
                 .collect();
 
-            let storage_view: HashMap<StarknetContractStorageKey, StarknetStarkFelt> = StorageView::<T>::iter()
+            let storage_view: HashMap<ContractStorageKey, StarkFelt> = StorageView::<T>::iter()
                 .map(|(key, value)| {
                     (
                         (
-                            StarknetContractAddress::try_from(StarknetStarkFelt::new(key.0).unwrap()).unwrap(),
-                            StorageKey::try_from(StarknetStarkFelt::new(key.1.into()).unwrap()).unwrap(),
+                            ContractAddress::try_from(StarkFelt::new(key.0).unwrap()).unwrap(),
+                            StorageKey::try_from(StarkFelt::new(key.1.into()).unwrap()).unwrap(),
                         ),
-                        StarknetStarkFelt::new(value.into()).unwrap(),
+                        StarkFelt::new(value.into()).unwrap(),
                     )
                 })
                 .collect();
 
             // let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter().map(|(key, value)| {
-            // 	let class_hash = ClassHash(StarknetStarkFelt::new(key).unwrap());
+            // 	let class_hash = ClassHash(StarkFelt::new(key).unwrap());
             // 	let contract_class = ContractClass::try_from(value).unwrap();
             // 	(class_hash, contract_class)
             // }).collect();
@@ -543,7 +541,7 @@ pub mod pallet {
             let class_hash_to_class: ContractClassMapping = HashMap::from([
                 (
                     ClassHash(
-                        StarknetStarkFelt::try_from(
+                        StarkFelt::try_from(
                             "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918", /* TEST ACCOUNT
                                                                                                    * CONTRACT CLASS
                                                                                                    * HASH */
@@ -554,7 +552,7 @@ pub mod pallet {
                 ),
                 (
                     ClassHash(
-                        StarknetStarkFelt::try_from(
+                        StarkFelt::try_from(
                             "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918", /* TEST FEATURES
                                                                                                    * CONTRACT CLASS
                                                                                                    * HASH */
