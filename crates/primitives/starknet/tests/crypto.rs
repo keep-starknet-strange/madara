@@ -5,7 +5,7 @@ use kp_starknet::crypto::commitment::{
     calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment,
 };
 use kp_starknet::crypto::hash::pedersen::PedersenHasher;
-use kp_starknet::execution::{CallEntryPoint, ContractAddress};
+use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper};
 use kp_starknet::transaction::types::{Event, Transaction};
 use sp_core::{H256, U256};
 use starknet_crypto::FieldElement;
@@ -18,9 +18,9 @@ fn test_merkle_tree() {
             hash: H256::from_low_u64_be(6),
             signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
             events: bounded_vec![Event::default(), Event::default()],
-            sender_address: ContractAddress::from([0; 32]),
+            sender_address: ContractAddressWrapper::from([0; 32]),
             nonce: U256::zero(),
-            call_entrypoint: CallEntryPoint::default(),
+            call_entrypoint: CallEntryPointWrapper::default(),
             selector: H256::default(),
         },
         Transaction {
@@ -28,9 +28,9 @@ fn test_merkle_tree() {
             hash: H256::from_low_u64_be(28),
             signature: bounded_vec![H256::from_low_u64_be(40)],
             events: bounded_vec![],
-            sender_address: ContractAddress::from([1; 32]),
+            sender_address: ContractAddressWrapper::from([1; 32]),
             nonce: U256::zero(),
-            call_entrypoint: CallEntryPoint::default(),
+            call_entrypoint: CallEntryPointWrapper::default(),
             selector: H256::default(),
         },
     ];

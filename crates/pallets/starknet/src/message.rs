@@ -1,5 +1,5 @@
 use frame_support::BoundedVec;
-use kp_starknet::execution::{CallEntryPoint, EntryPointType};
+use kp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
 use kp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
@@ -32,9 +32,9 @@ impl Message {
                 .collect::<Vec<H256>>(),
         )
         .unwrap();
-        let call_entrypoint = CallEntryPoint {
+        let call_entrypoint = CallEntryPointWrapper {
             class_hash: None,
-            entrypoint_type: EntryPointType::L1Handler,
+            entrypoint_type: EntryPointTypeWrapper::L1Handler,
             entrypoint_selector: Some(selector),
             calldata,
             storage_address: sender_address,

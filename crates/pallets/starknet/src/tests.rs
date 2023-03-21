@@ -3,7 +3,7 @@ use core::str::FromStr;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use kp_starknet::block::wrapper::header::Header;
-use kp_starknet::execution::{CallEntryPoint, EntryPointType};
+use kp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
 use kp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
@@ -97,9 +97,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
             bounded_vec!(),
 			contract_address_bytes,
             U256::from(0),
-            CallEntryPoint::new(
+            CallEntryPointWrapper::new(
 				Some(class_hash_bytes),
-				EntryPointType::External,
+				EntryPointTypeWrapper::External,
 				None,
 				bounded_vec![
                     H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address

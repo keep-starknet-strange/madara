@@ -23,7 +23,7 @@ use starknet_api::transaction::{
 use self::types::{Event, MaxArraySize, Transaction, TxType};
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::wrapper::block::Block;
-use crate::execution::{CallEntryPoint, ContractAddress};
+use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper};
 
 impl Event {
     /// Creates a new instance of an event.
@@ -61,9 +61,9 @@ impl Transaction {
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
         events: BoundedVec<Event, MaxArraySize>,
-        sender_address: ContractAddress,
+        sender_address: ContractAddressWrapper,
         nonce: U256,
-        call_entrypoint: CallEntryPoint,
+        call_entrypoint: CallEntryPointWrapper,
         selector: H256,
     ) -> Self {
         Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, selector }
@@ -198,8 +198,8 @@ impl Default for Transaction {
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
             events: BoundedVec::try_from(vec![Event::default(), Event::default()]).unwrap(),
             nonce: U256::default(),
-            sender_address: ContractAddress::default(),
-            call_entrypoint: CallEntryPoint::default(),
+            sender_address: ContractAddressWrapper::default(),
+            call_entrypoint: CallEntryPointWrapper::default(),
             selector: H256::default(),
         }
     }
