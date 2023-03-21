@@ -2,7 +2,6 @@
 members = [
   "crates/node",
   "crates/runtime",
-  "crates/pallets/cairo",
   "crates/pallets/starknet",
   "crates/primitives/starknet",
 ]
@@ -80,7 +79,6 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 pallet-insecure-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
 # Kaioshin pallets
-pallet-cairo = { version = "0.1.0-dev", path = "crates/pallets/cairo", default-features = false }
 pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", default-features = false }
 
 # Kaioshin primtitives
@@ -90,16 +88,16 @@ kp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", defa
 # Cairo Virtual Machine
 # TODO: wait for no-std support on official repo
 cairo-vm = { git = "https://github.com/open-dust/cairo-rs", branch = "wasm32-support", default-features = false, features = [
-	"alloc",
+  "alloc",
 ] }
 starknet-crypto = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
 starknet-ff = { git = "https://github.com/tdelabro/starknet-rs.git", branch = "feature/manual-no-std-bigdecimal", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
-	"alloc",
+  "alloc",
 ] }
 blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "starkware/no_std-support", features = [
-    "testing",
+  "testing",
 ], default-features = false }
 # Other third party dependencies
 lazy_static = { version = "1.4.0", default-features = false }
@@ -107,7 +105,7 @@ codec = { package = "parity-scale-codec", version = "3.2.2", default-features = 
   "derive",
 ] }
 scale-info = { version = "2.1.1", default-features = false, features = [
-	"derive",
+  "derive",
 ] }
 log = "0.4.17"
 hex = { version = "0.4.3", default-features = false }

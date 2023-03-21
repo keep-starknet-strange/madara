@@ -8,8 +8,8 @@ use blockifier::state::cached_state::CachedState;
 use blockifier::state::state_api::StateReader;
 use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::errors::InvokeTransactionError;
-use blockifier::transaction::objects::{TransactionExecutionResult, AccountTransactionContext};
-use blockifier::transaction::transactions::{Executable};
+use blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
+use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
@@ -143,30 +143,29 @@ impl Transaction {
         block: Block,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         let tx = self.to_invoke_tx();
-		let block_context = BlockContext::serialize(block.header);
-		let account_context = self.get_account_transaction_context(&tx);
+        let block_context = BlockContext::serialize(block.header);
+        let account_context = self.get_account_transaction_context(&tx);
 
-		// TODO: Investigate the use of tx.execute() instead of tx.run_execute()
-		// Going one lower level gives us more flexibility like not validating the tx as we could do it
-		// before the tx lands in the mempool.
-		// However it also means we need to copy/paste internal code from the tx.execute() method.
+        // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
+        // Going one lower level gives us more flexibility like not validating the tx as we could do it
+        // before the tx lands in the mempool.
+        // However it also means we need to copy/paste internal code from the tx.execute() method.
 
-		match tx {
-			AccountTransaction::Invoke(ref tx) => {
-
-				// Specifying an entry point selector is not allowed; `__execute__` is called, and
+        match tx {
+            AccountTransaction::Invoke(ref tx) => {
+                // Specifying an entry point selector is not allowed; `__execute__` is called, and
                 // the inner selector appears in the calldata.
                 if tx.entry_point_selector.is_some() {
                     return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
                 }
 
-				let result = tx.run_execute(state, &block_context, &account_context, None);
-				return result;
-			}
-			_ => {
-				panic!("Only invoke transactions are supported");
-			}
-		}
+                let result = tx.run_execute(state, &block_context, &account_context, None);
+                return result;
+            }
+            _ => {
+                panic!("Only invoke transactions are supported");
+            }
+        }
     }
 
     fn get_account_transaction_context(&self, tx: &AccountTransaction) -> AccountTransactionContext {
@@ -180,8 +179,8 @@ impl Transaction {
                 sender_address: tx.sender_address,
             },
             _ => {
-				panic!("Only invoke transactions are supported");
-			}
+                panic!("Only invoke transactions are supported");
+            }
         }
     }
 }
