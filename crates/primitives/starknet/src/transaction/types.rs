@@ -1,7 +1,7 @@
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 
-use crate::execution::{CallEntryPoint, ContractAddress};
+use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper};
 
 /// Max size of the event array.
 pub type MaxArraySize = ConstU32<4294967295>;
@@ -26,11 +26,11 @@ pub struct Transaction {
     /// Events.
     pub events: BoundedVec<Event, MaxArraySize>,
     /// Sender Address
-    pub sender_address: ContractAddress,
+    pub sender_address: ContractAddressWrapper,
     /// Nonce
     pub nonce: U256,
     /// Call entrypoint
-    pub call_entrypoint: CallEntryPoint,
+    pub call_entrypoint: CallEntryPointWrapper,
     /// Selector
     pub selector: H256,
 }

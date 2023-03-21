@@ -12,15 +12,15 @@ use starknet_api::state::EntryPointType as StarknetEntryPointType;
 use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
-pub type ContractAddress = [u8; 32];
+pub type ContractAddressWrapper = [u8; 32];
 
 type MaxCalldataSize = ConstU32<4294967295>;
-type ContractClassHash = [u8; 32];
+type ClassHashWrapper = [u8; 32];
 
 /// Enum that represents all the entrypoints types.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum EntryPointType {
+pub enum EntryPointTypeWrapper {
     /// Constructor.
     Constructor,
     /// External.
@@ -32,22 +32,22 @@ pub enum EntryPointType {
 /// Representation of a Starknet transaction.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct CallEntryPoint {
+pub struct CallEntryPointWrapper {
     /// The class hash
-    pub class_hash: Option<ContractClassHash>,
+    pub class_hash: Option<ClassHashWrapper>,
     /// The entrypoint type
-    pub entrypoint_type: EntryPointType,
+    pub entrypoint_type: EntryPointTypeWrapper,
     /// The entrypoint selector
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
     pub entrypoint_selector: Option<H256>,
     /// The Calldata
     pub calldata: BoundedVec<H256, MaxCalldataSize>,
     /// The storage address
-    pub storage_address: ContractAddress,
+    pub storage_address: ContractAddressWrapper,
     /// The caller address
-    pub caller_address: ContractAddress,
+    pub caller_address: ContractAddressWrapper,
 }
-impl EntryPointType {
+impl EntryPointTypeWrapper {
     /// Convert Kaioshin entrypoint type to Starknet entrypoint type.
     pub fn to_starknet(&self) -> StarknetEntryPointType {
         match self {
@@ -58,15 +58,15 @@ impl EntryPointType {
     }
 }
 
-impl CallEntryPoint {
+impl CallEntryPointWrapper {
     /// Creates a new instance of a call entrypoint.
     pub fn new(
-        class_hash: Option<ContractClassHash>,
-        entrypoint_type: EntryPointType,
+        class_hash: Option<ClassHashWrapper>,
+        entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: Option<H256>,
         calldata: BoundedVec<H256, MaxCalldataSize>,
-        storage_address: ContractAddress,
-        caller_address: ContractAddress,
+        storage_address: ContractAddressWrapper,
+        caller_address: ContractAddressWrapper,
     ) -> Self {
         Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
     }
@@ -93,15 +93,15 @@ impl CallEntryPoint {
         }
     }
 }
-impl Default for CallEntryPoint {
+impl Default for CallEntryPointWrapper {
     fn default() -> Self {
         Self {
-            class_hash: Some(ContractClassHash::default()),
-            entrypoint_type: EntryPointType::External,
+            class_hash: Some(ClassHashWrapper::default()),
+            entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: Some(H256::default()),
             calldata: BoundedVec::try_from(vec![H256::zero(); 32]).unwrap(),
-            storage_address: ContractAddress::default(),
-            caller_address: ContractAddress::default(),
+            storage_address: ContractAddressWrapper::default(),
+            caller_address: ContractAddressWrapper::default(),
         }
     }
 }
