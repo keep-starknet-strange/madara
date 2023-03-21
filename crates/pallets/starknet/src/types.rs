@@ -58,7 +58,6 @@ pub struct EthLogs {
 }
 #[derive(Deserialize, Encode, Decode, Default, Debug)]
 pub struct Message {
-    address: String,
-    topics: Vec<String>,
-    data: String,
+    pub topics: Vec<String>,
+    pub data: String,
 }
