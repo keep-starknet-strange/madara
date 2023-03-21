@@ -19,7 +19,9 @@ kp-starknet = { workspace = true, default-features = false }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
-blockifier = { workspace = true, default-features = false, features = ["testing"]}
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }
 starknet_api = { workspace = true, default-features = false }
 
 # Substrate frame
@@ -45,7 +47,7 @@ log = { workspace = true }
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
 pretty_assertions = "1.3.0"
-hex = {workspace = true}
+hex = { workspace = true }
 
 
 [features]
