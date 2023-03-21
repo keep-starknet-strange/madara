@@ -3,7 +3,7 @@ use core::str::FromStr;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use kp_starknet::block::wrapper::header::Header;
-use kp_starknet::execution::CallEntryPoint;
+use kp_starknet::execution::{CallEntryPoint, EntryPointType};
 use kp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
@@ -95,11 +95,11 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 H256::from_str("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap()
             ],
             bounded_vec!(),
-			contract_address_bytes.clone(),
+			contract_address_bytes,
             U256::from(0),
             CallEntryPoint::new(
-				class_hash_bytes.clone(),
-				0,
+				Some(class_hash_bytes),
+				EntryPointType::External,
 				None,
 				bounded_vec![
                     H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
@@ -107,8 +107,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
                 ],
-				contract_address_bytes.clone(),
-				contract_address_bytes.clone()
+				contract_address_bytes,
+				contract_address_bytes
 			),
             H256::default()
 		);

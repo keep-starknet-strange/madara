@@ -12,6 +12,9 @@ use sp_core::ConstU32;
 /// The Starknet pallet's runtime custom types.
 pub mod types;
 
+/// The implementation of the message type.
+pub mod message;
+
 /// Transaction validation logic.
 pub mod transaction_validation;
 
@@ -48,10 +51,10 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    extern crate alloc;
-    use alloc::string::{String, ToString};
-    use alloc::vec::Vec;
-    use alloc::{format, vec};
+    pub extern crate alloc;
+    pub use alloc::string::{String, ToString};
+    pub use alloc::vec::Vec;
+    pub use alloc::{format, vec};
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{
@@ -59,7 +62,7 @@ pub mod pallet {
     };
     use blockifier::test_utils::{get_contract_class, get_test_contract_class, ACCOUNT_CONTRACT_PATH};
     use frame_support::pallet_prelude::*;
-    use frame_support::traits::{Randomness, Time};
+    use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
     use kp_starknet::block::wrapper::block::Block;
     use kp_starknet::block::wrapper::header::Header;
@@ -184,7 +187,10 @@ pub mod pallet {
                         return;
                     }
                 };
-                log!(info, "Running offchain worker at block {:?}, {:?}.", n, res.result);
+                res.result.iter().for_each(|message| {
+                    Self::consume_l1_message(OriginFor::<T>::none(), message.to_transaction()).unwrap();
+                });
+                log!(info, "Running offchain worker at block {:?}.", n);
             }
         }
     }
@@ -317,6 +323,42 @@ pub mod pallet {
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
             match transaction.execute(state, block, TxType::InvokeTx) {
+                Ok(v) => {
+                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                }
+                Err(e) => {
+                    log!(error, "Transaction execution failed: {:?}", e);
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                }
+            }
+
+            // Append the transaction to the pending transactions.
+            Pending::<T>::try_append(transaction).unwrap();
+
+            // TODO: Apply state diff and update state root
+
+            Ok(())
+        }
+
+        /// Submit a Starknet transaction.
+        /// # Arguments
+        /// * `origin` - The origin of the transaction.
+        /// * `transaction` - The Starknet transaction.
+        /// # Returns
+        /// * `DispatchResult` - The result of the transaction.
+        /// # TODO
+        /// * Compute weight
+        #[pallet::call_index(2)]
+        #[pallet::weight(0)]
+        pub fn consume_l1_message(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // TODO: add origin check when proxy pallet added
+
+            // Check if contract is deployed
+            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+
+            let block = Self::current_block().unwrap();
+            let state = &mut Self::create_state_reader();
+            match transaction.execute(state, block, TxType::L1HandlerTx) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
                 }
