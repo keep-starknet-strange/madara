@@ -10,6 +10,14 @@ use crate::pallet::alloc::vec::Vec;
 use crate::types::Message;
 
 impl Message {
+    /// Converts a hex `String` into a byte slice.
+    ///
+    /// # Arguments
+    /// * `s` - The hex string
+    ///
+    /// # Returns
+    ///
+    /// A fixed size byte slice.
     pub fn decode_hex(s: &str) -> [u8; 32] {
         let s = s.trim_start_matches("0x");
         let s = if s.len() % 2 != 0 { format!("0{:}", s) } else { s.to_owned() };
@@ -18,7 +26,9 @@ impl Message {
             (0..s.len()).step_by(2).map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap()).collect::<Vec<u8>>();
         core::array::from_fn(|i| if i < decoded.len() { decoded[i] } else { 0 })
     }
-    pub fn to_transaction(&self) -> Transaction {
+
+    /// Converts a `Message` into a transaction object.
+    pub fn into_transaction(&self) -> Transaction {
         let sender_address = Self::decode_hex(&self.topics[2]);
         let selector = H256::from_slice(&Self::decode_hex(&self.topics[3]));
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))

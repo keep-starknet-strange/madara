@@ -33,6 +33,7 @@ pub enum RawOrigin {
     StarknetTransaction,
 }
 
+/// Error enum wrapper for offchain worker tasks.
 #[derive(Debug)]
 pub enum OffchainWorkerError {
     HttpError(HttpError),
@@ -41,21 +42,33 @@ pub enum OffchainWorkerError {
     ToBytesError(Utf8Error),
 }
 
+/// Struct that represents the response fields that we need of the eth node for
+/// `eth_getBlockByNumber`.
 #[derive(Deserialize, Encode, Decode, Default, Debug)]
 pub struct EthBlockNumber {
+    /// Object that contains the block number.
     pub result: NumberRes,
 }
+
+/// Inner struct for block number.
 #[derive(Deserialize, Encode, Decode, Default, Debug)]
 pub struct NumberRes {
+    /// Block number.
     pub number: String,
 }
 
+/// Struct that represents an Ethereum event for a message sent to starknet.
 #[derive(Deserialize, Encode, Decode, Default, Debug)]
 pub struct EthLogs {
+    /// Array that contains the events.
     pub result: Vec<Message>,
 }
+
+/// Inner struct for messages.
 #[derive(Deserialize, Encode, Decode, Default, Debug)]
 pub struct Message {
+    /// Topics of the event.
     pub topics: Vec<String>,
+    /// Data of the event.
     pub data: String,
 }
