@@ -3,19 +3,20 @@
 use alloc::sync::Arc;
 use alloc::vec;
 
-use blockifier::execution::entry_point::CallEntryPoint as StarknetCallEntryPoint;
+use blockifier::execution::entry_point::CallEntryPoint;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256};
-use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector};
+use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::EntryPointType as StarknetEntryPointType;
+use starknet_api::state::EntryPointType;
 use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
 pub type ContractAddressWrapper = [u8; 32];
 
 type MaxCalldataSize = ConstU32<4294967295>;
-type ClassHashWrapper = [u8; 32];
+/// Wrapper type for class hash field.
+pub type ClassHashWrapper = [u8; 32];
 
 /// Enum that represents all the entrypoints types.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
@@ -49,11 +50,11 @@ pub struct CallEntryPointWrapper {
 }
 impl EntryPointTypeWrapper {
     /// Convert Kaioshin entrypoint type to Starknet entrypoint type.
-    pub fn to_starknet(&self) -> StarknetEntryPointType {
+    pub fn to_starknet(&self) -> EntryPointType {
         match self {
-            Self::Constructor => StarknetEntryPointType::Constructor,
-            Self::External => StarknetEntryPointType::External,
-            Self::L1Handler => StarknetEntryPointType::L1Handler,
+            Self::Constructor => EntryPointType::Constructor,
+            Self::External => EntryPointType::External,
+            Self::L1Handler => EntryPointType::L1Handler,
         }
     }
 }
@@ -72,9 +73,9 @@ impl CallEntryPointWrapper {
     }
 
     /// Convert to Starknet CallEntryPoint
-    pub fn to_starknet_call_entry_point(&self) -> StarknetCallEntryPoint {
+    pub fn to_starknet_call_entry_point(&self) -> CallEntryPoint {
         let class_hash = self.class_hash.map(|class_hash| ClassHash(StarkFelt::new(class_hash).unwrap()));
-        StarknetCallEntryPoint {
+        CallEntryPoint {
             class_hash,
             entry_point_type: self.entrypoint_type.to_starknet(),
             entry_point_selector: EntryPointSelector(
@@ -88,8 +89,8 @@ impl CallEntryPointWrapper {
                     .map(|x| StarkFelt::new(*(*x).as_fixed_bytes()).unwrap())
                     .collect(),
             )),
-            storage_address: StarknetContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
-            caller_address: StarknetContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
+            storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
+            caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
         }
     }
 }

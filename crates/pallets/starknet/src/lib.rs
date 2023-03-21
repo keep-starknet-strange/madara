@@ -64,10 +64,11 @@ pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
-    use kp_starknet::block::wrapper::block::Block;
-    use kp_starknet::block::wrapper::header::Header;
     use kp_starknet::crypto::commitment;
     use kp_starknet::crypto::hash::pedersen::PedersenHasher;
+    use kp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper};
+    use kp_starknet::starknet_block::block::Block;
+    use kp_starknet::starknet_block::header::Header;
     use kp_starknet::state::DictStateReader;
     use kp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use kp_starknet::traits::hash::Hasher;
@@ -84,7 +85,7 @@ pub mod pallet {
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
-    use crate::types::{ContractAddress, ContractClassHash, ContractStorageKey, EthLogs, Nonce, StarkFelt};
+    use crate::types::{ContractStorageKey, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -217,17 +218,18 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn contract_class)]
     pub(super) type ContractClassHashes<T: Config> =
-        StorageMap<_, Twox64Concat, ContractAddress, ContractClassHash, ValueQuery>;
+        StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     #[pallet::storage]
     #[pallet::getter(fn nonce)]
-    pub(super) type Nonces<T: Config> = StorageMap<_, Twox64Concat, ContractAddress, Nonce, ValueQuery>;
+    pub(super) type Nonces<T: Config> = StorageMap<_, Twox64Concat, ContractAddressWrapper, NonceWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract storage key to its value.
     #[pallet::storage]
     #[pallet::getter(fn storage)]
-    pub(super) type StorageView<T: Config> = StorageMap<_, Twox64Concat, ContractStorageKey, StarkFelt, ValueQuery>;
+    pub(super) type StorageView<T: Config> =
+        StorageMap<_, Twox64Concat, ContractStorageKey, StarkFeltWrapper, ValueQuery>;
 
     #[pallet::storage]
     #[pallet::getter(fn last_known_eth_block)]
@@ -236,7 +238,7 @@ pub mod pallet {
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
-        pub contracts: Vec<(ContractAddress, ContractClassHash)>,
+        pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
         pub _phantom: PhantomData<T>,
     }
 
@@ -444,7 +446,7 @@ pub mod pallet {
             let pending = Self::pending();
 
             let global_state_root = U256::zero();
-            let sequencer_address = ContractAddress::default();
+            let sequencer_address = ContractAddressWrapper::default();
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
             let (transaction_commitment, (event_commitment, event_count)) =
@@ -479,8 +481,8 @@ pub mod pallet {
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
         fn _associate_contract_class(
-            contract_address: ContractAddress,
-            contract_class_hash: ContractClassHash,
+            contract_address: ContractAddressWrapper,
+            contract_class_hash: ClassHashWrapper,
         ) -> Result<(), DispatchError> {
             // Check if the contract address is already associated with a contract class hash.
             ensure!(

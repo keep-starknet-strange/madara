@@ -4,8 +4,8 @@ use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 
-use super::wrapper::header::Header;
 use crate::alloc::string::ToString;
+use crate::starknet_block::header::Header;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {

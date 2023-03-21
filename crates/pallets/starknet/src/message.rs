@@ -1,5 +1,5 @@
 use frame_support::BoundedVec;
-use kp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
+use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 use kp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
@@ -7,7 +7,7 @@ use crate::pallet::alloc::borrow::ToOwned;
 use crate::pallet::alloc::format;
 use crate::pallet::alloc::string::String;
 use crate::pallet::alloc::vec::Vec;
-use crate::types::{ContractAddress, Message};
+use crate::types::Message;
 
 impl Message {
     pub fn decode_hex(s: &str) -> [u8; 32] {
@@ -38,7 +38,7 @@ impl Message {
             entrypoint_selector: Some(selector),
             calldata,
             storage_address: sender_address,
-            caller_address: ContractAddress::default(),
+            caller_address: ContractAddressWrapper::default(),
         };
         Transaction {
             version: U256::default(),
