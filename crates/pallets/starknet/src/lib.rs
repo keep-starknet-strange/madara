@@ -187,7 +187,7 @@ pub mod pallet {
                     }
                 };
                 res.result.iter().for_each(|message| {
-                    Self::consume_l1_message(OriginFor::<T>::none(), message.to_transaction()).unwrap();
+                    Self::consume_l1_message(OriginFor::<T>::none(), message.into_transaction()).unwrap();
                 });
                 log!(info, "Running offchain worker at block {:?}.", n);
             }
@@ -580,6 +580,19 @@ pub mod pallet {
             })
         }
 
+        /// Queries an Eth json rpc node.
+        ///
+        /// # Arguments
+        ///
+        /// * `request` - The request to be sent.
+        ///
+        /// # Returns
+        ///
+        /// The result of the query formatted as a `String`.
+        ///
+        /// # Errors
+        ///
+        /// If and error happens during the query or deserialization.
         fn query_eth(request: &str) -> Result<String, OffchainWorkerError> {
             let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", vec![request])
                 .add_header("content-type", "application/json")
