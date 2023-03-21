@@ -1,4 +1,4 @@
-//! Cairo Execution Engine pallet benchmarking.
+//! Starknet pallet benchmarking.
 #![cfg(feature = "runtime-benchmarks")]
 use frame_benchmarking::{account, benchmarks, whitelist_account, whitelisted_caller, BenchmarkError, Vec};
 use frame_support::sp_runtime::traits::Bounded;
