@@ -8,7 +8,6 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 // Kaioshin primitives.
 // TODO: import the primitives.
-
 // A few exports that help ease life for downstream crates.
 pub use frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 pub use frame_support::weights::constants::{
@@ -18,8 +17,6 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
-/// Import the Cairo Execution Engine pallet.
-pub use pallet_cairo;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
@@ -254,17 +251,6 @@ impl pallet_sudo::Config for Runtime {
     type RuntimeCall = RuntimeCall;
 }
 
-/// Configure the Cairo Execution Engine pallet in pallets/cairo.
-impl pallet_cairo::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Randomness = KaioshinRandomness;
-    /// Define the maximum length of a Cairo assembly program, denominated in number of bytes.
-    type MaxCairoAssemblyProgramLength = ConstU32<1073741824>;
-    /// Define the maximum length of a Sierra program, denominated in number of bytes.
-    type MaxSierraProgramLength = ConstU32<1073741824>;
-    type SystemHash = pallet_cairo::hash::PedersenHash;
-}
-
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
@@ -292,9 +278,6 @@ construct_runtime!(
         Balances: pallet_balances,
         TransactionPayment: pallet_transaction_payment,
         Sudo: pallet_sudo,
-        // Include the custom logic from pallets in the runtime.
-        // Include Cairo pallet.
-        Cairo: pallet_cairo,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
         // Include pallet for randomness.
@@ -339,7 +322,6 @@ mod benches {
         [frame_system, SystemBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_timestamp, Timestamp]
-        [pallet_cairo, Cairo]
     );
 }
 

@@ -27,6 +27,8 @@ jobs:
         with:
           profile: minimal
           target: wasm32-unknown-unknown
+      - name: Install latest nextest release
+        uses: taiki-e/install-action@nextest
       - name: Set-Up
         run: >
           sudo apt-get update && sudo apt-get install -y
@@ -35,7 +37,7 @@ jobs:
       - name: Check Build and run tests
         run: |
           SKIP_WASM_BUILD=1 cargo check --release
-          cargo test --all
+          cargo nextest run
 
   bench:
     # The type of runner that the job will run on

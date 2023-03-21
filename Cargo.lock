@@ -702,8 +702,8 @@ name = "blockifier"
 version = "0.1.0"
 source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#1fedf4f44fd48a34f06388199ff2c60fefe74d46"
 dependencies = [
- "cairo-felt 0.2.0 (git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d)",
- "cairo-vm 0.2.0 (git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d)",
+ "cairo-felt",
+ "cairo-vm",
  "derive_more",
  "hashbrown 0.13.2",
  "indexmap 2.0.0-pre",
@@ -806,18 +806,6 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.2.0"
-source = "git+https://github.com/open-dust/cairo-rs?branch=wasm32-support#6aee85a78a9b9cc94501250daabbb95c09dbff57"
-dependencies = [
- "lazy_static",
- "num-bigint 0.4.3",
- "num-integer",
- "num-traits",
- "serde",
-]
-
-[[package]]
-name = "cairo-felt"
-version = "0.2.0"
 source = "git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d#ed77a3fe4f0511e4c5a25acf99cf919cf292262d"
 dependencies = [
  "lazy_static",
@@ -830,40 +818,11 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.2.0"
-source = "git+https://github.com/open-dust/cairo-rs?branch=wasm32-support#6aee85a78a9b9cc94501250daabbb95c09dbff57"
-dependencies = [
- "anyhow",
- "bincode 2.0.0-rc.2",
- "cairo-felt 0.2.0 (git+https://github.com/open-dust/cairo-rs?branch=wasm32-support)",
- "generic-array 0.14.6",
- "hashbrown 0.13.2",
- "hex",
- "keccak",
- "lazy_static",
- "nom",
- "num-bigint 0.4.3",
- "num-integer",
- "num-traits",
- "parse-hyperlinks 0.23.4 (git+https://github.com/open-dust/cairo-rs?branch=wasm32-support)",
- "rand_core 0.6.4",
- "serde",
- "serde_bytes",
- "serde_json",
- "sha2 0.10.6",
- "sha3",
- "starknet-crypto 0.2.0",
- "thiserror",
- "thiserror-no-std",
-]
-
-[[package]]
-name = "cairo-vm"
-version = "0.2.0"
 source = "git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d#ed77a3fe4f0511e4c5a25acf99cf919cf292262d"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
- "cairo-felt 0.2.0 (git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d)",
+ "cairo-felt",
  "generic-array 0.14.6",
  "hashbrown 0.13.2",
  "hex",
@@ -873,7 +832,7 @@ dependencies = [
  "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
- "parse-hyperlinks 0.23.4 (git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d)",
+ "parse-hyperlinks",
  "rand_core 0.6.4",
  "serde",
  "serde_bytes",
@@ -3336,9 +3295,6 @@ dependencies = [
  "sc-consensus-grandpa",
  "sc-executor",
  "sc-keystore",
- "sc-network",
- "sc-network-common",
- "sc-rpc",
  "sc-rpc-api",
  "sc-service",
  "sc-telemetry",
@@ -3347,7 +3303,6 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
- "sp-consensus",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
@@ -3374,7 +3329,6 @@ dependencies = [
  "kp-starknet",
  "pallet-aura",
  "pallet-balances",
- "pallet-cairo",
  "pallet-grandpa",
  "pallet-insecure-randomness-collective-flip",
  "pallet-starknet",
@@ -3387,7 +3341,6 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
- "sp-consensus-grandpa",
  "sp-core",
  "sp-inherents",
  "sp-offchain",
@@ -3414,21 +3367,14 @@ version = "0.1.0-dev"
 dependencies = [
  "bitvec 0.17.4",
  "blockifier",
- "either",
  "frame-support",
- "hash256-std-hasher",
- "impl-trait-for-tuples",
- "lazy_static",
- "log",
  "parity-scale-codec",
- "paste",
  "poseidon",
  "rand 0.8.5",
  "scale-info",
  "serde",
  "serde_json",
  "sp-core",
- "sp-io",
  "sp-runtime",
  "sp-std",
  "starknet-crypto 0.2.0",
@@ -4800,27 +4746,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-cairo"
-version = "0.1.0-dev"
-dependencies = [
- "cairo-vm 0.2.0 (git+https://github.com/open-dust/cairo-rs?branch=wasm32-support)",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "kp-starknet",
- "lazy_static",
- "log",
- "pallet-insecure-randomness-collective-flip",
- "parity-scale-codec",
- "poseidon",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "starknet-crypto 0.2.0",
-]
-
-[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#ba87188cce8c0a11c9542d7363cd5ddd46db2740"
@@ -4888,7 +4813,6 @@ dependencies = [
  "frame-system",
  "hex",
  "kp-starknet",
- "lazy_static",
  "log",
  "pallet-insecure-randomness-collective-flip",
  "pallet-timestamp",
@@ -4898,7 +4822,6 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std",
  "starknet-crypto 0.2.0",
  "starknet_api",
 ]
@@ -5090,14 +5013,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-sys 0.45.0",
-]
-
-[[package]]
-name = "parse-hyperlinks"
-version = "0.23.4"
-source = "git+https://github.com/open-dust/cairo-rs?branch=wasm32-support#6aee85a78a9b9cc94501250daabbb95c09dbff57"
-dependencies = [
- "nom",
 ]
 
 [[package]]

@@ -28,7 +28,6 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-consensus-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-offchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-session = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
@@ -61,7 +60,6 @@ frame-system-benchmarking = { workspace = true, optional = true }
 
 # Kaioshin Local Dependencies
 # Kaioshin Pallets
-pallet-cairo = { workspace = true }
 pallet-starknet = { workspace = true }
 # Kaioshin Primitives
 kp-starknet = { workspace = true, default-features = false }
@@ -73,7 +71,6 @@ substrate-wasm-builder = { workspace = true }
 default = ["std"]
 std = [
   # Kaioshin pallets
-  "pallet-cairo/std",
   "pallet-starknet/std",
   # Frame dependencies
   "frame-try-runtime?/std",
@@ -116,13 +113,12 @@ runtime-benchmarks = [
   "frame-system/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
   "pallet-grandpa/runtime-benchmarks",
-  "pallet-cairo/runtime-benchmarks",
-  "pallet-starknet/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
+  # Kaiohsin pallets
+  "pallet-starknet/runtime-benchmarks",
 ]
 try-runtime = [
-  # Kaiohsin pallets
   "pallet-timestamp/try-runtime",
   "pallet-transaction-payment/try-runtime",
   "frame-try-runtime/try-runtime",
@@ -134,6 +130,6 @@ try-runtime = [
   "pallet-insecure-randomness-collective-flip/try-runtime",
   "pallet-grandpa/try-runtime",
   "pallet-sudo/try-runtime",
-  "pallet-cairo/try-runtime",
+  # Kaiohsin pallets
   "pallet-starknet/try-runtime",
 ]
