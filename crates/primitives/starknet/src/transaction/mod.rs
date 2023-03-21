@@ -21,9 +21,9 @@ use starknet_api::transaction::{
 };
 
 use self::types::{Event, MaxArraySize, Transaction, TxType};
-use crate::block::serialize::SerializeBlockContext;
-use crate::block::wrapper::block::Block;
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper};
+use crate::starknet_block::block::Block;
+use crate::starknet_block::serialize::SerializeBlockContext;
 
 impl Event {
     /// Creates a new instance of an event.
