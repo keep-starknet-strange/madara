@@ -1,4 +1,3 @@
 (function() {var implementors = {
-"pallet_cairo":[["impl&lt;T: <a class=\"trait\" href=\"pallet_cairo/pallet/trait.Config.html\" title=\"trait pallet_cairo::pallet::Config\">Config</a>&gt; GetStorageVersion for <a class=\"struct\" href=\"pallet_cairo/pallet/struct.Pallet.html\" title=\"struct pallet_cairo::pallet::Pallet\">Pallet</a>&lt;T&gt;"]],
 "pallet_starknet":[["impl&lt;T: <a class=\"trait\" href=\"pallet_starknet/pallet/trait.Config.html\" title=\"trait pallet_starknet::pallet::Config\">Config</a>&gt; GetStorageVersion for <a class=\"struct\" href=\"pallet_starknet/pallet/struct.Pallet.html\" title=\"struct pallet_starknet::pallet::Pallet\">Pallet</a>&lt;T&gt;"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
