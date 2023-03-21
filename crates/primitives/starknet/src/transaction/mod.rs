@@ -110,7 +110,7 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransaction` - The converted transaction
-    pub fn to_invoke_tx(self: &Self) -> AccountTransaction {
+    pub fn to_invoke_tx(&self) -> AccountTransaction {
         AccountTransaction::Invoke(InvokeTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
             max_fee: Fee(2),
@@ -138,7 +138,7 @@ impl Transaction {
     /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
     ///   execution
     pub fn execute<S: StateReader>(
-        self: &Self,
+        &self,
         state: &mut CachedState<S>,
         block: Block,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
@@ -160,8 +160,7 @@ impl Transaction {
                     return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
                 }
 
-				let result = tx.run_execute(state, &block_context, &account_context, None);
-				return result;
+				tx.run_execute(state, &block_context, &account_context, None)
 			}
 			_ => {
 				panic!("Only invoke transactions are supported");
