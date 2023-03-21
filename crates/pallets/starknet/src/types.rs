@@ -19,7 +19,7 @@ pub type NonceWrapper = U256;
 /// Storage Key
 pub type StorageKey = H256;
 /// Contract Storage Key
-pub type ContractStorageKey = (ContractAddressWrapper, StorageKey);
+pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKey);
 /// Felt
 pub type StarkFeltWrapper = U256;
 
