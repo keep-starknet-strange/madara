@@ -75,7 +75,6 @@ pub mod pallet {
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
-    use sp_std::str::from_utf8;
     use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
     use starknet_api::hash::StarkFelt;
     use starknet_api::state::StorageKey;
@@ -83,6 +82,7 @@ pub mod pallet {
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
+    use crate::alloc::str::from_utf8;
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
@@ -260,7 +260,6 @@ pub mod pallet {
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
 
-            LastKnownEthBlock::<T>::set(Some(1));
             LastKnownEthBlock::<T>::set(Some(16868366));
         }
     }
@@ -352,7 +351,6 @@ pub mod pallet {
         #[pallet::weight(0)]
         pub fn consume_l1_message(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
-
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
@@ -560,6 +558,17 @@ pub mod pallet {
                         .unwrap(),
                     ),
                     get_test_contract_class(),
+                ),
+                (
+                    ClassHash(
+                        StarkFelt::try_from(
+                            "0x1cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8", /* TEST EMPTY L1
+                                                                                                  * HANDLER CONTRACT
+                                                                                                  * CLASS HASH */
+                        )
+                        .unwrap(),
+                    ),
+                    get_contract_class(include_bytes!("../../../../ressources/l1_handler.json")),
                 ),
             ]);
 
