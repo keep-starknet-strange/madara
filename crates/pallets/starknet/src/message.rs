@@ -21,9 +21,11 @@ impl Message {
     pub fn to_transaction(&self) -> Transaction {
         let sender_address = Self::decode_hex(&self.topics[2]);
         let selector = H256::from_slice(&Self::decode_hex(&self.topics[3]));
-        let char_vec = self.data.trim_start_matches("0x").chars().collect::<Vec<char>>();
+        let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
+            .chars()
+            .collect::<Vec<char>>();
 
-        let data_map = char_vec.chunks(32).map(|chunk| chunk.iter().collect::<String>());
+        let data_map = char_vec.chunks(64).map(|chunk| chunk.iter().collect::<String>());
         let nonce = U256::from_str_radix(&data_map.clone().last().unwrap(), 16).unwrap();
         let calldata = BoundedVec::try_from(
             data_map

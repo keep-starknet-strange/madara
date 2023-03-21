@@ -85,10 +85,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let other_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
     let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
 
+    // L1 HANDLER CONTRACT
+    let l1_handler_contract_address_str = "0000000000000000000000000000000000000000000000000000000000000001";
+    let l1_handler_contract_address_bytes = <[u8; 32]>::from_hex(l1_handler_contract_address_str).unwrap();
+
+    let l1_handler_class_hash_str = "01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8";
+    let l1_handler_class_hash_bytes = <[u8; 32]>::from_hex(l1_handler_class_hash_str).unwrap();
+
     pallet_starknet::GenesisConfig::<Test> {
         contracts: vec![
             (contract_address_bytes, class_hash_bytes),
             (other_contract_address_bytes, other_class_hash_bytes),
+            (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
         ],
         ..Default::default()
     }
