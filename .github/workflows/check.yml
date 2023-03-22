@@ -27,17 +27,17 @@ jobs:
         with:
           profile: minimal
           target: wasm32-unknown-unknown
-      - name: Install latest nextest release
-        uses: taiki-e/install-action@nextest
       - name: Set-Up
         run: >
           sudo apt-get update && sudo apt-get install -y
           clang llvm libudev-dev protobuf-compiler
+      - uses: finiam/codegen-cranelift-toolchain@v1
       - uses: Swatinem/rust-cache@v2
       - name: Check Build and run tests
         run: |
-          SKIP_WASM_BUILD=1 cargo check --release
-          cargo nextest run
+          SKIP_WASM_BUILD=1 cargo-clif check --release
+          SKIP_WASM_BUILD=1 cargo-clif test --all
+        shell: bash
 
   bench:
     # The type of runner that the job will run on
