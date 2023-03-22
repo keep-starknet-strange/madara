@@ -113,3 +113,11 @@ safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
 clap = { version = "4.0.9", default-features = false }
 futures = { version = "0.3.21", default-features = false }
+
+# patch for librocksdb-sys to enable cranelift compile
+# remove when kvdb-rocksdb dependency is using the rocksdb version
+# with this PR
+# https://github.com/rust-rocksdb/rust-rocksdb/pull/760
+[patch.crates-io]
+rocksdb = {git = "https://github.com/finiam/rust-rocksdb.git", branch="patch/0.19.0"}
+librocksdb-sys = {git = "https://github.com/finiam/rust-rocksdb.git", branch="patch/0.19.0"}
