@@ -133,7 +133,7 @@ pub mod pallet {
         /// # Arguments
         /// * `n` - The block number.
         fn offchain_worker(n: T::BlockNumber) {
-            Self::offchain_work();
+            Self::process_l1_messages();
             log!(info, "Running offchain worker at block {:?}.", n);
         }
     }
@@ -555,7 +555,7 @@ pub mod pallet {
         }
 
         /// Fetches L1 messages and execute them.
-        fn offchain_work() {
+        fn process_l1_messages() {
             let body_str = match Self::query_eth(LAST_FINALIZED_BLOCK_QUERY) {
                 Ok(res) => res,
                 Err(err) => {
