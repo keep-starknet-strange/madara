@@ -12,6 +12,7 @@ The following benchmarks are available :
 - `yarn test:chain` : Simple stresstest of the chain
 - `yarn test:storage` : Deploys and execute cairo programs to benchmark the storage overhead
 - `yarn test:execution` : Executes fib500 cairo programs
+- `yarn test:transfer` : Executes starknet ERC20 `transfer` transactions
 
 
 ## References

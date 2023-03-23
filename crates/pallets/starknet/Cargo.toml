@@ -45,6 +45,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 ] }
 scale-info = { workspace = true }
 log = { workspace = true }
+hex = { workspace = true }
 
 [dev-dependencies]
 hex = { workspace = true }

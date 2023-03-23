@@ -1,0 +1,261 @@
+{
+  "attributes": [],
+  "builtins": [],
+  "compiler_version": "0.10.3",
+  "data": [
+    "0x482a7ffd7ffc8000",
+    "0x208b7fff7fff7ffe",
+    "0x480680017fff8000",
+    "0x1",
+    "0x480680017fff8000",
+    "0x2",
+    "0x1104800180018000",
+    "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffffb",
+    "0x208b7fff7fff7ffe"
+  ],
+  "debug_info": {
+    "file_contents": {},
+    "instruction_locations": {
+      "0": {
+        "accessible_scopes": ["__main__", "__main__.add"],
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 0,
+            "offset": 0
+          },
+          "reference_ids": {
+            "__main__.add.a": 0,
+            "__main__.add.b": 1
+          }
+        },
+        "hints": [],
+        "inst": {
+          "end_col": 17,
+          "end_line": 2,
+          "input_file": {
+            "filename": "core/tests/test_data/cairo/add0.cairo"
+          },
+          "start_col": 12,
+          "start_line": 2
+        }
+      },
+      "1": {
+        "accessible_scopes": ["__main__", "__main__.add"],
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 0,
+            "offset": 1
+          },
+          "reference_ids": {
+            "__main__.add.a": 0,
+            "__main__.add.b": 1
+          }
+        },
+        "hints": [],
+        "inst": {
+          "end_col": 18,
+          "end_line": 2,
+          "input_file": {
+            "filename": "core/tests/test_data/cairo/add0.cairo"
+          },
+          "start_col": 5,
+          "start_line": 2
+        }
+      },
+      "2": {
+        "accessible_scopes": ["__main__", "__main__.main"],
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 1,
+            "offset": 0
+          },
+          "reference_ids": {}
+        },
+        "hints": [],
+        "inst": {
+          "end_col": 10,
+          "end_line": 5,
+          "input_file": {
+            "filename": "core/tests/test_data/cairo/add0.cairo"
+          },
+          "start_col": 9,
+          "start_line": 5
+        }
+      },
+      "4": {
+        "accessible_scopes": ["__main__", "__main__.main"],
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 1,
+            "offset": 1
+          },
+          "reference_ids": {}
+        },
+        "hints": [],
+        "inst": {
+          "end_col": 13,
+          "end_line": 5,
+          "input_file": {
+            "filename": "core/tests/test_data/cairo/add0.cairo"
+          },
+          "start_col": 12,
+          "start_line": 5
+        }
+      },
+      "6": {
+        "accessible_scopes": ["__main__", "__main__.main"],
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 1,
+            "offset": 2
+          },
+          "reference_ids": {}
+        },
+        "hints": [],
+        "inst": {
+          "end_col": 14,
+          "end_line": 5,
+          "input_file": {
+            "filename": "core/tests/test_data/cairo/add0.cairo"
+          },
+          "start_col": 5,
+          "start_line": 5
+        }
+      },
+      "8": {
+        "accessible_scopes": ["__main__", "__main__.main"],
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 1,
+            "offset": 5
+          },
+          "reference_ids": {}
+        },
+        "hints": [],
+        "inst": {
+          "end_col": 15,
+          "end_line": 6,
+          "input_file": {
+            "filename": "core/tests/test_data/cairo/add0.cairo"
+          },
+          "start_col": 5,
+          "start_line": 6
+        }
+      }
+    }
+  },
+  "hints": {},
+  "identifiers": {
+    "__main__.add": {
+      "decorators": [],
+      "pc": 0,
+      "type": "function"
+    },
+    "__main__.add.Args": {
+      "full_name": "__main__.add.Args",
+      "members": {
+        "a": {
+          "cairo_type": "felt",
+          "offset": 0
+        },
+        "b": {
+          "cairo_type": "felt",
+          "offset": 1
+        }
+      },
+      "size": 2,
+      "type": "struct"
+    },
+    "__main__.add.ImplicitArgs": {
+      "full_name": "__main__.add.ImplicitArgs",
+      "members": {},
+      "size": 0,
+      "type": "struct"
+    },
+    "__main__.add.Return": {
+      "cairo_type": "felt",
+      "type": "type_definition"
+    },
+    "__main__.add.SIZEOF_LOCALS": {
+      "type": "const",
+      "value": 0
+    },
+    "__main__.add.a": {
+      "cairo_type": "felt",
+      "full_name": "__main__.add.a",
+      "references": [
+        {
+          "ap_tracking_data": {
+            "group": 0,
+            "offset": 0
+          },
+          "pc": 0,
+          "value": "[cast(fp + (-4), felt*)]"
+        }
+      ],
+      "type": "reference"
+    },
+    "__main__.add.b": {
+      "cairo_type": "felt",
+      "full_name": "__main__.add.b",
+      "references": [
+        {
+          "ap_tracking_data": {
+            "group": 0,
+            "offset": 0
+          },
+          "pc": 0,
+          "value": "[cast(fp + (-3), felt*)]"
+        }
+      ],
+      "type": "reference"
+    },
+    "__main__.main": {
+      "decorators": [],
+      "pc": 2,
+      "type": "function"
+    },
+    "__main__.main.Args": {
+      "full_name": "__main__.main.Args",
+      "members": {},
+      "size": 0,
+      "type": "struct"
+    },
+    "__main__.main.ImplicitArgs": {
+      "full_name": "__main__.main.ImplicitArgs",
+      "members": {},
+      "size": 0,
+      "type": "struct"
+    },
+    "__main__.main.Return": {
+      "cairo_type": "()",
+      "type": "type_definition"
+    },
+    "__main__.main.SIZEOF_LOCALS": {
+      "type": "const",
+      "value": 0
+    }
+  },
+  "main_scope": "__main__",
+  "prime": "0x800000000000011000000000000000000000000000000000000000000000001",
+  "reference_manager": {
+    "references": [
+      {
+        "ap_tracking_data": {
+          "group": 0,
+          "offset": 0
+        },
+        "pc": 0,
+        "value": "[cast(fp + (-4), felt*)]"
+      },
+      {
+        "ap_tracking_data": {
+          "group": 0,
+          "offset": 0
+        },
+        "pc": 0,
+        "value": "[cast(fp + (-3), felt*)]"
+      }
+    ]
+  }
+}
