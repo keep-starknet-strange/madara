@@ -9,6 +9,31 @@ use crate::pallet::alloc::string::String;
 use crate::pallet::alloc::vec::Vec;
 use crate::types::Message;
 
+pub const LAST_FINALIZED_BLOCK_QUERY: &str =
+    r#"{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["finalized", true], "id": 0}"#;
+
+#[inline(always)]
+pub fn get_messages_events(from_block: u64, to_block: u64) -> String {
+    format!(
+        "{{
+            \"jsonrpc\": \"2.0\",
+        \"method\": \"eth_getLogs\",
+        \"params\": [
+            {{
+                \"fromBlock\": \"0x{:x}\",
+                \"toBlock\": \"0x{:x}\",
+                \"address\": \"0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4\",
+                \"topics\": [
+                    \"0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b\"
+                ]
+            }}
+        ],
+        \"id\": 0
+    }}",
+        from_block, to_block
+    )
+}
+
 impl Message {
     /// Converts a hex `String` into a byte slice.
     ///

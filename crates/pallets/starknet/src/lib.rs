@@ -83,6 +83,7 @@ pub mod pallet {
 
     use super::*;
     use crate::alloc::str::from_utf8;
+    use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
@@ -131,66 +132,9 @@ pub mod pallet {
         /// See: `<https://docs.substrate.io/reference/how-to-guides/offchain-workers/>`
         /// # Arguments
         /// * `n` - The block number.
-        /// # TODO
-        /// * Investigate how we can use offchain workers for Starknet specific tasks. An example
-        ///   might be the communication with the prover.
         fn offchain_worker(n: T::BlockNumber) {
-            let req = r#"{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["finalized", true], "id": 0}"#;
-            let body_str = match Self::query_eth(req) {
-                Ok(res) => res,
-                Err(err) => {
-                    log!(error, "{:?}", err);
-                    return;
-                }
-            };
-            let res: EthBlockNumber = match from_str(&body_str) {
-                Ok(res) => res,
-                Err(err) => {
-                    log!(error, "{:?}", err);
-                    return;
-                }
-            };
-            let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
-            let last_known_eth_block = Self::last_known_eth_block().unwrap();
-            if last_finalized_block > last_known_eth_block {
-                let req = format!(
-                    "{{
-                        \"jsonrpc\": \"2.0\",
-                    \"method\": \"eth_getLogs\",
-                    \"params\": [
-                        {{
-                            \"fromBlock\": \"0x{:x}\",
-                            \"toBlock\": \"0x{:x}\",
-                            \"address\": \"0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4\",
-                            \"topics\": [
-                                \"0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b\"
-                            ]
-                        }}
-                    ],
-                    \"id\": 0
-                }}",
-                    last_known_eth_block, last_finalized_block
-                );
-                let body_str = match Self::query_eth(&req) {
-                    Ok(res) => res,
-                    Err(err) => {
-                        log!(error, "{:?}", err);
-                        return;
-                    }
-                };
-
-                let res: EthLogs = match from_str(&body_str) {
-                    Ok(res) => res,
-                    Err(err) => {
-                        log!(error, "{:?}", err);
-                        return;
-                    }
-                };
-                res.result.iter().for_each(|message| {
-                    Self::consume_l1_message(OriginFor::<T>::none(), message.into_transaction()).unwrap();
-                });
-                log!(info, "Running offchain worker at block {:?}.", n);
-            }
+            Self::offchain_work();
+            log!(info, "Running offchain worker at block {:?}.", n);
         }
     }
 
@@ -304,11 +248,16 @@ pub mod pallet {
         }
 
         /// Submit a Starknet transaction.
+        ///
         /// # Arguments
+        ///
         /// * `origin` - The origin of the transaction.
         /// * `transaction` - The Starknet transaction.
-        /// # Returns
+        ///
+        ///  # Returns
+        ///
         /// * `DispatchResult` - The result of the transaction.
+        ///
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(1)]
@@ -339,12 +288,17 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Submit a Starknet transaction.
+        /// Consume a message from L1.
+        ///
         /// # Arguments
+        ///
         /// * `origin` - The origin of the transaction.
         /// * `transaction` - The Starknet transaction.
+        ///
         /// # Returns
+        ///
         /// * `DispatchResult` - The result of the transaction.
+        ///
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(2)]
@@ -432,10 +386,6 @@ pub mod pallet {
         /// # Arguments
         ///
         /// * `block_number` - The block number.
-        ///
-        /// # TODO
-        ///
-        /// * Implement the function.
         fn store_block(block_number: U256) {
             // TODO: Use actual values.
             let parent_block_hash = Self::parent_block_hash(&block_number);
@@ -602,6 +552,46 @@ pub mod pallet {
                 .map_err(OffchainWorkerError::RequestError)?;
             let body_bytes = res.body().collect::<Vec<u8>>();
             Ok(from_utf8(&body_bytes).map_err(OffchainWorkerError::ToBytesError)?.to_string())
+        }
+
+        /// Fetches L1 messages and execute them.
+        fn offchain_work() {
+            let body_str = match Self::query_eth(LAST_FINALIZED_BLOCK_QUERY) {
+                Ok(res) => res,
+                Err(err) => {
+                    log!(error, "{:?}", err);
+                    return;
+                }
+            };
+            let res: EthBlockNumber = match from_str(&body_str) {
+                Ok(res) => res,
+                Err(err) => {
+                    log!(error, "{:?}", err);
+                    return;
+                }
+            };
+            let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
+            let last_known_eth_block = Self::last_known_eth_block().unwrap();
+            if last_finalized_block > last_known_eth_block {
+                let body_str = match Self::query_eth(&get_messages_events(last_known_eth_block, last_finalized_block)) {
+                    Ok(res) => res,
+                    Err(err) => {
+                        log!(error, "{:?}", err);
+                        return;
+                    }
+                };
+
+                let res: EthLogs = match from_str(&body_str) {
+                    Ok(res) => res,
+                    Err(err) => {
+                        log!(error, "{:?}", err);
+                        return;
+                    }
+                };
+                res.result.iter().for_each(|message| {
+                    Self::consume_l1_message(OriginFor::<T>::none(), message.into_transaction()).unwrap();
+                });
+            }
         }
     }
 }
