@@ -47,9 +47,10 @@ scale-info = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
+hex = { workspace = true }
 pallet-timestamp = { workspace = true }
 pretty_assertions = "1.3.0"
-hex = { workspace = true }
+test-case = "3.0.0"
 
 
 [features]
