@@ -21,7 +21,6 @@ fn test_merkle_tree() {
             sender_address: ContractAddressWrapper::from([0; 32]),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
-            selector: H256::default(),
         },
         Transaction {
             version: U256::zero(),
@@ -31,7 +30,6 @@ fn test_merkle_tree() {
             sender_address: ContractAddressWrapper::from([1; 32]),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
-            selector: H256::default(),
         },
     ];
     let tx_com = calculate_transaction_commitment::<PedersenHasher>(&txs);

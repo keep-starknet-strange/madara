@@ -57,13 +57,22 @@ impl Message {
 
     /// Converts a `Message` into a transaction object.
     pub fn try_into_transaction(&self) -> Result<Transaction, OffchainWorkerError> {
+        // Data at least contains a nonce and at some point the fees.
+        if self.data.is_empty() {
+            return Err(OffchainWorkerError::EmptyData);
+        }
+        // L2 contract to call.
         let sender_address = Self::decode_hex_le(&self.topics[2])?;
+        // Function of the contract to call.
         let selector = H256::from_slice(&Self::decode_hex_le(&self.topics[3])?);
+        // Add the from address here so it's directly in the calldata.
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
             .chars()
             .collect::<Vec<char>>();
-
+        // Split the data String into values. (The event Log(a: uin256, b: uin256, c: uin256) logs a single
+        // string which is the concatenation of those fields).
         let data_map = char_vec.chunks(64).map(|chunk| chunk.iter().collect::<String>());
+        // L1 message nonce.
         let nonce = U256::from_str_radix(&data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)?, 16)
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata = Vec::new();
@@ -87,13 +96,18 @@ impl Message {
             sender_address,
             nonce,
             call_entrypoint,
-            selector,
         })
     }
 }
 
 #[cfg(test)]
 mod test {
+    use core::str::FromStr;
+
+    use frame_support::{bounded_vec, BoundedVec};
+    use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+    use kp_starknet::transaction::types::Transaction;
+    use sp_core::{H256, U256};
     use test_case::test_case;
 
     use crate::types::{Message, OffchainWorkerError};
@@ -111,5 +125,44 @@ mod test {
             assert!(res.is_err());
             assert_eq!(res.unwrap_err(), OffchainWorkerError::HexDecodeError);
         }
+    }
+
+    #[test]
+    fn test_try_into_transaction_correct_message_should_work() {
+        let hex = "0x1".to_owned();
+        let test_message: Message =
+            Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex.clone() };
+        let expected_tx = Transaction {
+            version: U256::default(),
+            hash: H256::default(),
+            signature: BoundedVec::default(),
+            events: BoundedVec::default(),
+            sender_address: H256::from_low_u64_be(1).to_fixed_bytes(),
+            nonce: U256::from(1),
+            call_entrypoint: CallEntryPointWrapper {
+                class_hash: None,
+                entrypoint_type: EntryPointTypeWrapper::L1Handler,
+                entrypoint_selector: Some(H256::from_str(&hex.clone()).unwrap()),
+                calldata: bounded_vec![H256::from_low_u64_be(1), H256::from_low_u64_be(1)],
+                storage_address: H256::from_low_u64_be(1).to_fixed_bytes(),
+                caller_address: ContractAddressWrapper::default(),
+            },
+        };
+        assert_eq!(test_message.try_into_transaction().unwrap(), expected_tx);
+    }
+
+    #[test]
+    fn test_try_into_transaction_incorrect_topic_should_fail() {
+        let hex = "0x1".to_owned();
+        let test_message: Message =
+            Message { topics: vec![hex.clone(), hex.clone(), "foo".to_owned(), hex.clone()], data: hex.clone() };
+        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+    }
+    #[test]
+    fn test_try_into_transaction_empty_data_should_fail() {
+        let hex = "0x1".to_owned();
+        let test_message: Message =
+            Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: "".to_owned() };
+        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::EmptyData);
     }
 }

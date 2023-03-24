@@ -64,9 +64,8 @@ impl Transaction {
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
-        selector: H256,
     ) -> Self {
-        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, selector }
+        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -114,7 +113,9 @@ impl Transaction {
             nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
             calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
-            entry_point_selector: EntryPointSelector(StarkHash::new(*self.selector.as_fixed_bytes()).unwrap()),
+            entry_point_selector: EntryPointSelector(
+                StarkHash::new(*self.call_entrypoint.entrypoint_selector.unwrap().as_fixed_bytes()).unwrap(),
+            ),
         }
     }
 
@@ -200,7 +201,6 @@ impl Default for Transaction {
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
-            selector: H256::default(),
         }
     }
 }

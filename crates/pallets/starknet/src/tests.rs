@@ -111,7 +111,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 				contract_address_bytes,
 				contract_address_bytes
 			),
-            H256::default()
 		);
 
         let tx = Message {
