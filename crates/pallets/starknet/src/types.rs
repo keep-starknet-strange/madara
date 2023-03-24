@@ -6,7 +6,7 @@ use serde::Deserialize;
 use sp_core::{H256, U256};
 use sp_runtime::offchain::http::Error;
 use sp_runtime::offchain::HttpError;
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{DispatchError, RuntimeDebug};
 
 extern crate alloc;
 use alloc::string::String;
@@ -40,6 +40,10 @@ pub enum OffchainWorkerError {
     RequestError(Error),
     SerdeError,
     ToBytesError(Utf8Error),
+    ConsumeMessageError(DispatchError),
+    ToTransactionError,
+    U256ConversionError,
+    HexDecodeError,
 }
 
 /// Struct that represents the response fields that we need of the eth node for

@@ -133,8 +133,11 @@ pub mod pallet {
         /// # Arguments
         /// * `n` - The block number.
         fn offchain_worker(n: T::BlockNumber) {
-            Self::process_l1_messages();
             log!(info, "Running offchain worker at block {:?}.", n);
+            match Self::process_l1_messages() {
+                Ok(_) => log!(info, "Successfully executed L1 messages"),
+                Err(err) => log!(error, "Failed to executed L1 message {:?}", err),
+            }
         }
     }
 
@@ -555,43 +558,21 @@ pub mod pallet {
         }
 
         /// Fetches L1 messages and execute them.
-        fn process_l1_messages() {
-            let body_str = match Self::query_eth(LAST_FINALIZED_BLOCK_QUERY) {
-                Ok(res) => res,
-                Err(err) => {
-                    log!(error, "{:?}", err);
-                    return;
-                }
-            };
-            let res: EthBlockNumber = match from_str(&body_str) {
-                Ok(res) => res,
-                Err(err) => {
-                    log!(error, "{:?}", err);
-                    return;
-                }
-            };
+        fn process_l1_messages() -> Result<(), OffchainWorkerError> {
+            let body_str = Self::query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
+            let res: EthBlockNumber = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
             let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
             let last_known_eth_block = Self::last_known_eth_block().unwrap();
             if last_finalized_block > last_known_eth_block {
-                let body_str = match Self::query_eth(&get_messages_events(last_known_eth_block, last_finalized_block)) {
-                    Ok(res) => res,
-                    Err(err) => {
-                        log!(error, "{:?}", err);
-                        return;
-                    }
-                };
+                let body_str = Self::query_eth(&get_messages_events(last_known_eth_block, last_finalized_block))?;
 
-                let res: EthLogs = match from_str(&body_str) {
-                    Ok(res) => res,
-                    Err(err) => {
-                        log!(error, "{:?}", err);
-                        return;
-                    }
-                };
-                res.result.iter().for_each(|message| {
-                    Self::consume_l1_message(OriginFor::<T>::none(), message.into_transaction()).unwrap();
-                });
+                let res: EthLogs = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
+                res.result.iter().try_for_each(|message| {
+                    Self::consume_l1_message(OriginFor::<T>::none(), message.try_into_transaction()?)
+                        .map_err(OffchainWorkerError::ConsumeMessageError)
+                })?;
             }
+            Ok(())
         }
     }
 }
