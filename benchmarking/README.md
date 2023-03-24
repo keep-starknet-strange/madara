@@ -1,6 +1,6 @@
-# Kaioshin Benchmarking
+# Madara Benchmarking
 
-This is a collection of scripts and tools to benchmark Kaioshin leveraging artillery.
+This is a collection of scripts and tools to benchmark Madara leveraging artillery.
 
 Steps to follow :
 - Install the dependencies using `yarn install`

@@ -1,4 +1,4 @@
-use kaioshin_runtime::{
+use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
     WASM_BINARY,
 };
@@ -155,6 +155,6 @@ fn testnet_genesis(
         },
         transaction_payment: Default::default(),
         /// Starknet Genesis configuration.
-        starknet: kaioshin_runtime::pallet_starknet::GenesisConfig { contracts: vec![], _phantom: Default::default() },
+        starknet: madara_runtime::pallet_starknet::GenesisConfig { contracts: vec![], _phantom: Default::default() },
     }
 }

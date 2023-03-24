@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-// Kaioshin primitives.
+// Madara primitives.
 // TODO: import the primitives.
 // A few exports that help ease life for downstream crates.
 pub use frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
@@ -84,8 +84,8 @@ pub mod opaque {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("kaioshin"),
-    impl_name: create_runtime_str!("kaioshin"),
+    spec_name: create_runtime_str!("madara"),
+    impl_name: create_runtime_str!("madara"),
     authoring_version: 1,
     // The version of the runtime specification. A full node will not attempt to use its native
     //   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
@@ -254,9 +254,9 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type Randomness = KaioshinRandomness;
+    type Randomness = MadaraRandomness;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
-    type SystemHash = kp_starknet::crypto::hash::pedersen::PedersenHasher;
+    type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
 }
 
@@ -281,7 +281,7 @@ construct_runtime!(
         // Include Starknet pallet.
         Starknet: pallet_starknet,
         // Include pallet for randomness.
-        KaioshinRandomness: pallet_insecure_randomness_collective_flip,
+        MadaraRandomness: pallet_insecure_randomness_collective_flip,
     }
 );
 

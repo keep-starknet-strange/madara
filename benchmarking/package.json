@@ -1,8 +1,8 @@
 {
-  "name": "kaioshin-benchmarking",
+  "name": "madara-benchmarking",
   "version": "1.0.0",
   "license": "MIT",
-  "description": "Benchmarking of Kaioshin.",
+  "description": "Benchmarking of Madara.",
   "main": "index.js",
   "scripts": {
     "test:chain": "artillery run -e local ./scripts/chain.yml",
@@ -13,10 +13,10 @@
     "test": "yarn test:storage && yarn metrics",
     "chain:dev": "../scripts/run_node.sh",
     "test:wait": "wait-on tcp:9944 && yarn test",
-		"test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
+    "test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
   },
   "keywords": [
-    "kaioshin",
+    "madara",
     "benchmark"
   ],
   "devDependencies": {

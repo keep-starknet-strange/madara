@@ -3,19 +3,19 @@ name = "pallet-starknet"
 version = "0.1.0-dev"
 description = "FRAME pallet to execute Starknet contracts."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
-homepage = "https://github.com/keep-starknet-strange/kaioshin"
+homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
 license = "MIT"
 publish = false
-repository = "https://github.com/keep-starknet-strange/kaioshin"
+repository = "https://github.com/keep-starknet-strange/madara"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Kaiohsin pallets
-# Kaioshin primitives
-kp-starknet = { workspace = true, default-features = false }
+# Madara primitives
+mp-starknet = { workspace = true, default-features = false }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
@@ -63,8 +63,8 @@ std = [
   "frame-benchmarking?/std",
   "scale-info/std",
   "pallet-timestamp/std",
-  # Kaioshin
-  "kp-starknet/std",
+  # Madara
+  "mp-starknet/std",
   # Starknet
   "starknet-crypto/std",
   "blockifier/std",

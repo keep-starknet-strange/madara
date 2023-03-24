@@ -8,8 +8,8 @@
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
-use kaioshin_runtime::opaque::Block;
-use kaioshin_runtime::{AccountId, Balance, Index};
+use madara_runtime::opaque::Block;
+use madara_runtime::{AccountId, Balance, Index};
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;

@@ -2,4 +2,4 @@
 # This script is meant to be run on Unix/Linux based systems
 set -e
 
-exec ./target/release/kaioshin --dev --ws-external --execution native
+exec ./target/release/madara --dev --ws-external --execution native

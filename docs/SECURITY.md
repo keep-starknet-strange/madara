@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If there are any vulnerabilities in **Kaioshin**, don't hesitate to _report them_.
+If there are any vulnerabilities in **Madara**, don't hesitate to _report them_.
 
 1. Use any of the [private contact addresses](https://github.com/keep-starknet-strange/madara#support).
 2. Describe the vulnerability.

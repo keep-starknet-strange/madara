@@ -49,7 +49,7 @@ pub struct CallEntryPointWrapper {
     pub caller_address: ContractAddressWrapper,
 }
 impl EntryPointTypeWrapper {
-    /// Convert Kaioshin entrypoint type to Starknet entrypoint type.
+    /// Convert Madara entrypoint type to Starknet entrypoint type.
     pub fn to_starknet(&self) -> EntryPointType {
         match self {
             Self::Constructor => EntryPointType::Constructor,
