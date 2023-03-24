@@ -4,7 +4,7 @@ use frame_support::traits::EnsureOrigin;
 use crate::types::RawOrigin;
 
 /// Ensure that the origin is a Starknet transaction.
-/// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
+/// See: `https://github.com/keep-starknet-strange/madara/issues/21`
 /// # Arguments
 /// * `o` - The origin to check.
 /// # Returns
@@ -20,7 +20,7 @@ where
 }
 
 /// Ensure that the origin is a Starknet transaction.
-/// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
+/// See: `https://github.com/keep-starknet-strange/madara/issues/21`
 pub struct EnsureStarknetTransaction;
 impl<OuterOrigin: Into<Result<RawOrigin, OuterOrigin>> + From<RawOrigin>> EnsureOrigin<OuterOrigin>
     for EnsureStarknetTransaction

@@ -1,6 +1,6 @@
 use frame_support::BoundedVec;
-use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
-use kp_starknet::transaction::types::Transaction;
+use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+use mp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
 use crate::pallet::alloc::borrow::ToOwned;
@@ -102,8 +102,8 @@ impl Message {
 #[cfg(test)]
 mod test {
     use frame_support::{bounded_vec, BoundedVec};
-    use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
-    use kp_starknet::transaction::types::Transaction;
+    use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+    use mp_starknet::transaction::types::Transaction;
     use pretty_assertions;
     use sp_core::{H256, U256};
     use test_case::test_case;

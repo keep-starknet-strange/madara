@@ -1,12 +1,12 @@
 use std::str::FromStr;
 
 use frame_support::bounded_vec;
-use kp_starknet::crypto::commitment::{
+use mp_starknet::crypto::commitment::{
     calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment,
 };
-use kp_starknet::crypto::hash::pedersen::PedersenHasher;
-use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper};
-use kp_starknet::transaction::types::{Event, Transaction};
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper};
+use mp_starknet::transaction::types::{Event, Transaction};
 use sp_core::{H256, U256};
 use starknet_crypto::FieldElement;
 

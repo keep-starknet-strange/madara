@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Madara</h1>
-  <img src="docs/images/madara.png" height="512">
+  <img src="docs/images/madara.png" height="256">
   <br />
   <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
   -
@@ -20,18 +20,18 @@
 
 ## About
 
-Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
+Madara is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
 
 ![](docs/images/madara-demo-fib-cairo-execution-in-pallet.gif)
 
 ## Architecture
 
-`Kaioshin` is formed by those components:
+`Madara` is formed by those components:
 - `node`: services for the blockchain node implementation (chain specification, rpc, ...)
 - `pallets`: custom FRAME pallets
   - `pallet-cairo`: Cairo execution engine pallet.
   - `pallet-starknet`: Starknet pallet.
-- `runtime`: assemble Kaioshin custom logic with the configured pallets.
+- `runtime`: assemble Madara custom logic with the configured pallets.
 
 Here is a high level overview of the current architecture of Starknet sequencer.
 
@@ -53,7 +53,7 @@ You can run benchmarks to get an idea of the performance of the pallets. To run 
 
 ## Getting Started
 
-Follow the steps below to get started with Kaioshin :hammer_and_wrench:
+Follow the steps below to get started with Madara :hammer_and_wrench:
 
 ### Using Nix
 
@@ -316,15 +316,15 @@ Reach out to the maintainer at one of the following places:
 
 ## Project assistance
 
-If you want to say **thank you** or/and support active development of Kaioshin:
+If you want to say **thank you** or/and support active development of Madara:
 
 - Add a [GitHub Star](https://github.com/keep-starknet-strange/madara) to the
   project.
-- Tweet about the Kaioshin.
+- Tweet about the Madara.
 - Write interesting articles about the project on [Dev.to](https://dev.to/),
   [Medium](https://medium.com/) or your personal blog.
 
-Together, we can make Kaioshin **better**!
+Together, we can make Madara **better**!
 
 ## Contributing
 
@@ -343,8 +343,8 @@ For a full list of all authors and contributors, see
 
 ## Security
 
-Kaioshin follows good practices of security, but 100% security cannot be assured.
-Kaioshin is provided **"as is"** without any **warranty**. Use at your own risk.
+Madara follows good practices of security, but 100% security cannot be assured.
+Madara is provided **"as is"** without any **warranty**. Use at your own risk.
 
 _For more information and to report security issues, please refer to our
 [security documentation](docs/SECURITY.md)._

@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help Kaioshin to improve
+about: Create a report to help Madara to improve
 title: "bug: "
 labels: "bug"
 assignees: ""
@@ -8,7 +8,7 @@ assignees: ""
 
 # Bug Report
 
-**Kaioshin version:**
+**Madara version:**
 
 <!-- Please specify commit or tag version. -->
 

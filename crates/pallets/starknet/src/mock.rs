@@ -16,7 +16,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system,
-        KaioshinRandomness: pallet_insecure_randomness_collective_flip,
+        MadaraRandomness: pallet_insecure_randomness_collective_flip,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
     }
@@ -61,9 +61,9 @@ impl system::Config for Test {
 
 impl pallet_starknet::Config for Test {
     type RuntimeEvent = RuntimeEvent;
-    type Randomness = KaioshinRandomness;
+    type Randomness = MadaraRandomness;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
-    type SystemHash = kp_starknet::crypto::hash::pedersen::PedersenHasher;
+    type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
 }
 

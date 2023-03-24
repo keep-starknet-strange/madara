@@ -1,16 +1,16 @@
 [package]
-name = "kaioshin-runtime"
+name = "madara-runtime"
 version = "0.1.0-dev"
-description = "Kaioshin runtime."
+description = "Madara runtime."
 authors = [
   "Abdelhamid Bakhta <@abdelhamidbakhta>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
-homepage = "https://github.com/keep-starknet-strange/kaioshin"
+homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
 license = "MIT"
 publish = false
-repository = "https://github.com/keep-starknet-strange/kaioshin"
+repository = "https://github.com/keep-starknet-strange/madara"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -58,11 +58,11 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-system-benchmarking = { workspace = true, optional = true }
 
-# Kaioshin Local Dependencies
-# Kaioshin Pallets
+# Madara Local Dependencies
+# Madara Pallets
 pallet-starknet = { workspace = true }
-# Kaioshin Primitives
-kp-starknet = { workspace = true, default-features = false }
+# Madara Primitives
+mp-starknet = { workspace = true, default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -70,7 +70,7 @@ substrate-wasm-builder = { workspace = true }
 [features]
 default = ["std"]
 std = [
-  # Kaioshin pallets
+  # Madara pallets
   "pallet-starknet/std",
   # Frame dependencies
   "frame-try-runtime?/std",

@@ -11,7 +11,7 @@ panic = "unwind"
 [workspace.package]
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
-repository = "https://github.com/keep-starknet-strange/kaioshin/"
+repository = "https://github.com/keep-starknet-strange/madara/"
 
 
 [workspace.dependencies]
@@ -78,11 +78,11 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 pallet-insecure-randomness-collective-flip = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
-# Kaioshin pallets
+# Madara pallets
 pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", default-features = false }
 
-# Kaioshin primtitives
-kp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
+# Madara primtitives
+mp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
 
 # Starknet dependencies
 # Cairo Virtual Machine

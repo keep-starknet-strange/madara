@@ -2,16 +2,16 @@ version: "3.2"
 
 services:
   dev:
-    container_name: kaioshin
+    container_name: madara
     image: paritytech/ci-linux:production
-    working_dir: /var/www/kaioshin
+    working_dir: /var/www/madara
     ports:
       - "9944:9944"
     environment:
-      - CARGO_HOME=/var/www/kaioshin/.cargo
+      - CARGO_HOME=/var/www/madara/.cargo
     volumes:
-      - .:/var/www/kaioshin
+      - .:/var/www/madara
       - type: bind
         source: ./.local
         target: /root/.local
-    command: bash -c "cargo build --release && ./target/release/kaioshin --dev --ws-external"
+    command: bash -c "cargo build --release && ./target/release/madara --dev --ws-external"

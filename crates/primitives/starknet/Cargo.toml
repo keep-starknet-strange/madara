@@ -1,5 +1,5 @@
 [package]
-name = "kp-starknet"
+name = "mp-starknet"
 version = "0.1.0-dev"
 license = "MIT"
 description = "Starknet primitives for Substrate."

@@ -2,9 +2,9 @@ use core::str::FromStr;
 
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use kp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
-use kp_starknet::starknet_block::header::Header;
-use kp_starknet::transaction::types::Transaction;
+use mp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
+use mp_starknet::starknet_block::header::Header;
+use mp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
