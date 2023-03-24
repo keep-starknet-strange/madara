@@ -117,7 +117,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let tx = Message {
             topics: vec!["0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b".to_owned(), "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(), "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(), "0x1310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771".to_owned()],
             data: "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
-        }.into_transaction();
+        }.try_into_transaction().unwrap();
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
     });
