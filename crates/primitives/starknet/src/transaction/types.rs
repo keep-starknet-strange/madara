@@ -31,8 +31,6 @@ pub struct Transaction {
     pub nonce: U256,
     /// Call entrypoint
     pub call_entrypoint: CallEntryPointWrapper,
-    /// Selector
-    pub selector: H256,
 }
 
 /// Representation of a Starknet event.
