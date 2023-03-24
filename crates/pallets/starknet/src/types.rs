@@ -34,7 +34,7 @@ pub enum RawOrigin {
 }
 
 /// Error enum wrapper for offchain worker tasks.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum OffchainWorkerError {
     HttpError(HttpError),
     RequestError(Error),
