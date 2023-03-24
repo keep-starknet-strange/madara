@@ -1,20 +1,20 @@
 <div align="center">
-  <h1>Kaioshin</h1>
-  <img src="docs/images/logo_small.png" height="512">
+  <h1>Madara</h1>
+  <img src="docs/images/madara.png" height="512">
   <br />
-  <a href="https://github.com/keep-starknet-strange/kaioshin/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
+  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
   -
-  <a href="https://github.com/keep-starknet-strange/kaioshin/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
+  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
   -
-  <a href="https://github.com/keep-starknet-strange/kaioshin/discussions">Ask a Question</a>
+  <a href="https://github.com/keep-starknet-strange/madara/discussions">Ask a Question</a>
 </div>
 
 <div align="center">
 <br />
 
-[![GitHub Workflow Status](https://github.com/keep-starknet-strange/kaioshin/actions/workflows/check.yml/badge.svg)](https://github.com/keep-starknet-strange/kaioshin/actions/workflows/check.yml)
-[![Project license](https://img.shields.io/github/license/keep-starknet-strange/kaioshin.svg?style=flat-square)](LICENSE)
-[![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/kaioshin/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+[![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/check.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/check.yml)
+[![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
+[![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 
 </div>
 
@@ -22,7 +22,7 @@
 
 Kaioshin is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
 
-![](docs/images/kaioshin-demo-fib-cairo-execution-in-pallet.gif)
+![](docs/images/madara-demo-fib-cairo-execution-in-pallet.gif)
 
 ## Architecture
 
@@ -95,7 +95,7 @@ Once the project has been built, the following command can be used to explore al
 subcommands:
 
 ```sh
-./target/release/kaioshin -h
+./target/release/madara -h
 ```
 
 ## Run
@@ -109,24 +109,24 @@ node.
 This command will start the single-node development chain with non-persistent state:
 
 ```bash
-./target/release/kaioshin --dev
+./target/release/madara --dev
 ```
 
 Purge the development chain's state:
 
 ```bash
-./target/release/kaioshin purge-chain --dev
+./target/release/madara purge-chain --dev
 ```
 
 Start the development chain with detailed logging:
 
 ```bash
-RUST_BACKTRACE=1 ./target/release/kaioshin -ldebug --dev
+RUST_BACKTRACE=1 ./target/release/madara -ldebug --dev
 ```
 
 > Development chain means that the state of our chain will be in a tmp folder while the nodes are
 > running. Also, **alice** account will be authority and sudo account as declared in the
-> [genesis state](https://github.com/substrate-developer-hub/substrate-kaioshin/blob/main/node/src/chain_spec.rs#L49).
+> [genesis state](https://github.com/substrate-developer-hub/substrate-madara/blob/main/node/src/chain_spec.rs#L49).
 > At the same time the following accounts will be pre-funded:
 > - Alice
 > - Bob
@@ -143,7 +143,7 @@ is ran. The following commands shows how to use a newly created folder as our db
 $ mkdir my-chain-state
 
 // Use of that folder to store the chain state
-$ ./target/release/kaioshin --dev --base-path ./my-chain-state/
+$ ./target/release/madara --dev --base-path ./my-chain-state/
 
 // Check the folder structure created inside the base path after running the chain
 $ ls ./my-chain-state
@@ -168,9 +168,9 @@ Build custom chain spec:
 
 ```bash
 # Build plain chain spec
-cargo run --release -- build-spec --chain local > infra/chain-specs/kaioshin-local-testnet-plain.json
+cargo run --release -- build-spec --chain local > infra/chain-specs/madara-local-testnet-plain.json
 # Build final raw chain spec
-cargo run --release -- build-spec --chain infra/chain-specs/kaioshin-local-testnet-plain.json --raw > infra/chain-specs/kaioshin-local-testnet.json
+cargo run --release -- build-spec --chain infra/chain-specs/madara-local-testnet-plain.json --raw > infra/chain-specs/madara-local-testnet.json
 ```
 
 See more details about [custom chain specs](https://docs.substrate.io/reference/how-to-guides/basics/customize-a-chain-specification/).
@@ -222,7 +222,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/kaioshin --help
+./target/release/madara --help
 ```
 
 ### Runtime
@@ -281,15 +281,15 @@ docker-compose -f infra/docker/docker-compose.yml up -d
 
 This command will firstly compile your code, and then start a local development network. You can
 also replace the default command
-(`cargo build --release && ./target/release/kaioshin --dev --ws-external`)
+(`cargo build --release && ./target/release/madara --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
 # Run Substrate node without re-compiling
-./infra/docker_run.sh ./target/release/kaioshin --dev --ws-external
+./infra/docker_run.sh ./target/release/madara --dev --ws-external
 
 # Purge the local dev chain
-./infra/docker_run.sh ./target/release/kaioshin purge-chain --dev
+./infra/docker_run.sh ./target/release/madara purge-chain --dev
 
 # Check whether the code is compilable
 ./infra/docker_run.sh cargo check
@@ -297,20 +297,20 @@ by appending your own. A few useful ones are as follow.
 
 ## Roadmap
 
-See the [open issues](https://github.com/keep-starknet-strange/kaioshin/issues) for
+See the [open issues](https://github.com/keep-starknet-strange/madara/issues) for
 a list of proposed features (and known issues).
 
-- [Top Feature Requests](https://github.com/keep-starknet-strange/kaioshin/issues?q=label%3Aenhancement+is%3Aopen+sort%3Areactions-%2B1-desc)
+- [Top Feature Requests](https://github.com/keep-starknet-strange/madara/issues?q=label%3Aenhancement+is%3Aopen+sort%3Areactions-%2B1-desc)
   (Add your votes using the 👍 reaction)
-- [Top Bugs](https://github.com/keep-starknet-strange/kaioshin/issues?q=is%3Aissue+is%3Aopen+label%3Abug+sort%3Areactions-%2B1-desc)
+- [Top Bugs](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3Abug+sort%3Areactions-%2B1-desc)
   (Add your votes using the 👍 reaction)
-- [Newest Bugs](https://github.com/keep-starknet-strange/kaioshin/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
+- [Newest Bugs](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
 
 ## Support
 
 Reach out to the maintainer at one of the following places:
 
-- [GitHub Discussions](https://github.com/keep-starknet-strange/kaioshin/discussions)
+- [GitHub Discussions](https://github.com/keep-starknet-strange/madara/discussions)
 - Contact options listed on
   [this GitHub profile](https://github.com/keep-starknet-strange)
 
@@ -318,7 +318,7 @@ Reach out to the maintainer at one of the following places:
 
 If you want to say **thank you** or/and support active development of Kaioshin:
 
-- Add a [GitHub Star](https://github.com/keep-starknet-strange/kaioshin) to the
+- Add a [GitHub Star](https://github.com/keep-starknet-strange/madara) to the
   project.
 - Tweet about the Kaioshin.
 - Write interesting articles about the project on [Dev.to](https://dev.to/),
@@ -339,7 +339,7 @@ for being involved!
 ## Authors & contributors
 
 For a full list of all authors and contributors, see
-[the contributors page](https://github.com/keep-starknet-strange/kaioshin/contributors).
+[the contributors page](https://github.com/keep-starknet-strange/madara/contributors).
 
 ## Security
 
@@ -390,10 +390,10 @@ It means that you don't have `protoc` installed on your machine. You can install
 
 #### Error
 ```text
-error: failed to run custom build command for `kaioshin-runtime v4.0.0-dev (/Users/abdel/dev/me/kaioshin/runtime)`
+error: failed to run custom build command for `madara-runtime v4.0.0-dev (/Users/abdel/dev/me/madara/runtime)`
 
 Caused by:
-  process didn't exit successfully: `.../kaioshin/target/release/build/kaioshin-runtime-9df5c70f9d1b72f5/build-script-build` (exit status: 1)
+  process didn't exit successfully: `.../madara/target/release/build/madara-runtime-9df5c70f9d1b72f5/build-script-build` (exit status: 1)
   --- stderr
   Rust WASM toolchain not installed, please install it!
 
@@ -424,13 +424,13 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <table>
   <tbody>
     <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abdelhamidbakhta"><img src="https://avatars.githubusercontent.com/u/45264458?v=4?s=100" width="100px;" alt="Abdel @ StarkWare "/><br /><sub><b>Abdel @ StarkWare </b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=abdelhamidbakhta" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tdelabro"><img src="https://avatars.githubusercontent.com/u/34384633?v=4?s=100" width="100px;" alt="Timothée Delabrouille"/><br /><sub><b>Timothée Delabrouille</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=tdelabro" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/EvolveArt"><img src="https://avatars.githubusercontent.com/u/12902455?v=4?s=100" width="100px;" alt="0xevolve"/><br /><sub><b>0xevolve</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=EvolveArt" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LucasLvy"><img src="https://avatars.githubusercontent.com/u/70894690?v=4?s=100" width="100px;" alt="Lucas @ StarkWare"/><br /><sub><b>Lucas @ StarkWare</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=LucasLvy" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DavideSilva"><img src="https://avatars.githubusercontent.com/u/2940022?v=4?s=100" width="100px;" alt="Davide Silva"/><br /><sub><b>Davide Silva</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=DavideSilva" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://www.finiam.com/"><img src="https://avatars.githubusercontent.com/u/58513848?v=4?s=100" width="100px;" alt="Finiam"/><br /><sub><b>Finiam</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=finiam" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZePedroResende"><img src="https://avatars.githubusercontent.com/u/17102689?v=4?s=100" width="100px;" alt="Resende"/><br /><sub><b>Resende</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/kaioshin/commits?author=ZePedroResende" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/abdelhamidbakhta"><img src="https://avatars.githubusercontent.com/u/45264458?v=4?s=100" width="100px;" alt="Abdel @ StarkWare "/><br /><sub><b>Abdel @ StarkWare </b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=abdelhamidbakhta" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tdelabro"><img src="https://avatars.githubusercontent.com/u/34384633?v=4?s=100" width="100px;" alt="Timothée Delabrouille"/><br /><sub><b>Timothée Delabrouille</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=tdelabro" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/EvolveArt"><img src="https://avatars.githubusercontent.com/u/12902455?v=4?s=100" width="100px;" alt="0xevolve"/><br /><sub><b>0xevolve</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=EvolveArt" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LucasLvy"><img src="https://avatars.githubusercontent.com/u/70894690?v=4?s=100" width="100px;" alt="Lucas @ StarkWare"/><br /><sub><b>Lucas @ StarkWare</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=LucasLvy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DavideSilva"><img src="https://avatars.githubusercontent.com/u/2940022?v=4?s=100" width="100px;" alt="Davide Silva"/><br /><sub><b>Davide Silva</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=DavideSilva" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.finiam.com/"><img src="https://avatars.githubusercontent.com/u/58513848?v=4?s=100" width="100px;" alt="Finiam"/><br /><sub><b>Finiam</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=finiam" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZePedroResende"><img src="https://avatars.githubusercontent.com/u/17102689?v=4?s=100" width="100px;" alt="Resende"/><br /><sub><b>Resende</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ZePedroResende" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

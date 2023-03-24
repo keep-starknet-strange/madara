@@ -14,8 +14,8 @@ To set up a development environment, please follow these steps:
 1. Clone the repo
 
    ```sh
-   git clone https://github.com/keep-starknet-strange/kaioshin
-   cd kaioshin
+   git clone https://github.com/keep-starknet-strange/madara
+   cd madara
    cargo test
    ```
 
@@ -23,7 +23,7 @@ To set up a development environment, please follow these steps:
 
 ## Issues and feature requests
 
-You've found a bug in the source code, a mistake in the documentation or maybe you'd like a new feature?Take a look at [GitHub Discussions](https://github.com/keep-starknet-strange/kaioshin/discussions) to see if it's already being discussed.  You can help us by [submitting an issue on GitHub](https://github.com/keep-starknet-strange/kaioshin/issues). Before you create an issue, make sure to search the issue archive -- your issue may have already been addressed!
+You've found a bug in the source code, a mistake in the documentation or maybe you'd like a new feature?Take a look at [GitHub Discussions](https://github.com/keep-starknet-strange/madara/discussions) to see if it's already being discussed.  You can help us by [submitting an issue on GitHub](https://github.com/keep-starknet-strange/madara/issues). Before you create an issue, make sure to search the issue archive -- your issue may have already been addressed!
 
 Please try to create bug reports that are:
 
@@ -37,10 +37,10 @@ Please try to create bug reports that are:
 ### How to submit a Pull Request
 
 1. Search our repository for open or closed
-   [Pull Requests](https://github.com/keep-starknet-strange/kaioshin/pulls)
+   [Pull Requests](https://github.com/keep-starknet-strange/madara/pulls)
    that relate to your submission. You don't want to duplicate effort.
 2. Fork the project
 3. Create your feature branch (`git checkout -b feat/amazing_feature`)
 4. Commit your changes (`git commit -m 'feat: add amazing_feature'`)
 5. Push to the branch (`git push origin feat/amazing_feature`)
-6. [Open a Pull Request](https://github.com/keep-starknet-strange/kaioshin/compare?expand=1)
+6. [Open a Pull Request](https://github.com/keep-starknet-strange/madara/compare?expand=1)
