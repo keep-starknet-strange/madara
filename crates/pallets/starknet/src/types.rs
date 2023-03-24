@@ -45,6 +45,7 @@ pub enum OffchainWorkerError {
     U256ConversionError,
     HexDecodeError,
     EmptyData,
+    NoLastKnownEthBlock,
 }
 
 /// Struct that represents the response fields that we need of the eth node for

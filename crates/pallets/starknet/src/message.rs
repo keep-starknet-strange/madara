@@ -46,7 +46,6 @@ impl Message {
     pub fn decode_hex_le(s: &str) -> Result<[u8; 32], OffchainWorkerError> {
         let s = s.trim_start_matches("0x");
         let s = if s.len() % 2 != 0 { format!("0{:}", s) } else { s.to_owned() };
-
         let mut res = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         for (id, i) in (0..s.len()).step_by(2).enumerate() {
             res[id] = u8::from_str_radix(&s[i..i + 2], 16).map_err(|_| OffchainWorkerError::HexDecodeError)?;
@@ -102,11 +101,10 @@ impl Message {
 
 #[cfg(test)]
 mod test {
-    use core::str::FromStr;
-
     use frame_support::{bounded_vec, BoundedVec};
     use kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     use kp_starknet::transaction::types::Transaction;
+    use pretty_assertions;
     use sp_core::{H256, U256};
     use test_case::test_case;
 
@@ -120,7 +118,7 @@ mod test {
         let res = Message::decode_hex_le(value);
         if should_success {
             assert!(res.is_ok());
-            assert_eq!(res.unwrap(), result.unwrap())
+            pretty_assertions::assert_eq!(res.unwrap(), result.unwrap())
         } else {
             assert!(res.is_err());
             assert_eq!(res.unwrap_err(), OffchainWorkerError::HexDecodeError);
@@ -129,7 +127,8 @@ mod test {
 
     #[test]
     fn test_try_into_transaction_correct_message_should_work() {
-        let hex = "0x1".to_owned();
+        let sender_address = H256::from_low_u64_be(1).to_fixed_bytes();
+        let hex = "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned();
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex.clone() };
         let expected_tx = Transaction {
@@ -137,18 +136,18 @@ mod test {
             hash: H256::default(),
             signature: BoundedVec::default(),
             events: BoundedVec::default(),
-            sender_address: H256::from_low_u64_be(1).to_fixed_bytes(),
+            sender_address,
             nonce: U256::from(1),
             call_entrypoint: CallEntryPointWrapper {
                 class_hash: None,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
-                entrypoint_selector: Some(H256::from_str(&hex.clone()).unwrap()),
+                entrypoint_selector: Some(H256::from_low_u64_be(1)),
                 calldata: bounded_vec![H256::from_low_u64_be(1), H256::from_low_u64_be(1)],
                 storage_address: H256::from_low_u64_be(1).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
         };
-        assert_eq!(test_message.try_into_transaction().unwrap(), expected_tx);
+        pretty_assertions::assert_eq!(test_message.try_into_transaction().unwrap(), expected_tx);
     }
 
     #[test]

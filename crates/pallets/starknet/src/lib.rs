@@ -207,7 +207,7 @@ pub mod pallet {
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
 
-            LastKnownEthBlock::<T>::set(Some(16868366));
+            LastKnownEthBlock::<T>::set(None);
         }
     }
 
@@ -559,10 +559,10 @@ pub mod pallet {
 
         /// Fetches L1 messages and execute them.
         fn process_l1_messages() -> Result<(), OffchainWorkerError> {
+            let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
             let body_str = Self::query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
             let res: EthBlockNumber = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
             let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
-            let last_known_eth_block = Self::last_known_eth_block().unwrap();
             if last_finalized_block > last_known_eth_block {
                 let body_str = Self::query_eth(&get_messages_events(last_known_eth_block, last_finalized_block))?;
 
