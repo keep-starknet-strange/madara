@@ -5,7 +5,6 @@ use kaioshin_rpc_core::StarkNetRpcServer;
 use kaioshin_runtime::opaque::Block;
 use kaioshin_runtime::{AccountId, Balance, Index};
 
-use sp_core::U256;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
@@ -36,7 +35,7 @@ where
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {
-    fn get_block_with_tx_hashes(&self, block_id: U256) -> Result<Option<Block>> {
+    fn get_block_with_tx_hashes(&self, block_id: u64) -> Result<Option<Block>> {
         self.get_block_with_tx_hashes(block_id)
     }
 }
