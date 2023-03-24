@@ -166,8 +166,8 @@
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
-<span class="kw">use </span>kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
-<span class="kw">use </span>kp_starknet::transaction::types::Transaction;
+<span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+<span class="kw">use </span>mp_starknet::transaction::types::Transaction;
 <span class="kw">use </span>sp_core::{H256, U256};
 
 <span class="kw">use </span><span class="kw">crate</span>::pallet::alloc::borrow::ToOwned;
@@ -269,8 +269,8 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use </span>frame_support::{bounded_vec, BoundedVec};
-    <span class="kw">use </span>kp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
-    <span class="kw">use </span>kp_starknet::transaction::types::Transaction;
+    <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+    <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
     <span class="kw">use </span>pretty_assertions;
     <span class="kw">use </span>sp_core::{H256, U256};
     <span class="kw">use </span>test_case::test_case;

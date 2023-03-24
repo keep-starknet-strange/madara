@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TxType"],"struct":["Event","Transaction"],"type":["MaxArraySize"]};

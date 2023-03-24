@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"kaioshin_runtime":[["impl GetCallMetadata for <a class=\"enum\" href=\"kaioshin_runtime/enum.RuntimeCall.html\" title=\"enum kaioshin_runtime::RuntimeCall\">RuntimeCall</a>"]]
+"madara_runtime":[["impl GetCallMetadata for <a class=\"enum\" href=\"madara_runtime/enum.RuntimeCall.html\" title=\"enum madara_runtime::RuntimeCall\">RuntimeCall</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

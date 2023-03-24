@@ -49,7 +49,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::RawOrigin;
 
 <span class="doccomment">/// Ensure that the origin is a Starknet transaction.
-/// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
+/// See: `https://github.com/keep-starknet-strange/madara/issues/21`
 /// # Arguments
 /// * `o` - The origin to check.
 /// # Returns
@@ -65,7 +65,7 @@
 }
 
 <span class="doccomment">/// Ensure that the origin is a Starknet transaction.
-/// See: `https://github.com/keep-starknet-strange/kaioshin/issues/21`
+/// See: `https://github.com/keep-starknet-strange/madara/issues/21`
 </span><span class="kw">pub struct </span>EnsureStarknetTransaction;
 <span class="kw">impl</span>&lt;OuterOrigin: Into&lt;<span class="prelude-ty">Result</span>&lt;RawOrigin, OuterOrigin&gt;&gt; + From&lt;RawOrigin&gt;&gt; EnsureOrigin&lt;OuterOrigin&gt;
     <span class="kw">for </span>EnsureStarknetTransaction

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["calculate_commitments","calculate_event_commitment","calculate_event_hash","calculate_transaction_commitment"]};
