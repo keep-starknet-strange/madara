@@ -85,65 +85,107 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 </span><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec;
 
-<span class="kw">use </span>blockifier::execution::entry_point::CallEntryPoint <span class="kw">as </span>StarknetCallEntryPoint;
+<span class="kw">use </span>blockifier::execution::entry_point::CallEntryPoint;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256};
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector};
+<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::EntryPointType;
 <span class="kw">use </span>starknet_api::transaction::Calldata;
 
 <span class="doccomment">/// The address of a contract.
-</span><span class="kw">pub type </span>ContractAddress = [u8; <span class="number">32</span>];
+</span><span class="kw">pub type </span>ContractAddressWrapper = [u8; <span class="number">32</span>];
 
 <span class="kw">type </span>MaxCalldataSize = ConstU32&lt;<span class="number">4294967295</span>&gt;;
-<span class="kw">type </span>ContractClassHash = [u8; <span class="number">32</span>];
-<span class="doccomment">/// TODO: define enum
-</span><span class="kw">type </span>StarknetEntryPointType = u8;
+<span class="doccomment">/// Wrapper type for class hash field.
+</span><span class="kw">pub type </span>ClassHashWrapper = [u8; <span class="number">32</span>];
+
+<span class="doccomment">/// Enum that represents all the entrypoints types.
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub enum </span>EntryPointTypeWrapper {
+    <span class="doccomment">/// Constructor.
+    </span>Constructor,
+    <span class="doccomment">/// External.
+    </span>External,
+    <span class="doccomment">/// L1 Handler.
+    </span>L1Handler,
+}
 
 <span class="doccomment">/// Representation of a Starknet transaction.
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub struct </span>CallEntryPoint {
+</span><span class="kw">pub struct </span>CallEntryPointWrapper {
     <span class="doccomment">/// The class hash
-    </span><span class="kw">pub </span>class_hash: ContractClassHash,
+    </span><span class="kw">pub </span>class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
     <span class="doccomment">/// The entrypoint type
-    </span><span class="kw">pub </span>entrypoint_type: StarknetEntryPointType,
+    </span><span class="kw">pub </span>entrypoint_type: EntryPointTypeWrapper,
     <span class="doccomment">/// The entrypoint selector
     /// An invoke transaction without an entry point selector invokes the &#39;execute&#39; function.
     </span><span class="kw">pub </span>entrypoint_selector: <span class="prelude-ty">Option</span>&lt;H256&gt;,
     <span class="doccomment">/// The Calldata
     </span><span class="kw">pub </span>calldata: BoundedVec&lt;H256, MaxCalldataSize&gt;,
     <span class="doccomment">/// The storage address
-    </span><span class="kw">pub </span>storage_address: ContractAddress,
+    </span><span class="kw">pub </span>storage_address: ContractAddressWrapper,
     <span class="doccomment">/// The caller address
-    </span><span class="kw">pub </span>caller_address: ContractAddress,
+    </span><span class="kw">pub </span>caller_address: ContractAddressWrapper,
+}
+<span class="kw">impl </span>EntryPointTypeWrapper {
+    <span class="doccomment">/// Convert Kaioshin entrypoint type to Starknet entrypoint type.
+    </span><span class="kw">pub fn </span>to_starknet(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EntryPointType {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Constructor =&gt; EntryPointType::Constructor,
+            <span class="self">Self</span>::External =&gt; EntryPointType::External,
+            <span class="self">Self</span>::L1Handler =&gt; EntryPointType::L1Handler,
+        }
+    }
 }
 
-<span class="kw">impl </span>CallEntryPoint {
+<span class="kw">impl </span>CallEntryPointWrapper {
     <span class="doccomment">/// Creates a new instance of a call entrypoint.
     </span><span class="kw">pub fn </span>new(
-        class_hash: ContractClassHash,
-        entrypoint_type: StarknetEntryPointType,
+        class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
+        entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: <span class="prelude-ty">Option</span>&lt;H256&gt;,
         calldata: BoundedVec&lt;H256, MaxCalldataSize&gt;,
-        storage_address: ContractAddress,
-        caller_address: ContractAddress,
+        storage_address: ContractAddressWrapper,
+        caller_address: ContractAddressWrapper,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
     }
 
     <span class="doccomment">/// Convert to Starknet CallEntryPoint
-    </span><span class="kw">pub fn </span>to_starknet_call_entry_point(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StarknetCallEntryPoint {
-        StarknetCallEntryPoint {
-            class_hash: <span class="prelude-val">Some</span>(ClassHash(StarkFelt::new(<span class="self">self</span>.class_hash).unwrap())),
-            <span class="doccomment">/// TODO: Change this to use self.entrypoint_type
-            </span>entry_point_type: EntryPointType::External,
+    </span><span class="kw">pub fn </span>to_starknet_call_entry_point(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CallEntryPoint {
+        <span class="kw">let </span>class_hash = <span class="self">self</span>.class_hash.map(|class_hash| ClassHash(StarkFelt::new(class_hash).unwrap()));
+        CallEntryPoint {
+            class_hash,
+            entry_point_type: <span class="self">self</span>.entrypoint_type.to_starknet(),
             entry_point_selector: EntryPointSelector(
                 StarkFelt::new(<span class="self">self</span>.entrypoint_selector.unwrap_or_default().<span class="number">0</span>).unwrap(),
             ),
@@ -155,20 +197,20 @@
                     .map(|x| StarkFelt::new(<span class="kw-2">*</span>(<span class="kw-2">*</span>x).as_fixed_bytes()).unwrap())
                     .collect(),
             )),
-            storage_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.storage_address).unwrap()).unwrap(),
-            caller_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.caller_address).unwrap()).unwrap(),
+            storage_address: ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.storage_address).unwrap()).unwrap(),
+            caller_address: ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.caller_address).unwrap()).unwrap(),
         }
     }
 }
-<span class="kw">impl </span>Default <span class="kw">for </span>CallEntryPoint {
+<span class="kw">impl </span>Default <span class="kw">for </span>CallEntryPointWrapper {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            class_hash: ContractClassHash::default(),
-            entrypoint_type: <span class="number">0</span>,
+            class_hash: <span class="prelude-val">Some</span>(ClassHashWrapper::default()),
+            entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: <span class="prelude-val">Some</span>(H256::default()),
             calldata: BoundedVec::try_from(<span class="macro">vec!</span>[H256::zero(); <span class="number">32</span>]).unwrap(),
-            storage_address: ContractAddress::default(),
-            caller_address: ContractAddress::default(),
+            storage_address: ContractAddressWrapper::default(),
+            caller_address: ContractAddressWrapper::default(),
         }
     }
 }

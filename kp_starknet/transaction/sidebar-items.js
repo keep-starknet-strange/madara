@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Event","Transaction"]};
+window.SIDEBAR_ITEMS = {"mod":["types"]};

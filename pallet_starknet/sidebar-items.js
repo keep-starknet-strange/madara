@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["log"],"mod":["pallet","state_root","transaction_validation","types"]};
+window.SIDEBAR_ITEMS = {"macro":["log"],"mod":["message","pallet","state_root","transaction_validation","types"]};

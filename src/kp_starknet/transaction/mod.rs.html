@@ -199,9 +199,16 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
+/// Types related to transactions.
+</span><span class="kw">pub mod </span>types;
 
-</span><span class="kw">use </span>alloc::vec;
+<span class="kw">use </span>alloc::vec;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
@@ -212,28 +219,17 @@
 <span class="kw">use </span>blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
 <span class="kw">use </span>blockifier::transaction::transactions::Executable;
 <span class="kw">use </span>frame_support::BoundedVec;
-<span class="kw">use </span>sp_core::{ConstU32, H256, U256};
-<span class="kw">use </span>starknet_api::api_core::{ContractAddress <span class="kw">as </span>StarknetContractAddress, Nonce};
-<span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::transaction::{Fee, InvokeTransaction, TransactionHash, TransactionSignature, TransactionVersion};
+<span class="kw">use </span>sp_core::{H256, U256};
+<span class="kw">use </span>starknet_api::api_core::{ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
+<span class="kw">use </span>starknet_api::transaction::{
+    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
+};
 
-<span class="kw">use </span><span class="kw">crate</span>::block::serialize::SerializeBlockContext;
-<span class="kw">use </span><span class="kw">crate</span>::block::wrapper::block::Block;
-<span class="kw">use </span><span class="kw">crate</span>::execution::{CallEntryPoint, ContractAddress};
-
-<span class="kw">type </span>MaxArraySize = ConstU32&lt;<span class="number">4294967295</span>&gt;;
-
-<span class="doccomment">/// Representation of a Starknet event.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub struct </span>Event {
-    <span class="doccomment">/// The keys (topics) of the event.
-    </span><span class="kw">pub </span>keys: BoundedVec&lt;H256, MaxArraySize&gt;,
-    <span class="doccomment">/// The data of the event.
-    </span><span class="kw">pub </span>data: BoundedVec&lt;H256, MaxArraySize&gt;,
-    <span class="doccomment">/// The address that emited the event
-    </span><span class="kw">pub </span>from_address: H256,
-}
+<span class="kw">use </span><span class="self">self</span>::types::{Event, MaxArraySize, Transaction, TxType};
+<span class="kw">use </span><span class="kw">crate</span>::execution::{CallEntryPointWrapper, ContractAddressWrapper};
+<span class="kw">use </span><span class="kw">crate</span>::starknet_block::block::Block;
+<span class="kw">use </span><span class="kw">crate</span>::starknet_block::serialize::SerializeBlockContext;
 
 <span class="kw">impl </span>Event {
     <span class="doccomment">/// Creates a new instance of an event.
@@ -263,36 +259,17 @@
     }
 }
 
-<span class="doccomment">/// Representation of a Starknet transaction.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub struct </span>Transaction {
-    <span class="doccomment">/// The version of the transaction.
-    </span><span class="kw">pub </span>version: U256,
-    <span class="doccomment">/// Transaction hash.
-    </span><span class="kw">pub </span>hash: H256,
-    <span class="doccomment">/// Signature.
-    </span><span class="kw">pub </span>signature: BoundedVec&lt;H256, MaxArraySize&gt;,
-    <span class="doccomment">/// Events.
-    </span><span class="kw">pub </span>events: BoundedVec&lt;Event, MaxArraySize&gt;,
-    <span class="doccomment">/// Sender Address
-    </span><span class="kw">pub </span>sender_address: ContractAddress,
-    <span class="doccomment">/// Nonce
-    </span><span class="kw">pub </span>nonce: U256,
-    <span class="doccomment">/// Call entrypoint
-    </span><span class="kw">pub </span>call_entrypoint: CallEntryPoint,
-}
-
 <span class="kw">impl </span>Transaction {
     <span class="doccomment">/// Creates a new instance of a transaction.
+    </span><span class="attr">#[allow(clippy::too_many_arguments)]
     </span><span class="kw">pub fn </span>new(
         version: U256,
         hash: H256,
         signature: BoundedVec&lt;H256, MaxArraySize&gt;,
         events: BoundedVec&lt;Event, MaxArraySize&gt;,
-        sender_address: ContractAddress,
+        sender_address: ContractAddressWrapper,
         nonce: U256,
-        call_entrypoint: CallEntryPoint,
+        call_entrypoint: CallEntryPointWrapper,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ version, hash, signature, events, sender_address, nonce, call_entrypoint }
     }
@@ -326,6 +303,28 @@
         })
     }
 
+    <span class="doccomment">/// Converts a transaction to a blockifier l1 handler transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to convert
+    ///
+    /// # Returns
+    ///
+    /// * `L1HandlerTransaction` - The converted transaction
+    </span><span class="kw">pub fn </span>to_l1_handler_tx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; L1HandlerTransaction {
+        L1HandlerTransaction {
+            transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>).unwrap()),
+            version: TransactionVersion(StarkFelt::new(<span class="self">self</span>.version.into()).unwrap()),
+            nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into()).unwrap()),
+            contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address).unwrap()).unwrap(),
+            calldata: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().calldata,
+            entry_point_selector: EntryPointSelector(
+                StarkHash::new(<span class="kw-2">*</span><span class="self">self</span>.call_entrypoint.entrypoint_selector.unwrap().as_fixed_bytes()).unwrap(),
+            ),
+        }
+    }
+
     <span class="doccomment">/// Executes a transaction
     ///
     /// # Arguments
@@ -342,44 +341,55 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>CachedState&lt;S&gt;,
         block: Block,
+        tx_type: TxType,
     ) -&gt; TransactionExecutionResult&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
-        <span class="kw">let </span>tx = <span class="self">self</span>.to_invoke_tx();
         <span class="kw">let </span>block_context = BlockContext::serialize(block.header);
-        <span class="kw">let </span>account_context = <span class="self">self</span>.get_account_transaction_context(<span class="kw-2">&amp;</span>tx);
+        <span class="kw">match </span>tx_type {
+            TxType::InvokeTx =&gt; <span class="kw">match </span><span class="self">self</span>.to_invoke_tx() {
+                AccountTransaction::Invoke(<span class="kw-2">ref </span>tx) =&gt; {
+                    <span class="kw">let </span>account_context = <span class="self">self</span>.get_invoke_transaction_context(tx);
+                    <span class="comment">// Specifying an entry point selector is not allowed; `__execute__` is called, and
+                    // the inner selector appears in the calldata.
+                    </span><span class="kw">if </span>tx.entry_point_selector.is_some() {
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(InvokeTransactionError::SpecifiedEntryPoint)<span class="question-mark">?</span>;
+                    }
 
-        <span class="comment">// TODO: Investigate the use of tx.execute() instead of tx.run_execute()
-        // Going one lower level gives us more flexibility like not validating the tx as we could do it
-        // before the tx lands in the mempool.
-        // However it also means we need to copy/paste internal code from the tx.execute() method.
-
-        </span><span class="kw">match </span>tx {
-            AccountTransaction::Invoke(<span class="kw-2">ref </span>tx) =&gt; {
-                <span class="comment">// Specifying an entry point selector is not allowed; `__execute__` is called, and
-                // the inner selector appears in the calldata.
-                </span><span class="kw">if </span>tx.entry_point_selector.is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(InvokeTransactionError::SpecifiedEntryPoint)<span class="question-mark">?</span>;
+                    tx.run_execute(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="prelude-val">None</span>)
                 }
-                tx.run_execute(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="prelude-val">None</span>)
-            }
-            <span class="kw">_ </span>=&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Only invoke transactions are supported&quot;</span>);
+                <span class="kw">_ </span>=&gt; {
+                    <span class="macro">panic!</span>(<span class="string">&quot;Only invoke transactions are supported&quot;</span>);
+                }
+            },
+            TxType::L1HandlerTx =&gt; {
+                <span class="kw">let </span>tx = <span class="self">self</span>.to_l1_handler_tx();
+                tx.run_execute(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span><span class="self">self</span>.get_l1_handler_transaction_context(<span class="kw-2">&amp;</span>tx), <span class="prelude-val">None</span>)
             }
         }
-    }
 
-    <span class="kw">fn </span>get_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>AccountTransaction) -&gt; AccountTransactionContext {
-        <span class="kw">match </span>tx {
-            AccountTransaction::Invoke(tx) =&gt; AccountTransactionContext {
-                transaction_hash: tx.transaction_hash,
-                max_fee: tx.max_fee,
-                version: tx.version,
-                signature: tx.signature.clone(),
-                nonce: tx.nonce,
-                sender_address: tx.sender_address,
-            },
-            <span class="kw">_ </span>=&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;Only invoke transactions are supported&quot;</span>);
-            }
+        <span class="comment">// TODO: Investigate the use of tx.execute() instead of tx.run_execute()
+        // Going one lower level gives us more flexibility like not validating the tx as we could do
+        // it before the tx lands in the mempool.
+        // However it also means we need to copy/paste internal code from the tx.execute() method.
+    </span>}
+
+    <span class="kw">fn </span>get_l1_handler_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>L1HandlerTransaction) -&gt; AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: tx.transaction_hash,
+            max_fee: Fee::default(),
+            version: tx.version,
+            signature: TransactionSignature::default(),
+            nonce: tx.nonce,
+            sender_address: tx.contract_address,
+        }
+    }
+    <span class="kw">fn </span>get_invoke_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>InvokeTransaction) -&gt; AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: tx.transaction_hash,
+            max_fee: tx.max_fee,
+            version: tx.version,
+            signature: tx.signature.clone(),
+            nonce: tx.nonce,
+            sender_address: tx.sender_address,
         }
     }
 }
@@ -395,8 +405,8 @@
             signature: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
             events: BoundedVec::try_from(<span class="macro">vec!</span>[Event::default(), Event::default()]).unwrap(),
             nonce: U256::default(),
-            sender_address: ContractAddress::default(),
-            call_entrypoint: CallEntryPoint::default(),
+            sender_address: ContractAddressWrapper::default(),
+            call_entrypoint: CallEntryPointWrapper::default(),
         }
     }
 }
