@@ -8,7 +8,6 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::state::cached_state::CachedState;
 use blockifier::state::state_api::StateReader;
-use blockifier::transaction::account_transaction::AccountTransaction;
 use blockifier::transaction::errors::InvokeTransactionError;
 use blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
 use blockifier::transaction::transactions::Executable;
@@ -17,11 +16,11 @@ use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
+    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion, DeclareTransaction,
 };
 
 use self::types::{Event, MaxArraySize, Transaction, TxType};
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper};
+use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 use crate::starknet_block::block::Block;
 use crate::starknet_block::serialize::SerializeBlockContext;
 
@@ -64,8 +63,9 @@ impl Transaction {
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
+		contract_class: Option<ContractClassWrapper>,
     ) -> Self {
-        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint }
+        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, contract_class }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -73,7 +73,7 @@ impl Transaction {
         Self { hash, ..Self::default() }
     }
 
-    /// Converts a transaction to a blockifier transaction
+	/// Converts a transaction to a blockifier declare transaction
     ///
     /// # Arguments
     ///
@@ -82,8 +82,8 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransaction` - The converted transaction
-    pub fn to_invoke_tx(&self) -> AccountTransaction {
-        AccountTransaction::Invoke(InvokeTransaction {
+    pub fn to_invoke_tx(&self) -> InvokeTransaction {
+        InvokeTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
             max_fee: Fee(2),
             version: TransactionVersion(StarkFelt::new(self.version.into()).unwrap()),
@@ -94,7 +94,30 @@ impl Transaction {
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
             calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
             entry_point_selector: None,
-        })
+        }
+    }
+
+    /// Converts a transaction to a blockifier invoke transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to convert
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransaction` - The converted transaction
+    pub fn to_declare_tx(&self) -> DeclareTransaction {
+        DeclareTransaction {
+            transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
+            max_fee: Fee(2),
+            version: TransactionVersion(StarkFelt::new(self.version.into()).unwrap()),
+            signature: TransactionSignature(
+                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect(),
+            ),
+            nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
+            sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
+            class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap(),
+        }
     }
 
     /// Converts a transaction to a blockifier l1 handler transaction
@@ -136,28 +159,38 @@ impl Transaction {
         state: &mut CachedState<S>,
         block: Block,
         tx_type: TxType,
+		contract_class: ContractClassWrapper,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         let block_context = BlockContext::serialize(block.header);
         match tx_type {
-            TxType::InvokeTx => match self.to_invoke_tx() {
-                AccountTransaction::Invoke(ref tx) => {
-                    let account_context = self.get_invoke_transaction_context(tx);
-                    // Specifying an entry point selector is not allowed; `__execute__` is called, and
-                    // the inner selector appears in the calldata.
-                    if tx.entry_point_selector.is_some() {
-                        return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
-                    }
+            TxType::InvokeTx =>  {
+				let tx = self.to_invoke_tx();
+				let account_context = self.get_invoke_transaction_context(&tx);
+				// Specifying an entry point selector is not allowed; `__execute__` is called, and
+				// the inner selector appears in the calldata.
+				if tx.entry_point_selector.is_some() {
+					return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
+				}
 
-                    tx.run_execute(state, &block_context, &account_context, None)
-                }
-                _ => {
-                    panic!("Only invoke transactions are supported");
-                }
+				tx.run_execute(state, &block_context, &account_context, None)
             },
             TxType::L1HandlerTx => {
                 let tx = self.to_l1_handler_tx();
                 tx.run_execute(state, &block_context, &self.get_l1_handler_transaction_context(&tx), None)
-            }
+            },
+			TxType::DeclareTx => {
+				let tx = self.to_declare_tx();
+				let account_context = self.get_declare_transaction_context(&tx);
+				let contract_class = contract_class.to_starknet_contract_class();
+
+				// Execute.
+				tx.run_execute(
+					state,
+					&block_context,
+					&account_context,
+					Some(contract_class.into()),
+				)
+			}
         }
 
         // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
@@ -186,6 +219,18 @@ impl Transaction {
             sender_address: tx.sender_address,
         }
     }
+
+	fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
+		AccountTransactionContext {
+			transaction_hash: tx.transaction_hash,
+			max_fee: tx.max_fee,
+			version: tx.version,
+			signature: tx.signature.clone(),
+			nonce: tx.nonce,
+			sender_address: tx.sender_address,
+		}
+	}
+
 }
 
 impl Default for Transaction {
@@ -201,6 +246,7 @@ impl Default for Transaction {
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
+			contract_class: None,
         }
     }
 }

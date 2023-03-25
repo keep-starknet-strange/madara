@@ -1,22 +1,55 @@
 //! Starknet execution functionality.
 
+use starknet_api::stdlib::collections::HashMap;
+
 use alloc::sync::Arc;
 use alloc::vec;
 
 use blockifier::execution::entry_point::CallEntryPoint;
 use frame_support::BoundedVec;
-use sp_core::{ConstU32, H256};
+use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::EntryPointType;
+use starknet_api::state::{EntryPointType, EntryPoint, EntryPointOffset, Program, ContractClassAbiEntry, ContractClass};
 use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
 pub type ContractAddressWrapper = [u8; 32];
 
+/// Maximum vector sizes.
 type MaxCalldataSize = ConstU32<4294967295>;
+type MaxAbiSize = ConstU32<4294967295>;
+type MaxEntryPoints = ConstU32<4294967295>;
+
 /// Wrapper type for class hash field.
 pub type ClassHashWrapper = [u8; 32];
+
+/// Contract Class
+#[derive(Default, Clone, Debug)]
+pub struct ContractClassWrapper {
+	/// Contract class id.
+	pub program: Program,
+	/// Contract class name.
+	pub abi: Option<BoundedVec<ContractClassAbiEntry, MaxAbiSize>>,
+	/// Contract class code.
+	pub entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>,
+}
+
+impl ContractClassWrapper {
+	/// Creates a new instance of a contract class.
+	pub fn new(program: Program, abi: Option<BoundedVec<ContractClassAbiEntry, MaxAbiSize>>, entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>) -> Self {
+		Self { program, abi, entry_points_by_type }
+	}
+
+	/// Convert to starknet contract class.
+	pub fn to_starknet_contract_class(&self) -> ContractClass {
+		ContractClass {
+			program: self.program.clone(),
+			abi: Some(self.abi.clone().unwrap().to_vec()),
+			entry_points_by_type: self.entry_points_by_type.iter().map(|(k, v)| (k.to_starknet(), v.to_vec())).collect(),
+		}
+	}
+}
 
 /// Enum that represents all the entrypoints types.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
@@ -30,7 +63,43 @@ pub enum EntryPointTypeWrapper {
     L1Handler,
 }
 
-/// Representation of a Starknet transaction.
+// pub enum ContractClassAbiEntryWrapper {
+// 	/// An event abi entry.
+//     Event(EventAbiEntry),
+//     /// A function abi entry.
+//     Function(FunctionAbiEntryWithType),
+//     /// A struct abi entry.
+//     Struct(StructAbiEntry),
+// }
+
+/// Representation of a Starknet Entry Point.
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct EntryPointWrapper {
+    /// The entrypoint selector
+	pub entrypoint_selector: H256,
+	/// The entrypoint offset
+	pub entrypoint_offset: U256,
+}
+
+impl EntryPointWrapper {
+	/// Creates a new instance of an entrypoint.
+	pub fn new(entrypoint_selector: H256, entrypoint_offset: U256) -> Self {
+		Self { entrypoint_selector, entrypoint_offset }
+	}
+
+	/// Convert to Starknet EntryPoint
+	pub fn to_starknet_entry_point(&self) -> EntryPoint {
+		EntryPoint {
+			selector: EntryPointSelector(
+				StarkFelt::new(self.entrypoint_selector.0).unwrap(),
+			),
+			offset: EntryPointOffset(self.entrypoint_offset.as_usize()),
+		}
+	}
+}
+
+/// Representation of a Starknet Call Entry Point.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallEntryPointWrapper {
