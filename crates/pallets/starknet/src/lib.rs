@@ -161,9 +161,15 @@ pub mod pallet {
 
     /// Mapping from Starknet contract address to the contract's class hash.
     #[pallet::storage]
-    #[pallet::getter(fn contract_class)]
+    #[pallet::getter(fn class_info)]
     pub(super) type ContractClassHashes<T: Config> =
         StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
+
+    /// Mapping from Starknet contract address to the contract's class hash.
+    #[pallet::storage]
+    #[pallet::getter(fn contract_class)]
+    pub(super) type ContractClasses<T: Config> =
+        StorageMap<_, Twox64Concat, ClassHashWrapper, ClassInfoWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     #[pallet::storage]
@@ -230,6 +236,8 @@ pub mod pallet {
         TransactionExecutionFailed,
         ContractClassHashAlreadyAssociated,
         ContractClassHashUnknown,
+		ContractClassAlreadyAssociated,
+		ContractClassMustBeSpecified
     }
 
     /// The Starknet pallet external functions.
@@ -273,7 +281,7 @@ pub mod pallet {
 
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
-            match transaction.execute(state, block, TxType::InvokeTx) {
+            match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -290,6 +298,57 @@ pub mod pallet {
 
             Ok(())
         }
+
+		// Submit a Starknet declare transaction.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `transaction` - The Starknet transaction.
+        ///
+        ///  # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        ///
+        /// # TODO
+        /// * Compute weight
+        #[pallet::call_index(3)]
+        #[pallet::weight(0)]
+        pub fn add_declare_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // TODO: add origin check when proxy pallet added
+
+            // Check if contract is deployed
+            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+
+			// Check class hash is not already declared
+
+
+			// Check that contract class is not None
+			ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
+
+
+            let block = Self::current_block().unwrap();
+            let state = &mut Self::create_state_reader();
+            match transaction.execute(state, block, TxType::DeclareTx, transaction.contract_class) {
+                Ok(v) => {
+                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                }
+                Err(e) => {
+                    log!(error, "Transaction execution failed: {:?}", e);
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                }
+            }
+
+            // Append the transaction to the pending transactions.
+            Pending::<T>::try_append(transaction).unwrap();
+
+            // Associate contract class to class hash
+			Self::associate_contract_class(transaction.contract_class, transaction.call_entrypoint.class_hash.unwrap());
+
+            Ok(())
+        }
+
+
 
         /// Consume a message from L1.
         ///
@@ -313,7 +372,7 @@ pub mod pallet {
 
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
-            match transaction.execute(state, block, TxType::L1HandlerTx) {
+            match transaction.execute(state, block, TxType::L1HandlerTx, None) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -423,13 +482,34 @@ pub mod pallet {
             Pending::<T>::kill();
         }
 
+		/// Associate a contract class hash with a contract class info
+        ///
+        /// # Arguments
+        ///
+        /// * `contract_class_hash` - The contract class hash.
+        /// * `class_info` - The contract class info.
+        fn associate_class_hash(
+            contract_class_hash: ClassHashWrapper,
+			class_info: ClassInfoWrapper,
+        ) -> Result<(), DispatchError> {
+            // Check if the contract address is already associated with a contract class hash.
+            ensure!(
+                !ContractClasses::<T>::contains_key(contract_class_hash),
+                Error::<T>::ContractClassAlreadyAssociated
+            );
+
+            ContractClasses::<T>::insert(contract_class_hash, class_info);
+
+            Ok(())
+        }
+
         /// Associate a contract address with a contract class hash.
         ///
         /// # Arguments
         ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
-        fn _associate_contract_class(
+        fn associate_contract_class(
             contract_address: ContractAddressWrapper,
             contract_class_hash: ClassHashWrapper,
         ) -> Result<(), DispatchError> {

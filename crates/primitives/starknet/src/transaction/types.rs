@@ -1,7 +1,7 @@
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper};
+use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
 /// Max size of the event array.
 pub type MaxArraySize = ConstU32<4294967295>;
@@ -10,6 +10,8 @@ pub type MaxArraySize = ConstU32<4294967295>;
 pub enum TxType {
     /// Regular invoke transaction.
     InvokeTx,
+	/// Declare transaction.
+	DeclareTx,
     /// Message sent from ethereum.
     L1HandlerTx,
 }
@@ -31,6 +33,8 @@ pub struct Transaction {
     pub nonce: U256,
     /// Call entrypoint
     pub call_entrypoint: CallEntryPointWrapper,
+	/// Contract Class
+	pub contract_class: Option<ContractClassWrapper>,
 }
 
 /// Representation of a Starknet event.
