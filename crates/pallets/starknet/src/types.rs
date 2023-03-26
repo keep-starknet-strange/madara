@@ -1,8 +1,7 @@
 //! Starknet pallet custom types.
-use frame_support::BoundedVec;
 use frame_support::codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::scale_info::TypeInfo;
-use mp_starknet::execution::{ContractAddressWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::{ContractAddressWrapper};
 use serde::Deserialize;
 use sp_core::{H256, U256};
 use sp_runtime::offchain::http::Error;
@@ -12,9 +11,7 @@ use sp_runtime::{DispatchError, RuntimeDebug};
 extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
-use starknet_api::state::{Program, ContractClassAbiEntry};
 use core::str::Utf8Error;
-use std::collections::HashMap;
 /// TODO: Replace with a proper type for field element.
 
 /// Nonce of a Starknet transaction.

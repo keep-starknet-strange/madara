@@ -4271,7 +4271,7 @@ dependencies = [
  "rand 0.8.5",
  "scale-info",
  "serde",
- "serde_json",
+ "serde-scale",
  "sp-core",
  "sp-runtime",
  "sp-std",
@@ -7313,6 +7313,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "771d4d9c4163ee138805e12c710dd365e4f44be8be0503cb1bb9eb989425d9c9"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-scale"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f2e6779ee764eea43ff586c555089470f7803669ffd8e76636f34f37d7ec3a8"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

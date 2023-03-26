@@ -169,7 +169,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn contract_class)]
     pub(super) type ContractClasses<T: Config> =
-        StorageMap<_, Twox64Concat, ClassHashWrapper, ClassInfoWrapper, ValueQuery>;
+        StorageMap<_, Twox64Concat, ClassHashWrapper, ContractClassWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     #[pallet::storage]
@@ -331,7 +331,7 @@ pub mod pallet {
 
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
-            match transaction.execute(state, block, TxType::DeclareTx, transaction.contract_class) {
+            match transaction.execute(state, block, TxType::DeclareTx, transaction.clone().contract_class) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -342,10 +342,10 @@ pub mod pallet {
             }
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction).unwrap();
+            Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
-			Self::associate_class_hash(transaction.call_entrypoint.class_hash.unwrap(), transaction.contract_class.unwrap());
+			Self::associate_class_hash(transaction.clone().call_entrypoint.class_hash.unwrap(), transaction.clone().contract_class.unwrap())?;
 
 			// TODO: Update class hashes root
 
@@ -387,10 +387,10 @@ pub mod pallet {
             }
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction).unwrap();
+            Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
-			Self::associate_contract_class(transaction.sender_address, transaction.call_entrypoint.class_hash.unwrap());
+			Self::associate_contract_class(transaction.clone().sender_address, transaction.clone().call_entrypoint.class_hash.unwrap())?;
 
 			// TODO: Apply state diff and update state root
 

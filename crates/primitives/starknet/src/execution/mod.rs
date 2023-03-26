@@ -2,6 +2,8 @@
 
 use starknet_api::stdlib::collections::HashMap;
 
+use serde_scale::from_slice;
+
 use alloc::sync::Arc;
 use alloc::vec;
 
@@ -10,7 +12,7 @@ use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPointType, EntryPoint, EntryPointOffset, Program, ContractClassAbiEntry, ContractClass};
+use starknet_api::state::{EntryPointType, EntryPoint, EntryPointOffset, ContractClass};
 use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
@@ -18,38 +20,46 @@ pub type ContractAddressWrapper = [u8; 32];
 
 /// Maximum vector sizes.
 type MaxCalldataSize = ConstU32<4294967295>;
-type MaxAbiSize = ConstU32<4294967295>;
-type MaxEntryPoints = ConstU32<4294967295>;
+// type MaxAbiSize = ConstU32<4294967295>;
+type MaxProgramSize = ConstU32<4294967295>;
+// type MaxEntryPoints = ConstU32<4294967295>;
 
 /// Wrapper type for class hash field.
 pub type ClassHashWrapper = [u8; 32];
+
 
 /// Contract Class
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
-	/// Contract class id.
-	pub program: Program,
-	/// Contract class name.
-	pub abi: BoundedVec<ContractClassAbiEntry, MaxAbiSize>,
-	/// Contract class code.
-	pub entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>,
+	/// Contract class program json.
+	pub program: BoundedVec<u8, MaxProgramSize>,
+	// /// Contract class abi.
+	// pub abi: BoundedVec<ContractClassAbiEntryWrapper, MaxAbiSize>,
+	// /// Contract class entrypoints.
+	// pub entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>,
 }
 
 impl ContractClassWrapper {
 	/// Creates a new instance of a contract class.
-	pub fn new(program: Program, abi: BoundedVec<ContractClassAbiEntry, MaxAbiSize>, entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>) -> Self {
-		Self { program, abi, entry_points_by_type }
+	pub fn new(program: BoundedVec<u8, MaxProgramSize>) -> Self {
+		Self { program }
 	}
 
 	/// Convert to starknet contract class.
 	pub fn to_starknet_contract_class(&self) -> ContractClass {
 		ContractClass {
-			program: self.program.clone(),
-			abi: Some(self.abi.clone().to_vec()),
-			entry_points_by_type: self.entry_points_by_type.iter().map(|(k, v)| (k.to_starknet(), v.to_vec())).collect(),
+			program: from_slice(&self.program).unwrap(),
+			abi: None,
+			entry_points_by_type: HashMap::default(),
 		}
 	}
+}
+
+impl Default for ContractClassWrapper {
+    fn default() -> Self {
+		Self { program: BoundedVec::try_from(vec![]).unwrap() }
+    }
 }
 
 /// Enum that represents all the entrypoints types.
