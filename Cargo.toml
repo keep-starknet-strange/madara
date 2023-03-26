@@ -44,7 +44,6 @@ sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polka
 sp-session = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-version = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-# sp-serializer = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
 # Substrate client dependencies
 sc-network = { version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
