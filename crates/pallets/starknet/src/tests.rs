@@ -1,7 +1,7 @@
 use core::str::FromStr;
 
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
-use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
+use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_block::header::Header;
