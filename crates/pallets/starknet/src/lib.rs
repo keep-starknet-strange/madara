@@ -58,7 +58,6 @@ pub mod pallet {
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
-    use blockifier::test_utils::{get_contract_class, get_test_contract_class, ACCOUNT_CONTRACT_PATH};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -87,6 +86,7 @@ pub mod pallet {
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
+	#[pallet::without_storage_info] // TODO: Remove this when we have bounded every storage item.
     pub struct Pallet<T>(_);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -339,7 +339,7 @@ pub mod pallet {
             let state = &mut Self::create_state_reader();
 			let contract_class = transaction.clone().contract_class.unwrap().to_starknet_contract_class();
 			match contract_class {
-				Ok(ref v) => {
+				Ok(ref _v) => {
 					log!(info, "Contract class parsed successfully.");
 				}
 				Err(e) => {
@@ -629,47 +629,11 @@ pub mod pallet {
                 })
                 .collect();
 
-            // let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter().map(|(key, value)| {
-            // 	let class_hash = ClassHash(StarkFelt::new(key).unwrap());
-            // 	let contract_class = ContractClass::try_from(value).unwrap();
-            // 	(class_hash, contract_class)
-            // }).collect();
-            // TODO: remove this when declare is implemented
-            let class_hash_to_class: ContractClassMapping = HashMap::from([
-                (
-                    ClassHash(
-                        StarkFelt::try_from(
-                            "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918", /* TEST ACCOUNT
-                                                                                                   * CONTRACT CLASS
-                                                                                                   * HASH */
-                        )
-                        .unwrap(),
-                    ),
-                    get_contract_class(ACCOUNT_CONTRACT_PATH),
-                ),
-                (
-                    ClassHash(
-                        StarkFelt::try_from(
-                            "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918", /* TEST FEATURES
-                                                                                                   * CONTRACT CLASS
-                                                                                                   * HASH */
-                        )
-                        .unwrap(),
-                    ),
-                    get_test_contract_class(),
-                ),
-                (
-                    ClassHash(
-                        StarkFelt::try_from(
-                            "0x1cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8", /* TEST EMPTY L1
-                                                                                                  * HANDLER CONTRACT
-                                                                                                  * CLASS HASH */
-                        )
-                        .unwrap(),
-                    ),
-                    get_contract_class(include_bytes!("../../../../ressources/l1_handler.json")),
-                ),
-            ]);
+            let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter().map(|(key, value)| {
+            	let class_hash = ClassHash(StarkFelt::new(key).unwrap());
+            	let contract_class = value.to_starknet_contract_class().unwrap();
+            	(class_hash, contract_class)
+            }).collect();
 
             CachedState::new(DictStateReader {
                 address_to_class_hash,

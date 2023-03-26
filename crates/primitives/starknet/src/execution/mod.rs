@@ -1,5 +1,6 @@
 //! Starknet execution functionality.
 
+use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec;
 
@@ -11,7 +12,6 @@ use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
-use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
@@ -21,62 +21,95 @@ pub type ContractAddressWrapper = [u8; 32];
 type MaxCalldataSize = ConstU32<4294967295>;
 // type MaxAbiSize = ConstU32<4294967295>;
 type MaxProgramSize = ConstU32<4294967295>;
-// type MaxEntryPoints = ConstU32<4294967295>;
+type MaxEntryPoints = ConstU32<4294967295>;
 
 /// Wrapper type for class hash field.
 pub type ClassHashWrapper = [u8; 32];
 
 /// Contract Class
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
     /// Contract class program json.
     pub program: BoundedVec<u8, MaxProgramSize>,
     // /// Contract class abi.
     // pub abi: BoundedVec<ContractClassAbiEntryWrapper, MaxAbiSize>,
-    // /// Contract class entrypoints.
-    // pub entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>,
+    /// Contract class entrypoints.
+    pub entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>, /* TODO: Switch to BoundedBTreeMap */
 }
 
 impl ContractClassWrapper {
     /// Creates a new instance of a contract class.
-    pub fn new(program: BoundedVec<u8, MaxProgramSize>) -> Self {
-        Self { program }
+    pub fn new(
+        program: BoundedVec<u8, MaxProgramSize>,
+        entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
+    ) -> Self {
+        Self { program, entry_points_by_type }
     }
 
     /// Convert to starknet contract class.
     pub fn to_starknet_contract_class(&self) -> Result<ContractClass, ()> {
-		let binding = self.program.to_vec();
-  		let _program = binding.as_slice();
-		let program = from_slice::<Program>(_program);
-		match program {
-			Ok(program) => Ok(ContractClass {
-				program,
-				abi: None,
-				entry_points_by_type: HashMap::default(),
-			}),
-			Err(_e) => Err(())
-		}
-	}
+        let binding = self.program.to_vec();
+        let _program = binding.as_slice();
+        let program = from_slice::<Program>(_program);
+        match program {
+            Ok(program) => Ok(ContractClass {
+                program,
+                abi: None,
+                entry_points_by_type: self
+                    .entry_points_by_type
+                    .iter()
+                    .map(|(k, v)| {
+                        (k.to_starknet_entry_point_type(), v.iter().map(|e| e.to_starknet_entry_point()).collect())
+                    })
+                    .collect(),
+            }),
+            Err(_e) => Err(()),
+        }
+    }
 }
 
 impl From<ContractClass> for ContractClassWrapper {
     fn from(contract_class: ContractClass) -> Self {
-		let program_string = to_string(&contract_class.program).unwrap();
+        let program_string = to_string(&contract_class.program).unwrap();
         Self {
             program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
+            entry_points_by_type: contract_class
+                .entry_points_by_type
+                .into_iter()
+                .map(|(k, v)| {
+                    (
+                        EntryPointTypeWrapper::from(k),
+                        BoundedVec::try_from(
+                            v.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<vec::Vec<EntryPointWrapper>>(),
+                        )
+                        .unwrap(),
+                    )
+                })
+                .collect(),
         }
     }
 }
 
 impl Default for ContractClassWrapper {
     fn default() -> Self {
-        Self { program: BoundedVec::try_from(vec![]).unwrap() }
+        Self { program: BoundedVec::try_from(vec![]).unwrap(), entry_points_by_type: BTreeMap::default() }
     }
 }
 
 /// Enum that represents all the entrypoints types.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    codec::Encode,
+    codec::Decode,
+    scale_info::TypeInfo,
+    codec::MaxEncodedLen,
+    PartialOrd,
+    Ord,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum EntryPointTypeWrapper {
     /// Constructor.
@@ -85,6 +118,27 @@ pub enum EntryPointTypeWrapper {
     External,
     /// L1 Handler.
     L1Handler,
+}
+
+impl From<EntryPointType> for EntryPointTypeWrapper {
+    fn from(entry_point_type: EntryPointType) -> Self {
+        match entry_point_type {
+            EntryPointType::Constructor => EntryPointTypeWrapper::Constructor,
+            EntryPointType::External => EntryPointTypeWrapper::External,
+            EntryPointType::L1Handler => EntryPointTypeWrapper::L1Handler,
+        }
+    }
+}
+
+impl EntryPointTypeWrapper {
+	/// Convert to starknet entrypoint type.
+	pub fn to_starknet_entry_point_type(&self) -> EntryPointType {
+		match self {
+			EntryPointTypeWrapper::Constructor => EntryPointType::Constructor,
+			EntryPointTypeWrapper::External => EntryPointType::External,
+			EntryPointTypeWrapper::L1Handler => EntryPointType::L1Handler,
+		}
+	}
 }
 
 // pub enum ContractClassAbiEntryWrapper {
@@ -97,7 +151,18 @@ pub enum EntryPointTypeWrapper {
 // }
 
 /// Representation of a Starknet Entry Point.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    codec::Encode,
+    codec::Decode,
+    scale_info::TypeInfo,
+    codec::MaxEncodedLen,
+    PartialOrd,
+    Ord,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryPointWrapper {
     /// The entrypoint selector
@@ -117,6 +182,15 @@ impl EntryPointWrapper {
         EntryPoint {
             selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.0).unwrap()),
             offset: EntryPointOffset(self.entrypoint_offset.as_usize()),
+        }
+    }
+}
+
+impl From<EntryPoint> for EntryPointWrapper {
+    fn from(entry_point: EntryPoint) -> Self {
+        Self {
+            entrypoint_selector: H256::from_slice(entry_point.selector.0.bytes()),
+            entrypoint_offset: U256::from(entry_point.offset.0),
         }
     }
 }
