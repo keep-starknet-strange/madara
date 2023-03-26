@@ -5,6 +5,7 @@ pub mod types;
 use alloc::vec;
 
 use blockifier::block_context::BlockContext;
+use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::state::cached_state::CachedState;
 use blockifier::state::state_api::StateReader;
@@ -185,7 +186,7 @@ impl Transaction {
         state: &mut CachedState<S>,
         block: Block,
         tx_type: TxType,
-		contract_class: Option<ContractClassWrapper>,
+		contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         let block_context = BlockContext::serialize(block.header);
         match tx_type {
@@ -198,23 +199,21 @@ impl Transaction {
 					return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
 				}
 
-				tx.run_execute(state, &block_context, &account_context, None)
+				tx.run_execute(state, &block_context, &account_context, contract_class)
             },
             TxType::L1HandlerTx => {
                 let tx = self.to_l1_handler_tx();
-                tx.run_execute(state, &block_context, &self.get_l1_handler_transaction_context(&tx), None)
+                tx.run_execute(state, &block_context, &self.get_l1_handler_transaction_context(&tx), contract_class)
             },
 			TxType::DeclareTx => {
 				let tx = self.to_declare_tx();
 				let account_context = self.get_declare_transaction_context(&tx);
-				let contract_class = contract_class.unwrap().to_starknet_contract_class();
-
 				// Execute.
 				tx.run_execute(
 					state,
 					&block_context,
 					&account_context,
-					Some(contract_class.into()),
+					contract_class,
 				)
 			},
 			TxType::DeployTx => {
@@ -226,7 +225,7 @@ impl Transaction {
 					state,
 					&block_context,
 					&account_context,
-					None,
+					contract_class,
 				)
 			},
         }
