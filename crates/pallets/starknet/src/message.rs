@@ -95,6 +95,7 @@ impl Message {
             sender_address,
             nonce,
             call_entrypoint,
+			contract_class: None,
         })
     }
 }
@@ -146,6 +147,7 @@ mod test {
                 storage_address: H256::from_low_u64_be(1).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
+			contract_class: None,
         };
         pretty_assertions::assert_eq!(test_message.try_into_transaction().unwrap(), expected_tx);
     }

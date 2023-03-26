@@ -185,7 +185,7 @@ impl Transaction {
         state: &mut CachedState<S>,
         block: Block,
         tx_type: TxType,
-		contract_class: ContractClassWrapper,
+		contract_class: Option<ContractClassWrapper>,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         let block_context = BlockContext::serialize(block.header);
         match tx_type {
@@ -207,7 +207,7 @@ impl Transaction {
 			TxType::DeclareTx => {
 				let tx = self.to_declare_tx();
 				let account_context = self.get_declare_transaction_context(&tx);
-				let contract_class = contract_class.to_starknet_contract_class();
+				let contract_class = contract_class.unwrap().to_starknet_contract_class();
 
 				// Execute.
 				tx.run_execute(
@@ -220,7 +220,6 @@ impl Transaction {
 			TxType::DeployTx => {
 				let tx = self.to_deploy_account_tx();
 				let account_context = self.get_deploy_transaction_context(&tx);
-				let contract_class = contract_class.to_starknet_contract_class();
 
 				// Execute.
 				tx.run_execute(
