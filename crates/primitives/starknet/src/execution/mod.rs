@@ -6,7 +6,7 @@ use alloc::vec;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallEntryPoint;
 use frame_support::BoundedVec;
-use serde_scale::{from_slice, to_vec, Error, EndOfInput};
+use serde_json_core::{from_slice, to_slice};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
@@ -45,24 +45,27 @@ impl ContractClassWrapper {
     }
 
     /// Convert to starknet contract class.
-    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, Error<EndOfInput>> {
-		let program = from_slice::<Program>(&self.program[..]);
+    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, ()> {
+		let binding = self.program.to_vec();
+  		let _program = binding.as_slice();
+		let program = from_slice::<Program>(_program);
 		match program {
 			Ok(program) => Ok(ContractClass {
-				program,
+				program: program.0,
 				abi: None,
 				entry_points_by_type: HashMap::default(),
 			}),
-			Err(e) => Err(e.into()),
+			Err(_e) => Err(())
 		}
 	}
 }
 
 impl From<ContractClass> for ContractClassWrapper {
     fn from(contract_class: ContractClass) -> Self {
+		let mut buffer = [0u8; 1000000];
+		let program_size = to_slice::<Program>(&contract_class.program, &mut buffer).unwrap();
         Self {
-            program: BoundedVec::try_from(to_vec(&contract_class.program).unwrap())
-                .unwrap(),
+            program: BoundedVec::try_from(buffer[..program_size].to_vec()).unwrap(),
         }
     }
 }
