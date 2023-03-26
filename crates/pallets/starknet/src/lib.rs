@@ -340,7 +340,7 @@ pub mod pallet {
 			let contract_class = transaction.clone().contract_class.unwrap().to_starknet_contract_class();
 			match contract_class {
 				Ok(ref v) => {
-					log!(info, "Contract class parsed successfully: {:?}", v);
+					log!(info, "Contract class parsed successfully.");
 				}
 				Err(e) => {
 					log!(error, "Contract class parsing failed: {:?}", e);
@@ -350,7 +350,7 @@ pub mod pallet {
 
             match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.unwrap())) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(info, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);

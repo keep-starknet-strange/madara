@@ -6,7 +6,7 @@ use alloc::vec;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallEntryPoint;
 use frame_support::BoundedVec;
-use serde_json_core::{from_slice, to_slice};
+use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
@@ -51,7 +51,7 @@ impl ContractClassWrapper {
 		let program = from_slice::<Program>(_program);
 		match program {
 			Ok(program) => Ok(ContractClass {
-				program: program.0,
+				program,
 				abi: None,
 				entry_points_by_type: HashMap::default(),
 			}),
@@ -62,10 +62,9 @@ impl ContractClassWrapper {
 
 impl From<ContractClass> for ContractClassWrapper {
     fn from(contract_class: ContractClass) -> Self {
-		let mut buffer = [0u8; 1000000];
-		let program_size = to_slice::<Program>(&contract_class.program, &mut buffer).unwrap();
+		let program_string = to_string(&contract_class.program).unwrap();
         Self {
-            program: BoundedVec::try_from(buffer[..program_size].to_vec()).unwrap(),
+            program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
         }
     }
 }
