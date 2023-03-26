@@ -165,7 +165,7 @@ pub mod pallet {
     pub(super) type ContractClassHashes<T: Config> =
         StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
 
-    /// Mapping from Starknet contract address to the contract's class hash.
+    /// Mapping from Starknet class hash to contract class.
     #[pallet::storage]
     #[pallet::getter(fn contract_class)]
     pub(super) type ContractClasses<T: Config> =
