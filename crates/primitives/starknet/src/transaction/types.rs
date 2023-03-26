@@ -12,6 +12,8 @@ pub enum TxType {
     InvokeTx,
 	/// Declare transaction.
 	DeclareTx,
+	/// Deploy transaction.
+	DeployTx,
     /// Message sent from ethereum.
     L1HandlerTx,
 }

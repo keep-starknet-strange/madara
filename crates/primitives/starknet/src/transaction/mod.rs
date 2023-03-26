@@ -16,7 +16,7 @@ use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion, DeclareTransaction,
+    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion, DeclareTransaction, DeployAccountTransaction, ContractAddressSalt,
 };
 
 use self::types::{Event, MaxArraySize, Transaction, TxType};
@@ -73,7 +73,7 @@ impl Transaction {
         Self { hash, ..Self::default() }
     }
 
-	/// Converts a transaction to a blockifier declare transaction
+	/// Converts a transaction to a blockifier invoke transaction
     ///
     /// # Arguments
     ///
@@ -97,7 +97,7 @@ impl Transaction {
         }
     }
 
-    /// Converts a transaction to a blockifier invoke transaction
+    /// Converts a transaction to a blockifier declare transaction
     ///
     /// # Arguments
     ///
@@ -117,6 +117,32 @@ impl Transaction {
             nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
             class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap(),
+        }
+    }
+
+    /// Converts a transaction to a blockifier deploy account transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to convert
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransaction` - The converted transaction
+    pub fn to_deploy_account_tx(&self) -> DeployAccountTransaction {
+        DeployAccountTransaction {
+            transaction_hash: TransactionHash(StarkFelt::new(self.hash.0).unwrap()),
+            max_fee: Fee(2),
+            version: TransactionVersion(StarkFelt::new(self.version.into()).unwrap()),
+            signature: TransactionSignature(
+                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect(),
+            ),
+            nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
+            contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
+            class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap(),
+			constructor_calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+			// TODO: add salt
+			contract_address_salt: ContractAddressSalt(StarkFelt::new([0; 32]).unwrap()),
         }
     }
 
@@ -190,7 +216,20 @@ impl Transaction {
 					&account_context,
 					Some(contract_class.into()),
 				)
-			}
+			},
+			TxType::DeployTx => {
+				let tx = self.to_deploy_account_tx();
+				let account_context = self.get_deploy_transaction_context(&tx);
+				let contract_class = contract_class.to_starknet_contract_class();
+
+				// Execute.
+				tx.run_execute(
+					state,
+					&block_context,
+					&account_context,
+					None,
+				)
+			},
         }
 
         // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
@@ -219,6 +258,17 @@ impl Transaction {
             sender_address: tx.sender_address,
         }
     }
+
+	fn get_deploy_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
+		AccountTransactionContext {
+			transaction_hash: tx.transaction_hash,
+			max_fee: tx.max_fee,
+			version: tx.version,
+			signature: tx.signature.clone(),
+			nonce: tx.nonce,
+			sender_address: tx.contract_address,
+		}
+	}
 
 	fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
 		AccountTransactionContext {

@@ -25,19 +25,20 @@ type MaxEntryPoints = ConstU32<4294967295>;
 pub type ClassHashWrapper = [u8; 32];
 
 /// Contract Class
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
 	/// Contract class id.
 	pub program: Program,
 	/// Contract class name.
-	pub abi: Option<BoundedVec<ContractClassAbiEntry, MaxAbiSize>>,
+	pub abi: BoundedVec<ContractClassAbiEntry, MaxAbiSize>,
 	/// Contract class code.
 	pub entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>,
 }
 
 impl ContractClassWrapper {
 	/// Creates a new instance of a contract class.
-	pub fn new(program: Program, abi: Option<BoundedVec<ContractClassAbiEntry, MaxAbiSize>>, entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>) -> Self {
+	pub fn new(program: Program, abi: BoundedVec<ContractClassAbiEntry, MaxAbiSize>, entry_points_by_type: HashMap<EntryPointTypeWrapper, BoundedVec<EntryPoint, MaxEntryPoints>>) -> Self {
 		Self { program, abi, entry_points_by_type }
 	}
 
@@ -45,7 +46,7 @@ impl ContractClassWrapper {
 	pub fn to_starknet_contract_class(&self) -> ContractClass {
 		ContractClass {
 			program: self.program.clone(),
-			abi: Some(self.abi.clone().unwrap().to_vec()),
+			abi: Some(self.abi.clone().to_vec()),
 			entry_points_by_type: self.entry_points_by_type.iter().map(|(k, v)| (k.to_starknet(), v.to_vec())).collect(),
 		}
 	}

@@ -64,7 +64,7 @@ pub mod pallet {
     use frame_system::pallet_prelude::*;
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper};
+    use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
     use mp_starknet::starknet_block::block::Block;
     use mp_starknet::starknet_block::header::Header;
     use mp_starknet::state::DictStateReader;
@@ -234,10 +234,12 @@ pub mod pallet {
     pub enum Error<T> {
         AccountNotDeployed,
         TransactionExecutionFailed,
-        ContractClassHashAlreadyAssociated,
+        ClassHashAlreadyDeclared,
         ContractClassHashUnknown,
 		ContractClassAlreadyAssociated,
-		ContractClassMustBeSpecified
+		ContractClassMustBeSpecified,
+		AccountAlreadyDeployed,
+		ContractAddressAlreadyAssociated
     }
 
     /// The Starknet pallet external functions.
@@ -321,7 +323,7 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
 			// Check class hash is not already declared
-
+			ensure!(!ContractClasses::<T>::contains_key(transaction.call_entrypoint.class_hash.unwrap()), Error::<T>::ClassHashAlreadyDeclared);
 
 			// Check that contract class is not None
 			ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
@@ -343,7 +345,54 @@ pub mod pallet {
             Pending::<T>::try_append(transaction).unwrap();
 
             // Associate contract class to class hash
-			Self::associate_contract_class(transaction.contract_class, transaction.call_entrypoint.class_hash.unwrap());
+			Self::associate_class_hash(transaction.call_entrypoint.class_hash.unwrap(), transaction.contract_class.unwrap());
+
+			// TODO: Update class hashes root
+
+            Ok(())
+        }
+
+		// Submit a Starknet deploy transaction.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `transaction` - The Starknet transaction.
+        ///
+        ///  # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        ///
+        /// # TODO
+        /// * Compute weight
+        #[pallet::call_index(4)]
+        #[pallet::weight(0)]
+        pub fn add_deploy_account_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // TODO: add origin check when proxy pallet added
+
+            // Check if contract is deployed
+            ensure!(!ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountAlreadyDeployed);
+
+
+            let block = Self::current_block().unwrap();
+            let state = &mut Self::create_state_reader();
+            match transaction.execute(state, block, TxType::DeployTx, None) {
+                Ok(v) => {
+                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                }
+                Err(e) => {
+                    log!(error, "Transaction execution failed: {:?}", e);
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                }
+            }
+
+            // Append the transaction to the pending transactions.
+            Pending::<T>::try_append(transaction).unwrap();
+
+            // Associate contract class to class hash
+			Self::associate_contract_class(transaction.sender_address, transaction.call_entrypoint.class_hash.unwrap());
+
+			// TODO: Apply state diff and update state root
 
             Ok(())
         }
@@ -490,7 +539,7 @@ pub mod pallet {
         /// * `class_info` - The contract class info.
         fn associate_class_hash(
             contract_class_hash: ClassHashWrapper,
-			class_info: ClassInfoWrapper,
+			class_info: ContractClassWrapper,
         ) -> Result<(), DispatchError> {
             // Check if the contract address is already associated with a contract class hash.
             ensure!(
@@ -516,7 +565,7 @@ pub mod pallet {
             // Check if the contract address is already associated with a contract class hash.
             ensure!(
                 !ContractClassHashes::<T>::contains_key(contract_address),
-                Error::<T>::ContractClassHashAlreadyAssociated
+                Error::<T>::ContractAddressAlreadyAssociated
             );
 
             // Check if the contract class hash is known.
