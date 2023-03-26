@@ -1,5 +1,7 @@
+use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use hex::FromHex;
+use mp_starknet::execution::ContractClassWrapper;
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
@@ -71,6 +73,8 @@ impl pallet_starknet::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
+	let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+
     // ACCOUNT CONTRACT
     let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
     let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
@@ -98,6 +102,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
         ],
+		classes: vec![
+			(class_hash_bytes, ContractClassWrapper::default()),
+		],
         ..Default::default()
     }
     .assimilate_storage(&mut t)

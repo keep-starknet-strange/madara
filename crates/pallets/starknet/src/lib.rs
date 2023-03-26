@@ -161,7 +161,7 @@ pub mod pallet {
 
     /// Mapping from Starknet contract address to the contract's class hash.
     #[pallet::storage]
-    #[pallet::getter(fn class_info)]
+    #[pallet::getter(fn contracts)]
     pub(super) type ContractClassHashes<T: Config> =
         StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
 
@@ -190,13 +190,14 @@ pub mod pallet {
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
         pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
+		pub classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
         pub _phantom: PhantomData<T>,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
-            Self { contracts: vec![], _phantom: PhantomData }
+            Self { contracts: vec![], classes: vec![], _phantom: PhantomData }
         }
     }
 
@@ -212,6 +213,10 @@ pub mod pallet {
             for (address, class_hash) in self.contracts.iter() {
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
+
+			for (class_hash, contract_class) in self.classes.iter() {
+				ContractClasses::<T>::insert(class_hash, contract_class);
+			}
 
             LastKnownEthBlock::<T>::set(None);
         }
@@ -569,7 +574,7 @@ pub mod pallet {
             );
 
             // Check if the contract class hash is known.
-            ensure!(ContractClassHashes::<T>::contains_key(contract_class_hash), Error::<T>::ContractClassHashUnknown);
+            ensure!(ContractClasses::<T>::contains_key(contract_class_hash), Error::<T>::ContractClassHashUnknown);
 
             ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
 
