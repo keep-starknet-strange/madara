@@ -4,6 +4,7 @@ use std::sync::Arc;
 use madara_rpc_core::StarkNetRpcServer;
 use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Balance, Index};
+use mp_starknet::starknet_block::block::Block;
 
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -36,6 +37,7 @@ where
     P: TransactionPool + 'static,
 {
     fn get_block_with_tx_hashes(&self, block_id: u64) -> Result<Option<Block>> {
-        self.get_block_with_tx_hashes(block_id)
+        //call into the runtime via sp_api
+        Ok(None)
     }
 }
