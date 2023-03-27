@@ -1,4 +1,4 @@
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, get_test_contract_class};
+use blockifier::test_utils::{get_contract_class, get_test_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use hex::FromHex;
 use mp_starknet::execution::ContractClassWrapper;
@@ -73,9 +73,9 @@ impl pallet_starknet::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-	let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-	let test_class = get_test_contract_class();
-	let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
+    let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let test_class = get_test_contract_class();
+    let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
 
     // ACCOUNT CONTRACT
     let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
@@ -104,11 +104,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
         ],
-		contract_classes: vec![
-			(class_hash_bytes, ContractClassWrapper::from(account_class)),
-			(other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-			(l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
-		],
+        contract_classes: vec![
+            (class_hash_bytes, ContractClassWrapper::from(account_class)),
+            (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
+            (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
+        ],
         ..Default::default()
     }
     .assimilate_storage(&mut t)

@@ -17,7 +17,8 @@ use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    Fee, InvokeTransaction, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion, DeclareTransaction, DeployAccountTransaction, ContractAddressSalt,
+    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Fee, InvokeTransaction, L1HandlerTransaction,
+    TransactionHash, TransactionSignature, TransactionVersion,
 };
 
 use self::types::{Event, MaxArraySize, Transaction, TxType};
@@ -64,7 +65,7 @@ impl Transaction {
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
-		contract_class: Option<ContractClassWrapper>,
+        contract_class: Option<ContractClassWrapper>,
     ) -> Self {
         Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, contract_class }
     }
@@ -74,7 +75,7 @@ impl Transaction {
         Self { hash, ..Self::default() }
     }
 
-	/// Converts a transaction to a blockifier invoke transaction
+    /// Converts a transaction to a blockifier invoke transaction
     ///
     /// # Arguments
     ///
@@ -141,9 +142,9 @@ impl Transaction {
             nonce: Nonce(StarkFelt::new(self.nonce.into()).unwrap()),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address).unwrap()).unwrap(),
             class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap(),
-			constructor_calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
-			// TODO: add salt
-			contract_address_salt: ContractAddressSalt(StarkFelt::new([0; 32]).unwrap()),
+            constructor_calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+            // TODO: add salt
+            contract_address_salt: ContractAddressSalt(StarkFelt::new([0; 32]).unwrap()),
         }
     }
 
@@ -186,48 +187,38 @@ impl Transaction {
         state: &mut CachedState<S>,
         block: Block,
         tx_type: TxType,
-		contract_class: Option<ContractClass>,
+        contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResult<Option<CallInfo>> {
         let block_context = BlockContext::serialize(block.header);
         match tx_type {
-            TxType::InvokeTx =>  {
-				let tx = self.to_invoke_tx();
-				let account_context = self.get_invoke_transaction_context(&tx);
-				// Specifying an entry point selector is not allowed; `__execute__` is called, and
-				// the inner selector appears in the calldata.
-				if tx.entry_point_selector.is_some() {
-					return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
-				}
+            TxType::InvokeTx => {
+                let tx = self.to_invoke_tx();
+                let account_context = self.get_invoke_transaction_context(&tx);
+                // Specifying an entry point selector is not allowed; `__execute__` is called, and
+                // the inner selector appears in the calldata.
+                if tx.entry_point_selector.is_some() {
+                    return Err(InvokeTransactionError::SpecifiedEntryPoint)?;
+                }
 
-				tx.run_execute(state, &block_context, &account_context, contract_class)
-            },
+                tx.run_execute(state, &block_context, &account_context, contract_class)
+            }
             TxType::L1HandlerTx => {
                 let tx = self.to_l1_handler_tx();
                 tx.run_execute(state, &block_context, &self.get_l1_handler_transaction_context(&tx), contract_class)
-            },
-			TxType::DeclareTx => {
-				let tx = self.to_declare_tx();
-				let account_context = self.get_declare_transaction_context(&tx);
-				// Execute.
-				tx.run_execute(
-					state,
-					&block_context,
-					&account_context,
-					contract_class,
-				)
-			},
-			TxType::DeployTx => {
-				let tx = self.to_deploy_account_tx();
-				let account_context = self.get_deploy_transaction_context(&tx);
+            }
+            TxType::DeclareTx => {
+                let tx = self.to_declare_tx();
+                let account_context = self.get_declare_transaction_context(&tx);
+                // Execute.
+                tx.run_execute(state, &block_context, &account_context, contract_class)
+            }
+            TxType::DeployTx => {
+                let tx = self.to_deploy_account_tx();
+                let account_context = self.get_deploy_transaction_context(&tx);
 
-				// Execute.
-				tx.run_execute(
-					state,
-					&block_context,
-					&account_context,
-					contract_class,
-				)
-			},
+                // Execute.
+                tx.run_execute(state, &block_context, &account_context, contract_class)
+            }
         }
 
         // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
@@ -236,16 +227,16 @@ impl Transaction {
         // However it also means we need to copy/paste internal code from the tx.execute() method.
     }
 
-	/// Get the transaction context for a l1 handler transaction
-	///
-	/// # Arguments
-	///
-	/// * `self` - The transaction to get the context for
-	/// * `tx` - The l1 handler transaction to get the context for
-	///
-	/// # Returns
-	///
-	/// * `AccountTransactionContext` - The context of the transaction
+    /// Get the transaction context for a l1 handler transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to get the context for
+    /// * `tx` - The l1 handler transaction to get the context for
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The context of the transaction
     fn get_l1_handler_transaction_context(&self, tx: &L1HandlerTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
@@ -257,16 +248,16 @@ impl Transaction {
         }
     }
 
-	/// Get the transaction context for an invoke transaction
-	///
-	/// # Arguments
-	///
-	/// * `self` - The transaction to get the context for
-	/// * `tx` - The invoke transaction to get the context for
-	///
-	/// # Returns
-	///
-	/// * `AccountTransactionContext` - The context of the transaction
+    /// Get the transaction context for an invoke transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to get the context for
+    /// * `tx` - The invoke transaction to get the context for
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The context of the transaction
     fn get_invoke_transaction_context(&self, tx: &InvokeTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
@@ -278,48 +269,47 @@ impl Transaction {
         }
     }
 
-	/// Get the transaction context for a deploy transaction
-	///
-	/// # Arguments
-	///
-	/// * `self` - The transaction to get the context for
-	/// * `tx` - The deploy transaction to get the context for
-	///
-	/// # Returns
-	///
-	/// * `AccountTransactionContext` - The context of the transaction
-	fn get_deploy_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
-		AccountTransactionContext {
-			transaction_hash: tx.transaction_hash,
-			max_fee: tx.max_fee,
-			version: tx.version,
-			signature: tx.signature.clone(),
-			nonce: tx.nonce,
-			sender_address: tx.contract_address,
-		}
-	}
+    /// Get the transaction context for a deploy transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to get the context for
+    /// * `tx` - The deploy transaction to get the context for
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The context of the transaction
+    fn get_deploy_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: tx.transaction_hash,
+            max_fee: tx.max_fee,
+            version: tx.version,
+            signature: tx.signature.clone(),
+            nonce: tx.nonce,
+            sender_address: tx.contract_address,
+        }
+    }
 
-	/// Get the transaction context for a declare transaction
-	///
-	/// # Arguments
-	///
-	/// * `self` - The transaction to get the context for
-	/// * `tx` - The declare transaction to get the context for
-	///
-	/// # Returns
-	///
-	/// * `AccountTransactionContext` - The context of the transaction
-	fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
-		AccountTransactionContext {
-			transaction_hash: tx.transaction_hash,
-			max_fee: tx.max_fee,
-			version: tx.version,
-			signature: tx.signature.clone(),
-			nonce: tx.nonce,
-			sender_address: tx.sender_address,
-		}
-	}
-
+    /// Get the transaction context for a declare transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to get the context for
+    /// * `tx` - The declare transaction to get the context for
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The context of the transaction
+    fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
+        AccountTransactionContext {
+            transaction_hash: tx.transaction_hash,
+            max_fee: tx.max_fee,
+            version: tx.version,
+            signature: tx.signature.clone(),
+            nonce: tx.nonce,
+            sender_address: tx.sender_address,
+        }
+    }
 }
 
 impl Default for Transaction {
@@ -335,7 +325,7 @@ impl Default for Transaction {
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
-			contract_class: None,
+            contract_class: None,
         }
     }
 }

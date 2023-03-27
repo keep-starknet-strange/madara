@@ -86,7 +86,7 @@ pub mod pallet {
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
-	#[pallet::without_storage_info] // TODO: Remove this when we have bounded every storage item.
+    #[pallet::without_storage_info] // TODO: Remove this when we have bounded every storage item.
     pub struct Pallet<T>(_);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
@@ -161,13 +161,13 @@ pub mod pallet {
 
     /// Mapping from Starknet contract address to the contract's class hash.
     #[pallet::storage]
-    #[pallet::getter(fn contracts)]
+    #[pallet::getter(fn contract_class_hash_by_address)]
     pub(super) type ContractClassHashes<T: Config> =
         StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
 
     /// Mapping from Starknet class hash to contract class.
     #[pallet::storage]
-    #[pallet::getter(fn contract_class)]
+    #[pallet::getter(fn contract_class_by_class_hash)]
     pub(super) type ContractClasses<T: Config> =
         StorageMap<_, Twox64Concat, ClassHashWrapper, ContractClassWrapper, ValueQuery>;
 
@@ -190,7 +190,7 @@ pub mod pallet {
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
         pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
-		pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
+        pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
         pub _phantom: PhantomData<T>,
     }
 
@@ -214,9 +214,9 @@ pub mod pallet {
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
 
-			for (class_hash, contract_class) in self.contract_classes.iter() {
-				ContractClasses::<T>::insert(class_hash, contract_class);
-			}
+            for (class_hash, contract_class) in self.contract_classes.iter() {
+                ContractClasses::<T>::insert(class_hash, contract_class);
+            }
 
             LastKnownEthBlock::<T>::set(None);
         }
@@ -241,11 +241,14 @@ pub mod pallet {
         TransactionExecutionFailed,
         ClassHashAlreadyDeclared,
         ContractClassHashUnknown,
-		ContractClassAlreadyAssociated,
-		ContractClassMustBeSpecified,
-		AccountAlreadyDeployed,
-		ContractAddressAlreadyAssociated,
-		InvalidContractClass,
+        ContractClassAlreadyAssociated,
+        ContractClassMustBeSpecified,
+        AccountAlreadyDeployed,
+        ContractAddressAlreadyAssociated,
+        InvalidContractClass,
+        ClassHashMustBeSpecified,
+        TooManyPendingTransactions,
+        InvalidCurrentBlock,
     }
 
     /// The Starknet pallet external functions.
@@ -307,8 +310,7 @@ pub mod pallet {
             Ok(())
         }
 
-		// Submit a Starknet declare transaction.
-        ///
+        // Submit a Starknet declare transaction.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -328,17 +330,38 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-			// Check class hash is not already declared
-			ensure!(!ContractClasses::<T>::contains_key(transaction.call_entrypoint.class_hash.unwrap()), Error::<T>::ClassHashAlreadyDeclared);
+            // Check that class hash is not None
+            ensure!(transaction.call_entrypoint.class_hash.is_some(), Error::<T>::ClassHashMustBeSpecified);
 
-			// Check that contract class is not None
-			ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
+            let class_hash = transaction.call_entrypoint.class_hash.unwrap();
 
+            // Check class hash is not already declared
+            ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
 
-            let block = Self::current_block().unwrap();
+            // Check that contract class is not None
+            ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
+
+            // Get current block
+            let block = match Self::current_block() {
+                Some(b) => b,
+                None => {
+                    log!(error, "Current block is None");
+                    return Err(Error::<T>::InvalidCurrentBlock.into());
+                }
+            };
+
+            // Create state reader from substrate storage
             let state = &mut Self::create_state_reader();
-			let contract_class = transaction.clone().contract_class.unwrap().to_starknet_contract_class().or(Err(Error::<T>::InvalidContractClass))?;
 
+            // Parse contract class
+            let contract_class = transaction
+                .clone()
+                .contract_class
+                .unwrap()
+                .to_starknet_contract_class()
+                .or(Err(Error::<T>::InvalidContractClass))?;
+
+            // Execute transaction
             match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap_or_default());
@@ -350,18 +373,17 @@ pub mod pallet {
             }
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction.clone()).unwrap();
+            Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
-			Self::associate_class_hash(transaction.clone().call_entrypoint.class_hash.unwrap(), contract_class.into())?;
+            Self::associate_class_hash(class_hash, contract_class.into())?;
 
-			// TODO: Update class hashes root
+            // TODO: Update class hashes root
 
             Ok(())
         }
 
-		// Submit a Starknet deploy transaction.
-        ///
+        // Submit a Starknet deploy transaction.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -379,10 +401,20 @@ pub mod pallet {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
-            ensure!(!ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountAlreadyDeployed);
+            ensure!(
+                !ContractClassHashes::<T>::contains_key(transaction.sender_address),
+                Error::<T>::AccountAlreadyDeployed
+            );
 
+            // Get current block
+            let block = match Self::current_block() {
+                Some(b) => b,
+                None => {
+                    log!(error, "Current block is None");
+                    return Err(Error::<T>::InvalidCurrentBlock.into());
+                }
+            };
 
-            let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
             match transaction.execute(state, block, TxType::DeployTx, None) {
                 Ok(v) => {
@@ -398,14 +430,15 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
-			Self::associate_contract_class(transaction.clone().sender_address, transaction.clone().call_entrypoint.class_hash.unwrap())?;
+            Self::associate_contract_class(
+                transaction.clone().sender_address,
+                transaction.clone().call_entrypoint.class_hash.unwrap(),
+            )?;
 
-			// TODO: Apply state diff and update state root
+            // TODO: Apply state diff and update state root
 
             Ok(())
         }
-
-
 
         /// Consume a message from L1.
         ///
@@ -440,7 +473,7 @@ pub mod pallet {
             }
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction).unwrap();
+            Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // TODO: Apply state diff and update state root
 
@@ -539,7 +572,7 @@ pub mod pallet {
             Pending::<T>::kill();
         }
 
-		/// Associate a contract class hash with a contract class info
+        /// Associate a contract class hash with a contract class info
         ///
         /// # Arguments
         ///
@@ -547,7 +580,7 @@ pub mod pallet {
         /// * `class_info` - The contract class info.
         fn associate_class_hash(
             contract_class_hash: ClassHashWrapper,
-			class_info: ContractClassWrapper,
+            class_info: ContractClassWrapper,
         ) -> Result<(), DispatchError> {
             // Check if the contract address is already associated with a contract class hash.
             ensure!(
@@ -617,11 +650,13 @@ pub mod pallet {
                 })
                 .collect();
 
-            let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter().map(|(key, value)| {
-            	let class_hash = ClassHash(StarkFelt::new(key).unwrap());
-            	let contract_class = value.to_starknet_contract_class().unwrap();
-            	(class_hash, contract_class)
-            }).collect();
+            let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter()
+                .map(|(key, value)| {
+                    let class_hash = ClassHash(StarkFelt::new(key).unwrap());
+                    let contract_class = value.to_starknet_contract_class().unwrap();
+                    (class_hash, contract_class)
+                })
+                .collect();
 
             CachedState::new(DictStateReader {
                 address_to_class_hash,

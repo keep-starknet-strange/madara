@@ -49,9 +49,7 @@ impl ContractClassWrapper {
 
     /// Convert to starknet contract class.
     pub fn to_starknet_contract_class(&self) -> Result<ContractClass, ()> {
-        let binding = self.program.to_vec();
-        let _program = binding.as_slice();
-        let program = from_slice::<Program>(_program);
+        let program = from_slice::<Program>(&self.program.to_vec());
         match program {
             Ok(program) => Ok(ContractClass {
                 program,
@@ -81,7 +79,9 @@ impl From<ContractClass> for ContractClassWrapper {
                     (
                         EntryPointTypeWrapper::from(k),
                         BoundedVec::try_from(
-                            v.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<vec::Vec<EntryPointWrapper>>(),
+                            v.iter()
+                                .map(|e| EntryPointWrapper::from(e.clone()))
+                                .collect::<vec::Vec<EntryPointWrapper>>(),
                         )
                         .unwrap(),
                     )
@@ -131,14 +131,14 @@ impl From<EntryPointType> for EntryPointTypeWrapper {
 }
 
 impl EntryPointTypeWrapper {
-	/// Convert to starknet entrypoint type.
-	pub fn to_starknet_entry_point_type(&self) -> EntryPointType {
-		match self {
-			EntryPointTypeWrapper::Constructor => EntryPointType::Constructor,
-			EntryPointTypeWrapper::External => EntryPointType::External,
-			EntryPointTypeWrapper::L1Handler => EntryPointType::L1Handler,
-		}
-	}
+    /// Convert to starknet entrypoint type.
+    pub fn to_starknet_entry_point_type(&self) -> EntryPointType {
+        match self {
+            EntryPointTypeWrapper::Constructor => EntryPointType::Constructor,
+            EntryPointTypeWrapper::External => EntryPointType::External,
+            EntryPointTypeWrapper::L1Handler => EntryPointType::L1Handler,
+        }
+    }
 }
 
 // pub enum ContractClassAbiEntryWrapper {
