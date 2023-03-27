@@ -48,8 +48,8 @@ impl ContractClassWrapper {
     }
 
     /// Convert to starknet contract class.
-    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, ()> {
-        let program = from_slice::<Program>(&self.program.to_vec());
+    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
+        let program = from_slice::<Program>(self.program.as_ref());
         match program {
             Ok(program) => Ok(ContractClass {
                 program,
@@ -62,7 +62,7 @@ impl ContractClassWrapper {
                     })
                     .collect(),
             }),
-            Err(_e) => Err(()),
+            Err(e) => Err(e),
         }
     }
 }
