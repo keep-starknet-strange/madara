@@ -22,15 +22,9 @@ jobs:
           sudo apt-get update && sudo apt-get install -y 
           clang llvm libudev-dev protobuf-compiler
 
-      - name: Install Rustup
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          source ~/.cargo/env
-          rustup default stable
-          rustup update nightly
-          rustup update stable
-          rustup target add wasm32-unknown-unknown --toolchain nightly
-
+      - name: Setup rust toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@v2
       - name: Build Documentation
         run: cargo doc --all --no-deps
 

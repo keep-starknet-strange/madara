@@ -44,11 +44,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          profile: minimal
-          target: wasm32-unknown-unknown
+      - name: Setup rust toolchain
+        run: rustup show
       - name: Set-Up
         run: >
           sudo apt-get update && sudo apt-get install -y
@@ -71,12 +68,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          profile: minimal
-          target: wasm32-unknown-unknown
+      - name: Setup rust toolchain
+        run: rustup show
       - name: Set-Up
         run: >
           sudo apt-get update && sudo apt-get install -y
