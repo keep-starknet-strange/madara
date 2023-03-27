@@ -165,6 +165,8 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
@@ -262,6 +264,7 @@
             sender_address,
             nonce,
             call_entrypoint,
+            contract_class: <span class="prelude-val">None</span>,
         })
     }
 }
@@ -313,6 +316,7 @@
                 storage_address: H256::from_low_u64_be(<span class="number">1</span>).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
+            contract_class: <span class="prelude-val">None</span>,
         };
         <span class="macro">pretty_assertions::assert_eq!</span>(test_message.try_into_transaction().unwrap(), expected_tx);
     }

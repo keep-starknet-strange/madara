@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["EntryPointTypeWrapper"],"struct":["CallEntryPointWrapper"],"type":["ClassHashWrapper","ContractAddressWrapper"]};
+window.SIDEBAR_ITEMS = {"enum":["EntryPointTypeWrapper"],"struct":["CallEntryPointWrapper","ContractClassWrapper","EntryPointWrapper"],"type":["ClassHashWrapper","ContractAddressWrapper"]};

@@ -158,6 +158,10 @@
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
 <a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre><pre class="rust"><code><span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
     WASM_BINARY,
@@ -315,7 +319,11 @@
         },
         transaction_payment: Default::default(),
         <span class="doccomment">/// Starknet Genesis configuration.
-        </span>starknet: madara_runtime::pallet_starknet::GenesisConfig { contracts: <span class="macro">vec!</span>[], _phantom: Default::default() },
+        </span>starknet: madara_runtime::pallet_starknet::GenesisConfig {
+            contracts: <span class="macro">vec!</span>[],
+            contract_classes: <span class="macro">vec!</span>[],
+            _phantom: Default::default(),
+        },
     }
 }
 </code></pre></div>
