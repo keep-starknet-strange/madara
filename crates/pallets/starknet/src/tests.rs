@@ -208,3 +208,86 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
         assert_eq!(Starknet::contract_class(class_hash_bytes), account_class);
     });
 }
+
+#[test]
+fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+        let class_hash_str = "025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+        let account_class = ContractClassWrapper::from(get_contract_class(ACCOUNT_CONTRACT_PATH));
+
+        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
+        let transaction = Transaction::new(
+            U256::from(1),
+            H256::default(),
+            bounded_vec!(),
+            bounded_vec!(),
+            contract_address_bytes,
+            U256::from(0),
+            CallEntryPointWrapper::new(
+                Some(class_hash_bytes),
+                EntryPointTypeWrapper::External,
+                None,
+                bounded_vec![],
+                contract_address_bytes,
+                contract_address_bytes,
+            ),
+            Some(account_class.clone()),
+        );
+
+        assert_ok!(Starknet::add_declare_transaction(none_origin.clone(), transaction.clone()));
+
+        // Check that the class hash was declared
+        assert_eq!(Starknet::contract_class(class_hash_bytes), account_class);
+
+		// Second declare should fail
+		assert_err!(Starknet::add_declare_transaction(none_origin.clone(), transaction), Error::<Test>::ClassHashAlreadyDeclared);
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_declare_none_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+        let class_hash_str = "025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
+        let transaction = Transaction::new(
+            U256::from(1),
+            H256::default(),
+            bounded_vec!(),
+            bounded_vec!(),
+            contract_address_bytes,
+            U256::from(0),
+            CallEntryPointWrapper::new(
+                Some(class_hash_bytes),
+                EntryPointTypeWrapper::External,
+                None,
+                bounded_vec![],
+                contract_address_bytes,
+                contract_address_bytes,
+            ),
+            None,
+        );
+
+		// Cannot declare a class with None
+		assert_err!(Starknet::add_declare_transaction(none_origin.clone(), transaction), Error::<Test>::ContractClassMustBeSpecified);
+    });
+}

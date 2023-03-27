@@ -190,14 +190,14 @@ pub mod pallet {
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
         pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
-		pub classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
+		pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
         pub _phantom: PhantomData<T>,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
-            Self { contracts: vec![], classes: vec![], _phantom: PhantomData }
+            Self { contracts: vec![], contract_classes: vec![], _phantom: PhantomData }
         }
     }
 
@@ -214,7 +214,7 @@ pub mod pallet {
                 ContractClassHashes::<T>::insert(address, class_hash);
             }
 
-			for (class_hash, contract_class) in self.classes.iter() {
+			for (class_hash, contract_class) in self.contract_classes.iter() {
 				ContractClasses::<T>::insert(class_hash, contract_class);
 			}
 
@@ -337,18 +337,9 @@ pub mod pallet {
 
             let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader();
-			let contract_class = transaction.clone().contract_class.unwrap().to_starknet_contract_class();
-			match contract_class {
-				Ok(ref _v) => {
-					log!(info, "Contract class parsed successfully.");
-				}
-				Err(e) => {
-					log!(error, "Contract class parsing failed: {:?}", e);
-					return Err(Error::<T>::InvalidContractClass.into());
-				}
-			}
+			let contract_class = transaction.clone().contract_class.unwrap().to_starknet_contract_class().or(Err(Error::<T>::InvalidContractClass))?;
 
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.unwrap())) {
+            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
@@ -362,7 +353,7 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
-			Self::associate_class_hash(transaction.clone().call_entrypoint.class_hash.unwrap(), transaction.clone().contract_class.unwrap())?;
+			Self::associate_class_hash(transaction.clone().call_entrypoint.class_hash.unwrap(), contract_class.into())?;
 
 			// TODO: Update class hashes root
 

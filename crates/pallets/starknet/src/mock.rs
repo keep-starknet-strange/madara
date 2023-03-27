@@ -104,7 +104,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
         ],
-		classes: vec![
+		contract_classes: vec![
 			(class_hash_bytes, ContractClassWrapper::from(account_class)),
 			(other_class_hash_bytes, ContractClassWrapper::from(test_class)),
 			(l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
