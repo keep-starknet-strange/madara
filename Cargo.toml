@@ -88,6 +88,10 @@ mp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", defa
 kaioshin-rpc = { version = "0.1.0-dev", path = "client/rpc" }
 kaioshin-rpc-core = { version = "0.1.0-dev", path = "client/rpc-core" }
 
+# Kaioshin client
+kaioshin-rpc = { version = "0.1.0-dev", path = "client/rpc" }
+kaioshin-rpc-core = { version = "0.1.0-dev", path = "client/rpc-core" }
+
 # Starknet dependencies
 # Cairo Virtual Machine
 # TODO: wait for no-std support on official repo
