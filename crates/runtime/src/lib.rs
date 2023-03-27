@@ -485,6 +485,12 @@ impl_runtime_apis! {
         }
     }
 
+    impl pallet_starknet::api::StarknetRuntimeApi<Block> for Runtime {
+        fn current_block_hash() -> Option<Hash> {
+            Starknet::current_block_hash()
+        }
+    }
+
     #[cfg(feature = "runtime-benchmarks")]
     impl frame_benchmarking::Benchmark<Block> for Runtime {
         fn benchmark_metadata(extra: bool) -> (

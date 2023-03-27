@@ -1,10 +1,13 @@
-use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
+use jsonrpsee::{core::Error, proc_macros::rpc};
 
-use madara_runtime::opaque::Block;
+use mp_starknet::starknet_block::block::Block;
+use sp_core::H256;
 
 #[rpc(server, namespace = "starknet")]
-#[async_trait]
-pub trait StarkNetRpc {
-    #[method(name = "getBlockWithTxHashes")]
-    fn get_block_with_tx_hashes(&self, block_id: u64) -> Result<Option<Block>>;
+pub trait StarknetRpcApi {
+    #[method(name = "blockNumber")]
+    fn block_hash(&self) -> Result<Option<H256>, Error>;
+
+    // #[method(name = "getBlockWithTxHashes")]
+    // fn get_block_with_tx_hashes(&self, block_id: u64) -> Result<Block, Error>;
 }

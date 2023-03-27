@@ -1,43 +1,53 @@
-use jsonrpsee::core::{RpcResult as Result, async_trait};
 use std::sync::Arc;
 
-use madara_rpc_core::StarkNetRpcServer;
+pub mod api;
+pub mod error;
+
+use crate::api::StarknetRpcApiServer;
+use crate::error::StarknetRpcApiError as SNError;
+use jsonrpsee::core::Error;
+
 use madara_runtime::opaque::Block;
-use madara_runtime::{AccountId, Balance, Index};
-use mp_starknet::starknet_block::block::Block;
+use mp_starknet::starknet_block::block::Block as SNBlock;
+use pallet_starknet::api::StarknetRuntimeApi;
 
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
-use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_core::H256;
 
-pub struct StarkNetImpl<C, P> {
+pub struct StarknetRpcServer<C, P> {
     pub client: Arc<C>,
     pub pool: Arc<P>,
+    // _marker: std::marker::PhantomData<M>,
 }
 
-impl<C, P> StarkNetImpl<C, P> {
+impl<C, P> StarknetRpcServer<C, P> {
     pub fn new(client: Arc<C>, pool: Arc<P>) -> Self {
         Self {
             client,
             pool,
+            // _marker: Default::default(),
         }
     }
 }
 
-#[async_trait]
-impl<C, P> StarkNetRpcServer for StarkNetImpl<C, P>
+impl<C, P> StarknetRpcApiServer for StarknetRpcServer<C, P>
 where
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
     C: Send + Sync + 'static,
-    C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-    C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-    C::Api: BlockBuilder<Block>,
+    C::Api: StarknetRuntimeApi<Block>,
     P: TransactionPool + 'static,
 {
-    fn get_block_with_tx_hashes(&self, block_id: u64) -> Result<Option<Block>> {
-        //call into the runtime via sp_api
-        Ok(None)
+    fn block_hash(&self) -> Result<Option<H256>, Error> {
+        // call into the runtime via sp_api
+        let api = self.client.runtime_api();
+		let block_hash = self.client.info().best_hash;
+
+        let block = api.current_block_hash(block_hash)
+            .map_err(|_| Error::from(SNError::BlockNotFound));
+
+        block
     }
 }

@@ -11,6 +11,7 @@ repository = { workspace = true }
 # Substrate dependencies
 sp-api = { workspace = true }
 sp-core = { workspace = true }
+sp-runtime = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-block-builder = { workspace = true }
@@ -21,8 +22,10 @@ substrate-frame-rpc-system = { workspace = true }
 # Madara dependencies
 mp-starknet = { workspace = true }
 madara-runtime = { path = "../../runtime" }
-madara-rpc-core = { workspace = true }
+
+pallet-starknet = { workspace = true }
 
 # Other third party dependencies
 tokio = { version = "1.24", features = ["sync"] }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
+thiserror = "1.0.40"

@@ -4030,8 +4030,8 @@ dependencies = [
  "futures",
  "jsonrpsee",
  "madara-rpc",
- "madara-rpc-core",
  "madara-runtime",
+ "pallet-starknet",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
@@ -4067,9 +4067,9 @@ name = "madara-rpc"
 version = "0.1.0-dev"
 dependencies = [
  "jsonrpsee",
- "madara-rpc-core",
  "madara-runtime",
  "mp-starknet",
+ "pallet-starknet",
  "pallet-transaction-payment-rpc",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
@@ -4077,19 +4077,10 @@ dependencies = [
  "sp-block-builder",
  "sp-blockchain",
  "sp-core",
+ "sp-runtime",
  "substrate-frame-rpc-system",
+ "thiserror",
  "tokio",
-]
-
-[[package]]
-name = "madara-rpc-core"
-version = "0.1.0-dev"
-dependencies = [
- "jsonrpsee",
- "madara-runtime",
- "serde",
- "serde_json",
- "sp-core",
 ]
 
 [[package]]
@@ -4875,6 +4866,7 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "sp-api",
  "sp-core",
  "sp-io",
  "sp-runtime",

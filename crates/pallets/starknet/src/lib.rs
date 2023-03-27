@@ -1,6 +1,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
+
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -20,6 +21,9 @@ pub mod transaction_validation;
 
 /// State root logic.
 pub mod state_root;
+
+/// Runtime api declarations
+pub mod api;
 
 #[cfg(test)]
 mod mock;
