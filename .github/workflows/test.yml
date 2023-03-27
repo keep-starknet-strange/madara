@@ -22,6 +22,28 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: >
+          sudo apt-get update && sudo apt-get install -y
+          clang llvm libudev-dev protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - name: Check Build and run tests
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy -- -D warnings
+        shell: bash
+
+  coverage:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -30,14 +52,16 @@ jobs:
       - name: Set-Up
         run: >
           sudo apt-get update && sudo apt-get install -y
-          clang llvm libudev-dev protobuf-compiler
-      - uses: finiam/codegen-cranelift-toolchain@v1
+          clang llvm libudev-dev protobuf-compiler &&
+          cargo install cargo-tarpaulin
       - uses: Swatinem/rust-cache@v2
-      - name: Check Build and run tests
-        run: |
-          SKIP_WASM_BUILD=1 cargo-clif check --release
-          SKIP_WASM_BUILD=1 cargo-clif test --all
+      - name: Coverage
+        run: cargo tarpaulin --workspace
         shell: bash
+      - name: Upload coverage to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          fail_ci_if_error: true
 
   bench:
     # The type of runner that the job will run on
