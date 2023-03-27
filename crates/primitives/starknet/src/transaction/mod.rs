@@ -236,6 +236,16 @@ impl Transaction {
         // However it also means we need to copy/paste internal code from the tx.execute() method.
     }
 
+	/// Get the transaction context for a l1 handler transaction
+	///
+	/// # Arguments
+	///
+	/// * `self` - The transaction to get the context for
+	/// * `tx` - The l1 handler transaction to get the context for
+	///
+	/// # Returns
+	///
+	/// * `AccountTransactionContext` - The context of the transaction
     fn get_l1_handler_transaction_context(&self, tx: &L1HandlerTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
@@ -246,6 +256,17 @@ impl Transaction {
             sender_address: tx.contract_address,
         }
     }
+
+	/// Get the transaction context for an invoke transaction
+	///
+	/// # Arguments
+	///
+	/// * `self` - The transaction to get the context for
+	/// * `tx` - The invoke transaction to get the context for
+	///
+	/// # Returns
+	///
+	/// * `AccountTransactionContext` - The context of the transaction
     fn get_invoke_transaction_context(&self, tx: &InvokeTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
@@ -257,6 +278,16 @@ impl Transaction {
         }
     }
 
+	/// Get the transaction context for a deploy transaction
+	///
+	/// # Arguments
+	///
+	/// * `self` - The transaction to get the context for
+	/// * `tx` - The deploy transaction to get the context for
+	///
+	/// # Returns
+	///
+	/// * `AccountTransactionContext` - The context of the transaction
 	fn get_deploy_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
 		AccountTransactionContext {
 			transaction_hash: tx.transaction_hash,
@@ -268,6 +299,16 @@ impl Transaction {
 		}
 	}
 
+	/// Get the transaction context for a declare transaction
+	///
+	/// # Arguments
+	///
+	/// * `self` - The transaction to get the context for
+	/// * `tx` - The declare transaction to get the context for
+	///
+	/// # Returns
+	///
+	/// * `AccountTransactionContext` - The context of the transaction
 	fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
 		AccountTransactionContext {
 			transaction_hash: tx.transaction_hash,
