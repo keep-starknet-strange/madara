@@ -1,10 +1,24 @@
+use blockifier::transaction::errors::TransactionExecutionError;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
+use starknet_api::StarknetApiError;
 
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
 /// Max size of the event array.
 pub type MaxArraySize = ConstU32<4294967295>;
+
+/// Wrapper type for transaction execution result.
+pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;
+
+/// Wrapper type for transaction execution error.
+#[derive(Debug)]
+pub enum TransactionExecutionErrorWrapper {
+	/// Transaction execution error.
+	TransactionExecution(TransactionExecutionError),
+	/// Starknet API error.
+	StarknetApi(StarknetApiError)
+}
 
 /// Different tx types.
 pub enum TxType {
