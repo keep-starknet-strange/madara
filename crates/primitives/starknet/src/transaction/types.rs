@@ -14,10 +14,10 @@ pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionEr
 /// Wrapper type for transaction execution error.
 #[derive(Debug)]
 pub enum TransactionExecutionErrorWrapper {
-	/// Transaction execution error.
-	TransactionExecution(TransactionExecutionError),
-	/// Starknet API error.
-	StarknetApi(StarknetApiError)
+    /// Transaction execution error.
+    TransactionExecution(TransactionExecutionError),
+    /// Starknet API error.
+    StarknetApi(StarknetApiError),
 }
 
 /// Different tx types.
