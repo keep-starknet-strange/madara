@@ -78,6 +78,7 @@ pub mod pallet {
     use starknet_api::hash::StarkFelt;
     use starknet_api::state::StorageKey;
     use starknet_api::stdlib::collections::HashMap;
+    use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
@@ -249,6 +250,7 @@ pub mod pallet {
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
         InvalidCurrentBlock,
+        StateReaderError,
     }
 
     /// The Starknet pallet external functions.
@@ -291,7 +293,7 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             let block = Self::current_block().unwrap();
-            let state = &mut Self::create_state_reader();
+            let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
@@ -351,7 +353,7 @@ pub mod pallet {
             };
 
             // Create state reader from substrate storage
-            let state = &mut Self::create_state_reader();
+            let state = &mut Self::create_state_reader()?;
 
             // Parse contract class
             let contract_class = transaction
@@ -415,7 +417,7 @@ pub mod pallet {
                 }
             };
 
-            let state = &mut Self::create_state_reader();
+            let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::DeployTx, None) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
@@ -461,7 +463,7 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             let block = Self::current_block().unwrap();
-            let state = &mut Self::create_state_reader();
+            let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::L1HandlerTx, None) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
@@ -619,7 +621,10 @@ pub mod pallet {
         /// # Returns
         ///
         /// The state reader.
-        fn create_state_reader() -> CachedState<DictStateReader> {
+        fn create_state_reader() -> Result<CachedState<DictStateReader>, DispatchError> {
+
+			// TODO: Handle errors and propagate them to the caller.
+
             let address_to_class_hash: HashMap<ContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
                 .map(|(key, value)| {
                     (
@@ -652,18 +657,21 @@ pub mod pallet {
 
             let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter()
                 .map(|(key, value)| {
-                    let class_hash = ClassHash(StarkFelt::new(key).unwrap());
+                    let class_hash = ClassHash(StarkFelt::new(key)?);
                     let contract_class = value.to_starknet_contract_class().unwrap();
-                    (class_hash, contract_class)
+                    Ok((class_hash, contract_class))
                 })
+                .collect::<Result<ContractClassMapping, StarknetApiError>>()
+                .map_err(|_| Error::<T>::StateReaderError)?
+                .into_iter()
                 .collect();
 
-            CachedState::new(DictStateReader {
+            Ok(CachedState::new(DictStateReader {
                 address_to_class_hash,
                 address_to_nonce,
                 storage_view,
                 class_hash_to_class,
-            })
+            }))
         }
 
         /// Queries an Eth json rpc node.
