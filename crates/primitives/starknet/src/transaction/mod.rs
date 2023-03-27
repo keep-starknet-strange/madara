@@ -186,7 +186,7 @@ impl Transaction {
                 }
 
                 tx.run_execute(state, &block_context, &account_context, contract_class)
-                    .map_err( TransactionExecutionErrorWrapper::TransactionExecution)
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::L1HandlerTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
