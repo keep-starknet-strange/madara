@@ -576,9 +576,6 @@ pub mod pallet {
                 Error::<T>::ContractAddressAlreadyAssociated
             );
 
-            // Check if the contract class hash is known.
-            ensure!(ContractClasses::<T>::contains_key(contract_class_hash), Error::<T>::ContractClassHashUnknown);
-
             ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
 
             Ok(())

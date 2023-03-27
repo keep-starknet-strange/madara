@@ -155,6 +155,6 @@ fn testnet_genesis(
         },
         transaction_payment: Default::default(),
         /// Starknet Genesis configuration.
-        starknet: madara_runtime::pallet_starknet::GenesisConfig { contracts: vec![], classes: vec![], _phantom: Default::default() },
+        starknet: madara_runtime::pallet_starknet::GenesisConfig { contracts: vec![], contract_classes: vec![], _phantom: Default::default() },
     }
 }
