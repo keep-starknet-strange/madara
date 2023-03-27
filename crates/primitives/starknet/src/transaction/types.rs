@@ -10,10 +10,10 @@ pub type MaxArraySize = ConstU32<4294967295>;
 pub enum TxType {
     /// Regular invoke transaction.
     InvokeTx,
-	/// Declare transaction.
-	DeclareTx,
-	/// Deploy transaction.
-	DeployTx,
+    /// Declare transaction.
+    DeclareTx,
+    /// Deploy transaction.
+    DeployTx,
     /// Message sent from ethereum.
     L1HandlerTx,
 }
@@ -35,8 +35,8 @@ pub struct Transaction {
     pub nonce: U256,
     /// Call entrypoint
     pub call_entrypoint: CallEntryPointWrapper,
-	/// Contract Class
-	pub contract_class: Option<ContractClassWrapper>,
+    /// Contract Class
+    pub contract_class: Option<ContractClassWrapper>,
 }
 
 /// Representation of a Starknet event.

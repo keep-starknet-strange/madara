@@ -160,10 +160,10 @@ fn given_hardcoded_contract_run_deploy_account_tx_then_it_works() {
             None,
         );
 
-        assert_ok!(Starknet::add_deploy_account_transaction(none_origin.clone(), transaction));
+        assert_ok!(Starknet::add_deploy_account_transaction(none_origin, transaction));
 
         // Check that the account was created
-        assert_eq!(Starknet::contracts(contract_address_bytes), class_hash_bytes);
+        assert_eq!(Starknet::contract_class_hash_by_address(contract_address_bytes), class_hash_bytes);
     });
 }
 
@@ -206,13 +206,13 @@ fn given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails() {
         assert_ok!(Starknet::add_deploy_account_transaction(none_origin.clone(), transaction.clone()));
 
         // Check that the account was created
-        assert_eq!(Starknet::contracts(contract_address_bytes), class_hash_bytes);
+        assert_eq!(Starknet::contract_class_hash_by_address(contract_address_bytes), class_hash_bytes);
 
-		assert_err!(
-			Starknet::add_deploy_account_transaction(none_origin.clone(), transaction),
-			Error::<Test>::AccountAlreadyDeployed
-		);
-	});
+        assert_err!(
+            Starknet::add_deploy_account_transaction(none_origin, transaction),
+            Error::<Test>::AccountAlreadyDeployed
+        );
+    });
 }
 
 #[test]
@@ -251,11 +251,11 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             None,
         );
 
-		assert_err!(
-			Starknet::add_deploy_account_transaction(none_origin.clone(), transaction),
-			Error::<Test>::TransactionExecutionFailed
-		);
-	});
+        assert_err!(
+            Starknet::add_deploy_account_transaction(none_origin.clone(), transaction),
+            Error::<Test>::TransactionExecutionFailed
+        );
+    });
 }
 
 #[test]
@@ -293,10 +293,10 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
             Some(account_class.clone()),
         );
 
-        assert_ok!(Starknet::add_declare_transaction(none_origin.clone(), transaction));
+        assert_ok!(Starknet::add_declare_transaction(none_origin, transaction));
 
         // Check that the class hash was declared
-        assert_eq!(Starknet::contract_class(class_hash_bytes), account_class);
+        assert_eq!(Starknet::contract_class_by_class_hash(class_hash_bytes), account_class);
     });
 }
 
@@ -338,10 +338,13 @@ fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
         assert_ok!(Starknet::add_declare_transaction(none_origin.clone(), transaction.clone()));
 
         // Check that the class hash was declared
-        assert_eq!(Starknet::contract_class(class_hash_bytes), account_class);
+        assert_eq!(Starknet::contract_class_by_class_hash(class_hash_bytes), account_class);
 
-		// Second declare should fail
-		assert_err!(Starknet::add_declare_transaction(none_origin.clone(), transaction), Error::<Test>::ClassHashAlreadyDeclared);
+        // Second declare should fail
+        assert_err!(
+            Starknet::add_declare_transaction(none_origin, transaction),
+            Error::<Test>::ClassHashAlreadyDeclared
+        );
     });
 }
 
@@ -378,7 +381,10 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
             None,
         );
 
-		// Cannot declare a class with None
-		assert_err!(Starknet::add_declare_transaction(none_origin.clone(), transaction), Error::<Test>::ContractClassMustBeSpecified);
+        // Cannot declare a class with None
+        assert_err!(
+            Starknet::add_declare_transaction(none_origin, transaction),
+            Error::<Test>::ContractClassMustBeSpecified
+        );
     });
 }
