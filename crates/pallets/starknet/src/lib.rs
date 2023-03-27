@@ -622,8 +622,7 @@ pub mod pallet {
         ///
         /// The state reader.
         fn create_state_reader() -> Result<CachedState<DictStateReader>, DispatchError> {
-
-			// TODO: Handle errors and propagate them to the caller.
+            // TODO: Handle errors and propagate them to the caller.
 
             let address_to_class_hash: HashMap<ContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
                 .map(|(key, value)| {
