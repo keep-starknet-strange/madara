@@ -175,7 +175,7 @@ impl Transaction {
         let block_context = BlockContext::serialize(block.header);
         match tx_type {
             TxType::InvokeTx => {
-                let tx = self.try_into().map_err(|e| TransactionExecutionErrorWrapper::StarknetApi(e))?;
+                let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_invoke_transaction_context(&tx);
                 // Specifying an entry point selector is not allowed; `__execute__` is called, and
                 // the inner selector appears in the calldata.
@@ -186,28 +186,28 @@ impl Transaction {
                 }
 
                 tx.run_execute(state, &block_context, &account_context, contract_class)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))
+                    .map_err( TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::L1HandlerTx => {
-                let tx = self.try_into().map_err(|e| TransactionExecutionErrorWrapper::StarknetApi(e))?;
+                let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
                 tx.run_execute(state, &block_context, &account_context, contract_class)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::DeclareTx => {
-                let tx = self.try_into().map_err(|e| TransactionExecutionErrorWrapper::StarknetApi(e))?;
+                let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
                 // Execute.
                 tx.run_execute(state, &block_context, &account_context, contract_class)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::DeployTx => {
-                let tx = self.try_into().map_err(|e| TransactionExecutionErrorWrapper::StarknetApi(e))?;
+                let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_deploy_transaction_context(&tx);
 
                 // Execute.
                 tx.run_execute(state, &block_context, &account_context, contract_class)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
         }
 
