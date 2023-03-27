@@ -84,13 +84,9 @@ pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", def
 # Madara primtitives
 mp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
 
-# Kaioshin client
-kaioshin-rpc = { version = "0.1.0-dev", path = "client/rpc" }
-kaioshin-rpc-core = { version = "0.1.0-dev", path = "client/rpc-core" }
-
-# Kaioshin client
-kaioshin-rpc = { version = "0.1.0-dev", path = "client/rpc" }
-kaioshin-rpc-core = { version = "0.1.0-dev", path = "client/rpc-core" }
+# Madara client
+madara-rpc = { version = "0.1.0-dev", path = "crates/client/rpc" }
+madara-rpc-core = { version = "0.1.0-dev", path = "crates/client/rpc-core" }
 
 # Starknet dependencies
 # Cairo Virtual Machine

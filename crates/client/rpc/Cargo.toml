@@ -1,5 +1,5 @@
 [package]
-name = "kaioshin-rpc"
+name = "madara-rpc"
 version = "0.1.0-dev"
 license = "MIT"
 description = "Starknet primitives for Substrate."
@@ -8,16 +8,21 @@ edition = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
-jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
-tokio = { version = "1.24", features = ["sync"] }
-sp-core = { default-features = false, git = "https://github.com/keep-starknet-strange/substrate.git", branch = "kaioshin-dev" }
-kaioshin-runtime = { path = "../../runtime" }
-kaioshin-rpc-core = { workspace = true }
+# Substrate dependencies
+sp-api = { workspace = true }
+sp-core = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
-kp-starknet = { workspace = true }
-sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-blockchain = { workspace = true }
 pallet-transaction-payment-rpc = { workspace = true }
 substrate-frame-rpc-system = { workspace = true }
+
+# Madara dependencies
+mp-starknet = { workspace = true }
+madara-runtime = { path = "../../runtime" }
+madara-rpc-core = { workspace = true }
+
+# Other third party dependencies
+tokio = { version = "1.24", features = ["sync"] }
+jsonrpsee = { workspace = true, features = [ "macros", "server" ] }

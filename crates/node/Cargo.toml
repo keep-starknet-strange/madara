@@ -67,12 +67,8 @@ frame-benchmarking-cli = { workspace = true }
 madara-runtime = { path = "../runtime" }
 
 # Rpc Extension
-kaioshin-rpc = { workspace = true }
-kaioshin-rpc-core = { workspace = true }
-
-# Rpc Extension
-kaioshin-rpc = { workspace = true }
-kaioshin-rpc-core = { workspace = true }
+madara-rpc = { workspace = true }
+madara-rpc-core = { workspace = true }
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }

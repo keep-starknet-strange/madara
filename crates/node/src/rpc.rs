@@ -37,8 +37,8 @@ where
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {
-    use kaioshin_rpc::StarkNetImpl;
-    use kaioshin_rpc_core::StarkNetRpcServer;
+    use madara_rpc::StarkNetImpl;
+    use madara_rpc_core::StarkNetRpcServer;
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 

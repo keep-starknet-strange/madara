@@ -1,9 +1,9 @@
 use jsonrpsee::core::{RpcResult as Result, async_trait};
 use std::sync::Arc;
 
-use kaioshin_rpc_core::StarkNetRpcServer;
-use kaioshin_runtime::opaque::Block;
-use kaioshin_runtime::{AccountId, Balance, Index};
+use madara_rpc_core::StarkNetRpcServer;
+use madara_runtime::opaque::Block;
+use madara_runtime::{AccountId, Balance, Index};
 
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;

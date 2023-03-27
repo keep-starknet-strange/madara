@@ -1,6 +1,6 @@
 use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
 
-use kaioshin_runtime::opaque::Block;
+use madara_runtime::opaque::Block;
 
 #[rpc(server, namespace = "starknet")]
 #[async_trait]
