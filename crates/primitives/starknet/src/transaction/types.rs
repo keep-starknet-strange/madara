@@ -21,13 +21,14 @@ pub enum TransactionExecutionErrorWrapper {
 }
 
 /// Different tx types.
+/// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
 pub enum TxType {
     /// Regular invoke transaction.
     InvokeTx,
     /// Declare transaction.
     DeclareTx,
-    /// Deploy transaction.
-    DeployTx,
+    /// Deploy account transaction.
+    DeployAccountTx,
     /// Message sent from ethereum.
     L1HandlerTx,
 }
