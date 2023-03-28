@@ -385,7 +385,7 @@ pub mod pallet {
             Ok(())
         }
 
-        // Submit a Starknet deploy transaction.
+        // Submit a Starknet deploy account transaction.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -418,7 +418,7 @@ pub mod pallet {
             };
 
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::DeployTx, None) {
+            match transaction.execute(state, block, TxType::DeployAccountTx, None) {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.unwrap());
                 }

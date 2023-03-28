@@ -186,7 +186,7 @@ impl Transaction {
                 }
 
                 tx.run_execute(state, &block_context, &account_context, contract_class)
-                    .map_err( TransactionExecutionErrorWrapper::TransactionExecution)
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::L1HandlerTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
@@ -201,9 +201,9 @@ impl Transaction {
                 tx.run_execute(state, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
-            TxType::DeployTx => {
+            TxType::DeployAccountTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
-                let account_context = self.get_deploy_transaction_context(&tx);
+                let account_context = self.get_deploy_account_transaction_context(&tx);
 
                 // Execute.
                 tx.run_execute(state, &block_context, &account_context, contract_class)
@@ -259,7 +259,7 @@ impl Transaction {
         }
     }
 
-    /// Get the transaction context for a deploy transaction
+    /// Get the transaction context for a deploy account transaction
     ///
     /// # Arguments
     ///
@@ -269,7 +269,7 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_deploy_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
+    fn get_deploy_account_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: tx.max_fee,
