@@ -507,7 +507,7 @@
                 }
 
                 tx.run_execute(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
-                    .map_err( TransactionExecutionErrorWrapper::TransactionExecution)
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::L1HandlerTx =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
