@@ -26,6 +26,7 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::crypto::KeyTypeId;
 use sp_core::OpaqueMetadata;
+use sp_core::{H256, U256};
 use sp_runtime::traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, One, Verify};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
@@ -36,6 +37,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -54,7 +56,7 @@ pub type Balance = u128;
 pub type Index = u32;
 
 /// A hash of some data used by the chain.
-pub type Hash = sp_core::H256;
+pub type Hash = H256;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -486,7 +488,10 @@ impl_runtime_apis! {
     }
 
     impl pallet_starknet::api::StarknetRuntimeApi<Block> for Runtime {
-        fn current_block_hash() -> Option<Hash> {
+        fn current_block_number() -> Option<U256> {
+            Starknet::current_block_number()
+        }
+        fn current_block_hash() -> Option<H256> {
             Starknet::current_block_hash()
         }
     }

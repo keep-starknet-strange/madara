@@ -24,8 +24,12 @@ mp-starknet = { workspace = true }
 madara-runtime = { path = "../runtime" }
 
 pallet-starknet = { workspace = true }
+starknet_api = { workspace = true, default-features = false }
 
 # Other third party dependencies
+serde = { version = "1.0.136", features = ["derive"], default-features = false }
+serde_json = { version = "1.0.85", default-features = false }
 tokio = { version = "1.24", features = ["sync"] }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
 thiserror = "1.0.40"
+tracing = "0.1.37"

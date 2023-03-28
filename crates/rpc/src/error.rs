@@ -1,7 +1,9 @@
-use jsonrpsee::{
-    core::Error,
-    types::error::{CallError, ErrorObject},
-};
+use std::fmt::Display;
+
+use jsonrpsee::core::Error;
+use jsonrpsee::types::error::ErrorCode::InternalError;
+use jsonrpsee::types::error::{CallError, ErrorObject, INTERNAL_ERROR_MSG};
+use tracing::error;
 
 #[derive(thiserror::Error, Clone, Copy, Debug)]
 pub enum StarknetRpcApiError {
@@ -43,10 +45,11 @@ pub enum StarknetRpcApiError {
 
 impl From<StarknetRpcApiError> for Error {
     fn from(err: StarknetRpcApiError) -> Self {
-        Error::Call(CallError::Custom(ErrorObject::owned(
-            err as i32,
-            err.to_string(),
-            None::<()>,
-        )))
+        Error::Call(CallError::Custom(ErrorObject::owned(err as i32, err.to_string(), None::<()>)))
     }
+}
+
+pub fn internal_server_error(err: impl Display) -> Error {
+    error!("{}: {}", INTERNAL_ERROR_MSG, err);
+    Error::Call(CallError::Custom(ErrorObject::owned(InternalError.code(), INTERNAL_ERROR_MSG, None::<()>)))
 }

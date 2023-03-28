@@ -4073,14 +4073,18 @@ dependencies = [
  "pallet-transaction-payment-rpc",
  "sc-transaction-pool",
  "sc-transaction-pool-api",
+ "serde",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
  "sp-core",
  "sp-runtime",
+ "starknet_api",
  "substrate-frame-rpc-system",
  "thiserror",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
