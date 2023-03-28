@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Madara</h1>
-  <img src="docs/images/madara.png" height="256">
+  <img src="docs/images/madara-no-bg.png" height="256">
   <br />
   <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
   -
