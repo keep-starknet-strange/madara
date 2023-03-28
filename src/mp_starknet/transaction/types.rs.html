@@ -64,6 +64,7 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -87,13 +88,14 @@
 }
 
 <span class="doccomment">/// Different tx types.
+/// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
 </span><span class="kw">pub enum </span>TxType {
     <span class="doccomment">/// Regular invoke transaction.
     </span>InvokeTx,
     <span class="doccomment">/// Declare transaction.
     </span>DeclareTx,
-    <span class="doccomment">/// Deploy transaction.
-    </span>DeployTx,
+    <span class="doccomment">/// Deploy account transaction.
+    </span>DeployAccountTx,
     <span class="doccomment">/// Message sent from ethereum.
     </span>L1HandlerTx,
 }

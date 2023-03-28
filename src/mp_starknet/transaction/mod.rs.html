@@ -522,9 +522,9 @@
                 </span>tx.run_execute(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
-            TxType::DeployTx =&gt; {
+            TxType::DeployAccountTx =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
-                <span class="kw">let </span>account_context = <span class="self">self</span>.get_deploy_transaction_context(<span class="kw-2">&amp;</span>tx);
+                <span class="kw">let </span>account_context = <span class="self">self</span>.get_deploy_account_transaction_context(<span class="kw-2">&amp;</span>tx);
 
                 <span class="comment">// Execute.
                 </span>tx.run_execute(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
@@ -580,7 +580,7 @@
         }
     }
 
-    <span class="doccomment">/// Get the transaction context for a deploy transaction
+    <span class="doccomment">/// Get the transaction context for a deploy account transaction
     ///
     /// # Arguments
     ///
@@ -590,7 +590,7 @@
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    </span><span class="kw">fn </span>get_deploy_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>DeployAccountTransaction) -&gt; AccountTransactionContext {
+    </span><span class="kw">fn </span>get_deploy_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>DeployAccountTransaction) -&gt; AccountTransactionContext {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: tx.max_fee,
