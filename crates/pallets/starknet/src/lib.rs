@@ -38,6 +38,8 @@ pub use self::pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
+pub const ETHEREUM_MAINNET_RPC: &[u8] = b"starknet::ETHEREUM_MAINNET_RPC";
+
 // syntactic sugar for logging.
 #[macro_export]
 macro_rules! log {
@@ -60,6 +62,7 @@ pub mod pallet {
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     use frame_support::pallet_prelude::*;
+    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
     use mp_starknet::crypto::commitment;
@@ -135,6 +138,10 @@ pub mod pallet {
         /// * `n` - The block number.
         fn offchain_worker(n: T::BlockNumber) {
             log!(info, "Running offchain worker at block {:?}.", n);
+
+            // TODO Move this to RPC call
+            StorageValueRef::persistent(ETHEREUM_MAINNET_RPC).set(&"https://ethereum-mainnet-rpc.allthatnode.com");
+
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
                 Err(err) => log!(error, "Failed to executed L1 message {:?}", err),
@@ -708,6 +715,23 @@ pub mod pallet {
             }))
         }
 
+        /// Returns Ethereum RPC URL from Storage
+        fn get_eth_rpc_url() -> Result<String, OffchainWorkerError> {
+            let eth_mainnet_rpc_url = StorageValueRef::persistent(ETHEREUM_MAINNET_RPC)
+                .get::<Vec<u8>>()
+                .map_err(|_| OffchainWorkerError::GetStorageFailed)?
+                .ok_or(OffchainWorkerError::EthRpcNotSet)?;
+
+            let endpoint: &str =
+            core::str::from_utf8(&eth_mainnet_rpc_url).map_err(|_| OffchainWorkerError::FormatBytesFailed)?;
+
+            if endpoint.is_empty() {
+                return Err(OffchainWorkerError::EthRpcNotSet);
+            }
+
+            Ok(endpoint.to_string())
+        }
+
         /// Queries an Eth json rpc node.
         ///
         /// # Arguments
@@ -722,7 +746,7 @@ pub mod pallet {
         ///
         /// If and error happens during the query or deserialization.
         fn query_eth(request: &str) -> Result<String, OffchainWorkerError> {
-            let res = http::Request::post("https://ethereum-mainnet-rpc.allthatnode.com", vec![request])
+            let res = http::Request::post(&Self::get_eth_rpc_url()?, vec![request])
                 .add_header("content-type", "application/json")
                 .send()
                 .map_err(OffchainWorkerError::HttpError)?
