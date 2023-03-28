@@ -9,6 +9,9 @@
 pub use pallet::*;
 use sp_core::ConstU32;
 
+use hex::FromHex;
+use core::str::FromStr;
+
 /// The Starknet pallet's runtime custom types.
 pub mod types;
 
@@ -58,6 +61,7 @@ pub mod pallet {
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
+    use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -217,6 +221,52 @@ pub mod pallet {
             for (class_hash, contract_class) in self.contract_classes.iter() {
                 ContractClasses::<T>::insert(class_hash, contract_class);
             }
+
+            let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+			let erc20_class = get_contract_class(include_bytes!("../../../../ressources/erc20.json"));
+
+            // ACCOUNT CONTRACT
+            let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
+            let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+            let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+            let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+			// ERC20 CONTRACT
+			let erc20_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001001";
+			let erc20_contract_address_bytes = <[u8; 32]>::from_hex(erc20_contract_address_str).unwrap();
+
+			let erc20_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+			let erc20_class_hash_bytes = <[u8; 32]>::from_hex(erc20_class_hash_str).unwrap();
+
+			ContractClassHashes::<T>::insert(
+				contract_address_bytes,
+				class_hash_bytes,
+			);
+
+			ContractClassHashes::<T>::insert(
+				erc20_contract_address_bytes,
+				erc20_class_hash_bytes,
+			);
+
+			ContractClasses::<T>::insert(
+				class_hash_bytes,
+				ContractClassWrapper::from(account_class),
+			);
+
+			ContractClasses::<T>::insert(
+				erc20_class_hash_bytes,
+				ContractClassWrapper::from(erc20_class),
+			);
+
+			// Set some initial balances
+			StorageView::<T>::insert(
+				(
+					contract_address_bytes,
+					H256::from_str("0x02a2c49c4dba0d91b34f2ade85d41d09561f9a77884c15ba2ab0f2241b080deb").unwrap(),
+				),
+				U256::from(1000000),
+			);
 
             LastKnownEthBlock::<T>::set(None);
         }

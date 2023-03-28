@@ -3,6 +3,15 @@
 const { Keyring } = require("@polkadot/keyring");
 const fibJson = require("../../ressources/fib.json");
 const addJson = require("../../ressources/add.json");
+const accountJson = require("../../ressources/account.json");
+const erc20Json = require("../../ressources/erc20.json");
+const { u8aToHex } = require("@polkadot/util");
+
+const ENTRYPOINTS = {
+  'CONSTRUCTOR': 0,
+  'EXTERNAL': 1,
+  'L1_HANDLER': 2,
+}
 
 module.exports = {
   rpcMethods,
@@ -65,33 +74,99 @@ async function executeERC20Transfer(userContext, events, done) {
   const user = keyring.addFromUri(`//${accountName}`);
 
   const contractAddress =
-    "0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+    "0x0000000000000000000000000000000000000000000000000000000000000101";
   const accountClassHash =
     "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+  const tokenClassHash =
     "0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c";
 
+  // // Convert Uint8Array to hex string
+  // const hexStringProgram = u8aToHex(
+  //   new TextEncoder().encode(JSON.stringify(accountJson.program))
+  // );
+
+  // let encodedData = new Map(Object.entries(accountJson.entry_points_by_type).map(([k, v]) => [ENTRYPOINTS[k], v]));
+  // encodedData = u8aToHex(new TextEncoder().encode(encodedData));
+
+  // // Declare account class hash
+  // const tx_declare = {
+  //   version: 1, // version of the transaction
+  //   hash: "", // leave empty for now, will be filled in by the runtime
+  //   signature: [], // leave empty for now, will be filled in when signing the transaction
+  //   events: [], // empty vector for now, will be filled in by the runtime
+  //   sender_address: contractAddress, // address of the sender contract
+  //   nonce: 0, // nonce of the transaction
+  //   callEntrypoint: {
+  //     // call entrypoint
+  //     classHash: accountClassHash, // class hash of the contract
+  //     entrypointSelector: null, // function selector of the transfer function
+  //     calldata: [], // empty vector for now, will be filled in by the runtime
+  //     storageAddress: contractAddress,
+  //     callerAddress: contractAddress,
+  //   },
+  //   contractClass: {
+  //     program: hexStringProgram,
+  //     entryPointsByType: encodedData,
+  //   },
+  // };
+
+  // const extrisinc_declare =
+  //   userContext.api.tx.starknet.addDeclareTransaction(tx_declare);
+  // const signedTxDeclare = await extrisinc_declare.signAsync(user, {
+  //   nonce: -1,
+  // });
+  // const resultDeclare = await signedTxDeclare.send();
+
+  // // Deploy account contract
+  // let tx_deploy = {
+  //   version: 1, // version of the transaction
+  //   hash: "", // leave empty for now, will be filled in by the runtime
+  //   signature: [], // leave empty for now, will be filled in when signing the transaction
+  //   events: [], // empty vector for now, will be filled in by the runtime
+  //   sender_address: contractAddress, // address of the sender contract
+  //   nonce: 1, // nonce of the transaction
+  //   callEntrypoint: {
+  //     // call entrypoint
+  //     classHash: accountClassHash, // class hash of the contract
+  //     entrypointSelector: null, // function selector of the transfer function
+  //     calldata: [], // empty vector for now, will be filled in by the runtime
+  //     storageAddress: contractAddress,
+  //     callerAddress: contractAddress,
+  //   },
+  //   contractClass: null,
+  // };
+
+  // const extrisinc_deploy =
+  //   userContext.api.tx.starknet.addDeployAccountTransaction(tx_declare);
+  // const signedTxDeploy = await extrisinc_deploy.signAsync(user, {
+  //   nonce: -1,
+  // });
+  // const resultDeploy = await signedTxDeploy.send();
+
+  // Execute transaction
   const tx = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
-    nonce: 0, // nonce of the transaction
+    nonce: 2, // nonce of the transaction
     callEntrypoint: {
       // call entrypoint
       classHash: accountClassHash, // class hash of the contract
       entrypointSelector: null, // function selector of the transfer function
       calldata: [
-        "0x0624ebfb99865079bd58cfcfb925b6f5ce940d6f6e41e118b8a72b7163fb435c",
+        "0x0000000000000000000000000000000000000000000000000000000000001001",
         "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
         "0x0000000000000000000000000000000000000000000000000000000000000003",
-        "0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c",
+        "0x0000000000000000000000000000000000000000000000000000000000001011",
         "0x0000000000000000000000000000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000000000000000000000000000000",
       ],
+      storageAddress: contractAddress,
+      callerAddress: contractAddress,
     },
-    storageAddress: contractAddress,
-    callerAddress: contractAddress,
+    contractClass: null,
   };
 
   const extrisinc = userContext.api.tx.starknet.addInvokeTransaction(tx);
