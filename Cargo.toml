@@ -85,7 +85,7 @@ pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", def
 mp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
 
 # Madara client
-madara-rpc = { version = "0.1.0-dev", path = "crates/client/rpc" }
+madara-rpc = { version = "0.1.0-dev", path = "crates/rpc" }
 
 # Starknet dependencies
 # Cairo Virtual Machine

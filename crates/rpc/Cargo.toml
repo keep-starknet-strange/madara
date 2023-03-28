@@ -21,7 +21,7 @@ substrate-frame-rpc-system = { workspace = true }
 
 # Madara dependencies
 mp-starknet = { workspace = true }
-madara-runtime = { path = "../../runtime" }
+madara-runtime = { path = "../runtime" }
 
 pallet-starknet = { workspace = true }
 
