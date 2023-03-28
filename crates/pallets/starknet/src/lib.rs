@@ -61,7 +61,7 @@ pub mod pallet {
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
-    use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+    use blockifier::test_utils::{get_contract_class};
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -222,8 +222,8 @@ pub mod pallet {
                 ContractClasses::<T>::insert(class_hash, contract_class);
             }
 
-            let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-			let erc20_class = get_contract_class(include_bytes!("../../../../ressources/erc20.json"));
+            let account_class = get_contract_class(include_bytes!("../../../../ressources/account.json"));
+			let erc20_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
 
             // ACCOUNT CONTRACT
             let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
