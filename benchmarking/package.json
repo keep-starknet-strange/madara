@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "description": "Benchmarking of Madara.",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "test:chain": "artillery run -e local ./scripts/chain.yml",
     "test:execution": "artillery run -e local ./scripts/cairo-execution.yml --output reports/report.json",
@@ -14,17 +14,24 @@
     "test": "yarn test:transfer && yarn metrics",
     "chain:dev": "../scripts/run_node.sh",
     "test:wait": "wait-on tcp:9944 && yarn test",
-    "test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
+    "test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'",
+    "build": "yarn generate:defs && yarn generate:meta",
+    "generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package sample-polkadotjs-typegen/interfaces --input ./src/interfaces --endpoint ws://localhost:9944",
+    "generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package sample-polkadotjs-typegen/interfaces --endpoint ws://localhost:9944 --output ./src/interfaces",
+    "lint": "tsc --noEmit --pretty"
   },
   "keywords": [
     "madara",
     "benchmark"
   ],
   "devDependencies": {
-    "@polkadot/keyring": "^10.4.2",
+    "@polkadot/keyring": "9.5.1",
+    "@polkadot/typegen": "8.13.1",
     "artillery": "^2.0.0-30",
     "artillery-engine-substrate": "^1.0.6-2",
     "concurrently": "^7.6.0",
-    "wait-on": "^6.0.1"
+    "wait-on": "^6.0.1",
+    "ts-node": "^8.6.2",
+    "typescript": "^4.0.2"
   }
 }

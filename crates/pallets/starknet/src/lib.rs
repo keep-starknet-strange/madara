@@ -224,6 +224,7 @@ pub mod pallet {
 
             let account_class = get_contract_class(include_bytes!("../../../../ressources/account.json"));
 			let erc20_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
+			let test_class = blockifier::test_utils::get_test_contract_class();
 
             // ACCOUNT CONTRACT
             let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
@@ -233,20 +234,32 @@ pub mod pallet {
             let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
 			// ERC20 CONTRACT
-			let erc20_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001001";
-			let erc20_contract_address_bytes = <[u8; 32]>::from_hex(erc20_contract_address_str).unwrap();
+			// let erc20_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001001";
+			// let erc20_contract_address_bytes = <[u8; 32]>::from_hex(erc20_contract_address_str).unwrap();
 
-			let erc20_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
-			let erc20_class_hash_bytes = <[u8; 32]>::from_hex(erc20_class_hash_str).unwrap();
+			// let erc20_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+			// let erc20_class_hash_bytes = <[u8; 32]>::from_hex(erc20_class_hash_str).unwrap();
+
+			// TEST CONTRACT
+			let test_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
+			let test_contract_address_bytes = <[u8; 32]>::from_hex(test_contract_address_str).unwrap();
+
+			let test_class_hash_str = "025ec026985a3bf9d0caafe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+			let test_class_hash_bytes = <[u8; 32]>::from_hex(test_class_hash_str).unwrap();
 
 			ContractClassHashes::<T>::insert(
 				contract_address_bytes,
 				class_hash_bytes,
 			);
 
+			// ContractClassHashes::<T>::insert(
+			// 	erc20_contract_address_bytes,
+			// 	erc20_class_hash_bytes,
+			// );
+
 			ContractClassHashes::<T>::insert(
-				erc20_contract_address_bytes,
-				erc20_class_hash_bytes,
+				test_contract_address_bytes,
+				test_class_hash_bytes,
 			);
 
 			ContractClasses::<T>::insert(
@@ -254,9 +267,14 @@ pub mod pallet {
 				ContractClassWrapper::from(account_class),
 			);
 
+			// ContractClasses::<T>::insert(
+			// 	erc20_class_hash_bytes,
+			// 	ContractClassWrapper::from(erc20_class),
+			// );
+
 			ContractClasses::<T>::insert(
-				erc20_class_hash_bytes,
-				ContractClassWrapper::from(erc20_class),
+				test_class_hash_bytes,
+				ContractClassWrapper::from(test_class),
 			);
 
 			// Set some initial balances
