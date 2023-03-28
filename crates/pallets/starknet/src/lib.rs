@@ -723,7 +723,7 @@ pub mod pallet {
                 .ok_or(OffchainWorkerError::EthRpcNotSet)?;
 
             let endpoint: &str =
-            core::str::from_utf8(&eth_mainnet_rpc_url).map_err(|_| OffchainWorkerError::FormatBytesFailed)?;
+                core::str::from_utf8(&eth_mainnet_rpc_url).map_err(|_| OffchainWorkerError::FormatBytesFailed)?;
 
             if endpoint.is_empty() {
                 return Err(OffchainWorkerError::EthRpcNotSet);
