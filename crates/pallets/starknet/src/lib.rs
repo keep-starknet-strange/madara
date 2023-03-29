@@ -10,7 +10,6 @@ pub use pallet::*;
 use sp_core::ConstU32;
 
 use hex::FromHex;
-use core::str::FromStr;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -223,7 +222,7 @@ pub mod pallet {
             }
 
             let account_class = get_contract_class(include_bytes!("../../../../ressources/account.json"));
-			let erc20_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
+            let erc20_class = get_contract_class(include_bytes!("../../../../ressources/erc20.json"));
 			let test_class = blockifier::test_utils::get_test_contract_class();
 
             // ACCOUNT CONTRACT
@@ -232,13 +231,6 @@ pub mod pallet {
 
             let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
             let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
-			// ERC20 CONTRACT
-			// let erc20_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001001";
-			// let erc20_contract_address_bytes = <[u8; 32]>::from_hex(erc20_contract_address_str).unwrap();
-
-			// let erc20_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
-			// let erc20_class_hash_bytes = <[u8; 32]>::from_hex(erc20_class_hash_str).unwrap();
 
 			// TEST CONTRACT
 			let test_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
@@ -252,14 +244,15 @@ pub mod pallet {
 				class_hash_bytes,
 			);
 
-			// ContractClassHashes::<T>::insert(
-			// 	erc20_contract_address_bytes,
-			// 	erc20_class_hash_bytes,
-			// );
-
 			ContractClassHashes::<T>::insert(
 				test_contract_address_bytes,
 				test_class_hash_bytes,
+			);
+
+			// Mocking the erc20 deployment state diff
+			ContractClassHashes::<T>::insert(
+				<[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
+				<[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
 			);
 
 			ContractClasses::<T>::insert(
@@ -267,23 +260,14 @@ pub mod pallet {
 				ContractClassWrapper::from(account_class),
 			);
 
-			// ContractClasses::<T>::insert(
-			// 	erc20_class_hash_bytes,
-			// 	ContractClassWrapper::from(erc20_class),
-			// );
-
 			ContractClasses::<T>::insert(
 				test_class_hash_bytes,
 				ContractClassWrapper::from(test_class),
 			);
 
-			// Set some initial balances
-			StorageView::<T>::insert(
-				(
-					contract_address_bytes,
-					H256::from_str("0x02a2c49c4dba0d91b34f2ade85d41d09561f9a77884c15ba2ab0f2241b080deb").unwrap(),
-				),
-				U256::from(1000000),
+			ContractClasses::<T>::insert(
+				<[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
+				ContractClassWrapper::from(erc20_class),
 			);
 
             LastKnownEthBlock::<T>::set(None);

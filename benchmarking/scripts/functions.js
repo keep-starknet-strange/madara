@@ -77,71 +77,6 @@ async function executeERC20Transfer(userContext, events, done) {
     "0x0000000000000000000000000000000000000000000000000000000000000101";
   const accountClassHash =
     "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-  const tokenClassHash =
-    "0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c";
-
-  // // Convert Uint8Array to hex string
-  // const hexStringProgram = u8aToHex(
-  //   new TextEncoder().encode(JSON.stringify(accountJson.program))
-  // );
-
-  // let encodedData = new Map(Object.entries(accountJson.entry_points_by_type).map(([k, v]) => [ENTRYPOINTS[k], v]));
-  // encodedData = u8aToHex(new TextEncoder().encode(encodedData));
-
-  // // Declare account class hash
-  // const tx_declare = {
-  //   version: 1, // version of the transaction
-  //   hash: "", // leave empty for now, will be filled in by the runtime
-  //   signature: [], // leave empty for now, will be filled in when signing the transaction
-  //   events: [], // empty vector for now, will be filled in by the runtime
-  //   sender_address: contractAddress, // address of the sender contract
-  //   nonce: 0, // nonce of the transaction
-  //   callEntrypoint: {
-  //     // call entrypoint
-  //     classHash: accountClassHash, // class hash of the contract
-  //     entrypointSelector: null, // function selector of the transfer function
-  //     calldata: [], // empty vector for now, will be filled in by the runtime
-  //     storageAddress: contractAddress,
-  //     callerAddress: contractAddress,
-  //   },
-  //   contractClass: {
-  //     program: hexStringProgram,
-  //     entryPointsByType: encodedData,
-  //   },
-  // };
-
-  // const extrisinc_declare =
-  //   userContext.api.tx.starknet.addDeclareTransaction(tx_declare);
-  // const signedTxDeclare = await extrisinc_declare.signAsync(user, {
-  //   nonce: -1,
-  // });
-  // const resultDeclare = await signedTxDeclare.send();
-
-  // // Deploy account contract
-  // let tx_deploy = {
-  //   version: 1, // version of the transaction
-  //   hash: "", // leave empty for now, will be filled in by the runtime
-  //   signature: [], // leave empty for now, will be filled in when signing the transaction
-  //   events: [], // empty vector for now, will be filled in by the runtime
-  //   sender_address: contractAddress, // address of the sender contract
-  //   nonce: 1, // nonce of the transaction
-  //   callEntrypoint: {
-  //     // call entrypoint
-  //     classHash: accountClassHash, // class hash of the contract
-  //     entrypointSelector: null, // function selector of the transfer function
-  //     calldata: [], // empty vector for now, will be filled in by the runtime
-  //     storageAddress: contractAddress,
-  //     callerAddress: contractAddress,
-  //   },
-  //   contractClass: null,
-  // };
-
-  // const extrisinc_deploy =
-  //   userContext.api.tx.starknet.addDeployAccountTransaction(tx_declare);
-  // const signedTxDeploy = await extrisinc_deploy.signAsync(user, {
-  //   nonce: -1,
-  // });
-  // const resultDeploy = await signedTxDeploy.send();
 
   // Execute transaction
   const tx = {
@@ -169,7 +104,7 @@ async function executeERC20Transfer(userContext, events, done) {
 
   const extrisinc = userContext.api.tx.starknet.addInvokeTransaction(tx);
   const signedTx = await extrisinc.signAsync(user, { nonce: -1 });
-  const result = await signedTx.send();
+  await signedTx.send();
 
   return done();
 }

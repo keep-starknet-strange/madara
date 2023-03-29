@@ -1,13 +1,12 @@
 import { WsProvider, ApiPromise } from "@polkadot/api";
 import { Keyring } from "@polkadot/keyring";
-import { stringToU8a, u8aToHex } from "@polkadot/util";
+import { u8aToHex } from "@polkadot/util";
 import erc20Json from "../../ressources/erc20.json" assert { type: "json" };
 // import "@polkadot/api/augment";
 // import "@polkadot/types/augment";
 // import * as definitions from "../interfaces/definitions";
 
-
-async function init() {
+export async function init() {
   // extract all types from definitions - fast and dirty approach, flatted on 'types'
   // const types = Object.values(definitions).reduce(
   //   (res, { types }): object => ({ ...res, ...types }),
@@ -15,7 +14,7 @@ async function init() {
   // );
 
   const wsProvider = new WsProvider();
-  const api = await ApiPromise.create({ provider: wsProvider, /* types */ });
+  const api = await ApiPromise.create({ provider: wsProvider /* types */ });
   await api.isReady;
 
   console.log(api.genesisHash.toHex());
@@ -26,7 +25,7 @@ async function init() {
   return { api, user };
 }
 
-async function declare(
+export async function declare(
   api: ApiPromise,
   user: any,
   contractAddress: string,
@@ -70,12 +69,12 @@ async function declare(
   }
 }
 
-async function deploy(
+export async function deploy(
   api: ApiPromise,
   user: any,
   contractAddress: string,
   tokenClassHash: string
-) {
+): Promise<string | undefined> {
   // Deploy contract
   let tx_deploy = {
     version: 1, // version of the transaction
@@ -109,9 +108,106 @@ async function deploy(
       nonce: -1,
     });
     const resultDeploy = await signedTxDeploy.send();
-    console.log(resultDeploy.toHuman()?.toString());
+
+    return resultDeploy.toHuman()?.toString();
   } catch (error) {
     console.error("Eror while deploying : ", error);
+    return;
+  }
+}
+
+export async function initialize(
+  api: ApiPromise,
+  user: any,
+  contractAddress: string,
+  tokenAddress: string
+): Promise<string | undefined> {
+  // Initialize contract
+  let tx_initialize = {
+    version: 1, // version of the transaction
+    hash: "", // leave empty for now, will be filled in by the runtime
+    signature: [], // leave empty for now, will be filled in when signing the transaction
+    events: [], // empty vector for now, will be filled in by the runtime
+    sender_address: contractAddress, // address of the sender contract
+    nonce: 1, // nonce of the transaction
+    callEntrypoint: {
+      // call entrypoint
+      classHash: null, // class hash of the contract
+      entrypointSelector: null, // function selector of the transfer function
+      calldata: [
+        tokenAddress, // CONTRACT ADDRESS
+        "0x0079dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463", // SELECTOR
+        "0x0000000000000000000000000000000000000000000000000000000000000005", // CALLDATA SIZE
+        "0x0000000000000000000000000000000000000000000000000000000000000004", // INPUT SIZE
+        "0x0000000000000000000000000000000000000000000000000000000054455354", // NAME (TEST)
+        "0x0000000000000000000000000000000000000000000000000000000054455354", // SYMBOL (TEST)
+        "0x0000000000000000000000000000000000000000000000000000000000000012", // DECIMALS (18)
+        contractAddress, // PERMISSIONED MINTER
+      ],
+      storageAddress: contractAddress,
+      callerAddress: contractAddress,
+    },
+    contractClass: null,
+  };
+
+  try {
+    const extrisinc_init = api.tx.starknet.addInvokeTransaction(tx_initialize);
+    const signedTxInit = await extrisinc_init.signAsync(user, {
+      nonce: -1,
+    });
+    const resultInit = await signedTxInit.send();
+
+    return resultInit.toHuman()?.toString();
+  } catch (error) {
+    console.error("Eror while initializing : ", error);
+    return;
+  }
+}
+
+export async function mint(
+  api: ApiPromise,
+  user: any,
+  contractAddress: string,
+  tokenAddress: string,
+  mintAmount: string
+): Promise<string | undefined> {
+  // Initialize contract
+  let tx_mint = {
+    version: 1, // version of the transaction
+    hash: "", // leave empty for now, will be filled in by the runtime
+    signature: [], // leave empty for now, will be filled in when signing the transaction
+    events: [], // empty vector for now, will be filled in by the runtime
+    sender_address: contractAddress, // address of the sender contract
+    nonce: 1, // nonce of the transaction
+    callEntrypoint: {
+      // call entrypoint
+      classHash: null, // class hash of the contract
+      entrypointSelector: null, // function selector of the transfer function
+      calldata: [
+        tokenAddress, // CONTRACT ADDRESS
+        "0x00151e58b29179122a728eab07c8847e5baf5802379c5db3a7d57a8263a7bd1d", // SELECTOR (permissionedMint)
+        "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+        contractAddress,                                                      // RECIPIENT ADDRESS
+        mintAmount,                                                           // AMOUNT
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      ],
+      storageAddress: contractAddress,
+      callerAddress: contractAddress,
+    },
+    contractClass: null,
+  };
+
+  try {
+    const extrisinc_mint = api.tx.starknet.addInvokeTransaction(tx_mint);
+    const signedTxMint = await extrisinc_mint.signAsync(user, {
+      nonce: -1,
+    });
+    const resultMint = await signedTxMint.send();
+
+    return resultMint.toHuman()?.toString();
+  } catch (error) {
+    console.error("Eror while initializing : ", error);
+    return;
   }
 }
 
@@ -123,9 +219,31 @@ async function e2e_erc20_test() {
   const tokenClassHash =
     "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
 
-  // await declare(api, user, contractAddress, tokenClassHash);
+  await declare(api, user, contractAddress, tokenClassHash);
 
   await deploy(api, user, contractAddress, tokenClassHash);
+
+  await initialize(
+    api,
+    user,
+    contractAddress,
+    "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00"
+  );
 }
 
-void e2e_erc20_test();
+async function erc20_init_test() {
+  const { api, user } = await init();
+
+  const contractAddress =
+    "0x0000000000000000000000000000000000000000000000000000000000000101";
+  const tokenAddress =
+    "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
+  const mintAmount =
+    "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+  // await initialize(api, user, contractAddress, tokenAddress);
+
+  await mint(api, user, contractAddress, tokenAddress, mintAmount);
+}
+
+void erc20_init_test();
