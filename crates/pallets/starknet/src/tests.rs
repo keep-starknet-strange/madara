@@ -5,12 +5,12 @@ use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_block::header::Header;
-use mp_starknet::transaction::types::Transaction;
+use mp_starknet::transaction::types::{Transaction, EventWrapper};
 use sp_core::{H256, U256};
 
 use crate::mock::*;
 use crate::types::Message;
-use crate::Error;
+use crate::{Error, Event};
 
 #[test]
 fn given_normal_conditions_when_deploy_sierra_program_then_it_works() {
@@ -120,6 +120,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
             data: "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
         }.try_into_transaction().unwrap();
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
+
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
     });
 }
