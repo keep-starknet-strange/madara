@@ -715,7 +715,6 @@
 <a href="#715" id="715">715</a>
 <a href="#716" id="716">716</a>
 <a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -805,7 +804,6 @@
     <span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     <span class="attr">#[pallet::pallet]
-    #[pallet::without_storage_info] </span><span class="comment">// TODO: Remove this when we have bounded every storage item.
     </span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
 
     <span class="doccomment">/// Configure the pallet by specifying the parameters and types on which it depends.

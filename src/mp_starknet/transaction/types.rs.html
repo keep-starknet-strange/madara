@@ -100,7 +100,7 @@
     </span>L1HandlerTx,
 }
 <span class="doccomment">/// Representation of a Starknet transaction.
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>Transaction {
     <span class="doccomment">/// The version of the transaction.
