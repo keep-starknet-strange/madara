@@ -48,6 +48,15 @@ impl EventWrapper {
             from_address: ContractAddressWrapper::default(),
         }
     }
+
+    /// Set from address.
+    pub fn set_from_address(&self, from_address: StarknetContractAddress) -> Self {
+        Self {
+            keys: self.keys.clone(),
+            data: self.data.clone(),
+            from_address: from_address.0.key().bytes().try_into().unwrap(),
+        }
+    }
 }
 impl Default for EventWrapper {
     fn default() -> Self {
