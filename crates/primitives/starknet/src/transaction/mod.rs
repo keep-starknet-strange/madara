@@ -18,7 +18,7 @@ use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPo
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
     ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Event, Fee, InvokeTransaction,
-    L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
+    L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion, EventContent,
 };
 use starknet_api::StarknetApiError;
 
@@ -76,6 +76,22 @@ impl From<Event> for EventWrapper {
             from_address: event.from_address.0.key().bytes().try_into().unwrap(),
         }
     }
+}
+
+impl From<EventContent> for EventWrapper {
+	fn from(event: EventContent) -> Self {
+		Self {
+			keys: BoundedVec::try_from(
+				event.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>(),
+			)
+			.unwrap(),
+			data: BoundedVec::try_from(
+				event.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>(),
+			)
+			.unwrap(),
+			from_address: ContractAddressWrapper::default(),
+		}
+	}
 }
 
 impl TryInto<DeployAccountTransaction> for &Transaction {

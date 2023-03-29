@@ -295,7 +295,11 @@ pub mod pallet {
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(info, "Transaction executed successfully: {:?}", v.as_ref().unwrap());
+                    // TODO: loop through events
+                    if let Some(tx_event) = v.unwrap_or_default().execution.events.get(0) {
+                        Self::deposit_event(Event::StarknetEvent(StarknetEventType::from(tx_event.event.clone())))
+                    }
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
