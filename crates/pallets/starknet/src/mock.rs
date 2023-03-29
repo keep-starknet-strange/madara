@@ -1,4 +1,4 @@
-use blockifier::test_utils::{get_contract_class, get_test_contract_class, ACCOUNT_CONTRACT_PATH};
+use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use hex::FromHex;
 use mp_starknet::execution::ContractClassWrapper;
@@ -74,7 +74,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    let test_class = get_test_contract_class();
+    let test_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
 
     // ACCOUNT CONTRACT
