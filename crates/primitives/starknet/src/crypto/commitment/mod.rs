@@ -1,12 +1,13 @@
 use alloc::vec::Vec;
 
 use bitvec::vec::BitVec;
+use sp_core::hexdisplay::AsBytesRef;
 use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
 use crate::traits::hash::CryptoHasher;
-use crate::transaction::types::{Event, Transaction};
+use crate::transaction::types::{EventWrapper, Transaction};
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -134,7 +135,7 @@ where
 ///
 /// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
 /// for details.
-pub fn calculate_event_hash<T: CryptoHasher>(event: &Event) -> FieldElement {
+pub fn calculate_event_hash<T: CryptoHasher>(event: &EventWrapper) -> FieldElement {
     let keys_hash = T::compute_hash_on_elements(
         &event
             .keys
@@ -149,6 +150,6 @@ pub fn calculate_event_hash<T: CryptoHasher>(event: &Event) -> FieldElement {
             .map(|data| FieldElement::from_byte_slice_be(data.as_bytes()).unwrap())
             .collect::<Vec<FieldElement>>(),
     );
-    let from_address = FieldElement::from_byte_slice_be(event.from_address.as_bytes()).unwrap();
+    let from_address = FieldElement::from_byte_slice_be(event.from_address.as_bytes_ref()).unwrap();
     T::compute_hash_on_elements(&[from_address, keys_hash, data_hash])
 }

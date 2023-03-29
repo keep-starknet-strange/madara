@@ -43,7 +43,7 @@ pub struct Transaction {
     /// Signature.
     pub signature: BoundedVec<H256, MaxArraySize>,
     /// Events.
-    pub events: BoundedVec<Event, MaxArraySize>,
+    pub events: BoundedVec<EventWrapper, MaxArraySize>,
     /// Sender Address
     pub sender_address: ContractAddressWrapper,
     /// Nonce
@@ -57,11 +57,11 @@ pub struct Transaction {
 /// Representation of a Starknet event.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct Event {
+pub struct EventWrapper {
     /// The keys (topics) of the event.
     pub keys: BoundedVec<H256, MaxArraySize>,
     /// The data of the event.
     pub data: BoundedVec<H256, MaxArraySize>,
     /// The address that emited the event
-    pub from_address: H256,
+    pub from_address: ContractAddressWrapper,
 }

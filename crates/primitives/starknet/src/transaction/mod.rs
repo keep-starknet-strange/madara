@@ -17,21 +17,26 @@ use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Fee, InvokeTransaction, L1HandlerTransaction,
-    TransactionHash, TransactionSignature, TransactionVersion,
+    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Event, Fee, InvokeTransaction,
+    L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
 };
 use starknet_api::StarknetApiError;
 
 use self::types::{
-    Event, MaxArraySize, Transaction, TransactionExecutionErrorWrapper, TransactionExecutionResultWrapper, TxType,
+    EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper, TransactionExecutionResultWrapper,
+    TxType,
 };
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 use crate::starknet_block::block::Block;
 use crate::starknet_block::serialize::SerializeBlockContext;
 
-impl Event {
+impl EventWrapper {
     /// Creates a new instance of an event.
-    pub fn new(keys: BoundedVec<H256, MaxArraySize>, data: BoundedVec<H256, MaxArraySize>, from_address: H256) -> Self {
+    pub fn new(
+        keys: BoundedVec<H256, MaxArraySize>,
+        data: BoundedVec<H256, MaxArraySize>,
+        from_address: ContractAddressWrapper,
+    ) -> Self {
         Self { keys, data, from_address }
     }
 
@@ -40,11 +45,11 @@ impl Event {
         Self {
             keys: BoundedVec::try_from(vec![]).unwrap(),
             data: BoundedVec::try_from(vec![]).unwrap(),
-            from_address: H256::zero(),
+            from_address: ContractAddressWrapper::default(),
         }
     }
 }
-impl Default for Event {
+impl Default for EventWrapper {
     fn default() -> Self {
         let one = H256::from_slice(&[
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
@@ -52,7 +57,23 @@ impl Default for Event {
         Self {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
-            from_address: one,
+            from_address: ContractAddressWrapper::from(one),
+        }
+    }
+}
+
+impl From<Event> for EventWrapper {
+    fn from(event: Event) -> Self {
+        Self {
+            keys: BoundedVec::try_from(
+                event.content.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>(),
+            )
+            .unwrap(),
+            data: BoundedVec::try_from(
+                event.content.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>(),
+            )
+            .unwrap(),
+            from_address: event.from_address.0.key().bytes().try_into().unwrap(),
         }
     }
 }
@@ -139,7 +160,7 @@ impl Transaction {
         version: U256,
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
-        events: BoundedVec<Event, MaxArraySize>,
+        events: BoundedVec<EventWrapper, MaxArraySize>,
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
@@ -311,7 +332,7 @@ impl Default for Transaction {
             version: U256::default(),
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
-            events: BoundedVec::try_from(vec![Event::default(), Event::default()]).unwrap(),
+            events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),

@@ -69,7 +69,7 @@ pub mod pallet {
     use mp_starknet::state::DictStateReader;
     use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
-    use mp_starknet::transaction::types::{Event as StarknetEventType, Transaction, TxType};
+    use mp_starknet::transaction::types::{EventWrapper as StarknetEventType, Transaction, TxType};
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
