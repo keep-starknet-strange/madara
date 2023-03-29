@@ -10,12 +10,12 @@ use std::sync::Arc;
 use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
 use madara_runtime::{AccountId, Balance, Index};
+use pallet_starknet::api::StarknetRuntimeApi;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use pallet_starknet::api::StarknetRuntimeApi;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -39,9 +39,10 @@ where
     C::Api: StarknetRuntimeApi<Block>,
     P: TransactionPool + 'static,
 {
+    use madara_rpc::api::StarknetRpcApiServer;
+    use madara_rpc::StarknetRpcServer;
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
-    use madara_rpc::{StarknetRpcServer, api::StarknetRpcApiServer};
 
     let mut module = RpcModule::new(());
     let FullDeps { client, pool, deny_unsafe } = deps;

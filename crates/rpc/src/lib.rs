@@ -20,10 +20,7 @@ pub struct StarknetRpcServer<C, P> {
 
 impl<C, P> StarknetRpcServer<C, P> {
     pub fn new(client: Arc<C>, pool: Arc<P>) -> Self {
-        Self {
-            client,
-            pool,
-        }
+        Self { client, pool }
     }
 }
 
