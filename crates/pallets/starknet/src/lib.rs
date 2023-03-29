@@ -300,7 +300,10 @@ pub mod pallet {
                     if let Some(inner_call) = v.unwrap_or_default().inner_calls.get(0) {
                         if let Some(tx_event) = inner_call.execution.events.get(0) {
                             log!(info, "Transaction event: {:?}", tx_event.event.clone());
-                            Self::deposit_event(Event::StarknetEvent(StarknetEventType::from(tx_event.event.clone())))
+                            Self::deposit_event(Event::StarknetEvent(
+                                StarknetEventType::from(tx_event.event.clone())
+                                    .set_from_address(inner_call.call.storage_address),
+                            ))
                         }
                     }
                 }
