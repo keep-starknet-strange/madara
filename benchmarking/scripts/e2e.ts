@@ -1,42 +1,21 @@
 import { WsProvider, ApiPromise } from "@polkadot/api";
 import { Keyring } from "@polkadot/keyring";
-import { u8aToHex } from "@polkadot/util";
+import { stringToU8a, u8aToHex } from "@polkadot/util";
 import erc20Json from "../../ressources/erc20.json" assert { type: "json" };
+// import "@polkadot/api/augment";
+// import "@polkadot/types/augment";
+// import * as definitions from "../interfaces/definitions";
 
-interface EntryPointType {
-  [name: string]: number;
-}
-
-const ENTRYPOINTS: EntryPointType = {
-  CONSTRUCTOR: 0,
-  EXTERNAL: 1,
-  L1_HANDLER: 2,
-};
-
-interface EntryPoint {
-  offset: string;
-  selector: string;
-}
-
-// Convert Uint8Array to hex string
-const programBytes = u8aToHex(
-  new TextEncoder().encode(JSON.stringify(erc20Json.program))
-);
-
-const entryPointsMap = new Map<number, EntryPoint[]>(
-  Object.entries(erc20Json.entry_points_by_type).map(([k, v]) => [
-    ENTRYPOINTS[k],
-    v,
-  ])
-);
-// Convert Map to Uint8Array
-const entryPointsBytes = u8aToHex(
-  new TextEncoder().encode(JSON.stringify(entryPointsMap))
-);
 
 async function init() {
+  // extract all types from definitions - fast and dirty approach, flatted on 'types'
+  // const types = Object.values(definitions).reduce(
+  //   (res, { types }): object => ({ ...res, ...types }),
+  //   {}
+  // );
+
   const wsProvider = new WsProvider();
-  const api = await ApiPromise.create({ provider: wsProvider });
+  const api = await ApiPromise.create({ provider: wsProvider, /* types */ });
   await api.isReady;
 
   console.log(api.genesisHash.toHex());
@@ -69,8 +48,12 @@ async function declare(
       callerAddress: contractAddress,
     },
     contractClass: {
-      program: programBytes,
-      entryPointsByType: "0x",
+      program: u8aToHex(
+        new TextEncoder().encode(JSON.stringify(erc20Json.program))
+      ),
+      entryPointsByType: u8aToHex(
+        new TextEncoder().encode(JSON.stringify(erc20Json.entry_points_by_type))
+      ),
     },
   };
 
@@ -108,10 +91,9 @@ async function deploy(
       calldata: [
         "0x0000000000000000000000000000000000000000000000000000000000001111",
         "0x0169f135eddda5ab51886052d777a57f2ea9c162d713691b5e04a6d4ed71d47f",
-        "0x0000000000000000000000000000000000000000000000000000000000000005",
+        "0x0000000000000000000000000000000000000000000000000000000000000004",
         tokenClassHash,
         "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000001",
       ],
@@ -141,7 +123,7 @@ async function e2e_erc20_test() {
   const tokenClassHash =
     "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
 
-  await declare(api, user, contractAddress, tokenClassHash);
+  // await declare(api, user, contractAddress, tokenClassHash);
 
   await deploy(api, user, contractAddress, tokenClassHash);
 }
