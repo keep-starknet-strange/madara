@@ -1,0 +1,27 @@
+[package]
+name = "madara-rpc"
+version = "0.1.0"
+description = "Starknet RPC compatibility layer for Substrate"
+authors = [
+	"Timothée Delabrouille <https://github.com/tdelabro>",
+	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+]
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+madara-rpc-core = { path = "../rpc-core" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-starknet = { workspace = true }
+thiserror = "1.0.40"
+jsonrpsee = { workspace = true, features = ["server", "macros"] }
+log = { workspace = true }

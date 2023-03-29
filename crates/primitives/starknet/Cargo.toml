@@ -20,10 +20,10 @@ sp-runtime = { workspace = true }
 
 # Starknet
 starknet-crypto = { workspace = true, default-features = false, features = [
-  "alloc",
+	"alloc",
 ] }
 starknet-ff = { workspace = true, default-features = false, features = [
-  "alloc",
+	"alloc",
 ] }
 poseidon_hash = { workspace = true, default-features = false }
 blockifier = { workspace = true, default-features = false }
@@ -31,13 +31,15 @@ starknet_api = { workspace = true, default-features = false }
 
 # Other third party dependencies
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
-  "derive",
-  "max-encoded-len",
+	"derive",
+	"max-encoded-len",
 ] }
 scale-info = { version = "2.5.0", default-features = false, features = [
-  "derive",
+	"derive",
 ] }
-serde = { version = "1.0.159", features = ["derive"], optional = true, default-features = false }
+serde = { version = "1.0.159", features = [
+	"derive",
+], optional = true, default-features = false }
 serde_json = { version = "1.0.95", default-features = false }
 bitvec = { version = "0.17.4", features = ["alloc"], default-features = false }
 
@@ -48,16 +50,16 @@ zstd = { version = "0.12.3", default-features = false }
 [features]
 default = ["std"]
 std = [
-  "codec/std",
-  "scale-info/std",
-  "serde",
-  # Starknet
-  "starknet-crypto/std",
-  "starknet-ff/std",
-  "blockifier/std",
-  "starknet_api/std",
-  # Substrate
-  "frame-support/std",
-  "sp-core/std",
-  "sp-std/std",
+	"codec/std",
+	"scale-info/std",
+	"serde",
+	# Starknet
+	"starknet-crypto/std",
+	"starknet-ff/std",
+	"blockifier/std",
+	"starknet_api/std",
+	# Substrate
+	"frame-support/std",
+	"sp-core/std",
+	"sp-std/std",
 ]

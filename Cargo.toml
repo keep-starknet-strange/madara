@@ -5,6 +5,8 @@ members = [
 	"crates/pallets/starknet",
 	"crates/primitives/starknet",
 	"crates/client/db",
+	"crates/client/rpc-core",
+	"crates/client/rpc",
 ]
 [profile.release]
 panic = "unwind"
@@ -38,7 +40,7 @@ sp-consensus-grandpa = { git = "https://github.com/paritytech/substrate", branch
 sp-timestamp = { version = "4.0.0-dev", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-keyring = { version = "7.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
@@ -108,8 +110,9 @@ scale-info = { version = "2.5.0", default-features = false, features = [
 	"derive",
 ] }
 log = "0.4.17"
-hex = { version = "0.4.3", default-features = false }
+hex = { version = "0.4.3" }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
 clap = { version = "4.2.1", default-features = false }
 futures = { version = "0.3.28", default-features = false }
+serde = { version = "1.0.136" }
