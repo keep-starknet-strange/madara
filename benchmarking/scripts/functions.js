@@ -6,6 +6,7 @@ const addJson = require("../../ressources/add.json");
 const accountJson = require("../../ressources/account.json");
 const erc20Json = require("../../ressources/erc20.json");
 const { u8aToHex } = require("@polkadot/util");
+const { transfer } = require("./e2e.js");
 
 const ENTRYPOINTS = {
   'CONSTRUCTOR': 0,
@@ -75,36 +76,12 @@ async function executeERC20Transfer(userContext, events, done) {
 
   const contractAddress =
     "0x0000000000000000000000000000000000000000000000000000000000000101";
-  const accountClassHash =
-    "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+  const tokenAddress =
+    "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
+  const amount =
+    "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-  // Execute transaction
-  const tx = {
-    version: 1, // version of the transaction
-    hash: "", // leave empty for now, will be filled in by the runtime
-    signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
-    sender_address: contractAddress, // address of the sender contract
-    nonce: 0, // nonce of the transaction
-    callEntrypoint: {
-      // call entrypoint
-      classHash: accountClassHash, // class hash of the contract
-      entrypointSelector: null, // function selector of the transfer function
-      calldata: [
-        "0x0000000000000000000000000000000000000000000000000000000000001001", // contract address
-        "0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc", // selector
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // calldata length
-        "0x0000000000000000000000000000000000000000000000000000000000000019", // calldata
-      ],
-      storageAddress: contractAddress,
-      callerAddress: contractAddress,
-    },
-    contractClass: null,
-  };
-
-  const extrisinc = userContext.api.tx.starknet.addInvokeTransaction(tx);
-  const signedTx = await extrisinc.signAsync(user, { nonce: -1 });
-  await signedTx.send();
+  await transfer(userContext.api, user, contractAddress, tokenAddress, contractAddress, amount)
 
   return done();
 }

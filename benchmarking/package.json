@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "license": "MIT",
   "description": "Benchmarking of Madara.",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "test:chain": "artillery run -e local ./scripts/chain.yml",
     "test:execution": "artillery run -e local ./scripts/cairo-execution.yml --output reports/report.json",

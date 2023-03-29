@@ -10,6 +10,7 @@ pub use pallet::*;
 use sp_core::ConstU32;
 
 use hex::FromHex;
+use core::str::FromStr;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -268,6 +269,14 @@ pub mod pallet {
 			ContractClasses::<T>::insert(
 				<[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
 				ContractClassWrapper::from(erc20_class),
+			);
+
+			StorageView::<T>::insert(
+				(
+					<[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
+					H256::from_str("0x02a2c49c4dba0d91b34f2ade85d41d09561f9a77884c15ba2ab0f2241b080deb").unwrap()
+				),
+				U256::from(1000000000000000000u128),
 			);
 
             LastKnownEthBlock::<T>::set(None);

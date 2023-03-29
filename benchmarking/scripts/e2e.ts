@@ -187,8 +187,8 @@ export async function mint(
         tokenAddress, // CONTRACT ADDRESS
         "0x00151e58b29179122a728eab07c8847e5baf5802379c5db3a7d57a8263a7bd1d", // SELECTOR (permissionedMint)
         "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
-        contractAddress,                                                      // RECIPIENT ADDRESS
-        mintAmount,                                                           // AMOUNT
+        contractAddress, // RECIPIENT ADDRESS
+        mintAmount, // AMOUNT
         "0x0000000000000000000000000000000000000000000000000000000000000000",
       ],
       storageAddress: contractAddress,
@@ -207,6 +207,55 @@ export async function mint(
     return resultMint.toHuman()?.toString();
   } catch (error) {
     console.error("Eror while initializing : ", error);
+    return;
+  }
+}
+
+export async function transfer(
+  api: ApiPromise,
+  user: any,
+  contractAddress: string,
+  tokenAddress: string,
+  recipientAddress: string,
+  transferAmount: string
+): Promise<string | undefined> {
+  // Initialize contract
+  let tx_transfer = {
+    version: 1, // version of the transaction
+    hash: "", // leave empty for now, will be filled in by the runtime
+    signature: [], // leave empty for now, will be filled in when signing the transaction
+    events: [], // empty vector for now, will be filled in by the runtime
+    sender_address: contractAddress, // address of the sender contract
+    nonce: 3, // nonce of the transaction
+    callEntrypoint: {
+      // call entrypoint
+      classHash: null, // class hash of the contract
+      entrypointSelector: null, // function selector of the transfer function
+      calldata: [
+        tokenAddress, // CONTRACT ADDRESS
+        "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+        "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+        recipientAddress,
+        transferAmount,
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      ],
+      storageAddress: contractAddress,
+      callerAddress: contractAddress,
+    },
+    contractClass: null,
+  };
+
+  try {
+    const extrisinc_transfer =
+      api.tx.starknet.addInvokeTransaction(tx_transfer);
+    const signedTxTransfer = await extrisinc_transfer.signAsync(user, {
+      nonce: -1,
+    });
+    const resultTransfer = await signedTxTransfer.send();
+
+    return resultTransfer.toHuman()?.toString();
+  } catch (error) {
+    console.error("Error while transfer : ", error);
     return;
   }
 }
@@ -241,9 +290,18 @@ async function erc20_init_test() {
   const mintAmount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-  // await initialize(api, user, contractAddress, tokenAddress);
+  await initialize(api, user, contractAddress, tokenAddress);
 
-  await mint(api, user, contractAddress, tokenAddress, mintAmount);
+  // await mint(api, user, contractAddress, tokenAddress, mintAmount);
+
+  await transfer(
+    api,
+    user,
+    contractAddress,
+    tokenAddress,
+    contractAddress,
+    mintAmount
+  );
 }
 
 void erc20_init_test();
