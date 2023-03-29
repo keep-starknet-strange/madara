@@ -1,6 +1,5 @@
 //! Starknet execution functionality.
 
-use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec;
 
@@ -12,6 +11,7 @@ use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
+use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
 /// The address of a contract.
@@ -35,65 +35,41 @@ pub struct ContractClassWrapper {
     // /// Contract class abi.
     // pub abi: BoundedVec<ContractClassAbiEntryWrapper, MaxAbiSize>,
     /// Contract class entrypoints.
-    pub entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>, /* TODO: Switch to BoundedBTreeMap */
+    pub entry_points_by_type: BoundedVec<u8, MaxEntryPoints>,
 }
 
 impl ContractClassWrapper {
     /// Creates a new instance of a contract class.
-    pub fn new(
-        program: BoundedVec<u8, MaxProgramSize>,
-        entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
-    ) -> Self {
+    pub fn new(program: BoundedVec<u8, MaxProgramSize>, entry_points_by_type: BoundedVec<u8, MaxProgramSize>) -> Self {
         Self { program, entry_points_by_type }
     }
 
     /// Convert to starknet contract class.
     pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
-        let program = from_slice::<Program>(self.program.as_ref());
-        match program {
-            Ok(program) => Ok(ContractClass {
-                program,
-                abi: None,
-                entry_points_by_type: self
-                    .entry_points_by_type
-                    .iter()
-                    .map(|(k, v)| {
-                        (k.to_starknet_entry_point_type(), v.iter().map(|e| e.to_starknet_entry_point()).collect())
-                    })
-                    .collect(),
-            }),
-            Err(e) => Err(e),
-        }
+        let program = from_slice::<Program>(self.program.as_ref())?;
+        let entrypoints =
+            from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(self.entry_points_by_type.as_ref())?;
+        Ok(ContractClass { program, abi: None, entry_points_by_type: entrypoints })
     }
 }
 
 impl From<ContractClass> for ContractClassWrapper {
     fn from(contract_class: ContractClass) -> Self {
         let program_string = to_string(&contract_class.program).unwrap();
+        let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
         Self {
             program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
-            entry_points_by_type: contract_class
-                .entry_points_by_type
-                .into_iter()
-                .map(|(k, v)| {
-                    (
-                        EntryPointTypeWrapper::from(k),
-                        BoundedVec::try_from(
-                            v.iter()
-                                .map(|e| EntryPointWrapper::from(e.clone()))
-                                .collect::<vec::Vec<EntryPointWrapper>>(),
-                        )
-                        .unwrap(),
-                    )
-                })
-                .collect(),
+            entry_points_by_type: BoundedVec::try_from(entrypoints_string.as_bytes().to_vec()).unwrap(),
         }
     }
 }
 
 impl Default for ContractClassWrapper {
     fn default() -> Self {
-        Self { program: BoundedVec::try_from(vec![]).unwrap(), entry_points_by_type: BTreeMap::default() }
+        Self {
+            program: BoundedVec::try_from(vec![]).unwrap(),
+            entry_points_by_type: BoundedVec::try_from(vec![]).unwrap(),
+        }
     }
 }
 

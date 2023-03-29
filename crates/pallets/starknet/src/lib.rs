@@ -87,7 +87,6 @@ pub mod pallet {
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
-    #[pallet::without_storage_info] // TODO: Remove this when we have bounded every storage item.
     pub struct Pallet<T>(_);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
