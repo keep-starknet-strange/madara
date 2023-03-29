@@ -298,9 +298,12 @@ pub mod pallet {
                 Ok(v) => {
                     log!(info, "Transaction executed successfully: {:?}", v.as_ref().unwrap());
                     // TODO: loop through events
-                    if let Some(tx_event) = v.unwrap_or_default().execution.events.get(0) {
-                        Self::deposit_event(Event::StarknetEvent(StarknetEventType::from(tx_event.event.clone())))
-                    }
+					if let Some(inner_call) = v.unwrap_or_default().inner_calls.get(0) {
+						if let Some(tx_event) = inner_call.execution.events.get(0) {
+							log!(info, "Transaction event: {:?}", tx_event.event.clone());
+							Self::deposit_event(Event::StarknetEvent(StarknetEventType::from(tx_event.event.clone())))
+						}
+					}
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
