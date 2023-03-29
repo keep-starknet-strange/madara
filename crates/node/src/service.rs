@@ -15,6 +15,8 @@ use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
+use crate::starknet::{db_config_dir, MadaraBackend};
+
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
@@ -53,6 +55,7 @@ pub fn new_partial(
             sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
             Option<Telemetry>,
+            Arc<MadaraBackend>,
         ),
     >,
     ServiceError,
@@ -108,6 +111,8 @@ pub fn new_partial(
         telemetry.as_ref().map(|x| x.handle()),
     )?;
 
+    let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
+
     let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
     let import_queue = sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
@@ -139,7 +144,7 @@ pub fn new_partial(
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (grandpa_block_import, grandpa_link, telemetry),
+        other: (grandpa_block_import, grandpa_link, telemetry, madara_backend),
     })
 }
 
@@ -160,7 +165,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         mut keystore_container,
         select_chain,
         transaction_pool,
-        other: (block_import, grandpa_link, mut telemetry),
+        other: (block_import, grandpa_link, mut telemetry, madara_backend),
     } = new_partial(&config)?;
 
     if let Some(url) = &config.keystore_remote {
