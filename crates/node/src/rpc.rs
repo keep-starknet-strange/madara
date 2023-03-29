@@ -49,7 +49,7 @@ where
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
     module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-    module.merge(StarknetRpcServer::new(client.clone(), pool.clone()).into_rpc())?;
+    module.merge(StarknetRpcServer::new(client, pool).into_rpc())?;
 
     Ok(module)
 }
