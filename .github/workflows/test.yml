@@ -33,7 +33,6 @@ jobs:
         run: |
           cargo fmt --all -- --check
           cargo clippy -- -D warnings
-        shell: bash
 
   coverage:
     # The type of runner that the job will run on
@@ -53,8 +52,7 @@ jobs:
           cargo install cargo-tarpaulin
       - uses: Swatinem/rust-cache@v2
       - name: Coverage
-        run: cargo tarpaulin --workspace
-        shell: bash
+        run: cargo tarpaulin --workspace --skip-clean
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
