@@ -489,7 +489,7 @@ impl_runtime_apis! {
 
     impl pallet_starknet::api::StarknetRuntimeApi<Block> for Runtime {
         fn current_block_number() -> Option<U256> {
-            Starknet::current_block_number()
+            Starknet::current_block().map(|block| block.header.block_number)
         }
         fn current_block_hash() -> Option<H256> {
             Starknet::current_block_hash()

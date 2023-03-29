@@ -489,16 +489,6 @@ pub mod pallet {
 
     /// The Starknet pallet internal functions.
     impl<T: Config> Pallet<T> {
-        /// Get current block number.
-        ///
-        /// # Returns
-        ///
-        /// The current block number.
-        #[inline(always)]
-        pub fn current_block_number() -> Option<U256> {
-            Self::current_block().map(|block| block.header.block_number)
-        }
-
         /// Get current block hash.
         ///
         /// # Returns
