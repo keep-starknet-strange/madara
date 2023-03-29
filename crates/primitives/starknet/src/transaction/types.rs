@@ -33,7 +33,7 @@ pub enum TxType {
     L1HandlerTx,
 }
 /// Representation of a Starknet transaction.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
     /// The version of the transaction.
