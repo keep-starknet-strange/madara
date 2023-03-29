@@ -22,7 +22,7 @@
 
 Madara is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
 
-![](docs/images/madara-demo-fib-cairo-execution-in-pallet.gif)
+![](docs/images/madara-benchmark-erc20-transfer-76tps-demo.gif)
 
 ## Architecture
 
