@@ -171,7 +171,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 		System::assert_last_event(Event::StarknetEvent(EventWrapper {
 			keys: bounded_vec![H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()],
 			data: bounded_vec!(),
-			from_address: [0;32]
+			from_address:  H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap().to_fixed_bytes()
 		}).into());
 
     });
