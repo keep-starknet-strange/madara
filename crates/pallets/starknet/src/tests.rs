@@ -5,7 +5,7 @@ use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_block::header::Header;
-use mp_starknet::transaction::types::{Transaction, EventWrapper};
+use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 
 use crate::mock::*;

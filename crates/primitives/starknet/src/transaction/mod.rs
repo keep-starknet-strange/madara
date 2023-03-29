@@ -17,8 +17,8 @@ use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Event, Fee, InvokeTransaction,
-    L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion, EventContent,
+    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Event, EventContent, Fee, InvokeTransaction,
+    L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
 };
 use starknet_api::StarknetApiError;
 
@@ -79,19 +79,19 @@ impl From<Event> for EventWrapper {
 }
 
 impl From<EventContent> for EventWrapper {
-	fn from(event: EventContent) -> Self {
-		Self {
-			keys: BoundedVec::try_from(
-				event.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>(),
-			)
-			.unwrap(),
-			data: BoundedVec::try_from(
-				event.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>(),
-			)
-			.unwrap(),
-			from_address: ContractAddressWrapper::default(),
-		}
-	}
+    fn from(event: EventContent) -> Self {
+        Self {
+            keys: BoundedVec::try_from(
+                event.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>(),
+            )
+            .unwrap(),
+            data: BoundedVec::try_from(
+                event.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>(),
+            )
+            .unwrap(),
+            from_address: ContractAddressWrapper::default(),
+        }
+    }
 }
 
 impl TryInto<DeployAccountTransaction> for &Transaction {
