@@ -22,32 +22,34 @@
 
 Madara is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and written in Rust 🦀.
 
-![](docs/images/madara-benchmark-erc20-transfer-76tps-demo.gif)
+This README file provides an overview of the Madara project, including its structure, components, and instructions for building, testing and running benchmarks.
 
 ## Architecture
-
-`Madara` is formed by those components:
-
-- `node`: services for the blockchain node implementation (chain specification, rpc, ...)
-- `pallets`: custom FRAME pallets
-  - `pallet-cairo`: Cairo execution engine pallet.
-  - `pallet-starknet`: Starknet pallet.
-- `runtime`: assemble Madara custom logic with the configured pallets.
 
 Here is a high level overview of the current architecture of Starknet sequencer.
 
 ![](docs/images/starknet-sequencer-architecture.png)
 
+## Project Structure
+
+The Madara project consists of the following directories:
+
+- `benchmarking`: Contains the code for benchmarking the custom FRAME pallets.
+- `crates`: Holds all the crates used by the project, organized into the following subdirectories:
+  - `node`: Implements services for the blockchain node (e.g., chain specification, RPC, etc.).
+  - `pallets`: Contains custom FRAME pallets, including:
+    - `pallet-starknet`: The Starknet pallet.
+  - `runtime`: Assembles Madara's custom logic with the configured pallets.
+  - `primitives`: Stores primitives used by the pallets.
+- `docs`: Contains the project's documentation.
+- `examples`: Provides example implementations for the project.
+- `infra`: Houses infrastructure-related components, such as deployment scripts and Dockerfiles.
+
 ### Benchmarking
 
-You can run benchmarks to get an idea of the performance of the pallets. To run the benchmarks, follow the steps within the [benchmarking](./benchmarking/README.md) document.
+Benchmarking allows you to assess the performance of the project's pallets. To run the benchmarks, follow the instructions in the [benchmarking](./benchmarking/README.md) document.
 
 ### Pallets
-
-#### `pallet-cairo`
-
-`pallet-cairo` is a pallet that provides a way to execute Cairo programs in a Substrate environment.
-
 #### `pallet-starknet`
 
 `pallet-starknet` is a pallet that provides a way to execute Starknet contracts in a Substrate environment.
