@@ -75,7 +75,7 @@ where
             StarknetRpcApiError::NoBlocks
         })?;
 
-        Ok(BlockHashAndNumber { block_hash: block_hash.to_string(), block_number })
+        Ok(BlockHashAndNumber { block_hash: format!("{:#x}", block_hash), block_number })
     }
 
     fn get_block_transaction_count(&self, block_id: StarknetBlockId) -> RpcResult<u128> {
@@ -107,7 +107,7 @@ where
 
         let api = self.client.runtime_api();
 
-        let block = api.block(substrate_block_hash).map_err(|e| {
+        let block = api.current_block(substrate_block_hash).map_err(|e| {
             error!(
                 "Failed retrieve Starknet block using the Starknet pallet runtime API for Substrate block with hash \
                  '{substrate_block_hash}': {e}"
