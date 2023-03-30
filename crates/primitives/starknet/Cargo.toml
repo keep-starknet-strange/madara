@@ -39,7 +39,7 @@ scale-info = { version = "2.5.0", default-features = false, features = [
 ] }
 serde = { version = "1.0.159", features = ["derive"], optional = true, default-features = false }
 serde_json = { version = "1.0.95", default-features = false }
-bitvec = { version = "0.17.4", features = ["alloc"], default-features = false }
+bitvec = { version = "1.0.1", features = ["alloc"], default-features = false }
 
 [dev-dependencies]
 rand = "0.8.5"
