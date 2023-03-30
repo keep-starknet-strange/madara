@@ -111,5 +111,5 @@ log = "0.4.17"
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
-clap = { version = "4.0.9", default-features = false }
+clap = { version = "4.2.1", default-features = false }
 futures = { version = "0.3.21", default-features = false }
