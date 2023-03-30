@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use madara_runtime::opaque::Block;
 use sc_service::{BasePath, Configuration};
 
-pub type MadaraBackend = madara_db::Backend<Block>;
+pub type MadaraBackend = mc_db::Backend<Block>;
 
 pub fn db_config_dir(config: &Configuration) -> PathBuf {
     let application = &config.impl_name;
