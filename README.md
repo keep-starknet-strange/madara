@@ -183,6 +183,23 @@ Run the local testnet:
 ./infra/local-testnet/run.sh
 ```
 
+### Set Ethereum Node URL for offchain worker
+
+In order for the offchain worker to access an Ethereum RPC node, we need to set the URL for that in offchain local storage.
+We can do that by making use of the default [`offchain` rpc calls](https://polkadot.js.org/docs/substrate/rpc/#offchain) provided by Substrate.
+
+In the polkadot explorer, navigate to Developer > RPC calls and choose the `offchain` endpoint.
+In there, you can set the value for `ETHEREUM_EXECUTION_RPC` by using the `localStorageSet` function.
+You need to select the type of storage, in this case `PERSISTENT`, and use the `starknet::ETHEREUM_EXECUTION_RPC` as the `key`.
+The value is the RPC URL you intend to use.
+
+![](docs/images/madara-set-rpc-url-in-local-storage.png)
+
+
+You can check that the value was properly set by using the `localStorageGet` function
+
+![](docs/images/madara-get-rpc-url-from-local-storage.png)
+
 ## Project Structure
 
 A Substrate project such as this consists of a number of components that are spread across a few

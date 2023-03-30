@@ -140,9 +140,6 @@ pub mod pallet {
         fn offchain_worker(n: T::BlockNumber) {
             log!(info, "Running offchain worker at block {:?}.", n);
 
-            // TODO Move this to RPC call
-            // StorageValueRef::persistent(ETHEREUM_EXECUTION_RPC).set(&"https://ethereum-mainnet-rpc.allthatnode.com");
-
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
                 Err(err) => log!(error, "Failed to executed L1 message {:?}", err),
