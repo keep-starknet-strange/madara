@@ -17,14 +17,14 @@ use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Event, EventContent, Fee, InvokeTransaction,
+    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, EventContent, Fee, InvokeTransaction,
     L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
 };
 use starknet_api::StarknetApiError;
 
 use self::types::{
-    EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper, TransactionExecutionResultWrapper,
-    TxType,
+    EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
+    TransactionExecutionResultWrapper, TxType,
 };
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 use crate::starknet_block::block::Block;
@@ -49,15 +49,63 @@ impl EventWrapper {
         }
     }
 
-    /// Set from address.
-    pub fn set_from_address(&self, from_address: StarknetContractAddress) -> Self {
-        Self {
-            keys: self.keys.clone(),
-            data: self.data.clone(),
-            from_address: from_address.0.key().bytes().try_into().unwrap(),
-        }
+    /// Creates a new instance of an event builder.
+    pub fn builder() -> EventBuilder {
+        EventBuilder::default()
     }
 }
+
+/// Builder pattern for `EventWrapper`.
+#[derive(Default)]
+pub struct EventBuilder {
+    keys: vec::Vec<H256>,
+    data: vec::Vec<H256>,
+    from_address: Option<StarknetContractAddress>,
+}
+
+impl EventBuilder {
+    /// Sets the keys of the event.
+    pub fn with_keys(mut self, keys: vec::Vec<H256>) -> Self {
+        self.keys = keys;
+        self
+    }
+
+    /// Sets the data of the event.
+    pub fn with_data(mut self, data: vec::Vec<H256>) -> Self {
+        self.data = data;
+        self
+    }
+
+    /// Sets the from address of the event.
+    pub fn with_from_address(mut self, from_address: StarknetContractAddress) -> Self {
+        self.from_address = Some(from_address);
+        self
+    }
+
+    /// Sets keys and data from an event content.
+    pub fn with_event_content(mut self, event_content: EventContent) -> Self {
+        self.keys = event_content.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>();
+        self.data = event_content.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>();
+        self
+    }
+
+    /// Builds the event.
+    pub fn build(self) -> Result<EventWrapper, EventError> {
+        Ok(EventWrapper {
+            keys: BoundedVec::try_from(self.keys).map_err(|_| EventError::InvalidKeys)?,
+            data: BoundedVec::try_from(self.data).map_err(|_| EventError::InvalidData)?,
+            from_address: self
+                .from_address
+                .unwrap_or_else(StarknetContractAddress::default)
+                .0
+                .key()
+                .bytes()
+                .try_into()
+                .map_err(|_| EventError::InvalidFromAddress)?,
+        })
+    }
+}
+
 impl Default for EventWrapper {
     fn default() -> Self {
         let one = H256::from_slice(&[
@@ -67,38 +115,6 @@ impl Default for EventWrapper {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
             from_address: ContractAddressWrapper::from(one),
-        }
-    }
-}
-
-impl From<Event> for EventWrapper {
-    fn from(event: Event) -> Self {
-        Self {
-            keys: BoundedVec::try_from(
-                event.content.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>(),
-            )
-            .unwrap(),
-            data: BoundedVec::try_from(
-                event.content.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>(),
-            )
-            .unwrap(),
-            from_address: event.from_address.0.key().bytes().try_into().unwrap(),
-        }
-    }
-}
-
-impl From<EventContent> for EventWrapper {
-    fn from(event: EventContent) -> Self {
-        Self {
-            keys: BoundedVec::try_from(
-                event.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>(),
-            )
-            .unwrap(),
-            data: BoundedVec::try_from(
-                event.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>(),
-            )
-            .unwrap(),
-            from_address: ContractAddressWrapper::default(),
         }
     }
 }

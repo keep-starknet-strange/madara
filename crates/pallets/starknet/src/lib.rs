@@ -56,6 +56,7 @@ pub mod pallet {
     pub use alloc::vec::Vec;
     pub use alloc::{format, vec};
 
+    use blockifier::execution::entry_point::CallInfo;
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     use frame_support::pallet_prelude::*;
@@ -69,7 +70,7 @@ pub mod pallet {
     use mp_starknet::state::DictStateReader;
     use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
-    use mp_starknet::transaction::types::{EventWrapper as StarknetEventType, Transaction, TxType};
+    use mp_starknet::transaction::types::{EventError, EventWrapper as StarknetEventType, Transaction, TxType};
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
@@ -250,6 +251,7 @@ pub mod pallet {
         TooManyPendingTransactions,
         InvalidCurrentBlock,
         StateReaderError,
+        EmitEventError,
     }
 
     /// The Starknet pallet external functions.
@@ -295,17 +297,8 @@ pub mod pallet {
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.as_ref().unwrap());
-                    // TODO: loop through events
-                    if let Some(inner_call) = v.unwrap_or_default().inner_calls.get(0) {
-                        if let Some(tx_event) = inner_call.execution.events.get(0) {
-                            log!(info, "Transaction event: {:?}", tx_event.event.clone());
-                            Self::deposit_event(Event::StarknetEvent(
-                                StarknetEventType::from(tx_event.event.clone())
-                                    .set_from_address(inner_call.call.storage_address),
-                            ))
-                        }
-                    }
+                    Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
+                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -375,7 +368,7 @@ pub mod pallet {
             // Execute transaction
             match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.unwrap_or_default());
+                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -429,7 +422,7 @@ pub mod pallet {
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::DeployAccountTx, None) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -621,6 +614,39 @@ pub mod pallet {
             );
 
             ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
+
+            Ok(())
+        }
+
+        /// Emit events from the call info.
+        ///
+        /// # Arguments
+        ///
+        /// * `call_info` - The call info.
+        ///
+        /// # Returns
+        ///
+        /// The result of the operation.
+        fn emit_events(call_info: &CallInfo) -> Result<(), EventError> {
+            // TODO: loop through all events/inner_calls
+            if let Some(inner_call) = call_info.inner_calls.get(0) {
+                if let Some(tx_event) = inner_call.execution.events.get(0) {
+                    log!(info, "Transaction event: {:?}", tx_event.event.clone());
+                    let event = StarknetEventType::builder()
+                        .with_event_content(tx_event.event.clone())
+                        .with_from_address(inner_call.call.storage_address)
+                        .build();
+                    match event {
+                        Ok(event) => {
+                            Self::deposit_event(Event::StarknetEvent(event));
+                        }
+                        Err(e) => {
+                            log!(error, "Error parsing event: {:?}", e);
+                            return Err(e);
+                        }
+                    }
+                }
+            }
 
             Ok(())
         }

@@ -65,3 +65,15 @@ pub struct EventWrapper {
     /// The address that emited the event
     pub from_address: ContractAddressWrapper,
 }
+
+/// Error enum wrapper for events.
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum EventError {
+    /// Provided keys are invalid.
+    InvalidKeys,
+    /// Provided data is invalid.
+    InvalidData,
+    /// Provided from address is invalid.
+    InvalidFromAddress,
+}
