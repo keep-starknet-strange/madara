@@ -1,6 +1,9 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
+use core::str::FromStr;
+
+use hex::FromHex;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -8,9 +11,6 @@
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
 use sp_core::ConstU32;
-
-use hex::FromHex;
-use core::str::FromStr;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -61,7 +61,7 @@ pub mod pallet {
 
     // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
-    use blockifier::test_utils::{get_contract_class};
+    use blockifier::test_utils::get_contract_class;
     use frame_support::pallet_prelude::*;
     use frame_support::traits::{OriginTrait, Randomness, Time};
     use frame_system::pallet_prelude::*;
@@ -224,7 +224,7 @@ pub mod pallet {
 
             let account_class = get_contract_class(include_bytes!("../../../../ressources/account.json"));
             let erc20_class = get_contract_class(include_bytes!("../../../../ressources/erc20.json"));
-			let test_class = blockifier::test_utils::get_test_contract_class();
+            let test_class = blockifier::test_utils::get_test_contract_class();
 
             // ACCOUNT CONTRACT
             let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
@@ -233,51 +233,39 @@ pub mod pallet {
             let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
             let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
-			// TEST CONTRACT
-			let test_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
-			let test_contract_address_bytes = <[u8; 32]>::from_hex(test_contract_address_str).unwrap();
+            // TEST CONTRACT
+            let test_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
+            let test_contract_address_bytes = <[u8; 32]>::from_hex(test_contract_address_str).unwrap();
 
-			let test_class_hash_str = "025ec026985a3bf9d0caafe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
-			let test_class_hash_bytes = <[u8; 32]>::from_hex(test_class_hash_str).unwrap();
+            let test_class_hash_str = "025ec026985a3bf9d0caafe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+            let test_class_hash_bytes = <[u8; 32]>::from_hex(test_class_hash_str).unwrap();
 
-			ContractClassHashes::<T>::insert(
-				contract_address_bytes,
-				class_hash_bytes,
-			);
+            ContractClassHashes::<T>::insert(contract_address_bytes, class_hash_bytes);
 
-			ContractClassHashes::<T>::insert(
-				test_contract_address_bytes,
-				test_class_hash_bytes,
-			);
+            ContractClassHashes::<T>::insert(test_contract_address_bytes, test_class_hash_bytes);
 
-			// Mocking the erc20 deployment state diff
-			ContractClassHashes::<T>::insert(
-				<[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
-				<[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
-			);
+            // Mocking the erc20 deployment state diff
+            ContractClassHashes::<T>::insert(
+                <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
+                <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
+            );
 
-			ContractClasses::<T>::insert(
-				class_hash_bytes,
-				ContractClassWrapper::from(account_class),
-			);
+            ContractClasses::<T>::insert(class_hash_bytes, ContractClassWrapper::from(account_class));
 
-			ContractClasses::<T>::insert(
-				test_class_hash_bytes,
-				ContractClassWrapper::from(test_class),
-			);
+            ContractClasses::<T>::insert(test_class_hash_bytes, ContractClassWrapper::from(test_class));
 
-			ContractClasses::<T>::insert(
-				<[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
-				ContractClassWrapper::from(erc20_class),
-			);
+            ContractClasses::<T>::insert(
+                <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918").unwrap(),
+                ContractClassWrapper::from(erc20_class),
+            );
 
-			StorageView::<T>::insert(
-				(
-					<[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
-					H256::from_str("0x02a2c49c4dba0d91b34f2ade85d41d09561f9a77884c15ba2ab0f2241b080deb").unwrap()
-				),
-				U256::from(1000000000000000000u128),
-			);
+            StorageView::<T>::insert(
+                (
+                    <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap(),
+                    H256::from_str("0x02a2c49c4dba0d91b34f2ade85d41d09561f9a77884c15ba2ab0f2241b080deb").unwrap(),
+                ),
+                U256::from(1000000000000000000u128),
+            );
 
             LastKnownEthBlock::<T>::set(None);
         }
