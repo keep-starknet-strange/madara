@@ -39,7 +39,7 @@ pallet-insecure-randomness-collective-flip = { workspace = true }
 
 # Other third party dependencies
 serde = { version = "1.0.136", features = ["derive"], default-features = false }
-serde_json = { version = "1.0.85", default-features = false }
+serde_json = { version = "1.0.95", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
