@@ -104,7 +104,7 @@ lazy_static = { version = "1.4.0", default-features = false }
 codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = [
   "derive",
 ] }
-scale-info = { version = "2.1.1", default-features = false, features = [
+scale-info = { version = "2.5.0", default-features = false, features = [
   "derive",
 ] }
 log = "0.4.17"
