@@ -32,12 +32,12 @@ use crate::starknet_block::serialize::SerializeBlockContext;
 
 impl EventWrapper {
     /// Creates a new instance of an event.
-	///
-	/// # Arguments
-	///
-	/// * `keys` - Event keys.
-	/// * `data` - Event data.
-	/// * `from_address` - Contract Address where the event was emitted from.
+    ///
+    /// # Arguments
+    ///
+    /// * `keys` - Event keys.
+    /// * `data` - Event data.
+    /// * `from_address` - Contract Address where the event was emitted from.
     pub fn new(
         keys: BoundedVec<H256, MaxArraySize>,
         data: BoundedVec<H256, MaxArraySize>,
@@ -71,40 +71,40 @@ pub struct EventBuilder {
 
 impl EventBuilder {
     /// Sets the keys of the event.
-	///
-	/// # Arguments
-	///
-	/// * `keys` - Event keys.
+    ///
+    /// # Arguments
+    ///
+    /// * `keys` - Event keys.
     pub fn with_keys(mut self, keys: vec::Vec<H256>) -> Self {
         self.keys = keys;
         self
     }
 
     /// Sets the data of the event.
-	///
-	/// # Arguments
-	///
-	/// * `data` - Event data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Event data.
     pub fn with_data(mut self, data: vec::Vec<H256>) -> Self {
         self.data = data;
         self
     }
 
     /// Sets the from address of the event.
-	///
-	/// # Arguments
-	///
-	/// * `from_address` - Contract Address where the event was emitted from.
+    ///
+    /// # Arguments
+    ///
+    /// * `from_address` - Contract Address where the event was emitted from.
     pub fn with_from_address(mut self, from_address: StarknetContractAddress) -> Self {
         self.from_address = Some(from_address);
         self
     }
 
     /// Sets keys and data from an event content.
-	///
-	/// # Arguments
-	///
-	/// * `event_content` - Event content retrieved from the `CallInfo`.
+    ///
+    /// # Arguments
+    ///
+    /// * `event_content` - Event content retrieved from the `CallInfo`.
     pub fn with_event_content(mut self, event_content: EventContent) -> Self {
         self.keys = event_content.keys.iter().map(|k| H256::from_slice(k.0.bytes())).collect::<vec::Vec<H256>>();
         self.data = event_content.data.0.iter().map(|d| H256::from_slice(d.bytes())).collect::<vec::Vec<H256>>();
