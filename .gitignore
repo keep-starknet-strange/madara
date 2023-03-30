@@ -22,4 +22,3 @@ data
 
 # Artillery reports
 benchmarking/reports/*.json
-benchmarking/src/interfaces
