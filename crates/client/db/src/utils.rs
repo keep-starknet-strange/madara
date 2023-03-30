@@ -19,27 +19,23 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use sp_runtime::traits::Block as BlockT;
-
 use crate::{Database, DatabaseSettings, DatabaseSource, DbHash};
 
-pub fn open_database<Block: BlockT>(config: &DatabaseSettings) -> Result<Arc<dyn Database<DbHash>>, String> {
+pub fn open_database(config: &DatabaseSettings) -> Result<Arc<dyn Database<DbHash>>, String> {
     let db: Arc<dyn Database<DbHash>> = match &config.source {
-        DatabaseSource::ParityDb { path } => open_parity_db::<Block>(path)?,
-        DatabaseSource::RocksDb { path, .. } => open_kvdb_rocksdb::<Block>(path, true)?,
-        DatabaseSource::Auto { paritydb_path, rocksdb_path, .. } => {
-            match open_kvdb_rocksdb::<Block>(rocksdb_path, false) {
-                Ok(db) => db,
-                Err(_) => open_parity_db::<Block>(paritydb_path)?,
-            }
-        }
+        DatabaseSource::ParityDb { path } => open_parity_db(path)?,
+        DatabaseSource::RocksDb { path, .. } => open_kvdb_rocksdb(path, true)?,
+        DatabaseSource::Auto { paritydb_path, rocksdb_path, .. } => match open_kvdb_rocksdb(rocksdb_path, false) {
+            Ok(db) => db,
+            Err(_) => open_parity_db(paritydb_path)?,
+        },
         _ => return Err("Missing feature flags `parity-db`".to_string()),
     };
     Ok(db)
 }
 
 #[cfg(feature = "kvdb-rocksdb")]
-fn open_kvdb_rocksdb<Block: BlockT>(path: &Path, create: bool) -> Result<Arc<dyn Database<DbHash>>, String> {
+fn open_kvdb_rocksdb(path: &Path, create: bool) -> Result<Arc<dyn Database<DbHash>>, String> {
     let mut db_config = kvdb_rocksdb::DatabaseConfig::with_columns(crate::columns::NUM_COLUMNS);
     db_config.create_if_missing = create;
 
@@ -48,7 +44,7 @@ fn open_kvdb_rocksdb<Block: BlockT>(path: &Path, create: bool) -> Result<Arc<dyn
 }
 
 #[cfg(not(feature = "kvdb-rocksdb"))]
-fn open_kvdb_rocksdb<Block: BlockT>(
+fn open_kvdb_rocksdb(
     _client: Arc<C>,
     _path: &Path,
     _create: bool,
@@ -58,7 +54,7 @@ fn open_kvdb_rocksdb<Block: BlockT>(
 }
 
 #[cfg(feature = "parity-db")]
-fn open_parity_db<Block: BlockT>(path: &Path) -> Result<Arc<dyn Database<DbHash>>, String> {
+fn open_parity_db(path: &Path) -> Result<Arc<dyn Database<DbHash>>, String> {
     let mut config = parity_db::Options::with_columns(path, crate::columns::NUM_COLUMNS as u8);
     config.columns[crate::columns::BLOCK_MAPPING as usize].btree_index = true;
 
@@ -67,6 +63,6 @@ fn open_parity_db<Block: BlockT>(path: &Path) -> Result<Arc<dyn Database<DbHash>
 }
 
 #[cfg(not(feature = "parity-db"))]
-fn open_parity_db<Block: BlockT>(_path: &Path) -> Result<Arc<dyn Database<DbHash>>, String> {
+fn open_parity_db(_path: &Path) -> Result<Arc<dyn Database<DbHash>>, String> {
     Err("Missing feature flags `parity-db`".to_string())
 }

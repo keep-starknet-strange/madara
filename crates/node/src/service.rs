@@ -8,6 +8,7 @@ use futures::prelude::*;
 use madara_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, RuntimeApi};
+use mc_storage::overrides_handle;
 use sc_client_api::{BlockBackend, BlockchainEvents};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::SharedVoterState;
@@ -212,7 +213,9 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
     let enable_grandpa = !config.disable_grandpa;
     let prometheus_registry = config.prometheus_registry().cloned();
 
-    let starknet_rpc_params = StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone() };
+    let overrides = overrides_handle(client.clone());
+    let starknet_rpc_params =
+        StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone(), overrides: overrides.clone() };
 
     let rpc_extensions_builder = {
         let client = client.clone();
@@ -252,6 +255,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
             Duration::new(6, 0),
             client.clone(),
             backend,
+            overrides.clone(),
             madara_backend.clone(),
             3,
             0,

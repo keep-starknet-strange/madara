@@ -7,6 +7,7 @@ use futures::prelude::*;
 use futures::task::{Context, Poll};
 use futures_timer::Delay;
 use log::debug;
+use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 // Substrate
 use sc_client_api::{
@@ -23,32 +24,34 @@ pub enum SyncStrategy {
     Parachain,
 }
 
-pub struct MappingSyncWorker<Block: BlockT, C, BE> {
-    import_notifications: ImportNotifications<Block>,
+pub struct MappingSyncWorker<B: BlockT, C, BE> {
+    import_notifications: ImportNotifications<B>,
     timeout: Duration,
     inner_delay: Option<Delay>,
 
     client: Arc<C>,
     substrate_backend: Arc<BE>,
-    madara_backend: Arc<madara_db::Backend<Block>>,
+    overrides: Arc<OverrideHandle<B>>,
+    madara_backend: Arc<madara_db::Backend<B>>,
 
     have_next: bool,
     retry_times: usize,
-    sync_from: <Block::Header as HeaderT>::Number,
+    sync_from: <B::Header as HeaderT>::Number,
     strategy: SyncStrategy,
 }
 
-impl<Block: BlockT, C, BE> Unpin for MappingSyncWorker<Block, C, BE> {}
+impl<B: BlockT, C, BE> Unpin for MappingSyncWorker<B, C, BE> {}
 
-impl<Block: BlockT, C, BE> MappingSyncWorker<Block, C, BE> {
+impl<B: BlockT, C, BE> MappingSyncWorker<B, C, BE> {
     pub fn new(
-        import_notifications: ImportNotifications<Block>,
+        import_notifications: ImportNotifications<B>,
         timeout: Duration,
         client: Arc<C>,
         substrate_backend: Arc<BE>,
-        frontier_backend: Arc<madara_db::Backend<Block>>,
+        overrides: Arc<OverrideHandle<B>>,
+        frontier_backend: Arc<madara_db::Backend<B>>,
         retry_times: usize,
-        sync_from: <Block::Header as HeaderT>::Number,
+        sync_from: <B::Header as HeaderT>::Number,
         strategy: SyncStrategy,
     ) -> Self {
         Self {
@@ -58,6 +61,7 @@ impl<Block: BlockT, C, BE> MappingSyncWorker<Block, C, BE> {
 
             client,
             substrate_backend,
+            overrides,
             madara_backend: frontier_backend,
 
             have_next: true,
@@ -110,6 +114,7 @@ where
             match crate::sync_blocks(
                 self.client.as_ref(),
                 self.substrate_backend.as_ref(),
+                self.overrides.clone(),
                 self.madara_backend.as_ref(),
                 self.retry_times,
                 self.sync_from,
