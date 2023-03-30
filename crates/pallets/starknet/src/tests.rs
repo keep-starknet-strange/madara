@@ -350,7 +350,7 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
 
         // Check that the class hash was declared
         // TODO: Uncomment once we have ABI support
-        // assert_eq!(Starknet::contract_class_by_class_hash(class_hash_bytes), account_class);
+        assert_eq!(Starknet::contract_class_by_class_hash(class_hash_bytes), account_class);
     });
 }
 
@@ -393,7 +393,7 @@ fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
 
         // Check that the class hash was declared
         // TODO: Uncomment once we have ABI support
-        // assert_eq!(Starknet::contract_class_by_class_hash(class_hash_bytes), account_class);
+        assert_eq!(Starknet::contract_class_by_class_hash(class_hash_bytes), account_class);
 
         // Second declare should fail
         assert_err!(

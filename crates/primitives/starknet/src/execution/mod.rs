@@ -33,7 +33,7 @@ pub struct ContractClassWrapper {
     /// Contract class program json.
     pub program: BoundedVec<u8, MaxProgramSize>,
     // /// Contract class abi.
-    // pub abi: BoundedVec<ContractClassAbiEntryWrapper, MaxAbiSize>,
+    pub abi: BoundedVec<ContractClassAbiEntryWrapper, MaxAbiSize>,
     /// Contract class entrypoints.
     pub entry_points_by_type: BoundedVec<u8, MaxEntryPoints>,
 }
