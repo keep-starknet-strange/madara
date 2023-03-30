@@ -751,6 +751,28 @@
 <a href="#751" id="751">751</a>
 <a href="#752" id="752">752</a>
 <a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -791,6 +813,9 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;runtime::starknet&quot;</span>;
 
+<span class="kw">pub const </span>ETHEREUM_EXECUTION_RPC: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;starknet::ETHEREUM_EXECUTION_RPC&quot;</span>;
+<span class="kw">pub const </span>ETHEREUM_CONSENSUS_RPC: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;starknet::ETHEREUM_CONSENSUS_RPC&quot;</span>;
+
 <span class="comment">// syntactic sugar for logging.
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>log {
@@ -813,6 +838,7 @@
     <span class="comment">// use blockifier::execution::contract_class::ContractClass;
     </span><span class="kw">use </span>blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>frame_support::sp_runtime::offchain::storage::StorageValueRef;
     <span class="kw">use </span>frame_support::traits::{OriginTrait, Randomness, Time};
     <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
     <span class="kw">use </span>mp_starknet::crypto::commitment;
@@ -888,6 +914,7 @@
         /// * `n` - The block number.
         </span><span class="kw">fn </span>offchain_worker(n: T::BlockNumber) {
             <span class="macro">log!</span>(info, <span class="string">&quot;Running offchain worker at block {:?}.&quot;</span>, n);
+
             <span class="kw">match </span><span class="self">Self</span>::process_l1_messages() {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="macro">log!</span>(info, <span class="string">&quot;Successfully executed L1 messages&quot;</span>),
                 <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">log!</span>(error, <span class="string">&quot;Failed to executed L1 message {:?}&quot;</span>, err),
@@ -1461,6 +1488,23 @@
             }))
         }
 
+        <span class="doccomment">/// Returns Ethereum RPC URL from Storage
+        </span><span class="kw">fn </span>get_eth_rpc_url() -&gt; <span class="prelude-ty">Result</span>&lt;String, OffchainWorkerError&gt; {
+            <span class="kw">let </span>eth_execution_rpc_url = StorageValueRef::persistent(ETHEREUM_EXECUTION_RPC)
+                .get::&lt;Vec&lt;u8&gt;&gt;()
+                .map_err(|<span class="kw">_</span>| OffchainWorkerError::GetStorageFailed)<span class="question-mark">?
+                </span>.ok_or(OffchainWorkerError::EthRpcNotSet)<span class="question-mark">?</span>;
+
+            <span class="kw">let </span>endpoint: <span class="kw-2">&amp;</span>str =
+                core::str::from_utf8(<span class="kw-2">&amp;</span>eth_execution_rpc_url).map_err(|<span class="kw">_</span>| OffchainWorkerError::FormatBytesFailed)<span class="question-mark">?</span>;
+
+            <span class="kw">if </span>endpoint.is_empty() {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::EthRpcNotSet);
+            }
+
+            <span class="prelude-val">Ok</span>(endpoint.to_string())
+        }
+
         <span class="doccomment">/// Queries an Eth json rpc node.
         ///
         /// # Arguments
@@ -1475,7 +1519,7 @@
         ///
         /// If and error happens during the query or deserialization.
         </span><span class="kw">fn </span>query_eth(request: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String, OffchainWorkerError&gt; {
-            <span class="kw">let </span>res = http::Request::post(<span class="string">&quot;https://ethereum-mainnet-rpc.allthatnode.com&quot;</span>, <span class="macro">vec!</span>[request])
+            <span class="kw">let </span>res = http::Request::post(<span class="kw-2">&amp;</span><span class="self">Self</span>::get_eth_rpc_url()<span class="question-mark">?</span>, <span class="macro">vec!</span>[request])
                 .add_header(<span class="string">&quot;content-type&quot;</span>, <span class="string">&quot;application/json&quot;</span>)
                 .send()
                 .map_err(OffchainWorkerError::HttpError)<span class="question-mark">?
