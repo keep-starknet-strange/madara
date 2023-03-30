@@ -319,6 +319,94 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -338,21 +426,32 @@
 <span class="kw">use </span>starknet_api::api_core::{ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::transaction::{
-    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, Fee, InvokeTransaction, L1HandlerTransaction,
-    TransactionHash, TransactionSignature, TransactionVersion,
+    ContractAddressSalt, DeclareTransaction, DeployAccountTransaction, EventContent, Fee, InvokeTransaction,
+    L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
 };
 <span class="kw">use </span>starknet_api::StarknetApiError;
 
 <span class="kw">use </span><span class="self">self</span>::types::{
-    Event, MaxArraySize, Transaction, TransactionExecutionErrorWrapper, TransactionExecutionResultWrapper, TxType,
+    EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
+    TransactionExecutionResultWrapper, TxType,
 };
 <span class="kw">use </span><span class="kw">crate</span>::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 <span class="kw">use </span><span class="kw">crate</span>::starknet_block::block::Block;
 <span class="kw">use </span><span class="kw">crate</span>::starknet_block::serialize::SerializeBlockContext;
 
-<span class="kw">impl </span>Event {
+<span class="kw">impl </span>EventWrapper {
     <span class="doccomment">/// Creates a new instance of an event.
-    </span><span class="kw">pub fn </span>new(keys: BoundedVec&lt;H256, MaxArraySize&gt;, data: BoundedVec&lt;H256, MaxArraySize&gt;, from_address: H256) -&gt; <span class="self">Self </span>{
+    ///
+    /// # Arguments
+    ///
+    /// * `keys` - Event keys.
+    /// * `data` - Event data.
+    /// * `from_address` - Contract Address where the event was emitted from.
+    </span><span class="kw">pub fn </span>new(
+        keys: BoundedVec&lt;H256, MaxArraySize&gt;,
+        data: BoundedVec&lt;H256, MaxArraySize&gt;,
+        from_address: ContractAddressWrapper,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ keys, data, from_address }
     }
 
@@ -361,11 +460,84 @@
         <span class="self">Self </span>{
             keys: BoundedVec::try_from(<span class="macro">vec!</span>[]).unwrap(),
             data: BoundedVec::try_from(<span class="macro">vec!</span>[]).unwrap(),
-            from_address: H256::zero(),
+            from_address: ContractAddressWrapper::default(),
         }
     }
+
+    <span class="doccomment">/// Creates a new instance of an event builder.
+    </span><span class="kw">pub fn </span>builder() -&gt; EventBuilder {
+        EventBuilder::default()
+    }
 }
-<span class="kw">impl </span>Default <span class="kw">for </span>Event {
+
+<span class="doccomment">/// Builder pattern for `EventWrapper`.
+</span><span class="attr">#[derive(Default)]
+</span><span class="kw">pub struct </span>EventBuilder {
+    keys: vec::Vec&lt;H256&gt;,
+    data: vec::Vec&lt;H256&gt;,
+    from_address: <span class="prelude-ty">Option</span>&lt;StarknetContractAddress&gt;,
+}
+
+<span class="kw">impl </span>EventBuilder {
+    <span class="doccomment">/// Sets the keys of the event.
+    ///
+    /// # Arguments
+    ///
+    /// * `keys` - Event keys.
+    </span><span class="kw">pub fn </span>with_keys(<span class="kw-2">mut </span><span class="self">self</span>, keys: vec::Vec&lt;H256&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.keys = keys;
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Sets the data of the event.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Event data.
+    </span><span class="kw">pub fn </span>with_data(<span class="kw-2">mut </span><span class="self">self</span>, data: vec::Vec&lt;H256&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.data = data;
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Sets the from address of the event.
+    ///
+    /// # Arguments
+    ///
+    /// * `from_address` - Contract Address where the event was emitted from.
+    </span><span class="kw">pub fn </span>with_from_address(<span class="kw-2">mut </span><span class="self">self</span>, from_address: StarknetContractAddress) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.from_address = <span class="prelude-val">Some</span>(from_address);
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Sets keys and data from an event content.
+    ///
+    /// # Arguments
+    ///
+    /// * `event_content` - Event content retrieved from the `CallInfo`.
+    </span><span class="kw">pub fn </span>with_event_content(<span class="kw-2">mut </span><span class="self">self</span>, event_content: EventContent) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.keys = event_content.keys.iter().map(|k| H256::from_slice(k.<span class="number">0</span>.bytes())).collect::&lt;vec::Vec&lt;H256&gt;&gt;();
+        <span class="self">self</span>.data = event_content.data.<span class="number">0</span>.iter().map(|d| H256::from_slice(d.bytes())).collect::&lt;vec::Vec&lt;H256&gt;&gt;();
+        <span class="self">self
+    </span>}
+
+    <span class="doccomment">/// Builds the event.
+    </span><span class="kw">pub fn </span>build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EventWrapper, EventError&gt; {
+        <span class="prelude-val">Ok</span>(EventWrapper {
+            keys: BoundedVec::try_from(<span class="self">self</span>.keys).map_err(|<span class="kw">_</span>| EventError::InvalidKeys)<span class="question-mark">?</span>,
+            data: BoundedVec::try_from(<span class="self">self</span>.data).map_err(|<span class="kw">_</span>| EventError::InvalidData)<span class="question-mark">?</span>,
+            from_address: <span class="self">self
+                </span>.from_address
+                .unwrap_or_default()
+                .<span class="number">0
+                </span>.key()
+                .bytes()
+                .try_into()
+                .map_err(|<span class="kw">_</span>| EventError::InvalidFromAddress)<span class="question-mark">?</span>,
+        })
+    }
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>EventWrapper {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>one = H256::from_slice(<span class="kw-2">&amp;</span>[
             <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>,
@@ -373,12 +545,13 @@
         <span class="self">Self </span>{
             keys: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
             data: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
-            from_address: one,
+            from_address: ContractAddressWrapper::from(one),
         }
     }
 }
 
-<span class="kw">impl </span>TryInto&lt;DeployAccountTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
+<span class="doccomment">/// Try to convert a `&amp;Transaction` into a `DeployAccountTransaction`.
+</span><span class="kw">impl </span>TryInto&lt;DeployAccountTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction, <span class="self">Self</span>::Error&gt; {
@@ -399,7 +572,8 @@
     }
 }
 
-<span class="kw">impl </span>TryInto&lt;L1HandlerTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
+<span class="doccomment">/// Try to convert a `&amp;Transaction` into a `L1HandlerTransaction`.
+</span><span class="kw">impl </span>TryInto&lt;L1HandlerTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;L1HandlerTransaction, <span class="self">Self</span>::Error&gt; {
@@ -416,7 +590,8 @@
     }
 }
 
-<span class="kw">impl </span>TryInto&lt;InvokeTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
+<span class="doccomment">/// Try to convert a `&amp;Transaction` into a `InvokeTransaction`.
+</span><span class="kw">impl </span>TryInto&lt;InvokeTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction, <span class="self">Self</span>::Error&gt; {
@@ -435,7 +610,8 @@
     }
 }
 
-<span class="kw">impl </span>TryInto&lt;DeclareTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
+<span class="doccomment">/// Try to convert a `&amp;Transaction` into a `DeclareTransaction`.
+</span><span class="kw">impl </span>TryInto&lt;DeclareTransaction&gt; <span class="kw">for </span><span class="kw-2">&amp;</span>Transaction {
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
@@ -460,7 +636,7 @@
         version: U256,
         hash: H256,
         signature: BoundedVec&lt;H256, MaxArraySize&gt;,
-        events: BoundedVec&lt;Event, MaxArraySize&gt;,
+        events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
@@ -632,7 +808,7 @@
             version: U256::default(),
             hash: one,
             signature: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
-            events: BoundedVec::try_from(<span class="macro">vec!</span>[Event::default(), Event::default()]).unwrap(),
+            events: BoundedVec::try_from(<span class="macro">vec!</span>[EventWrapper::default(), EventWrapper::default()]).unwrap(),
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),

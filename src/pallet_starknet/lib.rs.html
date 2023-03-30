@@ -715,6 +715,42 @@
 <a href="#715" id="715">715</a>
 <a href="#716" id="716">716</a>
 <a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -773,6 +809,7 @@
     <span class="kw">pub use </span>alloc::vec::Vec;
     <span class="kw">pub use </span>alloc::{format, vec};
 
+    <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
     <span class="comment">// use blockifier::execution::contract_class::ContractClass;
     </span><span class="kw">use </span>blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
@@ -786,7 +823,7 @@
     <span class="kw">use </span>mp_starknet::state::DictStateReader;
     <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
-    <span class="kw">use </span>mp_starknet::transaction::types::{Event <span class="kw">as </span>StarknetEventType, Transaction, TxType};
+    <span class="kw">use </span>mp_starknet::transaction::types::{EventError, EventWrapper <span class="kw">as </span>StarknetEventType, Transaction, TxType};
     <span class="kw">use </span>serde_json::from_str;
     <span class="kw">use </span>sp_core::{H256, U256};
     <span class="kw">use </span>sp_runtime::offchain::http;
@@ -967,6 +1004,7 @@
         TooManyPendingTransactions,
         InvalidCurrentBlock,
         StateReaderError,
+        EmitEventError,
     }
 
     <span class="doccomment">/// The Starknet pallet external functions.
@@ -1012,7 +1050,8 @@
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="kw">match </span>transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="macro">log!</span>(info, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
+                    <span class="self">Self</span>::emit_events(v.as_ref().unwrap()).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap_or_default());
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
@@ -1082,7 +1121,7 @@
             <span class="comment">// Execute transaction
             </span><span class="kw">match </span>transaction.execute(state, block, TxType::DeclareTx, <span class="prelude-val">Some</span>(contract_class.clone())) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="macro">log!</span>(info, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap_or_default());
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap_or_default());
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
@@ -1136,7 +1175,7 @@
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="kw">match </span>transaction.execute(state, block, TxType::DeployAccountTx, <span class="prelude-val">None</span>) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="macro">log!</span>(info, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
@@ -1328,6 +1367,39 @@
             );
 
             ContractClassHashes::&lt;T&gt;::insert(contract_address, contract_class_hash);
+
+            <span class="prelude-val">Ok</span>(())
+        }
+
+        <span class="doccomment">/// Emit events from the call info.
+        ///
+        /// # Arguments
+        ///
+        /// * `call_info` - The call info.
+        ///
+        /// # Returns
+        ///
+        /// The result of the operation.
+        </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;</span>CallInfo) -&gt; <span class="prelude-ty">Result</span>&lt;(), EventError&gt; {
+            <span class="comment">// TODO: loop through all events/inner_calls
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(inner_call) = call_info.inner_calls.get(<span class="number">0</span>) {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_event) = inner_call.execution.events.get(<span class="number">0</span>) {
+                    <span class="macro">log!</span>(info, <span class="string">&quot;Transaction event: {:?}&quot;</span>, tx_event.event.clone());
+                    <span class="kw">let </span>event = StarknetEventType::builder()
+                        .with_event_content(tx_event.event.clone())
+                        .with_from_address(inner_call.call.storage_address)
+                        .build();
+                    <span class="kw">match </span>event {
+                        <span class="prelude-val">Ok</span>(event) =&gt; {
+                            <span class="self">Self</span>::deposit_event(Event::StarknetEvent(event));
+                        }
+                        <span class="prelude-val">Err</span>(e) =&gt; {
+                            <span class="macro">log!</span>(error, <span class="string">&quot;Error parsing event: {:?}&quot;</span>, e);
+                            <span class="kw">return </span><span class="prelude-val">Err</span>(e);
+                        }
+                    }
+                }
+            }
 
             <span class="prelude-val">Ok</span>(())
         }

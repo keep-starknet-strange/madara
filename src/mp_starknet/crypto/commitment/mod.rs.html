@@ -152,15 +152,17 @@
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
+<span class="kw">use </span>sp_core::hexdisplay::AsBytesRef;
 <span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">super</span>::merkle_patricia_tree::merkle_tree::MerkleTree;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasher;
-<span class="kw">use </span><span class="kw">crate</span>::transaction::types::{Event, Transaction};
+<span class="kw">use </span><span class="kw">crate</span>::transaction::types::{EventWrapper, Transaction};
 
 <span class="doccomment">/// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -288,7 +290,7 @@
 ///
 /// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
 /// for details.
-</span><span class="kw">pub fn </span>calculate_event_hash&lt;T: CryptoHasher&gt;(event: <span class="kw-2">&amp;</span>Event) -&gt; FieldElement {
+</span><span class="kw">pub fn </span>calculate_event_hash&lt;T: CryptoHasher&gt;(event: <span class="kw-2">&amp;</span>EventWrapper) -&gt; FieldElement {
     <span class="kw">let </span>keys_hash = T::compute_hash_on_elements(
         <span class="kw-2">&amp;</span>event
             .keys
@@ -303,7 +305,7 @@
             .map(|data| FieldElement::from_byte_slice_be(data.as_bytes()).unwrap())
             .collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    <span class="kw">let </span>from_address = FieldElement::from_byte_slice_be(event.from_address.as_bytes()).unwrap();
+    <span class="kw">let </span>from_address = FieldElement::from_byte_slice_be(event.from_address.as_bytes_ref()).unwrap();
     T::compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
 }
 </code></pre></div>

@@ -65,6 +65,18 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -110,7 +122,7 @@
     <span class="doccomment">/// Signature.
     </span><span class="kw">pub </span>signature: BoundedVec&lt;H256, MaxArraySize&gt;,
     <span class="doccomment">/// Events.
-    </span><span class="kw">pub </span>events: BoundedVec&lt;Event, MaxArraySize&gt;,
+    </span><span class="kw">pub </span>events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
     <span class="doccomment">/// Sender Address
     </span><span class="kw">pub </span>sender_address: ContractAddressWrapper,
     <span class="doccomment">/// Nonce
@@ -124,13 +136,25 @@
 <span class="doccomment">/// Representation of a Starknet event.
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub struct </span>Event {
+</span><span class="kw">pub struct </span>EventWrapper {
     <span class="doccomment">/// The keys (topics) of the event.
     </span><span class="kw">pub </span>keys: BoundedVec&lt;H256, MaxArraySize&gt;,
     <span class="doccomment">/// The data of the event.
     </span><span class="kw">pub </span>data: BoundedVec&lt;H256, MaxArraySize&gt;,
     <span class="doccomment">/// The address that emited the event
-    </span><span class="kw">pub </span>from_address: H256,
+    </span><span class="kw">pub </span>from_address: ContractAddressWrapper,
+}
+
+<span class="doccomment">/// Error enum wrapper for events.
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub enum </span>EventError {
+    <span class="doccomment">/// Provided keys are invalid.
+    </span>InvalidKeys,
+    <span class="doccomment">/// Provided data is invalid.
+    </span>InvalidData,
+    <span class="doccomment">/// Provided from address is invalid.
+    </span>InvalidFromAddress,
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
