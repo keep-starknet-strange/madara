@@ -27,6 +27,7 @@ Madara is a ⚡ blazing fast ⚡ Starknet sequencer, based on substrate and writ
 ## Architecture
 
 `Madara` is formed by those components:
+
 - `node`: services for the blockchain node implementation (chain specification, rpc, ...)
 - `pallets`: custom FRAME pallets
   - `pallet-cairo`: Cairo execution engine pallet.
@@ -76,6 +77,7 @@ cargo run --release -- --dev
 
 Log level can be specified with `-l` flag. For example, `-ldebug` will show debug logs.
 It can also be specified via the `RUST_LOG` environment variable. For example:
+
 ```sh
 RUSTLOG=runtime=info cargo run --release -- --dev
 ```
@@ -128,6 +130,7 @@ RUST_BACKTRACE=1 ./target/release/madara -ldebug --dev
 > running. Also, **alice** account will be authority and sudo account as declared in the
 > [genesis state](https://github.com/substrate-developer-hub/substrate-madara/blob/main/node/src/chain_spec.rs#L49).
 > At the same time the following accounts will be pre-funded:
+>
 > - Alice
 > - Bob
 > - Alice//stash
@@ -153,7 +156,6 @@ dev
 $ ls ./my-chain-state/chains/dev
 db keystore network
 ```
-
 
 ### Connect with Polkadot-JS Apps Front-end
 
@@ -295,6 +297,80 @@ by appending your own. A few useful ones are as follow.
 ./infra/docker_run.sh cargo check
 ```
 
+## Progress
+
+### Block
+
+| Feature                | State              |
+|------------------------|--------------------|
+| Parent block hash      | :white_check_mark: |
+| Block number           | :white_check_mark: |
+| Global state root      | :construction:     |
+| Sequencer address      | :construction:     |
+| Block timestamp        | :white_check_mark: |
+| Transaction count      | :white_check_mark: |
+| Transaction commitment | :white_check_mark: |
+| Event count            | :white_check_mark: |
+| Event commitment       | :white_check_mark: |
+| Protocol version       | :white_check_mark: |
+| Extra data             | :white_check_mark: |
+
+### Transaction
+
+| Feature    | State          |
+|------------|----------------|
+| Declare    | :construction: |
+| Deploy     | :construction: |
+| Invoke     | :construction: |
+| L1 Handler | :construction: |
+
+### RPC
+
+| Feature                                  | State          |
+|------------------------------------------|----------------|
+| starknet_getBlockWithTxHashes            | :construction: |
+| starknet_getBlockWithTxs                 | :construction: |
+| starknet_getStateUpdate                  | :construction: |
+| starknet_getStorageAt                    | :construction: |
+| starknet_getTransactionByHash            | :construction: |
+| starknet_getTransactionByBlockIdAndIndex | :construction: |
+| starknet_getTransactionReceipt           | :construction: |
+| starknet_getClass                        | :construction: |
+| starknet_getClassHashAt                  | :construction: |
+| starknet_getClassAt                      | :construction: |
+| starknet_getBlockTransactionCount        | :construction: |
+| starknet_call                            | :construction: |
+| starknet_estimateFee                     | :construction: |
+| starknet_blockNumber                     | :construction: |
+| starknet_blockHashAndNumber              | :construction: |
+| starknet_chainId                         | :construction: |
+| starknet_pendingTransactions             | :construction: |
+| starknet_syncing                         | :construction: |
+| starknet_getEvents                       | :construction: |
+| starknet_getNonce                        | :construction: |
+| starknet_traceTransaction                | :construction: |
+| starknet_simulateTransaction             | :construction: |
+| starknet_traceBlockTransactions          | :construction: |
+| starknet_addInvokeTransaction            | :construction: |
+| starknet_addDeclareTransaction           | :construction: |
+| starknet_addDeployAccountTransaction     | :construction: |
+
+### Decentralisation
+
+| Feature                                 | State              |
+|-----------------------------------------|--------------------|
+| Single node                             | :white_check_mark: |
+| Small pool of nodes  (POA)              | :construction:     |
+| Large pool of nodes  (Base consensus)   | :construction:     |
+| Large pool of nodes  (Custom consensus) | :construction:     |
+
+### Optimisation
+
+| Feature                             | State          |
+|-------------------------------------|----------------|
+| Commitments                         | :construction: |
+| Transaction validity before mempool | :construction: |
+
 ## Roadmap
 
 See the [open issues](https://github.com/keep-starknet-strange/madara/issues) for
@@ -358,10 +434,12 @@ See [LICENSE](LICENSE) for more information.
 ## Troubleshooting
 
 ### error: failed to run custom build command for `libp2p-core v0.37.0` / Could not find `protoc` installation
+
 <details>
 <summary>Click to expand</summary>
 
 #### Error
+
 ```text
 error: failed to run custom build command for `libp2p-core v0.37.0`
 
@@ -380,15 +458,17 @@ Caused by:
 
 #### Solution
 
-It means that you don't have `protoc` installed on your machine. You can install it using `brew install protobuf` on MacOs or downloading it from https://github.com/protocolbuffers/protobuf/releases.
+It means that you don't have `protoc` installed on your machine. You can install it using `brew install protobuf` on MacOs or downloading it from <https://github.com/protocolbuffers/protobuf/releases>.
 
 </details>
 
-###  Rust WASM toolchain not installed, please install it!
+### Rust WASM toolchain not installed, please install it
+
 <details>
 <summary>Click to expand</summary>
 
 #### Error
+
 ```text
 error: failed to run custom build command for `madara-runtime v4.0.0-dev (/Users/abdel/dev/me/madara/runtime)`
 
@@ -414,6 +494,7 @@ It means that you don't have `wasm32-unknown-unknown` target installed on your m
 </details>
 
 ## Acknowledgements
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
