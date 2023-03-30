@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly" # can be `daily` or `monthly` also
+    open-pull-requests-limit: 10
+    ignore:
+      # match all substrate dependencies
+      - dependency-name: "frame-*"
+      - dependency-name: "sp-*"
+      - dependency-name: "sc-*"
+      - dependency-name: "substrate-*"
+      - dependency-name: "pallet-*"
