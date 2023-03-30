@@ -118,7 +118,7 @@ impl EventBuilder {
             data: BoundedVec::try_from(self.data).map_err(|_| EventError::InvalidData)?,
             from_address: self
                 .from_address
-                .unwrap_or_else(StarknetContractAddress::default)
+                .unwrap_or_default()
                 .0
                 .key()
                 .bytes()
