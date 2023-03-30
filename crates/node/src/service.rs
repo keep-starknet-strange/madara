@@ -3,9 +3,12 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use futures::future;
+use futures::prelude::*;
+use madara_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, RuntimeApi};
-use sc_client_api::BlockBackend;
+use sc_client_api::{BlockBackend, BlockchainEvents};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::SharedVoterState;
 pub use sc_executor::NativeElseWasmExecutor;
@@ -209,6 +212,8 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
     let enable_grandpa = !config.disable_grandpa;
     let prometheus_registry = config.prometheus_registry().cloned();
 
+    let starknet_rpc_params = StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone() };
+
     let rpc_extensions_builder = {
         let client = client.clone();
         let pool = transaction_pool.clone();
@@ -218,7 +223,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
                 client: client.clone(),
                 pool: pool.clone(),
                 deny_unsafe,
-                starknet: StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone() },
+                starknet: starknet_rpc_params.clone(),
             };
             crate::rpc::create_full(deps).map_err(Into::into)
         })
@@ -231,13 +236,29 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         task_manager: &mut task_manager,
         transaction_pool: transaction_pool.clone(),
         rpc_builder: rpc_extensions_builder,
-        backend,
+        backend: backend.clone(),
         system_rpc_tx,
         tx_handler_controller,
         sync_service: sync_service.clone(),
         config,
         telemetry: telemetry.as_mut(),
     })?;
+
+    task_manager.spawn_essential_handle().spawn(
+        "madara-mapping-sync-worker",
+        Some("madara"),
+        MappingSyncWorker::new(
+            client.import_notification_stream(),
+            Duration::new(6, 0),
+            client.clone(),
+            backend,
+            madara_backend.clone(),
+            3,
+            0,
+            SyncStrategy::Normal,
+        )
+        .for_each(|()| future::ready(())),
+    );
 
     if role.is_authority() {
         let proposer_factory = sc_basic_authorship::ProposerFactory::new(
