@@ -36,7 +36,7 @@ pub use worker::{MappingSyncWorker, SyncStrategy};
 pub fn sync_block<B: BlockT, C, BE>(
     client: &C,
     overrides: Arc<OverrideHandle<B>>,
-    backend: &madara_db::Backend<B>,
+    backend: &mc_db::Backend<B>,
     header: &B::Header,
 ) -> Result<(), String>
 where
@@ -46,13 +46,10 @@ where
     let substrate_block_hash = header.hash();
     match mp_consensus::find_log(header.digest()) {
         Ok(log) => {
-            let gen_from_hashes = |hashes: Hashes| -> madara_db::MappingCommitment<B> {
-                madara_db::MappingCommitment {
-                    block_hash: substrate_block_hash,
-                    starknet_block_hash: hashes.block_hash,
-                }
+            let gen_from_hashes = |hashes: Hashes| -> mc_db::MappingCommitment<B> {
+                mc_db::MappingCommitment { block_hash: substrate_block_hash, starknet_block_hash: hashes.block_hash }
             };
-            let gen_from_block = |block| -> madara_db::MappingCommitment<B> {
+            let gen_from_block = |block| -> mc_db::MappingCommitment<B> {
                 let hashes = Hashes::from_block(block);
                 gen_from_hashes(hashes)
             };
@@ -96,7 +93,7 @@ where
 
 pub fn sync_genesis_block<Block: BlockT, C>(
     client: &C,
-    backend: &madara_db::Backend<Block>,
+    backend: &mc_db::Backend<Block>,
     header: &Block::Header,
 ) -> Result<(), String>
 where
@@ -113,7 +110,7 @@ where
         let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
         let block_hash = block.header.hash();
         let mapping_commitment =
-            madara_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
+            mc_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
         backend.mapping().write_hashes(mapping_commitment)?;
     } else {
         backend.mapping().write_none(substrate_block_hash)?;
@@ -126,7 +123,7 @@ pub fn sync_one_block<B: BlockT, C, BE>(
     client: &C,
     substrate_backend: &BE,
     overrides: Arc<OverrideHandle<B>>,
-    madara_backend: &madara_db::Backend<B>,
+    madara_backend: &mc_db::Backend<B>,
     sync_from: <B::Header as HeaderT>::Number,
     strategy: SyncStrategy,
 ) -> Result<bool, String>
@@ -184,7 +181,7 @@ pub fn sync_blocks<B: BlockT, C, BE>(
     client: &C,
     substrate_backend: &BE,
     overrides: Arc<OverrideHandle<B>>,
-    madara_backend: &madara_db::Backend<B>,
+    madara_backend: &mc_db::Backend<B>,
     limit: usize,
     sync_from: <B::Header as HeaderT>::Number,
     strategy: SyncStrategy,
@@ -207,7 +204,7 @@ where
 
 pub fn fetch_header<Block: BlockT, BE>(
     substrate_backend: &BE,
-    madara_backend: &madara_db::Backend<Block>,
+    madara_backend: &mc_db::Backend<Block>,
     checking_tip: Block::Hash,
     sync_from: <Block::Header as HeaderT>::Number,
 ) -> Result<Option<Block::Header>, String>

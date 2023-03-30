@@ -44,7 +44,7 @@ where
     P: TransactionPool + 'static,
     BE: Backend<Block> + 'static,
 {
-    use madara_rpc::{Starknet, StarknetRpcApiServer};
+    use mc_rpc::{Starknet, StarknetRpcApiServer};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 

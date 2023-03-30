@@ -5,9 +5,9 @@ use std::time::Duration;
 
 use futures::future;
 use futures::prelude::*;
-use madara_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, RuntimeApi};
+use mc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 use mc_storage::overrides_handle;
 use sc_client_api::{BlockBackend, BlockchainEvents};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
@@ -248,7 +248,7 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
     })?;
 
     task_manager.spawn_essential_handle().spawn(
-        "madara-mapping-sync-worker",
+        "mc-mapping-sync-worker",
         Some("madara"),
         MappingSyncWorker::new(
             client.import_notification_stream(),

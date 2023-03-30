@@ -1,5 +1,5 @@
 [package]
-name = "madara-mapping-sync"
+name = "mc-mapping-sync"
 version = "0.1.0"
 description = "Mapping sync logic for Madara"
 authors = [
@@ -23,5 +23,5 @@ sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }
 mp-consensus = { workspace = true }
 mc-storage = { path = "../storage" }
-madara-db = { path = "../db" }
+mc-db = { path = "../db" }
 pallet-starknet = { path = "../../pallets/starknet" }
