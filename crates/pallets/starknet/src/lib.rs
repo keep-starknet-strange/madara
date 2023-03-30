@@ -38,7 +38,8 @@ pub use self::pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
-pub const ETHEREUM_MAINNET_RPC: &[u8] = b"starknet::ETHEREUM_MAINNET_RPC";
+pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
+pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -140,7 +141,7 @@ pub mod pallet {
             log!(info, "Running offchain worker at block {:?}.", n);
 
             // TODO Move this to RPC call
-            StorageValueRef::persistent(ETHEREUM_MAINNET_RPC).set(&"https://ethereum-mainnet-rpc.allthatnode.com");
+            // StorageValueRef::persistent(ETHEREUM_EXECUTION_RPC).set(&"https://ethereum-mainnet-rpc.allthatnode.com");
 
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
@@ -717,13 +718,13 @@ pub mod pallet {
 
         /// Returns Ethereum RPC URL from Storage
         fn get_eth_rpc_url() -> Result<String, OffchainWorkerError> {
-            let eth_mainnet_rpc_url = StorageValueRef::persistent(ETHEREUM_MAINNET_RPC)
+            let eth_execution_rpc_url = StorageValueRef::persistent(ETHEREUM_EXECUTION_RPC)
                 .get::<Vec<u8>>()
                 .map_err(|_| OffchainWorkerError::GetStorageFailed)?
                 .ok_or(OffchainWorkerError::EthRpcNotSet)?;
 
             let endpoint: &str =
-                core::str::from_utf8(&eth_mainnet_rpc_url).map_err(|_| OffchainWorkerError::FormatBytesFailed)?;
+                core::str::from_utf8(&eth_execution_rpc_url).map_err(|_| OffchainWorkerError::FormatBytesFailed)?;
 
             if endpoint.is_empty() {
                 return Err(OffchainWorkerError::EthRpcNotSet);
