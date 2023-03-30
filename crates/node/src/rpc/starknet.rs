@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use madara_db::Backend;
+use mc_db::Backend;
 use mc_storage::OverrideHandle;
 use sp_api::BlockT;
 

@@ -32,7 +32,7 @@ pub struct MappingSyncWorker<B: BlockT, C, BE> {
     client: Arc<C>,
     substrate_backend: Arc<BE>,
     overrides: Arc<OverrideHandle<B>>,
-    madara_backend: Arc<madara_db::Backend<B>>,
+    madara_backend: Arc<mc_db::Backend<B>>,
 
     have_next: bool,
     retry_times: usize,
@@ -49,7 +49,7 @@ impl<B: BlockT, C, BE> MappingSyncWorker<B, C, BE> {
         client: Arc<C>,
         substrate_backend: Arc<BE>,
         overrides: Arc<OverrideHandle<B>>,
-        frontier_backend: Arc<madara_db::Backend<B>>,
+        frontier_backend: Arc<mc_db::Backend<B>>,
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
         strategy: SyncStrategy,

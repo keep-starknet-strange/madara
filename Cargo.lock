@@ -4085,10 +4085,10 @@ dependencies = [
  "frame-system",
  "futures",
  "jsonrpsee",
- "madara-db",
- "madara-mapping-sync",
- "madara-rpc",
  "madara-runtime",
+ "mc-db",
+ "mc-mapping-sync",
+ "mc-rpc",
  "mc-storage",
  "pallet-starknet",
  "pallet-transaction-payment",
@@ -4119,66 +4119,6 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "try-runtime-cli",
-]
-
-[[package]]
-name = "madara-db"
-version = "0.1.0"
-dependencies = [
- "kvdb-rocksdb",
- "log",
- "parity-db",
- "parity-scale-codec",
- "sc-client-db",
- "sp-core",
- "sp-database",
- "sp-runtime",
-]
-
-[[package]]
-name = "madara-mapping-sync"
-version = "0.1.0"
-dependencies = [
- "futures",
- "futures-timer",
- "log",
- "madara-db",
- "mc-storage",
- "mp-consensus",
- "pallet-starknet",
- "sc-client-api",
- "sp-api",
- "sp-blockchain",
- "sp-runtime",
-]
-
-[[package]]
-name = "madara-rpc"
-version = "0.1.0"
-dependencies = [
- "hex",
- "jsonrpsee",
- "log",
- "madara-db",
- "madara-rpc-core",
- "mc-storage",
- "pallet-starknet",
- "sc-client-api",
- "sp-api",
- "sp-arithmetic",
- "sp-blockchain",
- "sp-core",
- "sp-runtime",
- "thiserror",
-]
-
-[[package]]
-name = "madara-rpc-core"
-version = "0.1.0"
-dependencies = [
- "jsonrpsee",
- "serde",
- "sp-blockchain",
 ]
 
 [[package]]
@@ -4245,6 +4185,66 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "add85d4dd35074e6fedc608f8c8f513a3548619a9024b751949ef0e8e45a4d84"
 dependencies = [
  "rawpointer",
+]
+
+[[package]]
+name = "mc-db"
+version = "0.1.0"
+dependencies = [
+ "kvdb-rocksdb",
+ "log",
+ "parity-db",
+ "parity-scale-codec",
+ "sc-client-db",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "mc-mapping-sync"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "log",
+ "mc-db",
+ "mc-storage",
+ "mp-consensus",
+ "pallet-starknet",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "mc-rpc"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "jsonrpsee",
+ "log",
+ "mc-db",
+ "mc-rpc-core",
+ "mc-storage",
+ "pallet-starknet",
+ "sc-client-api",
+ "sp-api",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "thiserror",
+]
+
+[[package]]
+name = "mc-rpc-core"
+version = "0.1.0"
+dependencies = [
+ "jsonrpsee",
+ "serde",
+ "sp-blockchain",
 ]
 
 [[package]]
