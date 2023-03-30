@@ -10,26 +10,29 @@ use jsonrpsee::core::RpcResult;
 use log::error;
 pub use madara_rpc_core::StarknetRpcApiServer;
 use madara_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId};
+use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::testing::H256;
 use sp_runtime::traits::Block as BlockT;
 
-pub struct Starknet<B: BlockT, C> {
+pub struct Starknet<B: BlockT, BE, C> {
     client: Arc<C>,
     backend: Arc<madara_db::Backend<B>>,
-    _marker: PhantomData<B>,
+    overrides: Arc<OverrideHandle<B>>,
+    _marker: PhantomData<(B, BE)>,
 }
 
-impl<B: BlockT, C> Starknet<B, C> {
-    pub fn new(client: Arc<C>, backend: Arc<madara_db::Backend<B>>) -> Self {
-        Self { client, backend, _marker: PhantomData }
+impl<B: BlockT, BE, C> Starknet<B, BE, C> {
+    pub fn new(client: Arc<C>, backend: Arc<madara_db::Backend<B>>, overrides: Arc<OverrideHandle<B>>) -> Self {
+        Self { client, backend, overrides, _marker: PhantomData }
     }
 }
 
-impl<B, C> Starknet<B, C>
+impl<B, BE, C> Starknet<B, BE, C>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -39,28 +42,35 @@ where
     }
 }
 
-impl<B, C> Starknet<B, C>
+impl<B, BE, C> Starknet<B, BE, C>
 where
     B: BlockT,
-    C: HeaderBackend<B> + 'static,
+    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
+    BE: Backend<B>,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
-        let api = self.client.runtime_api();
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+        let block = self
+            .overrides
+            .schemas
+            .get(&schema)
+            .unwrap_or(&self.overrides.fallback)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
 
-        let block_hash = api.current_block_hash(substrate_block_hash)?;
-
-        Ok(block_hash)
+        Ok(block.header.hash())
     }
 }
 
-impl<B, C> StarknetRpcApiServer for Starknet<B, C>
+impl<B, BE, C> StarknetRpcApiServer for Starknet<B, BE, C>
 where
     B: BlockT,
-    C: HeaderBackend<B> + 'static,
+    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
@@ -105,15 +115,14 @@ where
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
-        let api = self.client.runtime_api();
-
-        let block = api.current_block(substrate_block_hash).map_err(|e| {
-            error!(
-                "Failed retrieve Starknet block using the Starknet pallet runtime API for Substrate block with hash \
-                 '{substrate_block_hash}': {e}"
-            );
-            StarknetRpcApiError::BlockNotFound
-        })?;
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
+        let block = self
+            .overrides
+            .schemas
+            .get(&schema)
+            .unwrap_or(&self.overrides.fallback)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
 
         Ok(block.header.transaction_count)
     }

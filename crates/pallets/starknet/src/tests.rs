@@ -304,7 +304,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
         );
 
         assert_err!(
-            Starknet::add_deploy_account_transaction(none_origin.clone(), transaction),
+            Starknet::add_deploy_account_transaction(none_origin, transaction),
             Error::<Test>::TransactionExecutionFailed
         );
     });

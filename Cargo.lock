@@ -4089,6 +4089,7 @@ dependencies = [
  "madara-mapping-sync",
  "madara-rpc",
  "madara-runtime",
+ "mc-storage",
  "pallet-starknet",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
@@ -4142,6 +4143,8 @@ dependencies = [
  "futures-timer",
  "log",
  "madara-db",
+ "mc-storage",
+ "mp-consensus",
  "pallet-starknet",
  "sc-client-api",
  "sp-api",
@@ -4158,7 +4161,9 @@ dependencies = [
  "log",
  "madara-db",
  "madara-rpc-core",
+ "mc-storage",
  "pallet-starknet",
+ "sc-client-api",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -4240,6 +4245,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "add85d4dd35074e6fedc608f8c8f513a3548619a9024b751949ef0e8e45a4d84"
 dependencies = [
  "rawpointer",
+]
+
+[[package]]
+name = "mc-storage"
+version = "0.1.0"
+dependencies = [
+ "mp-starknet",
+ "pallet-starknet",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
 ]
 
 [[package]]
