@@ -15,6 +15,7 @@ use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
+use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 
 // Our native executor instance.
@@ -213,7 +214,12 @@ pub fn new_full(mut config: Configuration) -> Result<TaskManager, ServiceError> 
         let pool = transaction_pool.clone();
 
         Box::new(move |deny_unsafe, _| {
-            let deps = crate::rpc::FullDeps { client: client.clone(), pool: pool.clone(), deny_unsafe };
+            let deps = crate::rpc::FullDeps {
+                client: client.clone(),
+                pool: pool.clone(),
+                deny_unsafe,
+                starknet: StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone() },
+            };
             crate::rpc::create_full(deps).map_err(Into::into)
         })
     };
