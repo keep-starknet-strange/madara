@@ -12,7 +12,7 @@
 <div align="center">
 <br />
 
-[![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/check.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/check.yml)
+[![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 
@@ -319,7 +319,7 @@ by appending your own. A few useful ones are as follow.
 ### Block
 
 | Feature                | State              |
-|------------------------|--------------------|
+| ---------------------- | ------------------ |
 | Parent block hash      | :white_check_mark: |
 | Block number           | :white_check_mark: |
 | Global state root      | :construction:     |
@@ -335,7 +335,7 @@ by appending your own. A few useful ones are as follow.
 ### Transaction
 
 | Feature    | State          |
-|------------|----------------|
+| ---------- | -------------- |
 | Declare    | :construction: |
 | Deploy     | :construction: |
 | Invoke     | :construction: |
@@ -344,7 +344,7 @@ by appending your own. A few useful ones are as follow.
 ### RPC
 
 | Feature                                  | State          |
-|------------------------------------------|----------------|
+| ---------------------------------------- | -------------- |
 | starknet_getBlockWithTxHashes            | :construction: |
 | starknet_getBlockWithTxs                 | :construction: |
 | starknet_getStateUpdate                  | :construction: |
@@ -375,7 +375,7 @@ by appending your own. A few useful ones are as follow.
 ### Decentralisation
 
 | Feature                                 | State              |
-|-----------------------------------------|--------------------|
+| --------------------------------------- | ------------------ |
 | Single node                             | :white_check_mark: |
 | Small pool of nodes  (POA)              | :construction:     |
 | Large pool of nodes  (Base consensus)   | :construction:     |
@@ -384,7 +384,7 @@ by appending your own. A few useful ones are as follow.
 ### Optimisation
 
 | Feature                             | State          |
-|-------------------------------------|----------------|
+| ----------------------------------- | -------------- |
 | Commitments                         | :construction: |
 | Transaction validity before mempool | :construction: |
 
