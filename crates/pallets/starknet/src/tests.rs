@@ -50,8 +50,7 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             ..Header::default()
         };
 
-        assert!(current_block.is_some());
-        pretty_assertions::assert_eq!(current_block.unwrap().header, expected_current_block)
+        pretty_assertions::assert_eq!(current_block.header, expected_current_block)
     });
 }
 
