@@ -17,7 +17,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 madara-rpc-core = { path = "../rpc-core" }
+madara-db = { path = "../db" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
@@ -25,3 +27,4 @@ pallet-starknet = { workspace = true }
 thiserror = "1.0.40"
 jsonrpsee = { workspace = true, features = ["server", "macros"] }
 log = { workspace = true }
+hex = { workspace = true }
