@@ -20,7 +20,8 @@ pub struct TransactionMetadata<Block: BlockT> {
 pub struct MappingCommitment<Block: BlockT> {
     pub block_hash: Block::Hash,
     pub starknet_block_hash: H256,
-    pub starknet_transaction_hashes: Vec<H256>,
+    // TODO: implement whe we have transactions
+    // pub starknet_transaction_hashes: Vec<H256>,
 }
 
 pub struct MappingDb<Block: BlockT> {
@@ -91,19 +92,20 @@ impl<Block: BlockT> MappingDb<Block> {
             &substrate_hashes.encode(),
         );
 
-        for (i, starknet_transaction_hash) in commitment.starknet_transaction_hashes.into_iter().enumerate() {
-            let mut metadata = self.transaction_metadata(&starknet_transaction_hash)?;
-            metadata.push(TransactionMetadata::<Block> {
-                block_hash: commitment.block_hash,
-                starknet_block_hash: commitment.starknet_block_hash,
-                starknet_index: i as u32,
-            });
-            transaction.set(
-                crate::columns::TRANSACTION_MAPPING,
-                &starknet_transaction_hash.encode(),
-                &metadata.encode(),
-            );
-        }
+        // TODO: add back when transaction support
+        // for (i, starknet_transaction_hash) in
+        // commitment.starknet_transaction_hashes.into_iter().enumerate() {     let mut metadata =
+        // self.transaction_metadata(&starknet_transaction_hash)?;     metadata.
+        // push(TransactionMetadata::<Block> {         block_hash: commitment.block_hash,
+        //         starknet_block_hash: commitment.starknet_block_hash,
+        //         starknet_index: i as u32,
+        //     });
+        //     transaction.set(
+        //         crate::columns::TRANSACTION_MAPPING,
+        //         &starknet_transaction_hash.encode(),
+        //         &metadata.encode(),
+        //     );
+        // }
 
         transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
 

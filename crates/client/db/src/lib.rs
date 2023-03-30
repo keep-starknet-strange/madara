@@ -71,7 +71,7 @@ impl<Block: BlockT> Backend<Block> {
     }
 
     pub fn new(config: &DatabaseSettings) -> Result<Self, String> {
-        let db = utils::open_database::<Block>(config)?;
+        let db = utils::open_database(config)?;
 
         Ok(Self {
             mapping: Arc::new(MappingDb { db: db.clone(), write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }),
