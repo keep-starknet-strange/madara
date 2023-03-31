@@ -36,7 +36,6 @@ sp-version = { default-features = false, git = "https://github.com/paritytech/su
 # End of problematic dependencies.
 
 pallet-aura = { workspace = true }
-pallet-insecure-randomness-collective-flip = { workspace = true }
 pallet-balances = { workspace = true }
 frame-support = { workspace = true }
 pallet-grandpa = { workspace = true }
@@ -89,7 +88,6 @@ std = [
   "pallet-timestamp/std",
   "pallet-transaction-payment-rpc-runtime-api/std",
   "pallet-transaction-payment/std",
-  "pallet-insecure-randomness-collective-flip/std",
   # Substrate primitives dependencies
   "sp-api/std",
   "sp-block-builder/std",
@@ -127,7 +125,6 @@ try-runtime = [
   "frame-support/try-runtime",
   "pallet-aura/try-runtime",
   "pallet-balances/try-runtime",
-  "pallet-insecure-randomness-collective-flip/try-runtime",
   "pallet-grandpa/try-runtime",
   "pallet-sudo/try-runtime",
   # Kaiohsin pallets

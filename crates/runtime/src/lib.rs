@@ -58,8 +58,6 @@ construct_runtime!(
         Sudo: pallet_sudo,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
-        // Include pallet for randomness.
-        MadaraRandomness: pallet_insecure_randomness_collective_flip,
     }
 );
 /// The address format for describing accounts.

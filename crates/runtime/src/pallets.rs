@@ -130,11 +130,7 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type Randomness = MadaraRandomness;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
 }
-
-/// Configure the Randomness pallet.
-impl pallet_insecure_randomness_collective_flip::Config for Runtime {}

@@ -35,7 +35,6 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Frame pallets
-pallet-insecure-randomness-collective-flip = { workspace = true }
 
 # Other third party dependencies
 serde = { version = "1.0.159", features = ["derive"], default-features = false }
