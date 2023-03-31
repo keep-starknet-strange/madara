@@ -8,9 +8,9 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::state::cached_state::CachedState;
-use blockifier::state::state_api::StateReader;
-use blockifier::transaction::errors::InvokeTransactionError;
-use blockifier::transaction::objects::AccountTransactionContext;
+use blockifier::state::state_api::{StateReader, State};
+use blockifier::transaction::errors::{InvokeTransactionError, TransactionExecutionError};
+use blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::{H256, U256};
@@ -304,7 +304,21 @@ impl Transaction {
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
     }
+    
 
+    /// Verify transaction nonce
+    pub fn verify_nonce(&self, accoun_tx_context: AccountTransactionContext, state: &mut dyn State) -> TransactionExecutionResult<()> {
+        let currrent_nonce = state.get_nonce_at(accoun_tx_context.sender_address)?;
+        if currrent_nonce != accoun_tx_context.nonce {
+            return Err(TransactionExecutionError::InvalidNonce {
+                expected_nonce: accoun_tx_context.nonce,
+                actual_nonce: currrent_nonce,
+            });
+        }
+
+        Ok(state.increment_nonce(accoun_tx_context.sender_address)?)
+
+    }
     /// Get the transaction context for a l1 handler transaction
     ///
     /// # Arguments
