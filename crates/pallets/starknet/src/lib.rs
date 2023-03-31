@@ -70,11 +70,10 @@ pub mod pallet {
     use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
     use mp_consensus::{PostLog, MADARA_ENGINE_ID};
+    use mp_starknet::block::{StarknetBlock, StarknetHeader};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
-    use mp_starknet::starknet_block::block::Block;
-    use mp_starknet::starknet_block::header::Header;
     use mp_starknet::state::DictStateReader;
     use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
@@ -164,7 +163,7 @@ pub mod pallet {
     /// The current Starknet block.
     #[pallet::storage]
     #[pallet::getter(fn current_block)]
-    pub(super) type CurrentBlock<T: Config> = StorageValue<_, Block, ValueQuery>;
+    pub(super) type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock, ValueQuery>;
 
     // Mapping for block number and hashes.
     #[pallet::storage]
@@ -553,7 +552,7 @@ pub mod pallet {
             let protocol_version = None;
             let extra_data = None;
 
-            let block = Block::new(Header::new(
+            let block = StarknetBlock::new(StarknetHeader::new(
                 parent_block_hash,
                 block_number,
                 global_state_root,

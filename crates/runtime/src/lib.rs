@@ -265,7 +265,7 @@ impl_runtime_apis! {
             Starknet::current_block_hash()
         }
 
-        fn current_block() -> mp_starknet::starknet_block::block::Block {
+        fn current_block() -> mp_starknet::block::StarknetBlock {
             Starknet::current_block()
         }
     }
