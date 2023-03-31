@@ -63,8 +63,9 @@ pub mod pallet {
     pub use alloc::{format, vec};
 
     use blockifier::execution::entry_point::CallInfo;
-    // use blockifier::execution::contract_class::ContractClass;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
+    use blockifier::state::state_api::State;
+    use blockifier::test_utils::DictStateReader;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Time};
@@ -77,7 +78,9 @@ pub mod pallet {
     use mp_starknet::state::DictStateReader;
     use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
-    use mp_starknet::transaction::types::{EventError, EventWrapper as StarknetEventType, Transaction, TxType};
+    use mp_starknet::transaction::types::{
+        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
+    };
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
@@ -85,7 +88,7 @@ pub mod pallet {
     use sp_runtime::DigestItem;
     use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
     use starknet_api::hash::StarkFelt;
-    use starknet_api::state::StorageKey;
+    use starknet_api::state::{StateDiff, StorageKey};
     use starknet_api::stdlib::collections::HashMap;
     use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
@@ -258,6 +261,7 @@ pub mod pallet {
         TooManyPendingTransactions,
         StateReaderError,
         EmitEventError,
+        StateDiffError,
     }
 
     /// The Starknet pallet external functions.
@@ -304,6 +308,7 @@ pub mod pallet {
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
                     Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
+                    Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
@@ -379,7 +384,7 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
-            Self::associate_class_hash(class_hash, contract_class.into())?;
+            Self::set_class_info_from_class_hash(class_hash, contract_class.into())?;
 
             // TODO: Update class hashes root
 
@@ -427,7 +432,7 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
-            Self::associate_contract_class(
+            Self::set_class_hash_from_contract_address(
                 transaction.clone().sender_address,
                 transaction.clone().call_entrypoint.class_hash.unwrap(),
             )?;
@@ -578,7 +583,7 @@ pub mod pallet {
         ///
         /// * `contract_class_hash` - The contract class hash.
         /// * `class_info` - The contract class info.
-        fn associate_class_hash(
+        fn set_class_info_from_class_hash(
             contract_class_hash: ClassHashWrapper,
             class_info: ContractClassWrapper,
         ) -> Result<(), DispatchError> {
@@ -599,7 +604,7 @@ pub mod pallet {
         ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
-        fn associate_contract_class(
+        fn set_class_hash_from_contract_address(
             contract_address: ContractAddressWrapper,
             contract_class_hash: ClassHashWrapper,
         ) -> Result<(), DispatchError> {
@@ -644,6 +649,42 @@ pub mod pallet {
                 }
             }
 
+            Ok(())
+        }
+
+        pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
+            let StateDiff { deployed_contracts, storage_diffs, declared_classes, nonces } = state.to_state_diff();
+
+            deployed_contracts.iter().try_for_each(|(address, class_hash)| {
+                Self::set_class_hash_from_contract_address(address.0.0.0, class_hash.0.0).map_err(|_| {
+                    log!(
+                        error,
+                        "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
+                        address.0.0.0,
+                        class_hash.0.0
+                    );
+                    StateDiffError::DeployedContractError
+                })
+            })?;
+            storage_diffs.iter().for_each(|(address, diffs)| {
+                diffs.iter().for_each(|(key, value)| {
+                    StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
+                })
+            });
+            declared_classes.iter().try_for_each(|(class_hash, class_info)| {
+                Self::set_class_info_from_class_hash(class_hash.0.0, ContractClassWrapper::from(class_info)).map_err(
+                    |_| {
+                        log!(
+                            error,
+                            "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
+                            class_hash.0.0,
+                            ContractClassWrapper::from(class_info)
+                        );
+                        StateDiffError::DeclaredClassError
+                    },
+                )
+            })?;
+            nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
             Ok(())
         }
 

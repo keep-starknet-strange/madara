@@ -72,6 +72,16 @@ impl From<ContractClass> for ContractClassWrapper {
         }
     }
 }
+impl From<&starknet_api::state::ContractClass> for ContractClassWrapper {
+    fn from(contract_class: &starknet_api::state::ContractClass) -> Self {
+        let program_string = to_string(&contract_class.program).unwrap();
+        let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
+        Self {
+            program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
+            entry_points_by_type: BoundedVec::try_from(entrypoints_string.as_bytes().to_vec()).unwrap(),
+        }
+    }
+}
 
 impl Default for ContractClassWrapper {
     fn default() -> Self {

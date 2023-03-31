@@ -104,3 +104,13 @@ pub enum EventError {
     /// Provided from address is invalid.
     InvalidFromAddress,
 }
+
+/// Error enum wrapper for events.
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum StateDiffError {
+    /// Couldn't register newly deployed contracts.
+    DeployedContractError,
+    /// Couldn't register newly declared contracts.
+    DeclaredClassError,
+}
