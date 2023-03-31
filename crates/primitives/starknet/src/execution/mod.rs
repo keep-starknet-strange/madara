@@ -10,7 +10,7 @@ use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
+use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program, ContractClassAbiEntry, EventAbiEntry, FunctionAbiEntryWithType, StructAbiEntry};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
@@ -19,9 +19,11 @@ pub type ContractAddressWrapper = [u8; 32];
 
 /// Maximum vector sizes.
 type MaxCalldataSize = ConstU32<4294967295>;
-// type MaxAbiSize = ConstU32<4294967295>;
+type MaxAbiSize = ConstU32<4294967295>;
 type MaxProgramSize = ConstU32<4294967295>;
 type MaxEntryPoints = ConstU32<4294967295>;
+type MaxTypedParameters = ConstU32<4294967295>;
+type MaxStructMember = ConstU32<4294967295>;
 
 /// Wrapper type for class hash field.
 pub type ClassHashWrapper = [u8; 32];
@@ -33,15 +35,15 @@ pub struct ContractClassWrapper {
     /// Contract class program json.
     pub program: BoundedVec<u8, MaxProgramSize>,
     // /// Contract class abi.
-    pub abi: BoundedVec<ContractClassAbiEntryWrapper, MaxAbiSize>,
+    pub abi: BoundedVec<u8, MaxAbiSize>,
     /// Contract class entrypoints.
     pub entry_points_by_type: BoundedVec<u8, MaxEntryPoints>,
 }
 
 impl ContractClassWrapper {
     /// Creates a new instance of a contract class.
-    pub fn new(program: BoundedVec<u8, MaxProgramSize>, entry_points_by_type: BoundedVec<u8, MaxProgramSize>) -> Self {
-        Self { program, entry_points_by_type }
+    pub fn new(program: BoundedVec<u8, MaxProgramSize>, abi: BoundedVec<u8, MaxAbiSize>, entry_points_by_type: BoundedVec<u8, MaxProgramSize>) -> Self {
+        Self { program, abi, entry_points_by_type }
     }
 
     /// Convert to starknet contract class.
@@ -57,9 +59,11 @@ impl From<ContractClass> for ContractClassWrapper {
     fn from(contract_class: ContractClass) -> Self {
         let program_string = to_string(&contract_class.program).unwrap();
         let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
+        let abi_string = to_string(&contract_class.abi).unwrap();
         Self {
             program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
             entry_points_by_type: BoundedVec::try_from(entrypoints_string.as_bytes().to_vec()).unwrap(),
+            abi: BoundedVec::try_from(abi_string.as_bytes().to_vec()).unwrap(),
         }
     }
 }
@@ -68,6 +72,7 @@ impl Default for ContractClassWrapper {
     fn default() -> Self {
         Self {
             program: BoundedVec::try_from(vec![]).unwrap(),
+            abi: BoundedVec::try_from(vec![]).unwrap(),
             entry_points_by_type: BoundedVec::try_from(vec![]).unwrap(),
         }
     }
@@ -117,13 +122,100 @@ impl EntryPointTypeWrapper {
     }
 }
 
-// pub enum ContractClassAbiEntryWrapper {
-// 	/// An event abi entry.
-//     Event(EventAbiEntry),
-//     /// A function abi entry.
-//     Function(FunctionAbiEntryWithType),
-//     /// A struct abi entry.
-//     Struct(StructAbiEntry),
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    codec::Encode,
+    codec::Decode,
+    scale_info::TypeInfo,
+    codec::MaxEncodedLen,
+    PartialOrd,
+    Ord,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum ContractClassAbiEntryWrapper {
+	/// An event abi entry.
+    Event(EventAbiEntry),
+    /// A function abi entry.
+    Function(FunctionAbiEntryWithType),
+    /// A struct abi entry.
+    Struct(StructAbiEntry),
+}
+
+impl From<ContractClassAbiEntry> for ContractClassAbiEntryWrapper {
+    fn from(contract_class_abi_entry: ContractClassAbiEntry) -> Self {
+        match contract_class_abi_entry {
+            ContractClassAbiEntry::Event(EventAbiEntry) => ContractClassAbiEntryWrapper::Event(EventAbiEntry),
+            ContractClassAbiEntry::Function(FunctionAbiEntryWithType) => ContractClassAbiEntryWrapper::Function(FunctionAbiEntryWithType),
+            ContractClassAbiEntry::Struct(StructAbiEntry) => ContractClassAbiEntryWrapper::Struct(StructAbiEntry),
+        }
+    }
+}
+
+impl ContractClassAbiEntryWrapper {
+    /// Convert to starknet entrypoint type.
+    pub fn to_starknet_contract_class_abi_entry(&self) -> ContractClassAbiEntry {
+        match self {
+            ContractClassAbiEntryWrapper::Event(EventAbiEntry) => ContractClassAbiEntry::Event(EventAbiEntry),
+            ContractClassAbiEntryWrapper::Function(FunctionAbiEntryWithType) => ContractClassAbiEntry::Function(FunctionAbiEntryWithType),
+            ContractClassAbiEntryWrapper::Struct(StructAbiEntry) => ContractClassAbiEntry::Struct(StructAbiEntry),
+        }
+    }
+}
+
+// #[derive(Debug, Clone, Default, Eq, PartialEq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen, PartialOrd, Ord)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+// pub struct EventAbiEntryWrapper {
+//     pub name: U256,
+//     pub keys: BoundedVec<TypedParameter,MaxTypedParameters>,
+//     pub data: BoundedVec<TypedParameter,MaxTypedParameters>,
+// }
+
+// #[derive(Debug, Clone, Eq, PartialEq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen, PartialOrd, Ord)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+// pub struct FunctionAbiEntryWithTypeWrapper {
+//     pub r#type: FunctionAbiEntryType,
+//     pub entry: FunctionAbiEntry,
+// }
+
+// #[derive(Debug, Clone, Default, Eq, PartialEq, codec::Encode, codec::Decode)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize, scale_info::TypeInfo, codec::MaxEncodedLen,  PartialOrd, Ord))]
+// pub struct StructAbiEntryWrapper {
+//     pub name: U256,
+//     pub size: U256,
+//     pub members: BoundedVec<StructMember,MaxStructMember>,
+// }
+
+// #[derive(Debug, Clone, Eq, PartialEq, codec::Encode, codec::Decode)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize, Ord))]
+// pub enum FunctionAbiEntryType {
+//     Constructor,
+//     L1Handler,
+//     Regular,
+// }
+
+// #[derive(Debug, Default, Clone, Eq, PartialEq, codec::Encode, codec::Decode, Ord)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+// pub struct FunctionAbiEntry {
+//     pub name: U256,
+//     pub inputs: BoundedVec<TypedParameter,MaxTypedParameters>,
+//     pub outputs: BoundedVec<TypedParameter,MaxTypedParameters>,
+// }
+
+// #[derive(Debug, Clone, Default, Eq, PartialEq, codec::Encode, codec::Decode)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+// pub struct TypedParameter {
+//     pub name: U256,
+//     pub r#type: U256,
+// }
+
+// #[derive(Debug, Clone, Default, Eq, PartialEq, codec::Encode, codec::Decode)]
+// #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+// pub struct StructMember {
+//     pub param: TypedParameter,
+//     pub offset: U256,
 // }
 
 /// Representation of a Starknet Entry Point.
