@@ -442,3 +442,45 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
         );
     });
 }
+
+#[test]
+fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+        let transaction = Transaction::new(
+            U256::from(1),
+            H256::default(),
+            bounded_vec!(),
+            bounded_vec!(),
+            contract_address_bytes,
+            U256::from(0),
+            CallEntryPointWrapper::new(
+                Some(class_hash_bytes),
+                EntryPointTypeWrapper::External,
+                None,
+                bounded_vec![
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000003").unwrap(),
+                    H256::from_str("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000005").unwrap(),
+                ],
+                contract_address_bytes,
+                contract_address_bytes,
+            ),
+            None,
+        );
+
+        // Cannot declare a class with None
+        assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
+    });
+}
