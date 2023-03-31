@@ -65,6 +65,10 @@ pub mod pallet {
     use blockifier::execution::entry_point::CallInfo;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     use blockifier::state::state_api::State;
+<<<<<<< HEAD
+=======
+    use blockifier::test_utils::DictStateReader;
+>>>>>>> 0723542 (feat(starknet): apply state diffs)
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Time};
@@ -77,9 +81,15 @@ pub mod pallet {
     use mp_starknet::state::DictStateReader;
     use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
+<<<<<<< HEAD
     use mp_starknet::transaction::types::{
         EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
     };
+=======
+    // use blockifier::execution::contract_class::ContractClass;
+    use mp_starknet::transaction::types::StateDiffError;
+    use mp_starknet::transaction::types::{EventError, EventWrapper as StarknetEventType, Transaction, TxType};
+>>>>>>> 0723542 (feat(starknet): apply state diffs)
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
@@ -307,6 +317,7 @@ pub mod pallet {
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
                     Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
+                    Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
@@ -383,8 +394,12 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
+<<<<<<< HEAD
             Self::set_contract_class_hash(class_hash, contract_class.into())?;
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+=======
+            Self::set_class_info_from_class_hash(class_hash, contract_class.into())?;
+>>>>>>> 0723542 (feat(starknet): apply state diffs)
 
             // TODO: Update class hashes root
 
@@ -432,8 +447,17 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
+<<<<<<< HEAD
             // TODO: update state root
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+=======
+            Self::set_class_hash_from_contract_address(
+                transaction.clone().sender_address,
+                transaction.clone().call_entrypoint.class_hash.unwrap(),
+            )?;
+
+            // TODO: Apply state diff and update state root
+>>>>>>> 0723542 (feat(starknet): apply state diffs)
 
             Ok(())
         }
