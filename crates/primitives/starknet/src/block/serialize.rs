@@ -5,7 +5,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 
 use crate::alloc::string::ToString;
-use crate::starknet_block::header::Header;
+use crate::block::header::Header;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use mp_starknet::starknet_block::block::Block;
+use mp_starknet::block::StarknetBlock;
 use mp_starknet::storage::StarknetStorageSchema;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 // Substrate
@@ -26,7 +26,7 @@ pub struct OverrideHandle<Block: BlockT> {
 /// optimized implementation avoids spawning a runtime and the overhead associated with it.
 pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Return the current block.
-    fn current_block(&self, block_hash: B::Hash) -> Option<Block>;
+    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
 }
 
 fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
@@ -53,7 +53,7 @@ where
     C::Api: StarknetRuntimeApi<B>,
 {
     /// Return the current block.
-    fn current_block(&self, block_hash: B::Hash) -> Option<Block> {
+    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock> {
         let api = self.client.runtime_api();
 
         api.current_block(block_hash).ok()

@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use codec::Decode;
-use mp_starknet::starknet_block::block::Block;
+use mp_starknet::block::StarknetBlock;
 use mp_starknet::storage::{PALLET_STARKNET, STARKNET_CURRENT_BLOCK};
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -46,8 +46,8 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
-    fn current_block(&self, block_hash: B::Hash) -> Option<Block> {
-        self.query_storage::<Block>(
+    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock> {
+        self.query_storage::<StarknetBlock>(
             block_hash,
             &StorageKey(storage_prefix_build(PALLET_STARKNET, STARKNET_CURRENT_BLOCK)),
         )
