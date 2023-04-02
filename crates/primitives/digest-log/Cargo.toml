@@ -1,8 +1,8 @@
 [package]
-name = "mp-consensus"
+name = "mp-digest-log"
 version = "0.1.0-dev"
 license = "MIT"
-description = "Primitives for Madara consensus."
+description = "Primitives for Madara digest logs"
 authors = { workspace = true }
 edition = { workspace = true }
 repository = { workspace = true }
@@ -16,10 +16,4 @@ sp-runtime = { workspace = true }
 
 [features]
 default = ["std"]
-std = [
-	"mp-starknet/std",
-	"codec/std",
-	# Substrate
-	"sp-core/std",
-	"sp-runtime/std",
-]
+std = ["mp-starknet/std", "codec/std", "sp-core/std", "sp-runtime/std"]

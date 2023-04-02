@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
-use mp_consensus::{FindLogError, Hashes, Log, PostLog};
+use mp_digest_log::{FindLogError, Hashes, Log, PostLog};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
@@ -19,7 +19,7 @@ where
     BE: Backend<B>,
 {
     let substrate_block_hash = header.hash();
-    match mp_consensus::find_log(header.digest()) {
+    match mp_digest_log::find_log(header.digest()) {
         Ok(log) => {
             let gen_from_hashes = |hashes: Hashes| -> mc_db::MappingCommitment<B> {
                 mc_db::MappingCommitment { block_hash: substrate_block_hash, starknet_block_hash: hashes.block_hash }
