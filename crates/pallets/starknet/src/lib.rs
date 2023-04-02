@@ -75,7 +75,7 @@ pub mod pallet {
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
     use mp_starknet::state::DictStateReader;
-    use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
+    use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{EventError, EventWrapper as StarknetEventType, Transaction, TxType};
     use serde_json::from_str;
@@ -216,9 +216,9 @@ pub mod pallet {
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(false, U256::zero());
-            frame_support::storage::unhashed::put::<StarknetStorageSchema>(
+            frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
                 PALLET_STARKNET_SCHEMA,
-                &StarknetStorageSchema::V1,
+                &StarknetStorageSchemaVersion::V1,
             );
 
             for (address, class_hash) in self.contracts.iter() {
