@@ -36,7 +36,7 @@ where
                             overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
                         match starknet_block {
                             Some(block) => {
-                                let got_eth_block_hash = block.header.hash();
+                                let got_eth_block_hash = block.header().hash();
                                 if got_eth_block_hash != expect_eth_block_hash {
                                     Err(format!(
                                         "Ethereum block hash mismatch: frontier consensus digest \
@@ -70,7 +70,7 @@ where
     let substrate_block_hash = header.hash();
 
     let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
-    let block_hash = block.header.hash();
+    let block_hash = block.header().hash();
     let mapping_commitment =
         mc_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
     backend.mapping().write_hashes(mapping_commitment)?;
