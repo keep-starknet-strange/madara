@@ -50,7 +50,7 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             ..StarknetHeader::default()
         };
 
-        pretty_assertions::assert_eq!(current_block.header, expected_current_block)
+        pretty_assertions::assert_eq!(current_block.header(), expected_current_block)
     });
 }
 
