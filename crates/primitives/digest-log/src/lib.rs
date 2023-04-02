@@ -47,7 +47,7 @@ pub struct Hashes {
 
 impl Hashes {
     pub fn from_block(block: StarknetBlock) -> Self {
-        Hashes { block_hash: block.header.hash() }
+        Hashes { block_hash: block.header().hash() }
     }
 }
 
