@@ -1,3 +1,7 @@
+//! Staknet RPC server API implementation
+//!
+//! It uses the madara client and backend in order to answer queries.
+
 mod errors;
 mod madara_backend_client;
 
@@ -19,6 +23,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::testing::H256;
 use sp_runtime::traits::Block as BlockT;
 
+/// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
