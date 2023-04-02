@@ -4,7 +4,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[doc(hidden)]
-pub use codec;
+pub use scale_codec;
 #[doc(hidden)]
 pub use scale_info;
 #[cfg(feature = "std")]
