@@ -53,9 +53,9 @@ pub mod static_keys {
 /// Contains two distinct databases: `meta` and `mapping`.
 /// `mapping` is used to map Starknet blocks to Substrate ones.
 /// `meta` is used to store data about the current state of the chain
-pub struct Backend<Block: BlockT> {
-    meta: Arc<MetaDb<Block>>,
-    mapping: Arc<MappingDb<Block>>,
+pub struct Backend<B: BlockT> {
+    meta: Arc<MetaDb<B>>,
+    mapping: Arc<MappingDb<B>>,
 }
 
 /// Returns the Starknet database directory.
@@ -63,7 +63,7 @@ pub fn starknet_database_dir(db_config_dir: &Path, db_path: &str) -> PathBuf {
     db_config_dir.join("starknet").join(db_path)
 }
 
-impl<Block: BlockT> Backend<Block> {
+impl<B: BlockT> Backend<B> {
     /// Open the database
     ///
     /// The database will be created at db_config_dir.join(<db_type_name>)
@@ -96,12 +96,12 @@ impl<Block: BlockT> Backend<Block> {
     }
 
     /// Return the mapping database manager
-    pub fn mapping(&self) -> &Arc<MappingDb<Block>> {
+    pub fn mapping(&self) -> &Arc<MappingDb<B>> {
         &self.mapping
     }
 
     /// Return the meta database manager
-    pub fn meta(&self) -> &Arc<MetaDb<Block>> {
+    pub fn meta(&self) -> &Arc<MetaDb<B>> {
         &self.meta
     }
 }

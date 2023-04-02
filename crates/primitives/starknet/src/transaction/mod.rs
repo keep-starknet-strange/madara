@@ -27,7 +27,7 @@ use self::types::{
     TransactionExecutionResultWrapper, TxType,
 };
 use crate::block::serialize::SerializeBlockContext;
-use crate::block::StarknetBlock;
+use crate::block::Block as StarknetBlock;
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
 impl EventWrapper {
