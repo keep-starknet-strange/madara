@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use mp_starknet::block::StarknetBlock;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
@@ -23,6 +23,7 @@ pub struct OverrideHandle<B: BlockT> {
     pub fallback: Box<dyn StorageOverride<B>>,
 }
 
+#[allow(clippy::borrowed_box)]
 impl<B: BlockT> OverrideHandle<B> {
     pub fn for_schema_version(&self, schema_version: &StarknetStorageSchemaVersion) -> &Box<dyn StorageOverride<B>> {
         match self.schemas.get(schema_version) {
@@ -32,6 +33,7 @@ impl<B: BlockT> OverrideHandle<B> {
     }
 }
 
+#[allow(clippy::borrowed_box)]
 impl<B: BlockT> OverrideHandle<B> {
     pub fn for_block_hash<C: HeaderBackend<B> + StorageProvider<B, BE>, BE: Backend<B>>(
         &self,
