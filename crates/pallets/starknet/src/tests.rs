@@ -1,14 +1,14 @@
 use core::str::FromStr;
 
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+use blockifier::test_utils::ACCOUNT_CONTRACT_PATH;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_block::header::Header;
-use mp_starknet::transaction::types::{EventWrapper, Transaction};
+use mp_starknet::transaction::types::EventWrapper;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
+use crate::transaction_from_json::transaction_from_json;
 use crate::types::Message;
 use crate::{Error, Event};
 
@@ -64,11 +64,17 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         let none_origin = RuntimeOrigin::none();
 
         // Wrong address (not deployed)
-        let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+        // let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
+        // let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+        //
+        // let transaction =
+        // Transaction { version: U256::from(1), sender_address: contract_address_bytes,
+        // ..Transaction::default() };
 
-        let transaction =
-            Transaction { version: U256::from(1), sender_address: contract_address_bytes, ..Transaction::default() };
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed.json"
+        );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::AccountNotDeployed);
     })
@@ -82,43 +88,22 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
-        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
-            bounded_vec![
-                H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
-                H256::from_str("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap()
-            ],
-            bounded_vec!(),
-			contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-				Some(class_hash_bytes),
-				EntryPointTypeWrapper::External,
-				None,
-				bounded_vec![
-                    H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
-                    H256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
-                ],
-				contract_address_bytes,
-				contract_address_bytes
-			),
-			None,
-		);
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_invoke_tx_then_it_works.json"
+        );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         let tx = Message {
-            topics: vec!["0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b".to_owned(), "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(), "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(), "0x1310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771".to_owned()],
-            data: "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned()
-        }.try_into_transaction().unwrap();
+            topics: vec![
+                "0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b".to_owned(),
+                "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
+                "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
+                "0x1310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771".to_owned(),
+            ],
+            data: "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
+        }
+        .try_into_transaction()
+        .unwrap();
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
 
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
@@ -133,47 +118,25 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
-        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
-            bounded_vec![
-                H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
-                H256::from_str("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap()
-            ],
-            bounded_vec!(),
-			contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-				Some(class_hash_bytes),
-				EntryPointTypeWrapper::External,
-				None,
-				bounded_vec![
-                    H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
-                    H256::from_str("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(), // Selector
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Length
-                    // H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Value
-                ],
-				contract_address_bytes,
-				contract_address_bytes
-			),
-			None,
-		);
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_invoke_tx_then_event_is_emitted.json"
+        );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
 
-		System::assert_last_event(Event::StarknetEvent(EventWrapper {
-			keys: bounded_vec![H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()],
-			data: bounded_vec!(),
-			from_address:  H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap().to_fixed_bytes()
-		}).into());
-
+        System::assert_last_event(
+            Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec![
+                    H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()
+                ],
+                data: bounded_vec!(),
+                from_address: H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c")
+                    .unwrap()
+                    .to_fixed_bytes(),
+            })
+            .into(),
+        );
     });
 }
 
@@ -192,26 +155,10 @@ fn given_hardcoded_contract_run_deploy_account_tx_then_it_works() {
         let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
-        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![
-                    // Constructor calldata
-                ],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            None,
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_deploy_account_tx_then_it_works.json"
         );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_deploy_account_transaction(none_origin, transaction));
 
@@ -236,25 +183,11 @@ fn given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails() {
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![
-                    // Constructor calldata
-                ],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            None,
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails.\
+             json"
         );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_deploy_account_transaction(none_origin.clone(), transaction.clone()));
 
@@ -276,33 +209,12 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
 
         let none_origin = RuntimeOrigin::none();
 
-        // TODO: Compute address from salt/hash/calldata/deployer
-        let contract_address_str = "02356b628D108863BAf8644c125d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-        let class_hash_str = "0334e1e4d148a789fb44367eff869a6330693037983ba6fd2291b2be1249e15a";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![
-                    // Constructor calldata
-                ],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            None,
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/\
+             given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails.json"
         );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_err!(
             Starknet::add_deploy_account_transaction(none_origin.clone(), transaction),
@@ -319,32 +231,11 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-        let class_hash_str = "025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
-        let account_class = ContractClassWrapper::from(get_contract_class(ACCOUNT_CONTRACT_PATH));
-
-        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            Some(account_class.clone()),
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_declare_tx_then_it_works.json"
         );
+        let transaction =
+            transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_declare_transaction(none_origin, transaction));
 
@@ -362,32 +253,11 @@ fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-        let class_hash_str = "025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
-        let account_class = ContractClassWrapper::from(get_contract_class(ACCOUNT_CONTRACT_PATH));
-
-        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            Some(account_class.clone()),
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_declare_twice_then_it_fails.json"
         );
+        let transaction =
+            transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_declare_transaction(none_origin.clone(), transaction.clone()));
 
@@ -411,30 +281,10 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-        let class_hash_str = "025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
-
-        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            None,
+        let json_content: &str = include_str!(
+            "../../../../ressources/transactions/given_hardcoded_contract_run_declare_none_then_it_fails.json"
         );
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         // Cannot declare a class with None
         assert_err!(
