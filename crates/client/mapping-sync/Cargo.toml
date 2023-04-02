@@ -21,7 +21,7 @@ sc-client-api = { workspace = true }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }
-mp-consensus = { workspace = true }
+mp-digest-log = { workspace = true }
 mc-storage = { path = "../storage" }
 mc-db = { path = "../db" }
 pallet-starknet = { path = "../../pallets/starknet" }
