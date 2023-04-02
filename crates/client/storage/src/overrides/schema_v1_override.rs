@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use codec::Decode;
 use mp_starknet::block::StarknetBlock;
 use mp_starknet::storage::{PALLET_STARKNET, STARKNET_CURRENT_BLOCK};
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
+use scale_codec::Decode;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_storage::StorageKey;

@@ -3,8 +3,8 @@ name = "madara-runtime"
 version = "0.1.0-dev"
 description = "Madara runtime."
 authors = [
-  "Abdelhamid Bakhta <@abdelhamidbakhta>",
-  "Substrate DevHub <https://github.com/substrate-developer-hub>",
+	"Abdelhamid Bakhta <@abdelhamidbakhta>",
+	"Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -16,24 +16,19 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+	"derive",
 ] }
-scale-info = { version = "2.5.0", default-features = false, features = [
-  "derive",
-] }
+scale-info = { workspace = true, features = ["derive"] }
 
-# For an unknown reason, we can't use workspace dependencies for the following crates.
-# Sticking to the git version for now.
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-block-builder = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-inherents = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-offchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-session = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-transaction-pool = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-sp-version = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
-# End of problematic dependencies.
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-consensus-aura = { workspace = true }
+sp-inherents = { workspace = true }
+sp-offchain = { workspace = true }
+sp-session = { workspace = true }
+sp-transaction-pool = { workspace = true }
+sp-version = { workspace = true }
 
 pallet-aura = { workspace = true }
 pallet-balances = { workspace = true }
@@ -67,66 +62,66 @@ mp-starknet = { workspace = true, default-features = false }
 substrate-wasm-builder = { workspace = true }
 
 [features]
+try-runtime = [
+	"pallet-timestamp/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"frame-try-runtime/try-runtime",
+	"frame-executive/try-runtime",
+	"frame-system/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-aura/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-grandpa/try-runtime",
+	"pallet-sudo/try-runtime",
+	# Kaiohsin pallets
+	"pallet-starknet/try-runtime",
+]
 default = ["std"]
 std = [
-  # Madara pallets
-  "pallet-starknet/std",
-  # Frame dependencies
-  "frame-try-runtime?/std",
-  "frame-system-benchmarking?/std",
-  "frame-benchmarking?/std",
-  "frame-executive/std",
-  "frame-support/std",
-  "frame-system-rpc-runtime-api/std",
-  "frame-system/std",
-  "frame-try-runtime/std",
-  # Frame pallets dependencies
-  "pallet-aura/std",
-  "pallet-balances/std",
-  "pallet-grandpa/std",
-  "pallet-sudo/std",
-  "pallet-timestamp/std",
-  "pallet-transaction-payment-rpc-runtime-api/std",
-  "pallet-transaction-payment/std",
-  # Substrate primitives dependencies
-  "sp-api/std",
-  "sp-block-builder/std",
-  "sp-consensus-aura/std",
-  "sp-core/std",
-  "sp-inherents/std",
-  "sp-offchain/std",
-  "sp-runtime/std",
-  "sp-session/std",
-  "sp-std/std",
-  "sp-transaction-pool/std",
-  "sp-version/std",
-  # 3rd party dependencies
-  "codec/std",
-  "scale-info/std",
+	# Madara pallets
+	"pallet-starknet/std",
+	# Frame dependencies
+	"frame-try-runtime?/std",
+	"frame-system-benchmarking?/std",
+	"frame-benchmarking?/std",
+	"frame-executive/std",
+	"frame-support/std",
+	"frame-system-rpc-runtime-api/std",
+	"frame-system/std",
+	"frame-try-runtime/std",
+	# Frame pallets dependencies
+	"pallet-aura/std",
+	"pallet-balances/std",
+	"pallet-grandpa/std",
+	"pallet-sudo/std",
+	"pallet-timestamp/std",
+	"pallet-transaction-payment-rpc-runtime-api/std",
+	"pallet-transaction-payment/std",
+	# Substrate primitives dependencies
+	"sp-api/std",
+	"sp-block-builder/std",
+	"sp-consensus-aura/std",
+	"sp-core/std",
+	"sp-inherents/std",
+	"sp-offchain/std",
+	"sp-runtime/std",
+	"sp-session/std",
+	"sp-std/std",
+	"sp-transaction-pool/std",
+	"sp-version/std",
+	# 3rd party dependencies
+	"scale-codec/std",
+	"scale-info/std",
 ]
 runtime-benchmarks = [
-  "frame-benchmarking/runtime-benchmarks",
-  "frame-support/runtime-benchmarks",
-  "frame-system-benchmarking/runtime-benchmarks",
-  "frame-system/runtime-benchmarks",
-  "pallet-balances/runtime-benchmarks",
-  "pallet-grandpa/runtime-benchmarks",
-  "pallet-timestamp/runtime-benchmarks",
-  "sp-runtime/runtime-benchmarks",
-  # Kaiohsin pallets
-  "pallet-starknet/runtime-benchmarks",
-]
-try-runtime = [
-  "pallet-timestamp/try-runtime",
-  "pallet-transaction-payment/try-runtime",
-  "frame-try-runtime/try-runtime",
-  "frame-executive/try-runtime",
-  "frame-system/try-runtime",
-  "frame-support/try-runtime",
-  "pallet-aura/try-runtime",
-  "pallet-balances/try-runtime",
-  "pallet-grandpa/try-runtime",
-  "pallet-sudo/try-runtime",
-  # Kaiohsin pallets
-  "pallet-starknet/try-runtime",
+	"frame-benchmarking/runtime-benchmarks",
+	"frame-support/runtime-benchmarks",
+	"frame-system-benchmarking/runtime-benchmarks",
+	"frame-system/runtime-benchmarks",
+	"pallet-balances/runtime-benchmarks",
+	"pallet-grandpa/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
+	"sp-runtime/runtime-benchmarks",
+	# Kaiohsin pallets
+	"pallet-starknet/runtime-benchmarks",
 ]
