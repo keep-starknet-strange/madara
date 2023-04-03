@@ -65,7 +65,6 @@ pub mod pallet {
     use blockifier::execution::entry_point::CallInfo;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     use blockifier::state::state_api::State;
-    use blockifier::test_utils::DictStateReader;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Time};
