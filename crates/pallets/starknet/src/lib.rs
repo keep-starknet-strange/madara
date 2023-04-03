@@ -74,8 +74,10 @@ pub mod pallet {
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+    use mp_starknet::starknet_block::block::Block;
+    use mp_starknet::starknet_block::header::Header;
     use mp_starknet::state::DictStateReader;
-    use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+    use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{
         EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
