@@ -4375,16 +4375,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mp-consensus"
-version = "0.1.0-dev"
-dependencies = [
- "mp-starknet",
- "parity-scale-codec",
- "sp-core",
- "sp-runtime",
-]
-
-[[package]]
 name = "mp-starknet"
 version = "0.1.0-dev"
 dependencies = [
@@ -4940,7 +4930,6 @@ dependencies = [
  "frame-system",
  "hex",
  "log",
- "mp-consensus",
  "mp-starknet",
  "pallet-timestamp",
  "parity-scale-codec",

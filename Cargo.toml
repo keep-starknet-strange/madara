@@ -4,7 +4,6 @@ members = [
 	"crates/runtime",
 	"crates/pallets/starknet",
 	"crates/primitives/starknet",
-	"crates/primitives/consensus",
 	"crates/client/db",
 	"crates/client/rpc-core",
 	"crates/client/rpc",
@@ -83,11 +82,10 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
 # Madara pallets
-pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
+pallet-starknet = { version = "0.1.0-dev", path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false }
-mp-consensus = { path = "crates/primitives/consensus", default-features = false }
+mp-starknet = { version = "0.1.0-dev", path = "crates/primitives/starknet", default-features = false }
 
 # Starknet dependencies
 # Cairo Virtual Machine
