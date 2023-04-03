@@ -3,14 +3,16 @@
 use alloc::sync::Arc;
 use alloc::vec;
 
-use blockifier::execution::contract_class::ContractClass;
+use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
 use blockifier::execution::entry_point::CallEntryPoint;
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
+use starknet_api::state::{
+    ContractClass as StarknetApiContractClass, EntryPoint, EntryPointOffset, EntryPointType, Program,
+};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
@@ -54,26 +56,16 @@ impl ContractClassWrapper {
     }
 
     /// Convert to starknet contract class.
-    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
+    pub fn to_starknet_contract_class(&self) -> Result<BlockifierContractClass, serde_json::Error> {
         let program = from_slice::<Program>(self.program.as_ref())?;
         let entrypoints =
             from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(self.entry_points_by_type.as_ref())?;
-        Ok(ContractClass { program, abi: None, entry_points_by_type: entrypoints })
+        Ok(BlockifierContractClass { program, abi: None, entry_points_by_type: entrypoints })
     }
 }
 
-impl From<ContractClass> for ContractClassWrapper {
-    fn from(contract_class: ContractClass) -> Self {
-        let program_string = to_string(&contract_class.program).unwrap();
-        let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
-        Self {
-            program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
-            entry_points_by_type: BoundedVec::try_from(entrypoints_string.as_bytes().to_vec()).unwrap(),
-        }
-    }
-}
-impl From<&starknet_api::state::ContractClass> for ContractClassWrapper {
-    fn from(contract_class: &starknet_api::state::ContractClass) -> Self {
+impl From<BlockifierContractClass> for ContractClassWrapper {
+    fn from(contract_class: BlockifierContractClass) -> Self {
         let program_string = to_string(&contract_class.program).unwrap();
         let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
         Self {

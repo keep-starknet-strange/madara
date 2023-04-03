@@ -489,7 +489,6 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
             None,
         );
 
-        // Cannot declare a class with None
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
         assert_eq!(Starknet::storage((target_contract_address.to_fixed_bytes(), storage_var_selector)), U256::one());
     });
