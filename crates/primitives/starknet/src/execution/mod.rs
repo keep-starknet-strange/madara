@@ -10,7 +10,7 @@ use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program, ContractClassAbiEntry};
+use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
@@ -32,7 +32,7 @@ pub type ClassHashWrapper = [u8; 32];
 pub struct ContractClassWrapper {
     /// Contract class program json.
     pub program: BoundedVec<u8, MaxProgramSize>,
-    // /// Contract class abi.
+    /// Contract class abi.
     pub abi: BoundedVec<u8, MaxAbiSize>,
     /// Contract class entrypoints.
     pub entry_points_by_type: BoundedVec<u8, MaxEntryPoints>,
@@ -40,7 +40,11 @@ pub struct ContractClassWrapper {
 
 impl ContractClassWrapper {
     /// Creates a new instance of a contract class.
-    pub fn new(program: BoundedVec<u8, MaxProgramSize>, abi: BoundedVec<u8, MaxAbiSize>, entry_points_by_type: BoundedVec<u8, MaxProgramSize>) -> Self {
+    pub fn new(
+        program: BoundedVec<u8, MaxProgramSize>,
+        abi: BoundedVec<u8, MaxAbiSize>,
+        entry_points_by_type: BoundedVec<u8, MaxProgramSize>,
+    ) -> Self {
         Self { program, abi, entry_points_by_type }
     }
 
