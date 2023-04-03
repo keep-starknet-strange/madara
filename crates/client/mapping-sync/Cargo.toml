@@ -21,7 +21,5 @@ sc-client-api = { workspace = true }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }
-mp-consensus = { workspace = true }
-mc-storage = { path = "../storage" }
 madara-db = { path = "../db" }
 pallet-starknet = { path = "../../pallets/starknet" }
