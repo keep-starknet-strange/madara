@@ -71,7 +71,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
     let test_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
-    let test_class2 = get_contract_class(include_bytes!("../../../../ressources/test2.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
 
     // ACCOUNT CONTRACT
@@ -88,13 +87,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let other_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
     let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
 
-    // TEST2 CONTRACT
-    let other_contract_address_str2 = "0000000000000000000000000000000000000000000000000000000000000003";
-    let other_contract_address_bytes2 = <[u8; 32]>::from_hex(other_contract_address_str2).unwrap();
-
-    let other_class_hash_str2 = "039918d82d7a6743442752a71ccb59c3bb9c0f7005736399b0cddf82783d4cad";
-    let other_class_hash_bytes2 = <[u8; 32]>::from_hex(other_class_hash_str2).unwrap();
-
     // L1 HANDLER CONTRACT
     let l1_handler_contract_address_str = "0000000000000000000000000000000000000000000000000000000000000001";
     let l1_handler_contract_address_bytes = <[u8; 32]>::from_hex(l1_handler_contract_address_str).unwrap();
@@ -106,13 +98,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         contracts: vec![
             (contract_address_bytes, class_hash_bytes),
             (other_contract_address_bytes, other_class_hash_bytes),
-            (other_contract_address_bytes2, other_class_hash_bytes2),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
         ],
         contract_classes: vec![
             (class_hash_bytes, ContractClassWrapper::from(account_class)),
             (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-            (other_class_hash_bytes2, ContractClassWrapper::from(test_class2)),
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
         ],
         ..Default::default()
