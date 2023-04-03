@@ -1,5 +1,5 @@
 [package]
-name = "mc-rpc"
+name = "madara-rpc"
 version = "0.1.0"
 description = "Starknet RPC compatibility layer for Substrate"
 authors = [
@@ -16,8 +16,8 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-mc-rpc-core = { path = "../rpc-core" }
-mc-db = { path = "../db" }
+madara-rpc-core = { path = "../rpc-core" }
+madara-db = { path = "../db" }
 mc-storage = { path = "../storage" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
