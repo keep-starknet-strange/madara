@@ -39,20 +39,21 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-
     - name: Setup rust toolchain
       run: rustup show
     - name: Set-Up
-      run: >
-        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler && cargo install cargo-tarpaulin
+      run: sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+    - name: Install cargo-llvm-cov
+      uses: taiki-e/install-action@cargo-llvm-cov
     - uses: Swatinem/rust-cache@v2
     - name: Coverage
-      run: cargo tarpaulin --workspace --skip-clean
+      run: cargo llvm-cov report --all --lcov --output-path lcov.info
     - name: Upload coverage to codecov.io
       uses: codecov/codecov-action@v3
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: lcov.info
         fail_ci_if_error: true
 
   bench:
