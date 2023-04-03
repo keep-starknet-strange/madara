@@ -21,9 +21,6 @@ pub mod transaction_validation;
 /// State root logic.
 pub mod state_root;
 
-/// The Starknet pallet's runtime API
-pub mod runtime_api;
-
 #[cfg(test)]
 mod mock;
 
