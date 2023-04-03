@@ -10,9 +10,7 @@ use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{
-    ContractClass as StarknetApiContractClass, EntryPoint, EntryPointOffset, EntryPointType, Program,
-};
+use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
