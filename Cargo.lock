@@ -4117,20 +4117,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "madara-db"
-version = "0.1.0"
-dependencies = [
- "kvdb-rocksdb",
- "log",
- "parity-db",
- "parity-scale-codec",
- "sc-client-db",
- "sp-core",
- "sp-database",
- "sp-runtime",
-]
-
-[[package]]
 name = "madara-runtime"
 version = "0.1.0-dev"
 dependencies = [
