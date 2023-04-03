@@ -260,7 +260,7 @@ impl Transaction {
         tx_type: TxType,
         contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<Option<CallInfo>> {
-        let block_context = BlockContext::serialize(block.header().clone());
+        let block_context = BlockContext::serialize(block.header);
         match tx_type {
             TxType::InvokeTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;

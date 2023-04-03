@@ -9,17 +9,13 @@ use super::header::Header;
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Block {
     /// The block header.
-    header: Header,
+    pub header: Header,
 }
 
 impl Block {
     /// Creates a new block.
+    #[must_use]
     pub fn new(header: Header) -> Self {
         Self { header }
-    }
-
-    /// Return a reference to the block header
-    pub fn header(&self) -> &Header {
-        &self.header
     }
 }

@@ -487,7 +487,7 @@ pub mod pallet {
         /// The current block hash.
         #[inline(always)]
         pub fn current_block_hash() -> H256 {
-            Self::current_block().header().hash()
+            Self::current_block().header.hash()
         }
 
         /// Get the block hash of the previous block.
@@ -565,10 +565,10 @@ pub mod pallet {
             // Save the current block.
             CurrentBlock::<T>::put(block.clone());
             // Save the block number <> hash mapping.
-            BlockHash::<T>::insert(block_number, block.header().hash());
+            BlockHash::<T>::insert(block_number, block.header.hash());
             Pending::<T>::kill();
 
-            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
+            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header.hash()).encode());
             frame_system::Pallet::<T>::deposit_log(digest);
         }
 
