@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use mp_starknet::block::Block as StarknetBlock;
+use mp_starknet::block::StarknetBlock;
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};

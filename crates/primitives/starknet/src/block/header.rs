@@ -1,3 +1,4 @@
+//! Starknet header definition.
 use scale_codec::Encode;
 use sp_core::{H256, U256};
 

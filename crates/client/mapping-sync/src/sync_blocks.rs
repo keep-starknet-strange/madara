@@ -58,17 +58,21 @@ where
     }
 }
 
-fn sync_genesis_block<B: BlockT, C>(client: &C, backend: &mc_db::Backend<B>, header: &B::Header) -> Result<(), String>
+fn sync_genesis_block<Block: BlockT, C>(
+    client: &C,
+    backend: &mc_db::Backend<Block>,
+    header: &Block::Header,
+) -> Result<(), String>
 where
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C: ProvideRuntimeApi<Block>,
+    C::Api: StarknetRuntimeApi<Block>,
 {
     let substrate_block_hash = header.hash();
 
     let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
     let block_hash = block.header().hash();
     let mapping_commitment =
-        mc_db::MappingCommitment::<B> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
+        mc_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
     backend.mapping().write_hashes(mapping_commitment)?;
 
     Ok(())
@@ -152,14 +156,14 @@ where
     Ok(synced_any)
 }
 
-fn fetch_header<B: BlockT, BE>(
+fn fetch_header<Block: BlockT, BE>(
     substrate_backend: &BE,
-    madara_backend: &mc_db::Backend<B>,
-    checking_tip: B::Hash,
-    sync_from: <B::Header as HeaderT>::Number,
-) -> Result<Option<B::Header>, String>
+    madara_backend: &mc_db::Backend<Block>,
+    checking_tip: Block::Hash,
+    sync_from: <Block::Header as HeaderT>::Number,
+) -> Result<Option<Block::Header>, String>
 where
-    BE: HeaderBackend<B>,
+    BE: HeaderBackend<Block>,
 {
     if madara_backend.mapping().is_synced(&checking_tip)? {
         return Ok(None);

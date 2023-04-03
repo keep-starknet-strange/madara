@@ -19,7 +19,7 @@
 #![allow(clippy::large_enum_variant)]
 #![deny(unused_crate_dependencies)]
 
-use mp_starknet::block::Block as StarknetBlock;
+use mp_starknet::block::StarknetBlock;
 use scale_codec::{Decode, Encode};
 use sp_core::H256;
 use sp_runtime::generic::{Digest, OpaqueDigestItemId};
