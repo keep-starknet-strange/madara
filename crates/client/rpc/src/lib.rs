@@ -53,9 +53,12 @@ where
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
         let block = self
             .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .schemas
+            .get(&schema)
+            .unwrap_or(&self.overrides.fallback)
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
@@ -112,9 +115,12 @@ where
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
+        let schema = mc_storage::onchain_storage_schema(self.client.as_ref(), substrate_block_hash);
         let block = self
             .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .schemas
+            .get(&schema)
+            .unwrap_or(&self.overrides.fallback)
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 

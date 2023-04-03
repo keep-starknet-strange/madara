@@ -36,8 +36,12 @@ where
                 }
                 Log::Post(post_log) => match post_log {
                     PostLog::BlockHash(expect_eth_block_hash) => {
-                        let starknet_block =
-                            overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
+                        let schema = mc_storage::onchain_storage_schema(client, substrate_block_hash);
+                        let starknet_block = overrides
+                            .schemas
+                            .get(&schema)
+                            .unwrap_or(&overrides.fallback)
+                            .current_block(substrate_block_hash);
                         match starknet_block {
                             Some(block) => {
                                 let got_eth_block_hash = block.header.hash();
