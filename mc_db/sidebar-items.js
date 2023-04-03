@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["starknet_database_dir"],"mod":["static_keys"],"struct":["Backend","MappingCommitment"],"type":["DbHash"]};

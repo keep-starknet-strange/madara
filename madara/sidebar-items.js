@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["chain_spec","rpc","service"]};
+window.SIDEBAR_ITEMS = {"fn":["main"],"mod":["benchmarking","chain_spec","cli","command","rpc","service","starknet"]};

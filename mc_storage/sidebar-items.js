@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["onchain_storage_schema","overrides_handle"],"struct":["OverrideHandle","RuntimeApiStorageOverride","SchemaV1Override"],"trait":["StorageOverride"]};

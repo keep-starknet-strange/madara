@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["madara","madara_runtime","mp_starknet","pallet_starknet"];
+window.ALL_CRATES = ["madara","madara_runtime","mc_db","mc_mapping_sync","mc_rpc","mc_rpc_core","mc_storage","mp_digest_log","mp_starknet","pallet_starknet"];

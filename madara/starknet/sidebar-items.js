@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["db_config_dir"],"type":["MadaraBackend"]};

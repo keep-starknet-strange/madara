@@ -44,7 +44,7 @@
 #![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 
 #[doc(hidden)]
-</span><span class="kw">pub use </span>codec;
+</span><span class="kw">pub use </span>scale_codec;
 <span class="attr">#[doc(hidden)]
 </span><span class="kw">pub use </span>scale_info;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
@@ -56,7 +56,7 @@
 </span><span class="kw">pub extern crate </span>alloc;
 <span class="comment">// Include modules.
 </span><span class="doccomment">/// Starknet block related functionality.
-</span><span class="kw">pub mod </span>starknet_block;
+</span><span class="kw">pub mod </span>block;
 
 <span class="doccomment">/// Starknet transaction related functionality.
 </span><span class="kw">pub mod </span>transaction;

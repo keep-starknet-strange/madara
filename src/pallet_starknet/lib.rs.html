@@ -764,13 +764,6 @@
 <a href="#764" id="764">764</a>
 <a href="#765" id="765">765</a>
 <a href="#766" id="766">766</a>
-<a href="#767" id="767">767</a>
-<a href="#768" id="768">768</a>
-<a href="#769" id="769">769</a>
-<a href="#770" id="770">770</a>
-<a href="#771" id="771">771</a>
-<a href="#772" id="772">772</a>
-<a href="#773" id="773">773</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -793,6 +786,9 @@
 
 <span class="doccomment">/// State root logic.
 </span><span class="kw">pub mod </span>state_root;
+
+<span class="doccomment">/// The Starknet pallet&#39;s runtime API
+</span><span class="kw">pub mod </span>runtime_api;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>mock;
@@ -839,19 +835,20 @@
     <span class="kw">use </span>frame_support::sp_runtime::offchain::storage::StorageValueRef;
     <span class="kw">use </span>frame_support::traits::{OriginTrait, Time};
     <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>mp_digest_log::{PostLog, MADARA_ENGINE_ID};
+    <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader};
     <span class="kw">use </span>mp_starknet::crypto::commitment;
     <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
     <span class="kw">use </span>mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
-    <span class="kw">use </span>mp_starknet::starknet_block::block::Block;
-    <span class="kw">use </span>mp_starknet::starknet_block::header::Header;
     <span class="kw">use </span>mp_starknet::state::DictStateReader;
-    <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
+    <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
     <span class="kw">use </span>mp_starknet::transaction::types::{EventError, EventWrapper <span class="kw">as </span>StarknetEventType, Transaction, TxType};
     <span class="kw">use </span>serde_json::from_str;
     <span class="kw">use </span>sp_core::{H256, U256};
     <span class="kw">use </span>sp_runtime::offchain::http;
     <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
+    <span class="kw">use </span>sp_runtime::DigestItem;
     <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
     <span class="kw">use </span>starknet_api::hash::StarkFelt;
     <span class="kw">use </span>starknet_api::state::StorageKey;
@@ -929,7 +926,7 @@
     <span class="doccomment">/// The current Starknet block.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>current_block)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CurrentBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, Block&gt;;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CurrentBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, StarknetBlock, ValueQuery&gt;;
 
     <span class="comment">// Mapping for block number and hashes.
     </span><span class="attr">#[pallet::storage]
@@ -982,9 +979,9 @@
     </span><span class="kw">impl</span>&lt;T: Config&gt; GenesisBuild&lt;T&gt; <span class="kw">for </span>GenesisConfig&lt;T&gt; {
         <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) {
             &lt;Pallet&lt;T&gt;&gt;::store_block(U256::zero());
-            frame_support::storage::unhashed::put::&lt;StarknetStorageSchema&gt;(
+            frame_support::storage::unhashed::put::&lt;StarknetStorageSchemaVersion&gt;(
                 PALLET_STARKNET_SCHEMA,
-                <span class="kw-2">&amp;</span>StarknetStorageSchema::V1,
+                <span class="kw-2">&amp;</span>StarknetStorageSchemaVersion::V1,
             );
 
             <span class="kw">for </span>(address, class_hash) <span class="kw">in </span><span class="self">self</span>.contracts.iter() {
@@ -1025,7 +1022,6 @@
         InvalidContractClass,
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
-        InvalidCurrentBlock,
         StateReaderError,
         EmitEventError,
     }
@@ -1069,7 +1065,7 @@
             // Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
-            <span class="kw">let </span>block = <span class="self">Self</span>::current_block().unwrap();
+            <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="kw">match </span>transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
@@ -1122,14 +1118,7 @@
             </span><span class="macro">ensure!</span>(transaction.contract_class.is_some(), Error::&lt;T&gt;::ContractClassMustBeSpecified);
 
             <span class="comment">// Get current block
-            </span><span class="kw">let </span>block = <span class="kw">match </span><span class="self">Self</span>::current_block() {
-                <span class="prelude-val">Some</span>(b) =&gt; b,
-                <span class="prelude-val">None </span>=&gt; {
-                    <span class="macro">log!</span>(error, <span class="string">&quot;Current block is None&quot;</span>);
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidCurrentBlock.into());
-                }
-            };
-
+            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="comment">// Create state reader from substrate storage
             </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
 
@@ -1187,13 +1176,7 @@
             );
 
             <span class="comment">// Get current block
-            </span><span class="kw">let </span>block = <span class="kw">match </span><span class="self">Self</span>::current_block() {
-                <span class="prelude-val">Some</span>(b) =&gt; b,
-                <span class="prelude-val">None </span>=&gt; {
-                    <span class="macro">log!</span>(error, <span class="string">&quot;Current block is None&quot;</span>);
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidCurrentBlock.into());
-                }
-            };
+            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
 
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="kw">match </span>transaction.execute(state, block, TxType::DeployAccountTx, <span class="prelude-val">None</span>) {
@@ -1240,7 +1223,7 @@
             // Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
-            <span class="kw">let </span>block = <span class="self">Self</span>::current_block().unwrap();
+            <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="kw">match </span>transaction.execute(state, block, TxType::L1HandlerTx, <span class="prelude-val">None</span>) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
@@ -1269,8 +1252,8 @@
         ///
         /// The current block hash.
         </span><span class="attr">#[inline(always)]
-        </span><span class="kw">pub fn </span>current_block_hash() -&gt; <span class="prelude-ty">Option</span>&lt;H256&gt; {
-            <span class="self">Self</span>::current_block().map(|block| block.header.hash())
+        </span><span class="kw">pub fn </span>current_block_hash() -&gt; H256 {
+            <span class="self">Self</span>::current_block().header().hash()
         }
 
         <span class="doccomment">/// Get the block hash of the previous block.
@@ -1332,7 +1315,7 @@
             <span class="kw">let </span>protocol_version = <span class="prelude-val">None</span>;
             <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
-            <span class="kw">let </span>block = Block::new(Header::new(
+            <span class="kw">let </span>block = StarknetBlock::new(StarknetHeader::new(
                 parent_block_hash,
                 block_number,
                 global_state_root,
@@ -1348,8 +1331,11 @@
             <span class="comment">// Save the current block.
             </span>CurrentBlock::&lt;T&gt;::put(block.clone());
             <span class="comment">// Save the block number &lt;&gt; hash mapping.
-            </span>BlockHash::&lt;T&gt;::insert(block_number, block.header.hash());
+            </span>BlockHash::&lt;T&gt;::insert(block_number, block.header().hash());
             Pending::&lt;T&gt;::kill();
+
+            <span class="kw">let </span>digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
+            frame_system::Pallet::&lt;T&gt;::deposit_log(digest);
         }
 
         <span class="doccomment">/// Associate a contract class hash with a contract class info

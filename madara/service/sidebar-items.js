@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["new_full","new_partial"],"struct":["ExecutorDispatch","NativeElseWasmExecutor"]};
+window.SIDEBAR_ITEMS = {"fn":["new_full","new_partial","remote_keystore"],"struct":["ExecutorDispatch","NativeElseWasmExecutor"],"type":["FullBackend","FullClient","FullSelectChain"]};

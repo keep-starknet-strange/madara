@@ -82,9 +82,9 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet pallet custom types.
-</span><span class="kw">use </span>frame_support::codec::{Decode, Encode, MaxEncodedLen};
-<span class="kw">use </span>frame_support::scale_info::TypeInfo;
-<span class="kw">use </span>mp_starknet::execution::ContractAddressWrapper;
+</span><span class="kw">use </span>mp_starknet::execution::ContractAddressWrapper;
+<span class="kw">use </span>scale_codec::{Decode, Encode, MaxEncodedLen};
+<span class="kw">use </span>scale_info::TypeInfo;
 <span class="kw">use </span>serde::Deserialize;
 <span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>sp_runtime::offchain::http::Error;
