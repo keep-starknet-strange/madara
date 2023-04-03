@@ -28,7 +28,7 @@ use mp_consensus::{FindLogError, Hashes, Log, PostLog, PreLog};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
-use sp_api::ProvideRuntimeApi;
+use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::{Backend as _, HeaderBackend};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 pub use worker::{MappingSyncWorker, SyncStrategy};
@@ -102,11 +102,19 @@ where
 {
     let substrate_block_hash = header.hash();
 
-    let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
-    let block_hash = block.header.hash();
-    let mapping_commitment =
-        mc_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
-    backend.mapping().write_hashes(mapping_commitment)?;
+    if let Some(_) = client
+        .runtime_api()
+        .api_version::<dyn StarknetRuntimeApi<Block>>(substrate_block_hash)
+        .map_err(|e| format!("{:?}", e))?
+    {
+        let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
+        let block_hash = block.header.hash();
+        let mapping_commitment =
+            mc_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
+        backend.mapping().write_hashes(mapping_commitment)?;
+    } else {
+        backend.mapping().write_none(substrate_block_hash)?;
+    };
 
     Ok(())
 }
