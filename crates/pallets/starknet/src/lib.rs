@@ -79,9 +79,9 @@ pub mod pallet {
     use mp_starknet::starknet_block::header::Header;
     use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
-    // use blockifier::execution::contract_class::ContractClass;
-    use mp_starknet::transaction::types::StateDiffError;
-    use mp_starknet::transaction::types::{EventError, EventWrapper as StarknetEventType, Transaction, TxType};
+    use mp_starknet::transaction::types::{
+        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
+    };
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
@@ -309,7 +309,6 @@ pub mod pallet {
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
                     Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
-                    Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
