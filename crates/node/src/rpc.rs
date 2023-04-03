@@ -5,7 +5,6 @@
 
 #![warn(missing_docs)]
 
-mod starknet;
 use std::sync::Arc;
 
 use jsonrpsee::RpcModule;
@@ -16,7 +15,6 @@ use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-pub use starknet::StarknetDeps;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {
@@ -26,8 +24,6 @@ pub struct FullDeps<C, P> {
     pub pool: Arc<P>,
     /// Whether to deny unsafe calls
     pub deny_unsafe: DenyUnsafe,
-    /// Starknet dependencies
-    pub starknet: StarknetDeps<C, Block>,
 }
 
 /// Instantiate all full RPC extensions.
@@ -39,19 +35,21 @@ where
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BlockBuilder<Block>,
-    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>,
     P: TransactionPool + 'static,
 {
-    use madara_rpc::{Starknet, StarknetRpcApiServer};
     use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 
     let mut module = RpcModule::new(());
-    let FullDeps { client, pool, deny_unsafe, starknet } = deps;
+    let FullDeps { client, pool, deny_unsafe } = deps;
 
     module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
-    module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
-    module.merge(Starknet::new(client, starknet.madara_backend).into_rpc())?;
+    module.merge(TransactionPayment::new(client).into_rpc())?;
+
+    // Extend this RPC with a custom API by using the following syntax.
+    // `YourRpcStruct` should have a reference to a client, which is needed
+    // to call into the runtime.
+    // `module.merge(YourRpcTrait::into_rpc(YourRpcStruct::new(ReferenceToClient, ...)))?;`
 
     Ok(module)
 }

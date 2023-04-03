@@ -66,8 +66,6 @@ frame-benchmarking-cli = { workspace = true }
 # Starknet
 madara-runtime = { path = "../runtime" }
 madara-db = { path = "../client/db" }
-madara-rpc = { path = "../client/rpc" }
-pallet-starknet = { path = "../pallets/starknet" }
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }

@@ -1,37 +1,27 @@
 mod errors;
-mod madara_backend_client;
 
 use std::marker::PhantomData;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
-use jsonrpsee::core::RpcResult;
+use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-pub use madara_rpc_core::StarknetRpcApiServer;
-use madara_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId};
+use madara_rpc_core::{BlockHashAndNumber, StarknetRpcApiServer};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::testing::H256;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::Block;
 
-pub struct Starknet<B: BlockT, C> {
+pub struct Starknet<B: Block, C> {
     client: Arc<C>,
-    backend: Arc<madara_db::Backend<B>>,
     _marker: PhantomData<B>,
-}
-
-impl<B: BlockT, C> Starknet<B, C> {
-    pub fn new(client: Arc<C>, backend: Arc<madara_db::Backend<B>>) -> Self {
-        Self { client, backend, _marker: PhantomData }
-    }
 }
 
 impl<B, C> Starknet<B, C>
 where
-    B: BlockT,
+    B: Block,
     C: HeaderBackend<B> + 'static,
 {
     pub fn current_block_number(&self) -> RpcResult<u64> {
@@ -41,7 +31,7 @@ where
 
 impl<B, C> Starknet<B, C>
 where
-    B: BlockT,
+    B: Block,
     C: HeaderBackend<B> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -57,9 +47,10 @@ where
     }
 }
 
+#[async_trait]
 impl<B, C> StarknetRpcApiServer for Starknet<B, C>
 where
-    B: BlockT,
+    B: Block,
     C: HeaderBackend<B> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
@@ -77,44 +68,6 @@ where
 
         Ok(BlockHashAndNumber { block_hash: block_hash.to_string(), block_number })
     }
-
-    fn get_block_transaction_count(&self, block_id: StarknetBlockId) -> RpcResult<u128> {
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_str(&h).map_err(|e| {
-                    error!("Failed to convert '{h}' to H256: {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?,
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::BlockNumber(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::BlockTag(t) => match t {
-                madara_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                madara_rpc_core::BlockTag::Pending => None,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
-
-        let api = self.client.runtime_api();
-
-        let block = api.block(substrate_block_hash).map_err(|e| {
-            error!(
-                "Failed retrieve Starknet block using the Starknet pallet runtime API for Substrate block with hash \
-                 '{substrate_block_hash}': {e}"
-            );
-            StarknetRpcApiError::BlockNotFound
-        })?;
-
-        Ok(block.header.transaction_count)
-    }
 }
+
+pub mod starknet_backend_client {}

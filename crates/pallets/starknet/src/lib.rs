@@ -159,7 +159,7 @@ pub mod pallet {
     /// The current Starknet block.
     #[pallet::storage]
     #[pallet::getter(fn current_block)]
-    pub(super) type CurrentBlock<T: Config> = StorageValue<_, Block, ValueQuery>;
+    pub(super) type CurrentBlock<T: Config> = StorageValue<_, Block>;
 
     // Mapping for block number and hashes.
     #[pallet::storage]
@@ -255,6 +255,7 @@ pub mod pallet {
         InvalidContractClass,
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
+        InvalidCurrentBlock,
         StateReaderError,
         EmitEventError,
     }
@@ -298,7 +299,7 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            let block = Self::current_block();
+            let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
@@ -351,7 +352,14 @@ pub mod pallet {
             ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
 
             // Get current block
-            let block = Self::current_block();
+            let block = match Self::current_block() {
+                Some(b) => b,
+                None => {
+                    log!(error, "Current block is None");
+                    return Err(Error::<T>::InvalidCurrentBlock.into());
+                }
+            };
+
             // Create state reader from substrate storage
             let state = &mut Self::create_state_reader()?;
 
@@ -409,7 +417,13 @@ pub mod pallet {
             );
 
             // Get current block
-            let block = Self::current_block();
+            let block = match Self::current_block() {
+                Some(b) => b,
+                None => {
+                    log!(error, "Current block is None");
+                    return Err(Error::<T>::InvalidCurrentBlock.into());
+                }
+            };
 
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::DeployAccountTx, None) {
@@ -456,7 +470,7 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            let block = Self::current_block();
+            let block = Self::current_block().unwrap();
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::L1HandlerTx, None) {
                 Ok(v) => {
@@ -485,8 +499,8 @@ pub mod pallet {
         ///
         /// The current block hash.
         #[inline(always)]
-        pub fn current_block_hash() -> H256 {
-            Self::current_block().header.hash()
+        pub fn current_block_hash() -> Option<H256> {
+            Self::current_block().map(|block| block.header.hash())
         }
 
         /// Get the block hash of the previous block.
