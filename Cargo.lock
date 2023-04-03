@@ -4210,7 +4210,7 @@ dependencies = [
  "log",
  "mc-db",
  "mc-storage",
- "mp-digest-log",
+ "mp-consensus",
  "pallet-starknet",
  "sc-client-api",
  "sp-api",
@@ -4396,7 +4396,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mp-digest-log"
+name = "mp-consensus"
 version = "0.1.0-dev"
 dependencies = [
  "mp-starknet",
@@ -4961,7 +4961,7 @@ dependencies = [
  "frame-system",
  "hex",
  "log",
- "mp-digest-log",
+ "mp-consensus",
  "mp-starknet",
  "pallet-timestamp",
  "parity-scale-codec",

@@ -43,11 +43,17 @@ pub enum PostLog {
 pub struct Hashes {
     /// Starknet block hash.
     pub block_hash: H256,
+    // TODO: add transactions hashes back when they are supported
+    // Transaction hashes of the Ethereum block.
+    // pub transaction_hashes: Vec<H256>,
 }
 
 impl Hashes {
     pub fn from_block(block: StarknetBlock) -> Self {
-        Hashes { block_hash: block.header.hash() }
+        Hashes {
+            block_hash: block.header.hash(),
+            // transaction_hashes: block.transactions.into_iter().map(|txn| txn.hash()).collect(),
+        }
     }
 }
 

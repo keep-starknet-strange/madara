@@ -9,11 +9,21 @@ use sp_runtime::traits::Block as BlockT;
 
 use crate::DbHash;
 
+// TODO: use implement whe we have transactions
+// #[derive(Clone, Debug, Eq, PartialEq, Encode, Decode)]
+// pub struct TransactionMetadata<Block: BlockT> {
+//     pub block_hash: Block::Hash,
+//     pub starknet_block_hash: H256,
+//     pub starknet_index: u32,
+// }
+
 /// The mapping to write in db
 #[derive(Debug)]
 pub struct MappingCommitment<Block: BlockT> {
     pub block_hash: Block::Hash,
     pub starknet_block_hash: H256,
+    // TODO: implement whe we have transactions
+    // pub starknet_transaction_hashes: Vec<H256>,
 }
 
 /// Allow interaction with the mapping db
@@ -42,6 +52,17 @@ impl<Block: BlockT> MappingDb<Block> {
             None => Ok(None),
         }
     }
+
+    // TODO: implement whe we have transactions
+    // pub fn transaction_metadata(
+    //     &self,
+    //     starknet_transaction_hash: &H256,
+    // ) -> Result<Vec<TransactionMetadata<Block>>, String> {
+    //     match self.db.get(crate::columns::TRANSACTION_MAPPING, &starknet_transaction_hash.encode()) {
+    //         Some(raw) => Ok(Vec::<TransactionMetadata<Block>>::decode(&mut &raw[..]).map_err(|e|
+    // format!("{:?}", e))?),         None => Ok(Vec::new()),
+    //     }
+    // }
 
     /// Register that a Substrate block has been seen, without it containing a Starknet one
     pub fn write_none(&self, block_hash: Block::Hash) -> Result<(), String> {
@@ -81,6 +102,21 @@ impl<Block: BlockT> MappingDb<Block> {
             &commitment.starknet_block_hash.encode(),
             &substrate_hashes.encode(),
         );
+
+        // TODO: add back when transaction support
+        // for (i, starknet_transaction_hash) in
+        // commitment.starknet_transaction_hashes.into_iter().enumerate() {     let mut metadata =
+        // self.transaction_metadata(&starknet_transaction_hash)?;     metadata.
+        // push(TransactionMetadata::<Block> {         block_hash: commitment.block_hash,
+        //         starknet_block_hash: commitment.starknet_block_hash,
+        //         starknet_index: i as u32,
+        //     });
+        //     transaction.set(
+        //         crate::columns::TRANSACTION_MAPPING,
+        //         &starknet_transaction_hash.encode(),
+        //         &metadata.encode(),
+        //     );
+        // }
 
         transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
 
