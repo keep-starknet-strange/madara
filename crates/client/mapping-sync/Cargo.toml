@@ -13,14 +13,15 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-futures = { workspace = true, default-features = true }
-futures-timer = "3.0.2"
-log = { workspace = true, default-features = true }
+futures = "0.3.25"
+futures-timer = "3.0.1"
+log = "0.4.17"
+# Substrate
 sc-client-api = { workspace = true }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }
 mp-digest-log = { workspace = true }
-mc-storage = { workspace = true }
-mc-db = { workspace = true }
-pallet-starknet = { workspace = true }
+mc-storage = { path = "../storage" }
+mc-db = { path = "../db" }
+pallet-starknet = { path = "../../pallets/starknet" }

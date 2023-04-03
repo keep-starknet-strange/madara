@@ -1,6 +1,6 @@
 //! StarkNet storage primitives.
 
-use scale_codec::{Decode, Encode};
+use codec::{Decode, Encode};
 
 /// Current version of pallet Starknet's storage schema is stored under this key.
 pub const PALLET_STARKNET_SCHEMA: &[u8] = b":starknet_schema";

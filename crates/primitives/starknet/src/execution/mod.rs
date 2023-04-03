@@ -27,16 +27,7 @@ type MaxEntryPoints = ConstU32<4294967295>;
 pub type ClassHashWrapper = [u8; 32];
 
 /// Contract Class
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
     /// Contract class program json.
@@ -88,10 +79,10 @@ impl Default for ContractClassWrapper {
     Debug,
     PartialEq,
     Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
+    codec::Encode,
+    codec::Decode,
     scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
+    codec::MaxEncodedLen,
     PartialOrd,
     Ord,
 )]
@@ -141,10 +132,10 @@ impl EntryPointTypeWrapper {
     Debug,
     PartialEq,
     Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
+    codec::Encode,
+    codec::Decode,
     scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
+    codec::MaxEncodedLen,
     PartialOrd,
     Ord,
 )]
@@ -181,16 +172,7 @@ impl From<EntryPoint> for EntryPointWrapper {
 }
 
 /// Representation of a Starknet Call Entry Point.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
+#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallEntryPointWrapper {
     /// The class hash
