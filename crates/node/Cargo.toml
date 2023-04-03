@@ -67,7 +67,6 @@ frame-benchmarking-cli = { workspace = true }
 madara-runtime = { path = "../runtime" }
 madara-db = { path = "../client/db" }
 madara-rpc = { path = "../client/rpc" }
-madara-mapping-sync = { path = "../client/mapping-sync" }
 pallet-starknet = { path = "../pallets/starknet" }
 
 # CLI-specific dependencies

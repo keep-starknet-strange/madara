@@ -7,7 +7,6 @@ members = [
 	"crates/client/db",
 	"crates/client/rpc-core",
 	"crates/client/rpc",
-	"crates/client/mapping-sync",
 ]
 [profile.release]
 panic = "unwind"

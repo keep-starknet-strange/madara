@@ -4086,7 +4086,6 @@ dependencies = [
  "futures",
  "jsonrpsee",
  "madara-db",
- "madara-mapping-sync",
  "madara-rpc",
  "madara-runtime",
  "pallet-starknet",
@@ -4131,21 +4130,6 @@ dependencies = [
  "sc-client-db",
  "sp-core",
  "sp-database",
- "sp-runtime",
-]
-
-[[package]]
-name = "madara-mapping-sync"
-version = "0.1.0"
-dependencies = [
- "futures",
- "futures-timer",
- "log",
- "madara-db",
- "pallet-starknet",
- "sc-client-api",
- "sp-api",
- "sp-blockchain",
  "sp-runtime",
 ]
 
