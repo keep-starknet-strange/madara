@@ -69,7 +69,6 @@ pub mod pallet {
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
-    use mp_consensus::{PostLog, MADARA_ENGINE_ID};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
@@ -83,7 +82,6 @@ pub mod pallet {
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
-    use sp_runtime::DigestItem;
     use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
     use starknet_api::hash::StarkFelt;
     use starknet_api::state::StorageKey;
@@ -121,12 +119,9 @@ pub mod pallet {
         /// The block is being finalized.
         fn on_finalize(_n: T::BlockNumber) {
             // Create a new Starknet block and store it.
-            <Pallet<T>>::store_block(
-                mp_consensus::find_pre_log(&frame_system::Pallet::<T>::digest()).is_err(),
-                U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
-                    frame_system::Pallet::<T>::block_number(),
-                )),
-            );
+            <Pallet<T>>::store_block(U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
+                frame_system::Pallet::<T>::block_number(),
+            )));
         }
 
         /// The block is being initialized. Implement to have something happen.
@@ -216,7 +211,7 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            <Pallet<T>>::store_block(false, U256::zero());
+            <Pallet<T>>::store_block(U256::zero());
             frame_support::storage::unhashed::put::<StarknetStorageSchema>(
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchema::V1,
@@ -539,7 +534,7 @@ pub mod pallet {
         /// # Arguments
         ///
         /// * `block_number` - The block number.
-        fn store_block(should_deposit_log: bool, block_number: U256) {
+        fn store_block(block_number: U256) {
             // TODO: Use actual values.
             let parent_block_hash = Self::parent_block_hash(&block_number);
             let pending = Self::pending();
@@ -571,11 +566,6 @@ pub mod pallet {
             // Save the block number <> hash mapping.
             BlockHash::<T>::insert(block_number, block.header.hash());
             Pending::<T>::kill();
-
-            if should_deposit_log {
-                let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header.hash()).encode());
-                frame_system::Pallet::<T>::deposit_log(digest);
-            }
         }
 
         /// Associate a contract class hash with a contract class info
