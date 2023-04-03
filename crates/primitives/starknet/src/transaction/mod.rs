@@ -26,9 +26,9 @@ use self::types::{
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
     TransactionExecutionResultWrapper, TxType,
 };
-use crate::block::serialize::SerializeBlockContext;
-use crate::block::StarknetBlock;
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::starknet_block::block::Block;
+use crate::starknet_block::serialize::SerializeBlockContext;
 
 impl EventWrapper {
     /// Creates a new instance of an event.
@@ -256,7 +256,7 @@ impl Transaction {
     pub fn execute<S: StateReader>(
         &self,
         state: &mut CachedState<S>,
-        block: StarknetBlock,
+        block: Block,
         tx_type: TxType,
         contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<Option<CallInfo>> {
