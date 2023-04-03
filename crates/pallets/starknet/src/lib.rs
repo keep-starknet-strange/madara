@@ -91,6 +91,7 @@ pub mod pallet {
     use starknet_api::hash::StarkFelt;
     use starknet_api::state::{StateDiff, StorageKey};
     use starknet_api::stdlib::collections::HashMap;
+    use starknet_api::transaction::EventContent;
     use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
 
@@ -298,7 +299,7 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn add_invoke_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn add_invoke_transaction(_origin: OriginFor<T>, mut transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -306,10 +307,15 @@ pub mod pallet {
 
             let block = Self::current_block();
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::InvokeTx, None) {
-                Ok(v) => {
-                    Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
+            let call_info = transaction.execute(state, block, TxType::InvokeTx, None);
+            match call_info {
+                Ok(Some(mut v)) => {
+                    Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
+                    log!(debug, "Transaction executed successfully: {:?}", v);
+                }
+                Ok(None) => {
+                    log!(error, "Transaction execution failed: no call info while it was expected");
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -627,28 +633,39 @@ pub mod pallet {
         /// # Returns
         ///
         /// The result of the operation.
-        fn emit_events(call_info: &CallInfo) -> Result<(), EventError> {
-            // TODO: loop through all events/inner_calls
-            if let Some(inner_call) = call_info.inner_calls.get(0) {
-                if let Some(tx_event) = inner_call.execution.events.get(0) {
-                    log!(info, "Transaction event: {:?}", tx_event.event.clone());
-                    let event = StarknetEventType::builder()
-                        .with_event_content(tx_event.event.clone())
-                        .with_from_address(inner_call.call.storage_address)
-                        .build();
-                    match event {
-                        Ok(event) => {
-                            Self::deposit_event(Event::StarknetEvent(event));
-                        }
-                        Err(e) => {
-                            log!(error, "Error parsing event: {:?}", e);
-                            return Err(e);
-                        }
-                    }
-                }
-            }
+        #[inline(always)]
+        fn emit_events(call_info: &mut CallInfo, transaction: &mut Transaction) -> Result<(), EventError> {
+            call_info.inner_calls.iter_mut().try_for_each(|inner_call: &mut CallInfo| {
+                inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+                inner_call.execution.events.iter().try_for_each(|ordered_event| {
+                    Self::emit_event(&ordered_event.event, inner_call.call.storage_address, transaction)
+                })
+            })
+        }
 
-            Ok(())
+        /// Emit an event from the call info in substrate.
+        ///
+        /// # Arguments
+        ///
+        /// * `event` - The Starknet event.
+        /// * `from_address` - The contract address that emitted the event.
+        ///
+        /// # Error
+        ///
+        /// Returns an error if the event construction fails.
+        #[inline(always)]
+        fn emit_event(
+            event: &EventContent,
+            from_address: ContractAddress,
+            transaction: &mut Transaction,
+        ) -> Result<(), EventError> {
+            log!(info, "Transaction event: {:?}", event);
+            let sn_event = StarknetEventType::builder()
+                .with_event_content(event.clone())
+                .with_from_address(from_address)
+                .build()?;
+            transaction.events.try_push(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
+            Ok(Self::deposit_event(Event::StarknetEvent(sn_event)))
         }
 
         /// Apply the state diff returned by the starknet execution.

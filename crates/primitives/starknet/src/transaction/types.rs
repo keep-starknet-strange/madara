@@ -103,6 +103,8 @@ pub enum EventError {
     InvalidData,
     /// Provided from address is invalid.
     InvalidFromAddress,
+    /// Too many events
+    TooManyEvents,
 }
 
 /// Error enum wrapper for state diffs.
