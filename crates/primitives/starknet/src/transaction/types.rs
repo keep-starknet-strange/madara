@@ -106,7 +106,16 @@ pub enum EventError {
 }
 
 /// Error enum wrapper for state diffs.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateDiffError {
     /// Couldn't register newly deployed contracts.
