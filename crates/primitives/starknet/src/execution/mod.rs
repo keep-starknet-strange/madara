@@ -3,7 +3,7 @@
 use alloc::sync::Arc;
 use alloc::vec;
 
-use blockifier::execution::contract_class::ContractClass as BlockifierContractClass;
+use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallEntryPoint;
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
@@ -54,16 +54,16 @@ impl ContractClassWrapper {
     }
 
     /// Convert to starknet contract class.
-    pub fn to_starknet_contract_class(&self) -> Result<BlockifierContractClass, serde_json::Error> {
+    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
         let program = from_slice::<Program>(self.program.as_ref())?;
         let entrypoints =
             from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(self.entry_points_by_type.as_ref())?;
-        Ok(BlockifierContractClass { program, abi: None, entry_points_by_type: entrypoints })
+        Ok(ContractClass { program, abi: None, entry_points_by_type: entrypoints })
     }
 }
 
-impl From<BlockifierContractClass> for ContractClassWrapper {
-    fn from(contract_class: BlockifierContractClass) -> Self {
+impl From<ContractClass> for ContractClassWrapper {
+    fn from(contract_class: ContractClass) -> Self {
         let program_string = to_string(&contract_class.program).unwrap();
         let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
         Self {
