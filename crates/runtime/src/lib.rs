@@ -29,7 +29,7 @@ pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::crypto::KeyTypeId;
-use sp_core::{OpaqueMetadata, H256};
+use sp_core::OpaqueMetadata;
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT, NumberFor};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
@@ -257,16 +257,6 @@ impl_runtime_apis! {
         }
         fn query_length_to_fee(length: u32) -> Balance {
             TransactionPayment::length_to_fee(length)
-        }
-    }
-
-    impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
-        fn current_block_hash() -> H256 {
-            Starknet::current_block_hash()
-        }
-
-        fn block() -> mp_starknet::starknet_block::block::Block {
-            Starknet::current_block()
         }
     }
 

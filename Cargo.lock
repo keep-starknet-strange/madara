@@ -4086,9 +4086,7 @@ dependencies = [
  "futures",
  "jsonrpsee",
  "madara-db",
- "madara-rpc",
  "madara-runtime",
- "pallet-starknet",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
@@ -4137,16 +4135,13 @@ dependencies = [
 name = "madara-rpc"
 version = "0.1.0"
 dependencies = [
- "hex",
  "jsonrpsee",
  "log",
- "madara-db",
  "madara-rpc-core",
  "pallet-starknet",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
- "sp-core",
  "sp-runtime",
  "thiserror",
 ]
