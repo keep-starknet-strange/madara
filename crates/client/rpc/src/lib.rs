@@ -64,7 +64,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().hash())
+        Ok(block.header.hash())
     }
 }
 
@@ -123,6 +123,6 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().transaction_count)
+        Ok(block.header.transaction_count)
     }
 }
