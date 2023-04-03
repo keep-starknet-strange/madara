@@ -4,7 +4,7 @@ members = [
 	"crates/runtime",
 	"crates/pallets/starknet",
 	"crates/primitives/starknet",
-	"crates/primitives/digest-log",
+	"crates/primitives/consensus",
 	"crates/client/db",
 	"crates/client/rpc-core",
 	"crates/client/rpc",
@@ -88,7 +88,7 @@ pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
 mp-starknet = { path = "crates/primitives/starknet", default-features = false }
-mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
+mp-consensus = { path = "crates/primitives/consensus", default-features = false }
 
 # Starknet dependencies
 # Cairo Virtual Machine
