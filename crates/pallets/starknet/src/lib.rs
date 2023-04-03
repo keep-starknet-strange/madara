@@ -308,7 +308,6 @@ pub mod pallet {
             match transaction.execute(state, block, TxType::InvokeTx, None) {
                 Ok(v) => {
                     Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
-                    Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
                 }
                 Err(e) => {
@@ -317,6 +316,7 @@ pub mod pallet {
                 }
             }
 
+            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append(transaction).unwrap();
 
