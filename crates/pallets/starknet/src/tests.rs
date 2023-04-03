@@ -4,11 +4,11 @@ use blockifier::test_utils::ACCOUNT_CONTRACT_PATH;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::starknet_block::header::Header;
+use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::EventWrapper;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
-use crate::transaction_from_json::transaction_from_json;
 use crate::types::Message;
 use crate::{Error, Event};
 

@@ -27,9 +27,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(test)]
-mod transaction_from_json;
-
 // TODO: Uncomment when benchmarking is implemented.
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
