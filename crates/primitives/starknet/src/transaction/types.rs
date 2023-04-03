@@ -105,7 +105,7 @@ pub enum EventError {
     InvalidFromAddress,
 }
 
-/// Error enum wrapper for events.
+/// Error enum wrapper for state diffs.
 #[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateDiffError {
