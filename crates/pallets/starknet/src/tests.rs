@@ -3,8 +3,8 @@ use core::str::FromStr;
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::block::StarknetHeader;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use mp_starknet::starknet_block::header::Header;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 
@@ -32,7 +32,7 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
 
         let current_block = Starknet::current_block();
 
-        let expected_current_block = StarknetHeader {
+        let expected_current_block = Header {
             block_timestamp: 12_000,
             block_number: U256::from(2),
             parent_block_hash: H256::from_str("0x1c2b97b7b9ea91c2cde45bfb115058628c2e1c7aa3fecb51a0cdaf256dc8a310")
@@ -47,7 +47,7 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             event_count: 2,
             event_commitment: H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02")
                 .unwrap(),
-            ..StarknetHeader::default()
+            ..Header::default()
         };
 
         pretty_assertions::assert_eq!(current_block.header, expected_current_block)

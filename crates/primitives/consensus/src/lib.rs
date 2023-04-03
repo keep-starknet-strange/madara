@@ -20,7 +20,7 @@
 #![deny(unused_crate_dependencies)]
 
 use codec::{Decode, Encode};
-use mp_starknet::block::StarknetBlock;
+use mp_starknet::starknet_block::block::Block;
 use sp_core::H256;
 use sp_runtime::generic::{Digest, OpaqueDigestItemId};
 use sp_runtime::ConsensusEngineId;
@@ -36,7 +36,7 @@ pub enum Log {
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub enum PreLog {
     #[codec(index = 3)]
-    Block(StarknetBlock),
+    Block(Block),
 }
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -56,7 +56,7 @@ pub struct Hashes {
 }
 
 impl Hashes {
-    pub fn from_block(block: StarknetBlock) -> Self {
+    pub fn from_block(block: Block) -> Self {
         Hashes {
             block_hash: block.header.hash(),
             // transaction_hashes: block.transactions.into_iter().map(|txn| txn.hash()).collect(),
