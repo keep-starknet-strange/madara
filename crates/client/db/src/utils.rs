@@ -16,14 +16,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-mod parity_db_adapter;
-
 use std::path::Path;
 use std::sync::Arc;
 
 use crate::{Database, DatabaseSettings, DatabaseSource, DbHash};
 
-pub(crate) fn open_database(config: &DatabaseSettings) -> Result<Arc<dyn Database<DbHash>>, String> {
+pub fn open_database(config: &DatabaseSettings) -> Result<Arc<dyn Database<DbHash>>, String> {
     let db: Arc<dyn Database<DbHash>> = match &config.source {
         DatabaseSource::ParityDb { path } => open_parity_db(path)?,
         DatabaseSource::RocksDb { path, .. } => open_kvdb_rocksdb(path, true)?,
@@ -61,7 +59,7 @@ fn open_parity_db(path: &Path) -> Result<Arc<dyn Database<DbHash>>, String> {
     config.columns[crate::columns::BLOCK_MAPPING as usize].btree_index = true;
 
     let db = parity_db::Db::open_or_create(&config).map_err(|err| format!("{}", err))?;
-    Ok(Arc::new(parity_db_adapter::DbAdapter(db)))
+    Ok(Arc::new(crate::parity_db_adapter::DbAdapter(db)))
 }
 
 #[cfg(not(feature = "parity-db"))]
