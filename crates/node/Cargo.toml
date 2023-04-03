@@ -3,8 +3,8 @@ name = "madara"
 version = "0.1.0-dev"
 description = "Madara node."
 authors = [
-	"Abdelhamid Bakhta <@keep-starknet-strange>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Abdelhamid Bakhta <@keep-starknet-strange>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -63,9 +63,8 @@ substrate-frame-rpc-system = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 
-# Starknet
+# Local Dependencies
 madara-runtime = { path = "../runtime" }
-madara-db = { path = "../client/db" }
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
@@ -77,9 +76,9 @@ substrate-build-script-utils = { workspace = true }
 default = []
 # Dependencies that are only required if runtime benchmarking should be build.
 runtime-benchmarks = [
-	"madara-runtime/runtime-benchmarks",
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-benchmarking-cli/runtime-benchmarks",
+  "madara-runtime/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-benchmarking-cli/runtime-benchmarks",
 ]
 # Enable features that allow the runtime to be tried and debugged. Name might be subject to change
 # in the near future.
