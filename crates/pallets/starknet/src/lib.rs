@@ -64,7 +64,7 @@ pub mod pallet {
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::traits::{OriginTrait, Randomness, Time};
+    use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
@@ -99,8 +99,6 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        /// The type of Randomness we want to specify for this pallet.
-        type Randomness: Randomness<Self::Hash, Self::BlockNumber>;
         /// How Starknet state root is calculated.
         type StateRoot: Get<U256>;
         /// The hashing function to use.
