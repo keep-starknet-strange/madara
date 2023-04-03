@@ -75,9 +75,7 @@ pub mod pallet {
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
-    use mp_starknet::starknet_block::block::Block;
-    use mp_starknet::starknet_block::header::Header;
-    use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
+    use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{
         EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
@@ -663,7 +661,8 @@ pub mod pallet {
                 .with_from_address(from_address)
                 .build()?;
             transaction.events.try_push(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
-            Ok(Self::deposit_event(Event::StarknetEvent(sn_event)))
+            Self::deposit_event(Event::StarknetEvent(sn_event));
+            Ok(())
         }
 
         /// Apply the state diff returned by the starknet execution.
