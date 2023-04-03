@@ -14,13 +14,13 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
-mp-starknet = { workspace = true, default-features = true }
-sp-blockchain = { workspace = true, default-features = true }
-sp-runtime = { workspace = true, default-features = true }
-sp-storage = { workspace = true, default-features = true }
-sc-client-api = { workspace = true, default-features = true }
-sp-api = { workspace = true, default-features = true }
-sp-core = { workspace = true, default-features = true }
-sp-io = { workspace = true, default-features = true }
-scale-codec = { workspace = true, default-features = true }
-pallet-starknet = { workspace = true, default-features = true }
+mp-starknet = { workspace = true }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+codec = { package = "parity-scale-codec", version = "3.2.2" }
+pallet-starknet = { path = "../../pallets/starknet" }

@@ -40,12 +40,12 @@ sp-api = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
-scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+serde = { version = "1.0.159", features = ["derive"], default-features = false }
+serde_json = { version = "1.0.95", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
 	"derive",
 ] }
-scale-info = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true }
 log = { workspace = true }
 
 [dev-dependencies]
@@ -71,7 +71,7 @@ std = [
 	"starknet-crypto/std",
 	"blockifier/std",
 	# Other third party dependencies
-	"scale-codec/std",
+	"codec/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]
