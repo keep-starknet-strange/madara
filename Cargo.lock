@@ -8332,7 +8332,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.1.0"
-source = "git+https://github.com/tdelabro/starknet-api?branch=starkware/no_std-support#b128035713a8153398afbcd27c39593a460fdb40"
+source = "git+https://github.com/tdelabro/starknet-api?branch=starkware/no_std-support#97852d8ae1320fbdc3f42e623f23f94d99f79d20"
 dependencies = [
  "derive_more",
  "hashbrown 0.13.2",
@@ -9160,7 +9160,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.6",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
