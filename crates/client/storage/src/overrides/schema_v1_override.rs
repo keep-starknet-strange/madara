@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use mp_starknet::block::Block as StarknetBlock;
+use mp_starknet::block::StarknetBlock;
 use mp_starknet::storage::{PALLET_STARKNET, STARKNET_CURRENT_BLOCK};
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
