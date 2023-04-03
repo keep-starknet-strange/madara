@@ -8,8 +8,8 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::RpcResult;
 use log::error;
-pub use mc_rpc_core::StarknetRpcApiServer;
-use mc_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId};
+pub use madara_rpc_core::StarknetRpcApiServer;
+use madara_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId};
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -21,13 +21,13 @@ use sp_runtime::traits::Block as BlockT;
 
 pub struct Starknet<B: BlockT, BE, C> {
     client: Arc<C>,
-    backend: Arc<mc_db::Backend<B>>,
+    backend: Arc<madara_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
     _marker: PhantomData<(B, BE)>,
 }
 
 impl<B: BlockT, BE, C> Starknet<B, BE, C> {
-    pub fn new(client: Arc<C>, backend: Arc<mc_db::Backend<B>>, overrides: Arc<OverrideHandle<B>>) -> Self {
+    pub fn new(client: Arc<C>, backend: Arc<madara_db::Backend<B>>, overrides: Arc<OverrideHandle<B>>) -> Self {
         Self { client, backend, overrides, _marker: PhantomData }
     }
 }
@@ -74,11 +74,11 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
-    fn block_number(&self) -> RpcResult<mc_rpc_core::BlockNumber> {
+    fn block_number(&self) -> RpcResult<madara_rpc_core::BlockNumber> {
         self.current_block_number()
     }
 
-    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::BlockHashAndNumber> {
+    fn block_hash_and_number(&self) -> RpcResult<madara_rpc_core::BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
         let block_hash = self.current_block_hash().map_err(|e| {
             error!("Failed to retrieve the current block hash: {}", e);
@@ -109,8 +109,8 @@ where
                 })?
             }
             StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
+                madara_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
+                madara_rpc_core::BlockTag::Pending => None,
             },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;

@@ -1,5 +1,5 @@
 [package]
-name = "mc-db"
+name = "madara-db"
 version = "0.1.0"
 description = "Starknet database backend"
 authors = [

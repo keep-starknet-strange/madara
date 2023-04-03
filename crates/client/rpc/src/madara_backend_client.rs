@@ -2,7 +2,11 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::traits::Block as BlockT;
 
-pub fn load_hash<B: BlockT, C>(client: &C, backend: &mc_db::Backend<B>, hash: H256) -> Result<Option<B::Hash>, String>
+pub fn load_hash<B: BlockT, C>(
+    client: &C,
+    backend: &madara_db::Backend<B>,
+    hash: H256,
+) -> Result<Option<B::Hash>, String>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,

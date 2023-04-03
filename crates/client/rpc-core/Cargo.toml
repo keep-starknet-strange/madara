@@ -1,5 +1,5 @@
 [package]
-name = "mc-rpc-core"
+name = "madara-rpc-core"
 version = "0.1.0"
 description = "RPC trait of Starknet"
 authors = [
