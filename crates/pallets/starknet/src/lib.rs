@@ -61,8 +61,6 @@ pub mod pallet {
     pub use alloc::string::{String, ToString};
     pub use alloc::vec::Vec;
     pub use alloc::{format, vec};
-    #[cfg(feature = "std")]
-    use std::println;
 
     use blockifier::execution::entry_point::CallInfo;
     use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
@@ -374,7 +372,6 @@ pub mod pallet {
             // Execute transaction
             match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
                 Ok(_) => {
-                    println!("{:#?}", state.to_state_diff());
                     log!(debug, "Declare Transaction executed successfully.");
                 }
                 Err(e) => {
@@ -387,6 +384,7 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
+            Self::set_class_info_from_class_hash(class_hash, contract_class.into())?;
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             // TODO: Update class hashes root
@@ -591,8 +589,6 @@ pub mod pallet {
                 !ContractClasses::<T>::contains_key(contract_class_hash),
                 Error::<T>::ContractClassAlreadyAssociated
             );
-            println!("{:?}", contract_class_hash);
-
             ContractClasses::<T>::insert(contract_class_hash, class_info);
 
             Ok(())
@@ -654,7 +650,6 @@ pub mod pallet {
 
         pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
             let StateDiff { deployed_contracts, storage_diffs, declared_classes, nonces } = state.to_state_diff();
-            println!("{:?}", declared_classes);
             deployed_contracts.iter().try_for_each(|(address, class_hash)| {
                 Self::set_class_hash_from_contract_address(address.0.0.0, class_hash.0.0).map_err(|_| {
                     log!(
@@ -671,6 +666,7 @@ pub mod pallet {
                     StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
                 })
             });
+            // TODO: ask if this is usefull.
             declared_classes.iter().try_for_each(|(class_hash, class_info)| {
                 Self::set_class_info_from_class_hash(class_hash.0.0, ContractClassWrapper::from(class_info)).map_err(
                     |_| {
