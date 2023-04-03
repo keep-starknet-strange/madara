@@ -384,7 +384,7 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
-            Self::set_class_info_from_class_hash(class_hash, contract_class.into())?;
+            Self::set_contract_class_hash(class_hash, contract_class.into())?;
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             // TODO: Update class hashes root
@@ -580,7 +580,7 @@ pub mod pallet {
         ///
         /// * `contract_class_hash` - The contract class hash.
         /// * `class_info` - The contract class info.
-        fn set_class_info_from_class_hash(
+        fn set_contract_class_hash(
             contract_class_hash: ClassHashWrapper,
             class_info: ContractClassWrapper,
         ) -> Result<(), DispatchError> {
@@ -600,7 +600,7 @@ pub mod pallet {
         ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
-        fn set_class_hash_from_contract_address(
+        fn set_class_hash_at(
             contract_address: ContractAddressWrapper,
             contract_class_hash: ClassHashWrapper,
         ) -> Result<(), DispatchError> {
@@ -649,9 +649,10 @@ pub mod pallet {
         }
 
         pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
-            let StateDiff { deployed_contracts, storage_diffs, declared_classes, nonces } = state.to_state_diff();
+            let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces } =
+                state.to_state_diff();
             deployed_contracts.iter().try_for_each(|(address, class_hash)| {
-                Self::set_class_hash_from_contract_address(address.0.0.0, class_hash.0.0).map_err(|_| {
+                Self::set_class_hash_at(address.0.0.0, class_hash.0.0).map_err(|_| {
                     log!(
                         error,
                         "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
@@ -666,20 +667,6 @@ pub mod pallet {
                     StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
                 })
             });
-            // TODO: ask if this is usefull.
-            declared_classes.iter().try_for_each(|(class_hash, class_info)| {
-                Self::set_class_info_from_class_hash(class_hash.0.0, ContractClassWrapper::from(class_info)).map_err(
-                    |_| {
-                        log!(
-                            error,
-                            "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
-                            class_hash.0.0,
-                            ContractClassWrapper::from(class_info)
-                        );
-                        StateDiffError::DeclaredClassError
-                    },
-                )
-            })?;
             nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
             Ok(())
         }

@@ -456,6 +456,15 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
+        let target_contract_address =
+            H256::from_str("0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap();
+        let target_selector =
+            H256::from_str("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap();
+        let storage_var_selector =
+            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap();
+        let storage_var_val =
+            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
+
         let transaction = Transaction::new(
             U256::from(1),
             H256::default(),
@@ -468,11 +477,11 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
-                    H256::from_str("0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(),
-                    H256::from_str("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap(),
+                    target_contract_address,
+                    target_selector,
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
+                    storage_var_selector,
+                    storage_var_val,
                 ],
                 contract_address_bytes,
                 contract_address_bytes,
@@ -482,5 +491,6 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
         // Cannot declare a class with None
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
+        assert_eq!(Starknet::storage((target_contract_address.to_fixed_bytes(), storage_var_selector)), U256::one());
     });
 }
