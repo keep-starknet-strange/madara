@@ -29,7 +29,14 @@ pub const MADARA_ENGINE_ID: ConsensusEngineId = [b'm', b'a', b'd', b'a'];
 
 #[derive(Clone, PartialEq, Eq)]
 pub enum Log {
+    Pre(PreLog),
     Post(PostLog),
+}
+
+#[derive(Decode, Encode, Clone, PartialEq, Eq)]
+pub enum PreLog {
+    #[codec(index = 3)]
+    Block(StarknetBlock),
 }
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
@@ -63,6 +70,10 @@ pub enum FindLogError {
     MultipleLogs,
 }
 
+pub fn find_pre_log(digest: &Digest) -> Result<PreLog, FindLogError> {
+    _find_log(digest, OpaqueDigestItemId::PreRuntime(&MADARA_ENGINE_ID))
+}
+
 pub fn find_post_log(digest: &Digest) -> Result<PostLog, FindLogError> {
     _find_log(digest, OpaqueDigestItemId::Consensus(&MADARA_ENGINE_ID))
 }
@@ -86,6 +97,13 @@ pub fn find_log(digest: &Digest) -> Result<Log, FindLogError> {
     let mut found = None;
 
     for log in digest.logs() {
+        let pre_log = log.try_to::<PreLog>(OpaqueDigestItemId::PreRuntime(&MADARA_ENGINE_ID));
+        match (pre_log, found.is_some()) {
+            (Some(_), true) => return Err(FindLogError::MultipleLogs),
+            (Some(pre_log), false) => found = Some(Log::Pre(pre_log)),
+            (None, _) => (),
+        }
+
         let post_log = log.try_to::<PostLog>(OpaqueDigestItemId::Consensus(&MADARA_ENGINE_ID));
         match (post_log, found.is_some()) {
             (Some(_), true) => return Err(FindLogError::MultipleLogs),

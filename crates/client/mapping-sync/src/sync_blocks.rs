@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
-use mp_consensus::{FindLogError, Hashes, Log, PostLog};
+use mp_consensus::{FindLogError, Hashes, Log, PostLog, PreLog};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
@@ -30,6 +30,10 @@ where
             };
 
             match log {
+                Log::Pre(PreLog::Block(block)) => {
+                    let mapping_commitment = gen_from_block(block);
+                    backend.mapping().write_hashes(mapping_commitment)
+                }
                 Log::Post(post_log) => match post_log {
                     PostLog::BlockHash(expect_eth_block_hash) => {
                         let starknet_block =
