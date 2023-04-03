@@ -648,9 +648,20 @@ pub mod pallet {
             Ok(())
         }
 
+        /// Apply the state diff returned by the starknet execution.
+        ///
+        /// # Argument
+        ///
+        /// * `state` - The state constructed for the starknet execution engine.
+        ///
+        /// # Error
+        ///
+        /// Returns an error if it fails to apply the state diff of newly deployed contracts.
         pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
+            // Get all the state diffs
             let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces } =
                 state.to_state_diff();
+            // Store the newly deployed contracts in substrate storage.
             deployed_contracts.iter().try_for_each(|(address, class_hash)| {
                 Self::set_class_hash_at(address.0.0.0, class_hash.0.0).map_err(|_| {
                     log!(
@@ -662,11 +673,13 @@ pub mod pallet {
                     StateDiffError::DeployedContractError
                 })
             })?;
+            // Store the modifications of storage vars.
             storage_diffs.iter().for_each(|(address, diffs)| {
                 diffs.iter().for_each(|(key, value)| {
                     StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
                 })
             });
+            // Store the new nonces.
             nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
             Ok(())
         }
