@@ -21,10 +21,6 @@
 
 mod worker;
 
-use std::sync::Arc;
-
-use mc_storage::OverrideHandle;
-use mp_consensus::{FindLogError, Hashes, Log, PostLog, PreLog};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -33,65 +29,78 @@ use sp_blockchain::{Backend as _, HeaderBackend};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 pub use worker::{MappingSyncWorker, SyncStrategy};
 
-pub fn sync_block<B: BlockT, C, BE>(
+pub fn sync_block<Block: BlockT, C, BE>(
     client: &C,
-    overrides: Arc<OverrideHandle<B>>,
-    backend: &madara_db::Backend<B>,
-    header: &B::Header,
+    backend: &madara_db::Backend<Block>,
+    header: &Block::Header,
 ) -> Result<(), String>
 where
-    C: HeaderBackend<B> + StorageProvider<B, BE>,
-    BE: Backend<B>,
+    C: HeaderBackend<Block> + StorageProvider<Block, BE>,
+    BE: Backend<Block>,
 {
     let substrate_block_hash = header.hash();
-    match mp_consensus::find_log(header.digest()) {
-        Ok(log) => {
-            let gen_from_hashes = |hashes: Hashes| -> madara_db::MappingCommitment<B> {
-                madara_db::MappingCommitment {
-                    block_hash: substrate_block_hash,
-                    starknet_block_hash: hashes.block_hash,
-                }
-            };
-            let gen_from_block = |block| -> madara_db::MappingCommitment<B> {
-                let hashes = Hashes::from_block(block);
-                gen_from_hashes(hashes)
-            };
-
-            match log {
-                Log::Pre(PreLog::Block(block)) => {
-                    let mapping_commitment = gen_from_block(block);
-                    backend.mapping().write_hashes(mapping_commitment)
-                }
-                Log::Post(post_log) => match post_log {
-                    PostLog::BlockHash(expect_eth_block_hash) => {
-                        let schema = mc_storage::onchain_storage_schema(client, substrate_block_hash);
-                        let starknet_block = overrides
-                            .schemas
-                            .get(&schema)
-                            .unwrap_or(&overrides.fallback)
-                            .current_block(substrate_block_hash);
-                        match starknet_block {
-                            Some(block) => {
-                                let got_eth_block_hash = block.header.hash();
-                                if got_eth_block_hash != expect_eth_block_hash {
-                                    Err(format!(
-                                        "Ethereum block hash mismatch: frontier consensus digest \
-                                         ({expect_eth_block_hash:?}), db state ({got_eth_block_hash:?})"
-                                    ))
-                                } else {
-                                    let mapping_commitment = gen_from_block(block);
-                                    backend.mapping().write_hashes(mapping_commitment)
-                                }
-                            }
-                            None => backend.mapping().write_none(substrate_block_hash),
-                        }
-                    }
-                },
-            }
-        }
-        Err(FindLogError::NotFound) => backend.mapping().write_none(substrate_block_hash),
-        Err(FindLogError::MultipleLogs) => Err("Multiple logs found".to_string()),
+    let digest = header.digest();
+    for log in digest.logs.iter() {
+        // println!("---  DIGEST: {:?}", log);
     }
+    // match fp_consensus::find_log(header.digest()) {
+    //     Ok(log) => {
+    //         let gen_from_hashes = |hashes: Hashes| -> fc_db::MappingCommitment<Block> {
+    //             fc_db::MappingCommitment {
+    //                 block_hash: substrate_block_hash,
+    //                 ethereum_block_hash: hashes.block_hash,
+    //                 ethereum_transaction_hashes: hashes.transaction_hashes,
+    //             }
+    //         };
+    //         let gen_from_block = |block| -> fc_db::MappingCommitment<Block> {
+    //             let hashes = Hashes::from_block(block);
+    //             gen_from_hashes(hashes)
+    //         };
+
+    //         match log {
+    //             Log::Pre(PreLog::Block(block)) => {
+    //                 let mapping_commitment = gen_from_block(block);
+    //                 backend.mapping().write_hashes(mapping_commitment)
+    //             }
+    //             Log::Post(post_log) => match post_log {
+    //                 PostLog::Hashes(hashes) => {
+    //                     let mapping_commitment = gen_from_hashes(hashes);
+    //                     backend.mapping().write_hashes(mapping_commitment)
+    //                 }
+    //                 PostLog::Block(block) => {
+    //                     let mapping_commitment = gen_from_block(block);
+    //                     backend.mapping().write_hashes(mapping_commitment)
+    //                 }
+    //                 PostLog::BlockHash(expect_eth_block_hash) => {
+    //                     let schema = fc_storage::onchain_storage_schema(client,
+    // substrate_block_hash);                     let ethereum_block = overrides
+    //                         .schemas
+    //                         .get(&schema)
+    //                         .unwrap_or(&overrides.fallback)
+    //                         .current_block(substrate_block_hash);
+    //                     match ethereum_block {
+    //                         Some(block) => {
+    //                             let got_eth_block_hash = block.header.hash();
+    //                             if got_eth_block_hash != expect_eth_block_hash {
+    //                                 Err(format!(
+    //                                     "Ethereum block hash mismatch: frontier consensus digest
+    // \                                      ({expect_eth_block_hash:?}), db state
+    // ({got_eth_block_hash:?})"                                 ))
+    //                             } else {
+    //                                 let mapping_commitment = gen_from_block(block);
+    //                                 backend.mapping().write_hashes(mapping_commitment)
+    //                             }
+    //                         }
+    //                         None => backend.mapping().write_none(substrate_block_hash),
+    //                     }
+    //                 }
+    //             },
+    //         }
+    //     }
+    //     Err(FindLogError::NotFound) => backend.mapping().write_none(substrate_block_hash),
+    //     Err(FindLogError::MultipleLogs) => Err("Multiple logs found".to_string()),
+    // }
+    Ok(())
 }
 
 pub fn sync_genesis_block<Block: BlockT, C>(
@@ -105,15 +114,18 @@ where
 {
     let substrate_block_hash = header.hash();
 
-    if let Some(_) = client
+    if let Some(api_version) = client
         .runtime_api()
         .api_version::<dyn StarknetRuntimeApi<Block>>(substrate_block_hash)
         .map_err(|e| format!("{:?}", e))?
     {
         let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
         let block_hash = block.header.hash();
-        let mapping_commitment =
-            madara_db::MappingCommitment::<Block> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
+        let mapping_commitment = madara_db::MappingCommitment::<Block> {
+            block_hash: substrate_block_hash,
+            starknet_block_hash: block_hash,
+            starknet_transaction_hashes: Vec::new(),
+        };
         backend.mapping().write_hashes(mapping_commitment)?;
     } else {
         backend.mapping().write_none(substrate_block_hash)?;
@@ -122,19 +134,18 @@ where
     Ok(())
 }
 
-pub fn sync_one_block<B: BlockT, C, BE>(
+pub fn sync_one_block<Block: BlockT, C, BE>(
     client: &C,
     substrate_backend: &BE,
-    overrides: Arc<OverrideHandle<B>>,
-    madara_backend: &madara_db::Backend<B>,
-    sync_from: <B::Header as HeaderT>::Number,
+    madara_backend: &madara_db::Backend<Block>,
+    sync_from: <Block::Header as HeaderT>::Number,
     strategy: SyncStrategy,
 ) -> Result<bool, String>
 where
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
-    C: HeaderBackend<B> + StorageProvider<B, BE>,
-    BE: Backend<B>,
+    C: ProvideRuntimeApi<Block>,
+    C::Api: StarknetRuntimeApi<Block>,
+    C: HeaderBackend<Block> + StorageProvider<Block, BE>,
+    BE: Backend<Block>,
 {
     let mut current_syncing_tips = madara_backend.meta().current_syncing_tips()?;
 
@@ -172,7 +183,7 @@ where
         if SyncStrategy::Parachain == strategy && operating_header.number() > &client.info().best_number {
             return Ok(false);
         }
-        sync_block(client, overrides, madara_backend, &operating_header)?;
+        sync_block(client, madara_backend, &operating_header)?;
 
         current_syncing_tips.push(*operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
@@ -180,26 +191,24 @@ where
     }
 }
 
-pub fn sync_blocks<B: BlockT, C, BE>(
+pub fn sync_blocks<Block: BlockT, C, BE>(
     client: &C,
     substrate_backend: &BE,
-    overrides: Arc<OverrideHandle<B>>,
-    madara_backend: &madara_db::Backend<B>,
+    madara_backend: &madara_db::Backend<Block>,
     limit: usize,
-    sync_from: <B::Header as HeaderT>::Number,
+    sync_from: <Block::Header as HeaderT>::Number,
     strategy: SyncStrategy,
 ) -> Result<bool, String>
 where
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
-    C: HeaderBackend<B> + StorageProvider<B, BE>,
-    BE: Backend<B>,
+    C: ProvideRuntimeApi<Block>,
+    C::Api: StarknetRuntimeApi<Block>,
+    C: HeaderBackend<Block> + StorageProvider<Block, BE>,
+    BE: Backend<Block>,
 {
     let mut synced_any = false;
 
     for _ in 0..limit {
-        synced_any = synced_any
-            || sync_one_block(client, substrate_backend, overrides.clone(), madara_backend, sync_from, strategy)?;
+        synced_any = synced_any || sync_one_block(client, substrate_backend, madara_backend, sync_from, strategy)?;
     }
 
     Ok(synced_any)

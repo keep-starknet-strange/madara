@@ -48,7 +48,7 @@ pub enum PostLog {
 
 #[derive(Decode, Encode, Clone, PartialEq, Eq)]
 pub struct Hashes {
-    /// Starknet block hash.
+    /// Ethereum block hash.
     pub block_hash: H256,
     // TODO: add transactions hashes back when they are supported
     // Transaction hashes of the Ethereum block.
