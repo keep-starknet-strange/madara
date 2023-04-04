@@ -71,9 +71,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         // Transaction { version: U256::from(1), sender_address: contract_address_bytes,
         // ..Transaction::default() };
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_from_undeclared_sender.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::AccountNotDeployed);
@@ -88,9 +86,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_invoke_tx_then_it_works.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/invoke.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         let tx = Message {
@@ -118,9 +114,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_invoke_tx_then_event_is_emitted.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/invoke.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
@@ -155,9 +149,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_then_it_works() {
         let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_deploy_account_tx_then_it_works.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/deploy_account.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_deploy_account_transaction(none_origin, transaction));
@@ -183,10 +175,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails() {
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails.\
-             json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/deploy_account.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_deploy_account_transaction(none_origin.clone(), transaction.clone()));
@@ -210,10 +199,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
         let none_origin = RuntimeOrigin::none();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/\
-             given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/deploy_undeclared_account.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_err!(
@@ -231,9 +217,7 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_declare_tx_then_it_works.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/declare_account.json");
         let transaction =
             transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
 
@@ -253,9 +237,7 @@ fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_declare_twice_then_it_fails.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/declare_account.json");
         let transaction =
             transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
 
@@ -281,9 +263,7 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!(
-            "../../../../ressources/transactions/given_hardcoded_contract_run_declare_none_then_it_fails.json"
-        );
+        let json_content: &str = include_str!("../../../../ressources/transactions/declare_account.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         // Cannot declare a class with None
