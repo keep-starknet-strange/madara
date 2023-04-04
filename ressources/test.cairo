@@ -12,7 +12,7 @@ from starkware.starknet.common.syscalls import (
 from starkware.starknet.core.os.contract_address.contract_address import get_contract_address
 
 @event
-func Event() {
+func Event(value: felt) {
 }
 
 @storage_var
@@ -32,7 +32,7 @@ func without_arg() {
 
 @external
 func emit_event{syscall_ptr: felt*, range_check_ptr}() {
-    Event.emit();
+    Event.emit(1);
     return ();
 }
 
