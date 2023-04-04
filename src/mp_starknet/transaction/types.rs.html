@@ -104,6 +104,25 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -209,6 +228,25 @@
     </span>InvalidData,
     <span class="doccomment">/// Provided from address is invalid.
     </span>InvalidFromAddress,
+}
+
+<span class="doccomment">/// Error enum wrapper for state diffs.
+</span><span class="attr">#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub enum </span>StateDiffError {
+    <span class="doccomment">/// Couldn&#39;t register newly deployed contracts.
+    </span>DeployedContractError,
+    <span class="doccomment">/// Couldn&#39;t register newly declared contracts.
+    </span>DeclaredClassError,
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
