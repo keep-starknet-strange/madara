@@ -657,7 +657,7 @@ pub mod pallet {
             from_address: ContractAddress,
             transaction: &mut Transaction,
         ) -> Result<(), EventError> {
-            log!(info, "Transaction event: {:?}", event);
+            log!(debug, "Transaction event: {:?}", event);
             let sn_event = StarknetEventType::builder()
                 .with_event_content(event.clone())
                 .with_from_address(from_address)
