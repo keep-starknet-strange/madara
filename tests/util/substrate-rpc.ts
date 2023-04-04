@@ -34,7 +34,7 @@ export const createBlockWithExtrinsic = async <
 >(
   context: DevTestContext,
   polkadotCalls: [...Call]
-) => {};
+) => { };
 
 // LAUNCH BASED NETWORK TESTING (PARA TESTS)
 
