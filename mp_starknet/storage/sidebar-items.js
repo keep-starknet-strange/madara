@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["PALLET_STARKNET","PALLET_STARKNET_SCHEMA","PALLET_STARKNET_SCHEMA_CACHE","STARKNET_CURRENT_BLOCK"],"enum":["StarknetStorageSchema"]};
+window.SIDEBAR_ITEMS = {"constant":["PALLET_STARKNET","PALLET_STARKNET_SCHEMA","STARKNET_CURRENT_BLOCK"],"enum":["StarknetStorageSchemaVersion"]};

@@ -26,16 +26,12 @@
 <a href="#26" id="26">26</a>
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
-<a href="#29" id="29">29</a>
-<a href="#30" id="30">30</a>
 </pre><pre class="rust"><code><span class="doccomment">//! StarkNet storage primitives.
 
-</span><span class="kw">use </span>codec::{Decode, Encode};
+</span><span class="kw">use </span>scale_codec::{Decode, Encode};
 
 <span class="doccomment">/// Current version of pallet Starknet&#39;s storage schema is stored under this key.
 </span><span class="kw">pub const </span>PALLET_STARKNET_SCHEMA: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;:starknet_schema&quot;</span>;
-<span class="doccomment">/// Cached version of pallet Starknet&#39;s storage schema is stored under this key in the AuxStore.
-</span><span class="kw">pub const </span>PALLET_STARKNET_SCHEMA_CACHE: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;:starknet_schema_cache&quot;</span>;
 
 <span class="doccomment">/// Pallet Starknet storage items.
 /// Pallet name.
@@ -46,14 +42,14 @@
 <span class="doccomment">/// The schema version for Pallet Starknet&#39;s storage.
 </span><span class="attr">#[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub enum </span>StarknetStorageSchema {
+</span><span class="kw">pub enum </span>StarknetStorageSchemaVersion {
     <span class="doccomment">/// Undefined schema.
     </span>Undefined,
     <span class="doccomment">/// Schema V1.
     </span>V1,
 }
 
-<span class="kw">impl </span>Default <span class="kw">for </span>StarknetStorageSchema {
+<span class="kw">impl </span>Default <span class="kw">for </span>StarknetStorageSchemaVersion {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Undefined
     }

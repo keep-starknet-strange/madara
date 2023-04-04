@@ -134,6 +134,7 @@
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A worker syncing the Madara db
 //!
 //! # Role
@@ -180,7 +181,8 @@
 
 <span class="kw">impl</span>&lt;B: BlockT, C, BE&gt; Unpin <span class="kw">for </span>MappingSyncWorker&lt;B, C, BE&gt; {}
 
-<span class="kw">impl</span>&lt;B: BlockT, C, BE&gt; MappingSyncWorker&lt;B, C, BE&gt; {
+<span class="attr">#[allow(clippy::too_many_arguments)]
+</span><span class="kw">impl</span>&lt;B: BlockT, C, BE&gt; MappingSyncWorker&lt;B, C, BE&gt; {
     <span class="kw">pub fn </span>new(
         import_notifications: ImportNotifications&lt;B&gt;,
         timeout: Duration,

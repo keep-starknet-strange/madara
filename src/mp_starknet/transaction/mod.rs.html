@@ -435,9 +435,9 @@
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
     TransactionExecutionResultWrapper, TxType,
 };
+<span class="kw">use </span><span class="kw">crate</span>::block::serialize::SerializeBlockContext;
+<span class="kw">use </span><span class="kw">crate</span>::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span><span class="kw">crate</span>::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
-<span class="kw">use </span><span class="kw">crate</span>::starknet_block::block::Block;
-<span class="kw">use </span><span class="kw">crate</span>::starknet_block::serialize::SerializeBlockContext;
 
 <span class="kw">impl </span>EventWrapper {
     <span class="doccomment">/// Creates a new instance of an event.
@@ -665,11 +665,11 @@
     </span><span class="kw">pub fn </span>execute&lt;S: StateReader&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>CachedState&lt;S&gt;,
-        block: Block,
+        block: StarknetBlock,
         tx_type: TxType,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
     ) -&gt; TransactionExecutionResultWrapper&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
-        <span class="kw">let </span>block_context = BlockContext::serialize(block.header);
+        <span class="kw">let </span>block_context = BlockContext::serialize(block.header().clone());
         <span class="kw">match </span>tx_type {
             TxType::InvokeTx =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;

@@ -322,6 +322,16 @@
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
 </pre><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 </span><span class="comment">// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 </span><span class="attr">#![recursion_limit = <span class="string">&quot;256&quot;</span>]
@@ -353,7 +363,7 @@
 <span class="kw">use </span>sp_api::impl_runtime_apis;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_core::crypto::KeyTypeId;
-<span class="kw">use </span>sp_core::OpaqueMetadata;
+<span class="kw">use </span>sp_core::{OpaqueMetadata, H256};
 <span class="kw">use </span>sp_runtime::traits::{BlakeTwo256, Block <span class="kw">as </span>BlockT, NumberFor};
 <span class="kw">use </span>sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, test))]
@@ -581,6 +591,16 @@
         }
         <span class="kw">fn </span>query_length_to_fee(length: u32) -&gt; Balance {
             TransactionPayment::length_to_fee(length)
+        }
+    }
+
+    <span class="kw">impl </span>pallet_starknet::runtime_api::StarknetRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
+        <span class="kw">fn </span>current_block_hash() -&gt; H256 {
+            Starknet::current_block_hash()
+        }
+
+        <span class="kw">fn </span>current_block() -&gt; mp_starknet::block::Block {
+            Starknet::current_block()
         }
     }
 
