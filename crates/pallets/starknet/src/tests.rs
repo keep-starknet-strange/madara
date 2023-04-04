@@ -4,6 +4,8 @@ use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::block::Header as StarknetHeader;
+use mp_starknet::crypto::commitment;
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
@@ -155,9 +157,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 				None,
 				bounded_vec![
                     H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
-                    H256::from_str("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(), // Selector
+                    H256::from_str("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(), // Selector "emit_event"
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Length
-                    // H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Value
                 ],
 				contract_address_bytes,
 				contract_address_bytes
@@ -172,6 +173,12 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 			data: bounded_vec!(H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap()),
 			from_address:  H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap().to_fixed_bytes()
 		}).into());
+                   let pending = Starknet::pending();
+
+        let (_transaction_commitment, (event_commitment, event_count)) =
+                commitment::calculate_commitments::<PedersenHasher>(&pending);
+        assert_eq!(event_commitment, H256::from_str("0x01e95b35377e090a7448a6d09f207557f5fcc962f128ad8416d41c387dda3ec3").unwrap());
+        assert_eq!(event_count, 1);
 
     });
 }
