@@ -90,17 +90,18 @@ pub fn calculate_transaction_commitment<T: CryptoHasher>(transactions: &[Transac
 
 /// Calculate transaction commitment hash value.
 ///
-/// The transaction commitment is the root of the Patricia Merkle tree with height 64
-/// constructed by adding the (transaction_index, transaction_hash_with_signature)
-/// key-value pairs to the tree and computing the root hash.
+/// The event commitment is the root of the Patricia Merkle tree with height 64
+/// constructed by adding the event hash
+/// (see https://docs.starknet.io/documentation/architecture_and_concepts/Events/starknet-events/#event_hash)
+/// to the tree and computing the root hash.
 ///
 /// # Arguments
 ///
-/// * `transactions` - The transactions to get the root from.
+/// * `transactions` - The transactions to get the events from.
 ///
 /// # Returns
 ///
-/// The merkle root of the merkle tree built from the transactions.
+/// The merkle root of the merkle tree built from the transactions and the number of events.
 pub fn calculate_event_commitment<T: CryptoHasher>(transactions: &[Transaction]) -> (H256, u128) {
     let mut tree = CommitmentTree::<T>::default();
     let mut len = 0_u64;
