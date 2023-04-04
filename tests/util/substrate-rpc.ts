@@ -1,4 +1,4 @@
-import "@madara/api-augment";
+import "@moonbeam-network/api-augment";
 
 import { ApiPromise } from "@polkadot/api";
 import {

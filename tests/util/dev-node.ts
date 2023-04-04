@@ -7,6 +7,7 @@ import {
   BINARY_PATH,
   CUSTOM_SPEC_PATH,
   DISPLAY_LOG,
+  ETHAPI_CMD,
   MADARA_LOG,
   SPAWNING_TIME,
   WASM_RUNTIME_OVERRIDES,
@@ -79,6 +80,8 @@ export async function startMadaraDevNode(
     process.env.FORCE_COMPILED_WASM
       ? `--wasm-execution=compiled`
       : `--wasm-execution=interpreted-i-know-what-i-do`,
+    ETHAPI_CMD != "" ? `${ETHAPI_CMD}` : `--ethapi=txpool`,
+    `--no-hardware-benchmarks`,
     `--no-telemetry`,
     `--reserved-only`,
     `--no-grandpa`,
@@ -86,7 +89,8 @@ export async function startMadaraDevNode(
     `--force-authoring`,
     `--rpc-cors=all`,
     `--alice`,
-    `--chain=local`,
+    `--chain=${runtime}-dev`,
+    `--sealing=manual`,
     `--in-peers=0`,
     `--out-peers=0`,
     `-l${MADARA_LOG}`,
@@ -94,12 +98,13 @@ export async function startMadaraDevNode(
     `--rpc-port=${rpcPort}`,
     `--ws-port=${wsPort}`,
     `--tmp`,
-    "--rpc-methods=unsafe",
   ];
   if (WASM_RUNTIME_OVERRIDES != "") {
     args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
     // For tracing tests now we require to enable archive block pruning.
     args.push(`--blocks-pruning=archive`);
+  } else if (ETHAPI_CMD != "") {
+    args.push("--wasm-runtime-overrides=/");
   }
   debug(
     `Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort} --ws-port=${wsPort}`
@@ -153,7 +158,7 @@ export async function startMadaraDevNode(
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
-      if (chunk.toString().match(/Substrate Node/)) {
+      if (chunk.toString().match(/Development Service Ready/)) {
         clearTimeout(timer);
         if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);
@@ -162,7 +167,6 @@ export async function startMadaraDevNode(
         resolve();
       }
     };
-
     runningNode.stderr.on("data", onData);
     runningNode.stdout.on("data", onData);
   });
@@ -255,7 +259,7 @@ export async function startMadaraForkedNode(
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
-      if (chunk.toString().match(/Substrate Node/)) {
+      if (chunk.toString().match(/Development Service Ready/)) {
         clearTimeout(timer);
         if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);
