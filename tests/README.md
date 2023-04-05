@@ -56,7 +56,7 @@ They should be split by pallet and only need 1 `describeSmokeSuite` per file.
 
 In order to use smoke tests, you need to provide a blockchain:
 
-```
+```sh
 WSS_URL=wss://localhost:9944 npm run smoke-test
 ```
 
