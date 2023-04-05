@@ -58,18 +58,16 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
     pub extern crate alloc;
-    pub use alloc::string::{String, ToString};
-    pub use alloc::vec::Vec;
-    pub use alloc::{format, vec};
+    use alloc::str::from_utf8;
+    use alloc::string::{String, ToString};
+    use alloc::vec;
+    use alloc::vec::Vec;
 
+    use blockifier::execution::contract_class::ContractClass;
     use blockifier::execution::entry_point::CallInfo;
-    use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
+    use blockifier::state::cached_state::{CachedState, ContractStorageKey};
     use blockifier::state::state_api::State;
     use blockifier::test_utils::DictStateReader;
-    use frame_support::pallet_prelude::*;
-    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::traits::{OriginTrait, Time};
-    use frame_system::pallet_prelude::*;
     use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
     use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
     use mp_starknet::crypto::commitment;
@@ -92,9 +90,14 @@ pub mod pallet {
     use starknet_api::transaction::EventContent;
     use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
+    type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+
+    use frame_support::pallet_prelude::*;
+    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
+    use frame_support::traits::{OriginTrait, Time};
+    use frame_system::pallet_prelude::*;
 
     use super::*;
-    use crate::alloc::str::from_utf8;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
@@ -678,7 +681,7 @@ pub mod pallet {
         /// Returns an error if it fails to apply the state diff of newly deployed contracts.
         pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
             // Get all the state diffs
-            let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces } =
+            let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
                 state.to_state_diff();
             // Store the newly deployed contracts in substrate storage.
             deployed_contracts.iter().try_for_each(|(address, class_hash)| {
