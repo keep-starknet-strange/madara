@@ -4,13 +4,13 @@ use alloc::sync::Arc;
 use alloc::vec;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::CallEntryPoint;
+use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
@@ -250,6 +250,7 @@ impl CallEntryPointWrapper {
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
+            call_type: CallType::Call,
         }
     }
 }
