@@ -314,7 +314,17 @@ impl Transaction {
         // However it also means we need to copy/paste internal code from the tx.execute() method.
     }
 
-    /// Verify transaction nonce
+    /// Verifies transaction nonce
+    /// 
+    /// # Arguments
+    /// 
+    /// * `self` - The transaction to verify the nonce for
+    /// * `account_tx_context` - The transaction context for the account
+    /// * `state` - The state to verify the nonce on
+    /// 
+    /// # Returns
+    /// 
+    /// * `TransactionExecutionResult<()>` - The result of the nonce verification
     pub fn verify_nonce(
         &self,
         account_tx_context: &AccountTransactionContext,

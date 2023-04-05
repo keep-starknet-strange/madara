@@ -4321,6 +4321,7 @@ dependencies = [
  "bitvec 0.17.4",
  "blockifier",
  "frame-support",
+ "hex",
  "parity-scale-codec",
  "poseidon",
  "rand 0.8.5",
