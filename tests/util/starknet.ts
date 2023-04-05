@@ -126,7 +126,7 @@ export async function deploy(
   user: any,
   contractAddress: string,
   tokenClassHash: string
-): Promise<string | undefined> {
+): Promise<string> {
   // Deploy contract
   let tx_deploy = {
     version: 1, // version of the transaction
@@ -154,18 +154,9 @@ export async function deploy(
     contractClass: null,
   };
 
-  try {
-    const extrisinc_deploy = api.tx.starknet.addInvokeTransaction(tx_deploy);
-    const signedTxDeploy = await extrisinc_deploy.signAsync(user, {
-      nonce: -1,
-    });
-    const resultDeploy = await signedTxDeploy.send();
+  const extrisinc_deploy = api.tx.starknet.addInvokeTransaction(tx_deploy);
 
-    return resultDeploy.toHuman()?.toString();
-  } catch (error) {
-    console.error("Eror while deploying : ", error);
-    return;
-  }
+  return sendTransaction(api, extrisinc_deploy, user);
 }
 
 export async function initialize(
@@ -173,7 +164,7 @@ export async function initialize(
   user: any,
   contractAddress: string,
   tokenAddress: string
-): Promise<string | undefined> {
+): Promise<string> {
   // Initialize contract
   let tx_initialize = {
     version: 1, // version of the transaction
@@ -202,18 +193,9 @@ export async function initialize(
     contractClass: null,
   };
 
-  try {
-    const extrisinc_init = api.tx.starknet.addInvokeTransaction(tx_initialize);
-    const signedTxInit = await extrisinc_init.signAsync(user, {
-      nonce: -1,
-    });
-    const resultInit = await signedTxInit.send();
+  const extrisinc_init = api.tx.starknet.addInvokeTransaction(tx_initialize);
 
-    return resultInit.toHuman()?.toString();
-  } catch (error) {
-    console.error("Eror while initializing : ", error);
-    return;
-  }
+  return sendTransaction(api, extrisinc_init, user);
 }
 
 export async function mint(
@@ -222,7 +204,7 @@ export async function mint(
   contractAddress: string,
   tokenAddress: string,
   mintAmount: string
-): Promise<string | undefined> {
+): Promise<string> {
   // Initialize contract
   let tx_mint = {
     version: 1, // version of the transaction
@@ -249,18 +231,9 @@ export async function mint(
     contractClass: null,
   };
 
-  try {
-    const extrisinc_mint = api.tx.starknet.addInvokeTransaction(tx_mint);
-    const signedTxMint = await extrisinc_mint.signAsync(user, {
-      nonce: -1,
-    });
-    const resultMint = await signedTxMint.send();
+  const extrisinc_mint = api.tx.starknet.addInvokeTransaction(tx_mint);
 
-    return resultMint.toHuman()?.toString();
-  } catch (error) {
-    console.error("Eror while initializing : ", error);
-    return;
-  }
+  return sendTransaction(api, extrisinc_mint, user);
 }
 
 export async function transfer(
@@ -270,7 +243,7 @@ export async function transfer(
   tokenAddress: string,
   recipientAddress: string,
   transferAmount: string
-): Promise<string | undefined> {
+): Promise<string> {
   // Initialize contract
   let tx_transfer = {
     version: 1, // version of the transaction
@@ -297,17 +270,7 @@ export async function transfer(
     contractClass: null,
   };
 
-  try {
-    const extrisinc_transfer =
-      api.tx.starknet.addInvokeTransaction(tx_transfer);
-    const signedTxTransfer = await extrisinc_transfer.signAsync(user, {
-      nonce: -1,
-    });
-    const resultTransfer = await signedTxTransfer.send();
+  const extrisinc_transfer = api.tx.starknet.addInvokeTransaction(tx_transfer);
 
-    return resultTransfer.toHuman()?.toString();
-  } catch (error) {
-    console.error("Error while transfer : ", error);
-    return;
-  }
+  return sendTransaction(api, extrisinc_transfer, user);
 }
