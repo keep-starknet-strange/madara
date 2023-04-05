@@ -33,7 +33,16 @@ pub enum TxType {
     L1HandlerTx,
 }
 /// Representation of a Starknet transaction.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
     /// The version of the transaction.
@@ -55,7 +64,16 @@ pub struct Transaction {
 }
 
 /// Representation of a Starknet event.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EventWrapper {
     /// The keys (topics) of the event.
@@ -67,7 +85,16 @@ pub struct EventWrapper {
 }
 
 /// Error enum wrapper for events.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum EventError {
     /// Provided keys are invalid.
@@ -76,4 +103,25 @@ pub enum EventError {
     InvalidData,
     /// Provided from address is invalid.
     InvalidFromAddress,
+    /// Too many events
+    TooManyEvents,
+}
+
+/// Error enum wrapper for state diffs.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum StateDiffError {
+    /// Couldn't register newly deployed contracts.
+    DeployedContractError,
+    /// Couldn't register newly declared contracts.
+    DeclaredClassError,
 }

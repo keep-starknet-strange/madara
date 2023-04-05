@@ -1,0 +1,26 @@
+
+[package]
+name = "mc-storage"
+version = "0.1.0"
+description = "Starknet storage compatibility layer for Substrate."
+authors = [
+	"Timothée Delabrouille <https://github.com/tdelabro>",
+	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+]
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[dependencies]
+mp-starknet = { workspace = true, default-features = true }
+sp-blockchain = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = true }
+sp-storage = { workspace = true, default-features = true }
+sc-client-api = { workspace = true, default-features = true }
+sp-api = { workspace = true, default-features = true }
+sp-core = { workspace = true, default-features = true }
+sp-io = { workspace = true, default-features = true }
+scale-codec = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true, default-features = true }

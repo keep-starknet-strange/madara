@@ -3,7 +3,9 @@ use core::str::FromStr;
 use blockifier::test_utils::ACCOUNT_CONTRACT_PATH;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::starknet_block::header::Header;
+use mp_starknet::block::Header as StarknetHeader;
+use mp_starknet::crypto::commitment;
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::EventWrapper;
 use sp_core::{H256, U256};
@@ -32,7 +34,7 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
 
         let current_block = Starknet::current_block();
 
-        let expected_current_block = Header {
+        let expected_current_block = StarknetHeader {
             block_timestamp: 12_000,
             block_number: U256::from(2),
             parent_block_hash: H256::from_str("0x1c2b97b7b9ea91c2cde45bfb115058628c2e1c7aa3fecb51a0cdaf256dc8a310")
@@ -47,11 +49,10 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             event_count: 2,
             event_commitment: H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02")
                 .unwrap(),
-            ..Header::default()
+            ..StarknetHeader::default()
         };
 
-        assert!(current_block.is_some());
-        pretty_assertions::assert_eq!(current_block.unwrap().header, expected_current_block)
+        pretty_assertions::assert_eq!(*current_block.header(), expected_current_block)
     });
 }
 
@@ -114,7 +115,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../ressources/transactions/invoke.json");
+        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_emmit_event.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
@@ -124,13 +125,24 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 keys: bounded_vec![
                     H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()
                 ],
-                data: bounded_vec!(),
-                from_address: H256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c")
+                data: bounded_vec!(
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap()
+                ),
+                from_address: H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7")
                     .unwrap()
                     .to_fixed_bytes(),
             })
             .into(),
         );
+        let pending = Starknet::pending();
+
+        let (_transaction_commitment, (event_commitment, event_count)) =
+            commitment::calculate_commitments::<PedersenHasher>(&pending);
+        assert_eq!(
+            event_commitment,
+            H256::from_str("0x01e95b35377e090a7448a6d09f207557f5fcc962f128ad8416d41c387dda3ec3").unwrap()
+        );
+        assert_eq!(event_count, 1);
     });
 }
 
@@ -203,7 +215,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_err!(
-            Starknet::add_deploy_account_transaction(none_origin.clone(), transaction),
+            Starknet::add_deploy_account_transaction(none_origin, transaction),
             Error::<Test>::TransactionExecutionFailed
         );
     });
@@ -271,5 +283,57 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
             Starknet::add_declare_transaction(none_origin, transaction),
             Error::<Test>::ContractClassMustBeSpecified
         );
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+        let target_contract_address =
+            H256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
+        // test_storage_read_write
+        let target_selector =
+            H256::from_str("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap();
+        let storage_var_selector =
+            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap();
+        let storage_var_val =
+            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
+
+        let transaction = Transaction::new(
+            U256::from(1),
+            H256::default(),
+            bounded_vec!(),
+            bounded_vec!(),
+            contract_address_bytes,
+            U256::from(0),
+            CallEntryPointWrapper::new(
+                Some(class_hash_bytes),
+                EntryPointTypeWrapper::External,
+                None,
+                bounded_vec![
+                    target_contract_address,
+                    target_selector,
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    storage_var_selector,
+                    storage_var_val,
+                ],
+                contract_address_bytes,
+                contract_address_bytes,
+            ),
+            None,
+        );
+
+        assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
+        assert_eq!(Starknet::storage((target_contract_address.to_fixed_bytes(), storage_var_selector)), U256::one());
     });
 }

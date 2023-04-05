@@ -5,7 +5,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 
 use crate::alloc::string::ToString;
-use crate::starknet_block::header::Header;
+use crate::block::header::Header;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {
@@ -36,6 +36,7 @@ impl SerializeBlockContext for BlockContext {
             fee_token_address: ContractAddress::default(),
             invoke_tx_max_n_steps: 1000000,
             validate_max_n_steps: 1000000,
+            gas_price: 0,
         }
     }
 }

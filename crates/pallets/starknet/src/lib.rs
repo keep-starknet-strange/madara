@@ -21,6 +21,9 @@ pub mod transaction_validation;
 /// State root logic.
 pub mod state_root;
 
+/// The Starknet pallet's runtime API
+pub mod runtime_api;
+
 #[cfg(test)]
 mod mock;
 
@@ -55,39 +58,46 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
     pub extern crate alloc;
-    pub use alloc::string::{String, ToString};
-    pub use alloc::vec::Vec;
-    pub use alloc::{format, vec};
+    use alloc::str::from_utf8;
+    use alloc::string::{String, ToString};
+    use alloc::vec;
+    use alloc::vec::Vec;
 
+    use blockifier::execution::contract_class::ContractClass;
     use blockifier::execution::entry_point::CallInfo;
-    // use blockifier::execution::contract_class::ContractClass;
-    use blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
-    use frame_support::pallet_prelude::*;
-    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::traits::{OriginTrait, Time};
-    use frame_system::pallet_prelude::*;
+    use blockifier::state::cached_state::{CachedState, ContractStorageKey};
+    use blockifier::state::state_api::State;
+    use blockifier::test_utils::DictStateReader;
+    use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
+    use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
-    use mp_starknet::starknet_block::block::Block;
-    use mp_starknet::starknet_block::header::Header;
-    use mp_starknet::state::DictStateReader;
-    use mp_starknet::storage::{StarknetStorageSchema, PALLET_STARKNET_SCHEMA};
+    use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
-    use mp_starknet::transaction::types::{EventError, EventWrapper as StarknetEventType, Transaction, TxType};
+    use mp_starknet::transaction::types::{
+        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
+    };
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
     use sp_runtime::traits::UniqueSaturatedInto;
+    use sp_runtime::DigestItem;
     use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
     use starknet_api::hash::StarkFelt;
-    use starknet_api::state::StorageKey;
+    use starknet_api::state::{StateDiff, StorageKey};
     use starknet_api::stdlib::collections::HashMap;
+    use starknet_api::transaction::EventContent;
     use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
+    type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+
+    use frame_support::pallet_prelude::*;
+    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
+    use frame_support::traits::{OriginTrait, Time};
+    use frame_system::pallet_prelude::*;
 
     use super::*;
-    use crate::alloc::str::from_utf8;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
     use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
@@ -156,7 +166,7 @@ pub mod pallet {
     /// The current Starknet block.
     #[pallet::storage]
     #[pallet::getter(fn current_block)]
-    pub(super) type CurrentBlock<T: Config> = StorageValue<_, Block>;
+    pub(super) type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock, ValueQuery>;
 
     // Mapping for block number and hashes.
     #[pallet::storage]
@@ -209,9 +219,9 @@ pub mod pallet {
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
             <Pallet<T>>::store_block(U256::zero());
-            frame_support::storage::unhashed::put::<StarknetStorageSchema>(
+            frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
                 PALLET_STARKNET_SCHEMA,
-                &StarknetStorageSchema::V1,
+                &StarknetStorageSchemaVersion::V1,
             );
 
             for (address, class_hash) in self.contracts.iter() {
@@ -252,9 +262,9 @@ pub mod pallet {
         InvalidContractClass,
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
-        InvalidCurrentBlock,
         StateReaderError,
         EmitEventError,
+        StateDiffError,
     }
 
     /// The Starknet pallet external functions.
@@ -290,18 +300,23 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn add_invoke_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn add_invoke_transaction(_origin: OriginFor<T>, mut transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            let block = Self::current_block().unwrap();
+            let block = Self::current_block();
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::InvokeTx, None) {
-                Ok(v) => {
-                    Self::emit_events(v.as_ref().unwrap()).map_err(|_| Error::<T>::EmitEventError)?;
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
+            let call_info = transaction.execute(state, block, TxType::InvokeTx, None);
+            match call_info {
+                Ok(Some(mut v)) => {
+                    Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
+                    log!(debug, "Transaction executed successfully: {:?}", v);
+                }
+                Ok(None) => {
+                    log!(error, "Transaction execution failed: no call info while it was expected");
+                    return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -309,6 +324,7 @@ pub mod pallet {
                 }
             }
 
+            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append(transaction).unwrap();
 
@@ -349,14 +365,7 @@ pub mod pallet {
             ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
 
             // Get current block
-            let block = match Self::current_block() {
-                Some(b) => b,
-                None => {
-                    log!(error, "Current block is None");
-                    return Err(Error::<T>::InvalidCurrentBlock.into());
-                }
-            };
-
+            let block = Self::current_block();
             // Create state reader from substrate storage
             let state = &mut Self::create_state_reader()?;
 
@@ -370,8 +379,8 @@ pub mod pallet {
 
             // Execute transaction
             match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
-                Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap_or_default());
+                Ok(_) => {
+                    log!(debug, "Declare Transaction executed successfully.");
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -383,7 +392,8 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
-            Self::associate_class_hash(class_hash, contract_class.into())?;
+            Self::set_contract_class_hash(class_hash, contract_class.into())?;
+            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             // TODO: Update class hashes root
 
@@ -414,13 +424,7 @@ pub mod pallet {
             );
 
             // Get current block
-            let block = match Self::current_block() {
-                Some(b) => b,
-                None => {
-                    log!(error, "Current block is None");
-                    return Err(Error::<T>::InvalidCurrentBlock.into());
-                }
-            };
+            let block = Self::current_block();
 
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::DeployAccountTx, None) {
@@ -437,12 +441,8 @@ pub mod pallet {
             Pending::<T>::try_append(transaction.clone()).unwrap();
 
             // Associate contract class to class hash
-            Self::associate_contract_class(
-                transaction.clone().sender_address,
-                transaction.clone().call_entrypoint.class_hash.unwrap(),
-            )?;
-
-            // TODO: Apply state diff and update state root
+            // TODO: update state root
+            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             Ok(())
         }
@@ -467,7 +467,7 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            let block = Self::current_block().unwrap();
+            let block = Self::current_block();
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::L1HandlerTx, None) {
                 Ok(v) => {
@@ -482,7 +482,7 @@ pub mod pallet {
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            // TODO: Apply state diff and update state root
+            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             Ok(())
         }
@@ -496,8 +496,8 @@ pub mod pallet {
         ///
         /// The current block hash.
         #[inline(always)]
-        pub fn current_block_hash() -> Option<H256> {
-            Self::current_block().map(|block| block.header.hash())
+        pub fn current_block_hash() -> H256 {
+            Self::current_block().header().hash()
         }
 
         /// Get the block hash of the previous block.
@@ -559,7 +559,7 @@ pub mod pallet {
             let protocol_version = None;
             let extra_data = None;
 
-            let block = Block::new(Header::new(
+            let block = StarknetBlock::new(StarknetHeader::new(
                 parent_block_hash,
                 block_number,
                 global_state_root,
@@ -575,8 +575,11 @@ pub mod pallet {
             // Save the current block.
             CurrentBlock::<T>::put(block.clone());
             // Save the block number <> hash mapping.
-            BlockHash::<T>::insert(block_number, block.header.hash());
+            BlockHash::<T>::insert(block_number, block.header().hash());
             Pending::<T>::kill();
+
+            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
+            frame_system::Pallet::<T>::deposit_log(digest);
         }
 
         /// Associate a contract class hash with a contract class info
@@ -585,7 +588,7 @@ pub mod pallet {
         ///
         /// * `contract_class_hash` - The contract class hash.
         /// * `class_info` - The contract class info.
-        fn associate_class_hash(
+        fn set_contract_class_hash(
             contract_class_hash: ClassHashWrapper,
             class_info: ContractClassWrapper,
         ) -> Result<(), DispatchError> {
@@ -594,7 +597,6 @@ pub mod pallet {
                 !ContractClasses::<T>::contains_key(contract_class_hash),
                 Error::<T>::ContractClassAlreadyAssociated
             );
-
             ContractClasses::<T>::insert(contract_class_hash, class_info);
 
             Ok(())
@@ -606,7 +608,7 @@ pub mod pallet {
         ///
         /// * `contract_address` - The contract address.
         /// * `contract_class_hash` - The contract class hash.
-        fn associate_contract_class(
+        fn set_class_hash_at(
             contract_address: ContractAddressWrapper,
             contract_class_hash: ClassHashWrapper,
         ) -> Result<(), DispatchError> {
@@ -630,27 +632,75 @@ pub mod pallet {
         /// # Returns
         ///
         /// The result of the operation.
-        fn emit_events(call_info: &CallInfo) -> Result<(), EventError> {
-            // TODO: loop through all events/inner_calls
-            if let Some(inner_call) = call_info.inner_calls.get(0) {
-                if let Some(tx_event) = inner_call.execution.events.get(0) {
-                    log!(info, "Transaction event: {:?}", tx_event.event.clone());
-                    let event = StarknetEventType::builder()
-                        .with_event_content(tx_event.event.clone())
-                        .with_from_address(inner_call.call.storage_address)
-                        .build();
-                    match event {
-                        Ok(event) => {
-                            Self::deposit_event(Event::StarknetEvent(event));
-                        }
-                        Err(e) => {
-                            log!(error, "Error parsing event: {:?}", e);
-                            return Err(e);
-                        }
-                    }
-                }
-            }
+        #[inline(always)]
+        fn emit_events(call_info: &mut CallInfo, transaction: &mut Transaction) -> Result<(), EventError> {
+            call_info.inner_calls.iter_mut().try_for_each(|inner_call: &mut CallInfo| {
+                inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+                inner_call.execution.events.iter().try_for_each(|ordered_event| {
+                    Self::emit_event(&ordered_event.event, inner_call.call.storage_address, transaction)
+                })
+            })
+        }
 
+        /// Emit an event from the call info in substrate.
+        ///
+        /// # Arguments
+        ///
+        /// * `event` - The Starknet event.
+        /// * `from_address` - The contract address that emitted the event.
+        ///
+        /// # Error
+        ///
+        /// Returns an error if the event construction fails.
+        #[inline(always)]
+        fn emit_event(
+            event: &EventContent,
+            from_address: ContractAddress,
+            transaction: &mut Transaction,
+        ) -> Result<(), EventError> {
+            log!(debug, "Transaction event: {:?}", event);
+            let sn_event = StarknetEventType::builder()
+                .with_event_content(event.clone())
+                .with_from_address(from_address)
+                .build()?;
+            transaction.events.try_push(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
+            Self::deposit_event(Event::StarknetEvent(sn_event));
+            Ok(())
+        }
+
+        /// Apply the state diff returned by the starknet execution.
+        ///
+        /// # Argument
+        ///
+        /// * `state` - The state constructed for the starknet execution engine.
+        ///
+        /// # Error
+        ///
+        /// Returns an error if it fails to apply the state diff of newly deployed contracts.
+        pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
+            // Get all the state diffs
+            let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
+                state.to_state_diff();
+            // Store the newly deployed contracts in substrate storage.
+            deployed_contracts.iter().try_for_each(|(address, class_hash)| {
+                Self::set_class_hash_at(address.0.0.0, class_hash.0.0).map_err(|_| {
+                    log!(
+                        error,
+                        "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
+                        address.0.0.0,
+                        class_hash.0.0
+                    );
+                    StateDiffError::DeployedContractError
+                })
+            })?;
+            // Store the modifications of storage vars.
+            storage_diffs.iter().for_each(|(address, diffs)| {
+                diffs.iter().for_each(|(key, value)| {
+                    StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
+                })
+            });
+            // Store the new nonces.
+            nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
             Ok(())
         }
 
