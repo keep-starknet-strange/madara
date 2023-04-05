@@ -1,7 +1,7 @@
 //! Starknet execution functionality.
 
 use alloc::sync::Arc;
-use alloc::vec;
+use alloc::{format, vec};
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
@@ -245,11 +245,7 @@ impl CallEntryPointWrapper {
                     .clone()
                     .into_inner()
                     .iter()
-                    .map(|x| {
-                        let mut x_as_bytes = [0_u8; 32];
-                        x.to_big_endian(&mut x_as_bytes);
-                        StarkFelt::new(x_as_bytes).unwrap()
-                    })
+                    .map(|x| StarkFelt::try_from(format!("0x{x:X}").as_str()).unwrap())
                     .collect(),
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),

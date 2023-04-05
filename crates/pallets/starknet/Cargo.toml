@@ -49,6 +49,7 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 scale-info = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 
+
 [dev-dependencies]
 hex = { workspace = true }
 pallet-timestamp = { workspace = true }
