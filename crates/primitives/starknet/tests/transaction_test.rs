@@ -1,9 +1,9 @@
 use core::str::FromStr;
+use std::collections::HashMap;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::CachedState;
 use blockifier::transaction::objects::AccountTransactionContext;
-use codec::alloc::collections::HashMap;
 use frame_support::bounded_vec;
 use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
@@ -14,7 +14,7 @@ use starknet_api::api_core::{
     ClassHash, ContractAddress as StarknetContractAddress, ContractAddress, Nonce, PatriciaKey,
 };
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::transaction::{Fee, InvokeTransaction, TransactionHash, TransactionSignature, TransactionVersion};
+use starknet_api::transaction::{Fee, InvokeTransactionV1, TransactionHash, TransactionSignature, TransactionVersion};
 use starknet_api::{patricia_key, stark_felt};
 
 #[test]
@@ -62,22 +62,21 @@ fn test_verify_nonce() {
     let mut state =
         CachedState::new(DictStateReader { class_hash_to_class, address_to_class_hash, ..Default::default() });
 
-    let invoke_tx = InvokeTransaction {
+    let invoke_tx = InvokeTransactionV1 {
         transaction_hash: TransactionHash(StarkFelt::new(tx.hash.0).unwrap()),
         max_fee: Fee(2),
-        version: TransactionVersion(StarkFelt::new(tx.version.into()).unwrap()),
+
         signature: TransactionSignature(
             tx.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect(),
         ),
         nonce: Nonce(StarkFelt::new(tx.nonce.into()).unwrap()),
         sender_address: StarknetContractAddress::try_from(StarkFelt::new(tx.sender_address).unwrap()).unwrap(),
         calldata: tx.call_entrypoint.to_starknet_call_entry_point().calldata,
-        entry_point_selector: None,
     };
     let account_tx_context = AccountTransactionContext {
         transaction_hash: invoke_tx.transaction_hash,
         max_fee: invoke_tx.max_fee,
-        version: invoke_tx.version,
+        version: TransactionVersion(StarkFelt::from(1)),
         signature: invoke_tx.signature.clone(),
         nonce: invoke_tx.nonce,
         sender_address: invoke_tx.sender_address,

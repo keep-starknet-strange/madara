@@ -9,7 +9,7 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier::state::cached_state::CachedState;
 use blockifier::state::state_api::{State, StateReader};
-use blockifier::transaction::errors::{InvokeTransactionError, TransactionExecutionError};
+use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
@@ -314,15 +314,15 @@ impl Transaction {
     }
 
     /// Verifies transaction nonce
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `self` - The transaction to verify the nonce for
     /// * `account_tx_context` - The transaction context for the account
     /// * `state` - The state to verify the nonce on
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `TransactionExecutionResult<()>` - The result of the nonce verification
     pub fn verify_nonce(
         &self,
