@@ -142,6 +142,7 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let test_class = get_contract_class(include_bytes!("../../../ressources/test.json"));
 
     // ACCOUNT CONTRACT
     let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
@@ -149,6 +150,13 @@ fn testnet_genesis(
 
     let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
     let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+    // TEST CONTRACT
+    let other_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
+    let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
+
+    let other_class_hash_str = "0000000000000000000000000000000000000000000000000000000000001000";
+    let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
 
     GenesisConfig {
         system: SystemConfig {
@@ -168,8 +176,14 @@ fn testnet_genesis(
         transaction_payment: Default::default(),
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
-            contracts: vec![(contract_address_bytes, class_hash_bytes)],
-            contract_classes: vec![(class_hash_bytes, ContractClassWrapper::from(account_class))],
+            contracts: vec![
+                (contract_address_bytes, class_hash_bytes),
+                (other_contract_address_bytes, other_class_hash_bytes),
+            ],
+            contract_classes: vec![
+                (class_hash_bytes, ContractClassWrapper::from(account_class)),
+                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
+            ],
             _phantom: Default::default(),
         },
     }

@@ -138,7 +138,7 @@ export async function deploy(
     callEntrypoint: {
       // call entrypoint
       classHash: tokenClassHash, // class hash of the contract
-      entrypointSelector: null, // function selector of the transfer function
+      entrypointSelector: null,
       calldata: [
         "0x0000000000000000000000000000000000000000000000000000000000001111",
         "0x0169f135eddda5ab51886052d777a57f2ea9c162d713691b5e04a6d4ed71d47f",
