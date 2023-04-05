@@ -8,7 +8,7 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::state::cached_state::CachedState;
-use blockifier::state::state_api::{StateReader, State};
+use blockifier::state::state_api::{State, StateReader};
 use blockifier::transaction::errors::{InvokeTransactionError, TransactionExecutionError};
 use blockifier::transaction::objects::{AccountTransactionContext, TransactionExecutionResult};
 use blockifier::transaction::transactions::Executable;
@@ -261,6 +261,7 @@ impl Transaction {
         contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<Option<CallInfo>> {
         let block_context = BlockContext::serialize(block.header);
+
         match tx_type {
             TxType::InvokeTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
@@ -272,6 +273,8 @@ impl Transaction {
                         InvokeTransactionError::SpecifiedEntryPoint.into(),
                     ))?;
                 }
+                self.verify_nonce(&account_context, state)
+                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
 
                 tx.run_execute(state, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
@@ -279,12 +282,17 @@ impl Transaction {
             TxType::L1HandlerTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
+                self.verify_nonce(&account_context, state)
+                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
                 tx.run_execute(state, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
             TxType::DeclareTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
+                self.verify_nonce(&account_context, state)
+                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
+
                 // Execute.
                 tx.run_execute(state, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
@@ -292,7 +300,8 @@ impl Transaction {
             TxType::DeployAccountTx => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_deploy_account_transaction_context(&tx);
-
+                self.verify_nonce(&account_context, state)
+                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
                 // Execute.
                 tx.run_execute(state, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
@@ -304,20 +313,25 @@ impl Transaction {
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
     }
-    
 
     /// Verify transaction nonce
-    pub fn verify_nonce(&self, accoun_tx_context: AccountTransactionContext, state: &mut dyn State) -> TransactionExecutionResult<()> {
-        let currrent_nonce = state.get_nonce_at(accoun_tx_context.sender_address)?;
-        if currrent_nonce != accoun_tx_context.nonce {
+    pub fn verify_nonce(
+        &self,
+        account_tx_context: &AccountTransactionContext,
+        state: &mut dyn State,
+    ) -> TransactionExecutionResult<()> {
+        if account_tx_context.version == TransactionVersion(StarkFelt::from(0)) {
+            return Ok(());
+        }
+        let currrent_nonce = state.get_nonce_at(account_tx_context.sender_address)?;
+        if currrent_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionError::InvalidNonce {
-                expected_nonce: accoun_tx_context.nonce,
+                expected_nonce: account_tx_context.nonce,
                 actual_nonce: currrent_nonce,
             });
         }
 
-        Ok(state.increment_nonce(accoun_tx_context.sender_address)?)
-
+        Ok(state.increment_nonce(account_tx_context.sender_address)?)
     }
     /// Get the transaction context for a l1 handler transaction
     ///
