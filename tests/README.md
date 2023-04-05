@@ -62,7 +62,7 @@ WSS_URL=wss://localhost:9944 npm run smoke-test
 
 You can debug specific smoke test with `debug` library using prefix `smoke:*`:
 
-```
+```sh
 DEBUG=smoke:* WSS_URL=wss://localhost:9944 npm run smoke-test
 ```
 
