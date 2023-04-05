@@ -1,9 +1,12 @@
+#[cfg(feature = "std")]
+use std::println;
+
 use frame_support::BoundedVec;
+use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
-use crate::pallet::alloc::borrow::ToOwned;
 use crate::pallet::alloc::format;
 use crate::pallet::alloc::string::String;
 use crate::pallet::alloc::vec::Vec;
@@ -35,25 +38,6 @@ pub fn get_messages_events(from_block: u64, to_block: u64) -> String {
 }
 
 impl Message {
-    /// Converts a hex `String` into a byte slice little endian.
-    ///
-    /// # Arguments
-    /// * `s` - The hex string
-    ///
-    /// # Returns
-    ///
-    /// A fixed size byte slice.
-    pub fn decode_hex_be(s: &str) -> Result<[u8; 32], OffchainWorkerError> {
-        let s = s.trim_start_matches("0x");
-        let s = if s.len() % 2 != 0 { format!("0{:}", s) } else { s.to_owned() };
-        let mut res = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        for (id, i) in (0..s.len()).step_by(2).enumerate() {
-            res[id] = u8::from_str_radix(&s[i..i + 2], 16).map_err(|_| OffchainWorkerError::HexDecodeError)?;
-        }
-
-        Ok(res)
-    }
-
     /// Converts a `Message` into a transaction object.
     pub fn try_into_transaction(&self) -> Result<Transaction, OffchainWorkerError> {
         // Data at least contains a nonce and at some point the fees.
@@ -61,9 +45,13 @@ impl Message {
             return Err(OffchainWorkerError::EmptyData);
         }
         // L2 contract to call.
-        let sender_address = Self::decode_hex_be(&self.topics[2])?;
+        let sender_address = <[u8; 32]>::from_hex(self.topics[2].trim_start_matches("0x"))
+            .map_err(|_| OffchainWorkerError::HexDecodeError)?;
         // Function of the contract to call.
-        let selector = H256::from_slice(&Self::decode_hex_be(&self.topics[3])?);
+        let selector = H256::from_slice(
+            &<[u8; 32]>::from_hex(self.topics[3].trim_start_matches("0x"))
+                .map_err(|_| OffchainWorkerError::HexDecodeError)?,
+        );
         // Add the from address here so it's directly in the calldata.
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
             .chars()
@@ -76,7 +64,9 @@ impl Message {
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
-            calldata.push(U256::from_big_endian(&Self::decode_hex_be(&val)?))
+            calldata.push(U256::from_big_endian(
+                &<[u8; 32]>::from_hex(val.trim_start_matches("0x")).map_err(|_| OffchainWorkerError::HexDecodeError)?,
+            ))
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let call_entrypoint = CallEntryPointWrapper {
@@ -107,24 +97,8 @@ mod test {
     use mp_starknet::transaction::types::Transaction;
     use pretty_assertions;
     use sp_core::{H256, U256};
-    use test_case::test_case;
 
     use crate::types::{Message, OffchainWorkerError};
-
-    #[test_case("0x01", true, Some([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))]
-    #[test_case("02", true, Some([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))]
-    #[test_case("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", true, Some([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]))]
-    #[test_case("foo", false, None)]
-    fn test_decode_hex(value: &str, should_success: bool, result: Option<[u8; 32]>) {
-        let res = Message::decode_hex_be(value);
-        if should_success {
-            assert!(res.is_ok());
-            pretty_assertions::assert_eq!(res.unwrap(), result.unwrap())
-        } else {
-            assert!(res.is_err());
-            assert_eq!(res.unwrap_err(), OffchainWorkerError::HexDecodeError);
-        }
-    }
 
     #[test]
     fn test_try_into_transaction_correct_message_should_work() {
