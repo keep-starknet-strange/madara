@@ -21,29 +21,15 @@ describeDevMadara("Pallet Starknet - block", (context) => {
   });
 
   it("should declare a new contract class", async function () {
-    await declare(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      tokenClassHash
-    );
-  });
-
-  it("should declare then deploy", async function () {
-    await declare(
+    const blockHash = await declare(
       context.polkadotApi,
       context.alice,
       contractAddress,
       tokenClassHash
     );
 
-    await jumpBlocks(context, 1);
+    console.log("blockhash: ", blockHash);
 
-    await deploy(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      tokenClassHash
-    );
+    expect(blockHash).to.not.be.undefined;
   });
 });

@@ -183,13 +183,10 @@ fn testnet_genesis(
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
                 (contract_address_bytes, class_hash_bytes),
-                (other_contract_address_bytes, other_class_hash_bytes),
             ],
             contract_classes: vec![
                 (class_hash_bytes, ContractClassWrapper::from(account_class)),
                 (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
             ],
-            _phantom: Default::default(),
-        },
-    }
+
 }
