@@ -81,7 +81,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
     // TEST CONTRACT
-    let other_contract_address_str = "0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c";
+    let other_contract_address_str = "024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7";
     let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
 
     let other_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";

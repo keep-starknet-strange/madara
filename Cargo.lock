@@ -740,7 +740,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#1fedf4f44fd48a34f06388199ff2c60fefe74d46"
+source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#ee746284f598de420429b8441a98afdb3680637f"
 dependencies = [
  "cairo-felt",
  "cairo-vm",
@@ -748,6 +748,8 @@ dependencies = [
  "hashbrown 0.13.2",
  "indexmap 2.0.0-pre",
  "itertools",
+ "lazy_static",
+ "log",
  "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
@@ -756,6 +758,8 @@ dependencies = [
  "serde_json",
  "sha3",
  "starknet_api",
+ "strum",
+ "strum_macros",
  "thiserror-no-std",
 ]
 
@@ -845,8 +849,8 @@ dependencies = [
 
 [[package]]
 name = "cairo-felt"
-version = "0.2.0"
-source = "git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d#ed77a3fe4f0511e4c5a25acf99cf919cf292262d"
+version = "0.3.0-rc1"
+source = "git+https://github.com/tdelabro/cairo-rs.git?branch=fix-no-std#c43739b786b073024c7003737405a344385684b5"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.3",
@@ -856,13 +860,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-take_until_unbalanced"
+version = "0.24.2-rc1"
+source = "git+https://github.com/tdelabro/cairo-rs.git?branch=fix-no-std#c43739b786b073024c7003737405a344385684b5"
+dependencies = [
+ "nom",
+]
+
+[[package]]
 name = "cairo-vm"
-version = "0.2.0"
-source = "git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d#ed77a3fe4f0511e4c5a25acf99cf919cf292262d"
+version = "0.3.0-rc1"
+source = "git+https://github.com/tdelabro/cairo-rs.git?branch=fix-no-std#c43739b786b073024c7003737405a344385684b5"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
+ "bitvec 1.0.1",
  "cairo-felt",
+ "cairo-take_until_unbalanced",
  "generic-array 0.14.6",
  "hashbrown 0.13.2",
  "hex",
@@ -872,14 +886,13 @@ dependencies = [
  "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
- "parse-hyperlinks",
  "rand_core 0.6.4",
  "serde",
  "serde_bytes",
  "serde_json",
  "sha2 0.10.6",
  "sha3",
- "starknet-crypto 0.2.0",
+ "starknet-crypto 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
  "thiserror-no-std",
 ]
@@ -4086,6 +4099,11 @@ dependencies = [
  "futures",
  "jsonrpsee",
  "madara-runtime",
+ "mc-db",
+ "mc-mapping-sync",
+ "mc-rpc",
+ "mc-storage",
+ "pallet-starknet",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
  "sc-basic-authorship",
@@ -4180,6 +4198,82 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "add85d4dd35074e6fedc608f8c8f513a3548619a9024b751949ef0e8e45a4d84"
 dependencies = [
  "rawpointer",
+]
+
+[[package]]
+name = "mc-db"
+version = "0.1.0"
+dependencies = [
+ "kvdb-rocksdb",
+ "log",
+ "parity-db",
+ "parity-scale-codec",
+ "sc-client-db",
+ "sp-core",
+ "sp-database",
+ "sp-runtime",
+]
+
+[[package]]
+name = "mc-mapping-sync"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "log",
+ "mc-db",
+ "mc-storage",
+ "mp-digest-log",
+ "pallet-starknet",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-runtime",
+]
+
+[[package]]
+name = "mc-rpc"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "jsonrpsee",
+ "log",
+ "mc-db",
+ "mc-rpc-core",
+ "mc-storage",
+ "pallet-starknet",
+ "sc-client-api",
+ "sp-api",
+ "sp-arithmetic",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "thiserror",
+]
+
+[[package]]
+name = "mc-rpc-core"
+version = "0.1.0"
+dependencies = [
+ "jsonrpsee",
+ "serde",
+ "sp-blockchain",
+]
+
+[[package]]
+name = "mc-storage"
+version = "0.1.0"
+dependencies = [
+ "mp-starknet",
+ "pallet-starknet",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-storage",
 ]
 
 [[package]]
@@ -4315,6 +4409,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mp-digest-log"
+version = "0.1.0-dev"
+dependencies = [
+ "mp-starknet",
+ "parity-scale-codec",
+ "sp-core",
+ "sp-runtime",
+]
+
+[[package]]
 name = "mp-starknet"
 version = "0.1.0-dev"
 dependencies = [
@@ -4331,8 +4435,8 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "starknet-crypto 0.2.0",
- "starknet-ff 0.2.0",
+ "starknet-crypto 0.4.2 (git+https://github.com/xJonathanLEI/starknet-rs)",
+ "starknet-ff 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
  "starknet_api",
  "zstd 0.12.3+zstd.1.5.2",
 ]
@@ -4871,6 +4975,7 @@ dependencies = [
  "frame-system",
  "hex",
  "log",
+ "mp-digest-log",
  "mp-starknet",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -4878,10 +4983,12 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
+ "sp-api",
  "sp-core",
  "sp-io",
  "sp-runtime",
- "starknet-crypto 0.2.0",
+ "sp-std",
+ "starknet-crypto 0.4.2 (git+https://github.com/xJonathanLEI/starknet-rs)",
  "starknet_api",
  "test-case",
 ]
@@ -5073,14 +5180,6 @@ dependencies = [
  "redox_syscall",
  "smallvec",
  "windows-sys 0.45.0",
-]
-
-[[package]]
-name = "parse-hyperlinks"
-version = "0.23.4"
-source = "git+https://github.com/tdelabro/cairo-rs.git?rev=ed77a3fe4f0511e4c5a25acf99cf919cf292262d#ed77a3fe4f0511e4c5a25acf99cf919cf292262d"
-dependencies = [
- "nom",
 ]
 
 [[package]]
@@ -8229,11 +8328,11 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
 name = "starknet-crypto"
-version = "0.2.0"
-source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d49eb65d58fa98a164ad2cd4d04775885386b83bdad6060f168a38ede77c9aed"
 dependencies = [
  "crypto-bigint",
- "hashbrown 0.13.2",
  "hex",
  "hmac 0.12.1",
  "num-bigint 0.4.3",
@@ -8241,59 +8340,50 @@ dependencies = [
  "num-traits",
  "rfc6979",
  "sha2 0.10.6",
- "starknet-crypto-codegen 0.1.0",
- "starknet-curve 0.1.0",
- "starknet-ff 0.2.0",
- "thiserror-no-std",
+ "starknet-crypto-codegen 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-curve 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-ff 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "zeroize",
 ]
 
 [[package]]
 name = "starknet-crypto"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58dc3cf4a02f895ca3a4e3c9d92681e533d67236f2055bcc4f9acbc3560f377b"
+version = "0.4.2"
+source = "git+https://github.com/xJonathanLEI/starknet-rs#e72cc0a4b3ea67c7691ebec58300da3c21f0abb2"
 dependencies = [
  "crypto-bigint",
+ "hex",
  "hmac 0.12.1",
  "num-bigint 0.4.3",
  "num-integer",
  "num-traits",
  "rfc6979",
  "sha2 0.10.6",
- "starknet-crypto-codegen 0.2.0",
- "starknet-curve 0.2.1",
- "starknet-ff 0.3.1",
+ "starknet-crypto-codegen 0.3.0 (git+https://github.com/xJonathanLEI/starknet-rs)",
+ "starknet-curve 0.2.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
+ "starknet-ff 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
  "zeroize",
 ]
 
 [[package]]
 name = "starknet-crypto-codegen"
-version = "0.1.0"
-source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bff08f74f3ac785ac34ac05c68c5bd4df280107ab35df69dbcbde35183d89eba"
 dependencies = [
- "starknet-curve 0.1.0",
- "starknet-ff 0.2.0",
+ "starknet-curve 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-ff 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 1.0.109",
 ]
 
 [[package]]
 name = "starknet-crypto-codegen"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4013d158b58202262d0eda5aaf0b6a45bad15c35c94629d560d91f402d8eb8c6"
+version = "0.3.0"
+source = "git+https://github.com/xJonathanLEI/starknet-rs#e72cc0a4b3ea67c7691ebec58300da3c21f0abb2"
 dependencies = [
- "starknet-curve 0.2.1",
- "starknet-ff 0.3.1",
+ "starknet-curve 0.2.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
+ "starknet-ff 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "starknet-curve"
-version = "0.1.0"
-source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
-dependencies = [
- "starknet-ff 0.2.0",
 ]
 
 [[package]]
@@ -8302,20 +8392,15 @@ version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe0dbde7ef14d54c2117bc6d2efb68c2383005f1cd749b277c11df874d07b7af"
 dependencies = [
- "starknet-ff 0.3.1",
+ "starknet-ff 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
-name = "starknet-ff"
-version = "0.2.0"
-source = "git+https://github.com/tdelabro/starknet-rs.git?branch=feature/manual-no-std-bigdecimal#13023c5bbd0426ce064bc31e21bc70b517818b85"
+name = "starknet-curve"
+version = "0.2.1"
+source = "git+https://github.com/xJonathanLEI/starknet-rs#e72cc0a4b3ea67c7691ebec58300da3c21f0abb2"
 dependencies = [
- "ark-ff",
- "crypto-bigint",
- "getrandom 0.2.8",
- "hex",
- "serde",
- "thiserror-no-std",
+ "starknet-ff 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
 ]
 
 [[package]]
@@ -8331,9 +8416,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "starknet-ff"
+version = "0.3.1"
+source = "git+https://github.com/xJonathanLEI/starknet-rs#e72cc0a4b3ea67c7691ebec58300da3c21f0abb2"
+dependencies = [
+ "ark-ff",
+ "crypto-bigint",
+ "getrandom 0.2.8",
+ "hex",
+ "serde",
+]
+
+[[package]]
 name = "starknet_api"
 version = "0.1.0"
-source = "git+https://github.com/tdelabro/starknet-api?branch=starkware/no_std-support#97852d8ae1320fbdc3f42e623f23f94d99f79d20"
+source = "git+https://github.com/tdelabro/starknet-api?branch=no_std-support#dcc7dc529ddf388b04434fb860a9ec766d9b020c"
 dependencies = [
  "derive_more",
  "hashbrown 0.13.2",
@@ -8342,7 +8439,7 @@ dependencies = [
  "primitive-types",
  "serde",
  "serde_json",
- "starknet-crypto 0.3.0",
+ "starknet-crypto 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

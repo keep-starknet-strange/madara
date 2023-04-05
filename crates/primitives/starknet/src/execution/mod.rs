@@ -4,13 +4,13 @@ use alloc::sync::Arc;
 use alloc::vec;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::CallEntryPoint;
+use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
@@ -27,7 +27,16 @@ type MaxEntryPoints = ConstU32<4294967295>;
 pub type ClassHashWrapper = [u8; 32];
 
 /// Contract Class
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
     /// Contract class program json.
@@ -79,10 +88,10 @@ impl Default for ContractClassWrapper {
     Debug,
     PartialEq,
     Eq,
-    codec::Encode,
-    codec::Decode,
+    scale_codec::Encode,
+    scale_codec::Decode,
     scale_info::TypeInfo,
-    codec::MaxEncodedLen,
+    scale_codec::MaxEncodedLen,
     PartialOrd,
     Ord,
 )]
@@ -132,10 +141,10 @@ impl EntryPointTypeWrapper {
     Debug,
     PartialEq,
     Eq,
-    codec::Encode,
-    codec::Decode,
+    scale_codec::Encode,
+    scale_codec::Decode,
     scale_info::TypeInfo,
-    codec::MaxEncodedLen,
+    scale_codec::MaxEncodedLen,
     PartialOrd,
     Ord,
 )]
@@ -172,7 +181,16 @@ impl From<EntryPoint> for EntryPointWrapper {
 }
 
 /// Representation of a Starknet Call Entry Point.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallEntryPointWrapper {
     /// The class hash
@@ -232,6 +250,7 @@ impl CallEntryPointWrapper {
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
+            call_type: CallType::Call,
         }
     }
 }

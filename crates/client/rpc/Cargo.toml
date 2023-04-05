@@ -1,0 +1,40 @@
+[package]
+name = "mc-rpc"
+version = "0.1.0"
+description = "Starknet RPC compatibility layer for Substrate"
+authors = [
+	"Timothée Delabrouille <https://github.com/tdelabro>",
+	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+]
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# Madara runtime
+pallet-starknet = { workspace = true, default-features = true }
+# Madara client
+mc-rpc-core = { workspace = true }
+mc-db = { workspace = true }
+mc-storage = { workspace = true }
+# Substate primitives
+sp-runtime = { workspace = true, default-features = true }
+sp-core = { workspace = true, default-features = true }
+sp-api = { workspace = true, default-features = true }
+sp-arithmetic = { workspace = true, default-features = true }
+sp-blockchain = { workspace = true, default-features = true }
+# Substrate client
+sc-client-api = { workspace = true, default-features = true }
+# Others
+jsonrpsee = { workspace = true, default-features = true, features = [
+	"server",
+	"macros",
+] }
+thiserror = "1.0.40"
+log = { workspace = true, default-features = true }
+hex = { workspace = true, default-features = true }
