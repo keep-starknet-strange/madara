@@ -1,0 +1,85 @@
+{
+  "name": "@madara/api-augment",
+  "version": "0.1500.0",
+  "type": "module",
+  "private": true,
+  "description": "Madara types augment for @polkadot/api",
+  "author": "0xevolve <matthias@pragmaoracle.com>",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/keep-starknet-strange/madara/tree/master/typescript-api#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keep-starknet-strange/madara.git",
+    "directory": "typescript-api"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "scripts": {
+    "generate": "npm run load:meta && npm run generate:defs && npm run generate:meta",
+    "postgenerate": "npm run pretty",
+    "load:meta": "npm run load:meta:local",
+    "load:meta:local": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > metadata-sharingan.json",
+    "generate:defs": "npm run generate:defs:sharingan",
+    "generate:defs:sharingan": "node --experimental-specifier-resolution=node --loader ts-node/esm  node_modules/.bin/polkadot-types-from-defs --package @madara/api-augment/sharingan/interfaces --input ./src/sharingan/interfaces --endpoint ./metadata-sharingan.json",
+    "generate:meta": "npm run generate:meta:sharingan",
+    "prebuild": "rimraf build",
+    "build": "npx tsc -b --verbose",
+    "postbuild": "node --experimental-specifier-resolution=node --loader ts-node/esm ./scripts/postbuild.js",
+    "publish": "cd build && npm publish",
+    "deploy": "npm run generate && npm run build && npm run publish",
+    "pretty": "prettier --write --ignore-unknown --plugin prettier-plugin-jsdoc 'src/**/*' 'scripts/**/*'"
+  },
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./index.cjs",
+      "default": "./index.js"
+    },
+    "./sharingan": {
+      "types": "./index.d.ts",
+      "require": "./index.cjs",
+      "default": "./index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "sharingan": [
+        "index.d.ts"
+      ]
+    }
+  },
+  "keywords": [
+    "madara",
+    "types",
+    "polkadot",
+    "api"
+  ],
+  "devDependencies": {
+    "@polkadot/api": "^10.1.3",
+    "@polkadot/typegen": "^10.1.3",
+    "prettier": "^2.7.1",
+    "prettier-plugin-jsdoc": "^0.3.38",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.2"
+  },
+  "overrides": {
+    "@polkadot/api": "$@polkadot/api",
+    "@polkadot/api-derive": "$@polkadot/api",
+    "@polkadot/api-augment": "$@polkadot/api",
+    "@polkadot/api-base": "$@polkadot/api",
+    "@polkadot/rpc-augment": "$@polkadot/api",
+    "@polkadot/rpc-core": "$@polkadot/api",
+    "@polkadot/rpc-provider": "$@polkadot/api",
+    "@polkadot/types-create": "$@polkadot/api",
+    "@polkadot/types-augment": "$@polkadot/api",
+    "@polkadot/types-support": "$@polkadot/api",
+    "@polkadot/types-codec": "$@polkadot/api",
+    "@polkadot/types": "$@polkadot/api",
+    "@polkadot/types-known": "$@polkadot/api"
+  }
+}
