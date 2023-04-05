@@ -541,6 +541,8 @@ pub mod pallet {
             let parent_block_hash = Self::parent_block_hash(&block_number);
             let pending = Self::pending();
 
+            // TODO calculate commitments for global state
+
             let global_state_root = U256::zero();
             let sequencer_address = ContractAddressWrapper::default();
             let block_timestamp = Self::block_timestamp();
@@ -699,7 +701,7 @@ pub mod pallet {
                     )
                 })
                 .collect();
-
+ 
             let address_to_nonce: HashMap<ContractAddress, Nonce> = Nonces::<T>::iter()
                 .map(|(key, value)| {
                     (

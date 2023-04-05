@@ -24,6 +24,14 @@ impl CryptoHasher for PoseidonHasher {
         FieldElement::from_byte_slice_be(&u8s_from_felts(&poseidon_hash::hash_sw8(&input))).unwrap()
     }
     fn compute_hash_on_elements(_elements: &[FieldElement]) -> FieldElement {
-        todo!()
+        if _elements.is_empty() {
+            <PoseidonHasher as CryptoHasher>::hash(FieldElement::ZERO, FieldElement::ZERO)
+        } else {
+            let hash = _elements.iter().fold(FieldElement::ZERO, |a, b| <PoseidonHasher as CryptoHasher>::hash(a, *b));
+            <PoseidonHasher as CryptoHasher>::hash(
+                hash,
+                FieldElement::from_byte_slice_be(&_elements.len().to_be_bytes()).unwrap(),
+            )
+        }
     }
 }

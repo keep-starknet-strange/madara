@@ -45,3 +45,10 @@ impl StateReader for DictStateReader {
         Ok(class_hash)
     }
 }
+
+#[derive(Debug, Default)]
+pub struct ContractStateNode {
+    pub class_hash: ClassHash,
+    pub nonce: Nonce,
+    pub storage_root: StarkFelt,
+}

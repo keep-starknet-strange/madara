@@ -3,11 +3,17 @@ use alloc::vec::Vec;
 use bitvec::vec::BitVec;
 use sp_core::hexdisplay::AsBytesRef;
 use sp_core::H256;
+use starknet_api::api_core::ClassHash;
+use starknet_api::hash::StarkFelt;
 use starknet_crypto::FieldElement;
 
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
+use crate::state::ContractStateNode;
 use crate::traits::hash::CryptoHasher;
 use crate::transaction::types::{EventWrapper, Transaction};
+
+pub const STARKNET_STATE_V0: &[u8] = b"STARKNET_STATE_V0";
+pub const CONTRACT_CLASS_LEAF_V0: &[u8] = b"CONTRACT_CLASS_LEAF_V0";
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -152,4 +158,54 @@ pub fn calculate_event_hash<T: CryptoHasher>(event: &EventWrapper) -> FieldEleme
     );
     let from_address = FieldElement::from_byte_slice_be(event.from_address.as_bytes_ref()).unwrap();
     T::compute_hash_on_elements(&[from_address, keys_hash, data_hash])
+}
+
+/// Calculate the contracts tree root.
+pub fn calculate_contract_state_root<T: CryptoHasher>(contracts: &[ContractStateNode]) -> H256 {
+    let mut tree = CommitmentTree::<T>::default();
+    contracts.iter().enumerate().for_each(|(idx, contract)| {
+        let idx: u64 = idx.try_into().expect("too many contracts while calculating commitment");
+        let final_hash = calculate_contract_state_node_hash::<T>(contract);
+        tree.set(idx, final_hash);
+    });
+    H256::from_slice(&tree.commit().to_bytes_be())
+}
+
+/// Calculate the hash of a contract state node.
+fn calculate_contract_state_node_hash<T: CryptoHasher>(contract: &ContractStateNode) -> FieldElement {
+    let class_hash = FieldElement::from_byte_slice_be(contract.class_hash.0.bytes()).unwrap();
+    let storage_root = FieldElement::from_byte_slice_be(contract.storage_root.bytes()).unwrap();
+    let nonce = FieldElement::from_byte_slice_be(contract.nonce.0.bytes()).unwrap();
+    let hash_l1 = T::compute_hash_on_elements(&[class_hash, storage_root]);
+    let hash_l2 = T::compute_hash_on_elements(&[hash_l1, nonce]);
+    return T::compute_hash_on_elements(&[hash_l2, FieldElement::ZERO]);
+}
+
+/// Calculate the classes tree root.
+pub fn calculate_classes_tree_root<T: CryptoHasher>(classes: &[ClassHash]) -> H256 {
+    let mut tree = CommitmentTree::<T>::default();
+    classes.iter().enumerate().for_each(|(idx, class)| {
+        let idx: u64 = idx.try_into().expect("too many classes while calculating commitment");
+        let final_hash = calculate_contract_class_hash::<T>(class);
+        tree.set(idx, final_hash);
+    });
+    H256::from_slice(&tree.commit().to_bytes_be())
+}
+
+/// Calculate the hash of a contract class.
+fn calculate_contract_class_hash<T: CryptoHasher>(class: &ClassHash) -> FieldElement {
+    let class_hash = FieldElement::from_byte_slice_be(class.0.bytes()).unwrap();
+    T::compute_hash_on_elements(&[FieldElement::from_byte_slice_be(CONTRACT_CLASS_LEAF_V0).unwrap(), class_hash])
+}
+
+/// Calculate the global state root.
+pub fn calculate_global_state_root<T: CryptoHasher>(contract_state_root: H256, classes_root: H256) -> H256 {
+    let contract_state_root = FieldElement::from_byte_slice_be(contract_state_root.as_bytes()).unwrap();
+    let classes_root = FieldElement::from_byte_slice_be(classes_root.as_bytes()).unwrap();
+    let root = T::compute_hash_on_elements(&[
+        FieldElement::from_byte_slice_be(STARKNET_STATE_V0).unwrap(),
+        contract_state_root,
+        classes_root,
+    ]);
+    H256::from_slice(&root.to_bytes_be())
 }
