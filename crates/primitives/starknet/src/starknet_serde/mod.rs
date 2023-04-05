@@ -1,18 +1,22 @@
 //! This module contains the serialization and deserialization functions for the StarkNet types.
-use core::str::FromStr;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use blockifier::test_utils::get_contract_class;
 use frame_support::BoundedVec;
 use hex::FromHex;
+use serde::{Deserialize, Serialize};
 use sp_core::{H256, U256};
 
+use crate::alloc::string::ToString;
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
 // Deserialization and Conversion for JSON Transactions, Events, and CallEntryPoints
 /// Struct for deserializing CallEntryPoint from JSON
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DeserializeCallEntrypoint {
     /// The class hash
     pub class_hash: Option<String>,
@@ -30,8 +34,7 @@ pub struct DeserializeCallEntrypoint {
 }
 
 /// Struct for deserializing Event from JSON
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DeserializeEventWrapper {
     /// The keys (topics) of the event.
     pub keys: Vec<String>,
@@ -42,8 +45,7 @@ pub struct DeserializeEventWrapper {
 }
 
 /// Struct for deserializing Transaction from JSON
-#[derive(Debug)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DeserializeTransaction {
     /// The version of the transaction
     pub version: u8,
@@ -61,17 +63,28 @@ pub struct DeserializeTransaction {
     pub call_entrypoint: DeserializeCallEntrypoint,
 }
 
+fn remove_prefix(input: &str) -> &str {
+    if input.starts_with("0x") { &input[2..] } else { input }
+}
+
+fn string_to_h256(hex_str: &str) -> Result<H256, String> {
+    let bytes =
+        Vec::from_hex(remove_prefix(hex_str)).map_err(|e| format!("Failed to convert hex string to bytes: {:?}", e))?;
+    if bytes.len() == 32 { Ok(H256::from_slice(&bytes)) } else { Err(format!("Invalid input length: {}", bytes.len())) }
+}
+
 // Implement TryFrom trait to convert DeserializeTransaction to Transaction
 impl TryFrom<DeserializeTransaction> for Transaction {
     type Error = String;
 
     fn try_from(d: DeserializeTransaction) -> Result<Self, Self::Error> {
         let version = U256::from(d.version);
-        let hash = H256::from_str(&d.hash.as_str()).map_err(|e| format!("Invalid hash: {:?}", e))?;
+        let hash =
+            string_to_h256(&d.hash).map_err(|e| format!("Failed to convert hash hex string to H256: {:?}", e))?;
         let signature = d
             .signature
             .into_iter()
-            .map(|s| H256::from_str(&s).map_err(|e| format!("Invalid signature: {:?}", e)))
+            .map(|s| string_to_h256(&s).map_err(|e| format!("Invalid signature: {}", e)))
             .collect::<Result<Vec<H256>, String>>()?;
         let signature =
             BoundedVec::<H256, MaxArraySize>::try_from(signature).map_err(|_| "Signature exceeds maximum size")?;
@@ -83,7 +96,7 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .map_err(|e| format!("Invalid events: {:?}", e))?;
         let events =
             BoundedVec::<EventWrapper, MaxArraySize>::try_from(events).map_err(|_| "Events exceed maximum size")?;
-        let sender_address = ContractAddressWrapper::from_hex(&d.sender_address)
+        let sender_address = ContractAddressWrapper::from_hex(remove_prefix(&d.sender_address))
             .map_err(|e| format!("Invalid sender_address: {:?}", e))?;
         let nonce = U256::from(d.nonce);
         let call_entrypoint = CallEntryPointWrapper::try_from(d.call_entrypoint)?;
@@ -98,7 +111,9 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
 
     fn try_from(d: DeserializeCallEntrypoint) -> Result<Self, Self::Error> {
         let class_hash = match d.class_hash {
-            Some(hash) => Some(<[u8; 32]>::from_hex(&hash).map_err(|e| format!("Invalid class_hash: {:?}", e))?),
+            Some(hash) => {
+                Some(<[u8; 32]>::from_hex(remove_prefix(&hash)).map_err(|e| format!("Invalid class_hash: {:?}", e))?)
+            }
             None => None,
         };
 
@@ -110,24 +125,22 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
         };
 
         let entrypoint_selector = match d.entrypoint_selector {
-            Some(selector) => {
-                Some(H256::from_str(&selector).map_err(|e| format!("Invalid entrypoint_selector: {:?}", e))?)
-            }
+            Some(selector) => Some(
+                string_to_h256(&selector)
+                    .map_err(|e| format!("Failed to convert entrypoint_selector hex string to H256: {:?}", e))?,
+            ),
             None => None,
         };
 
-        let calldata: Result<Vec<H256>, String> = d
-            .calldata
-            .into_iter()
-            .map(|hex_str| H256::from_str(&hex_str).map_err(|e| format!("Invalid calldata: {:?}", e)))
-            .collect();
+        let calldata: Result<Vec<H256>, String> =
+            d.calldata.into_iter().map(|hex_str| string_to_h256(&hex_str)).collect();
         let calldata = BoundedVec::<H256, MaxArraySize>::try_from(calldata?).map_err(|_| "Exceeded max array size")?;
 
-        let storage_address =
-            <[u8; 32]>::from_hex(&d.storage_address).map_err(|e| format!("Invalid storage_address: {:?}", e))?;
+        let storage_address = <[u8; 32]>::from_hex(remove_prefix(&d.storage_address))
+            .map_err(|e| format!("Invalid storage_address: {:?}", e))?;
 
-        let caller_address =
-            <[u8; 32]>::from_hex(&d.caller_address).map_err(|e| format!("Invalid caller_address: {:?}", e))?;
+        let caller_address = <[u8; 32]>::from_hex(remove_prefix(&d.caller_address))
+            .map_err(|e| format!("Invalid caller_address: {:?}", e))?;
 
         Ok(Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address })
     }
@@ -138,16 +151,26 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
     type Error = String;
 
     fn try_from(d: DeserializeEventWrapper) -> Result<Self, Self::Error> {
-        let keys: Result<Vec<H256>, &str> =
-            d.keys.into_iter().map(|s| H256::from_str(&s).map_err(|_| "Invalid key")).collect();
+        let keys: Result<Vec<H256>, String> = d
+            .keys
+            .into_iter()
+            .map(|hex_str| {
+                string_to_h256(&hex_str).map_err(|e| format!("Failed to convert keys hex string to H256: {:?}", e))
+            })
+            .collect();
         let keys = BoundedVec::<H256, MaxArraySize>::try_from(keys?).map_err(|_| "Exceeded max array size")?;
 
-        let data: Result<Vec<H256>, &str> =
-            d.data.into_iter().map(|s| H256::from_str(s.as_str()).map_err(|_| "Invalid data")).collect();
+        let data: Result<Vec<H256>, String> = d
+            .data
+            .into_iter()
+            .map(|hex_str| {
+                string_to_h256(&hex_str).map_err(|e| format!("Failed to convert data hex string to H256: {:?}", e))
+            })
+            .collect();
         let data = BoundedVec::<H256, MaxArraySize>::try_from(data?).map_err(|_| "Exceeded max array size")?;
 
-        let from_address =
-            H256::from_str(&d.from_address.as_str()).map_err(|_| "Invalid caller_address")?.to_fixed_bytes();
+        let from_address: [u8; 32] = <[u8; 32]>::from_hex(remove_prefix(&d.from_address))
+            .map_err(|e| format!("Failed to convert from_address hex string to bytes: {:?}", e))?;
 
         Ok(Self { keys, data, from_address })
     }

@@ -36,7 +36,7 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 	"max-encoded-len",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
-serde = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.95", default-features = false }
 bitvec = { workspace = true, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
@@ -51,7 +51,6 @@ default = ["std"]
 std = [
 	"scale-codec/std",
 	"scale-info/std",
-	"serde",
 	"bitvec/std",
 	# Starknet
 	"starknet-crypto/std",

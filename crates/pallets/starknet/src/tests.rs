@@ -6,8 +6,9 @@ use hex::FromHex;
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_serde::transaction_from_json;
-use mp_starknet::transaction::types::EventWrapper;
+use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 
 use crate::mock::*;

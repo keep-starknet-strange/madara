@@ -127,26 +127,6 @@ fn test_invalid_format_for_address() {
     let transaction = transaction_from_json(json_content, &[]);
     println!("{:?}", transaction);
     assert!(transaction.is_err(), "Expected an error due to invalid format for Address (invalid hex)");
-
-    // Not 32 bytes length
-    let json_content: &str = r#"{
-      "version": 1,
-      "hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "signature": [],
-      "events": [],
-      "sender_address": "0x025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918",
-      "nonce": 0,
-      "call_entrypoint": {
-        "class_hash": "025ec026985a3bf8a0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918",
-        "entrypoint_type": "External",
-        "calldata": [],
-        "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
-      }
-    }"#;
-    let transaction = transaction_from_json(json_content, &[]);
-    println!("{:?}", transaction);
-    assert!(transaction.is_err(), "Expected an error due to invalid format for Address (not 32 bytes)");
 }
 
 #[test]
@@ -168,6 +148,7 @@ fn test_missing_optional_field_no_error() {
     }"#;
 
     let transaction = transaction_from_json(json_content, &[]);
+    println!("${:?}", transaction);
     assert!(transaction.is_ok(), "Expected no error because class_hash in call_entrypoint is optional");
 }
 
