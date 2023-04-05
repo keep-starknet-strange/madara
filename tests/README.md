@@ -38,7 +38,7 @@ npm run test-with-logs
 
 ## Adding smoke tests
 
-Smoke test should only contains consistency/state checks.
+Smoke test should only contain consistency/state checks.
 
 Testing the consistency is usually simple:
 
