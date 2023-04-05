@@ -1,7 +1,7 @@
 export const BASE_PATH = process.env.BASE_PATH;
 export const CUSTOM_SPEC_PATH = process.env.CUSTOM_SPEC_PATH;
 
-export const DISPLAY_LOG = process.env.MOONBEAM_LOG || false;
+export const DISPLAY_LOG = process.env.MADARA_LOG || false;
 export const MADARA_LOG = process.env.MADARA_LOG || "info";
 export const DEBUG_MODE = process.env.DEBUG_MODE || false;
 
@@ -12,8 +12,7 @@ export const BINARY_PATH =
 export const OVERRIDE_RUNTIME_PATH =
   process.env["OVERRIDE_RUNTIME_PATH"] || undefined;
 export const SPAWNING_TIME = 20000;
-export const ETHAPI_CMD = process.env.ETHAPI_CMD || "";
 export const WASM_RUNTIME_OVERRIDES = process.env.WASM_RUNTIME_OVERRIDES || "";
 
-// Weight per gas mapping
+// Weight per step mapping
 export const WEIGHT_PER_STEP = 1_000_000_000_000n / 40_000_000n;

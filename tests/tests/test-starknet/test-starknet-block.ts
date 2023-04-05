@@ -7,8 +7,8 @@ import { describeDevMadara } from "../../util/setup-dev-tests";
 
 
 describeDevMadara("Pallet Starknet - block", (context) => {
-  it("should work", async function () {
+  it("should connect to local node", async function () {
     const rdy = context.polkadotApi.isConnected;
-    console.log(rdy);
+    expect(rdy).to.be.true;
   });
 });
