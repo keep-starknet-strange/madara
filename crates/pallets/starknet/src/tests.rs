@@ -8,6 +8,7 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
+use scale_codec::Encode;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
@@ -105,17 +106,10 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
-<<<<<<< HEAD
-                    H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
-                    H256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
-=======
-                    U256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
+                    U256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
                     U256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
                     U256::one(), // Length
                     U256::from(25), // Value
->>>>>>> 90d3b46 (refacto(starknet): change calldata to u256)
                 ],
                 contract_address_bytes,
                 contract_address_bytes,
@@ -171,23 +165,16 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
-<<<<<<< HEAD
-                    H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
-                    H256::from_str("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(), // Selector "emit_event"
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Length
-=======
-                    U256::from_str("0x0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap(), // Contract address
+
+                    U256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
                     U256::from_str("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(), // Selector
-                    U256::zero(), // Length
-                    // H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Value
->>>>>>> 90d3b46 (refacto(starknet): change calldata to u256)
+                    U256::zero(),
                 ],
                 contract_address_bytes,
                 contract_address_bytes,
             ),
             None,
         );
-
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
 
         System::assert_last_event(
@@ -497,7 +484,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         let target_contract_address =
-            U256::from_str("0624EBFb99865079bd58CFCFB925B6F5Ce940D6F6e41E118b8A72B7163fB435c").unwrap();
+            U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
         // test_storage_read_write
         let target_selector =
             U256::from_str("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap();
@@ -532,6 +519,9 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let mut storage_var_selector_bytes = [0_u8; 32];
         storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
-        assert_eq!(Starknet::storage((contract_address_bytes, H256::from(storage_var_selector_bytes))), U256::one());
+        assert_eq!(
+            Starknet::storage((contract_address_bytes, H256::from_slice(&storage_var_selector_bytes))),
+            U256::one()
+        );
     });
 }
