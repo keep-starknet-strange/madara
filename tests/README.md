@@ -79,7 +79,7 @@ DEBUG=smoke:* WSS_URL=wss://localhost:9944 npm run smoke-test
 
 You can also add the node's logs to the output using the `MADARA_LOG` env variable. Ex:
 
-```
+```sh
 MADARA_LOG="warn,rpc=trace" npm run test
 ```
 
