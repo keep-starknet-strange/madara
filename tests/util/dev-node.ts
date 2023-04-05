@@ -94,7 +94,7 @@ export async function startMadaraDevNode(
     `--rpc-port=${rpcPort}`,
     `--ws-port=${wsPort}`,
     `--tmp`,
-    "--rpc-methods=unsafe",
+    '--rpc-methods=unsafe'
   ];
   if (WASM_RUNTIME_OVERRIDES != "") {
     args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
@@ -162,6 +162,7 @@ export async function startMadaraDevNode(
         resolve();
       }
     };
+
     runningNode.stderr.on("data", onData);
     runningNode.stdout.on("data", onData);
   });
