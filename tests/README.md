@@ -18,7 +18,7 @@ Each group will start a dev service with the
 
 ## Installation
 
-```
+```sh
 npm install
 ```
 
