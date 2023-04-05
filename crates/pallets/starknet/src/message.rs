@@ -76,7 +76,7 @@ impl Message {
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
-            calldata.push(H256::from_slice(&Self::decode_hex_le(&val)?))
+            calldata.push(U256::from_big_endian(&Self::decode_hex_le(&val)?))
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let call_entrypoint = CallEntryPointWrapper {
@@ -131,7 +131,7 @@ mod test {
         let sender_address = H256::from_low_u64_be(1).to_fixed_bytes();
         let hex = "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned();
         let test_message: Message =
-            Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex.clone() };
+            Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         let expected_tx = Transaction {
             version: U256::default(),
             hash: H256::default(),
@@ -143,7 +143,7 @@ mod test {
                 class_hash: None,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
                 entrypoint_selector: Some(H256::from_low_u64_be(1)),
-                calldata: bounded_vec![H256::from_low_u64_be(1), H256::from_low_u64_be(1)],
+                calldata: bounded_vec![U256::from(1), U256::from(1)],
                 storage_address: H256::from_low_u64_be(1).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
@@ -156,14 +156,14 @@ mod test {
     fn test_try_into_transaction_incorrect_topic_should_fail() {
         let hex = "0x1".to_owned();
         let test_message: Message =
-            Message { topics: vec![hex.clone(), hex.clone(), "foo".to_owned(), hex.clone()], data: hex.clone() };
+            Message { topics: vec![hex.clone(), hex.clone(), "foo".to_owned(), hex.clone()], data: hex };
         assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
     }
     #[test]
     fn test_try_into_transaction_empty_data_should_fail() {
         let hex = "0x1".to_owned();
         let test_message: Message =
-            Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: "".to_owned() };
+            Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex], data: "".to_owned() };
         assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::EmptyData);
     }
 }
