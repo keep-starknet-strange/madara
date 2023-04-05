@@ -69,7 +69,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
         let transaction =
-            Transaction { version: U256::from(1), sender_address: contract_address_bytes, ..Transaction::default() };
+            Transaction { version: 1_u8, sender_address: contract_address_bytes, ..Transaction::default() };
 
         assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::AccountNotDeployed);
     })
@@ -91,7 +91,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
             bounded_vec![
                 H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
@@ -142,7 +142,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
             bounded_vec![
                 H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
@@ -200,7 +200,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_then_it_works() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
@@ -243,7 +243,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
@@ -291,7 +291,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
@@ -335,7 +335,7 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
@@ -378,7 +378,7 @@ fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
@@ -425,7 +425,7 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
@@ -474,7 +474,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
             H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
 
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
