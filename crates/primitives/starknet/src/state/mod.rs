@@ -1,11 +1,15 @@
+use alloc::sync::Arc;
+
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::{ContractClassMapping, ContractStorageKey};
+use blockifier::state::cached_state::ContractStorageKey;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::stdlib::collections::HashMap;
+
+type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]
@@ -32,10 +36,10 @@ impl StateReader for DictStateReader {
         Ok(nonce)
     }
 
-    fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
+    fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
         let contract_class = self.class_hash_to_class.get(class_hash).cloned();
         match contract_class {
-            Some(contract_class) => Ok(contract_class),
+            Some(contract_class) => Ok(Arc::new(contract_class)),
             None => Err(StateError::UndeclaredClassHash(*class_hash)),
         }
     }
