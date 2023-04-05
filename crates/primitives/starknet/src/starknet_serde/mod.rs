@@ -67,12 +67,12 @@ impl TryFrom<DeserializeTransaction> for Transaction {
 
     fn try_from(d: DeserializeTransaction) -> Result<Self, Self::Error> {
         let version = U256::from(d.version);
-        let hash = H256::from_str(&d.hash.as_str()).map_err(|_| "Invalid hash")?;
+        let hash = H256::from_str(&d.hash.as_str()).map_err(|e| format!("Invalid hash: {:?}", e))?;
         let signature = d
             .signature
             .into_iter()
-            .map(|s| H256::from_str(&s).map_err(|_| "Invalid signature"))
-            .collect::<Result<Vec<H256>, &str>>()?;
+            .map(|s| H256::from_str(&s).map_err(|e| format!("Invalid signature: {:?}", e)))
+            .collect::<Result<Vec<H256>, String>>()?;
         let signature =
             BoundedVec::<H256, MaxArraySize>::try_from(signature).map_err(|_| "Signature exceeds maximum size")?;
         let events = d
@@ -80,11 +80,11 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .into_iter()
             .map(EventWrapper::try_from)
             .collect::<Result<Vec<EventWrapper>, String>>()
-            .map_err(|_| "Invalid events")?;
+            .map_err(|e| format!("Invalid events: {:?}", e))?;
         let events =
             BoundedVec::<EventWrapper, MaxArraySize>::try_from(events).map_err(|_| "Events exceed maximum size")?;
-        let sender_address =
-            ContractAddressWrapper::from_hex(&d.sender_address).map_err(|_| "Invalid sender address")?;
+        let sender_address = ContractAddressWrapper::from_hex(&d.sender_address)
+            .map_err(|e| format!("Invalid sender_address: {:?}", e))?;
         let nonce = U256::from(d.nonce);
         let call_entrypoint = CallEntryPointWrapper::try_from(d.call_entrypoint)?;
 
@@ -98,7 +98,7 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
 
     fn try_from(d: DeserializeCallEntrypoint) -> Result<Self, Self::Error> {
         let class_hash = match d.class_hash {
-            Some(hash) => Some(<[u8; 32]>::from_hex(&hash).map_err(|_| "Invalid class_hash")?),
+            Some(hash) => Some(<[u8; 32]>::from_hex(&hash).map_err(|e| format!("Invalid class_hash: {:?}", e))?),
             None => None,
         };
 
@@ -110,17 +110,24 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
         };
 
         let entrypoint_selector = match d.entrypoint_selector {
-            Some(selector) => Some(H256::from_str(&selector).map_err(|_| "Invalid entrypoint_selector")?),
+            Some(selector) => {
+                Some(H256::from_str(&selector).map_err(|e| format!("Invalid entrypoint_selector: {:?}", e))?)
+            }
             None => None,
         };
 
-        let calldata: Result<Vec<H256>, &str> =
-            d.calldata.into_iter().map(|hex_str| H256::from_str(&hex_str).map_err(|_| "Invalid calldata")).collect();
+        let calldata: Result<Vec<H256>, String> = d
+            .calldata
+            .into_iter()
+            .map(|hex_str| H256::from_str(&hex_str).map_err(|e| format!("Invalid calldata: {:?}", e)))
+            .collect();
         let calldata = BoundedVec::<H256, MaxArraySize>::try_from(calldata?).map_err(|_| "Exceeded max array size")?;
 
-        let storage_address = <[u8; 32]>::from_hex(&d.storage_address).map_err(|_| "Invalid storage_address")?;
+        let storage_address =
+            <[u8; 32]>::from_hex(&d.storage_address).map_err(|e| format!("Invalid storage_address: {:?}", e))?;
 
-        let caller_address = <[u8; 32]>::from_hex(&d.caller_address).map_err(|_| "Invalid caller_address")?;
+        let caller_address =
+            <[u8; 32]>::from_hex(&d.caller_address).map_err(|e| format!("Invalid caller_address: {:?}", e))?;
 
         Ok(Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address })
     }
@@ -155,16 +162,10 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
 /// field of the resulting `Transaction` object. Otherwise, the `contract_class` field will be set
 /// to `None`.
 pub fn transaction_from_json(json_str: &str, contract_content: &'static [u8]) -> Result<Transaction, String> {
-    let deserialized_transaction: DeserializeTransaction = serde_json::from_str(json_str).map_err(|e| {
-        let error_message = format!("Failed to convert deserialized transaction: {:?}", e);
-        println!("{}", error_message);
-        error_message
-    })?;
-    let mut transaction = Transaction::try_from(deserialized_transaction).map_err(|e| {
-        let error_message = format!("Failed to convert deserialized transaction: {:?}", e);
-        println!("{}", error_message);
-        error_message
-    })?;
+    let deserialized_transaction: DeserializeTransaction =
+        serde_json::from_str(json_str).map_err(|e| format!("Failed to convert deserialized transaction: {:?}", e))?;
+    let mut transaction = Transaction::try_from(deserialized_transaction)
+        .map_err(|e| format!("Failed to convert deserialized transaction: {:?}", e))?;
 
     if !contract_content.is_empty() {
         transaction.contract_class = Some(ContractClassWrapper::from(get_contract_class(contract_content)));
