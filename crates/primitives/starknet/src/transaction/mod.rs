@@ -247,6 +247,15 @@ impl Transaction {
     }
 
     /// Verifies if a transaction has the correct version
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to execute
+    /// * `tx_type` - The type of the transaction to execute
+    ///
+    /// # Returns
+    ///
+    /// * `TransactionExecutionResultWrapper<()>` - The result of the transaction version validation
     pub fn verify_tx_version(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<()> {
         let version = match StarkFelt::new(U256::from(self.version).into()) {
             Ok(felt) => TransactionVersion(felt),
