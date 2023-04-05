@@ -3,11 +3,13 @@
 const { Keyring } = require("@polkadot/keyring");
 const fibJson = require("../../pallets/cairo/src/execution/samples/fib.json");
 const addJson = require("../../pallets/cairo/src/execution/samples/add.json");
+const { transfer, deploy, declare, initialize } = require("../../tests/util/starknet.ts");
 
 module.exports = {
   rpcMethods,
   runCairoProgram,
   executeCairoProgram,
+  executeERC20Transfer,
 };
 
 function rpcMethods(userContext, events, done) {
@@ -54,6 +56,49 @@ async function executeCairoProgram(userContext, events, done) {
     0
   );
   await extrisinc.signAndSend(user, { nonce: -1 });
+
+  return done();
+}
+
+async function executeERC20Transfer(userContext, events, done) {
+  const { accountName, deployed } = userContext.vars;
+
+  const keyring = new Keyring({ type: "sr25519" });
+  const user = keyring.addFromUri(`//${accountName}`);
+
+  const contractAddress =
+    "0x0000000000000000000000000000000000000000000000000000000000000101";
+  const amount =
+    "0x0000000000000000000000000000000000000000000000000000000000000001";
+  const mintAmount =
+    "0x0000000000000000000000000000000000000000000000000000000000001000";
+  const tokenClassHash =
+    "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+
+
+  // Setup contract if it doesn't exist
+  if (!deployed[tokenAddress]) {
+    await declare(userContext.api, user, contractAddress, tokenClassHash);
+
+    const tokenAddress = await deploy(userContext.api, user, contractAddress, tokenClassHash);
+
+    await initialize(userContext.api, user, contractAddress, tokenAddress);
+
+    await mint(userContext.api, user, contractAddress, tokenAddress, mintAmount);
+
+    // Update userContext deployed dict
+    userContext.vars.deployed = {...userContext.vars.deployed, [tokenAddress]: true};
+  }
+
+
+  await transfer(
+    userContext.api,
+    user,
+    contractAddress,
+    tokenAddress,
+    contractAddress,
+    amount
+  );
 
   return done();
 }
