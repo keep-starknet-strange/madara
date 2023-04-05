@@ -119,7 +119,7 @@ scale-codec = { package = "parity-scale-codec", version = "3.0.0", default-featu
 scale-info = { version = "2.5.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.17", default-features = false }
-hex = { version = "0.4.3" }
+hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
 clap = { version = "4.2.1", default-features = false }
