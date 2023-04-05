@@ -265,19 +265,20 @@
 <a href="#265" id="265">265</a>
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 </span><span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>blockifier::execution::entry_point::CallEntryPoint;
+<span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallType};
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>serde_json::{from_slice, to_string};
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
+<span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 <span class="kw">use </span>starknet_api::transaction::Calldata;
 
@@ -517,6 +518,7 @@
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.storage_address).unwrap()).unwrap(),
             caller_address: ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.caller_address).unwrap()).unwrap(),
+            call_type: CallType::Call,
         }
     }
 }

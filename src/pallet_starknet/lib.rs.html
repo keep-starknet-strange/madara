@@ -800,6 +800,27 @@
 <a href="#800" id="800">800</a>
 <a href="#801" id="801">801</a>
 <a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -860,23 +881,21 @@
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
     <span class="kw">pub extern crate </span>alloc;
-    <span class="kw">pub use </span>alloc::string::{String, ToString};
-    <span class="kw">pub use </span>alloc::vec::Vec;
-    <span class="kw">pub use </span>alloc::{format, vec};
+    <span class="kw">use </span>alloc::str::from_utf8;
+    <span class="kw">use </span>alloc::string::{String, ToString};
+    <span class="kw">use </span>alloc::vec;
+    <span class="kw">use </span>alloc::vec::Vec;
 
+    <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
     <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
-    <span class="kw">use </span>blockifier::state::cached_state::{CachedState, ContractClassMapping, ContractStorageKey};
+    <span class="kw">use </span>blockifier::state::cached_state::{CachedState, ContractStorageKey};
     <span class="kw">use </span>blockifier::state::state_api::State;
-    <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
-    <span class="kw">use </span>frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    <span class="kw">use </span>frame_support::traits::{OriginTrait, Time};
-    <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>blockifier::test_utils::DictStateReader;
     <span class="kw">use </span>mp_digest_log::{PostLog, MADARA_ENGINE_ID};
     <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader};
     <span class="kw">use </span>mp_starknet::crypto::commitment;
     <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
     <span class="kw">use </span>mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
-    <span class="kw">use </span>mp_starknet::state::DictStateReader;
     <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
     <span class="kw">use </span>mp_starknet::transaction::types::{
@@ -891,11 +910,17 @@
     <span class="kw">use </span>starknet_api::hash::StarkFelt;
     <span class="kw">use </span>starknet_api::state::{StateDiff, StorageKey};
     <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
+    <span class="kw">use </span>starknet_api::transaction::EventContent;
     <span class="kw">use </span>starknet_api::StarknetApiError;
     <span class="kw">use </span>types::{EthBlockNumber, OffchainWorkerError};
+    <span class="kw">type </span>ContractClassMapping = HashMap&lt;ClassHash, ContractClass&gt;;
+
+    <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>frame_support::sp_runtime::offchain::storage::StorageValueRef;
+    <span class="kw">use </span>frame_support::traits::{OriginTrait, Time};
+    <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::alloc::str::from_utf8;
     <span class="kw">use </span><span class="kw">crate</span>::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
     <span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
@@ -1098,7 +1123,7 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>add_invoke_transaction(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>add_invoke_transaction(_origin: OriginFor&lt;T&gt;, <span class="kw-2">mut </span>transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -1106,10 +1131,15 @@
 
             <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">match </span>transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>) {
-                <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="self">Self</span>::emit_events(v.as_ref().unwrap()).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
-                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap_or_default());
+            <span class="kw">let </span>call_info = transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>);
+            <span class="kw">match </span>call_info {
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>v)) =&gt; {
+                    <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>v, <span class="kw-2">&amp;mut </span>transaction).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
+                }
+                <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
+                    <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: no call info while it was expected&quot;</span>);
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
@@ -1425,27 +1455,39 @@
         /// # Returns
         ///
         /// The result of the operation.
-        </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;</span>CallInfo) -&gt; <span class="prelude-ty">Result</span>&lt;(), EventError&gt; {
-            <span class="comment">// TODO: loop through all events/inner_calls
-            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(inner_call) = call_info.inner_calls.get(<span class="number">0</span>) {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(tx_event) = inner_call.execution.events.get(<span class="number">0</span>) {
-                    <span class="macro">log!</span>(info, <span class="string">&quot;Transaction event: {:?}&quot;</span>, tx_event.event.clone());
-                    <span class="kw">let </span>event = StarknetEventType::builder()
-                        .with_event_content(tx_event.event.clone())
-                        .with_from_address(inner_call.call.storage_address)
-                        .build();
-                    <span class="kw">match </span>event {
-                        <span class="prelude-val">Ok</span>(event) =&gt; {
-                            <span class="self">Self</span>::deposit_event(Event::StarknetEvent(event));
-                        }
-                        <span class="prelude-val">Err</span>(e) =&gt; {
-                            <span class="macro">log!</span>(error, <span class="string">&quot;Error parsing event: {:?}&quot;</span>, e);
-                            <span class="kw">return </span><span class="prelude-val">Err</span>(e);
-                        }
-                    }
-                }
-            }
+        </span><span class="attr">#[inline(always)]
+        </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;mut </span>CallInfo, transaction: <span class="kw-2">&amp;mut </span>Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(), EventError&gt; {
+            call_info.inner_calls.iter_mut().try_for_each(|inner_call: <span class="kw-2">&amp;mut </span>CallInfo| {
+                inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+                inner_call.execution.events.iter().try_for_each(|ordered_event| {
+                    <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, inner_call.call.storage_address, transaction)
+                })
+            })
+        }
 
+        <span class="doccomment">/// Emit an event from the call info in substrate.
+        ///
+        /// # Arguments
+        ///
+        /// * `event` - The Starknet event.
+        /// * `from_address` - The contract address that emitted the event.
+        ///
+        /// # Error
+        ///
+        /// Returns an error if the event construction fails.
+        </span><span class="attr">#[inline(always)]
+        </span><span class="kw">fn </span>emit_event(
+            event: <span class="kw-2">&amp;</span>EventContent,
+            from_address: ContractAddress,
+            transaction: <span class="kw-2">&amp;mut </span>Transaction,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), EventError&gt; {
+            <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction event: {:?}&quot;</span>, event);
+            <span class="kw">let </span>sn_event = StarknetEventType::builder()
+                .with_event_content(event.clone())
+                .with_from_address(from_address)
+                .build()<span class="question-mark">?</span>;
+            transaction.events.try_push(sn_event.clone()).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>;
+            <span class="self">Self</span>::deposit_event(Event::StarknetEvent(sn_event));
             <span class="prelude-val">Ok</span>(())
         }
 
@@ -1460,7 +1502,7 @@
         /// Returns an error if it fails to apply the state diff of newly deployed contracts.
         </span><span class="kw">pub fn </span>apply_state_diffs(state: <span class="kw-2">&amp;</span>CachedState&lt;DictStateReader&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), StateDiffError&gt; {
             <span class="comment">// Get all the state diffs
-            </span><span class="kw">let </span>StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces } =
+            </span><span class="kw">let </span>StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
                 state.to_state_diff();
             <span class="comment">// Store the newly deployed contracts in substrate storage.
             </span>deployed_contracts.iter().try_for_each(|(address, class_hash)| {

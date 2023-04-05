@@ -123,6 +123,8 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -228,6 +230,8 @@
     </span>InvalidData,
     <span class="doccomment">/// Provided from address is invalid.
     </span>InvalidFromAddress,
+    <span class="doccomment">/// Too many events
+    </span>TooManyEvents,
 }
 
 <span class="doccomment">/// Error enum wrapper for state diffs.

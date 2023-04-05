@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Call","Error","Event"],"externcrate":["alloc"],"macro":["format","vec"],"mod":["dispatchables","storage_types","vec"],"struct":["GenesisConfig","Pallet","String","Vec"],"trait":["Config","ToString"],"type":["Module"]};
+window.SIDEBAR_ITEMS = {"enum":["Call","Error","Event"],"externcrate":["alloc"],"mod":["dispatchables","storage_types"],"struct":["GenesisConfig","Pallet"],"trait":["Config"],"type":["Module"]};

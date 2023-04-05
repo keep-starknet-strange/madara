@@ -153,6 +153,7 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
@@ -238,17 +239,18 @@
 
 <span class="doccomment">/// Calculate transaction commitment hash value.
 ///
-/// The transaction commitment is the root of the Patricia Merkle tree with height 64
-/// constructed by adding the (transaction_index, transaction_hash_with_signature)
-/// key-value pairs to the tree and computing the root hash.
+/// The event commitment is the root of the Patricia Merkle tree with height 64
+/// constructed by adding the event hash
+/// (see https://docs.starknet.io/documentation/architecture_and_concepts/Events/starknet-events/#event_hash)
+/// to the tree and computing the root hash.
 ///
 /// # Arguments
 ///
-/// * `transactions` - The transactions to get the root from.
+/// * `transactions` - The transactions to get the events from.
 ///
 /// # Returns
 ///
-/// The merkle root of the merkle tree built from the transactions.
+/// The merkle root of the merkle tree built from the transactions and the number of events.
 </span><span class="kw">pub fn </span>calculate_event_commitment&lt;T: CryptoHasher&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction]) -&gt; (H256, u128) {
     <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;T&gt;::default();
     <span class="kw">let </span><span class="kw-2">mut </span>len = <span class="number">0_u64</span>;
