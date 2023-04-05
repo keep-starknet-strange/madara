@@ -2,6 +2,7 @@ import "@madara/api-augment";
 import { u8aToHex } from "@polkadot/util";
 
 import { expect } from "chai";
+import { jumpBlocks } from "../../util/block";
 
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { declare, deploy, initialize } from "../../util/starknet";
@@ -20,11 +21,29 @@ describeDevMadara("Pallet Starknet - block", (context) => {
   });
 
   it("should declare a new contract class", async function () {
-    await declare(context.polkadotApi, context.alice, contractAddress, tokenClassHash);
+    await declare(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      tokenClassHash
+    );
   });
 
   it("should declare then deploy", async function () {
-    await declare(context.polkadotApi, context.alice, contractAddress, tokenClassHash);
-    await deploy(context.polkadotApi, context.alice, contractAddress, tokenClassHash);
+    await declare(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      tokenClassHash
+    );
+
+    await jumpBlocks(context, 1);
+
+    await deploy(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      tokenClassHash
+    );
   });
 });
