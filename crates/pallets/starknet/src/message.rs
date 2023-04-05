@@ -43,7 +43,7 @@ impl Message {
     /// # Returns
     ///
     /// A fixed size byte slice.
-    pub fn decode_hex_le(s: &str) -> Result<[u8; 32], OffchainWorkerError> {
+    pub fn decode_hex_be(s: &str) -> Result<[u8; 32], OffchainWorkerError> {
         let s = s.trim_start_matches("0x");
         let s = if s.len() % 2 != 0 { format!("0{:}", s) } else { s.to_owned() };
         let mut res = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -61,9 +61,9 @@ impl Message {
             return Err(OffchainWorkerError::EmptyData);
         }
         // L2 contract to call.
-        let sender_address = Self::decode_hex_le(&self.topics[2])?;
+        let sender_address = Self::decode_hex_be(&self.topics[2])?;
         // Function of the contract to call.
-        let selector = H256::from_slice(&Self::decode_hex_le(&self.topics[3])?);
+        let selector = H256::from_slice(&Self::decode_hex_be(&self.topics[3])?);
         // Add the from address here so it's directly in the calldata.
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
             .chars()
@@ -76,7 +76,7 @@ impl Message {
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
-            calldata.push(U256::from_big_endian(&Self::decode_hex_le(&val)?))
+            calldata.push(U256::from_big_endian(&Self::decode_hex_be(&val)?))
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let call_entrypoint = CallEntryPointWrapper {
@@ -116,7 +116,7 @@ mod test {
     #[test_case("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", true, Some([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255]))]
     #[test_case("foo", false, None)]
     fn test_decode_hex(value: &str, should_success: bool, result: Option<[u8; 32]>) {
-        let res = Message::decode_hex_le(value);
+        let res = Message::decode_hex_be(value);
         if should_success {
             assert!(res.is_ok());
             pretty_assertions::assert_eq!(res.unwrap(), result.unwrap())
