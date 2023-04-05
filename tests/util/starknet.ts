@@ -1,14 +1,96 @@
 import "@madara/api-augment";
 import { ApiPromise } from "@polkadot/api";
+import { SubmittableExtrinsic } from "@polkadot/api/types";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { ISubmittableResult } from "@polkadot/types/types";
 import { u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
+
+export async function sendTransaction(
+  api: ApiPromise,
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
+  sender: KeyringPair
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let unsubscribe;
+    let timeout;
+    let transaction_success_event = false;
+    let block_hash;
+    const SPAWNING_TIME = 500000;
+
+    transaction
+      .signAndSend(
+        sender,
+        { nonce: -1 },
+        async ({ events = [], status, dispatchError }) => {
+          console.log(`Current status is ${status.type}`);
+
+          // status would still be set, but in the case of error we can shortcut
+          // to just check it (so an error would indicate InBlock or Finalized)
+          if (dispatchError) {
+            if (dispatchError.isModule) {
+              // for module errors, we have the section indexed, lookup
+              const decoded = api.registry.findMetaError(
+                dispatchError.asModule
+              );
+              const { docs, name, section } = decoded;
+
+              reject(Error(`${section}.${name}: ${docs.join(" ")}`));
+            } else {
+              // Other, CannotLookup, BadOrigin, no extra info
+              reject(Error(dispatchError.toString()));
+            }
+          }
+
+          if (status.isInBlock) {
+            block_hash = status.asInBlock.toHex();
+            console.log("Included at block hash", block_hash);
+            console.log("Events:");
+
+            events.forEach(({ event: { data, method, section }, phase }) => {
+              console.log(
+                "\t",
+                phase.toString(),
+                `: ${section}.${method}`,
+                data.toString()
+              );
+
+              if (section == "system" && method == "ExtrinsicSuccess") {
+                transaction_success_event = true;
+              }
+            });
+          }
+
+          if (transaction_success_event) {
+            if (unsubscribe) {
+              unsubscribe();
+            }
+
+            clearTimeout(timeout);
+            resolve(block_hash);
+          }
+        }
+      )
+      .then((unsub) => {
+        unsubscribe = unsub;
+      })
+      .catch((error) => {
+        console.error(error);
+        reject(error);
+      });
+
+    timeout = setTimeout(() => {
+      reject(new Error("Transaction timeout"));
+    }, SPAWNING_TIME);
+  });
+}
 
 export async function declare(
   api: ApiPromise,
   user: any,
   contractAddress: string,
   tokenClassHash: string
-): Promise<string | undefined> {
+): Promise<string> {
   const tx_declare = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
@@ -36,16 +118,7 @@ export async function declare(
 
   const extrisinc_declare = api.tx.starknet.addDeclareTransaction(tx_declare);
 
-  try {
-    const signedTxDeclare = await extrisinc_declare.signAsync(user, {
-      nonce: -1,
-    });
-    const resultDeclare = await signedTxDeclare.send();
-    return resultDeclare.toHuman()?.toString();
-  } catch (error) {
-    console.error("Eror while declaring : ", error);
-    return;
-  }
+  return sendTransaction(api, extrisinc_declare, user);
 }
 
 export async function deploy(

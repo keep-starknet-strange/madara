@@ -14,7 +14,7 @@ echo "Installing Packages"
 npm ci
 
 echo "Starting madara node"
-../target/release/madara --tmp --chain=madara-local --rpc-port=9933 &> /tmp/node-start.log &
+../target/release/madara --tmp --chain=local --rpc-port=9933 &> /tmp/node-start.log &
 PID=$!
 
 echo "Waiting node...(5s)"
