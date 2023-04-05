@@ -20,7 +20,7 @@
     },
     "test": {
       "patterns": [
-        "../target/release/moonbeam",
+        "../target/release/madara",
         "./tests/**"
       ],
       "extensions": "ts,html,scss",
@@ -52,7 +52,6 @@
   "license": "ISC",
   "dependencies": {
     "@metamask/eth-sig-util": "^4.0.1",
-    "@moonbeam-network/api-augment": "^0.2201.0",
     "@polkadot/api": "^10.1.4",
     "@polkadot/api-augment": "^10.1.4",
     "@polkadot/apps-config": "^0.122.2",
