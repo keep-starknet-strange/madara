@@ -146,33 +146,12 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
-<a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
-<a href="#151" id="151">151</a>
-<a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
-<a href="#157" id="157">157</a>
-<a href="#158" id="158">158</a>
-<a href="#159" id="159">159</a>
-<a href="#160" id="160">160</a>
-<a href="#161" id="161">161</a>
-<a href="#162" id="162">162</a>
-<a href="#163" id="163">163</a>
-<a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
+<span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
 <span class="kw">use </span>sp_core::{H256, U256};
 
-<span class="kw">use </span><span class="kw">crate</span>::pallet::alloc::borrow::ToOwned;
 <span class="kw">use </span><span class="kw">crate</span>::pallet::alloc::format;
 <span class="kw">use </span><span class="kw">crate</span>::pallet::alloc::string::String;
 <span class="kw">use </span><span class="kw">crate</span>::pallet::alloc::vec::Vec;
@@ -204,25 +183,6 @@
 }
 
 <span class="kw">impl </span>Message {
-    <span class="doccomment">/// Converts a hex `String` into a byte slice little endian.
-    ///
-    /// # Arguments
-    /// * `s` - The hex string
-    ///
-    /// # Returns
-    ///
-    /// A fixed size byte slice.
-    </span><span class="kw">pub fn </span>decode_hex_le(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], OffchainWorkerError&gt; {
-        <span class="kw">let </span>s = s.trim_start_matches(<span class="string">&quot;0x&quot;</span>);
-        <span class="kw">let </span>s = <span class="kw">if </span>s.len() % <span class="number">2 </span>!= <span class="number">0 </span>{ <span class="macro">format!</span>(<span class="string">&quot;0{:}&quot;</span>, s) } <span class="kw">else </span>{ s.to_owned() };
-        <span class="kw">let </span><span class="kw-2">mut </span>res = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>];
-        <span class="kw">for </span>(id, i) <span class="kw">in </span>(<span class="number">0</span>..s.len()).step_by(<span class="number">2</span>).enumerate() {
-            res[id] = u8::from_str_radix(<span class="kw-2">&amp;</span>s[i..i + <span class="number">2</span>], <span class="number">16</span>).map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?</span>;
-        }
-
-        <span class="prelude-val">Ok</span>(res)
-    }
-
     <span class="doccomment">/// Converts a `Message` into a transaction object.
     </span><span class="kw">pub fn </span>try_into_transaction(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, OffchainWorkerError&gt; {
         <span class="comment">// Data at least contains a nonce and at some point the fees.
@@ -230,9 +190,13 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::EmptyData);
         }
         <span class="comment">// L2 contract to call.
-        </span><span class="kw">let </span>sender_address = <span class="self">Self</span>::decode_hex_le(<span class="kw-2">&amp;</span><span class="self">self</span>.topics[<span class="number">2</span>])<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>sender_address = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="self">self</span>.topics[<span class="number">2</span>].trim_start_matches(<span class="string">&quot;0x&quot;</span>))
+            .map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?</span>;
         <span class="comment">// Function of the contract to call.
-        </span><span class="kw">let </span>selector = H256::from_slice(<span class="kw-2">&amp;</span><span class="self">Self</span>::decode_hex_le(<span class="kw-2">&amp;</span><span class="self">self</span>.topics[<span class="number">3</span>])<span class="question-mark">?</span>);
+        </span><span class="kw">let </span>selector = H256::from_slice(
+            <span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="self">self</span>.topics[<span class="number">3</span>].trim_start_matches(<span class="string">&quot;0x&quot;</span>))
+                .map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?</span>,
+        );
         <span class="comment">// Add the from address here so it&#39;s directly in the calldata.
         </span><span class="kw">let </span>char_vec = <span class="macro">format!</span>(<span class="string">&quot;{:}{:}&quot;</span>, <span class="self">self</span>.topics[<span class="number">1</span>].trim_start_matches(<span class="string">&quot;0x&quot;</span>), <span class="self">self</span>.data.trim_start_matches(<span class="string">&quot;0x&quot;</span>))
             .chars()
@@ -245,7 +209,9 @@
             .map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>calldata = Vec::new();
         <span class="kw">for </span>val <span class="kw">in </span>data_map.take(<span class="self">self</span>.data.len() - <span class="number">2</span>) {
-            calldata.push(H256::from_slice(<span class="kw-2">&amp;</span><span class="self">Self</span>::decode_hex_le(<span class="kw-2">&amp;</span>val)<span class="question-mark">?</span>))
+            calldata.push(U256::from_big_endian(
+                <span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from_hex(val.trim_start_matches(<span class="string">&quot;0x&quot;</span>)).map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?</span>,
+            ))
         }
         <span class="kw">let </span>calldata = BoundedVec::try_from(calldata).map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
         <span class="kw">let </span>call_entrypoint = CallEntryPointWrapper {
@@ -276,31 +242,15 @@
     <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
     <span class="kw">use </span>pretty_assertions;
     <span class="kw">use </span>sp_core::{H256, U256};
-    <span class="kw">use </span>test_case::test_case;
 
     <span class="kw">use </span><span class="kw">crate</span>::types::{Message, OffchainWorkerError};
-
-    <span class="attr">#[test_case(<span class="string">&quot;0x01&quot;</span>, <span class="bool-val">true</span>, <span class="prelude-val">Some</span>([<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]</span>))]
-    <span class="attr">#[test_case(<span class="string">&quot;02&quot;</span>, <span class="bool-val">true</span>, <span class="prelude-val">Some</span>([<span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]</span>))]
-    <span class="attr">#[test_case(<span class="string">&quot;0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF&quot;</span>, <span class="bool-val">true</span>, <span class="prelude-val">Some</span>([<span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>, <span class="number">255</span>]</span>))]
-    <span class="attr">#[test_case(<span class="string">&quot;foo&quot;</span>, <span class="bool-val">false</span>, <span class="prelude-val">None</span>)]
-    </span><span class="kw">fn </span>test_decode_hex(value: <span class="kw-2">&amp;</span>str, should_success: bool, result: <span class="prelude-ty">Option</span>&lt;[u8; <span class="number">32</span>]&gt;) {
-        <span class="kw">let </span>res = Message::decode_hex_le(value);
-        <span class="kw">if </span>should_success {
-            <span class="macro">assert!</span>(res.is_ok());
-            <span class="macro">pretty_assertions::assert_eq!</span>(res.unwrap(), result.unwrap())
-        } <span class="kw">else </span>{
-            <span class="macro">assert!</span>(res.is_err());
-            <span class="macro">assert_eq!</span>(res.unwrap_err(), OffchainWorkerError::HexDecodeError);
-        }
-    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_into_transaction_correct_message_should_work() {
         <span class="kw">let </span>sender_address = H256::from_low_u64_be(<span class="number">1</span>).to_fixed_bytes();
         <span class="kw">let </span>hex = <span class="string">&quot;0x0000000000000000000000000000000000000000000000000000000000000001&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
-            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex.clone() };
+            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         <span class="kw">let </span>expected_tx = Transaction {
             version: U256::default(),
             hash: H256::default(),
@@ -312,7 +262,7 @@
                 class_hash: <span class="prelude-val">None</span>,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
                 entrypoint_selector: <span class="prelude-val">Some</span>(H256::from_low_u64_be(<span class="number">1</span>)),
-                calldata: <span class="macro">bounded_vec!</span>[H256::from_low_u64_be(<span class="number">1</span>), H256::from_low_u64_be(<span class="number">1</span>)],
+                calldata: <span class="macro">bounded_vec!</span>[U256::from(<span class="number">1</span>), U256::from(<span class="number">1</span>)],
                 storage_address: H256::from_low_u64_be(<span class="number">1</span>).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
@@ -325,14 +275,22 @@
     </span><span class="kw">fn </span>test_try_into_transaction_incorrect_topic_should_fail() {
         <span class="kw">let </span>hex = <span class="string">&quot;0x1&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
-            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), <span class="string">&quot;foo&quot;</span>.to_owned(), hex.clone()], data: hex.clone() };
+            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), <span class="string">&quot;foo&quot;</span>.to_owned(), hex.clone()], data: hex };
+        <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_try_into_transaction_incorrect_selector_in_topic_should_fail() {
+        <span class="kw">let </span>hex = <span class="string">&quot;0x1&quot;</span>.to_owned();
+        <span class="kw">let </span>test_message: Message =
+            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), <span class="string">&quot;foo&quot;</span>.to_owned()], data: hex };
         <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
     }
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_into_transaction_empty_data_should_fail() {
         <span class="kw">let </span>hex = <span class="string">&quot;0x1&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
-            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: <span class="string">&quot;&quot;</span>.to_owned() };
+            Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex], data: <span class="string">&quot;&quot;</span>.to_owned() };
         <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::EmptyData);
     }
 }

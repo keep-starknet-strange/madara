@@ -269,7 +269,7 @@
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 </span><span class="kw">use </span>alloc::sync::Arc;
-<span class="kw">use </span>alloc::vec;
+<span class="kw">use </span>alloc::{format, vec};
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallType};
@@ -469,7 +469,7 @@
     /// An invoke transaction without an entry point selector invokes the &#39;execute&#39; function.
     </span><span class="kw">pub </span>entrypoint_selector: <span class="prelude-ty">Option</span>&lt;H256&gt;,
     <span class="doccomment">/// The Calldata
-    </span><span class="kw">pub </span>calldata: BoundedVec&lt;H256, MaxCalldataSize&gt;,
+    </span><span class="kw">pub </span>calldata: BoundedVec&lt;U256, MaxCalldataSize&gt;,
     <span class="doccomment">/// The storage address
     </span><span class="kw">pub </span>storage_address: ContractAddressWrapper,
     <span class="doccomment">/// The caller address
@@ -492,7 +492,7 @@
         class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
         entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: <span class="prelude-ty">Option</span>&lt;H256&gt;,
-        calldata: BoundedVec&lt;H256, MaxCalldataSize&gt;,
+        calldata: BoundedVec&lt;U256, MaxCalldataSize&gt;,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
     ) -&gt; <span class="self">Self </span>{
@@ -513,7 +513,7 @@
                     .clone()
                     .into_inner()
                     .iter()
-                    .map(|x| StarkFelt::new(<span class="kw-2">*</span>(<span class="kw-2">*</span>x).as_fixed_bytes()).unwrap())
+                    .map(|x| StarkFelt::try_from(<span class="macro">format!</span>(<span class="string">&quot;0x{x:X}&quot;</span>).as_str()).unwrap())
                     .collect(),
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.storage_address).unwrap()).unwrap(),
@@ -528,7 +528,7 @@
             class_hash: <span class="prelude-val">Some</span>(ClassHashWrapper::default()),
             entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: <span class="prelude-val">Some</span>(H256::default()),
-            calldata: BoundedVec::try_from(<span class="macro">vec!</span>[H256::zero(); <span class="number">32</span>]).unwrap(),
+            calldata: BoundedVec::try_from(<span class="macro">vec!</span>[U256::zero(); <span class="number">32</span>]).unwrap(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
         }
