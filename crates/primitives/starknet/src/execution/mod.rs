@@ -201,7 +201,7 @@ pub struct CallEntryPointWrapper {
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
     pub entrypoint_selector: Option<H256>,
     /// The Calldata
-    pub calldata: BoundedVec<H256, MaxCalldataSize>,
+    pub calldata: BoundedVec<U256, MaxCalldataSize>,
     /// The storage address
     pub storage_address: ContractAddressWrapper,
     /// The caller address
@@ -224,7 +224,7 @@ impl CallEntryPointWrapper {
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: Option<H256>,
-        calldata: BoundedVec<H256, MaxCalldataSize>,
+        calldata: BoundedVec<U256, MaxCalldataSize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
     ) -> Self {
@@ -245,7 +245,11 @@ impl CallEntryPointWrapper {
                     .clone()
                     .into_inner()
                     .iter()
-                    .map(|x| StarkFelt::new(*(*x).as_fixed_bytes()).unwrap())
+                    .map(|x| {
+                        let mut x_as_bytes = [0_u8; 32];
+                        x.to_big_endian(&mut x_as_bytes);
+                        StarkFelt::new(x_as_bytes).unwrap()
+                    })
                     .collect(),
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
@@ -260,7 +264,7 @@ impl Default for CallEntryPointWrapper {
             class_hash: Some(ClassHashWrapper::default()),
             entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: Some(H256::default()),
-            calldata: BoundedVec::try_from(vec![H256::zero(); 32]).unwrap(),
+            calldata: BoundedVec::try_from(vec![U256::zero(); 32]).unwrap(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
         }
