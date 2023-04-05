@@ -3,7 +3,6 @@ import { ApiPromise } from "@polkadot/api";
 import { u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 
-
 export async function declare(
   api: ApiPromise,
   user: any,
