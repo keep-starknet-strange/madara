@@ -273,7 +273,7 @@ impl Transaction {
                 let tx: InvokeTransactionV1 = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_invoke_transaction_context(&tx);
                 self.verify_nonce(&account_context, state)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
 
                 tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
@@ -282,7 +282,7 @@ impl Transaction {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
                 self.verify_nonce(&account_context, state)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
                 tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
             }
@@ -290,7 +290,7 @@ impl Transaction {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
                 self.verify_nonce(&account_context, state)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
 
                 // Execute.
                 tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
@@ -300,7 +300,7 @@ impl Transaction {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_deploy_account_transaction_context(&tx);
                 self.verify_nonce(&account_context, state)
-                    .map_err(|e| TransactionExecutionErrorWrapper::TransactionExecution(e))?;
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
                 // Execute.
                 tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
