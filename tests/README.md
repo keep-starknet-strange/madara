@@ -30,7 +30,7 @@ npm run test
 
 and to print more information:
 
-```
+```sh
 npm run test-with-logs
 ```
 
