@@ -1,10 +1,9 @@
-import { ApiPromise } from "@polkadot/api";
+import { ApiPromise, Keyring } from "@polkadot/api";
 import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { RegistryError } from "@polkadot/types/types";
 import { ChildProcess } from "child_process";
 
-import { alice } from "./accounts";
 import { createAndFinalizeBlock } from "./block";
 import { DEBUG_MODE, SPAWNING_TIME } from "./constants";
 import {
@@ -16,6 +15,7 @@ import { providePolkadotApi } from "./providers";
 import { extractError, ExtrinsicCreation } from "./substrate-rpc";
 
 import type { BlockHash } from "@polkadot/types/interfaces/chain/types";
+import { KeyringPair } from "@polkadot/keyring/types";
 const debug = require("debug")("test:setup");
 
 export interface BlockCreation {
@@ -40,6 +40,7 @@ export interface BlockCreationResponse<
 }
 
 export interface DevTestContext {
+  alice: KeyringPair;
   createPolkadotApi: () => Promise<ApiPromise>;
 
   createBlock<
@@ -117,13 +118,18 @@ export function describeDevMadara(
         // Necessary hack to allow polkadotApi to finish its internal metadata loading
         // apiPromise.isReady unfortunately doesn't wait for those properly
         await new Promise((resolve) => {
-          setTimeout(resolve, 100);
+          setTimeout(resolve, 500);
         });
 
         return apiPromise;
       };
 
       context.polkadotApi = await context.createPolkadotApi();
+
+      // Bug WASM not initialized
+      await context.polkadotApi.isReady;
+      const keyringSr25519 = new Keyring({ type: "sr25519" });
+      context.alice = keyringSr25519.addFromUri("//Alice");
 
       context.createBlock = async <
         ApiType extends ApiTypes,
@@ -148,6 +154,7 @@ export function describeDevMadara(
               ? transactions
               : [transactions];
         for await (const call of txs) {
+          console.log(call.isSigned);
           if (typeof call == "string") {
             // Starknet
             // results.push({
@@ -172,6 +179,11 @@ export function describeDevMadara(
               hash: (await call.send()).toString(),
             });
           } else {
+            // Bug WASM not initialized
+            await context.polkadotApi.isReady;
+            const keyringSr25519 = new Keyring({ type: "sr25519" });
+            const alice = keyringSr25519.addFromUri("//Alice");
+
             const tx = context.polkadotApi.tx(call);
             debug(
               `- Unsigned: ${tx.method.section}.${tx.method.method}(${tx.args
