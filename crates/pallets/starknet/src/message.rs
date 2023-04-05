@@ -1,6 +1,3 @@
-#[cfg(feature = "std")]
-use std::println;
-
 use frame_support::BoundedVec;
 use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
