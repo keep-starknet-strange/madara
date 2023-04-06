@@ -6,9 +6,8 @@ use hex::FromHex;
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_serde::transaction_from_json;
-use mp_starknet::transaction::types::{EventWrapper, Transaction};
+use mp_starknet::transaction::types::EventWrapper;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
@@ -64,14 +63,6 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         run_to_block(2);
 
         let none_origin = RuntimeOrigin::none();
-
-        // Wrong address (not deployed)
-        // let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
-        // let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-        //
-        // let transaction =
-        // Transaction { version: U256::from(1), sender_address: contract_address_bytes,
-        // ..Transaction::default() };
 
         let json_content: &str = include_str!("../../../../ressources/transactions/invoke_from_undeclared_sender.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
@@ -294,47 +285,16 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         run_to_block(2);
 
         let none_origin = RuntimeOrigin::none();
-        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
-        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+        let json_content: &str = include_str!("../../../../ressources/transactions/storage_read_write.json");
+        let transaction =
+            transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
+        assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
 
         let target_contract_address =
             H256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
-        // test_storage_read_write
-        let target_selector =
-            H256::from_str("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap();
         let storage_var_selector =
             H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap();
-        let storage_var_val =
-            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap();
-
-        let transaction = Transaction::new(
-            U256::from(1),
-            H256::default(),
-            bounded_vec!(),
-            bounded_vec!(),
-            contract_address_bytes,
-            U256::from(0),
-            CallEntryPointWrapper::new(
-                Some(class_hash_bytes),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![
-                    target_contract_address,
-                    target_selector,
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
-                    storage_var_selector,
-                    storage_var_val,
-                ],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            None,
-        );
-
-        assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
         assert_eq!(Starknet::storage((target_contract_address.to_fixed_bytes(), storage_var_selector)), U256::one());
     });
 }
