@@ -1,4 +1,4 @@
-use mp_starknet::starknet_serde::transaction_from_json;
+use mp_starknet::starknet_serde::{transaction_from_json, DeserializeCallEntrypointError, DeserializeTransactionError};
 
 #[test]
 fn test_missing_not_optional_field() {
@@ -18,7 +18,7 @@ fn test_missing_not_optional_field() {
     }"#;
 
     let transaction = transaction_from_json(json_content, &[]);
-    assert!(transaction.is_err(), "Expected an error due to missing a not optional field");
+    assert!(matches!(transaction, Err(DeserializeTransactionError::FailedToParse(_))));
 }
 
 #[test]
@@ -40,12 +40,12 @@ fn test_invalid_number_format() {
     }"#;
 
     let transaction = transaction_from_json(json_content, &[]);
-    assert!(transaction.is_err(), "Expected an error due to invalid number format");
+    assert!(matches!(transaction, Err(DeserializeTransactionError::FailedToParse(_))));
 }
 
 #[test]
 fn test_invalid_format_for_h256() {
-    // Not 32 bytes length
+    // Hash not 32 bytes length
     let json_content: &str = r#"{
       "version": 1,
       "hash": "0x0000000000000000000000000000000000000000000000000000000000000000aa",
@@ -62,10 +62,9 @@ fn test_invalid_format_for_h256() {
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
-    println!("{:?}", transaction);
-    assert!(transaction.is_err(), "Expected an error due to invalid format for H256");
+    assert!(matches!(transaction, Err(DeserializeTransactionError::InvalidHash(_))));
 
-    // No valid hexa
+    // Hash invalid hexa
     let json_content: &str = r#"{
       "version": 1,
       "hash": "Invalid",
@@ -82,8 +81,7 @@ fn test_invalid_format_for_h256() {
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
-    println!("{:?}", transaction);
-    assert!(transaction.is_err(), "Expected an error due to invalid format for H256");
+    assert!(matches!(transaction, Err(DeserializeTransactionError::InvalidHash(_))));
 }
 
 #[test]
@@ -105,8 +103,7 @@ fn test_invalid_format_for_address() {
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
-    println!("{:?}", transaction);
-    assert!(transaction.is_err(), "Expected an error due to invalid format for Address (not 32 bytes)");
+    assert!(matches!(transaction, Err(DeserializeTransactionError::InvalidSenderAddress(_))));
 
     // No valid hexa
     let json_content: &str = r#"{
@@ -125,8 +122,7 @@ fn test_invalid_format_for_address() {
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
-    println!("{:?}", transaction);
-    assert!(transaction.is_err(), "Expected an error due to invalid format for Address (invalid hex)");
+    assert!(matches!(transaction, Err(DeserializeTransactionError::InvalidSenderAddress(_))));
 }
 
 #[test]
@@ -148,7 +144,6 @@ fn test_missing_optional_field_no_error() {
     }"#;
 
     let transaction = transaction_from_json(json_content, &[]);
-    println!("${:?}", transaction);
     assert!(transaction.is_ok(), "Expected no error because class_hash in call_entrypoint is optional");
 }
 
@@ -171,5 +166,8 @@ fn test_wrong_entrypoint_type() {
     }"#;
 
     let transaction = transaction_from_json(json_content, &[]);
-    assert!(transaction.is_err(), "Expected an error due to invalid entrypoint_type");
+    assert!(matches!(
+        transaction,
+        Err(DeserializeTransactionError::InvalidCallEntryPoint(DeserializeCallEntrypointError::InvalidEntryPointType))
+    ));
 }
