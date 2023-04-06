@@ -592,34 +592,34 @@ fn deploy_account_tx_with_salt() {
         let proxy_class_hash = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
         let proxy_class_hash_bytes = <[u8; 32]>::from_hex(proxy_class_hash.strip_prefix("0x").unwrap()).unwrap();
 
-        let account_class_hash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
-
         let salt = StarkFelt::try_from("0x22c428661e51d30b5cb09cf3e9cae5565e4ef2c094b6c845f750c52fffb6f97").unwrap();
 
         let cd_raw = vec![
-            account_class_hash,
+            "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2",
             "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
             "0x2",
             "0x22c428661e51d30b5cb09cf3e9cae5565e4ef2c094b6c845f750c52fffb6f97",
             "0x0",
         ];
-        let cd_felt = cd_raw.clone().into_iter().map(|x| StarkFelt::try_from(x).unwrap()).collect::<Vec<StarkFelt>>();
-        let cd_u256 = cd_raw.clone().into_iter().map(|x| U256::from(x)).collect::<Vec<U256>>();
 
         let contract_addr = calculate_contract_address(
             ContractAddressSalt(salt),
             ClassHash(StarkFelt::new(proxy_class_hash_bytes).unwrap()),
-            &Calldata(cd_felt.into()),
+            &Calldata(
+                cd_raw.clone().into_iter().map(|x| StarkFelt::try_from(x).unwrap()).collect::<Vec<StarkFelt>>().into(),
+            ),
             ContractAddress::default(),
         )
         .unwrap();
         let contract_address_bytes = contract_addr.0.key().to_owned().0;
 
-        let exp_addr = ContractAddress::try_from(
-            StarkFelt::try_from("0x41b840332cda4bc8b157ae3feecfc95b9e057d8311a07b044e7d1521106313b").unwrap(),
-        )
-        .unwrap();
-        assert_eq!(contract_addr, exp_addr);
+        assert_eq!(
+            contract_addr,
+            ContractAddress::try_from(
+                StarkFelt::try_from("0x41b840332cda4bc8b157ae3feecfc95b9e057d8311a07b044e7d1521106313b").unwrap()
+            )
+            .unwrap()
+        );
 
         // Example TX: https://testnet.starkscan.co/tx/0x01ba94e9f0f919e23bdedc6a8e5e62bb1be9b257a65a72a1d4d236a93edc2a60
         let transaction = Transaction::new(
@@ -633,7 +633,7 @@ fn deploy_account_tx_with_salt() {
                 Some(proxy_class_hash_bytes),
                 EntryPointTypeWrapper::External,
                 None,
-                BoundedVec::try_from(cd_u256).unwrap(),
+                BoundedVec::try_from(cd_raw.clone().into_iter().map(|x| U256::from(x)).collect::<Vec<U256>>()).unwrap(),
                 contract_address_bytes,
                 contract_address_bytes,
             ),
