@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { jumpBlocks } from "../../util/block";
 
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { declare, deploy, initialize } from "../../util/starknet";
+import { declare, deploy, initialize, transfer } from "../../util/starknet";
 
 const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -33,7 +33,20 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     expect(blockHash).to.not.be.undefined;
   });
 
-  it("should deploy a new contract", async function () {
+  // it("should deploy a new contract", async function () {
+  //   const address = await deploy(
+  //     context.polkadotApi,
+  //     context.alice,
+  //     contractAddress,
+  //     tokenClassHash
+  //   );
+
+  //   console.log("address: ", address);
+
+  //   expect(address).to.not.be.undefined;
+  // });
+
+  it("should execute a transfer", async function () {
     const address = await deploy(
       context.polkadotApi,
       context.alice,
@@ -44,5 +57,14 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     console.log("address: ", address);
 
     expect(address).to.not.be.undefined;
+
+    await transfer(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      address,
+      contractAddress,
+      mintAmount
+    );
   });
 });

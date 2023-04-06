@@ -145,6 +145,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
     let test_class = get_contract_class(include_bytes!("../../../ressources/test.json"));
+    let erc20_class = get_contract_class(include_bytes!("../../../ressources/erc20.json"));
 
     // ACCOUNT CONTRACT
     let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
@@ -159,6 +160,13 @@ fn testnet_genesis(
 
     let other_class_hash_str = "0000000000000000000000000000000000000000000000000000000000001000";
     let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
+
+    // ERC20 CONTRACT
+    let token_contract_address_str = "040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
+    let token_contract_address_bytes = <[u8; 32]>::from_hex(token_contract_address_str).unwrap();
+
+    let token_class_hash_str = "0000000000000000000000000000000000000000000000000000000000010000";
+    let token_class_hash_bytes = <[u8; 32]>::from_hex(token_class_hash_str).unwrap();
 
     GenesisConfig {
         system: SystemConfig {
@@ -186,10 +194,12 @@ fn testnet_genesis(
             contracts: vec![
                 (contract_address_bytes, class_hash_bytes),
                 (other_contract_address_bytes, other_class_hash_bytes),
+                (token_contract_address_bytes, token_class_hash_bytes),
             ],
             contract_classes: vec![
                 (class_hash_bytes, ContractClassWrapper::from(account_class)),
                 (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
+                (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
             ],
             storage: vec![(
                 (
