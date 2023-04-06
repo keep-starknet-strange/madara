@@ -70,6 +70,9 @@ mc-rpc = { path = "../client/rpc" }
 mc-storage = { path = "../client/storage" }
 mc-mapping-sync = { path = "../client/mapping-sync" }
 pallet-starknet = { path = "../pallets/starknet" }
+mp-starknet = { workspace = true }
+blockifier = {workspace = true}
+hex = {workspace = true}
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
