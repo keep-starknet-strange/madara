@@ -106,10 +106,10 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
-                    H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
-                    H256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
+                    U256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
+                    U256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
+                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
+                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
                 ],
                 contract_address_bytes,
                 contract_address_bytes
