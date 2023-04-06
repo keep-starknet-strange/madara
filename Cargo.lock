@@ -4092,17 +4092,20 @@ dependencies = [
 name = "madara"
 version = "0.1.0-dev"
 dependencies = [
+ "blockifier",
  "clap",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
  "futures",
+ "hex",
  "jsonrpsee",
  "madara-runtime",
  "mc-db",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
+ "mp-starknet",
  "pallet-starknet",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",

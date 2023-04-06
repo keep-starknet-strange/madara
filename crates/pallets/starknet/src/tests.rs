@@ -87,7 +87,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 "0xdb80dd488acf86d17c747445b0eabb5d57c541d3bd7b6b87af987858e5066b2b".to_owned(),
                 "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
                 "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
-                "0x1310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771".to_owned(),
+                "0x01310e2c127c3b511c5ac0fd7949d544bb4d75b8bc83aaeb357e712ecf582771".to_owned(),
             ],
             data: "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned(),
         }
@@ -292,9 +292,16 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
 
         let target_contract_address =
-            H256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
-        let storage_var_selector =
-            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap();
-        assert_eq!(Starknet::storage((target_contract_address.to_fixed_bytes(), storage_var_selector)), U256::one());
+            U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
+        let storage_var_selector = U256::from(25);
+
+        let mut contract_address_bytes = [0_u8; 32];
+        target_contract_address.to_big_endian(&mut contract_address_bytes);
+        let mut storage_var_selector_bytes = [0_u8; 32];
+        storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
+        assert_eq!(
+            Starknet::storage((contract_address_bytes, H256::from_slice(&storage_var_selector_bytes))),
+            U256::one()
+        );
     });
 }
