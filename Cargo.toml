@@ -103,8 +103,7 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
-# TODO: wait for no-std support on official repo
-cairo-vm = { git = "https://github.com/open-dust/cairo-rs", branch = "fix-no-std", default-features = false }
+cairo-vm = { git = "https://github.com/lambdaclass/cairo-rs", rev = "725c17e6b4c50ecf9fbb0113ecf172d85837295", default-features = false }
 starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "0.4.2", default-features = false }
 starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "0.3.1", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [

@@ -99,6 +99,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "zediogoviana",
+      "name": "Zé Diogo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25623039?v=4",
+      "profile": "https://zediogoviana.github.io/",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
