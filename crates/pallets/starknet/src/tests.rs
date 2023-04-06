@@ -76,6 +76,51 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 }
 
 #[test]
+fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+        // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
+        let transaction = Transaction::new(
+            0_u8,
+            H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
+            bounded_vec![
+                H256::from_str("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
+                H256::from_str("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap()
+            ],
+            bounded_vec!(),
+            contract_address_bytes,
+            U256::from(0),
+            CallEntryPointWrapper::new(
+                Some(class_hash_bytes),
+                EntryPointTypeWrapper::External,
+                None,
+                bounded_vec![
+                    H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(), // Contract address
+                    H256::from_str("0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc").unwrap(), // Selector
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Length
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), // Value
+                ],
+                contract_address_bytes,
+                contract_address_bytes
+            ),
+            None,
+        );
+
+        assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
 fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
