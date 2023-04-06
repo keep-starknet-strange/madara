@@ -72,6 +72,24 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 }
 
 #[test]
+fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_invalid_version.json");
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+
+        assert_err!(
+            Starknet::add_invoke_transaction(none_origin, transaction),
+            Error::<Test>::TransactionExecutionFailed
+        );
+    });
+}
+
+#[test]
 fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
