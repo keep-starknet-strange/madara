@@ -70,6 +70,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let proxy_class = get_contract_class(include_bytes!("../../../../ressources/proxy_compiled.json"));
+    let arg_account_class = get_contract_class(include_bytes!("../../../../ressources/account_compiled.json"));
     let test_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
 
@@ -77,7 +79,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
     let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-    let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+    let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a919";
     let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
     // TEST CONTRACT
@@ -94,6 +96,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let l1_handler_class_hash_str = "01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8";
     let l1_handler_class_hash_bytes = <[u8; 32]>::from_hex(l1_handler_class_hash_str).unwrap();
 
+    // PROXY CLASS
+    let proxy_class_hash = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+    let proxy_class_hash_bytes = <[u8; 32]>::from_hex(proxy_class_hash).unwrap();
+
+    let arg_account_class_hash = "033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
+    let arg_account_class_hash_bytes = <[u8; 32]>::from_hex(arg_account_class_hash).unwrap();
+
     pallet_starknet::GenesisConfig::<Test> {
         contracts: vec![
             (contract_address_bytes, class_hash_bytes),
@@ -104,6 +113,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (class_hash_bytes, ContractClassWrapper::from(account_class)),
             (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
+            (proxy_class_hash_bytes, ContractClassWrapper::from(proxy_class)),
+            (arg_account_class_hash_bytes, ContractClassWrapper::from(arg_account_class)),
         ],
         ..Default::default()
     }

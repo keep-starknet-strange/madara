@@ -1,7 +1,7 @@
 use core::str::FromStr;
 
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
-use frame_support::{assert_err, assert_ok, bounded_vec};
+use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
@@ -9,6 +9,9 @@ use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
+use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, ContractAddressSalt};
 
 use crate::mock::*;
 use crate::types::Message;
@@ -131,7 +134,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a919";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
@@ -191,7 +194,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a919";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
@@ -261,7 +264,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_then_it_works() {
         let contract_address_str = "02356b628D108863BAf8644c125d97bAD70190AF5957031f4852d00D0F690a77";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a919";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
@@ -305,7 +308,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails() {
         let contract_address_str = "02356b628D108863BAf8644c125d97bAD70190AF5957031f4852d00D0F690a77";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a919";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
 
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
@@ -576,5 +579,68 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
             Starknet::storage((contract_address_bytes, H256::from_slice(&storage_var_selector_bytes))),
             U256::one()
         );
+    });
+}
+
+#[test]
+fn deploy_account_tx_with_salt() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let proxy_class_hash = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+        let proxy_class_hash_bytes = <[u8; 32]>::from_hex(proxy_class_hash.strip_prefix("0x").unwrap()).unwrap();
+
+        let account_class_hash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
+
+        let salt = StarkFelt::try_from("0x22c428661e51d30b5cb09cf3e9cae5565e4ef2c094b6c845f750c52fffb6f97").unwrap();
+
+        let cd_raw = vec![
+            account_class_hash,
+            "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
+            "0x2",
+            "0x22c428661e51d30b5cb09cf3e9cae5565e4ef2c094b6c845f750c52fffb6f97",
+            "0x0",
+        ];
+        let cd_felt = cd_raw.clone().into_iter().map(|x| StarkFelt::try_from(x).unwrap()).collect::<Vec<StarkFelt>>();
+        let cd_u256 = cd_raw.clone().into_iter().map(|x| U256::from(x)).collect::<Vec<U256>>();
+
+        let contract_addr = calculate_contract_address(
+            ContractAddressSalt(salt),
+            ClassHash(StarkFelt::new(proxy_class_hash_bytes).unwrap()),
+            &Calldata(cd_felt.into()),
+            ContractAddress::default(),
+        )
+        .unwrap();
+        let contract_address_bytes = contract_addr.0.key().to_owned().0;
+
+        let exp_addr = ContractAddress::try_from(
+            StarkFelt::try_from("0x41b840332cda4bc8b157ae3feecfc95b9e057d8311a07b044e7d1521106313b").unwrap(),
+        )
+        .unwrap();
+        assert_eq!(contract_addr, exp_addr);
+
+        // Example TX: https://testnet.starkscan.co/tx/0x01ba94e9f0f919e23bdedc6a8e5e62bb1be9b257a65a72a1d4d236a93edc2a60
+        let transaction = Transaction::new(
+            U256::from(1),
+            H256::default(),
+            bounded_vec!(),
+            bounded_vec!(),
+            contract_address_bytes,
+            U256::from(0),
+            CallEntryPointWrapper::new(
+                Some(proxy_class_hash_bytes),
+                EntryPointTypeWrapper::External,
+                None,
+                BoundedVec::try_from(cd_u256).unwrap(),
+                contract_address_bytes,
+                contract_address_bytes,
+            ),
+            None,
+            Some(H256::from(salt.0)),
+        );
+
+        assert_ok!(Starknet::add_deploy_account_transaction(none_origin, transaction));
     });
 }
