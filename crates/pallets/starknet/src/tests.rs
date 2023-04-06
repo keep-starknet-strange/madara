@@ -117,6 +117,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
                 contract_address_bytes
             ),
             None,
+            None,
         );
 
         assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
@@ -623,7 +624,7 @@ fn deploy_account_tx_with_salt() {
 
         // Example TX: https://testnet.starkscan.co/tx/0x01ba94e9f0f919e23bdedc6a8e5e62bb1be9b257a65a72a1d4d236a93edc2a60
         let transaction = Transaction::new(
-            U256::from(1),
+            1_u8,
             H256::default(),
             bounded_vec!(),
             bounded_vec!(),
