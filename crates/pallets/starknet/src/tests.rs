@@ -125,7 +125,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_emmit_event.json");
+        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_emit_event.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
