@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { Keyring } = require("@polkadot/keyring");
-const { batchTransfer } = require("../../tests/build/util/starknet");
+const { transfer } = require("../../tests/build/util/starknet");
 
 module.exports = {
   rpcMethods,
@@ -51,7 +51,7 @@ async function executeERC20Transfer(userContext, events, done) {
   //   };
   // }
 
-  await batchTransfer(
+  await transfer(
     userContext.api,
     user,
     contractAddress,
