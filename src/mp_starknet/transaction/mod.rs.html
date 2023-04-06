@@ -413,6 +413,43 @@
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -424,6 +461,7 @@
 <span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 <span class="kw">use </span>blockifier::state::cached_state::CachedState;
 <span class="kw">use </span>blockifier::state::state_api::StateReader;
+<span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
 <span class="kw">use </span>blockifier::transaction::transactions::Executable;
 <span class="kw">use </span>frame_support::BoundedVec;
@@ -563,7 +601,7 @@
         <span class="prelude-val">Ok</span>(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>)<span class="question-mark">?</span>),
             max_fee: Fee(<span class="number">2</span>),
-            version: TransactionVersion(StarkFelt::new(<span class="self">self</span>.version.into())<span class="question-mark">?</span>),
+            version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
             signature: TransactionSignature(
                 <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.<span class="number">0</span>).unwrap()).collect(),
             ),
@@ -584,7 +622,7 @@
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;L1HandlerTransaction, <span class="self">Self</span>::Error&gt; {
         <span class="prelude-val">Ok</span>(L1HandlerTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>)<span class="question-mark">?</span>),
-            version: TransactionVersion(StarkFelt::new(<span class="self">self</span>.version.into())<span class="question-mark">?</span>),
+            version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
             nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address)<span class="question-mark">?</span>)<span class="question-mark">?</span>,
             calldata: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().calldata,
@@ -629,9 +667,9 @@
             class_hash: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
         };
 
-        <span class="prelude-val">Ok</span>(<span class="kw">if </span><span class="self">self</span>.version == U256::zero() {
+        <span class="prelude-val">Ok</span>(<span class="kw">if </span><span class="self">self</span>.version == <span class="number">0_u8 </span>{
             DeclareTransaction::V0(tx)
-        } <span class="kw">else if </span><span class="self">self</span>.version == U256::one() {
+        } <span class="kw">else if </span><span class="self">self</span>.version == <span class="number">1_u8 </span>{
             DeclareTransaction::V1(tx)
         } <span class="kw">else </span>{
             <span class="macro">unimplemented!</span>(<span class="string">&quot;DeclareTransactionV2 required the compiled class hash. I don&#39;t know how to get it&quot;</span>);
@@ -643,7 +681,7 @@
     <span class="doccomment">/// Creates a new instance of a transaction.
     </span><span class="attr">#[allow(clippy::too_many_arguments)]
     </span><span class="kw">pub fn </span>new(
-        version: U256,
+        version: u8,
         hash: H256,
         signature: BoundedVec&lt;H256, MaxArraySize&gt;,
         events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
@@ -658,6 +696,41 @@
     <span class="doccomment">/// Creates a new instance of a transaction without signature.
     </span><span class="kw">pub fn </span>from_tx_hash(hash: H256) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ hash, ..<span class="self">Self</span>::default() }
+    }
+
+    <span class="doccomment">/// Verifies if a transaction has the correct version
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to execute
+    /// * `tx_type` - The type of the transaction to execute
+    ///
+    /// # Returns
+    ///
+    /// * `TransactionExecutionResultWrapper&lt;()&gt;` - The result of the transaction version validation
+    </span><span class="kw">pub fn </span>verify_tx_version(<span class="kw-2">&amp;</span><span class="self">self</span>, tx_type: <span class="kw-2">&amp;</span>TxType) -&gt; TransactionExecutionResultWrapper&lt;()&gt; {
+        <span class="kw">let </span>version = <span class="kw">match </span>StarkFelt::new(U256::from(<span class="self">self</span>.version).into()) {
+            <span class="prelude-val">Ok</span>(felt) =&gt; TransactionVersion(felt),
+            <span class="prelude-val">Err</span>(err) =&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionExecutionErrorWrapper::StarknetApi(err));
+            }
+        };
+
+        <span class="kw">let </span>allowed_versions: vec::Vec&lt;TransactionVersion&gt; = <span class="kw">match </span>tx_type {
+            TxType::DeclareTx =&gt; {
+                <span class="comment">// Support old versions in order to allow bootstrapping of a new system.
+                </span><span class="macro">vec!</span>[TransactionVersion(StarkFelt::from(<span class="number">0</span>)), TransactionVersion(StarkFelt::from(<span class="number">1</span>))]
+            }
+            <span class="kw">_ </span>=&gt; <span class="macro">vec!</span>[TransactionVersion(StarkFelt::from(<span class="number">1</span>))],
+        };
+        <span class="kw">if </span>allowed_versions.contains(<span class="kw-2">&amp;</span>version) {
+            <span class="prelude-val">Ok</span>(())
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(TransactionExecutionErrorWrapper::TransactionExecution(TransactionExecutionError::InvalidVersion {
+                version,
+                allowed_versions,
+            }))
+        }
     }
 
     <span class="doccomment">/// Executes a transaction
@@ -681,6 +754,7 @@
     ) -&gt; TransactionExecutionResultWrapper&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
         <span class="kw">let </span>block_context = BlockContext::serialize(block.header().clone());
         <span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
+        <span class="self">self</span>.verify_tx_version(<span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
         <span class="kw">match </span>tx_type {
             TxType::InvokeTx =&gt; {
@@ -817,7 +891,7 @@
             <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>,
         ]);
         <span class="self">Self </span>{
-            version: U256::default(),
+            version: <span class="number">1_u8</span>,
             hash: one,
             signature: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
             events: BoundedVec::try_from(<span class="macro">vec!</span>[EventWrapper::default(), EventWrapper::default()]).unwrap(),
