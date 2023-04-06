@@ -34,15 +34,15 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   });
 
   it("should deploy a new contract", async function () {
-    const blockHash = await deploy(
+    const address = await deploy(
       context.polkadotApi,
       context.alice,
       contractAddress,
       tokenClassHash
     );
 
-    console.log("blockhash: ", blockHash);
+    console.log("address: ", address);
 
-    expect(blockHash).to.not.be.undefined;
+    expect(address).to.not.be.undefined;
   });
 });

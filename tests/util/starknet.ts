@@ -5,6 +5,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { ISubmittableResult } from "@polkadot/types/types";
 import { u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
+import { hash } from "starknet";
 
 export async function sendTransaction(
   api: ApiPromise,
@@ -127,6 +128,10 @@ export async function deploy(
   contractAddress: string,
   tokenClassHash: string
 ): Promise<string> {
+
+  // Compute contract address
+  const deployedContractAddress = hash.calculateContractAddressFromHash(1, tokenClassHash, [], 0);
+
   // Deploy contract
   let tx_deploy = {
     version: 1, // version of the transaction
@@ -144,9 +149,9 @@ export async function deploy(
         "0x0169f135eddda5ab51886052d777a57f2ea9c162d713691b5e04a6d4ed71d47f",
         "0x0000000000000000000000000000000000000000000000000000000000000004",
         tokenClassHash,
-        "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000000000000000000000000000001", // Salt
+        "0x0000000000000000000000000000000000000000000000000000000000000000", // Calldata len
+        "0x0000000000000000000000000000000000000000000000000000000000000001", // Deploy from zero
       ],
       storageAddress: contractAddress,
       callerAddress: contractAddress,
@@ -156,7 +161,9 @@ export async function deploy(
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
 
-  return sendTransaction(api, extrisinc_deploy, user);
+  await sendTransaction(api, extrisinc_deploy, user);
+
+  return deployedContractAddress;
 }
 
 export async function initialize(
@@ -180,11 +187,11 @@ export async function initialize(
       calldata: [
         tokenAddress, // CONTRACT ADDRESS
         "0x0079dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463", // SELECTOR
-        "0x0000000000000000000000000000000000000000000000000000000000000005", // CALLDATA SIZE
-        "0x0000000000000000000000000000000000000000000000000000000000000004", // INPUT SIZE
-        "0x0000000000000000000000000000000000000000000000000000000054455354", // NAME (TEST)
-        "0x0000000000000000000000000000000000000000000000000000000054455354", // SYMBOL (TEST)
-        "0x0000000000000000000000000000000000000000000000000000000000000012", // DECIMALS (18)
+        5, // CALLDATA SIZE
+        4, // INPUT SIZE
+        1413829460, // NAME (TEST)
+        1413829460, // SYMBOL (TEST)
+        18, // DECIMALS (18)
         contractAddress, // PERMISSIONED MINTER
       ],
       storageAddress: contractAddress,
