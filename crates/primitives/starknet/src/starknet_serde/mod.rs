@@ -22,6 +22,16 @@ fn string_to_h256(hex_str: &str) -> Result<H256, String> {
     if bytes.len() == 32 { Ok(H256::from_slice(&bytes)) } else { Err(format!("Invalid input length: {}", bytes.len())) }
 }
 
+fn string_to_u256(hex_str: &str) -> Result<U256, String> {
+    let bytes =
+        Vec::from_hex(remove_prefix(hex_str)).map_err(|e| format!("Failed to convert hex string to bytes: {:?}", e))?;
+    if bytes.len() == 32 {
+        Ok(U256::from_big_endian(&bytes))
+    } else {
+        Err(format!("Invalid input length: {}", bytes.len()))
+    }
+}
+
 // Deserialization and Conversion for JSON Transactions, Events, and CallEntryPoints
 /// Struct for deserializing CallEntryPoint from JSON
 #[derive(Debug, Serialize, Deserialize)]
@@ -240,12 +250,12 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             None => None,
         };
 
-        let calldata: Result<Vec<H256>, DeserializeCallEntrypointError> = d
+        let calldata: Result<Vec<U256>, DeserializeCallEntrypointError> = d
             .calldata
             .into_iter()
-            .map(|hex_str| string_to_h256(&hex_str).map_err(|e| DeserializeCallEntrypointError::InvalidCalldata(e)))
+            .map(|hex_str| string_to_u256(&hex_str).map_err(|e| DeserializeCallEntrypointError::InvalidCalldata(e)))
             .collect();
-        let calldata = BoundedVec::<H256, MaxArraySize>::try_from(calldata?)
+        let calldata = BoundedVec::<U256, MaxArraySize>::try_from(calldata?)
             .map_err(|_| DeserializeCallEntrypointError::CalldataExceedsMaxSize)?;
 
         let storage_address = <[u8; 32]>::from_hex(remove_prefix(&d.storage_address))
