@@ -188,6 +188,11 @@
 <a href="#188" id="188">188</a>
 <a href="#189" id="189">189</a>
 <a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>madara_runtime::{
@@ -353,17 +358,22 @@
             <span class="comment">// Add Wasm runtime to storage.
             </span>code: wasm_binary.to_vec(),
         },
-        balances: BalancesConfig {
+        <span class="comment">// Provides interaction with balances and accounts
+        </span>balances: BalancesConfig {
             <span class="comment">// Configure endowed accounts with initial balance of 1 &lt;&lt; 60.
             </span>balances: endowed_accounts.iter().cloned().map(|k| (k, <span class="number">1 </span>&lt;&lt; <span class="number">60</span>)).collect(),
         },
-        aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">0</span>.clone())).collect() },
-        grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">1</span>.clone(), <span class="number">1</span>)).collect() },
-        sudo: SudoConfig {
+        <span class="comment">// Authority-based consensus protocol used for block production
+        </span>aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">0</span>.clone())).collect() },
+        <span class="comment">// Deterministic finality mechanism used for block finalization
+        </span>grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">1</span>.clone(), <span class="number">1</span>)).collect() },
+        <span class="comment">// Allows executing privileged functions
+        </span>sudo: SudoConfig {
             <span class="comment">// Assign network admin rights.
             </span>key: <span class="prelude-val">Some</span>(root_key),
         },
-        transaction_payment: Default::default(),
+        <span class="comment">// Provides the logic needed to handle transaction fees
+        </span>transaction_payment: Default::default(),
         <span class="doccomment">/// Starknet Genesis configuration.
         </span>starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: <span class="macro">vec!</span>[
