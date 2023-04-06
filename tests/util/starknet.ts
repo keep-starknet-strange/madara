@@ -128,9 +128,13 @@ export async function deploy(
   contractAddress: string,
   tokenClassHash: string
 ): Promise<string> {
-
   // Compute contract address
-  const deployedContractAddress = hash.calculateContractAddressFromHash(1, tokenClassHash, [], 0);
+  const deployedContractAddress = hash.calculateContractAddressFromHash(
+    1,
+    tokenClassHash,
+    [],
+    0
+  );
 
   // Deploy contract
   let tx_deploy = {
