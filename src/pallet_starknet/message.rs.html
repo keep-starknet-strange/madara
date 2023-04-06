@@ -223,7 +223,7 @@
             caller_address: ContractAddressWrapper::default(),
         };
         <span class="prelude-val">Ok</span>(Transaction {
-            version: U256::default(),
+            version: <span class="number">1_u8</span>,
             hash: H256::default(),
             signature: BoundedVec::default(),
             events: BoundedVec::default(),
@@ -252,7 +252,7 @@
         <span class="kw">let </span>test_message: Message =
             Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         <span class="kw">let </span>expected_tx = Transaction {
-            version: U256::default(),
+            version: <span class="number">1_u8</span>,
             hash: H256::default(),
             signature: BoundedVec::default(),
             events: BoundedVec::default(),

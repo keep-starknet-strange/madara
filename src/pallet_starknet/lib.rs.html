@@ -821,6 +821,20 @@
 <a href="#821" id="821">821</a>
 <a href="#822" id="822">822</a>
 <a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -973,7 +987,12 @@
 
             <span class="kw">match </span><span class="self">Self</span>::process_l1_messages() {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="macro">log!</span>(info, <span class="string">&quot;Successfully executed L1 messages&quot;</span>),
-                <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">log!</span>(error, <span class="string">&quot;Failed to executed L1 message {:?}&quot;</span>, err),
+                <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">match </span>err {
+                    OffchainWorkerError::NoLastKnownEthBlock =&gt; {
+                        <span class="macro">log!</span>(info, <span class="string">&quot;No last known Ethereum block number found. Skipping execution of L1 messages.&quot;</span>)
+                    }
+                    <span class="kw">_ </span>=&gt; <span class="macro">log!</span>(error, <span class="string">&quot;Failed to execute L1 messages: {:?}&quot;</span>, err),
+                },
             }
         }
     }
@@ -1626,17 +1645,26 @@
         }
 
         <span class="doccomment">/// Fetches L1 messages and execute them.
+        /// This function is called by the offchain worker.
+        /// It is executed in a separate thread.
+        /// # Returns
+        /// The result of the offchain worker execution.
         </span><span class="kw">fn </span>process_l1_messages() -&gt; <span class="prelude-ty">Result</span>&lt;(), OffchainWorkerError&gt; {
-            <span class="kw">let </span>last_known_eth_block = <span class="self">Self</span>::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)<span class="question-mark">?</span>;
-            <span class="kw">let </span>body_str = <span class="self">Self</span>::query_eth(LAST_FINALIZED_BLOCK_QUERY)<span class="question-mark">?</span>;
+            <span class="comment">// Get the last known block from storage.
+            </span><span class="kw">let </span>last_known_eth_block = <span class="self">Self</span>::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)<span class="question-mark">?</span>;
+            <span class="comment">// Query L1 for the last finalized block.
+            </span><span class="kw">let </span>body_str = <span class="self">Self</span>::query_eth(LAST_FINALIZED_BLOCK_QUERY)<span class="question-mark">?</span>;
             <span class="kw">let </span>res: EthBlockNumber = from_str(<span class="kw-2">&amp;</span>body_str).map_err(|<span class="kw">_</span>| OffchainWorkerError::SerdeError)<span class="question-mark">?</span>;
             <span class="kw">let </span>last_finalized_block = u64::from_str_radix(<span class="kw-2">&amp;</span>res.result.number[<span class="number">2</span>..], <span class="number">16</span>).unwrap();
-            <span class="kw">if </span>last_finalized_block &gt; last_known_eth_block {
-                <span class="kw">let </span>body_str = <span class="self">Self</span>::query_eth(<span class="kw-2">&amp;</span>get_messages_events(last_known_eth_block, last_finalized_block))<span class="question-mark">?</span>;
-
+            <span class="comment">// Check if there are new messages to be processed.
+            </span><span class="kw">if </span>last_finalized_block &gt; last_known_eth_block {
+                <span class="comment">// Read the new messages from L1.
+                </span><span class="kw">let </span>body_str = <span class="self">Self</span>::query_eth(<span class="kw-2">&amp;</span>get_messages_events(last_known_eth_block, last_finalized_block))<span class="question-mark">?</span>;
                 <span class="kw">let </span>res: EthLogs = from_str(<span class="kw-2">&amp;</span>body_str).map_err(|<span class="kw">_</span>| OffchainWorkerError::SerdeError)<span class="question-mark">?</span>;
-                res.result.iter().try_for_each(|message| {
-                    <span class="self">Self</span>::consume_l1_message(OriginFor::&lt;T&gt;::none(), message.try_into_transaction()<span class="question-mark">?</span>)
+                <span class="comment">// Iterate over the messages and execute them.
+                </span>res.result.iter().try_for_each(|message| {
+                    <span class="comment">// Execute the message.
+                    </span><span class="self">Self</span>::consume_l1_message(OriginFor::&lt;T&gt;::none(), message.try_into_transaction()<span class="question-mark">?</span>)
                         .map_err(OffchainWorkerError::ConsumeMessageError)
                 })<span class="question-mark">?</span>;
             }
