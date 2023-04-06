@@ -163,16 +163,21 @@ fn testnet_genesis(
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
         },
+        // Provides interaction with balances and accounts
         balances: BalancesConfig {
             // Configure endowed accounts with initial balance of 1 << 60.
             balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
         },
+        // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
+        // Deterministic finality mechanism used for block finalization
         grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
+        // Allows executing privileged functions
         sudo: SudoConfig {
             // Assign network admin rights.
             key: Some(root_key),
         },
+        // Provides the logic needed to handle transaction fees
         transaction_payment: Default::default(),
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
