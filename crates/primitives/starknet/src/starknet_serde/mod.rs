@@ -190,7 +190,7 @@ impl TryFrom<DeserializeTransaction> for Transaction {
     type Error = DeserializeTransactionError;
 
     fn try_from(d: DeserializeTransaction) -> Result<Self, Self::Error> {
-        let version = U256::from(d.version);
+        let version = d.version;
 
         let hash = string_to_h256(&d.hash).map_err(DeserializeTransactionError::InvalidHash)?;
 
