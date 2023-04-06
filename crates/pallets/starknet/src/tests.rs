@@ -8,7 +8,6 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
-use scale_codec::Encode;
 use sp_core::{H256, U256};
 
 use crate::mock::*;
@@ -160,6 +159,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 contract_address_bytes,
             ),
             None,
+            None,
         );
 
         let tx =
@@ -218,6 +218,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 contract_address_bytes,
                 contract_address_bytes,
             ),
+            None,
             None,
         );
         assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
@@ -282,6 +283,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_then_it_works() {
                 contract_address_bytes,
             ),
             None,
+            None,
         );
 
         assert_ok!(Starknet::add_deploy_account_transaction(none_origin, transaction));
@@ -324,6 +326,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_twice_then_it_fails() {
                 contract_address_bytes,
                 contract_address_bytes,
             ),
+            None,
             None,
         );
 
@@ -373,6 +376,7 @@ fn given_hardcoded_contract_run_deploy_account_tx_undeclared_then_it_fails() {
                 contract_address_bytes,
             ),
             None,
+            None,
         );
 
         assert_err!(
@@ -415,6 +419,7 @@ fn given_hardcoded_contract_run_declare_tx_then_it_works() {
                 contract_address_bytes,
             ),
             Some(account_class),
+            None,
         );
 
         assert_ok!(Starknet::add_declare_transaction(none_origin, transaction));
@@ -458,6 +463,7 @@ fn given_hardcoded_contract_run_declare_twice_then_it_fails() {
                 contract_address_bytes,
             ),
             Some(account_class),
+            None,
         );
 
         assert_ok!(Starknet::add_declare_transaction(none_origin.clone(), transaction.clone()));
@@ -504,6 +510,7 @@ fn given_hardcoded_contract_run_declare_none_then_it_fails() {
                 contract_address_bytes,
                 contract_address_bytes,
             ),
+            None,
             None,
         );
 
@@ -557,6 +564,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
                 contract_address_bytes,
                 contract_address_bytes,
             ),
+            None,
             None,
         );
         let mut contract_address_bytes = [0_u8; 32];

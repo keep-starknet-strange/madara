@@ -74,22 +74,13 @@ impl Message {
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
         };
-        Ok(Transaction {
-            version: 1_u8,
-            hash: H256::default(),
-            signature: BoundedVec::default(),
-            events: BoundedVec::default(),
-            sender_address,
-            nonce,
-            call_entrypoint,
-            contract_class: None,
-        })
+        Ok(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
 
 #[cfg(test)]
 mod test {
-    use frame_support::{bounded_vec, BoundedVec};
+    use frame_support::bounded_vec;
     use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     use mp_starknet::transaction::types::Transaction;
     use pretty_assertions;
@@ -104,10 +95,6 @@ mod test {
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         let expected_tx = Transaction {
-            version: 1_u8,
-            hash: H256::default(),
-            signature: BoundedVec::default(),
-            events: BoundedVec::default(),
             sender_address,
             nonce: U256::from(1),
             call_entrypoint: CallEntryPointWrapper {
@@ -118,7 +105,7 @@ mod test {
                 storage_address: H256::from_low_u64_be(1).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
-            contract_class: None,
+            ..Transaction::default()
         };
         pretty_assertions::assert_eq!(test_message.try_into_transaction().unwrap(), expected_tx);
     }
