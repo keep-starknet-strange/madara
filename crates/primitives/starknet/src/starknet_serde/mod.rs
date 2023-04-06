@@ -192,12 +192,12 @@ impl TryFrom<DeserializeTransaction> for Transaction {
     fn try_from(d: DeserializeTransaction) -> Result<Self, Self::Error> {
         let version = U256::from(d.version);
 
-        let hash = string_to_h256(&d.hash).map_err(|e| DeserializeTransactionError::InvalidHash(e))?;
+        let hash = string_to_h256(&d.hash).map_err(DeserializeTransactionError::InvalidHash)?;
 
         let signature = d
             .signature
             .into_iter()
-            .map(|s| string_to_h256(&s).map_err(|e| DeserializeTransactionError::InvalidSignature(e)))
+            .map(|s| string_to_h256(&s).map_err(DeserializeTransactionError::InvalidSignature))
             .collect::<Result<Vec<H256>, DeserializeTransactionError>>()?;
         let signature = BoundedVec::<H256, MaxArraySize>::try_from(signature)
             .map_err(|_| DeserializeTransactionError::SignatureExceedsMaxSize)?;
@@ -207,17 +207,17 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .into_iter()
             .map(EventWrapper::try_from)
             .collect::<Result<Vec<EventWrapper>, DeserializeEventError>>()
-            .map_err(|e| DeserializeTransactionError::InvalidEvents(e))?;
+            .map_err(DeserializeTransactionError::InvalidEvents)?;
         let events = BoundedVec::<EventWrapper, MaxArraySize>::try_from(events)
             .map_err(|_| DeserializeTransactionError::EventsExceedMaxSize)?;
 
         let sender_address = ContractAddressWrapper::from_hex(remove_prefix(&d.sender_address))
-            .map_err(|e| DeserializeTransactionError::InvalidSenderAddress(e))?;
+            .map_err(DeserializeTransactionError::InvalidSenderAddress)?;
 
         let nonce = U256::from(d.nonce);
 
         let call_entrypoint = CallEntryPointWrapper::try_from(d.call_entrypoint)
-            .map_err(|e| DeserializeTransactionError::InvalidCallEntryPoint(e))?;
+            .map_err(DeserializeTransactionError::InvalidCallEntryPoint)?;
 
         Ok(Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
@@ -230,8 +230,7 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
     fn try_from(d: DeserializeCallEntrypoint) -> Result<Self, Self::Error> {
         let class_hash = match d.class_hash {
             Some(hash) => Some(
-                <[u8; 32]>::from_hex(remove_prefix(&hash))
-                    .map_err(|e| DeserializeCallEntrypointError::InvalidClassHash(e))?,
+                <[u8; 32]>::from_hex(remove_prefix(&hash)).map_err(DeserializeCallEntrypointError::InvalidClassHash)?,
             ),
             None => None,
         };
@@ -244,25 +243,25 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
         };
 
         let entrypoint_selector = match d.entrypoint_selector {
-            Some(selector) => Some(
-                string_to_h256(&selector).map_err(|e| DeserializeCallEntrypointError::InvalidEntrypointSelector(e))?,
-            ),
+            Some(selector) => {
+                Some(string_to_h256(&selector).map_err(DeserializeCallEntrypointError::InvalidEntrypointSelector)?)
+            }
             None => None,
         };
 
         let calldata: Result<Vec<U256>, DeserializeCallEntrypointError> = d
             .calldata
             .into_iter()
-            .map(|hex_str| string_to_u256(&hex_str).map_err(|e| DeserializeCallEntrypointError::InvalidCalldata(e)))
+            .map(|hex_str| string_to_u256(&hex_str).map_err(DeserializeCallEntrypointError::InvalidCalldata))
             .collect();
         let calldata = BoundedVec::<U256, MaxArraySize>::try_from(calldata?)
             .map_err(|_| DeserializeCallEntrypointError::CalldataExceedsMaxSize)?;
 
         let storage_address = <[u8; 32]>::from_hex(remove_prefix(&d.storage_address))
-            .map_err(|e| DeserializeCallEntrypointError::InvalidStorageAddress(e))?;
+            .map_err(DeserializeCallEntrypointError::InvalidStorageAddress)?;
 
         let caller_address = <[u8; 32]>::from_hex(remove_prefix(&d.caller_address))
-            .map_err(|e| DeserializeCallEntrypointError::InvalidCallerAddress(e))?;
+            .map_err(DeserializeCallEntrypointError::InvalidCallerAddress)?;
 
         Ok(Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address })
     }
@@ -276,7 +275,7 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
         let keys: Result<Vec<H256>, DeserializeEventError> = d
             .keys
             .into_iter()
-            .map(|hex_str| string_to_h256(&hex_str).map_err(|e| DeserializeEventError::InvalidKeys(e)))
+            .map(|hex_str| string_to_h256(&hex_str).map_err(DeserializeEventError::InvalidKeys))
             .collect();
         let keys =
             BoundedVec::<H256, MaxArraySize>::try_from(keys?).map_err(|_| DeserializeEventError::KeysExceedMaxSize)?;
@@ -284,13 +283,13 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
         let data: Result<Vec<H256>, DeserializeEventError> = d
             .data
             .into_iter()
-            .map(|hex_str| string_to_h256(&hex_str).map_err(|e| DeserializeEventError::InvalidData(e)))
+            .map(|hex_str| string_to_h256(&hex_str).map_err(DeserializeEventError::InvalidData))
             .collect();
         let data =
             BoundedVec::<H256, MaxArraySize>::try_from(data?).map_err(|_| DeserializeEventError::DataExceedMaxSize)?;
 
-        let from_address: [u8; 32] = <[u8; 32]>::from_hex(remove_prefix(&d.from_address))
-            .map_err(|e| DeserializeEventError::InvalidFromAddress(e))?;
+        let from_address: [u8; 32] =
+            <[u8; 32]>::from_hex(remove_prefix(&d.from_address)).map_err(DeserializeEventError::InvalidFromAddress)?;
 
         Ok(Self { keys, data, from_address })
     }
