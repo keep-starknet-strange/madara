@@ -701,7 +701,7 @@ pub mod pallet {
                     )
                 })
                 .collect();
- 
+
             let address_to_nonce: HashMap<ContractAddress, Nonce> = Nonces::<T>::iter()
                 .map(|(key, value)| {
                     (

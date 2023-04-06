@@ -1,8 +1,9 @@
 use alloc::vec::Vec;
 
 use bitvec::vec::BitVec;
+use scale_codec::Encode;
 use sp_core::hexdisplay::AsBytesRef;
-use sp_core::H256;
+use sp_core::{H256, U256};
 use starknet_api::api_core::ClassHash;
 use starknet_api::hash::StarkFelt;
 use starknet_crypto::FieldElement;
@@ -160,11 +161,39 @@ pub fn calculate_event_hash<T: CryptoHasher>(event: &EventWrapper) -> FieldEleme
     T::compute_hash_on_elements(&[from_address, keys_hash, data_hash])
 }
 
+/// A Patricia Merkle tree with height 256 used to compute state tree root.
+struct StateTree<T: CryptoHasher> {
+    tree: MerkleTree<T>,
+}
+
+impl<T: CryptoHasher> Default for StateTree<T> {
+    fn default() -> Self {
+        Self { tree: MerkleTree::empty() }
+    }
+}
+
+impl<T: CryptoHasher> StateTree<T> {
+    /// Sets the value of a key in the merkle tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index of the value to set.
+    /// * `value` - The value to set.
+    pub fn set(&mut self, key: U256, value: FieldElement) {
+        self.tree.set(&BitVec::from(key.encode()), value);
+    }
+
+    /// Get the merkle root of the tree.
+    pub fn commit(self) -> FieldElement {
+        self.tree.commit()
+    }
+}
+
 /// Calculate the contracts tree root.
 pub fn calculate_contract_state_root<T: CryptoHasher>(contracts: &[ContractStateNode]) -> H256 {
-    let mut tree = CommitmentTree::<T>::default();
+    let mut tree = StateTree::<T>::default();
     contracts.iter().enumerate().for_each(|(idx, contract)| {
-        let idx: u64 = idx.try_into().expect("too many contracts while calculating commitment");
+        let idx: U256 = idx.try_into().expect("too many contracts while calculating commitment");
         let final_hash = calculate_contract_state_node_hash::<T>(contract);
         tree.set(idx, final_hash);
     });
@@ -183,9 +212,9 @@ fn calculate_contract_state_node_hash<T: CryptoHasher>(contract: &ContractStateN
 
 /// Calculate the classes tree root.
 pub fn calculate_classes_tree_root<T: CryptoHasher>(classes: &[ClassHash]) -> H256 {
-    let mut tree = CommitmentTree::<T>::default();
+    let mut tree = StateTree::<T>::default();
     classes.iter().enumerate().for_each(|(idx, class)| {
-        let idx: u64 = idx.try_into().expect("too many classes while calculating commitment");
+        let idx: U256 = idx.try_into().expect("too many classes while calculating commitment");
         let final_hash = calculate_contract_class_hash::<T>(class);
         tree.set(idx, final_hash);
     });
