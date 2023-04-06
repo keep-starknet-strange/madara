@@ -150,7 +150,12 @@ pub mod pallet {
 
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
-                Err(err) => log!(error, "Failed to executed L1 message {:?}", err),
+                Err(err) => match err {
+                    OffchainWorkerError::NoLastKnownEthBlock => {
+                        log!(info, "No last known Ethereum block number found. Skipping execution of L1 messages.")
+                    }
+                    _ => log!(error, "Failed to execute L1 messages: {:?}", err),
+                },
             }
         }
     }
@@ -803,16 +808,25 @@ pub mod pallet {
         }
 
         /// Fetches L1 messages and execute them.
+        /// This function is called by the offchain worker.
+        /// It is executed in a separate thread.
+        /// # Returns
+        /// The result of the offchain worker execution.
         fn process_l1_messages() -> Result<(), OffchainWorkerError> {
+            // Get the last known block from storage.
             let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
+            // Query L1 for the last finalized block.
             let body_str = Self::query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
             let res: EthBlockNumber = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
             let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
+            // Check if there are new messages to be processed.
             if last_finalized_block > last_known_eth_block {
+                // Read the new messages from L1.
                 let body_str = Self::query_eth(&get_messages_events(last_known_eth_block, last_finalized_block))?;
-
                 let res: EthLogs = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
+                // Iterate over the messages and execute them.
                 res.result.iter().try_for_each(|message| {
+                    // Execute the message.
                     Self::consume_l1_message(OriginFor::<T>::none(), message.try_into_transaction()?)
                         .map_err(OffchainWorkerError::ConsumeMessageError)
                 })?;
