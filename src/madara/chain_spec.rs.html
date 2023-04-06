@@ -162,10 +162,39 @@
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
-</pre><pre class="rust"><code><span class="kw">use </span>madara_runtime::{
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+</pre><pre class="rust"><code><span class="kw">use </span>blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+<span class="kw">use </span>hex::FromHex;
+<span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
     WASM_BINARY,
 };
+<span class="kw">use </span>mp_starknet::execution::ContractClassWrapper;
 <span class="kw">use </span>sc_service::ChainType;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_consensus_grandpa::AuthorityId <span class="kw">as </span>GrandpaId;
@@ -302,6 +331,23 @@
     endowed_accounts: Vec&lt;AccountId&gt;,
     _enable_println: bool,
 ) -&gt; GenesisConfig {
+    <span class="kw">let </span>account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../ressources/test.json&quot;</span>));
+
+    <span class="comment">// ACCOUNT CONTRACT
+    </span><span class="kw">let </span>contract_address_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000101&quot;</span>;
+    <span class="kw">let </span>contract_address_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(contract_address_str).unwrap();
+
+    <span class="kw">let </span>class_hash_str = <span class="string">&quot;025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918&quot;</span>;
+    <span class="kw">let </span>class_hash_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(class_hash_str).unwrap();
+
+    <span class="comment">// TEST CONTRACT
+    </span><span class="kw">let </span>other_contract_address_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000001111&quot;</span>;
+    <span class="kw">let </span>other_contract_address_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(other_contract_address_str).unwrap();
+
+    <span class="kw">let </span>other_class_hash_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000001000&quot;</span>;
+    <span class="kw">let </span>other_class_hash_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(other_class_hash_str).unwrap();
+
     GenesisConfig {
         system: SystemConfig {
             <span class="comment">// Add Wasm runtime to storage.
@@ -320,8 +366,14 @@
         transaction_payment: Default::default(),
         <span class="doccomment">/// Starknet Genesis configuration.
         </span>starknet: madara_runtime::pallet_starknet::GenesisConfig {
-            contracts: <span class="macro">vec!</span>[],
-            contract_classes: <span class="macro">vec!</span>[],
+            contracts: <span class="macro">vec!</span>[
+                (contract_address_bytes, class_hash_bytes),
+                (other_contract_address_bytes, other_class_hash_bytes),
+            ],
+            contract_classes: <span class="macro">vec!</span>[
+                (class_hash_bytes, ContractClassWrapper::from(account_class)),
+                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
+            ],
             _phantom: Default::default(),
         },
     }

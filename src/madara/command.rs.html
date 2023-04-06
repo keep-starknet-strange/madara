@@ -220,7 +220,7 @@
     <span class="kw">fn </span>load_spec(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;<span class="kw">dyn </span>sc_service::ChainSpec&gt;, String&gt; {
         <span class="prelude-val">Ok</span>(<span class="kw">match </span>id {
             <span class="string">&quot;dev&quot; </span>=&gt; Box::new(chain_spec::development_config()<span class="question-mark">?</span>),
-            <span class="string">&quot;&quot; </span>| <span class="string">&quot;local&quot; </span>=&gt; Box::new(chain_spec::local_testnet_config()<span class="question-mark">?</span>),
+            <span class="string">&quot;&quot; </span>| <span class="string">&quot;local&quot; </span>| <span class="string">&quot;madara-local&quot; </span>=&gt; Box::new(chain_spec::local_testnet_config()<span class="question-mark">?</span>),
             path =&gt; Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))<span class="question-mark">?</span>),
         })
     }
