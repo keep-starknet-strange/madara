@@ -75,7 +75,7 @@ impl Message {
             caller_address: ContractAddressWrapper::default(),
         };
         Ok(Transaction {
-            version: 1_u8,
+            version: U256::default(),
             hash: H256::default(),
             signature: BoundedVec::default(),
             events: BoundedVec::default(),
@@ -104,7 +104,7 @@ mod test {
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         let expected_tx = Transaction {
-            version: 1_u8,
+            version: U256::default(),
             hash: H256::default(),
             signature: BoundedVec::default(),
             events: BoundedVec::default(),

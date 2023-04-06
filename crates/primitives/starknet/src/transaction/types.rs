@@ -46,7 +46,7 @@ pub enum TxType {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
     /// The version of the transaction.
-    pub version: u8,
+    pub version: U256,
     /// Transaction hash.
     pub hash: H256,
     /// Signature.

@@ -14,7 +14,7 @@ use starknet_crypto::FieldElement;
 fn test_merkle_tree() {
     let txs = vec![
         Transaction {
-            version: 0_u8,
+            version: U256::zero(),
             hash: H256::from_low_u64_be(6),
             signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
             events: bounded_vec![EventWrapper::default(), EventWrapper::default()],
@@ -24,7 +24,7 @@ fn test_merkle_tree() {
             contract_class: None,
         },
         Transaction {
-            version: 0_u8,
+            version: U256::zero(),
             hash: H256::from_low_u64_be(28),
             signature: bounded_vec![H256::from_low_u64_be(40)],
             events: bounded_vec![],
