@@ -450,6 +450,19 @@
 <a href="#450" id="450">450</a>
 <a href="#451" id="451">451</a>
 <a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -609,8 +622,9 @@
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address)<span class="question-mark">?</span>)<span class="question-mark">?</span>,
             class_hash: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
             constructor_calldata: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().calldata,
-            <span class="comment">// TODO: add salt
-            </span>contract_address_salt: ContractAddressSalt(StarkFelt::new([<span class="number">0</span>; <span class="number">32</span>])<span class="question-mark">?</span>),
+            contract_address_salt: ContractAddressSalt(StarkFelt::new(
+                <span class="self">self</span>.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
+            )<span class="question-mark">?</span>),
         })
     }
 }
@@ -689,8 +703,19 @@
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
+        contract_address_salt: <span class="prelude-ty">Option</span>&lt;H256&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ version, hash, signature, events, sender_address, nonce, call_entrypoint, contract_class }
+        <span class="self">Self </span>{
+            version,
+            hash,
+            signature,
+            events,
+            sender_address,
+            nonce,
+            call_entrypoint,
+            contract_class,
+            contract_address_salt,
+        }
     }
 
     <span class="doccomment">/// Creates a new instance of a transaction without signature.
@@ -899,6 +924,7 @@
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: <span class="prelude-val">None</span>,
+            contract_address_salt: <span class="prelude-val">None</span>,
         }
     }
 }

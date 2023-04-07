@@ -125,6 +125,8 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -188,6 +190,8 @@
     </span><span class="kw">pub </span>call_entrypoint: CallEntryPointWrapper,
     <span class="doccomment">/// Contract Class
     </span><span class="kw">pub </span>contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
+    <span class="doccomment">/// Contract Address Salt
+    </span><span class="kw">pub </span>contract_address_salt: <span class="prelude-ty">Option</span>&lt;H256&gt;,
 }
 
 <span class="doccomment">/// Representation of a Starknet event.

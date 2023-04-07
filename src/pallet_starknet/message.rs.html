@@ -133,19 +133,6 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
-<a href="#141" id="141">141</a>
-<a href="#142" id="142">142</a>
-<a href="#143" id="143">143</a>
-<a href="#144" id="144">144</a>
-<a href="#145" id="145">145</a>
-<a href="#146" id="146">146</a>
-<a href="#147" id="147">147</a>
-<a href="#148" id="148">148</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
@@ -222,22 +209,13 @@
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
         };
-        <span class="prelude-val">Ok</span>(Transaction {
-            version: <span class="number">1_u8</span>,
-            hash: H256::default(),
-            signature: BoundedVec::default(),
-            events: BoundedVec::default(),
-            sender_address,
-            nonce,
-            call_entrypoint,
-            contract_class: <span class="prelude-val">None</span>,
-        })
+        <span class="prelude-val">Ok</span>(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
-    <span class="kw">use </span>frame_support::{bounded_vec, BoundedVec};
+    <span class="kw">use </span>frame_support::bounded_vec;
     <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
     <span class="kw">use </span>pretty_assertions;
@@ -252,10 +230,6 @@
         <span class="kw">let </span>test_message: Message =
             Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         <span class="kw">let </span>expected_tx = Transaction {
-            version: <span class="number">1_u8</span>,
-            hash: H256::default(),
-            signature: BoundedVec::default(),
-            events: BoundedVec::default(),
             sender_address,
             nonce: U256::from(<span class="number">1</span>),
             call_entrypoint: CallEntryPointWrapper {
@@ -266,7 +240,7 @@
                 storage_address: H256::from_low_u64_be(<span class="number">1</span>).to_fixed_bytes(),
                 caller_address: ContractAddressWrapper::default(),
             },
-            contract_class: <span class="prelude-val">None</span>,
+            ..Transaction::default()
         };
         <span class="macro">pretty_assertions::assert_eq!</span>(test_message.try_into_transaction().unwrap(), expected_tx);
     }
