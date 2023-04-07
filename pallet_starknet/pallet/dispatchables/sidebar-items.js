@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["add_declare_transaction","add_deploy_account_transaction","add_invoke_transaction","consume_l1_message","ping"]};
+window.SIDEBAR_ITEMS = {"fn":["consume_l1_message","declare","deploy_account","invoke","ping"]};

@@ -835,6 +835,12 @@
 <a href="#835" id="835">835</a>
 <a href="#836" id="836">836</a>
 <a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -1127,8 +1133,9 @@
             <span class="prelude-val">Ok</span>(())
         }
 
-        <span class="doccomment">/// Submit a Starknet transaction.
-        ///
+        <span class="doccomment">/// The invoke transaction is the main transaction type used to invoke contract functions in
+        /// Starknet.
+        /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -1142,7 +1149,7 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>add_invoke_transaction(_origin: OriginFor&lt;T&gt;, <span class="kw-2">mut </span>transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>invoke(_origin: OriginFor&lt;T&gt;, <span class="kw-2">mut </span>transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -1175,8 +1182,10 @@
             </span><span class="prelude-val">Ok</span>(())
         }
 
-        <span class="comment">// Submit a Starknet declare transaction.
-        </span><span class="doccomment">/// # Arguments
+        <span class="doccomment">/// The declare transaction is used to introduce new classes into the state of Starknet,
+        /// enabling other contracts to deploy instances of those classes or using them in a library
+        /// call. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#declare_transaction`.
+        /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
         /// * `transaction` - The Starknet transaction.
@@ -1187,9 +1196,9 @@
         ///
         /// # TODO
         /// * Compute weight
-        </span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
+        </span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>add_declare_transaction(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>declare(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -1242,8 +1251,11 @@
             </span><span class="prelude-val">Ok</span>(())
         }
 
-        <span class="comment">// Submit a Starknet deploy account transaction.
-        </span><span class="doccomment">/// # Arguments
+        <span class="doccomment">/// Since StarkNet v0.10.1 the deploy_account transaction replaces the deploy transaction
+        /// for deploying account contracts. To use it, you should first pre-fund your
+        /// would-be account address so that you could pay the transaction fee (see here for more
+        /// details) . You can then send the deploy_account transaction. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction`.
+        /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
         /// * `transaction` - The Starknet transaction.
@@ -1254,9 +1266,9 @@
         ///
         /// # TODO
         /// * Compute weight
-        </span><span class="attr">#[pallet::call_index(<span class="number">4</span>)]
+        </span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>add_deploy_account_transaction(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>deploy_account(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -1302,7 +1314,7 @@
         ///
         /// # TODO
         /// * Compute weight
-        </span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
+        </span><span class="attr">#[pallet::call_index(<span class="number">4</span>)]
         #[pallet::weight(<span class="number">0</span>)]
         </span><span class="kw">pub fn </span>consume_l1_message(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// TODO: add origin check when proxy pallet added
