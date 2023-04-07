@@ -67,6 +67,7 @@ declare module "@polkadot/api-base/types/errors" {
       ContractClassMustBeSpecified: AugmentedError<ApiType>;
       EmitEventError: AugmentedError<ApiType>;
       InvalidContractClass: AugmentedError<ApiType>;
+      StateDiffError: AugmentedError<ApiType>;
       StateReaderError: AugmentedError<ApiType>;
       TooManyPendingTransactions: AugmentedError<ApiType>;
       TransactionExecutionFailed: AugmentedError<ApiType>;
@@ -102,6 +103,12 @@ declare module "@polkadot/api-base/types/errors" {
        * current runtime and the new runtime.
        */
       SpecVersionNeedsToIncrease: AugmentedError<ApiType>;
+      /** Generic error */
+      [key: string]: AugmentedError<ApiType>;
+    };
+    utility: {
+      /** Too many calls batched. */
+      TooManyCalls: AugmentedError<ApiType>;
       /** Generic error */
       [key: string]: AugmentedError<ApiType>;
     };

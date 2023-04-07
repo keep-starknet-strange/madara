@@ -1,4 +1,4 @@
-// import "@madara/api-augment";
+import "@madara/api-augment";
 import { ApiPromise } from "@polkadot/api";
 import { SubmittableExtrinsic } from "@polkadot/api/types";
 import { KeyringPair } from "@polkadot/keyring/types";
@@ -6,7 +6,6 @@ import { ISubmittableResult } from "@polkadot/types/types";
 import { u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 import { hash } from "starknet";
-import { readFileSync, writeFileSync } from "fs";
 
 export async function sendTransactionNoValidation(
   api: ApiPromise,
@@ -340,7 +339,7 @@ export async function batchTransfer(
     contractClass: null,
   };
 
-  const extrisinc_transfer = api.tx.starknet.addInvokeTransaction(tx_transfer);
+  const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
 
   const extrisinc_transfers = Array(50).fill(extrisinc_transfer);
 

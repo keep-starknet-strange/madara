@@ -16,6 +16,7 @@ import type {
   FrameSupportDispatchPerDispatchClassU32,
   FrameSupportDispatchPerDispatchClassWeight,
   FrameSupportDispatchPerDispatchClassWeightsPerClass,
+  FrameSupportDispatchRawOrigin,
   FrameSupportTokensMiscBalanceStatus,
   FrameSystemAccountInfo,
   FrameSystemCall,
@@ -33,6 +34,7 @@ import type {
   FrameSystemLimitsBlockWeights,
   FrameSystemLimitsWeightsPerClass,
   FrameSystemPhase,
+  MadaraRuntimeOriginCaller,
   MadaraRuntimeRuntime,
   MpStarknetBlock,
   MpStarknetBlockHeader,
@@ -63,6 +65,9 @@ import type {
   PalletTransactionPaymentChargeTransactionPayment,
   PalletTransactionPaymentEvent,
   PalletTransactionPaymentReleases,
+  PalletUtilityCall,
+  PalletUtilityError,
+  PalletUtilityEvent,
   SpArithmeticArithmeticError,
   SpConsensusAuraSr25519AppSr25519Public,
   SpConsensusGrandpaAppPublic,
@@ -99,6 +104,7 @@ declare module "@polkadot/types/types/registry" {
     FrameSupportDispatchPerDispatchClassU32: FrameSupportDispatchPerDispatchClassU32;
     FrameSupportDispatchPerDispatchClassWeight: FrameSupportDispatchPerDispatchClassWeight;
     FrameSupportDispatchPerDispatchClassWeightsPerClass: FrameSupportDispatchPerDispatchClassWeightsPerClass;
+    FrameSupportDispatchRawOrigin: FrameSupportDispatchRawOrigin;
     FrameSupportTokensMiscBalanceStatus: FrameSupportTokensMiscBalanceStatus;
     FrameSystemAccountInfo: FrameSystemAccountInfo;
     FrameSystemCall: FrameSystemCall;
@@ -116,6 +122,7 @@ declare module "@polkadot/types/types/registry" {
     FrameSystemLimitsBlockWeights: FrameSystemLimitsBlockWeights;
     FrameSystemLimitsWeightsPerClass: FrameSystemLimitsWeightsPerClass;
     FrameSystemPhase: FrameSystemPhase;
+    MadaraRuntimeOriginCaller: MadaraRuntimeOriginCaller;
     MadaraRuntimeRuntime: MadaraRuntimeRuntime;
     MpStarknetBlock: MpStarknetBlock;
     MpStarknetBlockHeader: MpStarknetBlockHeader;
@@ -146,6 +153,9 @@ declare module "@polkadot/types/types/registry" {
     PalletTransactionPaymentChargeTransactionPayment: PalletTransactionPaymentChargeTransactionPayment;
     PalletTransactionPaymentEvent: PalletTransactionPaymentEvent;
     PalletTransactionPaymentReleases: PalletTransactionPaymentReleases;
+    PalletUtilityCall: PalletUtilityCall;
+    PalletUtilityError: PalletUtilityError;
+    PalletUtilityEvent: PalletUtilityEvent;
     SpArithmeticArithmeticError: SpArithmeticArithmeticError;
     SpConsensusAuraSr25519AppSr25519Public: SpConsensusAuraSr25519AppSr25519Public;
     SpConsensusGrandpaAppPublic: SpConsensusGrandpaAppPublic;
