@@ -157,8 +157,9 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
             class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
             constructor_calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
-            // TODO: add salt
-            contract_address_salt: ContractAddressSalt(StarkFelt::new([0; 32])?),
+            contract_address_salt: ContractAddressSalt(StarkFelt::new(
+                self.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
+            )?),
         })
     }
 }
@@ -237,8 +238,19 @@ impl Transaction {
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
+        contract_address_salt: Option<H256>,
     ) -> Self {
-        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, contract_class }
+        Self {
+            version,
+            hash,
+            signature,
+            events,
+            sender_address,
+            nonce,
+            call_entrypoint,
+            contract_class,
+            contract_address_salt,
+        }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -447,6 +459,7 @@ impl Default for Transaction {
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
+            contract_address_salt: None,
         }
     }
 }
