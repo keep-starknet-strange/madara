@@ -116,7 +116,7 @@ export async function declare(
     },
   };
 
-  const extrisinc_declare = api.tx.starknet.addDeclareTransaction(tx_declare);
+  const extrisinc_declare = api.tx.starknet.declare(tx_declare);
 
   return sendTransaction(api, extrisinc_declare, user);
 }
@@ -154,7 +154,7 @@ export async function deploy(
     contractClass: null,
   };
 
-  const extrisinc_deploy = api.tx.starknet.addInvokeTransaction(tx_deploy);
+  const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
 
   return sendTransaction(api, extrisinc_deploy, user);
 }
@@ -193,7 +193,7 @@ export async function initialize(
     contractClass: null,
   };
 
-  const extrisinc_init = api.tx.starknet.addInvokeTransaction(tx_initialize);
+  const extrisinc_init = api.tx.starknet.invoke(tx_initialize);
 
   return sendTransaction(api, extrisinc_init, user);
 }
@@ -231,7 +231,7 @@ export async function mint(
     contractClass: null,
   };
 
-  const extrisinc_mint = api.tx.starknet.addInvokeTransaction(tx_mint);
+  const extrisinc_mint = api.tx.starknet.invoke(tx_mint);
 
   return sendTransaction(api, extrisinc_mint, user);
 }
@@ -270,7 +270,7 @@ export async function transfer(
     contractClass: null,
   };
 
-  const extrisinc_transfer = api.tx.starknet.addInvokeTransaction(tx_transfer);
+  const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
 
   return sendTransaction(api, extrisinc_transfer, user);
 }
