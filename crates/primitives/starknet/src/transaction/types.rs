@@ -61,6 +61,8 @@ pub struct Transaction {
     pub call_entrypoint: CallEntryPointWrapper,
     /// Contract Class
     pub contract_class: Option<ContractClassWrapper>,
+    /// Contract Address Salt
+    pub contract_address_salt: Option<H256>,
 }
 
 /// Representation of a Starknet event.
