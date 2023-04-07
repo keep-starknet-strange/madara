@@ -6,27 +6,27 @@
 import "@polkadot/api-base/types/submittable";
 
 import type {
-  ApiTypes,
-  AugmentedSubmittable,
-  SubmittableExtrinsic,
-  SubmittableExtrinsicFunction,
+    ApiTypes,
+    AugmentedSubmittable,
+    SubmittableExtrinsic,
+    SubmittableExtrinsicFunction,
 } from "@polkadot/api-base/types";
 import type {
-  Bytes,
-  Compact,
-  Vec,
-  bool,
-  u128,
-  u32,
-  u64,
+    Bytes,
+    Compact,
+    Vec,
+    bool,
+    u128,
+    u32,
+    u64,
 } from "@polkadot/types-codec";
 import type { AnyNumber, IMethod, ITuple } from "@polkadot/types-codec/types";
 import type { Call, MultiAddress } from "@polkadot/types/interfaces/runtime";
 import type {
-  MpStarknetTransactionTypesTransaction,
-  SpConsensusGrandpaEquivocationProof,
-  SpCoreVoid,
-  SpWeightsWeightV2Weight,
+    MpStarknetTransactionTypesTransaction,
+    SpConsensusGrandpaEquivocationProof,
+    SpCoreVoid,
+    SpWeightsWeightV2Weight,
 } from "@polkadot/types/lookup";
 
 export type __AugmentedSubmittable = AugmentedSubmittable<() => unknown>;
@@ -298,7 +298,7 @@ declare module "@polkadot/api-base/types/submittable" {
        *
        * - Compute weight
        */
-      addDeclareTransaction: AugmentedSubmittable<
+      declare: AugmentedSubmittable<
         (
           transaction:
             | MpStarknetTransactionTypesTransaction
@@ -366,7 +366,7 @@ declare module "@polkadot/api-base/types/submittable" {
        *
        * - Compute weight
        */
-      addInvokeTransaction: AugmentedSubmittable<
+      invoke: AugmentedSubmittable<
         (
           transaction:
             | MpStarknetTransactionTypesTransaction

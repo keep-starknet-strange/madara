@@ -141,3 +141,12 @@ impl pallet_starknet::Config for Runtime {
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
 }
+
+/// A stateless module with helpers for dispatch management which does no re-authentication.
+/// We use this to enable batch dispatches.
+impl pallet_utility::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
+    type WeightInfo = ();
+    type PalletsOrigin = OriginCaller;
+}

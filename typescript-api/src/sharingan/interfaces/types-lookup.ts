@@ -6,29 +6,29 @@
 import "@polkadot/types/lookup";
 
 import type {
-  Bytes,
-  Compact,
-  Enum,
-  Null,
-  Option,
-  Result,
-  Struct,
-  Text,
-  U256,
-  U8aFixed,
-  Vec,
-  bool,
-  u128,
-  u32,
-  u64,
-  u8,
+    Bytes,
+    Compact,
+    Enum,
+    Null,
+    Option,
+    Result,
+    Struct,
+    Text,
+    U256,
+    U8aFixed,
+    Vec,
+    bool,
+    u128,
+    u32,
+    u64,
+    u8,
 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type {
-  AccountId32,
-  Call,
-  H256,
-  MultiAddress,
+    AccountId32,
+    Call,
+    H256,
+    MultiAddress,
 } from "@polkadot/types/interfaces/runtime";
 import type { Event } from "@polkadot/types/interfaces/system";
 
@@ -752,16 +752,16 @@ declare module "@polkadot/types/lookup" {
   /** @name PalletStarknetCall (111) */
   interface PalletStarknetCall extends Enum {
     readonly isPing: boolean;
-    readonly isAddInvokeTransaction: boolean;
-    readonly asAddInvokeTransaction: {
+    readonly isinvoke: boolean;
+    readonly asinvoke: {
       readonly transaction: MpStarknetTransactionTypesTransaction;
     } & Struct;
     readonly isConsumeL1Message: boolean;
     readonly asConsumeL1Message: {
       readonly transaction: MpStarknetTransactionTypesTransaction;
     } & Struct;
-    readonly isAddDeclareTransaction: boolean;
-    readonly asAddDeclareTransaction: {
+    readonly isdeclare: boolean;
+    readonly asdeclare: {
       readonly transaction: MpStarknetTransactionTypesTransaction;
     } & Struct;
     readonly isAddDeployAccountTransaction: boolean;
@@ -770,9 +770,9 @@ declare module "@polkadot/types/lookup" {
     } & Struct;
     readonly type:
       | "Ping"
-      | "AddInvokeTransaction"
+      | "invoke"
       | "ConsumeL1Message"
-      | "AddDeclareTransaction"
+      | "declare"
       | "AddDeployAccountTransaction";
   }
 
