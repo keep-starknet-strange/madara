@@ -59,6 +59,7 @@
     "@polkadot/util": "^11.1.1",
     "@substrate/txwrapper-core": "^3.2.2",
     "@substrate/txwrapper-substrate": "^3.2.2",
+    "@madara/api-augment": "0.1.0",
     "@types/chai": "^4.2.11",
     "@types/chai-as-promised": "^7.1.4",
     "@types/mocha": "^9.0.0",
