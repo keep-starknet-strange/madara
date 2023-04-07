@@ -15,18 +15,6 @@ use crate::types::Message;
 use crate::{Error, Event};
 
 #[test]
-fn given_normal_conditions_when_deploy_sierra_program_then_it_works() {
-    new_test_ext().execute_with(|| {
-        let deployer_account = 1;
-        let deployer_origin = RuntimeOrigin::signed(deployer_account);
-        // Go past genesis block so events get deposited
-        System::set_block_number(1);
-        // Dispatch a signed extrinsic.
-        assert_ok!(Starknet::ping(deployer_origin));
-    });
-}
-
-#[test]
 fn should_calculate_contract_addr_correct() {
     let (addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
     let exp = <[u8; 32]>::from_hex("00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9").unwrap();
@@ -85,7 +73,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         let transaction =
             Transaction { version: 1_u8, sender_address: contract_address_bytes, ..Transaction::default() };
 
-        assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::AccountNotDeployed);
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::AccountNotDeployed);
     })
 }
 
@@ -126,7 +114,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
             None,
         );
 
-        assert_err!(Starknet::add_invoke_transaction(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -177,7 +165,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
             .try_into_transaction()
             .unwrap();
 
-        assert_ok!(Starknet::add_invoke_transaction(none_origin.clone(), transaction));
+        assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
     });
 }
@@ -219,7 +207,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             None,
             None,
         );
-        assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
+        assert_ok!(Starknet::invoke(none_origin, transaction));
 
         System::assert_last_event(
             Event::StarknetEvent(EventWrapper {
@@ -291,7 +279,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         target_contract_address.to_big_endian(&mut contract_address_bytes);
         let mut storage_var_selector_bytes = [0_u8; 32];
         storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
-        assert_ok!(Starknet::add_invoke_transaction(none_origin, transaction));
+        assert_ok!(Starknet::invoke(none_origin, transaction));
         assert_eq!(
             Starknet::storage((contract_address_bytes, H256::from_slice(&storage_var_selector_bytes))),
             U256::one()
@@ -326,7 +314,7 @@ fn given_contract_run_deploy_account_tx_works() {
             ..Transaction::default()
         };
 
-        assert_ok!(Starknet::add_deploy_account_transaction(none_origin, transaction));
+        assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr), account_class_hash);
     });
 }
@@ -358,13 +346,10 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             ..Transaction::default()
         };
 
-        assert_ok!(Starknet::add_deploy_account_transaction(none_origin.clone(), transaction.clone()));
+        assert_ok!(Starknet::deploy_account(none_origin.clone(), transaction.clone()));
         // Check that the account was created
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr), account_class_hash);
-        assert_err!(
-            Starknet::add_deploy_account_transaction(none_origin, transaction),
-            Error::<Test>::AccountAlreadyDeployed
-        );
+        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::AccountAlreadyDeployed);
     });
 }
 
@@ -393,10 +378,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             ..Transaction::default()
         };
 
-        assert_err!(
-            Starknet::add_deploy_account_transaction(none_origin, transaction),
-            Error::<Test>::TransactionExecutionFailed
-        );
+        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -427,18 +409,15 @@ fn given_contract_declare_tx_works_once_not_twice() {
         };
         // Cannot declare a class with None
         assert_err!(
-            Starknet::add_declare_transaction(none_origin.clone(), transaction.clone()),
+            Starknet::declare(none_origin.clone(), transaction.clone()),
             Error::<Test>::ContractClassMustBeSpecified
         );
 
         transaction.contract_class = Some(erc20_class.clone());
 
-        assert_ok!(Starknet::add_declare_transaction(none_origin.clone(), transaction.clone()));
+        assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
-        assert_err!(
-            Starknet::add_declare_transaction(none_origin, transaction),
-            Error::<Test>::ClassHashAlreadyDeclared
-        );
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::ClassHashAlreadyDeclared);
     });
 }
