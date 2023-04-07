@@ -290,8 +290,9 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Submit a Starknet transaction.
-        ///
+        /// The invoke transaction is the main transaction type used to invoke contract functions in
+        /// Starknet.
+        /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -305,7 +306,7 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn add_invoke_transaction(_origin: OriginFor<T>, mut transaction: Transaction) -> DispatchResult {
+        pub fn invoke(_origin: OriginFor<T>, mut transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -338,7 +339,9 @@ pub mod pallet {
             Ok(())
         }
 
-        // Submit a Starknet declare transaction.
+        /// The declare transaction is used to introduce new classes into the state of Starknet,
+        /// enabling other contracts to deploy instances of those classes or using them in a library
+        /// call. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#declare_transaction`.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -350,9 +353,9 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(3)]
+        #[pallet::call_index(2)]
         #[pallet::weight(0)]
-        pub fn add_declare_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn declare(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -405,7 +408,10 @@ pub mod pallet {
             Ok(())
         }
 
-        // Submit a Starknet deploy account transaction.
+        /// Since StarkNet v0.10.1 the deploy_account transaction replaces the deploy transaction
+        /// for deploying account contracts. To use it, you should first pre-fund your
+        /// would-be account address so that you could pay the transaction fee (see here for more
+        /// details) . You can then send the deploy_account transaction. See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction`.
         /// # Arguments
         ///
         /// * `origin` - The origin of the transaction.
@@ -417,9 +423,9 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(4)]
+        #[pallet::call_index(3)]
         #[pallet::weight(0)]
-        pub fn add_deploy_account_transaction(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn deploy_account(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -465,7 +471,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(2)]
+        #[pallet::call_index(4)]
         #[pallet::weight(0)]
         pub fn consume_l1_message(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
