@@ -304,7 +304,6 @@ export async function transfer(
   return "";
 }
 
-
 export async function batchTransfer(
   api: ApiPromise,
   user: any,

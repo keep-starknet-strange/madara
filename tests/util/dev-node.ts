@@ -130,7 +130,7 @@ export async function startMadaraDevNode(
     if ((err as any).errno == "ENOENT") {
       console.error(
         `\x1b[31mMissing Madara binary ` +
-        `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
+          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
       );
     } else {
       console.error(err);
@@ -232,7 +232,7 @@ export async function startMadaraForkedNode(
     if ((err as any).errno == "ENOENT") {
       console.error(
         `\x1b[31mMissing Madara binary ` +
-        `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
+          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
       );
     } else {
       console.error(err);

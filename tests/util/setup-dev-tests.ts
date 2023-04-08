@@ -26,17 +26,17 @@ export interface BlockCreation {
 export interface BlockCreationResponse<
   ApiType extends ApiTypes,
   Call extends
-  | SubmittableExtrinsic<ApiType>
-  | string
-  | (SubmittableExtrinsic<ApiType> | string)[]
+    | SubmittableExtrinsic<ApiType>
+    | string
+    | (SubmittableExtrinsic<ApiType> | string)[]
 > {
   block: {
     duration: number;
     hash: string;
   };
   result: Call extends (string | SubmittableExtrinsic<ApiType>)[]
-  ? ExtrinsicCreation[]
-  : ExtrinsicCreation;
+    ? ExtrinsicCreation[]
+    : ExtrinsicCreation;
 }
 
 export interface DevTestContext {
@@ -46,10 +46,10 @@ export interface DevTestContext {
   createBlock<
     ApiType extends ApiTypes,
     Call extends
-    | SubmittableExtrinsic<ApiType>
-    | Promise<SubmittableExtrinsic<ApiType>>
-    | string
-    | Promise<string>,
+      | SubmittableExtrinsic<ApiType>
+      | Promise<SubmittableExtrinsic<ApiType>>
+      | string
+      | Promise<string>,
     Calls extends Call | Call[]
   >(
     transactions?: Calls,
@@ -94,8 +94,8 @@ export function describeDevMadara(
       const init = forkedMode
         ? await startMadaraForkedNode(9933, 9944)
         : !DEBUG_MODE
-          ? await startMadaraDevNode(withWasm, runtime)
-          : {
+        ? await startMadaraDevNode(withWasm, runtime)
+        : {
             runningNode: null,
             p2pPort: 19931,
             wsPort: 19933,
@@ -134,10 +134,10 @@ export function describeDevMadara(
       context.createBlock = async <
         ApiType extends ApiTypes,
         Call extends
-        | SubmittableExtrinsic<ApiType>
-        | Promise<SubmittableExtrinsic<ApiType>>
-        | string
-        | Promise<string>,
+          | SubmittableExtrinsic<ApiType>
+          | Promise<SubmittableExtrinsic<ApiType>>
+          | string
+          | Promise<string>,
         Calls extends Call | Call[]
       >(
         transactions?: Calls,
@@ -151,8 +151,8 @@ export function describeDevMadara(
           transactions == undefined
             ? []
             : Array.isArray(transactions)
-              ? transactions
-              : [transactions];
+            ? transactions
+            : [transactions];
         for await (const call of txs) {
           console.log(call.isSigned);
           if (typeof call == "string") {
@@ -225,17 +225,17 @@ export function describeDevMadara(
           const extrinsicIndex =
             result.type == "eth"
               ? allRecords
-                .find(
-                  ({ phase, event: { section, method, data } }) =>
-                    phase.isApplyExtrinsic &&
-                    section == "ethereum" &&
-                    method == "Executed" &&
-                    data[2].toString() == result.hash
-                )
-                ?.phase?.asApplyExtrinsic?.toNumber()
+                  .find(
+                    ({ phase, event: { section, method, data } }) =>
+                      phase.isApplyExtrinsic &&
+                      section == "ethereum" &&
+                      method == "Executed" &&
+                      data[2].toString() == result.hash
+                  )
+                  ?.phase?.asApplyExtrinsic?.toNumber()
               : blockData.block.extrinsics.findIndex(
-                (ext) => ext.hash.toHex() == result.hash
-              );
+                  (ext) => ext.hash.toHex() == result.hash
+                );
           // We retrieve the events associated with the extrinsic
           const events = allRecords.filter(
             ({ phase }) =>

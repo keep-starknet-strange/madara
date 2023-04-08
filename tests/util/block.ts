@@ -129,14 +129,14 @@ export function extractPreimageDeposit(
   request:
     | Option<ITuple<[AccountId20, u128]>>
     | {
-      readonly deposit: ITuple<[AccountId20, u128]>;
-      readonly len: u32;
-    }
+        readonly deposit: ITuple<[AccountId20, u128]>;
+        readonly len: u32;
+      }
     | {
-      readonly deposit: Option<ITuple<[AccountId20, u128]>>;
-      readonly count: u32;
-      readonly len: Option<u32>;
-    }
+        readonly deposit: Option<ITuple<[AccountId20, u128]>>;
+        readonly count: u32;
+        readonly len: Option<u32>;
+      }
 ) {
   const deposit = "deposit" in request ? request.deposit : request;
   if ("isSome" in deposit) {
