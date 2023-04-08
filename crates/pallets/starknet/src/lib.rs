@@ -235,16 +235,6 @@ pub mod pallet {
             }
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
-                log!(
-                    info,
-                    "contract_class: {:?}",
-                    frame_support::Hashable::blake2_256(&contract_class.program).as_slice()
-                );
-                log!(
-                    info,
-                    "contract_class: {:?}",
-                    frame_support::Hashable::blake2_256(&contract_class.entry_points_by_type).as_slice()
-                );
                 ContractClasses::<T>::insert(class_hash, contract_class);
             }
 
