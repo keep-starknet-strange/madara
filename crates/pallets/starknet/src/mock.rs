@@ -166,7 +166,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     pallet_starknet::GenesisConfig::<Test> {
         contracts: vec![
-            (account_addr.into(), proxy_class_hash),
+            (account_addr, proxy_class_hash),
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
             (blockifier_account_address, blockifier_account_class_hash),
@@ -216,7 +216,7 @@ pub fn account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
         "0x0",
     ];
 
-    let addr = calculate_contract_address(account_salt, H256::from(account_class_hash), cd_raw.clone()).unwrap();
+    let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
 }
 

@@ -213,8 +213,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 Some(account_class_hash),
                 EntryPointTypeWrapper::External,
                 None,
-                BoundedVec::try_from(calldata.clone().into_iter().map(|x| U256::from(x)).collect::<Vec<U256>>())
-                    .unwrap(),
+                BoundedVec::try_from(calldata.clone().into_iter().map(U256::from).collect::<Vec<U256>>()).unwrap(),
                 test_addr,
                 test_addr,
             ),
@@ -245,8 +244,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
                 Some(account_class_hash),
                 EntryPointTypeWrapper::External,
                 None,
-                BoundedVec::try_from(calldata.clone().into_iter().map(|x| U256::from(x)).collect::<Vec<U256>>())
-                    .unwrap(),
+                BoundedVec::try_from(calldata.clone().into_iter().map(U256::from).collect::<Vec<U256>>()).unwrap(),
                 test_addr,
                 test_addr,
             ),
@@ -321,7 +319,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             Error::<Test>::ContractClassMustBeSpecified
         );
 
-        transaction.contract_class = Some(erc20_class.clone());
+        transaction.contract_class = Some(erc20_class);
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
