@@ -1,17 +1,19 @@
 use core::str::FromStr;
 
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
-use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
+use frame_support::parameter_types;
+use frame_support::traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, GenesisBuild, Hooks};
+use frame_system::EnsureSigned;
 use hex::FromHex;
 use mp_starknet::execution::ContractClassWrapper;
-use sp_core::H256;
+use sp_core::{ConstU32, H256};
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
-use {crate as pallet_starknet, frame_system as system};
+use {crate as pallet_starknet, frame_system as system, pallet_balances};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -32,6 +34,8 @@ frame_support::construct_runtime!(
         System: frame_system,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
+        Assets: pallet_assets,
+        Balances: pallet_balances,
     }
 );
 
@@ -61,7 +65,7 @@ impl system::Config for Test {
     type BlockHashCount = ConstU64<250>;
     type Version = ();
     type PalletInfo = PalletInfo;
-    type AccountData = ();
+    type AccountData = pallet_balances::AccountData<u64>;
     type OnNewAccount = ();
     type OnKilledAccount = ();
     type SystemWeightInfo = ();
@@ -69,14 +73,54 @@ impl system::Config for Test {
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
-
+parameter_types! {
+    pub const AssetId: u32 = 1;
+    pub const AssetName: &'static str = "Ether";
+    pub const AssetSymbol: &'static str = "ETH";
+}
 impl pallet_starknet::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+    type AssetId = AssetId;
+    type AssetName = AssetName;
+    type AssetSymbol = AssetSymbol;
 }
 
+impl pallet_balances::Config for Test {
+    type MaxReserves = ();
+    type ReserveIdentifier = [u8; 8];
+    type MaxLocks = ConstU32<10>;
+    type Balance = u64;
+    type RuntimeEvent = RuntimeEvent;
+    type DustRemoval = ();
+    type ExistentialDeposit = ConstU64<1>;
+    type AccountStore = System;
+    type WeightInfo = ();
+}
+impl pallet_assets::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+    type Balance = u64;
+    type AssetId = u32;
+    type AssetIdParameter = scale_codec::Compact<u32>;
+    type Currency = Balances;
+    type ForceOrigin = frame_system::EnsureRoot<u64>;
+    type AssetDeposit = ConstU64<1>;
+    type AssetAccountDeposit = ConstU64<10>;
+    type MetadataDepositBase = ConstU64<1>;
+    type MetadataDepositPerByte = ConstU64<1>;
+    type ApprovalDeposit = ConstU64<1>;
+    type StringLimit = ConstU32<50>;
+    type Freezer = ();
+    type WeightInfo = ();
+    type Extra = ();
+    type CallbackHandle = ();
+    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
+    type RemoveItemsLimit = ConstU32<1000>;
+    #[cfg(feature = "runtime-benchmarks")]
+    type BenchmarkHelper = ();
+}
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();

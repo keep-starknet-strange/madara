@@ -99,6 +99,10 @@ pub mod pallet {
     use blockifier::state::cached_state::{CachedState, ContractStorageKey};
     use blockifier::state::state_api::State;
     use blockifier::test_utils::DictStateReader;
+    use frame_support::pallet_prelude::*;
+    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
+    use frame_support::traits::{OriginTrait, Time};
+    use frame_system::pallet_prelude::*;
     use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
     use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
     use mp_starknet::crypto::commitment;
@@ -111,6 +115,7 @@ pub mod pallet {
     use mp_starknet::transaction::types::{
         EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
     };
+    use pallet_assets;
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
@@ -123,12 +128,6 @@ pub mod pallet {
     use starknet_api::transaction::EventContent;
     use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
-    type ContractClassMapping = HashMap<ClassHash, ContractClass>;
-
-    use frame_support::pallet_prelude::*;
-    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::traits::{OriginTrait, Time};
-    use frame_system::pallet_prelude::*;
 
     use super::*;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
@@ -139,7 +138,7 @@ pub mod pallet {
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: frame_system::Config + pallet_assets::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// How Starknet state root is calculated.
@@ -148,8 +147,11 @@ pub mod pallet {
         type SystemHash: Hasher;
         /// The time idk what.
         type TimestampProvider: Time;
+        type AssetId: Get<<Self as pallet_assets::Config>::AssetId>;
+        type AssetName: Get<Vec<u8>>;
+        type AssetSymbol: Get<Vec<u8>>;
     }
-
+    type ContractClassMapping = HashMap<ClassHash, ContractClass>;
     /// The Starknet pallet hooks.
     /// HOOKS
     /// # TODO

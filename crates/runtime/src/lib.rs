@@ -61,6 +61,7 @@ construct_runtime!(
         Utility: pallet_utility,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
+        Assets: pallet_assets,
     }
 );
 /// The address format for describing accounts.
@@ -100,6 +101,7 @@ mod benches {
         [frame_system, SystemBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_timestamp, Timestamp]
+        [pallet_assets, Assets]
     );
 }
 

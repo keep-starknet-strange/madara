@@ -9,6 +9,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use frame_system::{EnsureRoot, EnsureSigned};
 pub use pallet_balances::Call as BalancesCall;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
@@ -143,6 +144,9 @@ impl pallet_starknet::Config for Runtime {
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+    type AssetId = AssetId;
+    type AssetName = AssetName;
+    type AssetSymbol = AssetSymbol;
 }
 
 /// A stateless module with helpers for dispatch management which does no re-authentication.
