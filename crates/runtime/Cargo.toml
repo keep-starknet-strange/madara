@@ -46,6 +46,7 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 node-primitives = { workspace = true }
 pallet-assets = { workspace = true }
+pallet-authorship = { workspace = true }
 
 # Used for the node RPCs
 frame-system-rpc-runtime-api = { workspace = true }
