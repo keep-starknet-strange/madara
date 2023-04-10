@@ -13,7 +13,7 @@ use errors::StarknetRpcApiError;
 use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
-use mc_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId};
+use mc_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId, FunctionCall};
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -124,5 +124,53 @@ where
             .unwrap_or_default();
 
         Ok(block.header().transaction_count)
+    }
+
+    fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
+        let substrate_block_hash = match block_id {
+			StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+				self.client.as_ref(),
+				&self.backend,
+				H256::from_str(&h).map_err(|e| {
+					error!("Failed to convert '{h}' to H256: {e}");
+					StarknetRpcApiError::BlockNotFound
+				})?,
+			)
+			.map_err(|e| {
+				error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+				StarknetRpcApiError::BlockNotFound
+			})?,
+			StarknetBlockId::BlockNumber(n) => {
+				self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+					error!("Failed to retrieve the hash of block number '{n}': {e}");
+					StarknetRpcApiError::BlockNotFound
+				})?
+			}
+			StarknetBlockId::BlockTag(t) => match t {
+				mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
+				mc_rpc_core::BlockTag::Pending => None,
+			},
+		}
+		.ok_or(StarknetRpcApiError::BlockNotFound)?;
+
+		let block = self
+			.overrides
+			.for_block_hash(self.client.as_ref(), substrate_block_hash)
+			.current_block(substrate_block_hash)
+			.unwrap_or_default();
+
+		let runtime_api = self.client.runtime_api();
+
+		let result = runtime_api.call(substrate_block_hash).map_err(|e| {
+			error!("Failed to call function: {e}");
+			StarknetRpcApiError::ContractError
+		})?;
+
+		// let result = client.call(request).map_err(|e| {
+		// 	error!("Failed to call function: {e}");
+		// 	StarknetRpcApiError::ContractError
+		// })?;
+
+		Ok(result)
     }
 }
