@@ -293,11 +293,9 @@ impl CallEntryPointWrapper {
         let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
             .map_err(|_| EntryPointExecutionErrorWrapper::BlockContextSerializationError)?;
 
-        let call_info = call_entry_point
+        call_entry_point
             .execute(state, execution_resources, execution_context, &block_context, &account_context)
-            .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution);
-
-        call_info
+            .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution)
     }
 }
 impl Default for CallEntryPointWrapper {
