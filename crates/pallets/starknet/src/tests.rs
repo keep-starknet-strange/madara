@@ -353,9 +353,6 @@ fn given_non_root_when_set_fee_token_address_then_it_fails() {
         let non_root_origin = RuntimeOrigin::signed(1);
         let new_fee_token_address =
             <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
-        assert_err!(
-            Starknet::set_fee_token_address(non_root_origin, new_fee_token_address),
-            DispatchError::BadOrigin
-        );
+        assert_err!(Starknet::set_fee_token_address(non_root_origin, new_fee_token_address), DispatchError::BadOrigin);
     })
 }
