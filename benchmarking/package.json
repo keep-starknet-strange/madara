@@ -8,9 +8,10 @@
     "test:chain": "artillery run -e local ./scripts/chain.yml",
     "test:execution": "artillery run -e local ./scripts/cairo-execution.yml --output reports/report.json",
     "test:storage": "artillery run -e local ./scripts/cairo-storage.yml --output reports/report-storage.json",
-    "report": "artillery report --output reports/report reports/report-storage.json",
+    "test:transfer": "artillery run -e local ./scripts/starknet-erc20.yml --output reports/report-transfer.json",
+    "report": "artillery report --output reports/report reports/report-transfer.json",
     "metrics": "node scripts/metrics.js",
-    "test": "yarn test:storage && yarn metrics",
+    "test": "yarn test:transfer && yarn metrics",
     "chain:dev": "../scripts/run_node.sh",
     "test:wait": "wait-on tcp:9944 && yarn test",
     "test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
