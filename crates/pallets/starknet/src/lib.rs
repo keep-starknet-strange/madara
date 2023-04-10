@@ -280,11 +280,12 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Ping the pallet to check if it is alive.
         #[pallet::call_index(0)]
-        #[pallet::weight(0)]
+        #[pallet::weight(0)]      
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             // Make sure the caller is from a signed origin and retrieve the signer.
             let _deployer_account = ensure_signed(origin)?;
-            Pending::<T>::try_append(Transaction::default()).unwrap();
+            Pending::<T>::try_append(Transaction::default())
+                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
@@ -331,8 +332,9 @@ pub mod pallet {
             }
 
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction).unwrap();
+            Pending::<T>::try_append(transaction).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
             // TODO: Apply state diff and update state root
 
@@ -447,9 +449,8 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
-
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction.clone()).unwrap();
+            Pending::<T>::try_append(transaction.clone()).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
             // Associate contract class to class hash
             // TODO: update state root
