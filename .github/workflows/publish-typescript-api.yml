@@ -28,6 +28,7 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: typescript-api/build/package.json
+          access: "public"
 
   update-polkadot-js-for-tests-and-tools:
     runs-on: ubuntu-latest
