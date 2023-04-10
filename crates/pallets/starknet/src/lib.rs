@@ -286,6 +286,13 @@ pub mod pallet {
         KeepStarknetStrange,
         /// Regular Starknet event
         StarknetEvent(StarknetEventType),
+        /// Emitted when fee token address is changed.
+        /// This is emitted by the `set_fee_token_address` extrinsic.
+        /// [old_fee_token_address, new_fee_token_address]
+        FeeTokenAddressChanged {
+            old_fee_token_address: ContractAddressWrapper,
+            new_fee_token_address: ContractAddressWrapper,
+        },
     }
 
     /// The Starknet pallet custom errors.
@@ -540,6 +547,39 @@ pub mod pallet {
 
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
+            Ok(())
+        }
+
+        /// Set the value of the fee token address.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `fee_token_address` - The value of the fee token address.
+        ///
+        /// # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        ///
+        /// # TODO
+        /// * Add some limitations on how often this can be called.
+        #[pallet::call_index(5)]
+        #[pallet::weight(0)]
+        pub fn set_fee_token_address(
+            origin: OriginFor<T>,
+            fee_token_address: ContractAddressWrapper,
+        ) -> DispatchResult {
+            // Only root can set the fee token address.
+            ensure_root(origin)?;
+            // Get current fee token address.
+            let current_fee_token_address = Self::fee_token_address();
+            // Update the fee token address.
+            FeeTokenAddress::<T>::put(fee_token_address);
+            // Emit event.
+            Self::deposit_event(Event::FeeTokenAddressChanged {
+                old_fee_token_address: current_fee_token_address,
+                new_fee_token_address: fee_token_address,
+            });
             Ok(())
         }
     }
