@@ -614,29 +614,19 @@ pub mod pallet {
             // Get class hash
             let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
-            let transaction = Transaction::new(
-                1_u8,
-                H256::zero(),
-                BoundedVec::default(),
-                BoundedVec::default(),
+            let entrypoint = CallEntryPointWrapper::new(
+                Some(class_hash),
+                EntryPointTypeWrapper::External,
+                Some(function_selector),
+                BoundedVec::try_from(calldata).unwrap_or_default(),
                 address,
-                U256::from(0),
-                CallEntryPointWrapper::new(
-                    Some(class_hash),
-                    EntryPointTypeWrapper::External,
-                    Some(function_selector),
-                    BoundedVec::try_from(calldata).unwrap_or_default(),
-                    address,
-                    ContractAddressWrapper::default(),
-                ),
-                None,
-                None,
+                ContractAddressWrapper::default(),
             );
 
-            match transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address) {
+            match entrypoint.execute(state, block, fee_token_address) {
                 Ok(v) => {
                     // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
-                    let result = v.unwrap_or_default().execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
+                    let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
                     Ok(result)
                 }
                 Err(e) => {
