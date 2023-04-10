@@ -10,6 +10,7 @@ use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryP
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
+use sp_runtime::DispatchError;
 
 use crate::mock::*;
 use crate::types::Message;
@@ -322,4 +323,36 @@ fn given_contract_declare_tx_works_once_not_twice() {
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
         assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::ClassHashAlreadyDeclared);
     });
+}
+
+#[test]
+fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let root_origin = RuntimeOrigin::root();
+        let current_fee_token_address = Starknet::fee_token_address();
+        let new_fee_token_address =
+            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
+
+        assert_ok!(Starknet::set_fee_token_address(root_origin, new_fee_token_address));
+        System::assert_last_event(
+            Event::FeeTokenAddressChanged { old_fee_token_address: current_fee_token_address, new_fee_token_address }
+                .into(),
+        );
+    })
+}
+
+#[test]
+fn given_non_root_when_set_fee_token_address_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let non_root_origin = RuntimeOrigin::signed(1);
+        let new_fee_token_address =
+            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
+        assert_err!(Starknet::set_fee_token_address(non_root_origin, new_fee_token_address), DispatchError::BadOrigin);
+    })
 }
