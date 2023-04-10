@@ -297,9 +297,12 @@ impl Transaction {
     ///
     /// # Arguments
     ///
-    /// * `self` - The transaction to execute
-    /// * `state` - The state to execute the transaction on
-    /// * `block` - The block to execute the transaction on
+    /// * `self` - The transaction to execute.
+    /// * `state` - The state to execute the transaction on.
+    /// * `block` - The block to execute the transaction on.
+    /// * `tx_type` - The type of the transaction to execute.
+    /// * `contract_class` - The contract class to execute the transaction on.
+    /// * `fee_token_address` - The fee token address.
     ///
     /// # Returns
     ///
@@ -311,9 +314,15 @@ impl Transaction {
         block: StarknetBlock,
         tx_type: TxType,
         contract_class: Option<ContractClass>,
+        fee_token_address: ContractAddressWrapper,
     ) -> TransactionExecutionResultWrapper<Option<CallInfo>> {
-        let block_context = BlockContext::serialize(block.header().clone());
+        // Create the block context.
+        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+            .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
+        // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
+
+        // Verify the transaction version.
         self.verify_tx_version(&tx_type)?;
 
         match tx_type {
