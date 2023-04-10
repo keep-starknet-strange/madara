@@ -201,23 +201,52 @@ pub mod pallet {
     pub(super) type StorageView<T: Config> =
         StorageMap<_, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
 
+    /// The last processed Ethereum block number for L1 messages consumption.
+    /// This is used to avoid re-processing the same Ethereum block multiple times.
+    /// This is used by the offchain worker.
+    /// # TODO
+    /// * Find a more relevant name for this.
     #[pallet::storage]
     #[pallet::getter(fn last_known_eth_block)]
     pub(super) type LastKnownEthBlock<T: Config> = StorageValue<_, u64>;
 
+    /// The address of the fee token ERC20 contract.
+    #[pallet::storage]
+    #[pallet::getter(fn fee_token_address)]
+    pub(super) type FeeTokenAddress<T: Config> = StorageValue<_, ContractAddressWrapper, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
+        /// The contracts to be deployed at genesis.
+        /// This is a vector of tuples, where the first element is the contract address and the
+        /// second element is the contract class hash.
+        /// This can be used to start the chain with a set of pre-deployed contracts, for example in
+        /// a test environment or in the case of a migration of an existing chain state.
         pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
+        /// The contract classes to be deployed at genesis.
+        /// This is a vector of tuples, where the first element is the contract class hash and the
+        /// second element is the contract class definition.
+        /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
+        /// contracts classes.
         pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
         pub storage: Vec<(ContractStorageKeyWrapper, StarkFeltWrapper)>,
+        /// The address of the fee token.
+        /// Must be set to the address of the fee token ERC20 contract.
+        pub fee_token_address: ContractAddressWrapper,
         pub _phantom: PhantomData<T>,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
-            Self { contracts: vec![], contract_classes: vec![], storage: vec![], _phantom: PhantomData }
+            Self {
+                contracts: vec![],
+                contract_classes: vec![],
+                storage: vec![],
+                fee_token_address: ContractAddressWrapper::default(),
+                _phantom: PhantomData,
+            }
         }
     }
 
@@ -243,6 +272,8 @@ pub mod pallet {
             }
 
             LastKnownEthBlock::<T>::set(None);
+            // Set the fee token address from the genesis config.
+            FeeTokenAddress::<T>::set(self.fee_token_address);
         }
     }
 
@@ -317,9 +348,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
+            // Get current block
             let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
             let state = &mut Self::create_state_reader()?;
-            let call_info = transaction.execute(state, block, TxType::InvokeTx, None);
+            let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
             match call_info {
                 Ok(Some(mut v)) => {
                     Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
@@ -379,6 +413,8 @@ pub mod pallet {
 
             // Get current block
             let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
             // Create state reader from substrate storage
             let state = &mut Self::create_state_reader()?;
 
@@ -391,7 +427,8 @@ pub mod pallet {
                 .or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
+            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone()), fee_token_address)
+            {
                 Ok(_) => {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
@@ -441,9 +478,11 @@ pub mod pallet {
 
             // Get current block
             let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
 
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::DeployAccountTx, None) {
+            match transaction.execute(state, block, TxType::DeployAccountTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -484,8 +523,9 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             let block = Self::current_block();
+            let fee_token_address = Self::fee_token_address();
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::L1HandlerTx, None) {
+            match transaction.execute(state, block, TxType::L1HandlerTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
