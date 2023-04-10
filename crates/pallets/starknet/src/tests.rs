@@ -336,7 +336,7 @@ fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
         let new_fee_token_address =
             <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
 
-        assert_ok!(Starknet::set_fee_token_address(root_origin.clone(), new_fee_token_address));
+        assert_ok!(Starknet::set_fee_token_address(root_origin, new_fee_token_address));
         System::assert_last_event(
             Event::FeeTokenAddressChanged { old_fee_token_address: current_fee_token_address, new_fee_token_address }
                 .into(),
