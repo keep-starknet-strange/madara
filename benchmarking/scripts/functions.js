@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 const { Keyring } = require("@polkadot/keyring");
-const { batchTransfer } = require("../../tests/build/util/starknet");
+const {
+  batchTransfer,
+  initialize,
+  mint,
+  declare,
+  deploy,
+} = require("../../tests/build/util/starknet");
 
 module.exports = {
   rpcMethods,
@@ -16,7 +22,7 @@ function rpcMethods(userContext, events, done) {
 }
 
 async function executeERC20Transfer(userContext, events, done) {
-  const { accountName, deployed } = userContext.vars;
+  const { accountName } = userContext.vars;
 
   const keyring = new Keyring({ type: "sr25519" });
   const user = keyring.addFromUri(`//${accountName}`);
@@ -25,31 +31,8 @@ async function executeERC20Transfer(userContext, events, done) {
     "0x0000000000000000000000000000000000000000000000000000000000000101";
   const amount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
-  const mintAmount =
-    "0x0000000000000000000000000000000000000000000000000000000000001000";
-  const tokenClassHash =
-    "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
 
-  // Setup contract if it doesn't exist
-  // let tokenAddress;
-  // if (!deployed[tokenClassHash]) {
-  //   await declare(userContext.api, user, contractAddress, tokenClassHash);
-
-  //   tokenAddress = await deploy(
-  //     userContext.api,
-  //     user,
-  //     contractAddress,
-  //     tokenClassHash
-  //   );
-
-  //   console.log("Deployed token address: ", tokenAddress);
-
-  //   // Update userContext deployed dict
-  //   userContext.vars.deployed = {
-  //     ...userContext.vars.deployed,
-  //     [tokenClassHash]: true,
-  //   };
-  // }
+  // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
 
   await batchTransfer(
     userContext.api,
@@ -61,4 +44,50 @@ async function executeERC20Transfer(userContext, events, done) {
   );
 
   return done();
+}
+
+async function _setupToken(userContext, user, contractAddress) {
+  const { deployed } = userContext.vars;
+
+  const mintAmount =
+    "0x0000000000000000000000000000000000000000000000000000000000001000";
+  const tokenClassHash =
+    "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+
+  // Setup token contract if it doesn't exist
+  let tokenAddress;
+  if (!deployed[tokenClassHash]) {
+    try {
+      await declare(userContext.api, user, contractAddress, tokenClassHash);
+
+      tokenAddress = await deploy(
+        userContext.api,
+        user,
+        contractAddress,
+        tokenClassHash
+      );
+
+      console.log("Deployed token address: ", tokenAddress);
+
+      await initialize(userContext.api, user, contractAddress, tokenAddress);
+
+      await mint(
+        userContext.api,
+        user,
+        contractAddress,
+        tokenAddress,
+        mintAmount
+      );
+
+      // Update userContext deployed dict
+      userContext.vars.deployed = {
+        ...userContext.vars.deployed,
+        [tokenClassHash]: true,
+      };
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  return tokenAddress;
 }
