@@ -231,14 +231,32 @@ export default {
       },
     },
   },
-  /** Lookup41: pallet_starknet::pallet::Event<T> */
+  /** Lookup41: pallet_utility::pallet::Event */
+  PalletUtilityEvent: {
+    _enum: {
+      BatchInterrupted: {
+        index: "u32",
+        error: "SpRuntimeDispatchError",
+      },
+      BatchCompleted: "Null",
+      BatchCompletedWithErrors: "Null",
+      ItemCompleted: "Null",
+      ItemFailed: {
+        error: "SpRuntimeDispatchError",
+      },
+      DispatchedAs: {
+        result: "Result<Null, SpRuntimeDispatchError>",
+      },
+    },
+  },
+  /** Lookup42: pallet_starknet::pallet::Event<T> */
   PalletStarknetEvent: {
     _enum: {
       KeepStarknetStrange: "Null",
       StarknetEvent: "MpStarknetTransactionTypesEventWrapper",
     },
   },
-  /** Lookup42: mp_starknet::transaction::types::EventWrapper */
+  /** Lookup43: mp_starknet::transaction::types::EventWrapper */
   MpStarknetTransactionTypesEventWrapper: {
     _alias: {
       keys_: "keys",
@@ -247,7 +265,7 @@ export default {
     data: "Vec<H256>",
     fromAddress: "[u8;32]",
   },
-  /** Lookup45: frame_system::Phase */
+  /** Lookup46: frame_system::Phase */
   FrameSystemPhase: {
     _enum: {
       ApplyExtrinsic: "u32",
@@ -255,12 +273,12 @@ export default {
       Initialization: "Null",
     },
   },
-  /** Lookup48: frame_system::LastRuntimeUpgradeInfo */
+  /** Lookup49: frame_system::LastRuntimeUpgradeInfo */
   FrameSystemLastRuntimeUpgradeInfo: {
     specVersion: "Compact<u32>",
     specName: "Text",
   },
-  /** Lookup52: frame_system::pallet::Call<T> */
+  /** Lookup53: frame_system::pallet::Call<T> */
   FrameSystemCall: {
     _enum: {
       remark: {
@@ -293,14 +311,14 @@ export default {
       },
     },
   },
-  /** Lookup56: frame_system::limits::BlockWeights */
+  /** Lookup57: frame_system::limits::BlockWeights */
   FrameSystemLimitsBlockWeights: {
     baseBlock: "SpWeightsWeightV2Weight",
     maxBlock: "SpWeightsWeightV2Weight",
     perClass: "FrameSupportDispatchPerDispatchClassWeightsPerClass",
   },
   /**
-   * Lookup57:
+   * Lookup58:
    * frame_support::dispatch::PerDispatchClass<frame_system::limits::WeightsPerClass>
    */
   FrameSupportDispatchPerDispatchClassWeightsPerClass: {
@@ -308,29 +326,29 @@ export default {
     operational: "FrameSystemLimitsWeightsPerClass",
     mandatory: "FrameSystemLimitsWeightsPerClass",
   },
-  /** Lookup58: frame_system::limits::WeightsPerClass */
+  /** Lookup59: frame_system::limits::WeightsPerClass */
   FrameSystemLimitsWeightsPerClass: {
     baseExtrinsic: "SpWeightsWeightV2Weight",
     maxExtrinsic: "Option<SpWeightsWeightV2Weight>",
     maxTotal: "Option<SpWeightsWeightV2Weight>",
     reserved: "Option<SpWeightsWeightV2Weight>",
   },
-  /** Lookup60: frame_system::limits::BlockLength */
+  /** Lookup61: frame_system::limits::BlockLength */
   FrameSystemLimitsBlockLength: {
     max: "FrameSupportDispatchPerDispatchClassU32",
   },
-  /** Lookup61: frame_support::dispatch::PerDispatchClass<T> */
+  /** Lookup62: frame_support::dispatch::PerDispatchClass<T> */
   FrameSupportDispatchPerDispatchClassU32: {
     normal: "u32",
     operational: "u32",
     mandatory: "u32",
   },
-  /** Lookup62: sp_weights::RuntimeDbWeight */
+  /** Lookup63: sp_weights::RuntimeDbWeight */
   SpWeightsRuntimeDbWeight: {
     read: "u64",
     write: "u64",
   },
-  /** Lookup63: sp_version::RuntimeVersion */
+  /** Lookup64: sp_version::RuntimeVersion */
   SpVersionRuntimeVersion: {
     specName: "Text",
     implName: "Text",
@@ -341,7 +359,7 @@ export default {
     transactionVersion: "u32",
     stateVersion: "u8",
   },
-  /** Lookup69: frame_system::pallet::Error<T> */
+  /** Lookup70: frame_system::pallet::Error<T> */
   FrameSystemError: {
     _enum: [
       "InvalidSpecName",
@@ -352,7 +370,7 @@ export default {
       "CallFiltered",
     ],
   },
-  /** Lookup70: pallet_timestamp::pallet::Call<T> */
+  /** Lookup71: pallet_timestamp::pallet::Call<T> */
   PalletTimestampCall: {
     _enum: {
       set: {
@@ -360,11 +378,11 @@ export default {
       },
     },
   },
-  /** Lookup72: sp_consensus_aura::sr25519::app_sr25519::Public */
+  /** Lookup73: sp_consensus_aura::sr25519::app_sr25519::Public */
   SpConsensusAuraSr25519AppSr25519Public: "SpCoreSr25519Public",
-  /** Lookup73: sp_core::sr25519::Public */
+  /** Lookup74: sp_core::sr25519::Public */
   SpCoreSr25519Public: "[u8;32]",
-  /** Lookup76: pallet_grandpa::StoredState<N> */
+  /** Lookup77: pallet_grandpa::StoredState<N> */
   PalletGrandpaStoredState: {
     _enum: {
       Live: "Null",
@@ -379,14 +397,14 @@ export default {
       },
     },
   },
-  /** Lookup77: pallet_grandpa::StoredPendingChange<N, Limit> */
+  /** Lookup78: pallet_grandpa::StoredPendingChange<N, Limit> */
   PalletGrandpaStoredPendingChange: {
     scheduledAt: "u32",
     delay: "u32",
     nextAuthorities: "Vec<(SpConsensusGrandpaAppPublic,u64)>",
     forced: "Option<u32>",
   },
-  /** Lookup80: pallet_grandpa::pallet::Call<T> */
+  /** Lookup81: pallet_grandpa::pallet::Call<T> */
   PalletGrandpaCall: {
     _enum: {
       report_equivocation: {
@@ -403,12 +421,12 @@ export default {
       },
     },
   },
-  /** Lookup81: sp_consensus_grandpa::EquivocationProof<primitive_types::H256, N> */
+  /** Lookup82: sp_consensus_grandpa::EquivocationProof<primitive_types::H256, N> */
   SpConsensusGrandpaEquivocationProof: {
     setId: "u64",
     equivocation: "SpConsensusGrandpaEquivocation",
   },
-  /** Lookup82: sp_consensus_grandpa::Equivocation<primitive_types::H256, N> */
+  /** Lookup83: sp_consensus_grandpa::Equivocation<primitive_types::H256, N> */
   SpConsensusGrandpaEquivocation: {
     _enum: {
       Prevote: "FinalityGrandpaEquivocationPrevote",
@@ -416,7 +434,7 @@ export default {
     },
   },
   /**
-   * Lookup83: finality_grandpa::Equivocation<sp_consensus_grandpa::app::Public,
+   * Lookup84: finality_grandpa::Equivocation<sp_consensus_grandpa::app::Public,
    * finality_grandpa::Prevote<primitive_types::H256, N>,
    * sp_consensus_grandpa::app::Signature>
    */
@@ -426,17 +444,17 @@ export default {
     first: "(FinalityGrandpaPrevote,SpConsensusGrandpaAppSignature)",
     second: "(FinalityGrandpaPrevote,SpConsensusGrandpaAppSignature)",
   },
-  /** Lookup84: finality_grandpa::Prevote<primitive_types::H256, N> */
+  /** Lookup85: finality_grandpa::Prevote<primitive_types::H256, N> */
   FinalityGrandpaPrevote: {
     targetHash: "H256",
     targetNumber: "u32",
   },
-  /** Lookup85: sp_consensus_grandpa::app::Signature */
+  /** Lookup86: sp_consensus_grandpa::app::Signature */
   SpConsensusGrandpaAppSignature: "SpCoreEd25519Signature",
-  /** Lookup86: sp_core::ed25519::Signature */
+  /** Lookup87: sp_core::ed25519::Signature */
   SpCoreEd25519Signature: "[u8;64]",
   /**
-   * Lookup89: finality_grandpa::Equivocation<sp_consensus_grandpa::app::Public,
+   * Lookup90: finality_grandpa::Equivocation<sp_consensus_grandpa::app::Public,
    * finality_grandpa::Precommit<primitive_types::H256, N>,
    * sp_consensus_grandpa::app::Signature>
    */
@@ -446,14 +464,14 @@ export default {
     first: "(FinalityGrandpaPrecommit,SpConsensusGrandpaAppSignature)",
     second: "(FinalityGrandpaPrecommit,SpConsensusGrandpaAppSignature)",
   },
-  /** Lookup90: finality_grandpa::Precommit<primitive_types::H256, N> */
+  /** Lookup91: finality_grandpa::Precommit<primitive_types::H256, N> */
   FinalityGrandpaPrecommit: {
     targetHash: "H256",
     targetNumber: "u32",
   },
-  /** Lookup92: sp_core::Void */
+  /** Lookup93: sp_core::Void */
   SpCoreVoid: "Null",
-  /** Lookup93: pallet_grandpa::pallet::Error<T> */
+  /** Lookup94: pallet_grandpa::pallet::Error<T> */
   PalletGrandpaError: {
     _enum: [
       "PauseFailed",
@@ -465,22 +483,22 @@ export default {
       "DuplicateOffenceReport",
     ],
   },
-  /** Lookup95: pallet_balances::BalanceLock<Balance> */
+  /** Lookup96: pallet_balances::BalanceLock<Balance> */
   PalletBalancesBalanceLock: {
     id: "[u8;8]",
     amount: "u128",
     reasons: "PalletBalancesReasons",
   },
-  /** Lookup96: pallet_balances::Reasons */
+  /** Lookup97: pallet_balances::Reasons */
   PalletBalancesReasons: {
     _enum: ["Fee", "Misc", "All"],
   },
-  /** Lookup99: pallet_balances::ReserveData<ReserveIdentifier, Balance> */
+  /** Lookup100: pallet_balances::ReserveData<ReserveIdentifier, Balance> */
   PalletBalancesReserveData: {
     id: "[u8;8]",
     amount: "u128",
   },
-  /** Lookup101: pallet_balances::pallet::Call<T, I> */
+  /** Lookup102: pallet_balances::pallet::Call<T, I> */
   PalletBalancesCall: {
     _enum: {
       transfer: {
@@ -511,7 +529,7 @@ export default {
       },
     },
   },
-  /** Lookup106: pallet_balances::pallet::Error<T, I> */
+  /** Lookup107: pallet_balances::pallet::Error<T, I> */
   PalletBalancesError: {
     _enum: [
       "VestingBalance",
@@ -524,11 +542,11 @@ export default {
       "TooManyReserves",
     ],
   },
-  /** Lookup108: pallet_transaction_payment::Releases */
+  /** Lookup109: pallet_transaction_payment::Releases */
   PalletTransactionPaymentReleases: {
     _enum: ["V1Ancient", "V2"],
   },
-  /** Lookup109: pallet_sudo::pallet::Call<T> */
+  /** Lookup110: pallet_sudo::pallet::Call<T> */
   PalletSudoCall: {
     _enum: {
       sudo: {
@@ -550,14 +568,52 @@ export default {
       },
     },
   },
-  /** Lookup111: pallet_starknet::pallet::Call<T> */
+  /** Lookup112: pallet_utility::pallet::Call<T> */
+  PalletUtilityCall: {
+    _enum: {
+      batch: {
+        calls: "Vec<Call>",
+      },
+      as_derivative: {
+        index: "u16",
+        call: "Call",
+      },
+      batch_all: {
+        calls: "Vec<Call>",
+      },
+      dispatch_as: {
+        asOrigin: "MadaraRuntimeOriginCaller",
+        call: "Call",
+      },
+      force_batch: {
+        calls: "Vec<Call>",
+      },
+      with_weight: {
+        call: "Call",
+        weight: "SpWeightsWeightV2Weight",
+      },
+    },
+  },
+  /** Lookup114: madara_runtime::OriginCaller */
+  MadaraRuntimeOriginCaller: {
+    _enum: {
+      system: "FrameSupportDispatchRawOrigin",
+      Void: "SpCoreVoid",
+    },
+  },
+  /** Lookup115: frame_support::dispatch::RawOrigin<sp_core::crypto::AccountId32> */
+  FrameSupportDispatchRawOrigin: {
+    _enum: {
+      Root: "Null",
+      Signed: "AccountId32",
+      None: "Null",
+    },
+  },
+  /** Lookup116: pallet_starknet::pallet::Call<T> */
   PalletStarknetCall: {
     _enum: {
       ping: "Null",
       invoke: {
-        transaction: "MpStarknetTransactionTypesTransaction",
-      },
-      consume_l1_message: {
         transaction: "MpStarknetTransactionTypesTransaction",
       },
       declare: {
@@ -566,14 +622,17 @@ export default {
       deploy_account: {
         transaction: "MpStarknetTransactionTypesTransaction",
       },
+      consume_l1_message: {
+        transaction: "MpStarknetTransactionTypesTransaction",
+      },
     },
   },
-  /** Lookup112: mp_starknet::transaction::types::Transaction */
+  /** Lookup117: mp_starknet::transaction::types::Transaction */
   MpStarknetTransactionTypesTransaction: {
     _alias: {
       hash_: "hash",
     },
-    version: "U256",
+    version: "u8",
     hash_: "H256",
     signature: "Vec<H256>",
     events: "Vec<MpStarknetTransactionTypesEventWrapper>",
@@ -581,34 +640,39 @@ export default {
     nonce: "U256",
     callEntrypoint: "MpStarknetExecutionCallEntryPointWrapper",
     contractClass: "Option<MpStarknetExecutionContractClassWrapper>",
+    contractAddressSalt: "Option<H256>",
   },
-  /** Lookup117: mp_starknet::execution::CallEntryPointWrapper */
+  /** Lookup122: mp_starknet::execution::CallEntryPointWrapper */
   MpStarknetExecutionCallEntryPointWrapper: {
     classHash: "Option<[u8;32]>",
     entrypointType: "MpStarknetExecutionEntryPointTypeWrapper",
     entrypointSelector: "Option<H256>",
-    calldata: "Vec<H256>",
+    calldata: "Vec<U256>",
     storageAddress: "[u8;32]",
     callerAddress: "[u8;32]",
   },
-  /** Lookup119: mp_starknet::execution::EntryPointTypeWrapper */
+  /** Lookup124: mp_starknet::execution::EntryPointTypeWrapper */
   MpStarknetExecutionEntryPointTypeWrapper: {
     _enum: ["Constructor", "External", "L1Handler"],
   },
-  /** Lookup122: mp_starknet::execution::ContractClassWrapper */
+  /** Lookup129: mp_starknet::execution::ContractClassWrapper */
   MpStarknetExecutionContractClassWrapper: {
     program: "Bytes",
     entryPointsByType: "Bytes",
   },
-  /** Lookup124: pallet_sudo::pallet::Error<T> */
+  /** Lookup131: pallet_sudo::pallet::Error<T> */
   PalletSudoError: {
     _enum: ["RequireSudo"],
   },
-  /** Lookup127: mp_starknet::block::Block */
+  /** Lookup132: pallet_utility::pallet::Error<T> */
+  PalletUtilityError: {
+    _enum: ["TooManyCalls"],
+  },
+  /** Lookup135: mp_starknet::block::Block */
   MpStarknetBlock: {
     header: "MpStarknetBlockHeader",
   },
-  /** Lookup128: mp_starknet::block::header::Header */
+  /** Lookup136: mp_starknet::block::header::Header */
   MpStarknetBlockHeader: {
     parentBlockHash: "H256",
     blockNumber: "U256",
@@ -622,7 +686,7 @@ export default {
     protocolVersion: "Option<u8>",
     extraData: "Option<U256>",
   },
-  /** Lookup132: pallet_starknet::pallet::Error<T> */
+  /** Lookup140: pallet_starknet::pallet::Error<T> */
   PalletStarknetError: {
     _enum: [
       "AccountNotDeployed",
@@ -638,9 +702,10 @@ export default {
       "TooManyPendingTransactions",
       "StateReaderError",
       "EmitEventError",
+      "StateDiffError",
     ],
   },
-  /** Lookup134: sp_runtime::MultiSignature */
+  /** Lookup142: sp_runtime::MultiSignature */
   SpRuntimeMultiSignature: {
     _enum: {
       Ed25519: "SpCoreEd25519Signature",
@@ -648,24 +713,24 @@ export default {
       Ecdsa: "SpCoreEcdsaSignature",
     },
   },
-  /** Lookup135: sp_core::sr25519::Signature */
+  /** Lookup143: sp_core::sr25519::Signature */
   SpCoreSr25519Signature: "[u8;64]",
-  /** Lookup136: sp_core::ecdsa::Signature */
+  /** Lookup144: sp_core::ecdsa::Signature */
   SpCoreEcdsaSignature: "[u8;65]",
-  /** Lookup139: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T> */
+  /** Lookup147: frame_system::extensions::check_non_zero_sender::CheckNonZeroSender<T> */
   FrameSystemExtensionsCheckNonZeroSender: "Null",
-  /** Lookup140: frame_system::extensions::check_spec_version::CheckSpecVersion<T> */
+  /** Lookup148: frame_system::extensions::check_spec_version::CheckSpecVersion<T> */
   FrameSystemExtensionsCheckSpecVersion: "Null",
-  /** Lookup141: frame_system::extensions::check_tx_version::CheckTxVersion<T> */
+  /** Lookup149: frame_system::extensions::check_tx_version::CheckTxVersion<T> */
   FrameSystemExtensionsCheckTxVersion: "Null",
-  /** Lookup142: frame_system::extensions::check_genesis::CheckGenesis<T> */
+  /** Lookup150: frame_system::extensions::check_genesis::CheckGenesis<T> */
   FrameSystemExtensionsCheckGenesis: "Null",
-  /** Lookup145: frame_system::extensions::check_nonce::CheckNonce<T> */
+  /** Lookup153: frame_system::extensions::check_nonce::CheckNonce<T> */
   FrameSystemExtensionsCheckNonce: "Compact<u32>",
-  /** Lookup146: frame_system::extensions::check_weight::CheckWeight<T> */
+  /** Lookup154: frame_system::extensions::check_weight::CheckWeight<T> */
   FrameSystemExtensionsCheckWeight: "Null",
-  /** Lookup147: pallet_transaction_payment::ChargeTransactionPayment<T> */
+  /** Lookup155: pallet_transaction_payment::ChargeTransactionPayment<T> */
   PalletTransactionPaymentChargeTransactionPayment: "Compact<u128>",
-  /** Lookup148: madara_runtime::Runtime */
+  /** Lookup156: madara_runtime::Runtime */
   MadaraRuntimeRuntime: "Null",
 };

@@ -210,13 +210,14 @@ pub mod pallet {
     pub struct GenesisConfig<T: Config> {
         pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
         pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
+        pub storage: Vec<(ContractStorageKeyWrapper, StarkFeltWrapper)>,
         pub _phantom: PhantomData<T>,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
-            Self { contracts: vec![], contract_classes: vec![], _phantom: PhantomData }
+            Self { contracts: vec![], contract_classes: vec![], storage: vec![], _phantom: PhantomData }
         }
     }
 
@@ -235,6 +236,10 @@ pub mod pallet {
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
                 ContractClasses::<T>::insert(class_hash, contract_class);
+            }
+
+            for (key, value) in self.storage.iter() {
+                StorageView::<T>::insert(key, value);
             }
 
             LastKnownEthBlock::<T>::set(None);
@@ -482,7 +487,7 @@ pub mod pallet {
             let state = &mut Self::create_state_reader()?;
             match transaction.execute(state, block, TxType::L1HandlerTx, None) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
