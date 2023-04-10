@@ -1,3 +1,5 @@
+use core::str::FromStr;
+
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use hex::FromHex;
@@ -5,10 +7,20 @@ use mp_starknet::execution::ContractClassWrapper;
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
+use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, ContractAddressSalt};
+use starknet_api::StarknetApiError;
 use {crate as pallet_starknet, frame_system as system};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
+pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
+pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
+pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
+pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -69,23 +81,31 @@ impl pallet_starknet::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 
-    let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    // ARGENT CLASSES
+    let proxy_class_hash = <[u8; 32]>::from_hex(ARGENT_PROXY_CLASS_HASH_V0.strip_prefix("0x").unwrap()).unwrap();
+    let account_class_hash = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH_V0.strip_prefix("0x").unwrap()).unwrap();
+
+    let blockifier_account_address =
+        <[u8; 32]>::from_hex("02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap();
+    let blockifier_account_class_hash =
+        <[u8; 32]>::from_hex(BLOCKIFIER_ACCOUNT_CLASS.strip_prefix("0x").unwrap()).unwrap();
+
+    // TEST CLASSES
+    let argent_proxy_class = get_contract_class(include_bytes!("../../../../ressources/argent_proxy_v0.json"));
+    let argent_account_class = get_contract_class(include_bytes!("../../../../ressources/argent_account_v0.json"));
     let test_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
+    let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
 
     // ACCOUNT CONTRACT
-    let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
-    let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-    let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-    let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+    // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
+    let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
 
     // TEST CONTRACT
     let other_contract_address_str = "024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7";
     let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
 
-    let other_class_hash_str = "025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
-    let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
+    let other_class_hash_bytes = <[u8; 32]>::from_hex(TEST_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
 
     // L1 HANDLER CONTRACT
     let l1_handler_contract_address_str = "0000000000000000000000000000000000000000000000000000000000000001";
@@ -96,14 +116,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     pallet_starknet::GenesisConfig::<Test> {
         contracts: vec![
-            (contract_address_bytes, class_hash_bytes),
+            (account_addr.into(), proxy_class_hash),
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
+            (blockifier_account_address, blockifier_account_class_hash),
         ],
         contract_classes: vec![
-            (class_hash_bytes, ContractClassWrapper::from(account_class)),
+            (proxy_class_hash, ContractClassWrapper::from(argent_proxy_class)),
+            (account_class_hash, ContractClassWrapper::from(argent_account_class)),
             (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
+            (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
         ],
         ..Default::default()
     }
@@ -122,4 +145,40 @@ pub(crate) fn run_to_block(n: u64) {
         Starknet::ping(deployer_origin.clone()).unwrap();
         Starknet::on_finalize(b);
     }
+}
+
+pub fn account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
+    let account_class_hash = H256::from_str(ARGENT_PROXY_CLASS_HASH_V0).unwrap();
+    let account_salt = H256::from_str(salt).unwrap();
+
+    let cd_raw = vec![
+        ARGENT_ACCOUNT_CLASS_HASH_V0,
+        "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
+        "0x2",
+        salt,
+        "0x0",
+    ];
+
+    let addr = calculate_contract_address(account_salt, H256::from(account_class_hash), cd_raw.clone()).unwrap();
+    (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
+}
+
+pub fn calculate_contract_address(
+    salt: H256,
+    class_hash: H256,
+    constructor_calldata: Vec<&str>,
+) -> Result<ContractAddress, StarknetApiError> {
+    _calculate_contract_address(
+        ContractAddressSalt(StarkFelt::new(salt.0)?),
+        ClassHash(StarkFelt::new(class_hash.0)?),
+        &Calldata(
+            constructor_calldata
+                .clone()
+                .into_iter()
+                .map(|x| StarkFelt::try_from(x).unwrap())
+                .collect::<Vec<StarkFelt>>()
+                .into(),
+        ),
+        ContractAddress::default(),
+    )
 }

@@ -554,16 +554,16 @@ export default {
   PalletStarknetCall: {
     _enum: {
       ping: "Null",
-      add_invoke_transaction: {
+      invoke: {
         transaction: "MpStarknetTransactionTypesTransaction",
       },
       consume_l1_message: {
         transaction: "MpStarknetTransactionTypesTransaction",
       },
-      add_declare_transaction: {
+      declare: {
         transaction: "MpStarknetTransactionTypesTransaction",
       },
-      add_deploy_account_transaction: {
+      deploy_account: {
         transaction: "MpStarknetTransactionTypesTransaction",
       },
     },
