@@ -45,14 +45,84 @@ The Madara project consists of the following directories:
 - `examples`: Provides example implementations for the project.
 - `infra`: Houses infrastructure-related components, such as deployment scripts and Dockerfiles.
 
+### Node
+
+Madara node expose a number of capabilities:
+
+- Networking: Substrate nodes use the [`libp2p`](https://libp2p.io/) networking stack to allow the
+  nodes in the network to communicate with one another.
+- Consensus: Blockchains must have a way to come to
+  [consensus](https://docs.substrate.io/main-docs/fundamentals/consensus/) on the state of the
+  network. Substrate makes it possible to supply custom consensus engines and also ships with
+  several consensus mechanisms that have been built on top of
+  [Web3 Foundation research](https://research.web3.foundation/en/latest/polkadot/NPoS/index.html).
+- RPC Server: A remote procedure call (RPC) server is used to interact with Substrate nodes.
+
+There are several files in the `node` directory - take special note of the following:
+
+- [`chain_spec.rs`](./crates/node/src/chain_spec.rs): A
+  [chain specification](https://docs.substrate.io/main-docs/build/chain-spec/) is a
+  source code file that defines a Substrate chain's initial (genesis) state. Chain specifications
+  are useful for development and testing, and critical when architecting the launch of a
+  production chain. Take note of the `development_config` and `testnet_genesis` functions, which
+  are used to define the genesis state for the local development chain configuration. These
+  functions identify some
+  [well-known accounts](https://docs.substrate.io/reference/command-line-tools/subkey/)
+  and use them to configure the blockchain's initial state.
+- [`service.rs`](./crates/node/src/service.rs): This file defines the node implementation. Take note of
+  the libraries that this file imports and the names of the functions it invokes.
+
+After the node has been [built](#build), refer to the embedded documentation to learn more about the
+capabilities and configuration parameters that it exposes:
+
+```shell
+./target/release/madara --help
+```
+### Runtime
+
+In Substrate, the terms
+"runtime" and "state transition function"
+are analogous - they refer to the core logic of the blockchain that is responsible for validating
+blocks and executing the state changes they define. The Substrate project in this repository uses
+[FRAME](https://docs.substrate.io/main-docs/fundamentals/runtime-intro/#frame) to construct a
+blockchain runtime. FRAME allows runtime developers to declare domain-specific logic in modules
+called "pallets". At the heart of FRAME is a helpful
+[macro language](https://docs.substrate.io/reference/frame-macros/) that makes it easy to
+create pallets and flexibly compose them to create blockchains that can address
+[a variety of needs](https://substrate.io/ecosystem/projects/).
+
+Review the [FRAME runtime implementation](./crates/runtime/src/lib.rs) included in this template and note
+the following:
+
+- This file configures several pallets to include in the runtime. Each pallet configuration is
+  defined by a code block that begins with `impl $PALLET_NAME::Config for Runtime`.
+- The pallets are composed into a single runtime by way of the
+  [`construct_runtime!`](https://crates.parity.io/frame_support/macro.construct_runtime.html)
+  macro, which is part of the core
+  FRAME Support [system](https://docs.substrate.io/reference/frame-pallets/#system-pallets) library.
+
+### Pallets
+
+The runtime in this project is constructed using the pallets required for the Starknet sequencer implementation.
+
+A FRAME pallet is compromised of a number of blockchain primitives:
+
+- Storage: FRAME defines a rich set of powerful
+  [storage abstractions](https://docs.substrate.io/main-docs/build/runtime-storage/) that makes
+  it easy to use Substrate's efficient key-value database to manage the evolving state of a
+  blockchain.
+- Dispatchables: FRAME pallets define special types of functions that can be invoked (dispatched)
+  from outside of the runtime in order to update its state.
+- Events: Substrate uses [events and errors](https://docs.substrate.io/main-docs/build/events-errors/)
+  to notify users of important changes in the runtime.
+- Errors: When a dispatchable fails, it returns an error.
+- Config: The `Config` configuration interface is used to define the types and parameters upon
+  which a FRAME pallet depends.
+
+
 ### Benchmarking
 
 Benchmarking allows you to assess the performance of the project's pallets. To run the benchmarks, follow the instructions in the [benchmarking](./benchmarking/README.md) document.
-
-### Pallets
-#### `pallet-starknet`
-
-`pallet-starknet` is a pallet that provides a way to execute Starknet contracts in a Substrate environment.
 
 ## Getting Started
 
@@ -202,93 +272,6 @@ You can check that the value was properly set by using the `localStorageGet` fun
 
 ![](docs/images/madara-get-rpc-url-from-local-storage.png)
 
-## Project Structure
-
-A Substrate project such as this consists of a number of components that are spread across a few
-directories.
-
-### Node
-
-A blockchain node is an application that allows users to participate in a blockchain network.
-Substrate-based blockchain nodes expose a number of capabilities:
-
-- Networking: Substrate nodes use the [`libp2p`](https://libp2p.io/) networking stack to allow the
-  nodes in the network to communicate with one another.
-- Consensus: Blockchains must have a way to come to
-  [consensus](https://docs.substrate.io/main-docs/fundamentals/consensus/) on the state of the
-  network. Substrate makes it possible to supply custom consensus engines and also ships with
-  several consensus mechanisms that have been built on top of
-  [Web3 Foundation research](https://research.web3.foundation/en/latest/polkadot/NPoS/index.html).
-- RPC Server: A remote procedure call (RPC) server is used to interact with Substrate nodes.
-
-There are several files in the `node` directory - take special note of the following:
-
-- [`chain_spec.rs`](./node/src/chain_spec.rs): A
-  [chain specification](https://docs.substrate.io/main-docs/build/chain-spec/) is a
-  source code file that defines a Substrate chain's initial (genesis) state. Chain specifications
-  are useful for development and testing, and critical when architecting the launch of a
-  production chain. Take note of the `development_config` and `testnet_genesis` functions, which
-  are used to define the genesis state for the local development chain configuration. These
-  functions identify some
-  [well-known accounts](https://docs.substrate.io/reference/command-line-tools/subkey/)
-  and use them to configure the blockchain's initial state.
-- [`service.rs`](./node/src/service.rs): This file defines the node implementation. Take note of
-  the libraries that this file imports and the names of the functions it invokes. In particular,
-  there are references to consensus-related topics, such as the
-  [block finalization and forks](https://docs.substrate.io/main-docs/fundamentals/consensus/#finalization-and-forks)
-  and other [consensus mechanisms](https://docs.substrate.io/main-docs/fundamentals/consensus/#default-consensus-models)
-  such as Aura for block authoring and GRANDPA for finality.
-
-After the node has been [built](#build), refer to the embedded documentation to learn more about the
-capabilities and configuration parameters that it exposes:
-
-```shell
-./target/release/madara --help
-```
-
-### Runtime
-
-In Substrate, the terms
-"runtime" and "state transition function"
-are analogous - they refer to the core logic of the blockchain that is responsible for validating
-blocks and executing the state changes they define. The Substrate project in this repository uses
-[FRAME](https://docs.substrate.io/main-docs/fundamentals/runtime-intro/#frame) to construct a
-blockchain runtime. FRAME allows runtime developers to declare domain-specific logic in modules
-called "pallets". At the heart of FRAME is a helpful
-[macro language](https://docs.substrate.io/reference/frame-macros/) that makes it easy to
-create pallets and flexibly compose them to create blockchains that can address
-[a variety of needs](https://substrate.io/ecosystem/projects/).
-
-Review the [FRAME runtime implementation](./runtime/src/lib.rs) included in this template and note
-the following:
-
-- This file configures several pallets to include in the runtime. Each pallet configuration is
-  defined by a code block that begins with `impl $PALLET_NAME::Config for Runtime`.
-- The pallets are composed into a single runtime by way of the
-  [`construct_runtime!`](https://crates.parity.io/frame_support/macro.construct_runtime.html)
-  macro, which is part of the core
-  FRAME Support [system](https://docs.substrate.io/reference/frame-pallets/#system-pallets) library.
-
-### Pallets
-
-The runtime in this project is constructed using many FRAME pallets that ship with the
-[core Substrate repository](https://github.com/paritytech/substrate/tree/master/frame) and a
-template pallet that is [defined in the `pallets`](./pallets/template/src/lib.rs) directory.
-
-A FRAME pallet is compromised of a number of blockchain primitives:
-
-- Storage: FRAME defines a rich set of powerful
-  [storage abstractions](https://docs.substrate.io/main-docs/build/runtime-storage/) that makes
-  it easy to use Substrate's efficient key-value database to manage the evolving state of a
-  blockchain.
-- Dispatchables: FRAME pallets define special types of functions that can be invoked (dispatched)
-  from outside of the runtime in order to update its state.
-- Events: Substrate uses [events and errors](https://docs.substrate.io/main-docs/build/events-errors/)
-  to notify users of important changes in the runtime.
-- Errors: When a dispatchable fails, it returns an error.
-- Config: The `Config` configuration interface is used to define the types and parameters upon
-  which a FRAME pallet depends.
-
 ### Run in Docker
 
 First, install [Docker](https://docs.docker.com/get-docker/) and
@@ -315,81 +298,9 @@ by appending your own. A few useful ones are as follow.
 # Check whether the code is compilable
 ./infra/docker_run.sh cargo check
 ```
+## Starknet features compatibility
 
-## Progress
-
-### Block
-
-| Feature                | State              |
-| ---------------------- | ------------------ |
-| Parent block hash      | :white_check_mark: |
-| Block number           | :white_check_mark: |
-| Global state root      | :construction:     |
-| Sequencer address      | :construction:     |
-| Block timestamp        | :white_check_mark: |
-| Transaction count      | :white_check_mark: |
-| Transaction commitment | :white_check_mark: |
-| Event count            | :white_check_mark: |
-| Event commitment       | :white_check_mark: |
-| Protocol version       | :white_check_mark: |
-| Extra data             | :white_check_mark: |
-
-### Transaction
-
-| Feature    | State          |
-| ---------- | -------------- |
-| Declare    | :construction: |
-| Deploy     | :construction: |
-| Invoke     | :construction: |
-| L1 Handler | :construction: |
-
-### RPC
-
-| Feature                                  | State          |
-| ---------------------------------------- | -------------- |
-| starknet_getBlockWithTxHashes            | :construction: |
-| starknet_getBlockWithTxs                 | :construction: |
-| starknet_getStateUpdate                  | :construction: |
-| starknet_getStorageAt                    | :construction: |
-| starknet_getTransactionByHash            | :construction: |
-| starknet_getTransactionByBlockIdAndIndex | :construction: |
-| starknet_getTransactionReceipt           | :construction: |
-| starknet_getClass                        | :construction: |
-| starknet_getClassHashAt                  | :construction: |
-| starknet_getClassAt                      | :construction: |
-| starknet_getBlockTransactionCount        | :construction: |
-| starknet_call                            | :construction: |
-| starknet_estimateFee                     | :construction: |
-| starknet_blockNumber                     | :construction: |
-| starknet_blockHashAndNumber              | :construction: |
-| starknet_chainId                         | :construction: |
-| starknet_pendingTransactions             | :construction: |
-| starknet_syncing                         | :construction: |
-| starknet_getEvents                       | :construction: |
-| starknet_getNonce                        | :construction: |
-| starknet_traceTransaction                | :construction: |
-| starknet_simulateTransaction             | :construction: |
-| starknet_traceBlockTransactions          | :construction: |
-| starknet_addInvokeTransaction            | :construction: |
-| starknet_addDeclareTransaction           | :construction: |
-| starknet_addDeployAccountTransaction     | :construction: |
-
-### Decentralisation
-
-| Feature                                 | State              |
-| --------------------------------------- | ------------------ |
-| Single node                             | :white_check_mark: |
-| Small pool of nodes  (POA)              | :construction:     |
-| Large pool of nodes  (Base consensus)   | :construction:     |
-| Large pool of nodes  (Custom consensus) | :construction:     |
-
-### Optimisation
-
-| Feature                             | State          |
-| ----------------------------------- | -------------- |
-| Commitments                         | :construction: |
-| Transaction validity before mempool | :construction: |
-
+See [Starknet features compatibility](docs/starknet_features_compatibility.md) for details.
 ## Roadmap
 
 See the [open issues](https://github.com/keep-starknet-strange/madara/issues) for
@@ -531,6 +442,13 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/DavideSilva"><img src="https://avatars.githubusercontent.com/u/2940022?v=4?s=100" width="100px;" alt="Davide Silva"/><br /><sub><b>Davide Silva</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=DavideSilva" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.finiam.com/"><img src="https://avatars.githubusercontent.com/u/58513848?v=4?s=100" width="100px;" alt="Finiam"/><br /><sub><b>Finiam</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=finiam" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZePedroResende"><img src="https://avatars.githubusercontent.com/u/17102689?v=4?s=100" width="100px;" alt="Resende"/><br /><sub><b>Resende</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ZePedroResende" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/drspacemn"><img src="https://avatars.githubusercontent.com/u/16685321?v=4?s=100" width="100px;" alt="drspacemn"/><br /><sub><b>drspacemn</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=drspacemn" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tarrencev"><img src="https://avatars.githubusercontent.com/u/4740651?v=4?s=100" width="100px;" alt="Tarrence van As"/><br /><sub><b>Tarrence van As</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=tarrencev" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://home.cse.ust.hk/~shanaj/"><img src="https://avatars.githubusercontent.com/u/47173566?v=4?s=100" width="100px;" alt="Siyuan Han"/><br /><sub><b>Siyuan Han</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=hsyodyssey" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://zediogoviana.github.io/"><img src="https://avatars.githubusercontent.com/u/25623039?v=4?s=100" width="100px;" alt="Zé Diogo"/><br /><sub><b>Zé Diogo</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=zediogoviana" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Matth26"><img src="https://avatars.githubusercontent.com/u/9798638?v=4?s=100" width="100px;" alt="Matthias Monnier"/><br /><sub><b>Matthias Monnier</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Matth26" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

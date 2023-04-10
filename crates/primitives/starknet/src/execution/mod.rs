@@ -1,16 +1,16 @@
 //! Starknet execution functionality.
 
 use alloc::sync::Arc;
-use alloc::vec;
+use alloc::{format, vec};
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::CallEntryPoint;
+use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::hash::StarkFelt;
-use starknet_api::state::{EntryPoint, EntryPointOffset, EntryPointType, Program};
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
@@ -27,7 +27,16 @@ type MaxEntryPoints = ConstU32<4294967295>;
 pub type ClassHashWrapper = [u8; 32];
 
 /// Contract Class
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
     /// Contract class program json.
@@ -87,10 +96,10 @@ impl Default for ContractClassWrapper {
     Debug,
     PartialEq,
     Eq,
-    codec::Encode,
-    codec::Decode,
+    scale_codec::Encode,
+    scale_codec::Decode,
     scale_info::TypeInfo,
-    codec::MaxEncodedLen,
+    scale_codec::MaxEncodedLen,
     PartialOrd,
     Ord,
 )]
@@ -131,10 +140,10 @@ impl EntryPointTypeWrapper {
     Debug,
     PartialEq,
     Eq,
-    codec::Encode,
-    codec::Decode,
+    scale_codec::Encode,
+    scale_codec::Decode,
     scale_info::TypeInfo,
-    codec::MaxEncodedLen,
+    scale_codec::MaxEncodedLen,
     PartialOrd,
     Ord,
 )]
@@ -171,7 +180,16 @@ impl From<EntryPoint> for EntryPointWrapper {
 }
 
 /// Representation of a Starknet Call Entry Point.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallEntryPointWrapper {
     /// The class hash
@@ -182,7 +200,7 @@ pub struct CallEntryPointWrapper {
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
     pub entrypoint_selector: Option<H256>,
     /// The Calldata
-    pub calldata: BoundedVec<H256, MaxCalldataSize>,
+    pub calldata: BoundedVec<U256, MaxCalldataSize>,
     /// The storage address
     pub storage_address: ContractAddressWrapper,
     /// The caller address
@@ -205,7 +223,7 @@ impl CallEntryPointWrapper {
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: Option<H256>,
-        calldata: BoundedVec<H256, MaxCalldataSize>,
+        calldata: BoundedVec<U256, MaxCalldataSize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
     ) -> Self {
@@ -226,11 +244,12 @@ impl CallEntryPointWrapper {
                     .clone()
                     .into_inner()
                     .iter()
-                    .map(|x| StarkFelt::new(*(*x).as_fixed_bytes()).unwrap())
+                    .map(|x| StarkFelt::try_from(format!("0x{x:X}").as_str()).unwrap())
                     .collect(),
             )),
             storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
+            call_type: CallType::Call,
         }
     }
 }
@@ -240,7 +259,7 @@ impl Default for CallEntryPointWrapper {
             class_hash: Some(ClassHashWrapper::default()),
             entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: Some(H256::default()),
-            calldata: BoundedVec::try_from(vec![H256::zero(); 32]).unwrap(),
+            calldata: BoundedVec::try_from(vec![U256::zero(); 32]).unwrap(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
         }

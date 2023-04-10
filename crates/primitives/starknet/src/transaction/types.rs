@@ -18,6 +18,8 @@ pub enum TransactionExecutionErrorWrapper {
     TransactionExecution(TransactionExecutionError),
     /// Starknet API error.
     StarknetApi(StarknetApiError),
+    /// Block context serialization error.
+    BlockContextSerializationError,
 }
 
 /// Different tx types.
@@ -33,11 +35,20 @@ pub enum TxType {
     L1HandlerTx,
 }
 /// Representation of a Starknet transaction.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
     /// The version of the transaction.
-    pub version: U256,
+    pub version: u8,
     /// Transaction hash.
     pub hash: H256,
     /// Signature.
@@ -52,10 +63,21 @@ pub struct Transaction {
     pub call_entrypoint: CallEntryPointWrapper,
     /// Contract Class
     pub contract_class: Option<ContractClassWrapper>,
+    /// Contract Address Salt
+    pub contract_address_salt: Option<H256>,
 }
 
 /// Representation of a Starknet event.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EventWrapper {
     /// The keys (topics) of the event.
@@ -67,7 +89,16 @@ pub struct EventWrapper {
 }
 
 /// Error enum wrapper for events.
-#[derive(Clone, Debug, PartialEq, Eq, codec::Encode, codec::Decode, scale_info::TypeInfo, codec::MaxEncodedLen)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum EventError {
     /// Provided keys are invalid.
@@ -76,4 +107,25 @@ pub enum EventError {
     InvalidData,
     /// Provided from address is invalid.
     InvalidFromAddress,
+    /// Too many events
+    TooManyEvents,
+}
+
+/// Error enum wrapper for state diffs.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum StateDiffError {
+    /// Couldn't register newly deployed contracts.
+    DeployedContractError,
+    /// Couldn't register newly declared contracts.
+    DeclaredClassError,
 }

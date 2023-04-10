@@ -1,0 +1,19 @@
+[package]
+name = "mp-digest-log"
+version = "0.1.0-dev"
+license = "MIT"
+description = "Primitives for Madara digest logs"
+authors = { workspace = true }
+edition = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+mp-starknet = { workspace = true }
+scale-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
+# Substrate
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+
+[features]
+default = ["std"]
+std = ["mp-starknet/std", "scale-codec/std", "sp-core/std", "sp-runtime/std"]
