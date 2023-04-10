@@ -338,9 +338,9 @@ impl Transaction {
                 expected_nonce: account_tx_context.nonce,
                 actual_nonce: currrent_nonce,
             });
+        } else {
+            return Ok(());
         }
-
-        Ok(state.increment_nonce(account_tx_context.sender_address)?)
     }
     /// Get the transaction context for a l1 handler transaction
     ///
