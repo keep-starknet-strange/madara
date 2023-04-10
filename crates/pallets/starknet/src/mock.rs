@@ -102,17 +102,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
 
     // TEST CONTRACT
-    let other_contract_address_str = "024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7";
-    let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
-
+    let other_contract_address_bytes =
+        <[u8; 32]>::from_hex("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
     let other_class_hash_bytes = <[u8; 32]>::from_hex(TEST_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
 
     // L1 HANDLER CONTRACT
-    let l1_handler_contract_address_str = "0000000000000000000000000000000000000000000000000000000000000001";
-    let l1_handler_contract_address_bytes = <[u8; 32]>::from_hex(l1_handler_contract_address_str).unwrap();
+    let l1_handler_contract_address_bytes =
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
+    let l1_handler_class_hash_bytes =
+        <[u8; 32]>::from_hex("01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8").unwrap();
 
-    let l1_handler_class_hash_str = "01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8";
-    let l1_handler_class_hash_bytes = <[u8; 32]>::from_hex(l1_handler_class_hash_str).unwrap();
+    let fee_token_address =
+        <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
 
     pallet_starknet::GenesisConfig::<Test> {
         contracts: vec![
@@ -128,6 +129,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
             (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
         ],
+        fee_token_address,
         ..Default::default()
     }
     .assimilate_storage(&mut t)

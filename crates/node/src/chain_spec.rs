@@ -146,18 +146,19 @@ fn testnet_genesis(
     let erc20_class = get_contract_class(include_bytes!("../../../ressources/erc20.json"));
 
     // ACCOUNT CONTRACT
-    let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
-    let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
-    let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-    let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+    let contract_address_bytes =
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000101").unwrap();
+    let class_hash_bytes =
+        <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918").unwrap();
 
     // TEST CONTRACT
-    let other_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
-    let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
+    let other_contract_address_bytes =
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001111").unwrap();
+    let other_class_hash_bytes =
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001000").unwrap();
 
-    let other_class_hash_str = "0000000000000000000000000000000000000000000000000000000000001000";
-    let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
+    let fee_token_address =
+        <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
 
     // ERC20 CONTRACT
     let token_contract_address_str = "040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
@@ -200,6 +201,7 @@ fn testnet_genesis(
                 (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
             ],
             storage: vec![],
+            fee_token_address,
             _phantom: Default::default(),
         },
     }

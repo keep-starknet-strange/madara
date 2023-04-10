@@ -6,11 +6,12 @@ use starknet_api::stdlib::collections::HashMap;
 
 use crate::alloc::string::ToString;
 use crate::block::header::Header;
+use crate::execution::ContractAddressWrapper;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {
     /// Serializes a block header into a `BlockContext`.
-    fn serialize(block_header: Header) -> BlockContext;
+    fn serialize(block_header: Header, fee_token_address: ContractAddressWrapper) -> BlockContext;
 }
 
 /// Implementation of the `SerializeBlockContext` trait.
@@ -25,7 +26,7 @@ impl SerializeBlockContext for BlockContext {
     ///
     /// The serialized block context.
     /// TODO: use actual values
-    fn serialize(block_header: Header) -> BlockContext {
+    fn serialize(block_header: Header, fee_token_address: ContractAddressWrapper) -> BlockContext {
         BlockContext {
             chain_id: ChainId("SN_GOERLI".to_string()),
             block_number: BlockNumber(block_header.block_number.as_u64()),
@@ -33,7 +34,7 @@ impl SerializeBlockContext for BlockContext {
             sequencer_address: ContractAddress::try_from(StarkFelt::new(block_header.sequencer_address).unwrap())
                 .unwrap(),
             cairo_resource_fee_weights: HashMap::default(),
-            fee_token_address: ContractAddress::default(),
+            fee_token_address: ContractAddress::try_from(StarkFelt::new(fee_token_address).unwrap()).unwrap(),
             invoke_tx_max_n_steps: 1000000,
             validate_max_n_steps: 1000000,
             gas_price: 0,
