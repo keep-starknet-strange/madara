@@ -2,7 +2,7 @@
   "name": "@madara/api-augment",
   "version": "0.1.0",
   "type": "module",
-  "private": true,
+  "private": false,
   "description": "Madara types augment for @polkadot/api",
   "author": "0xevolve <matthias@pragmaoracle.com>",
   "license": "GPL-3.0-only",
