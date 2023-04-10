@@ -841,6 +841,11 @@
 <a href="#841" id="841">841</a>
 <a href="#842" id="842">842</a>
 <a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -1053,13 +1058,14 @@
     </span><span class="kw">pub struct </span>GenesisConfig&lt;T: Config&gt; {
         <span class="kw">pub </span>contracts: Vec&lt;(ContractAddressWrapper, ClassHashWrapper)&gt;,
         <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHashWrapper, ContractClassWrapper)&gt;,
+        <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKeyWrapper, StarkFeltWrapper)&gt;,
         <span class="kw">pub </span>_phantom: PhantomData&lt;T&gt;,
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
     </span><span class="kw">impl</span>&lt;T: Config&gt; Default <span class="kw">for </span>GenesisConfig&lt;T&gt; {
         <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-            <span class="self">Self </span>{ contracts: <span class="macro">vec!</span>[], contract_classes: <span class="macro">vec!</span>[], _phantom: PhantomData }
+            <span class="self">Self </span>{ contracts: <span class="macro">vec!</span>[], contract_classes: <span class="macro">vec!</span>[], storage: <span class="macro">vec!</span>[], _phantom: PhantomData }
         }
     }
 
@@ -1078,6 +1084,10 @@
 
             <span class="kw">for </span>(class_hash, contract_class) <span class="kw">in </span><span class="self">self</span>.contract_classes.iter() {
                 ContractClasses::&lt;T&gt;::insert(class_hash, contract_class);
+            }
+
+            <span class="kw">for </span>(key, value) <span class="kw">in </span><span class="self">self</span>.storage.iter() {
+                StorageView::&lt;T&gt;::insert(key, value);
             }
 
             LastKnownEthBlock::&lt;T&gt;::set(<span class="prelude-val">None</span>);
@@ -1325,7 +1335,7 @@
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="kw">match </span>transaction.execute(state, block, TxType::L1HandlerTx, <span class="prelude-val">None</span>) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="macro">log!</span>(info, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);

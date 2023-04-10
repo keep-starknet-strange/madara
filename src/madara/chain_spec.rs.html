@@ -193,6 +193,17 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>madara_runtime::{
@@ -338,6 +349,7 @@
 ) -&gt; GenesisConfig {
     <span class="kw">let </span>account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
     <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../ressources/test.json&quot;</span>));
+    <span class="kw">let </span>erc20_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../ressources/erc20.json&quot;</span>));
 
     <span class="comment">// ACCOUNT CONTRACT
     </span><span class="kw">let </span>contract_address_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000101&quot;</span>;
@@ -352,6 +364,13 @@
 
     <span class="kw">let </span>other_class_hash_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000001000&quot;</span>;
     <span class="kw">let </span>other_class_hash_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(other_class_hash_str).unwrap();
+
+    <span class="comment">// ERC20 CONTRACT
+    </span><span class="kw">let </span>token_contract_address_str = <span class="string">&quot;040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00&quot;</span>;
+    <span class="kw">let </span>token_contract_address_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(token_contract_address_str).unwrap();
+
+    <span class="kw">let </span>token_class_hash_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000010000&quot;</span>;
+    <span class="kw">let </span>token_class_hash_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(token_class_hash_str).unwrap();
 
     GenesisConfig {
         system: SystemConfig {
@@ -379,11 +398,14 @@
             contracts: <span class="macro">vec!</span>[
                 (contract_address_bytes, class_hash_bytes),
                 (other_contract_address_bytes, other_class_hash_bytes),
+                (token_contract_address_bytes, token_class_hash_bytes),
             ],
             contract_classes: <span class="macro">vec!</span>[
                 (class_hash_bytes, ContractClassWrapper::from(account_class)),
                 (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
+                (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
             ],
+            storage: <span class="macro">vec!</span>[],
             _phantom: Default::default(),
         },
     }
