@@ -317,7 +317,8 @@ impl Transaction {
         fee_token_address: ContractAddressWrapper,
     ) -> TransactionExecutionResultWrapper<Option<CallInfo>> {
         // Create the block context.
-        let block_context = BlockContext::serialize(block.header().clone(), fee_token_address);
+        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+            .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
 
