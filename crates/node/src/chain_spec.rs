@@ -1,5 +1,3 @@
-use core::str::FromStr;
-
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use hex::FromHex;
 use madara_runtime::{
@@ -10,7 +8,7 @@ use mp_starknet::execution::ContractClassWrapper;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
-use sp_core::{sr25519, Pair, Public, H256, U256};
+use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 // The URL for the telemetry server.
