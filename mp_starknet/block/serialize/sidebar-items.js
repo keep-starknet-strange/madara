@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["SerializeBlockContext"]};
+window.SIDEBAR_ITEMS = {"enum":["BlockSerializationError"],"trait":["SerializeBlockContext"]};

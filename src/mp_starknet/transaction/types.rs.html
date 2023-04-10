@@ -127,6 +127,8 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -147,6 +149,8 @@
     </span>TransactionExecution(TransactionExecutionError),
     <span class="doccomment">/// Starknet API error.
     </span>StarknetApi(StarknetApiError),
+    <span class="doccomment">/// Block context serialization error.
+    </span>BlockContextSerializationError,
 }
 
 <span class="doccomment">/// Different tx types.

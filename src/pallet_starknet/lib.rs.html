@@ -846,6 +846,46 @@
 <a href="#846" id="846">846</a>
 <a href="#847" id="847">847</a>
 <a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
 </pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -1049,23 +1089,52 @@
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>StorageView&lt;T: Config&gt; =
         StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery&gt;;
 
-    <span class="attr">#[pallet::storage]
+    <span class="doccomment">/// The last processed Ethereum block number for L1 messages consumption.
+    /// This is used to avoid re-processing the same Ethereum block multiple times.
+    /// This is used by the offchain worker.
+    /// # TODO
+    /// * Find a more relevant name for this.
+    </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>last_known_eth_block)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>LastKnownEthBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, u64&gt;;
+
+    <span class="doccomment">/// The address of the fee token ERC20 contract.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>fee_token_address)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>FeeTokenAddress&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, ContractAddressWrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// Starknet genesis configuration.
     </span><span class="attr">#[pallet::genesis_config]
     </span><span class="kw">pub struct </span>GenesisConfig&lt;T: Config&gt; {
-        <span class="kw">pub </span>contracts: Vec&lt;(ContractAddressWrapper, ClassHashWrapper)&gt;,
-        <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHashWrapper, ContractClassWrapper)&gt;,
+        <span class="doccomment">/// The contracts to be deployed at genesis.
+        /// This is a vector of tuples, where the first element is the contract address and the
+        /// second element is the contract class hash.
+        /// This can be used to start the chain with a set of pre-deployed contracts, for example in
+        /// a test environment or in the case of a migration of an existing chain state.
+        </span><span class="kw">pub </span>contracts: Vec&lt;(ContractAddressWrapper, ClassHashWrapper)&gt;,
+        <span class="doccomment">/// The contract classes to be deployed at genesis.
+        /// This is a vector of tuples, where the first element is the contract class hash and the
+        /// second element is the contract class definition.
+        /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
+        /// contracts classes.
+        </span><span class="kw">pub </span>contract_classes: Vec&lt;(ClassHashWrapper, ContractClassWrapper)&gt;,
         <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKeyWrapper, StarkFeltWrapper)&gt;,
+        <span class="doccomment">/// The address of the fee token.
+        /// Must be set to the address of the fee token ERC20 contract.
+        </span><span class="kw">pub </span>fee_token_address: ContractAddressWrapper,
         <span class="kw">pub </span>_phantom: PhantomData&lt;T&gt;,
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
     </span><span class="kw">impl</span>&lt;T: Config&gt; Default <span class="kw">for </span>GenesisConfig&lt;T&gt; {
         <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-            <span class="self">Self </span>{ contracts: <span class="macro">vec!</span>[], contract_classes: <span class="macro">vec!</span>[], storage: <span class="macro">vec!</span>[], _phantom: PhantomData }
+            <span class="self">Self </span>{
+                contracts: <span class="macro">vec!</span>[],
+                contract_classes: <span class="macro">vec!</span>[],
+                storage: <span class="macro">vec!</span>[],
+                fee_token_address: ContractAddressWrapper::default(),
+                _phantom: PhantomData,
+            }
         }
     }
 
@@ -1091,6 +1160,8 @@
             }
 
             LastKnownEthBlock::&lt;T&gt;::set(<span class="prelude-val">None</span>);
+            <span class="comment">// Set the fee token address from the genesis config.
+            </span>FeeTokenAddress::&lt;T&gt;::set(<span class="self">self</span>.fee_token_address);
         }
     }
 
@@ -1165,9 +1236,12 @@
             // Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
-            <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
+            <span class="comment">// Get current block
+            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
+            <span class="comment">// Get fee token address
+            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">let </span>call_info = transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>);
+            <span class="kw">let </span>call_info = transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>, fee_token_address);
             <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>v)) =&gt; {
                     <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>v, <span class="kw-2">&amp;mut </span>transaction).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
@@ -1227,6 +1301,8 @@
 
             <span class="comment">// Get current block
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
+            <span class="comment">// Get fee token address
+            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
             <span class="comment">// Create state reader from substrate storage
             </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
 
@@ -1239,7 +1315,8 @@
                 .or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidContractClass))<span class="question-mark">?</span>;
 
             <span class="comment">// Execute transaction
-            </span><span class="kw">match </span>transaction.execute(state, block, TxType::DeclareTx, <span class="prelude-val">Some</span>(contract_class.clone())) {
+            </span><span class="kw">match </span>transaction.execute(state, block, TxType::DeclareTx, <span class="prelude-val">Some</span>(contract_class.clone()), fee_token_address)
+            {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Declare Transaction executed successfully.&quot;</span>);
                 }
@@ -1289,9 +1366,11 @@
 
             <span class="comment">// Get current block
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
+            <span class="comment">// Get fee token address
+            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
 
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">match </span>transaction.execute(state, block, TxType::DeployAccountTx, <span class="prelude-val">None</span>) {
+            <span class="kw">match </span>transaction.execute(state, block, TxType::DeployAccountTx, <span class="prelude-val">None</span>, fee_token_address) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
                 }
@@ -1332,8 +1411,9 @@
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
             <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
+            <span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
             <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">match </span>transaction.execute(state, block, TxType::L1HandlerTx, <span class="prelude-val">None</span>) {
+            <span class="kw">match </span>transaction.execute(state, block, TxType::L1HandlerTx, <span class="prelude-val">None</span>, fee_token_address) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
                 }
