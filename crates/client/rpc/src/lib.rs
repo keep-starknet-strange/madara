@@ -10,6 +10,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
+use hex::FromHex;
 use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
@@ -20,6 +21,7 @@ use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
+use sp_core::U256;
 use sp_runtime::testing::H256;
 use sp_runtime::traits::Block as BlockT;
 
@@ -128,49 +130,71 @@ where
 
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
         let substrate_block_hash = match block_id {
-			StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
-				self.client.as_ref(),
-				&self.backend,
-				H256::from_str(&h).map_err(|e| {
-					error!("Failed to convert '{h}' to H256: {e}");
-					StarknetRpcApiError::BlockNotFound
-				})?,
-			)
-			.map_err(|e| {
-				error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-				StarknetRpcApiError::BlockNotFound
-			})?,
-			StarknetBlockId::BlockNumber(n) => {
-				self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-					error!("Failed to retrieve the hash of block number '{n}': {e}");
-					StarknetRpcApiError::BlockNotFound
-				})?
-			}
-			StarknetBlockId::BlockTag(t) => match t {
-				mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-				mc_rpc_core::BlockTag::Pending => None,
-			},
-		}
-		.ok_or(StarknetRpcApiError::BlockNotFound)?;
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+                self.client.as_ref(),
+                &self.backend,
+                H256::from_str(&h).map_err(|e| {
+                    error!("Failed to convert '{h}' to H256: {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?,
+            )
+            .map_err(|e| {
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
+                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::BlockTag::Pending => None,
+            },
+        }
+        .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
-		let block = self
-			.overrides
-			.for_block_hash(self.client.as_ref(), substrate_block_hash)
-			.current_block(substrate_block_hash)
-			.unwrap_or_default();
+        let runtime_api = self.client.runtime_api();
 
-		let runtime_api = self.client.runtime_api();
+        let calldata: Result<Vec<U256>, StarknetRpcApiError> = request
+            .calldata
+            .iter()
+            .map(|x| {
+                U256::from_str(x).map_err(|e| {
+                    error!("Failed to convert '{x}' to U256: {e}");
+                    StarknetRpcApiError::InvalidCallData
+                })
+            })
+            .collect();
 
-		let result = runtime_api.call(substrate_block_hash).map_err(|e| {
-			error!("Failed to call function: {e}");
-			StarknetRpcApiError::ContractError
-		})?;
-
-		// let result = client.call(request).map_err(|e| {
-		// 	error!("Failed to call function: {e}");
-		// 	StarknetRpcApiError::ContractError
-		// })?;
-
-		Ok(result)
+        match calldata {
+            Ok(calldata) => {
+                let result = runtime_api
+                    .call(
+                        substrate_block_hash,
+                        <[u8; 32]>::from_hex(remove_prefix(&request.contract_address)).map_err(|e| {
+                            error!("Failed to convert '{0}' to [u8; 32]: {e}", request.contract_address);
+                            StarknetRpcApiError::BlockNotFound
+                        })?,
+                        H256::from_str(&request.entry_point_selector).map_err(|e| {
+                            error!("Failed to convert '{0}' to H256: {e}", request.entry_point_selector);
+                            StarknetRpcApiError::BlockNotFound
+                        })?,
+                        calldata,
+                    )
+                    .map_err(|e| {
+                        error!("Failed to call function: {e}");
+                        StarknetRpcApiError::ContractError
+                    })?;
+                Ok(result.iter().map(|x| format!("{:#x}", x)).collect())
+            }
+            Err(e) => Err(e.into()),
+        }
     }
+}
+
+/// Removes the "0x" prefix from a given hexadecimal string
+fn remove_prefix(input: &str) -> &str {
+    input.strip_prefix("0x").unwrap_or(input)
 }
