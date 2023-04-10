@@ -184,7 +184,11 @@ where
                         calldata,
                     )
                     .map_err(|e| {
-                        error!("Failed to call function: {e}");
+                        error!("Request parameters error: {e}");
+                        StarknetRpcApiError::InternalServerError
+                    })?
+                    .map_err(|e| {
+                        error!("Failed to call function: {:#?}", e);
                         StarknetRpcApiError::ContractError
                     })?;
                 Ok(result.iter().map(|x| format!("{:#x}", x)).collect())

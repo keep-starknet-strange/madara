@@ -308,6 +308,7 @@ pub mod pallet {
         StateReaderError,
         EmitEventError,
         StateDiffError,
+        ContractNotFound,
     }
 
     /// The Starknet pallet external functions.
@@ -611,7 +612,7 @@ pub mod pallet {
             // Get state
             let state = &mut Self::create_state_reader()?;
             // Get class hash
-            let class_hash = ContractClassHashes::<T>::get(address);
+            let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
             let transaction = Transaction::new(
                 1_u8,

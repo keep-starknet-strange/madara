@@ -3,6 +3,8 @@ use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
 
+use sp_runtime::DispatchError;
+
 use crate::types::StarkFeltWrapper;
 
 sp_api::decl_runtime_apis! {
@@ -12,6 +14,6 @@ sp_api::decl_runtime_apis! {
         /// Returns the current block.
         fn current_block() -> mp_starknet::block::Block;
         /// Returns a `Call` response.
-        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Vec<StarkFeltWrapper>;
+        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError>;
     }
 }

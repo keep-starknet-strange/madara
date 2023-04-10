@@ -36,7 +36,7 @@ use sp_runtime::traits::{BlakeTwo256, Block as BlockT, NumberFor};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{generic, ApplyExtrinsicResult};
+use sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
@@ -272,8 +272,8 @@ impl_runtime_apis! {
             Starknet::current_block()
         }
 
-        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Vec<StarkFeltWrapper> {
-            Starknet::call_contract(address, function_selector, calldata).unwrap()
+        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {
+            Starknet::call_contract(address, function_selector, calldata)
         }
     }
 
