@@ -391,12 +391,12 @@ impl Transaction {
         }
         let currrent_nonce = state.get_nonce_at(account_tx_context.sender_address)?;
         if currrent_nonce != account_tx_context.nonce {
-            return Err(TransactionExecutionError::InvalidNonce {
+            Err(TransactionExecutionError::InvalidNonce {
                 expected_nonce: account_tx_context.nonce,
                 actual_nonce: currrent_nonce,
-            });
+            })
         } else {
-            return Ok(());
+            Ok(())
         }
     }
     /// Get the transaction context for a l1 handler transaction

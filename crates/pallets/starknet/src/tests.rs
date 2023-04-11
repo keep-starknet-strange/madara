@@ -12,12 +12,9 @@ use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 use sp_runtime::DispatchError;
-use starknet_api::api_core::{
-    ContractAddress as StarknetContractAddress, Nonce,
-};
-use starknet_api::hash::{StarkFelt};
+use starknet_api::api_core::{ContractAddress as StarknetContractAddress, Nonce};
+use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Fee, InvokeTransactionV1, TransactionHash, TransactionSignature, TransactionVersion};
-
 
 use crate::mock::*;
 use crate::types::Message;
@@ -84,7 +81,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::AccountNotDeployed);
     })
-} 
+}
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
@@ -370,10 +367,8 @@ fn test_verify_nonce() {
         System::set_block_number(0);
         run_to_block(2);
 
-
         let contract_address_str = "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
-
         let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
         let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
         // Example tx : https://testnet.starkscan.co/tx/0x6fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212
@@ -402,14 +397,11 @@ fn test_verify_nonce() {
             ),
             None,
             None,
-        ); 
-        
-        
+        );
         let state = &mut Starknet::create_state_reader().unwrap();
         let invoke_tx = InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(tx.hash.0).unwrap()),
             max_fee: Fee(2),
-    
             signature: TransactionSignature(
                 tx.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect(),
             ),
