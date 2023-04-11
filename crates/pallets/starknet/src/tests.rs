@@ -1,10 +1,6 @@
 use core::str::FromStr;
 
-
-
-
-
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH, ACCOUNT_CONTRACT_PATH};
+use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH};
 use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
@@ -13,10 +9,9 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::starknet_serde::transaction_from_json;
-
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
-// use mp_starknet::transaction::types::{TxType};
+use sp_runtime::DispatchError;
 use starknet_api::api_core::{
     ContractAddress as StarknetContractAddress, Nonce,
 };
@@ -368,40 +363,6 @@ fn given_non_root_when_set_fee_token_address_then_it_fails() {
         assert_err!(Starknet::set_fee_token_address(non_root_origin, new_fee_token_address), DispatchError::BadOrigin);
     })
 }
-
-#[test]
-fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
-    new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
-
-        let root_origin = RuntimeOrigin::root();
-        let current_fee_token_address = Starknet::fee_token_address();
-        let new_fee_token_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
-
-        assert_ok!(Starknet::set_fee_token_address(root_origin, new_fee_token_address));
-        System::assert_last_event(
-            Event::FeeTokenAddressChanged { old_fee_token_address: current_fee_token_address, new_fee_token_address }
-                .into(),
-        );
-    })
-}
-
-#[test]
-fn given_non_root_when_set_fee_token_address_then_it_fails() {
-    new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
-
-        let non_root_origin = RuntimeOrigin::signed(1);
-        let new_fee_token_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
-        assert_err!(Starknet::set_fee_token_address(non_root_origin, new_fee_token_address), DispatchError::BadOrigin);
-    })
-}
-
-
 
 #[test]
 fn test_verify_nonce() {
