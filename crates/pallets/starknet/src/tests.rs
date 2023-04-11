@@ -383,7 +383,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
 /// * `origin` - The origin of the transaction.
 /// * `sender_account` - The address of the sender account.
 fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
-    let erc20_class = ContractClassWrapper::from(get_contract_class(ERC20_CONTRACT_PATH));
+    let erc20_class = ContractClassWrapper::from(include_bytes!("../../../../ressources/erc20/erc20.json));
     let erc20_class_hash =
         <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
