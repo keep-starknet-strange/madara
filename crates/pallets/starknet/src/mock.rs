@@ -102,10 +102,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
     let simple_account_class_hash =
         <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000E").unwrap();
-    let erc20_contract_address =
-        <[u8; 32]>::from_hex("04c0420e24f7673bb73e06ec4e50f441784d0649c760d6d070070d9990b0fd4d").unwrap();
     let erc20_class_hash_bytes =
-        <[u8; 32]>::from_hex("043d344c499893b5be9a1234a5346a61dc2c3ddc7fbc7a58660e07b18db7a991").unwrap();
+        <[u8; 32]>::from_hex("059f26f04870626b3bb87ba158cc47ca5eee6e9d1d03aba6b1a387a2b76a4233").unwrap();
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
@@ -131,7 +129,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
             (blockifier_account_address, blockifier_account_class_hash),
-            (erc20_contract_address, erc20_class_hash_bytes),
             (simple_account_address, simple_account_class_hash),
         ],
         contract_classes: vec![
@@ -140,7 +137,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
             (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
-            (erc20_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
             (simple_account_class_hash, ContractClassWrapper::from(simple_account_class)),
         ],
         fee_token_address,

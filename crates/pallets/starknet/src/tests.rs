@@ -3,8 +3,7 @@ use core::str::FromStr;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
-use frame_system::pallet_prelude::OriginFor;
-use hex::{FromHex, ToHex};
+use hex::FromHex;
 use hexlit::hex;
 use lazy_static::lazy_static;
 use mp_starknet::block::Header as StarknetHeader;
@@ -405,33 +404,11 @@ fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) 
 /// * `origin` - The origin of the transaction.
 /// * `sender_account` - The address of the sender account.
 fn deploy_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
-    let deploy_transaction = Transaction {
-        sender_address: sender_account,
-        call_entrypoint: CallEntryPointWrapper::new(
-            None,
-            EntryPointTypeWrapper::External,
-            None,
-            bounded_vec![
-                SIMPLE_ACCOUNT_ADDRESS.into(),
-                hex!("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").into(),
-                10.into(), // calldata len
-                ERC20_CLASS_HASH.into(),
-                ERC20_CONSTRUCTOR_SALT.into(),
-                7.into(),                      // Constructor calldata len
-                1.into(),                      // Name
-                2.into(),                      // Symbol
-                3.into(),                      // Decimals
-                100000.into(),                 // Total supply low
-                9.into(),                      // Total supply high
-                SIMPLE_ACCOUNT_ADDRESS.into(), // Recipient
-                SIMPLE_ACCOUNT_ADDRESS.into(), // Owner
-            ],
-            sender_account,
-            sender_account,
-        ),
-        contract_class: Some(ERC20_CONTRACT_CLASS.clone()),
-        ..Transaction::default()
-    };
+    let deploy_transaction = transaction_from_json(
+        include_str!("../../../../ressources/transactions/deploy.json"),
+        include_bytes!("../../../../ressources/account/account.json"),
+    )
+    .unwrap();
     assert_ok!(Starknet::invoke(origin, deploy_transaction));
 }
 
@@ -446,11 +423,10 @@ fn invoke_mint_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrap
 }
 
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper(include_bytes!(
-        "/Users/abdel/dev/keep-starknet-strange/madara/ressources/erc20/erc20.json"
-    ));
+    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper =
+        get_contract_class_wrapper(include_bytes!("../../../../ressources/erc20/erc20.json"));
 }
-const ERC20_CLASS_HASH: [u8; 32] = hex!("01d1aacf8f874c4a865b974236419a46383a5161925626e9053202d8e87257e9");
+const ERC20_CLASS_HASH: [u8; 32] = hex!("059f26f04870626b3bb87ba158cc47ca5eee6e9d1d03aba6b1a387a2b76a4233");
 const ERC20_CONSTRUCTOR_SALT: [u8; 32] = hex!("00000000000000000000000000000000000000000000000000000000000000AA");
 
 const SIMPLE_ACCOUNT_ADDRESS: [u8; 32] = hex!("000000000000000000000000000000000000000000000000000000000000000F");

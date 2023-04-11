@@ -10,7 +10,7 @@ from ressources.erc20.library import ERC20
 
 @constructor
 func constructor{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
-    name: felt, symbol: felt, decimals: felt, initial_supply: Uint256, recipient: felt, owner: felt
+    name: felt, symbol: felt, decimals: felt, initial_supply: Uint256, recipient: felt
 ) {
     ERC20.initializer(name, symbol, decimals);
     ERC20._mint(recipient, initial_supply);

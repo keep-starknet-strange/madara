@@ -11,14 +11,6 @@ from starkware.starknet.common.syscalls import (
     get_contract_address,
 )
 
-@view
-func assert_only_self{syscall_ptr: felt*}() {
-    let (self) = get_contract_address();
-    let (caller) = get_caller_address();
-    assert self = caller;
-    return ();
-}
-
 @external
 func __validate_declare__(class_hash: felt) {
     return ();
@@ -45,7 +37,7 @@ func __execute__{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr
         calldata_size=calldata_len,
         calldata=calldata,
     );
-    return (retdata_size=retdata_size, retdata=retdata);
+    return (retdata_size=calldata_len, retdata=calldata);
 }
 
 @external
@@ -55,7 +47,6 @@ func deploy_contract{syscall_ptr: felt*}(
     constructor_calldata_len: felt,
     constructor_calldata: felt*,
 ) -> (contract_address: felt) {
-    assert_only_self();
     let (contract_address) = deploy(
         class_hash=class_hash,
         contract_address_salt=contract_address_salt,
@@ -63,5 +54,5 @@ func deploy_contract{syscall_ptr: felt*}(
         constructor_calldata=constructor_calldata,
         deploy_from_zero=FALSE,
     );
-    return (contract_address=contract_address);
+    return (contract_address=0);
 }
