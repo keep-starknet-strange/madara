@@ -3,6 +3,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use futures::channel::mpsc;
 use futures::future;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
@@ -163,7 +164,7 @@ fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
 
 /// Builds a new service for a full client.
 /// TODO: implement `sealing` parameter (currently ignored)
-pub fn new_full(mut config: Configuration, _sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
     let sc_service::PartialComponents {
         client,
         backend,
@@ -215,6 +216,11 @@ pub fn new_full(mut config: Configuration, _sealing: Option<Sealing>) -> Result<
     let enable_grandpa = !config.disable_grandpa;
     let prometheus_registry = config.prometheus_registry().cloned();
 
+    // Channel for the rpc handler to communicate with the authorship task.
+    // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
+    // parameter
+    let (command_sink, _commands_stream) = mpsc::channel(1000);
+
     let overrides = overrides_handle(client.clone());
     let starknet_rpc_params =
         StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone(), overrides: overrides.clone() };
@@ -229,6 +235,7 @@ pub fn new_full(mut config: Configuration, _sealing: Option<Sealing>) -> Result<
                 pool: pool.clone(),
                 deny_unsafe,
                 starknet: starknet_rpc_params.clone(),
+                command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
             };
             crate::rpc::create_full(deps).map_err(Into::into)
         })
