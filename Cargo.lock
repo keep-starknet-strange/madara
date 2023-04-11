@@ -4432,6 +4432,7 @@ dependencies = [
  "hex",
  "parity-scale-codec",
  "poseidon",
+ "pretty_assertions",
  "rand 0.8.5",
  "scale-info",
  "serde",

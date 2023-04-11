@@ -1,11 +1,15 @@
 import "@madara/api-augment";
-import { u8aToHex } from "@polkadot/util";
 
 import { expect } from "chai";
-import { jumpBlocks } from "../../util/block";
 
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { declare, deploy, initialize } from "../../util/starknet";
+import {
+  declare,
+  deploy,
+  initialize,
+  mint,
+  transfer,
+} from "../../util/starknet";
 
 const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -33,16 +37,53 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     expect(blockHash).to.not.be.undefined;
   });
 
-  it("should deploy a new contract", async function () {
-    const blockHash = await deploy(
+  // it("should deploy a new contract", async function () {
+  //   const address = await deploy(
+  //     context.polkadotApi,
+  //     context.alice,
+  //     contractAddress,
+  //     tokenClassHash
+  //   );
+
+  //   console.log("address: ", address);
+
+  //   expect(address).to.not.be.undefined;
+  // });
+
+  it("should deploy, initialize, mint and then transfer", async function () {
+    const address = await deploy(
       context.polkadotApi,
       context.alice,
       contractAddress,
       tokenClassHash
     );
 
-    console.log("blockhash: ", blockHash);
+    console.log("address: ", address);
 
-    expect(blockHash).to.not.be.undefined;
+    expect(address).to.not.be.undefined;
+
+    await initialize(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      address
+    );
+
+    await mint(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      address,
+      "0x0000000000000000000000000000000000000000000000000000000000000100"
+    );
+
+    await transfer(
+      context.polkadotApi,
+      context.alice,
+      contractAddress,
+      address,
+      contractAddress,
+      mintAmount
+    );
   });
 });
