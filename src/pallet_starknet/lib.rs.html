@@ -926,7 +926,69 @@
 <a href="#926" id="926">926</a>
 <a href="#927" id="927">927</a>
 <a href="#928" id="928">928</a>
-</pre><pre class="rust"><code><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+</pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
+//! zk-rollup for general-purpose smart contracts.
+//! See the [Starknet documentation](https://docs.starknet.io/) for more information.
+//! The code consists of the following sections:
+//! 1. Config: The trait Config is defined, which is used to configure the pallet by specifying the
+//! parameters and types on which it depends. The trait also includes associated types for
+//! RuntimeEvent, StateRoot, SystemHash, and TimestampProvider.
+//!
+//! 2. Hooks: The Hooks trait is implemented for the pallet, which includes methods to be executed
+//! during the block lifecycle: on_finalize, on_initialize, on_runtime_upgrade, and offchain_worker.
+//!
+//! 3. Storage: Several storage items are defined, including Pending, CurrentBlock, BlockHash,
+//! ContractClassHashes, ContractClasses, Nonces, StorageView, LastKnownEthBlock, and
+//! FeeTokenAddress. These storage items are used to store and manage data related to the Starknet
+//! pallet.
+//!
+//! 4. Genesis Configuration: The GenesisConfig struct is defined, which is used to set up the
+//! initial state of the pallet during genesis. The struct includes fields for contracts,
+//! contract_classes, storage, fee_token_address, and _phantom. A GenesisBuild implementation is
+//! provided to build the initial state during genesis.
+//!
+//! 5. Events: A set of events are defined in the Event enum, including KeepStarknetStrange,
+//! StarknetEvent, and FeeTokenAddressChanged. These events are emitted during the execution of
+//! various pallet functions.
+//!
+//! 6.Errors: A set of custom errors are defined in the Error enum, which is used to represent
+//! various error conditions during the execution of the pallet.
+//!
+//! 7. Dispatchable Functions: The Pallet struct implements several dispatchable functions (ping,
+//! invoke, ...), which allow users to interact with the pallet and invoke state changes. These
+//! functions are annotated with weight and return a DispatchResult.
+</span><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
 </span><span class="doccomment">/// Starknet pallet.
