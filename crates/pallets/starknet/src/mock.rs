@@ -97,6 +97,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
     let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
     let erc20_class = get_contract_class(include_bytes!("../../../../ressources/erc20.json"));
+    let simple_account_class = get_contract_class(include_bytes!("../../../../ressources/account/account.json"));
+    let simple_account_address =
+        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
+    let simple_account_class_hash =
+        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000E").unwrap();
     let erc20_contract_address =
         <[u8; 32]>::from_hex("04c0420e24f7673bb73e06ec4e50f441784d0649c760d6d070070d9990b0fd4d").unwrap();
     let erc20_class_hash_bytes =
@@ -127,6 +132,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
             (blockifier_account_address, blockifier_account_class_hash),
             (erc20_contract_address, erc20_class_hash_bytes),
+            (simple_account_address, simple_account_class_hash),
         ],
         contract_classes: vec![
             (proxy_class_hash, ContractClassWrapper::from(argent_proxy_class)),
@@ -135,6 +141,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
             (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
             (erc20_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
+            (simple_account_class_hash, ContractClassWrapper::from(simple_account_class)),
         ],
         fee_token_address,
         ..Default::default()
