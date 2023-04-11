@@ -17,9 +17,11 @@
 
 </div>
 
-# 🚀 Madara: Starknet Sequencer on Substrate 🦀
+# ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
 Welcome to **Madara**, a blazing fast ⚡ Starknet sequencer built on the Substrate framework and written in Rust. The project aims to provide a highly performant and scalable zk-rollup for general-purpose smart contracts. We're always looking for contributors, so dive in and explore the code!
+
+Experience the flexibility and power of Madara, enabling you to launch your very own Starknet-based appchain or L3. Harness the capabilities of Cairo while maintaining complete control over your custom appchain, tailored to your specific requirements. Madara is designed to empower a multitude of projects, fueling growth within the Starknet ecosystem.
 
 ## 🌟 Features
 
@@ -37,7 +39,7 @@ Get started with our comprehensive documentation, which covers everything from p
 - [Architecture Overview](./docs/architecture.md)
 - [Project Structure](./docs/project-structure.md)
 - [Getting Started Guide](./docs/getting-started.md)
-- [Benchmarking](./benchmarking.md)
+- [Benchmarking](./benchmarking/README.md)
 
 ## 🏗️ Build & Run
 
@@ -49,7 +51,7 @@ Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
 
 ## 🤝 Contribute
 
-We're always looking for passionate developers to join our community and contribute to Madara. Check out our [contributing guide](./docs/contributing.md) for more information on how to get started.
+We're always looking for passionate developers to join our community and contribute to Madara. Check out our [contributing guide](./docs/CONTRIBUTING.md) for more information on how to get started.
 
 ## 📖 License
 
