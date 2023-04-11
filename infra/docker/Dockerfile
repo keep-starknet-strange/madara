@@ -1,5 +1,3 @@
-# This is an example build stage for the node template. Here we create the binary in a temporary image.
-
 # This is a base image to build substrate nodes
 FROM docker.io/paritytech/ci-linux:production as builder
 
