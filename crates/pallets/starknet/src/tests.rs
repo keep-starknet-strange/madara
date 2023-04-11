@@ -557,8 +557,7 @@ fn test_verify_nonce() {
             None,
         ); 
         
-        // create a state
-        //
+        let state = &mut Starknet::create_state_reader().unwrap();
         let invoke_tx = InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(tx.hash.0).unwrap()),
             max_fee: Fee(2),
@@ -579,12 +578,12 @@ fn test_verify_nonce() {
             sender_address: invoke_tx.sender_address,
         };
         // Test for a valid nonce
-        let result = tx.verify_nonce(&account_tx_context, &mut state);
+        let result = tx.verify_nonce(&account_tx_context, state);
         assert!(result.is_ok());
 
         // Test for an invalid nonce
         let account_tx_context_invalid_nonce = AccountTransactionContext { nonce: Nonce(2.into()), ..account_tx_context };
-        let result = tx.verify_nonce(&account_tx_context_invalid_nonce, &mut state);
+        let result = tx.verify_nonce(&account_tx_context_invalid_nonce, state);
         assert!(result.is_err());
     });
 }
