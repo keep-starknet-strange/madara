@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-npm i @madara/api-augment
+npm i @keep-starknet-strange/madara-api-augment
 ```
 
 > :warning: `@polkadot/api` should be installed in your project!
@@ -14,7 +14,7 @@ npm i @madara/api-augment
 
 Add to your codebase entry point before any imports from the API itself.
 
-- `import '@madara/api-augment'` - applies Madara types and endpoint augmentation
+- `import '@keep-starknet-strange/madara-api-augment'` - applies Madara types and endpoint augmentation
 
 ## Docs
 
