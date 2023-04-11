@@ -74,7 +74,7 @@ impl<H: CryptoHasher> MerkleTree<H> {
     /// Less visible initialization for `MerkleTree<T>` as the main entry points should be
     /// [`MerkleTree::<RcNodeStorage>::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.
-    fn new(root: FieldElement) -> Self {
+    pub fn new(root: FieldElement) -> Self {
         let root_node = Rc::new(RefCell::new(Node::Unresolved(root)));
         Self { root: root_node, _hasher: PhantomData }
     }

@@ -20,8 +20,17 @@ pub struct DictStateReader {
     pub address_to_nonce: HashMap<ContractAddress, Nonce>,
     /// The class hash of each contract.
     pub address_to_class_hash: HashMap<ContractAddress, ClassHash>,
+    /// The storage root of each contract.
+    pub address_to_storage_root: HashMap<ContractAddress, StarkFelt>,
     /// The class of each class hash.
     pub class_hash_to_class: ContractClassMapping,
+}
+
+impl DictStateReader {
+    fn get_storage_root_at(&self, contract_address: ContractAddress) -> StateResult<StarkFelt> {
+        let storage_root = self.address_to_storage_root.get(&contract_address).copied().unwrap_or_default();
+        Ok(storage_root)
+    }
 }
 
 impl StateReader for DictStateReader {
@@ -36,6 +45,11 @@ impl StateReader for DictStateReader {
         Ok(nonce)
     }
 
+    fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
+        let class_hash = self.address_to_class_hash.get(&contract_address).copied().unwrap_or_default();
+        Ok(class_hash)
+    }
+
     fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
         let contract_class = self.class_hash_to_class.get(class_hash).cloned();
         match contract_class {
@@ -43,16 +57,6 @@ impl StateReader for DictStateReader {
             None => Err(StateError::UndeclaredClassHash(*class_hash)),
         }
     }
-
-    fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
-        let class_hash = self.address_to_class_hash.get(&contract_address).copied().unwrap_or_default();
-        Ok(class_hash)
-    }
 }
 
-#[derive(Debug, Default)]
-pub struct ContractStateNode {
-    pub class_hash: ClassHash,
-    pub nonce: Nonce,
-    pub storage_root: StarkFelt,
-}
+

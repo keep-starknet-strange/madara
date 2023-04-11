@@ -195,6 +195,12 @@ pub mod pallet {
     #[pallet::getter(fn nonce)]
     pub(super) type Nonces<T: Config> = StorageMap<_, Twox64Concat, ContractAddressWrapper, NonceWrapper, ValueQuery>;
 
+    /// Mapping from Starknet contract address to its storage_root.
+    #[pallet::storage]
+    #[pallet::getter(fn storage_root)]
+    pub(super) type StorageRoot<T: Config> =
+    StorageMap<_, Twox64Concat, ContractAddressWrapper, StarkFeltWrapper, ValueQuery>;
+
     /// Mapping from Starknet contract storage key to its value.
     #[pallet::storage]
     #[pallet::getter(fn storage)]
@@ -266,6 +272,7 @@ pub mod pallet {
             for (class_hash, contract_class) in self.contract_classes.iter() {
                 ContractClasses::<T>::insert(class_hash, contract_class);
             }
+
 
             for (key, value) in self.storage.iter() {
                 StorageView::<T>::insert(key, value);
@@ -621,7 +628,7 @@ pub mod pallet {
         /// The current block timestamp.
         #[inline(always)]
         pub fn block_timestamp() -> u64 {
-            T::TimestampProvider::now().unique_saturated_into()
+            T::TimestampProvider::now().unique_saturated_into() as u64
         }
 
         /// Get the number of transactions in the block.
@@ -841,7 +848,7 @@ pub mod pallet {
                 .collect();
 
             let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter()
-                .map(|(key, value)| {
+                .map(|(key, vaFlue)| {
                     let class_hash = ClassHash(StarkFelt::new(key)?);
                     let contract_class = value.to_starknet_contract_class().unwrap();
                     Ok((class_hash, contract_class))

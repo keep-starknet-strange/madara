@@ -4,12 +4,12 @@ use bitvec::vec::BitVec;
 use scale_codec::Encode;
 use sp_core::hexdisplay::AsBytesRef;
 use sp_core::{H256, U256};
-use starknet_api::api_core::ClassHash;
+use starknet_api::api_core::{ClassHash, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_crypto::FieldElement;
+use crate::crypto::hash::pedersen::PedersenHasher;
 
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
-use crate::state::ContractStateNode;
 use crate::traits::hash::CryptoHasher;
 use crate::transaction::types::{EventWrapper, Transaction};
 
@@ -162,7 +162,7 @@ pub fn calculate_event_hash<T: CryptoHasher>(event: &EventWrapper) -> FieldEleme
     T::compute_hash_on_elements(&[from_address, keys_hash, data_hash])
 }
 
-/// A Patricia Merkle tree with height 256 used to compute state tree root.
+/// A Patricia Merkle tree with height 251 used to compute state tree root.
 struct StateTree<T: CryptoHasher> {
     tree: MerkleTree<T>,
 }
@@ -170,6 +170,16 @@ struct StateTree<T: CryptoHasher> {
 impl<T: CryptoHasher> Default for StateTree<T> {
     fn default() -> Self {
         Self { tree: MerkleTree::empty() }
+    }
+}
+
+impl StateTree<PedersenHasher> {
+
+
+    pub fn new(root: FieldElement) -> Self {
+        Self {
+            tree: MerkleTree::new(root)
+        }
     }
 }
 
@@ -190,23 +200,27 @@ impl<T: CryptoHasher> StateTree<T> {
     }
 }
 
-/// Calculate the contracts tree root.
-pub fn calculate_contract_state_root<T: CryptoHasher>(contracts: &[ContractStateNode]) -> H256 {
-    let mut tree = StateTree::<T>::default();
-    contracts.iter().enumerate().for_each(|(idx, contract)| {
-        let idx: U256 = idx.try_into().expect("too many contracts while calculating commitment");
-        let final_hash = calculate_contract_state_node_hash::<T>(contract);
-        tree.set(idx, final_hash);
-    });
-    H256::from_slice(&tree.commit().to_bytes_be())
+struct StorageCommitmentTree<T: CryptoHasher> {
+    tree: MerkleTree<T>,
+    hight: usize,
+}
+
+impl Default for StorageCommitmentTree<PedersenHasher> {
+    fn default() -> Self {
+        Self { tree: MerkleTree::empty()
+            , hight: 251
+        }
+    }
 }
 
 /// Calculate the hash of a contract state node.
-fn calculate_contract_state_node_hash<T: CryptoHasher>(contract: &ContractStateNode) -> FieldElement {
-    let class_hash = FieldElement::from_byte_slice_be(contract.class_hash.0.bytes()).unwrap();
-    let storage_root = FieldElement::from_byte_slice_be(contract.storage_root.bytes()).unwrap();
-    let nonce = FieldElement::from_byte_slice_be(contract.nonce.0.bytes()).unwrap();
-    let hash_l1 = T::compute_hash_on_elements(&[class_hash, storage_root]);
+pub fn calculate_contract_state_root<T: CryptoHasher>(class_hash: ClassHash,
+                                                       storage_root: StarkFelt,
+                                                       nonce: Nonce) -> FieldElement {
+    let class_hash = FieldElement::from_byte_slice_be(class_hash.0.bytes()).unwrap();
+    let root = FieldElement::from_byte_slice_be(storage_root.bytes()).unwrap();
+    let nonce = FieldElement::from_byte_slice_be(nonce.0.bytes()).unwrap();
+    let hash_l1 = T::compute_hash_on_elements(&[class_hash, root]);
     let hash_l2 = T::compute_hash_on_elements(&[hash_l1, nonce]);
     return T::compute_hash_on_elements(&[hash_l2, FieldElement::ZERO]);
 }
