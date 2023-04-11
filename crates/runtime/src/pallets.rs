@@ -1,6 +1,8 @@
 //! Configuration of the pallets used in the runtime.
 
-pub use frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
+pub use frame_support::traits::{
+    ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
+};
 pub use frame_support::weights::constants::{
     BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
 };
@@ -18,6 +20,7 @@ use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use sp_std::marker::PhantomData;
 
 use crate::*;
 
@@ -149,4 +152,14 @@ impl pallet_utility::Config for Runtime {
     type RuntimeCall = RuntimeCall;
     type WeightInfo = ();
     type PalletsOrigin = OriginCaller;
+}
+
+pub struct ConsensusOnTimestampSet<T>(PhantomData<T>);
+impl<T: pallet_aura::Config> OnTimestampSet<T::Moment> for ConsensusOnTimestampSet<T> {
+    fn on_timestamp_set(moment: T::Moment) {
+        if EnableManualSeal::get() {
+            return;
+        }
+        <pallet_aura::Pallet<T> as OnTimestampSet<T::Moment>>::on_timestamp_set(moment)
+    }
 }

@@ -35,7 +35,10 @@ impl SubstrateCli for Cli {
 
     fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
         Ok(match id {
-            "dev" => Box::new(chain_spec::development_config()?),
+            "dev" => {
+                let enable_manual_seal = self.sealing.map(|_| true);
+                Box::new(chain_spec::development_config(enable_manual_seal)?)
+            }
             "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config()?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
@@ -177,8 +180,9 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             let runner = cli.create_runner(&cli.run)?;
-            runner
-                .run_node_until_exit(|config| async move { service::new_full(config).map_err(sc_cli::Error::Service) })
+            runner.run_node_until_exit(|config| async move {
+                service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
+            })
         }
     }
 }

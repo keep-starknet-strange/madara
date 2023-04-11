@@ -80,3 +80,7 @@ parameter_types! {
     pub const SS58Prefix: u8 = 42;
     pub FeeMultiplier: Multiplier = Multiplier::one();
 }
+
+parameter_types! {
+    pub storage EnableManualSeal: bool = false;
+}
