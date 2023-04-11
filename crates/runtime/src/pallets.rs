@@ -75,12 +75,14 @@ impl frame_system::Config for Runtime {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+// Authority-based consensus protocol used for block production
 impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
     type DisabledValidators = ();
     type MaxAuthorities = ConstU32<32>;
 }
 
+// Deterministic finality mechanism used for block finalization
 impl pallet_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
@@ -91,6 +93,8 @@ impl pallet_grandpa::Config for Runtime {
     type KeyOwnerProof = sp_core::Void;
     type EquivocationReportSystem = ();
 }
+
+// Timestamp manipulation
 impl pallet_timestamp::Config for Runtime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
@@ -99,6 +103,7 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
+// Provides interaction with balances and accounts
 impl pallet_balances::Config for Runtime {
     type MaxLocks = ConstU32<50>;
     type MaxReserves = ();
@@ -113,6 +118,7 @@ impl pallet_balances::Config for Runtime {
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
+// Provides the logic needed to handle transaction fees
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
@@ -122,6 +128,7 @@ impl pallet_transaction_payment::Config for Runtime {
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 
+// Allows executing privileged functions
 impl pallet_sudo::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
@@ -133,4 +140,13 @@ impl pallet_starknet::Config for Runtime {
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+}
+
+/// A stateless module with helpers for dispatch management which does no re-authentication.
+/// We use this to enable batch dispatches.
+impl pallet_utility::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
+    type WeightInfo = ();
+    type PalletsOrigin = OriginCaller;
 }

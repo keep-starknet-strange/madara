@@ -1,7 +1,10 @@
+use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+use hex::FromHex;
 use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
     WASM_BINARY,
 };
+use mp_starknet::execution::ContractClassWrapper;
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
@@ -138,26 +141,54 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
+    let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let test_class = get_contract_class(include_bytes!("../../../ressources/test.json"));
+
+    // ACCOUNT CONTRACT
+    let contract_address_str = "0000000000000000000000000000000000000000000000000000000000000101";
+    let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+
+    let class_hash_str = "025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+    let class_hash_bytes = <[u8; 32]>::from_hex(class_hash_str).unwrap();
+
+    // TEST CONTRACT
+    let other_contract_address_str = "0000000000000000000000000000000000000000000000000000000000001111";
+    let other_contract_address_bytes = <[u8; 32]>::from_hex(other_contract_address_str).unwrap();
+
+    let other_class_hash_str = "0000000000000000000000000000000000000000000000000000000000001000";
+    let other_class_hash_bytes = <[u8; 32]>::from_hex(other_class_hash_str).unwrap();
+
     GenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
         },
+        // Provides interaction with balances and accounts
         balances: BalancesConfig {
             // Configure endowed accounts with initial balance of 1 << 60.
             balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
         },
+        // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
+        // Deterministic finality mechanism used for block finalization
         grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
+        // Allows executing privileged functions
         sudo: SudoConfig {
             // Assign network admin rights.
             key: Some(root_key),
         },
+        // Provides the logic needed to handle transaction fees
         transaction_payment: Default::default(),
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
-            contracts: vec![],
-            contract_classes: vec![],
+            contracts: vec![
+                (contract_address_bytes, class_hash_bytes),
+                (other_contract_address_bytes, other_class_hash_bytes),
+            ],
+            contract_classes: vec![
+                (class_hash_bytes, ContractClassWrapper::from(account_class)),
+                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
+            ],
             _phantom: Default::default(),
         },
     }

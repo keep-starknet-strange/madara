@@ -740,7 +740,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#ee746284f598de420429b8441a98afdb3680637f"
+source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#63f91714b2db3da88904b355407bfb3b4acdad8b"
 dependencies = [
  "cairo-felt",
  "cairo-vm",
@@ -850,7 +850,7 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.3.0-rc1"
-source = "git+https://github.com/tdelabro/cairo-rs.git?branch=fix-no-std#c43739b786b073024c7003737405a344385684b5"
+source = "git+https://github.com/lambdaclass/cairo-rs?rev=725c17e6b4c50ecf9fbb0113ecf172d85837295#725c17e6b4c50ecf9fbb0113ecf172d858372954"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.3",
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.24.2-rc1"
-source = "git+https://github.com/tdelabro/cairo-rs.git?branch=fix-no-std#c43739b786b073024c7003737405a344385684b5"
+source = "git+https://github.com/lambdaclass/cairo-rs?rev=725c17e6b4c50ecf9fbb0113ecf172d85837295#725c17e6b4c50ecf9fbb0113ecf172d858372954"
 dependencies = [
  "nom",
 ]
@@ -870,7 +870,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.3.0-rc1"
-source = "git+https://github.com/tdelabro/cairo-rs.git?branch=fix-no-std#c43739b786b073024c7003737405a344385684b5"
+source = "git+https://github.com/lambdaclass/cairo-rs?rev=725c17e6b4c50ecf9fbb0113ecf172d85837295#725c17e6b4c50ecf9fbb0113ecf172d858372954"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
@@ -4092,17 +4092,20 @@ dependencies = [
 name = "madara"
 version = "0.1.0-dev"
 dependencies = [
+ "blockifier",
  "clap",
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "frame-system",
  "futures",
+ "hex",
  "jsonrpsee",
  "madara-runtime",
  "mc-db",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
+ "mp-starknet",
  "pallet-starknet",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc",
@@ -4154,6 +4157,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-utility",
  "parity-scale-codec",
  "scale-info",
  "sp-api",
@@ -5067,6 +5071,22 @@ dependencies = [
  "sp-api",
  "sp-runtime",
  "sp-weights",
+]
+
+[[package]]
+name = "pallet-utility"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#76fed9b9082daade5392663f25ed8968f8e8c11c"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -9258,7 +9278,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.6",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 

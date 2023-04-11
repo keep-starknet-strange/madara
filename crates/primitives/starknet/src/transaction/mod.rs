@@ -149,7 +149,7 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
         Ok(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0)?),
             max_fee: Fee(2),
-            version: TransactionVersion(StarkFelt::new(self.version.into())?),
+            version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new(x.0).unwrap()).collect(),
             ),
@@ -157,8 +157,9 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
             class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
             constructor_calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
-            // TODO: add salt
-            contract_address_salt: ContractAddressSalt(StarkFelt::new([0; 32])?),
+            contract_address_salt: ContractAddressSalt(StarkFelt::new(
+                self.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
+            )?),
         })
     }
 }
@@ -170,7 +171,7 @@ impl TryInto<L1HandlerTransaction> for &Transaction {
     fn try_into(self) -> Result<L1HandlerTransaction, Self::Error> {
         Ok(L1HandlerTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0)?),
-            version: TransactionVersion(StarkFelt::new(self.version.into())?),
+            version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
             calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
@@ -215,9 +216,9 @@ impl TryInto<DeclareTransaction> for &Transaction {
             class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
         };
 
-        Ok(if self.version == U256::zero() {
+        Ok(if self.version == 0_u8 {
             DeclareTransaction::V0(tx)
-        } else if self.version == U256::one() {
+        } else if self.version == 1_u8 {
             DeclareTransaction::V1(tx)
         } else {
             unimplemented!("DeclareTransactionV2 required the compiled class hash. I don't know how to get it");
@@ -229,7 +230,7 @@ impl Transaction {
     /// Creates a new instance of a transaction.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        version: U256,
+        version: u8,
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
         events: BoundedVec<EventWrapper, MaxArraySize>,
@@ -237,13 +238,59 @@ impl Transaction {
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
+        contract_address_salt: Option<H256>,
     ) -> Self {
-        Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, contract_class }
+        Self {
+            version,
+            hash,
+            signature,
+            events,
+            sender_address,
+            nonce,
+            call_entrypoint,
+            contract_class,
+            contract_address_salt,
+        }
     }
 
     /// Creates a new instance of a transaction without signature.
     pub fn from_tx_hash(hash: H256) -> Self {
         Self { hash, ..Self::default() }
+    }
+
+    /// Verifies if a transaction has the correct version
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to execute
+    /// * `tx_type` - The type of the transaction to execute
+    ///
+    /// # Returns
+    ///
+    /// * `TransactionExecutionResultWrapper<()>` - The result of the transaction version validation
+    pub fn verify_tx_version(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<()> {
+        let version = match StarkFelt::new(U256::from(self.version).into()) {
+            Ok(felt) => TransactionVersion(felt),
+            Err(err) => {
+                return Err(TransactionExecutionErrorWrapper::StarknetApi(err));
+            }
+        };
+
+        let allowed_versions: vec::Vec<TransactionVersion> = match tx_type {
+            TxType::DeclareTx => {
+                // Support old versions in order to allow bootstrapping of a new system.
+                vec![TransactionVersion(StarkFelt::from(0)), TransactionVersion(StarkFelt::from(1))]
+            }
+            _ => vec![TransactionVersion(StarkFelt::from(1))],
+        };
+        if allowed_versions.contains(&version) {
+            Ok(())
+        } else {
+            Err(TransactionExecutionErrorWrapper::TransactionExecution(TransactionExecutionError::InvalidVersion {
+                version,
+                allowed_versions,
+            }))
+        }
     }
 
     /// Executes a transaction
@@ -267,6 +314,7 @@ impl Transaction {
     ) -> TransactionExecutionResultWrapper<Option<CallInfo>> {
         let block_context = BlockContext::serialize(block.header().clone());
         let execution_resources = &mut ExecutionResources::default();
+        self.verify_tx_version(&tx_type)?;
 
         match tx_type {
             TxType::InvokeTx => {
@@ -440,7 +488,7 @@ impl Default for Transaction {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
         ]);
         Self {
-            version: U256::default(),
+            version: 1_u8,
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
             events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
@@ -448,6 +496,7 @@ impl Default for Transaction {
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
+            contract_address_salt: None,
         }
     }
 }

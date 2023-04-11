@@ -46,7 +46,7 @@ pub enum TxType {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
     /// The version of the transaction.
-    pub version: U256,
+    pub version: u8,
     /// Transaction hash.
     pub hash: H256,
     /// Signature.
@@ -61,6 +61,8 @@ pub struct Transaction {
     pub call_entrypoint: CallEntryPointWrapper,
     /// Contract Class
     pub contract_class: Option<ContractClassWrapper>,
+    /// Contract Address Salt
+    pub contract_address_salt: Option<H256>,
 }
 
 /// Representation of a Starknet event.
