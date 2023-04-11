@@ -2,7 +2,7 @@
 
 %lang starknet
 
-from starkware.cairo.common.bool import FALSE
+from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.starknet.common.syscalls import (
     call_contract,
@@ -10,6 +10,18 @@ from starkware.starknet.common.syscalls import (
     get_caller_address,
     get_contract_address,
 )
+
+@event
+func ContractDeployed(
+    address: felt,
+    deployer: felt,
+    classHash: felt,
+    calldata_len: felt,
+    calldata: felt*,
+    salt: felt,
+    metadata: felt,
+) {
+}
 
 @external
 func __validate_declare__(class_hash: felt) {
@@ -41,7 +53,7 @@ func __execute__{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr
 }
 
 @external
-func deploy_contract{syscall_ptr: felt*}(
+func deploy_contract{syscall_ptr: felt*, range_check_ptr}(
     class_hash: felt,
     contract_address_salt: felt,
     constructor_calldata_len: felt,
@@ -52,7 +64,16 @@ func deploy_contract{syscall_ptr: felt*}(
         contract_address_salt=contract_address_salt,
         constructor_calldata_size=constructor_calldata_len,
         constructor_calldata=constructor_calldata,
-        deploy_from_zero=FALSE,
+        deploy_from_zero=TRUE,
+    );
+    ContractDeployed.emit(
+        address=contract_address,
+        deployer=0,
+        classHash=class_hash,
+        calldata_len=constructor_calldata_len,
+        calldata=constructor_calldata,
+        salt=contract_address_salt,
+        metadata='fuck Abdel',
     );
     return (contract_address=0);
 }
