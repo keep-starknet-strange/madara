@@ -1,0 +1,23 @@
+{
+  "version": 1, 
+  "hash": "0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212", 
+  "signature": [],
+  "events": [], 
+  "sender_address": "0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9", 
+  "nonce": 3, 
+  "call_entrypoint": {
+    "entrypoint_type": "External",
+    "class_hash": null, 
+    "entrypoint_selector": null, 
+    "calldata": [
+      "0x04c0420e24f7673bb73e06ec4e50f441784d0649c760d6d070070d9990b0fd4d", 
+      "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", 
+      "0x0000000000000000000000000000000000000000000000000000000000000003", 
+      "0x01176a1bd84444c89232ec27754698e5d2e7e1a7f1539f12027f28b23ec9f3d8",
+      "0x02",
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ],
+    "storage_address": "0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9",
+    "caller_address": "0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9"
+  }
+}

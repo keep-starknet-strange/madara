@@ -2,11 +2,14 @@ use core::str::FromStr;
 
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
-use hex::FromHex;
+use frame_system::pallet_prelude::OriginFor;
+use hex::{FromHex, ToHex};
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::{
+    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+};
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
@@ -356,3 +359,68 @@ fn given_non_root_when_set_fee_token_address_then_it_fails() {
         assert_err!(Starknet::set_fee_token_address(non_root_origin, new_fee_token_address), DispatchError::BadOrigin);
     })
 }
+
+#[test]
+fn given_erc20_transfer_when_invoke_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(1);
+        let origin = RuntimeOrigin::none();
+        let (sender_account, _, _) = account_helper(TEST_ACCOUNT_SALT);
+        // TODO: call declare, for now it works because we have a pre-deployed ERC20 contract in the genesis
+        // state. declare_erc20(origin.clone(), sender_account);
+        // TODO: implement deploy ERC20
+        // For now it works because we have a pre-deployed ERC20 contract in the genesis state.
+        deploy_erc20(origin.clone(), sender_account);
+
+        // Mint some tokens
+        invoke_mint_erc20(origin, sender_account);
+    })
+}
+
+/// Helper function to declare ERC20 contract.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
+    let erc20_class = ContractClassWrapper::from(get_contract_class(ERC20_CONTRACT_PATH));
+    let erc20_class_hash =
+        <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+    let declare_transaction = Transaction {
+        sender_address: sender_account,
+        call_entrypoint: CallEntryPointWrapper::new(
+            Some(erc20_class_hash),
+            EntryPointTypeWrapper::External,
+            None,
+            bounded_vec![],
+            sender_account,
+            sender_account,
+        ),
+        contract_class: Some(erc20_class),
+        ..Transaction::default()
+    };
+    assert_ok!(Starknet::declare(origin, declare_transaction));
+}
+
+/// Helper function to deploy ERC20 contract.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn deploy_erc20(_origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {}
+
+/// Helper function to mint some tokens.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn invoke_mint_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
+    let erc20_mint_tx_json: &str = include_str!("../../../../ressources/transactions/invoke_erc20_mint.json");
+    let erc20_mint_tx = transaction_from_json(erc20_mint_tx_json, &[]).expect("Failed to create Transaction from JSON");
+    assert_ok!(Starknet::invoke(origin, erc20_mint_tx));
+}
+
+/// Helper function to transfer some tokens.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn invoke_transfer_erc20(_origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {}

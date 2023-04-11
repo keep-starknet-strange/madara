@@ -96,6 +96,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let test_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
     let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let erc20_class = get_contract_class(include_bytes!("../../../../ressources/erc20.json"));
+    let erc20_contract_address =
+        <[u8; 32]>::from_hex("04c0420e24f7673bb73e06ec4e50f441784d0649c760d6d070070d9990b0fd4d").unwrap();
+    let erc20_class_hash_bytes =
+        <[u8; 32]>::from_hex("043d344c499893b5be9a1234a5346a61dc2c3ddc7fbc7a58660e07b18db7a991").unwrap();
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
@@ -121,6 +126,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
             (blockifier_account_address, blockifier_account_class_hash),
+            (erc20_contract_address, erc20_class_hash_bytes),
         ],
         contract_classes: vec![
             (proxy_class_hash, ContractClassWrapper::from(argent_proxy_class)),
@@ -128,6 +134,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
             (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
+            (erc20_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
         ],
         fee_token_address,
         ..Default::default()
@@ -138,6 +145,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     t.into()
 }
 
+/// Run to block n.
+/// The function will repeatedly create and run blocks until the block number is equal to `n`.
+/// # Arguments
+/// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
     let deployer_account = 1;
     let deployer_origin = RuntimeOrigin::signed(deployer_account);

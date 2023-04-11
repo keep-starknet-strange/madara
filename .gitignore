@@ -22,3 +22,6 @@ data
 
 # Artillery reports
 benchmarking/reports/*.json
+
+# Python & Cairo env
+cairo_venv

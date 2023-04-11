@@ -360,27 +360,28 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             let state = &mut Self::create_state_reader()?;
-            let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
-            match call_info {
-                Ok(Some(mut v)) => {
-                    Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
-                    log!(debug, "Transaction executed successfully: {:?}", v);
-                }
-                Ok(None) => {
-                    log!(error, "Transaction execution failed: no call info while it was expected");
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
-                }
-                Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
-                }
-            }
+            transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address).unwrap();
+            // let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
+            // match call_info {
+            //     Ok(Some(mut v)) => {
+            //         Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
+            //         log!(debug, "Transaction executed successfully: {:?}", v);
+            //     }
+            //     Ok(None) => {
+            //         log!(error, "Transaction execution failed: no call info while it was expected");
+            //         return Err(Error::<T>::TransactionExecutionFailed.into());
+            //     }
+            //     Err(e) => {
+            //         log!(error, "Transaction execution failed: {:?}", e);
+            //         return Err(Error::<T>::TransactionExecutionFailed.into());
+            //     }
+            // }
 
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
-            // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction).unwrap();
+            // Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            // // Append the transaction to the pending transactions.
+            // Pending::<T>::try_append(transaction).unwrap();
 
-            // TODO: Apply state diff and update state root
+            // // TODO: Apply state diff and update state root
 
             Ok(())
         }
