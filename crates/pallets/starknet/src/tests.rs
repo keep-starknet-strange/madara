@@ -1,8 +1,7 @@
 use core::str::FromStr;
 
 
-use blockifier::execution::contract_class::ContractClass;
-use blockifier::state::cached_state::CachedState;
+
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::{assert_err, assert_ok, bounded_vec};
@@ -11,18 +10,16 @@ use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
-use mp_starknet::state::DictStateReader;
+
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 // use mp_starknet::transaction::types::{TxType};
 use starknet_api::api_core::{
-    ClassHash, ContractAddress as StarknetContractAddress, ContractAddress, Nonce, PatriciaKey,
+    ContractAddress as StarknetContractAddress, Nonce,
 };
-use starknet_api::hash::{StarkFelt, StarkHash};
+use starknet_api::hash::{StarkFelt};
 use starknet_api::transaction::{Fee, InvokeTransactionV1, TransactionHash, TransactionSignature, TransactionVersion};
-use starknet_api::{patricia_key, stark_felt};
-use {crate as pallet_starknet, frame_system as system, pallet_timestamp};
-use blockifier::state::state_api::State;
+
 
 use crate::mock::*;
 use crate::types::Message;
