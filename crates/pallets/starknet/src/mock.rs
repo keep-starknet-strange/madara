@@ -96,6 +96,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let test_class = get_contract_class(include_bytes!("../../../../ressources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../ressources/l1_handler.json"));
     let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let simple_account_class = get_contract_class(include_bytes!("../../../../ressources/account/account.json"));
+    let simple_account_address =
+        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
+    let simple_account_class_hash =
+        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000E").unwrap();
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
@@ -121,6 +126,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address_bytes, other_class_hash_bytes),
             (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
             (blockifier_account_address, blockifier_account_class_hash),
+            (simple_account_address, simple_account_class_hash),
         ],
         contract_classes: vec![
             (proxy_class_hash, ContractClassWrapper::from(argent_proxy_class)),
@@ -128,6 +134,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
             (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
             (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
+            (simple_account_class_hash, ContractClassWrapper::from(simple_account_class)),
         ],
         fee_token_address,
         ..Default::default()
@@ -138,6 +145,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     t.into()
 }
 
+/// Run to block n.
+/// The function will repeatedly create and run blocks until the block number is equal to `n`.
+/// # Arguments
+/// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
     let deployer_account = 1;
     let deployer_origin = RuntimeOrigin::signed(deployer_account);
@@ -165,6 +176,15 @@ pub fn account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
 }
 
+/// Calculate the address of a contract.
+/// # Arguments
+/// * `salt` - The salt of the contract.
+/// * `class_hash` - The hash of the contract class.
+/// * `constructor_calldata` - The calldata of the constructor.
+/// # Returns
+/// The address of the contract.
+/// # Errors
+/// If the contract address cannot be calculated.
 pub fn calculate_contract_address(
     salt: H256,
     class_hash: H256,
