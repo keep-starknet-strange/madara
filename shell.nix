@@ -1,3 +1,5 @@
+# Madara shell.nix
+
 let
   mozillaOverlay =
     import (builtins.fetchGit {
