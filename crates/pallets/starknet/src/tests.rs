@@ -369,12 +369,30 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         run_to_block(1);
         let origin = RuntimeOrigin::none();
         let (sender_account, _, _) = account_helper(TEST_ACCOUNT_SALT);
+        // Declare ERC20 contract
         declare_erc20(origin.clone(), sender_account);
-        // For now it works because we have a pre-deployed ERC20 contract in the genesis state.
+        // Deploy ERC20 contract
         deploy_erc20(origin.clone(), sender_account);
-
-        // Mint some tokens
-        // invoke_mint_erc20(origin, sender_account);
+        // TODO: use dynamic values to craft invoke transaction
+        // Transfer some token
+        invoke_transfer_erc20(origin, sender_account);
+        System::assert_last_event(
+            Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec![
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ],
+                data: bounded_vec!(
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(),
+                    H256::from_str("0x01176a1bd84444c89232ec27754698e5d2e7e1a7f1539f12027f28b23ec9f3d8").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+                ),
+                from_address: H256::from_str("0x0074c41dd9ba722396796cba415f8a742d671eb872371c96ce1ce6016fd0f2bb")
+                    .unwrap()
+                    .to_fixed_bytes(),
+            })
+            .into(),
+        );
     })
 }
 
@@ -403,9 +421,9 @@ fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) 
 /// # Arguments
 /// * `origin` - The origin of the transaction.
 /// * `sender_account` - The address of the sender account.
-fn deploy_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
+fn deploy_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
     let deploy_transaction = transaction_from_json(
-        include_str!("../../../../ressources/transactions/deploy.json"),
+        include_str!("../../../../ressources/transactions/deploy_erc20.json"),
         include_bytes!("../../../../ressources/account/account.json"),
     )
     .unwrap();
@@ -416,8 +434,8 @@ fn deploy_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
 /// # Arguments
 /// * `origin` - The origin of the transaction.
 /// * `sender_account` - The address of the sender account.
-fn invoke_mint_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
-    let erc20_mint_tx_json: &str = include_str!("../../../../ressources/transactions/invoke_erc20_mint.json");
+fn invoke_transfer_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
+    let erc20_mint_tx_json: &str = include_str!("../../../../ressources/transactions/invoke_erc20_transfer.json");
     let erc20_mint_tx = transaction_from_json(erc20_mint_tx_json, &[]).expect("Failed to create Transaction from JSON");
     assert_ok!(Starknet::invoke(origin, erc20_mint_tx));
 }
@@ -426,17 +444,7 @@ lazy_static! {
     static ref ERC20_CONTRACT_CLASS: ContractClassWrapper =
         get_contract_class_wrapper(include_bytes!("../../../../ressources/erc20/erc20.json"));
 }
-const ERC20_CLASS_HASH: [u8; 32] = hex!("059f26f04870626b3bb87ba158cc47ca5eee6e9d1d03aba6b1a387a2b76a4233");
-const ERC20_CONSTRUCTOR_SALT: [u8; 32] = hex!("00000000000000000000000000000000000000000000000000000000000000AA");
-
-const SIMPLE_ACCOUNT_ADDRESS: [u8; 32] = hex!("000000000000000000000000000000000000000000000000000000000000000F");
-const SIMPLE_ACCOUNT_CLASS_HASH: [u8; 32] = hex!("000000000000000000000000000000000000000000000000000000000000000E");
-
-/// Helper function to transfer some tokens.
-/// # Arguments
-/// * `origin` - The origin of the transaction.
-/// * `sender_account` - The address of the sender account.
-fn invoke_transfer_erc20(_origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {}
+const ERC20_CLASS_HASH: [u8; 32] = hex!("01d1aacf8f874c4a865b974236419a46383a5161925626e9053202d8e87257e9");
 
 fn get_contract_class_wrapper(contract_content: &'static [u8]) -> ContractClassWrapper {
     let contract_class: ContractClass =
