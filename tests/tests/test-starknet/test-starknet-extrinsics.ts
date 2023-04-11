@@ -1,4 +1,4 @@
-import "@madara/api-augment";
+import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
