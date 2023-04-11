@@ -143,12 +143,12 @@ In there, you can set the value for `ETHEREUM_EXECUTION_RPC` by using the `local
 You need to select the type of storage, in this case `PERSISTENT`, and use the `starknet::ETHEREUM_EXECUTION_RPC` as the `key`.
 The value is the RPC URL you intend to use.
 
-![](docs/images/madara-set-rpc-url-in-local-storage.png)
+![](./images/madara-set-rpc-url-in-local-storage.png)
 
 
 You can check that the value was properly set by using the `localStorageGet` function
 
-![](docs/images/madara-get-rpc-url-from-local-storage.png)
+![](./images/madara-get-rpc-url-from-local-storage.png)
 
 ### Run in Docker
 
