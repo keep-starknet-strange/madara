@@ -210,7 +210,7 @@ fn remove_prefix(input: &str) -> &str {
 
 /// Converts a hexadecimal string to an H256 value, padding with zero bytes on the left if necessary
 fn string_to_h256(hex_str: &str) -> Result<H256, String> {
-    let hex_str = hex_str.trim_start_matches("0x");
+    let hex_str = remove_prefix(hex_str);
     let mut padded_hex_str = hex_str.to_string();
     while padded_hex_str.len() < 64 {
         padded_hex_str.insert(0, '0');
@@ -218,4 +218,34 @@ fn string_to_h256(hex_str: &str) -> Result<H256, String> {
     let bytes =
         Vec::from_hex(&padded_hex_str).map_err(|e| format!("Failed to convert hex string to bytes: {:?}", e))?;
     Ok(H256::from_slice(&bytes))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Test case for the string_to_h256 function
+    #[test]
+    fn test_string_to_h256() {
+        // Test case 1: Valid input with 64 characters
+        let hex_str_1 = "0x0222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7";
+        let expected_result_1 = H256::from_str(hex_str_1).unwrap();
+        assert_eq!(string_to_h256(hex_str_1).unwrap(), expected_result_1);
+
+        // Test case 2: Input with leading zeros
+        let hex_str_2 = "0x0123456789abcdef";
+        let expected_result_2 =
+            H256::from_str("0x0000000000000000000000000000000000000000000000000123456789abcdef").unwrap();
+        assert_eq!(string_to_h256(hex_str_2).unwrap(), expected_result_2);
+
+        // Test case 3: Input with missing "0x" prefix
+        let hex_str_3 = "222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7";
+        let expected_result_3 =
+            H256::from_str("0x0222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7").unwrap();
+        assert_eq!(string_to_h256(hex_str_3).unwrap(), expected_result_3);
+
+        // Test case 4: Input with invalid length
+        let hex_str_4 = "0x222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7111111";
+        assert!(string_to_h256(hex_str_4).is_err());
+    }
 }
