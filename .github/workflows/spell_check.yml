@@ -13,4 +13,4 @@ jobs:
           check_filenames: true
           check_hidden: true
           ignore_words_file: ./.codespellignore
-          skip: Cargo.lock,package-lock.json,target,yarn.lock
+          skip: Cargo.lock,package-lock.json,target,yarn.lock,.git,resources

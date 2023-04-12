@@ -15,11 +15,11 @@ mod schema_v1_override;
 pub use self::schema_v1_override::SchemaV1Override;
 use crate::onchain_storage_schema;
 
-/// A handle containing multiple enities implementing `StorageOverride`
+/// A handle containing multiple entities implementing `StorageOverride`
 pub struct OverrideHandle<B: BlockT> {
-    /// Contains one implem of `StorageOverride` by version of the pallet storage schema
+    /// Contains one implementation of `StorageOverride` by version of the pallet storage schema
     pub schemas: BTreeMap<StarknetStorageSchemaVersion, Box<dyn StorageOverride<B>>>,
-    /// A nonfailing way to retrieve the storage data
+    /// A non-failing way to retrieve the storage data
     pub fallback: Box<dyn StorageOverride<B>>,
 }
 
@@ -48,7 +48,7 @@ impl<B: BlockT> OverrideHandle<B> {
 /// Something that can fetch Starknet-related data. This trait is quite similar to the runtime API,
 /// and indeed the implementation of it uses the runtime API.
 /// Having this trait is useful because it allows optimized implementations that fetch data from a
-/// State Backend with some assumptions about pallet-staknet's storage schema. Using such an
+/// State Backend with some assumptions about pallet-starknet's storage schema. Using such an
 /// optimized implementation avoids spawning a runtime and the overhead associated with it.
 pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Return the current block.

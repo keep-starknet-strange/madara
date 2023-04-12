@@ -117,24 +117,24 @@ following buttons :
   (pretty random) if running.
 - Step over : Resume the execution until next line, or go one level up if the end of the current
   scope is reached.
-- Step into : Resume the execution to go inside the immediatly next function call if any, otherwise
+- Step into : Resume the execution to go inside the immediately next function call if any, otherwise
   step to next line.
 - Step out : Resume the execution until the end of the scope is reached.
-- Restart : Kill the program and start a new debuging session.
-- Stop : Kill the program and end debugin session.
+- Restart : Kill the program and start a new debugging session.
+- Stop : Kill the program and end debugging session.
 
 Breakpoints stay between debugging sessions. When multiple function calls are made on the same line,
-multiple step into, step out, step into, ... can be requiered to go inside one of the chained
+multiple step into, step out, step into, ... can be required to go inside one of the chained
 calls.
 
-When paused, content of variables is showed in the debuging tab of VSCode. Some basic types are
+When paused, content of variables is showed in the debugging tab of VSCode. Some basic types are
 displayed correctly (primitive types, Vec, Arc) but more complex types such as HashMap/BTreeMap
 are not "smartly" displayed (content of the struct is shown by mapping is hidden in the complexity
 of the implementation).
 
 ## Running Typescript tests with a debug node
 
-By setting the environement variable `DEBUG_MODE=true`, the Typescript tests will not spawn its
+By setting the environment variable `DEBUG_MODE=true`, the Typescript tests will not spawn its
 own node and instead will connect to an external node running on ports 19931/19932/19933, which
 are the ports used by the debug node.
 

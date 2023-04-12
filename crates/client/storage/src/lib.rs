@@ -42,7 +42,7 @@ where
     })
 }
 
-/// Retrive the current `pallet-starknet` storage schema version
+/// Retrieve the current `pallet-starknet` storage schema version
 pub fn onchain_storage_schema<B, C, BE>(client: &C, hash: B::Hash) -> StarknetStorageSchemaVersion
 where
     B: BlockT,
