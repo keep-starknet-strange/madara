@@ -1,5 +1,6 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
+use std::cell::RefCell;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -7,17 +8,20 @@ use futures::channel::mpsc;
 use futures::future;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
-use madara_runtime::{self, RuntimeApi};
+use madara_runtime::{self, Hash, RuntimeApi};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
+use prometheus_endpoint::Registry;
 use sc_client_api::{BlockBackend, BlockchainEvents};
 use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
-use sc_consensus_grandpa::SharedVoterState;
+use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_keystore::LocalKeystore;
 use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryWorker};
+use sc_transaction_pool::FullPool;
+use sp_api::ConstructRuntimeApi;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 
 use crate::cli::Sealing;
@@ -187,12 +191,17 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
         &config.chain_spec,
     );
 
-    config.network.extra_sets.push(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
-    let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
-        backend.clone(),
-        grandpa_link.shared_authority_set().clone(),
-        Vec::default(),
-    ));
+    let warp_sync_params = if sealing.is_some() {
+        None
+    } else {
+        config.network.extra_sets.push(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+        let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
+            backend.clone(),
+            grandpa_link.shared_authority_set().clone(),
+            Vec::default(),
+        ));
+        Some(WarpSyncParams::WithProvider(warp_sync))
+    };
 
     let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
@@ -202,7 +211,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
             spawn_handle: task_manager.spawn_handle(),
             import_queue,
             block_announce_validator_builder: None,
-            warp_sync_params: Some(WarpSyncParams::WithProvider(warp_sync)),
+            warp_sync_params,
         })?;
 
     if config.offchain_worker.enabled {
@@ -213,13 +222,13 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     let force_authoring = config.force_authoring;
     let backoff_authoring_blocks: Option<()> = None;
     let name = config.network.node_name.clone();
-    let enable_grandpa = !config.disable_grandpa;
+    let enable_grandpa = !config.disable_grandpa && sealing.is_none();
     let prometheus_registry = config.prometheus_registry().cloned();
 
     // Channel for the rpc handler to communicate with the authorship task.
     // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
     // parameter
-    let (command_sink, _commands_stream) = mpsc::channel(1000);
+    let (command_sink, commands_stream) = mpsc::channel(1000);
 
     let overrides = overrides_handle(client.clone());
     let starknet_rpc_params =
@@ -273,6 +282,25 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     );
 
     if role.is_authority() {
+        // manual-seal authorship
+        if let Some(sealing) = sealing {
+            run_manual_seal_authorship(
+                sealing,
+                client,
+                transaction_pool,
+                select_chain,
+                block_import,
+                &task_manager,
+                prometheus_registry.as_ref(),
+                telemetry.as_ref(),
+                commands_stream,
+            )?;
+
+            network_starter.start_network();
+            // log::info!("Manual Seal Ready");
+            return Ok(task_manager);
+        }
+
         let proposer_factory = sc_basic_authorship::ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
@@ -360,4 +388,91 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
 
     network_starter.start_network();
     Ok(task_manager)
+}
+
+fn run_manual_seal_authorship(
+    sealing: Sealing,
+    client: Arc<FullClient>,
+    transaction_pool: Arc<FullPool<Block, FullClient>>,
+    select_chain: FullSelectChain,
+    block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    task_manager: &TaskManager,
+    prometheus_registry: Option<&Registry>,
+    telemetry: Option<&Telemetry>,
+    commands_stream: mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>,
+) -> Result<(), ServiceError>
+where
+    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
+    RuntimeApi: Send + Sync + 'static,
+{
+    let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+        task_manager.spawn_handle(),
+        client.clone(),
+        transaction_pool.clone(),
+        prometheus_registry,
+        telemetry.as_ref().map(|x| x.handle()),
+    );
+
+    thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));
+
+    /// Provide a mock duration starting at 0 in millisecond for timestamp inherent.
+    /// Each call will increment timestamp by slot_duration making Aura think time has passed.
+    struct MockTimestampInherentDataProvider;
+
+    #[async_trait::async_trait]
+    impl sp_inherents::InherentDataProvider for MockTimestampInherentDataProvider {
+        async fn provide_inherent_data(
+            &self,
+            inherent_data: &mut sp_inherents::InherentData,
+        ) -> Result<(), sp_inherents::Error> {
+            TIMESTAMP.with(|x| {
+                *x.borrow_mut() += madara_runtime::SLOT_DURATION;
+                inherent_data.put_data(sp_timestamp::INHERENT_IDENTIFIER, &*x.borrow())
+            })
+        }
+
+        async fn try_handle_error(
+            &self,
+            _identifier: &sp_inherents::InherentIdentifier,
+            _error: &[u8],
+        ) -> Option<Result<(), sp_inherents::Error>> {
+            // The pallet never reports error.
+            None
+        }
+    }
+
+    let create_inherent_data_providers = move |_, ()| async move {
+        let timestamp = MockTimestampInherentDataProvider;
+        Ok(timestamp)
+    };
+
+    let manual_seal = match sealing {
+        Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
+            sc_consensus_manual_seal::ManualSealParams {
+                block_import,
+                env: proposer_factory,
+                client,
+                pool: transaction_pool,
+                commands_stream,
+                select_chain,
+                consensus_data_provider: None,
+                create_inherent_data_providers,
+            },
+        )),
+        Sealing::Instant => future::Either::Right(sc_consensus_manual_seal::run_instant_seal(
+            sc_consensus_manual_seal::InstantSealParams {
+                block_import,
+                env: proposer_factory,
+                client,
+                pool: transaction_pool,
+                select_chain,
+                consensus_data_provider: None,
+                create_inherent_data_providers,
+            },
+        )),
+    };
+
+    // we spawn the future on a background thread managed by service.
+    task_manager.spawn_essential_handle().spawn_blocking("manual-seal", None, manual_seal);
+    Ok(())
 }

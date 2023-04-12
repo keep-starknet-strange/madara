@@ -10,6 +10,7 @@ import {
   mint,
   transfer,
 } from "../../util/starknet";
+import { jumpBlocks } from "../../util/block";
 
 const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -22,6 +23,13 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   it("should connect to local node", async function () {
     const rdy = context.polkadotApi.isConnected;
     expect(rdy).to.be.true;
+  });
+
+  it.only("should jump 10 blocks", async function () {
+    const rdy = context.polkadotApi.isConnected;
+    expect(rdy).to.be.true;
+
+    await jumpBlocks(context, 10);
   });
 
   it("should declare a new contract class", async function () {

@@ -78,6 +78,7 @@ sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = 
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Substrate Frame pallet
 pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
