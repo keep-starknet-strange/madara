@@ -93,31 +93,29 @@ where
     }
 
     fn get_block_transaction_count(&self, block_id: StarknetBlockId) -> RpcResult<u128> {
-        let substrate_block_hash = if let Some(h) = block_id.block_hash {
-            madara_backend_client::load_hash(
+        let substrate_block_hash = match block_id {
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
                 H256::from_str(&h).map_err(|e| {
-                    error!("Failed to convert '{:?}' to H256: {}", h, e);
+                    error!("Failed to convert '{h}' to H256: {e}");
                     StarknetRpcApiError::BlockNotFound
                 })?,
             )
             .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{:?}': {}", h, e);
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
                 StarknetRpcApiError::BlockNotFound
-            })?
-        } else if let Some(n) = block_id.block_number {
-            self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                error!("Failed to retrieve the hash of block number '{:?}': {}", n, e);
-                StarknetRpcApiError::BlockNotFound
-            })?
-        } else if let Some(t) = block_id.block_tag {
-            match t {
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
                 mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
                 mc_rpc_core::BlockTag::Pending => None,
-            }
-        } else {
-            return Err(StarknetRpcApiError::BlockNotFound.into());
+            },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
@@ -131,32 +129,29 @@ where
     }
 
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
-        let substrate_block_hash = if let Some(h) = block_id.block_hash {
-            madara_backend_client::load_hash(
+        let substrate_block_hash = match block_id {
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
                 H256::from_str(&h).map_err(|e| {
-                    error!("Failed to convert '{:?}' to H256: {}", h, e);
+                    error!("Failed to convert '{h}' to H256: {e}");
                     StarknetRpcApiError::BlockNotFound
                 })?,
             )
             .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{:?}': {}", h, e);
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
                 StarknetRpcApiError::BlockNotFound
-            })?
-        } else if let Some(n) = block_id.block_number {
-            self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                error!("Failed to retrieve the hash of block number '{:?}': {}", n, e);
-                StarknetRpcApiError::BlockNotFound
-            })?
-        } else if let Some(t) = block_id.block_tag {
-            match t {
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
                 mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
                 mc_rpc_core::BlockTag::Pending => None,
-            }
-        } else {
-            error!("No block identifier provided.");
-            return Err(StarknetRpcApiError::BlockNotFound.into());
+            },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
