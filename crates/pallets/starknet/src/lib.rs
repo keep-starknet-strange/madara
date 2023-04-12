@@ -280,12 +280,11 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Ping the pallet to check if it is alive.
         #[pallet::call_index(0)]
-        #[pallet::weight(0)]      
+        #[pallet::weight(0)]
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             // Make sure the caller is from a signed origin and retrieve the signer.
             let _deployer_account = ensure_signed(origin)?;
-            Pending::<T>::try_append(Transaction::default())
-                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
+            Pending::<T>::try_append(Transaction::default()).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
