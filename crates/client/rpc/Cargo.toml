@@ -31,10 +31,7 @@ sp-blockchain = { workspace = true, default-features = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 # Others
-jsonrpsee = { workspace = true, default-features = true, features = [
-	"server",
-	"macros",
-] }
+jsonrpsee = { workspace = true, default-features = true, features = ["server", "macros"] }
 thiserror = "1.0.40"
 log = { workspace = true, default-features = true }
 hex = { workspace = true, default-features = true }
