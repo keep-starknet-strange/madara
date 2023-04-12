@@ -35,12 +35,12 @@ pub struct FunctionCall {
 }
 
 /// A block hash, number or tag
+/// TODO: fix block_tag
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(untagged)]
-pub enum BlockId {
-    BlockHash(FieldElement),
-    BlockNumber(BlockNumber),
-    BlockTag(BlockTag),
+pub struct BlockId {
+    pub block_hash: Option<BlockHash>,
+    pub block_number: Option<BlockNumber>,
+    pub block_tag: Option<BlockTag>,
 }
 
 /// Starknet rpc interface.
