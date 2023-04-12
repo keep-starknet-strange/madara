@@ -1,15 +1,21 @@
 use core::str::FromStr;
 
+use blockifier::execution::contract_class::ContractClass;
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
+use hexlit::hex;
+use lazy_static::lazy_static;
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::{
+    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+};
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
+use sp_runtime::DispatchError;
 
 use crate::mock::*;
 use crate::types::Message;
@@ -322,4 +328,126 @@ fn given_contract_declare_tx_works_once_not_twice() {
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
         assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::ClassHashAlreadyDeclared);
     });
+}
+
+#[test]
+fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let root_origin = RuntimeOrigin::root();
+        let current_fee_token_address = Starknet::fee_token_address();
+        let new_fee_token_address =
+            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
+
+        assert_ok!(Starknet::set_fee_token_address(root_origin, new_fee_token_address));
+        System::assert_last_event(
+            Event::FeeTokenAddressChanged { old_fee_token_address: current_fee_token_address, new_fee_token_address }
+                .into(),
+        );
+    })
+}
+
+#[test]
+fn given_non_root_when_set_fee_token_address_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let non_root_origin = RuntimeOrigin::signed(1);
+        let new_fee_token_address =
+            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000ff").unwrap();
+        assert_err!(Starknet::set_fee_token_address(non_root_origin, new_fee_token_address), DispatchError::BadOrigin);
+    })
+}
+
+#[test]
+fn given_erc20_transfer_when_invoke_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(1);
+        let origin = RuntimeOrigin::none();
+        let (sender_account, _, _) = account_helper(TEST_ACCOUNT_SALT);
+        // Declare ERC20 contract
+        declare_erc20(origin.clone(), sender_account);
+        // Deploy ERC20 contract
+        deploy_erc20(origin.clone(), sender_account);
+        // TODO: use dynamic values to craft invoke transaction
+        // Transfer some token
+        invoke_transfer_erc20(origin, sender_account);
+        System::assert_last_event(
+            Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec![
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ],
+                data: bounded_vec!(
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(),
+                    H256::from_str("0x01176a1bd84444c89232ec27754698e5d2e7e1a7f1539f12027f28b23ec9f3d8").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+                ),
+                from_address: H256::from_str("0x0074c41dd9ba722396796cba415f8a742d671eb872371c96ce1ce6016fd0f2bb")
+                    .unwrap()
+                    .to_fixed_bytes(),
+            })
+            .into(),
+        );
+    })
+}
+
+/// Helper function to declare ERC20 contract.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
+    let declare_transaction = Transaction {
+        sender_address: sender_account,
+        call_entrypoint: CallEntryPointWrapper::new(
+            Some(ERC20_CLASS_HASH.clone()),
+            EntryPointTypeWrapper::External,
+            None,
+            bounded_vec![],
+            sender_account,
+            sender_account,
+        ),
+        contract_class: Some(ERC20_CONTRACT_CLASS.clone()),
+        ..Transaction::default()
+    };
+    assert_ok!(Starknet::declare(origin, declare_transaction));
+}
+
+/// Helper function to deploy ERC20 contract.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn deploy_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
+    let deploy_transaction = transaction_from_json(
+        include_str!("../../../../ressources/transactions/deploy_erc20.json"),
+        include_bytes!("../../../../ressources/account/account.json"),
+    )
+    .unwrap();
+    assert_ok!(Starknet::invoke(origin, deploy_transaction));
+}
+
+/// Helper function to mint some tokens.
+/// # Arguments
+/// * `origin` - The origin of the transaction.
+/// * `sender_account` - The address of the sender account.
+fn invoke_transfer_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
+    let erc20_mint_tx_json: &str = include_str!("../../../../ressources/transactions/invoke_erc20_transfer.json");
+    let erc20_mint_tx = transaction_from_json(erc20_mint_tx_json, &[]).expect("Failed to create Transaction from JSON");
+    assert_ok!(Starknet::invoke(origin, erc20_mint_tx));
+}
+
+lazy_static! {
+    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper =
+        get_contract_class_wrapper(include_bytes!("../../../../ressources/erc20/erc20.json"));
+}
+const ERC20_CLASS_HASH: [u8; 32] = hex!("01d1aacf8f874c4a865b974236419a46383a5161925626e9053202d8e87257e9");
+
+fn get_contract_class_wrapper(contract_content: &'static [u8]) -> ContractClassWrapper {
+    let contract_class: ContractClass =
+        serde_json::from_slice(contract_content).expect("File must contain the content of a compiled contract.");
+    ContractClassWrapper::from(contract_class)
 }

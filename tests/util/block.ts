@@ -1,4 +1,4 @@
-import "@keep-starknet-strange/madara-api-augment";
+import "@keep-starknet-strange/madara-api-augment/sharingan";
 import type { RuntimeDispatchInfoV1 } from "@polkadot/types/interfaces/payment";
 import { ApiPromise } from "@polkadot/api";
 import { RuntimeDispatchInfo } from "@polkadot/types/interfaces";
