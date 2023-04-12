@@ -1,3 +1,4 @@
+# Madara docker ignore file
 .devcontainer
 .github
 .vscode

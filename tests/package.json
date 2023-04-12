@@ -31,7 +31,7 @@
   },
   "scripts": {
     "test-with-logs": "mocha --printlogs -r ts-node/register 'tests/**/test-*.ts'",
-    "setup-typescript-api": "rm -rf node_modules/@madara/api-augment && cd ../typescript-api && npm run build && cp -r build ../tests/node_modules/@madara/api-augment",
+    "setup-local-typescript-api": "rm -rf node_modules/@keep-starknet-strange/madara-api-augment && cd ../typescript-api && npm run build && cp -r build ../tests/node_modules/@keep-starknet-strange/madara-api-augment",
     "pre-build-contracts": "ts-node tools/pre-build-contracts.ts && npx prettier -w ./contracts/compiled/*.json",
     "test": "mocha --parallel -r ts-node/register 'tests/**/test-*.ts' -- -j 4",
     "test-seq": "mocha -r ts-node/register 'tests/**/test-*.ts'",
@@ -83,6 +83,7 @@
     "rimraf": "^3.0.2",
     "semver": "^7.3.8",
     "solc": "^0.8.3",
+    "starknet": "^4.22.0",
     "tcp-port-used": "^1.0.2",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.3",

@@ -10,7 +10,7 @@ services:
     environment:
       - CARGO_HOME=/var/www/madara/.cargo
     volumes:
-      - .:/var/www/madara
+      - ../../:/var/www/madara
       - type: bind
         source: ./.local
         target: /root/.local

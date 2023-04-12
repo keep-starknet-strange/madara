@@ -1,3 +1,34 @@
+//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
+//! zk-rollup for general-purpose smart contracts.
+//! See the [Starknet documentation](https://docs.starknet.io/) for more information.
+//! The code consists of the following sections:
+//! 1. Config: The trait Config is defined, which is used to configure the pallet by specifying the
+//! parameters and types on which it depends. The trait also includes associated types for
+//! RuntimeEvent, StateRoot, SystemHash, and TimestampProvider.
+//!
+//! 2. Hooks: The Hooks trait is implemented for the pallet, which includes methods to be executed
+//! during the block lifecycle: on_finalize, on_initialize, on_runtime_upgrade, and offchain_worker.
+//!
+//! 3. Storage: Several storage items are defined, including Pending, CurrentBlock, BlockHash,
+//! ContractClassHashes, ContractClasses, Nonces, StorageView, LastKnownEthBlock, and
+//! FeeTokenAddress. These storage items are used to store and manage data related to the Starknet
+//! pallet.
+//!
+//! 4. Genesis Configuration: The GenesisConfig struct is defined, which is used to set up the
+//! initial state of the pallet during genesis. The struct includes fields for contracts,
+//! contract_classes, storage, fee_token_address, and _phantom. A GenesisBuild implementation is
+//! provided to build the initial state during genesis.
+//!
+//! 5. Events: A set of events are defined in the Event enum, including KeepStarknetStrange,
+//! StarknetEvent, and FeeTokenAddressChanged. These events are emitted during the execution of
+//! various pallet functions.
+//!
+//! 6.Errors: A set of custom errors are defined in the Error enum, which is used to represent
+//! various error conditions during the execution of the pallet.
+//!
+//! 7. Dispatchable Functions: The Pallet struct implements several dispatchable functions (ping,
+//! invoke, ...), which allow users to interact with the pallet and invoke state changes. These
+//! functions are annotated with weight and return a DispatchResult.
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
@@ -201,22 +232,52 @@ pub mod pallet {
     pub(super) type StorageView<T: Config> =
         StorageMap<_, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
 
+    /// The last processed Ethereum block number for L1 messages consumption.
+    /// This is used to avoid re-processing the same Ethereum block multiple times.
+    /// This is used by the offchain worker.
+    /// # TODO
+    /// * Find a more relevant name for this.
     #[pallet::storage]
     #[pallet::getter(fn last_known_eth_block)]
     pub(super) type LastKnownEthBlock<T: Config> = StorageValue<_, u64>;
 
+    /// The address of the fee token ERC20 contract.
+    #[pallet::storage]
+    #[pallet::getter(fn fee_token_address)]
+    pub(super) type FeeTokenAddress<T: Config> = StorageValue<_, ContractAddressWrapper, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
+        /// The contracts to be deployed at genesis.
+        /// This is a vector of tuples, where the first element is the contract address and the
+        /// second element is the contract class hash.
+        /// This can be used to start the chain with a set of pre-deployed contracts, for example in
+        /// a test environment or in the case of a migration of an existing chain state.
         pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
+        /// The contract classes to be deployed at genesis.
+        /// This is a vector of tuples, where the first element is the contract class hash and the
+        /// second element is the contract class definition.
+        /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
+        /// contracts classes.
         pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
+        pub storage: Vec<(ContractStorageKeyWrapper, StarkFeltWrapper)>,
+        /// The address of the fee token.
+        /// Must be set to the address of the fee token ERC20 contract.
+        pub fee_token_address: ContractAddressWrapper,
         pub _phantom: PhantomData<T>,
     }
 
     #[cfg(feature = "std")]
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
-            Self { contracts: vec![], contract_classes: vec![], _phantom: PhantomData }
+            Self {
+                contracts: vec![],
+                contract_classes: vec![],
+                storage: vec![],
+                fee_token_address: ContractAddressWrapper::default(),
+                _phantom: PhantomData,
+            }
         }
     }
 
@@ -237,7 +298,13 @@ pub mod pallet {
                 ContractClasses::<T>::insert(class_hash, contract_class);
             }
 
+            for (key, value) in self.storage.iter() {
+                StorageView::<T>::insert(key, value);
+            }
+
             LastKnownEthBlock::<T>::set(None);
+            // Set the fee token address from the genesis config.
+            FeeTokenAddress::<T>::set(self.fee_token_address);
         }
     }
 
@@ -250,6 +317,13 @@ pub mod pallet {
         KeepStarknetStrange,
         /// Regular Starknet event
         StarknetEvent(StarknetEventType),
+        /// Emitted when fee token address is changed.
+        /// This is emitted by the `set_fee_token_address` extrinsic.
+        /// [old_fee_token_address, new_fee_token_address]
+        FeeTokenAddressChanged {
+            old_fee_token_address: ContractAddressWrapper,
+            new_fee_token_address: ContractAddressWrapper,
+        },
     }
 
     /// The Starknet pallet custom errors.
@@ -312,9 +386,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
+            // Get current block
             let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
             let state = &mut Self::create_state_reader()?;
-            let call_info = transaction.execute(state, block, TxType::InvokeTx, None);
+            let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
             match call_info {
                 Ok(Some(mut v)) => {
                     Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
@@ -375,6 +452,8 @@ pub mod pallet {
 
             // Get current block
             let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
             // Create state reader from substrate storage
             let state = &mut Self::create_state_reader()?;
 
@@ -387,7 +466,8 @@ pub mod pallet {
                 .or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone())) {
+            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone()), fee_token_address)
+            {
                 Ok(_) => {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
@@ -437,9 +517,11 @@ pub mod pallet {
 
             // Get current block
             let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
 
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::DeployAccountTx, None) {
+            match transaction.execute(state, block, TxType::DeployAccountTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -479,10 +561,11 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             let block = Self::current_block();
+            let fee_token_address = Self::fee_token_address();
             let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::L1HandlerTx, None) {
+            match transaction.execute(state, block, TxType::L1HandlerTx, None, fee_token_address) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -495,6 +578,39 @@ pub mod pallet {
 
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
+            Ok(())
+        }
+
+        /// Set the value of the fee token address.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `fee_token_address` - The value of the fee token address.
+        ///
+        /// # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        ///
+        /// # TODO
+        /// * Add some limitations on how often this can be called.
+        #[pallet::call_index(5)]
+        #[pallet::weight(0)]
+        pub fn set_fee_token_address(
+            origin: OriginFor<T>,
+            fee_token_address: ContractAddressWrapper,
+        ) -> DispatchResult {
+            // Only root can set the fee token address.
+            ensure_root(origin)?;
+            // Get current fee token address.
+            let current_fee_token_address = Self::fee_token_address();
+            // Update the fee token address.
+            FeeTokenAddress::<T>::put(fee_token_address);
+            // Emit event.
+            Self::deposit_event(Event::FeeTokenAddressChanged {
+                old_fee_token_address: current_fee_token_address,
+                new_fee_token_address: fee_token_address,
+            });
             Ok(())
         }
     }

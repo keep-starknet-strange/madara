@@ -2818,6 +2818,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hexlit"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b6e75c860d4216ac53f9ac88b25c99eaedba075b3a7b2ed31f2adc51a74fffd"
+
+[[package]]
 name = "hkdf"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4429,8 +4435,10 @@ dependencies = [
  "bitvec 0.17.4",
  "blockifier",
  "frame-support",
+ "hex",
  "parity-scale-codec",
  "poseidon",
+ "pretty_assertions",
  "rand 0.8.5",
  "scale-info",
  "serde",
@@ -4977,6 +4985,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex",
+ "hexlit",
+ "lazy_static",
  "log",
  "mp-digest-log",
  "mp-starknet",

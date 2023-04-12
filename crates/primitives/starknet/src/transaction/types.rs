@@ -18,6 +18,8 @@ pub enum TransactionExecutionErrorWrapper {
     TransactionExecution(TransactionExecutionError),
     /// Starknet API error.
     StarknetApi(StarknetApiError),
+    /// Block context serialization error.
+    BlockContextSerializationError,
 }
 
 /// Different tx types.

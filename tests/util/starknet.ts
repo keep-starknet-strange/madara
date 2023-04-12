@@ -1,10 +1,27 @@
-import "@madara/api-augment";
+import "@keep-starknet-strange/madara-api-augment";
 import { ApiPromise } from "@polkadot/api";
 import { SubmittableExtrinsic } from "@polkadot/api/types";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { ISubmittableResult } from "@polkadot/types/types";
-import { u8aToHex } from "@polkadot/util";
+import { stringify, u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
+import { hash } from "starknet";
+
+export async function sendTransactionNoValidation(
+  api: ApiPromise,
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
+  sender: KeyringPair
+): Promise<void> {
+  await transaction.signAndSend(sender, { nonce: -1 });
+}
+
+export async function sendTransactionBatchNoValidation(
+  api: ApiPromise,
+  transactions: SubmittableExtrinsic<"promise", ISubmittableResult>[],
+  sender: KeyringPair
+): Promise<void> {
+  await api.tx.utility.batch(transactions).signAndSend(sender, { nonce: -1 });
+}
 
 export async function sendTransaction(
   api: ApiPromise,
@@ -107,18 +124,17 @@ export async function declare(
       callerAddress: contractAddress,
     },
     contractClass: {
-      program: u8aToHex(
-        new TextEncoder().encode(JSON.stringify(erc20Json.program))
-      ),
+      program: u8aToHex(Buffer.from(stringify(erc20Json.program))),
       entryPointsByType: u8aToHex(
-        new TextEncoder().encode(JSON.stringify(erc20Json.entry_points_by_type))
+        Buffer.from(stringify(erc20Json.entry_points_by_type))
       ),
     },
   };
 
   const extrisinc_declare = api.tx.starknet.declare(tx_declare);
 
-  return sendTransaction(api, extrisinc_declare, user);
+  await sendTransaction(api, extrisinc_declare, user);
+  return "";
 }
 
 export async function deploy(
@@ -127,6 +143,14 @@ export async function deploy(
   contractAddress: string,
   tokenClassHash: string
 ): Promise<string> {
+  // Compute contract address
+  const deployedContractAddress = hash.calculateContractAddressFromHash(
+    2,
+    tokenClassHash,
+    [],
+    0
+  );
+
   // Deploy contract
   let tx_deploy = {
     version: 1, // version of the transaction
@@ -144,9 +168,9 @@ export async function deploy(
         "0x0169f135eddda5ab51886052d777a57f2ea9c162d713691b5e04a6d4ed71d47f",
         "0x0000000000000000000000000000000000000000000000000000000000000004",
         tokenClassHash,
-        "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "0x0000000000000000000000000000000000000000000000000000000000000001",
+        "0x0000000000000000000000000000000000000000000000000000000000000002", // Salt
+        "0x0000000000000000000000000000000000000000000000000000000000000000", // Calldata len
+        "0x0000000000000000000000000000000000000000000000000000000000000001", // Deploy from zero
       ],
       storageAddress: contractAddress,
       callerAddress: contractAddress,
@@ -156,7 +180,9 @@ export async function deploy(
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
 
-  return sendTransaction(api, extrisinc_deploy, user);
+  await sendTransaction(api, extrisinc_deploy, user);
+
+  return deployedContractAddress;
 }
 
 export async function initialize(
@@ -180,11 +206,11 @@ export async function initialize(
       calldata: [
         tokenAddress, // CONTRACT ADDRESS
         "0x0079dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463", // SELECTOR
-        "0x0000000000000000000000000000000000000000000000000000000000000005", // CALLDATA SIZE
-        "0x0000000000000000000000000000000000000000000000000000000000000004", // INPUT SIZE
-        "0x0000000000000000000000000000000000000000000000000000000054455354", // NAME (TEST)
-        "0x0000000000000000000000000000000000000000000000000000000054455354", // SYMBOL (TEST)
-        "0x0000000000000000000000000000000000000000000000000000000000000012", // DECIMALS (18)
+        5, // CALLDATA SIZE
+        4, // INPUT SIZE
+        1413829460, // NAME (TEST)
+        1413829460, // SYMBOL (TEST)
+        18, // DECIMALS (18)
         contractAddress, // PERMISSIONED MINTER
       ],
       storageAddress: contractAddress,
@@ -272,5 +298,50 @@ export async function transfer(
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
 
-  return sendTransaction(api, extrisinc_transfer, user);
+  await sendTransaction(api, extrisinc_transfer, user);
+
+  return "";
+}
+
+export async function batchTransfer(
+  api: ApiPromise,
+  user: any,
+  contractAddress: string,
+  tokenAddress: string,
+  recipientAddress: string,
+  transferAmount: string
+): Promise<string> {
+  // Initialize contract
+  let tx_transfer = {
+    version: 1, // version of the transaction
+    hash: "", // leave empty for now, will be filled in by the runtime
+    signature: [], // leave empty for now, will be filled in when signing the transaction
+    events: [], // empty vector for now, will be filled in by the runtime
+    sender_address: contractAddress, // address of the sender contract
+    nonce: 3, // nonce of the transaction
+    callEntrypoint: {
+      // call entrypoint
+      classHash: null, // class hash of the contract
+      entrypointSelector: null, // function selector of the transfer function
+      calldata: [
+        tokenAddress, // CONTRACT ADDRESS
+        "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+        "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+        recipientAddress,
+        transferAmount,
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+      ],
+      storageAddress: contractAddress,
+      callerAddress: contractAddress,
+    },
+    contractClass: null,
+  };
+
+  const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
+
+  const extrisinc_transfers = Array(50).fill(extrisinc_transfer);
+
+  await sendTransactionBatchNoValidation(api, extrisinc_transfers, user);
+
+  return "";
 }
