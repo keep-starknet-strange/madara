@@ -1317,7 +1317,7 @@
         </span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
             <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
             </span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
-            Pending::&lt;T&gt;::try_append(Transaction::default()).unwrap();
+            Pending::&lt;T&gt;::try_append(Transaction::default()).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
             <span class="macro">log!</span>(info, <span class="string">&quot;Keep Starknet Strange!&quot;</span>);
             <span class="self">Self</span>::deposit_event(Event::KeepStarknetStrange);
             <span class="prelude-val">Ok</span>(())
@@ -1367,8 +1367,9 @@
             }
 
             <span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
+
             <span class="comment">// Append the transaction to the pending transactions.
-            </span>Pending::&lt;T&gt;::try_append(transaction).unwrap();
+            </span>Pending::&lt;T&gt;::try_append(transaction).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
 
             <span class="comment">// TODO: Apply state diff and update state root
 
@@ -1488,9 +1489,8 @@
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             }
-
             <span class="comment">// Append the transaction to the pending transactions.
-            </span>Pending::&lt;T&gt;::try_append(transaction.clone()).unwrap();
+            </span>Pending::&lt;T&gt;::try_append(transaction.clone()).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
 
             <span class="comment">// Associate contract class to class hash
             // TODO: update state root
