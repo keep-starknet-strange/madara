@@ -108,11 +108,11 @@
 </pre><pre class="rust"><code><span class="doccomment">//! A database backend storing data about madara chain
 //!
 //! # Usefulness
-//! Staknet RPC methods use Starknet block hash as arguments to access on-chain values.
-//! Because the Starknet block are wrapped inside the Substrate ones, we have no simple way to index
-//! the chain storage using this hash.
-//! Rather than iterating over all the Substrate blocks in order to find the onw wrapping the
-//! requested Staknet one, we maintain a StarknetBlockHash to SubstrateBlock hash mapping.
+//! Starknet RPC methods use Starknet block hash as arguments to access on-chain values.
+//! Because the Starknet blocks are wrapped inside the Substrate ones, we have no simple way to
+//! index the chain storage using this hash.
+//! Rather than iterating over all the Substrate blocks in order to find the one wrapping the
+//! requested Starknet one, we maintain a StarknetBlockHash to SubstrateBlock hash mapping.
 //!
 //! # Databases supported
 //! `paritydb` and `rocksdb` are both supported, behind the `kvdb-rocksd` and `parity-db` feature

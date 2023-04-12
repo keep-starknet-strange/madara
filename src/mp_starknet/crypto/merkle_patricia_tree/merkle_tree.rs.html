@@ -479,6 +479,7 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This is a gigantic copy pasta from https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree Thanks to the equilibrium team and whoever else contributed for the code.
 </span><span class="kw">use </span>alloc::rc::Rc;
 <span class="kw">use </span>alloc::vec::Vec;
@@ -586,7 +587,7 @@
     ///
     /// This necessitates recursively calculating the hash of, and
     /// in turn persisting, any changed child nodes. This is necessary
-    /// as the parent node&#39;s hash relies on its childrens hashes.
+    /// as the parent node&#39;s hash relies on its children hashes.
     ///
     /// In effect, the entire subtree gets persisted.
     ///
@@ -864,7 +865,8 @@
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span>Vec::new(),
         };
 
-        <span class="comment">// A leaf node is redudant data as the information for it is already contained in the previous node.
+        <span class="comment">// A leaf node is redundant data as the information for it is already contained in the previous
+        // node.
         </span><span class="kw">if </span><span class="macro">matches!</span>(<span class="kw-2">&amp;*</span>node.borrow(), Node::Leaf(<span class="kw">_</span>)) {
             nodes.pop();
         }

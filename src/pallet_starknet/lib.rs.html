@@ -1037,10 +1037,10 @@
 <span class="comment">// syntactic sugar for logging.
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>log {
-	(<span class="macro-nonterminal">$level</span>:tt, <span class="macro-nonterminal">$patter</span>:expr $(, <span class="macro-nonterminal">$values</span>:expr)* $(,)<span class="question-mark">?</span>) =&gt; {
+	(<span class="macro-nonterminal">$level</span>:tt, <span class="macro-nonterminal">$pattern</span>:expr $(, <span class="macro-nonterminal">$values</span>:expr)* $(,)<span class="question-mark">?</span>) =&gt; {
 		log::<span class="macro-nonterminal">$</span><span class="macro">level!</span>(
 			<span class="macro-nonterminal">target</span>: <span class="macro-nonterminal">$crate::LOG_TARGET</span>,
-			<span class="macro">concat!</span>(<span class="string">&quot;[{:?}] 🐺 &quot;</span>, <span class="macro-nonterminal">$patter</span>), &lt;frame_system::Pallet&lt;T&gt;&gt;::block_number() $(, <span class="macro-nonterminal">$values</span>)*
+			<span class="macro">concat!</span>(<span class="string">&quot;[{:?}] 🐺 &quot;</span>, <span class="macro-nonterminal">$pattern</span>), &lt;frame_system::Pallet&lt;T&gt;&gt;::block_number() $(, <span class="macro-nonterminal">$values</span>)*
 		)
 	};
 }

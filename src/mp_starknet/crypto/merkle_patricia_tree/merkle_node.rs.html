@@ -377,7 +377,7 @@
 <span class="kw">impl </span>BinaryNode {
     <span class="doccomment">/// Maps the key&#39;s bit at the binary node&#39;s height to a [Direction].
     ///
-    /// This can be used to check which direction the key descibes in the context
+    /// This can be used to check which direction the key describes in the context
     /// of this binary node i.e. which direction the child along the key&#39;s path would
     /// take.
     ///
@@ -415,7 +415,7 @@
     ///
     /// Does nothing if the hash is already [Some].
     ///
-    /// If either childs hash is [None], then the hash cannot
+    /// If either child&#39;s hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_hash&lt;H: CryptoHasher&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">if </span><span class="self">self</span>.hash.is_some() {
@@ -424,12 +424,12 @@
 
         <span class="kw">let </span>left = <span class="kw">match </span><span class="self">self</span>.left.borrow().hash() {
             <span class="prelude-val">Some</span>(hash) =&gt; hash,
-            <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtrees have to be commited first&quot;</span>),
+            <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtrees have to be committed first&quot;</span>),
         };
 
         <span class="kw">let </span>right = <span class="kw">match </span><span class="self">self</span>.right.borrow().hash() {
             <span class="prelude-val">Some</span>(hash) =&gt; hash,
-            <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtrees have to be commited first&quot;</span>),
+            <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtrees have to be committed first&quot;</span>),
         };
 
         <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(H::hash(left, right));
@@ -529,7 +529,7 @@
 
         <span class="kw">let </span>child = <span class="kw">match </span><span class="self">self</span>.child.borrow().hash() {
             <span class="prelude-val">Some</span>(hash) =&gt; hash,
-            <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtree has to be commited before&quot;</span>),
+            <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;subtree has to be committed before&quot;</span>),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>temp_path = <span class="self">self</span>.path.clone();
         temp_path.force_align();

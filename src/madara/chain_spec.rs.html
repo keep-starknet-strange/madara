@@ -350,8 +350,8 @@
     _enable_println: bool,
 ) -&gt; GenesisConfig {
     <span class="kw">let </span>account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../ressources/test.json&quot;</span>));
-    <span class="kw">let </span>erc20_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../ressources/erc20.json&quot;</span>));
+    <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/test.json&quot;</span>));
+    <span class="kw">let </span>erc20_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/erc20.json&quot;</span>));
 
     <span class="comment">// ACCOUNT CONTRACT
     </span><span class="kw">let </span>contract_address_bytes =

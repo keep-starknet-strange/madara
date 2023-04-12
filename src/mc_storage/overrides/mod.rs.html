@@ -103,11 +103,11 @@
 <span class="kw">pub use </span><span class="self">self</span>::schema_v1_override::SchemaV1Override;
 <span class="kw">use </span><span class="kw">crate</span>::onchain_storage_schema;
 
-<span class="doccomment">/// A handle containing multiple enities implementing `StorageOverride`
+<span class="doccomment">/// A handle containing multiple entities implementing `StorageOverride`
 </span><span class="kw">pub struct </span>OverrideHandle&lt;B: BlockT&gt; {
-    <span class="doccomment">/// Contains one implem of `StorageOverride` by version of the pallet storage schema
+    <span class="doccomment">/// Contains one implementation of `StorageOverride` by version of the pallet storage schema
     </span><span class="kw">pub </span>schemas: BTreeMap&lt;StarknetStorageSchemaVersion, Box&lt;<span class="kw">dyn </span>StorageOverride&lt;B&gt;&gt;&gt;,
-    <span class="doccomment">/// A nonfailing way to retrieve the storage data
+    <span class="doccomment">/// A non-failing way to retrieve the storage data
     </span><span class="kw">pub </span>fallback: Box&lt;<span class="kw">dyn </span>StorageOverride&lt;B&gt;&gt;,
 }
 
@@ -136,7 +136,7 @@
 <span class="doccomment">/// Something that can fetch Starknet-related data. This trait is quite similar to the runtime API,
 /// and indeed the implementation of it uses the runtime API.
 /// Having this trait is useful because it allows optimized implementations that fetch data from a
-/// State Backend with some assumptions about pallet-staknet&#39;s storage schema. Using such an
+/// State Backend with some assumptions about pallet-starknet&#39;s storage schema. Using such an
 /// optimized implementation avoids spawning a runtime and the overhead associated with it.
 </span><span class="kw">pub trait </span>StorageOverride&lt;B: BlockT&gt;: Send + Sync {
     <span class="doccomment">/// Return the current block.
