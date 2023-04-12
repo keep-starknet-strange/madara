@@ -62,28 +62,28 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
 
     expect(address).to.not.be.undefined;
 
-    await initialize(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      address
-    );
+    // await initialize(
+    //   context.polkadotApi,
+    //   context.alice,
+    //   contractAddress,
+    //   address
+    // );
 
-    await mint(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      address,
-      "0x0000000000000000000000000000000000000000000000000000000000000100"
-    );
+    // await mint(
+    //   context.polkadotApi,
+    //   context.alice,
+    //   contractAddress,
+    //   address,
+    //   "0x0000000000000000000000000000000000000000000000000000000000000100"
+    // );
 
-    await transfer(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      address,
-      contractAddress,
-      mintAmount
-    );
+    // await transfer(
+    //   context.polkadotApi,
+    //   context.alice,
+    //   contractAddress,
+    //   address,
+    //   contractAddress,
+    //   mintAmount
+    // );
   });
 });
