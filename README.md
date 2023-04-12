@@ -86,6 +86,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://zediogoviana.github.io/"><img src="https://avatars.githubusercontent.com/u/25623039?v=4?s=100" width="100px;" alt="Zé Diogo"/><br /><sub><b>Zé Diogo</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=zediogoviana" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Matth26"><img src="https://avatars.githubusercontent.com/u/9798638?v=4?s=100" width="100px;" alt="Matthias Monnier"/><br /><sub><b>Matthias Monnier</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Matth26" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/glihm"><img src="https://avatars.githubusercontent.com/u/7962849?v=4?s=100" width="100px;" alt="glihm"/><br /><sub><b>glihm</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=glihm" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/0xEniotna"><img src="https://avatars.githubusercontent.com/u/101047205?v=4?s=100" width="100px;" alt="Antoine"/><br /><sub><b>Antoine</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=0xEniotna" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
