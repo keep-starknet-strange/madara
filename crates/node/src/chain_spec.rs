@@ -235,6 +235,5 @@ fn testnet_genesis(
             fee_token_address,
             _phantom: Default::default(),
         },
-        assets: madara_runtime::pallet_assets::GenesisConfig::default(),
     }
 }

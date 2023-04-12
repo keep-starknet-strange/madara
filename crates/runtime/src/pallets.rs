@@ -13,6 +13,7 @@ use frame_system::{EnsureRoot, EnsureSigned};
 pub use pallet_balances::Call as BalancesCall;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
+use pallet_starknet::StarknetFee;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -143,7 +144,7 @@ impl OnUnbalanced<NegativeImbalance> for DealWithFees {
 // Provides the logic needed to handle transaction fees
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnChargeTransaction = CurrencyAdapter<Balances, DealWithFees>;
+    type OnChargeTransaction = StarknetFee;
     type OperationalFeeMultiplier = ConstU8<5>;
     type WeightToFee = IdentityFee<Balance>;
     type LengthToFee = IdentityFee<Balance>;
@@ -161,9 +162,6 @@ impl pallet_starknet::Config for Runtime {
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
-    type AssetId = AssetId;
-    type AssetName = AssetName;
-    type AssetSymbol = AssetSymbol;
 }
 
 /// A stateless module with helpers for dispatch management which does no re-authentication.

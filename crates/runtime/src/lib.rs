@@ -21,7 +21,6 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use mp_starknet::execution::ContractAddressWrapper;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
@@ -61,7 +60,6 @@ construct_runtime!(
         Utility: pallet_utility,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
-        Assets: pallet_assets,
     }
 );
 /// The address format for describing accounts.
@@ -101,7 +99,6 @@ mod benches {
         [frame_system, SystemBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_timestamp, Timestamp]
-        [pallet_assets, Assets]
     );
 }
 

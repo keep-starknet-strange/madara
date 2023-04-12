@@ -45,7 +45,6 @@ sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 node-primitives = { workspace = true }
-pallet-assets = { workspace = true }
 pallet-authorship = { workspace = true }
 
 # Used for the node RPCs
@@ -87,7 +86,6 @@ std = [
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
 	"pallet-utility/std",
-	"pallet-assets/std",
 	# Substrate primitives dependencies
 	"sp-api/std",
 	"sp-block-builder/std",
@@ -118,7 +116,6 @@ try-runtime = [
 	"pallet-utility/try-runtime",
 	# Kaiohsin pallets
 	"pallet-starknet/try-runtime",
-	"pallet-assets/try-runtime",
 ]
 default = ["std"]
 runtime-benchmarks = [
@@ -133,5 +130,4 @@ runtime-benchmarks = [
 	"sp-runtime/runtime-benchmarks",
 	# Kaiohsin pallets
 	"pallet-starknet/runtime-benchmarks",
-	"pallet-assets/runtime-benchmarks",
 ]

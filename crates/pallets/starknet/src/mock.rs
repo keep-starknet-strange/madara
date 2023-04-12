@@ -34,7 +34,6 @@ frame_support::construct_runtime!(
         System: frame_system,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
-        Assets: pallet_assets,
         Balances: pallet_balances,
     }
 );
@@ -83,9 +82,6 @@ impl pallet_starknet::Config for Test {
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
-    type AssetId = AssetId;
-    type AssetName = AssetName;
-    type AssetSymbol = AssetSymbol;
 }
 
 impl pallet_balances::Config for Test {
@@ -99,28 +95,7 @@ impl pallet_balances::Config for Test {
     type AccountStore = System;
     type WeightInfo = ();
 }
-impl pallet_assets::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-    type Balance = u64;
-    type AssetId = u32;
-    type AssetIdParameter = scale_codec::Compact<u32>;
-    type Currency = Balances;
-    type ForceOrigin = frame_system::EnsureRoot<u64>;
-    type AssetDeposit = ConstU64<1>;
-    type AssetAccountDeposit = ConstU64<10>;
-    type MetadataDepositBase = ConstU64<1>;
-    type MetadataDepositPerByte = ConstU64<1>;
-    type ApprovalDeposit = ConstU64<1>;
-    type StringLimit = ConstU32<50>;
-    type Freezer = ();
-    type WeightInfo = ();
-    type Extra = ();
-    type CallbackHandle = ();
-    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<Self::AccountId>>;
-    type RemoveItemsLimit = ConstU32<1000>;
-    #[cfg(feature = "runtime-benchmarks")]
-    type BenchmarkHelper = ();
-}
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();

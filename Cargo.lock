@@ -4259,7 +4259,6 @@ dependencies = [
  "frame-try-runtime 0.10.0-dev (git+https://github.com/LucasLvy/substrate?branch=polkadot-v0.9.40)",
  "mp-starknet",
  "node-primitives",
- "pallet-assets",
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
@@ -5011,7 +5010,6 @@ name = "pallet-assets"
 version = "4.0.0-dev"
 source = "git+https://github.com/LucasLvy/substrate?branch=polkadot-v0.9.40#0144b08cccc7132c00ede5945714fc9f65b4819b"
 dependencies = [
- "frame-benchmarking",
  "frame-support 4.0.0-dev (git+https://github.com/LucasLvy/substrate?branch=polkadot-v0.9.40)",
  "frame-system",
  "parity-scale-codec",
@@ -5127,6 +5125,7 @@ dependencies = [
  "pallet-assets",
  "pallet-balances",
  "pallet-timestamp",
+ "pallet-transaction-payment",
  "parity-scale-codec",
  "pretty_assertions",
  "scale-info",

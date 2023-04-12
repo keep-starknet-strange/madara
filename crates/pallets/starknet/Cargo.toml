@@ -38,6 +38,7 @@ sp-runtime = { workspace = true }
 sp-api = { workspace = true }
 sp-std = { workspace = true }
 pallet-balances = { workspace = true }
+pallet-transaction-payment = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies

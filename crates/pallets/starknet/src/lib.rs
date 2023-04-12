@@ -94,11 +94,14 @@ pub mod pallet {
     use alloc::vec;
     use alloc::vec::Vec;
 
+    use blockifier::block_context::BlockContext;
     use blockifier::execution::contract_class::ContractClass;
-    use blockifier::execution::entry_point::CallInfo;
+    use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
     use blockifier::state::cached_state::{CachedState, ContractStorageKey};
     use blockifier::state::state_api::State;
     use blockifier::test_utils::DictStateReader;
+    use blockifier::transaction::account_transaction::AccountTransaction;
+    use blockifier::transaction::objects::AccountTransactionContext;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Time};
@@ -115,17 +118,19 @@ pub mod pallet {
     use mp_starknet::transaction::types::{
         EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
     };
-    use pallet_assets;
+    use pallet_transaction_payment::OnChargeTransaction;
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
-    use sp_runtime::traits::UniqueSaturatedInto;
+    use sp_runtime::traits::{DispatchInfoOf, PostDispatchInfoOf, UniqueSaturatedInto};
     use sp_runtime::DigestItem;
-    use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+    use sp_std::sync::Arc;
+    use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, Nonce};
+    use starknet_api::block::{BlockNumber, BlockTimestamp};
     use starknet_api::hash::StarkFelt;
     use starknet_api::state::{StateDiff, StorageKey};
     use starknet_api::stdlib::collections::HashMap;
-    use starknet_api::transaction::EventContent;
+    use starknet_api::transaction::{Calldata, EventContent};
     use starknet_api::StarknetApiError;
     use types::{EthBlockNumber, OffchainWorkerError};
 
@@ -138,7 +143,7 @@ pub mod pallet {
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_assets::Config {
+    pub trait Config: frame_system::Config + pallet_transaction_payment::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// How Starknet state root is calculated.
@@ -147,9 +152,6 @@ pub mod pallet {
         type SystemHash: Hasher;
         /// The time idk what.
         type TimestampProvider: Time;
-        type AssetId: Get<<Self as pallet_assets::Config>::AssetId>;
-        type AssetName: Get<Vec<u8>>;
-        type AssetSymbol: Get<Vec<u8>>;
     }
     type ContractClassMapping = HashMap<ClassHash, ContractClass>;
     /// The Starknet pallet hooks.
@@ -995,6 +997,107 @@ pub mod pallet {
                         .map_err(OffchainWorkerError::ConsumeMessageError)
                 })?;
             }
+            Ok(())
+        }
+    }
+    pub struct StarknetFee;
+    impl<T: Config> OnChargeTransaction<T> for StarknetFee {
+        /// The underlying integer type in which fees are calculated.
+        type Balance = u128;
+
+        type LiquidityInfo = U256;
+
+        /// Before the transaction is executed the payment of the transaction fees
+        /// need to be secured.
+        ///
+        /// Note: The `fee` already includes the `tip`.
+        fn withdraw_fee(
+            who: &T::AccountId,
+            call: &T::RuntimeCall,
+            dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+            fee: Self::Balance,
+            tip: Self::Balance,
+        ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+            let state = &mut Pallet::<T>::create_state_reader().unwrap();
+            // Get current block
+            let block = Pallet::<T>::current_block();
+            let fee_transfer_call = blockifier::execution::entry_point::CallEntryPoint {
+                class_hash: None,
+                entry_point_type: starknet_api::deprecated_contract_class::EntryPointType::External,
+                entry_point_selector: blockifier::abi::abi_utils::selector_from_name(
+                    blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME,
+                ),
+                calldata: starknet_api::calldata![
+                    StarkFelt::new(block.header().sequencer_address).unwrap(), // Recipient.
+                    StarkFelt::new([
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9
+                    ])
+                    .unwrap(),
+                    StarkFelt::new([
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+                    ])
+                    .unwrap()
+                ],
+                storage_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).unwrap())
+                    .unwrap(),
+                caller_address: ContractAddress::try_from(
+                    StarkFelt::new([
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    ])
+                    .unwrap(),
+                )
+                .unwrap(),
+                call_type: blockifier::execution::entry_point::CallType::Call,
+            };
+            log!(error, "COUCOU");
+            let mut execution_context = ExecutionContext::default();
+            let account_ctx = AccountTransactionContext::default();
+            let block_ctx = BlockContext {
+                chain_id: ChainId("SN_GOERLI".to_string()),
+                block_number: BlockNumber(block.header().block_number.as_u64()),
+                block_timestamp: BlockTimestamp(block.header().block_timestamp),
+                sequencer_address: ContractAddress::try_from(StarkFelt::new(block.header().sequencer_address).unwrap())
+                    .unwrap(),
+                cairo_resource_fee_weights: HashMap::default(),
+                fee_token_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).unwrap())
+                    .unwrap(),
+                invoke_tx_max_n_steps: 1000000,
+                validate_max_n_steps: 1000000,
+                gas_price: 0,
+            };
+            match fee_transfer_call.execute(
+                state,
+                &mut ExecutionResources::default(),
+                &mut execution_context,
+                &block_ctx,
+                &account_ctx,
+            ) {
+                Ok(v) => {
+                    log!(info, "Transaction executed successfully: {:?}", v);
+                }
+                Err(e) => {
+                    log!(error, "Transaction execution failed: {:?}", e);
+                    return Err(TransactionValidityError::Unknown(UnknownTransaction::Custom(1)));
+                }
+            }
+            Pallet::<T>::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError).unwrap();
+            Ok(U256::from(60))
+        }
+
+        /// After the transaction was executed the actual fee can be calculated.
+        /// This function should refund any overpaid fees and optionally deposit
+        /// the corrected amount.
+        ///
+        /// Note: The `fee` already includes the `tip`.
+        fn correct_and_deposit_fee(
+            who: &T::AccountId,
+            dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+            post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+            corrected_fee: Self::Balance,
+            tip: Self::Balance,
+            already_withdrawn: Self::LiquidityInfo,
+        ) -> Result<(), TransactionValidityError> {
+            log!(error, "toto");
             Ok(())
         }
     }
