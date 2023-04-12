@@ -13,16 +13,19 @@ use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use prometheus_endpoint::Registry;
 use sc_client_api::{BlockBackend, BlockchainEvents};
-use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
+use sc_consensus::BasicQueue;
+use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
 use sc_keystore::LocalKeystore;
 use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
-use sc_telemetry::{Telemetry, TelemetryWorker};
+use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool::FullPool;
-use sp_api::ConstructRuntimeApi;
+use sp_api::{ConstructRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_runtime::traits::BlakeTwo256;
+use sp_trie::PrefixedMemoryDB;
 
 use crate::cli::Sealing;
 use crate::rpc::StarknetDeps;
@@ -52,9 +55,13 @@ pub(crate) type FullClient = sc_service::TFullClient<Block, RuntimeApi, NativeEl
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
+type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
+type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor<Client, Block>>;
+
 #[allow(clippy::type_complexity)]
-pub fn new_partial(
+pub fn new_partial<BIQ>(
     config: &Configuration,
+    build_import_queue: BIQ,
 ) -> Result<
     sc_service::PartialComponents<
         FullClient,
@@ -63,14 +70,26 @@ pub fn new_partial(
         sc_consensus::DefaultImportQueue<Block, FullClient>,
         sc_transaction_pool::FullPool<Block, FullClient>,
         (
-            sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+            BoxBlockImport<FullClient>,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
             Option<Telemetry>,
             Arc<MadaraBackend>,
         ),
     >,
     ServiceError,
-> {
+>
+where
+    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
+    RuntimeApi: Send + Sync + 'static,
+    BIQ: FnOnce(
+        Arc<FullClient>,
+        &Configuration,
+        &TaskManager,
+        Option<TelemetryHandle>,
+        GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+        Arc<MadaraBackend>,
+    ) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>,
+{
     if config.keystore_remote.is_some() {
         return Err(ServiceError::Other("Remote Keystores are not supported.".into()));
     }
@@ -124,28 +143,16 @@ pub fn new_partial(
 
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
 
-    let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
+    let _slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
-    let import_queue = sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
-        block_import: grandpa_block_import.clone(),
-        justification_import: Some(Box::new(grandpa_block_import.clone())),
-        client: client.clone(),
-        create_inherent_data_providers: move |_, ()| async move {
-            let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-
-            let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                *timestamp,
-                slot_duration,
-            );
-
-            Ok((slot, timestamp))
-        },
-        spawner: &task_manager.spawn_essential_handle(),
-        registry: config.prometheus_registry(),
-        check_for_equivocation: Default::default(),
-        telemetry: telemetry.as_ref().map(|x| x.handle()),
-        compatibility_mode: Default::default(),
-    })?;
+    let (import_queue, block_import) = build_import_queue(
+        client.clone(),
+        config,
+        &task_manager,
+        telemetry.as_ref().map(|x| x.handle()),
+        grandpa_block_import,
+        madara_backend.clone(),
+    )?;
 
     Ok(sc_service::PartialComponents {
         client,
@@ -155,7 +162,7 @@ pub fn new_partial(
         keystore_container,
         select_chain,
         transaction_pool,
-        other: (grandpa_block_import, grandpa_link, telemetry, madara_backend),
+        other: (block_import, grandpa_link, telemetry, madara_backend),
     })
 }
 
@@ -166,9 +173,75 @@ fn remote_keystore(_url: &str) -> Result<Arc<LocalKeystore>, &'static str> {
     Err("Remote Keystore not supported.")
 }
 
+/// Build the import queue for the template runtime (aura + grandpa).
+pub fn build_aura_grandpa_import_queue(
+    client: Arc<FullClient>,
+    config: &Configuration,
+    task_manager: &TaskManager,
+    telemetry: Option<TelemetryHandle>,
+    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    _madara_backend: Arc<MadaraBackend>,
+) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+where
+    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
+    RuntimeApi: Send + Sync + 'static,
+{
+    let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
+    let create_inherent_data_providers = move |_, ()| async move {
+        let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+        let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+            *timestamp,
+            slot_duration,
+        );
+        Ok((slot, timestamp))
+    };
+
+    let import_queue =
+        sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(sc_consensus_aura::ImportQueueParams {
+            block_import: grandpa_block_import.clone(),
+            justification_import: Some(Box::new(grandpa_block_import.clone())),
+            client,
+            create_inherent_data_providers,
+            spawner: &task_manager.spawn_essential_handle(),
+            registry: config.prometheus_registry(),
+            check_for_equivocation: Default::default(),
+            telemetry,
+            compatibility_mode: sc_consensus_aura::CompatibilityMode::None,
+        })
+        .map_err::<ServiceError, _>(Into::into)?;
+
+    Ok((import_queue, Box::new(grandpa_block_import)))
+}
+
+/// Build the import queue for the template runtime (manual seal).
+pub fn build_manual_seal_import_queue(
+    _client: Arc<FullClient>,
+    config: &Configuration,
+    task_manager: &TaskManager,
+    _telemetry: Option<TelemetryHandle>,
+    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    _madara_backend: Arc<MadaraBackend>,
+) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+where
+    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
+    RuntimeApi: Send + Sync + 'static,
+{
+    Ok((
+        sc_consensus_manual_seal::import_queue(
+            Box::new(grandpa_block_import.clone()),
+            &task_manager.spawn_essential_handle(),
+            config.prometheus_registry(),
+        ),
+        Box::new(grandpa_block_import),
+    ))
+}
+
 /// Builds a new service for a full client.
 /// TODO: implement `sealing` parameter (currently ignored)
 pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+    let build_import_queue =
+        if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
+
     let sc_service::PartialComponents {
         client,
         backend,
@@ -178,7 +251,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
         select_chain,
         transaction_pool,
         other: (block_import, grandpa_link, mut telemetry, madara_backend),
-    } = new_partial(&config)?;
+    } = new_partial(&config, build_import_queue)?;
 
     if let Some(url) = &config.keystore_remote {
         match remote_keystore(url) {
@@ -395,7 +468,7 @@ fn run_manual_seal_authorship(
     client: Arc<FullClient>,
     transaction_pool: Arc<FullPool<Block, FullClient>>,
     select_chain: FullSelectChain,
-    block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    block_import: BoxBlockImport<FullClient>,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
     telemetry: Option<&Telemetry>,
@@ -475,4 +548,22 @@ where
     // we spawn the future on a background thread managed by service.
     task_manager.spawn_essential_handle().spawn_blocking("manual-seal", None, manual_seal);
     Ok(())
+}
+
+pub fn new_chain_ops(
+    mut config: &mut Configuration,
+) -> Result<
+    (
+        Arc<FullClient>,
+        Arc<FullBackend>,
+        BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
+        TaskManager,
+        Arc<MadaraBackend>,
+    ),
+    ServiceError,
+> {
+    config.keystore = sc_service::config::KeystoreConfig::InMemory;
+    let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
+        new_partial::<_>(config, build_aura_grandpa_import_queue)?;
+    Ok((client, backend, import_queue, task_manager, other.3))
 }
