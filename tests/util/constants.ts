@@ -11,7 +11,7 @@ export const BINARY_PATH =
 // Is undefined by default as the path is dependent of the runtime.
 export const OVERRIDE_RUNTIME_PATH =
   process.env["OVERRIDE_RUNTIME_PATH"] || undefined;
-export const SPAWNING_TIME = 20000;
+export const SPAWNING_TIME = 500000;
 export const WASM_RUNTIME_OVERRIDES = process.env.WASM_RUNTIME_OVERRIDES || "";
 
 // Weight per step mapping

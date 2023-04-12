@@ -9,7 +9,6 @@ describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
 
   before(async function () {
-    this.timeout(100000);
     providerRPC = new RpcProvider({
       nodeUrl: `http://127.0.0.1:${context.rpcPort}/`,
       retries: 3,
