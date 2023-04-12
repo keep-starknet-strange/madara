@@ -84,7 +84,7 @@ pub struct EventWrapper {
     pub keys: BoundedVec<H256, MaxArraySize>,
     /// The data of the event.
     pub data: BoundedVec<H256, MaxArraySize>,
-    /// The address that emited the event
+    /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
 }
 

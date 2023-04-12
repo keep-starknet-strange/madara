@@ -142,8 +142,8 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    let test_class = get_contract_class(include_bytes!("../../../ressources/test.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../ressources/erc20.json"));
+    let test_class = get_contract_class(include_bytes!("../../../resources/test.json"));
+    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20.json"));
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
