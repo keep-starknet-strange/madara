@@ -215,11 +215,11 @@ where
 
 /// Build the import queue for the template runtime (manual seal).
 pub fn build_manual_seal_import_queue(
-    _client: Arc<FullClient>,
+    client: Arc<FullClient>,
     config: &Configuration,
     task_manager: &TaskManager,
     _telemetry: Option<TelemetryHandle>,
-    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
 ) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
 where
@@ -228,16 +228,15 @@ where
 {
     Ok((
         sc_consensus_manual_seal::import_queue(
-            Box::new(grandpa_block_import.clone()),
+            Box::new(client.clone()),
             &task_manager.spawn_essential_handle(),
             config.prometheus_registry(),
         ),
-        Box::new(grandpa_block_import),
+        Box::new(client),
     ))
 }
 
 /// Builds a new service for a full client.
-/// TODO: implement `sealing` parameter (currently ignored)
 pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -370,7 +369,8 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
             )?;
 
             network_starter.start_network();
-            // log::info!("Manual Seal Ready");
+
+            log::info!("Manual Seal Ready");
             return Ok(task_manager);
         }
 

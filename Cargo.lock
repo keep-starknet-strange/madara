@@ -4113,6 +4113,7 @@ dependencies = [
  "futures",
  "hex",
  "jsonrpsee",
+ "log",
  "madara-runtime",
  "mc-db",
  "mc-mapping-sync",
