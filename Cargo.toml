@@ -22,15 +22,15 @@ repository = "https://github.com/keep-starknet-strange/madara/"
 
 [workspace.dependencies]
 # Substrate frame dependencies
-frame-executive = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-support = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-benchmarking = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-benchmarking-cli = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-system = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-system-benchmarking = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-system-rpc-runtime-api = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-frame-try-runtime = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
-substrate-frame-rpc-system = { git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-executive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-benchmarking-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
 
 # Substrate primitives dependencies
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40", default-features = false }
@@ -83,18 +83,18 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "master" }
 
 # Substrate Frame pallet
-pallet-aura = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-balances = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-sudo = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-grandpa = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-timestamp = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-utility = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-assets = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-pallet-authorship = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
-node-primitives = { default-features = false, git = "https://github.com/LucasLvy/substrate", branch = "polkadot-v0.9.40" }
+pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-utility = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-assets = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+pallet-authorship = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+node-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
