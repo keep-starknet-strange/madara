@@ -58,6 +58,9 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             event_count: 2,
             event_commitment: H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02")
                 .unwrap(),
+            sequencer_address: [
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+            ],
             ..StarknetHeader::default()
         };
 
