@@ -94,13 +94,14 @@ pub mod pallet {
     use alloc::vec;
     use alloc::vec::Vec;
 
+    use blockifier::abi::abi_utils;
     use blockifier::block_context::BlockContext;
     use blockifier::execution::contract_class::ContractClass;
     use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
     use blockifier::state::cached_state::{CachedState, ContractStorageKey};
     use blockifier::state::state_api::State;
     use blockifier::test_utils::DictStateReader;
-    use blockifier::transaction::account_transaction::AccountTransaction;
+    use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
     use blockifier::transaction::objects::AccountTransactionContext;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
@@ -122,11 +123,13 @@ pub mod pallet {
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
-    use sp_runtime::traits::{DispatchInfoOf, PostDispatchInfoOf, UniqueSaturatedInto};
+    use sp_runtime::traits::{DispatchInfoOf, PostDispatchInfoOf, Printable, UniqueSaturatedInto};
+    use sp_runtime::transaction_validity::InvalidTransaction::Payment;
+    use sp_runtime::transaction_validity::UnknownTransaction::Custom;
     use sp_runtime::DigestItem;
-    use sp_std::sync::Arc;
     use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, Nonce};
     use starknet_api::block::{BlockNumber, BlockTimestamp};
+    use starknet_api::deprecated_contract_class::EntryPointType;
     use starknet_api::hash::StarkFelt;
     use starknet_api::state::{StateDiff, StorageKey};
     use starknet_api::stdlib::collections::HashMap;
@@ -307,7 +310,6 @@ pub mod pallet {
             for (key, value) in self.storage.iter() {
                 StorageView::<T>::insert(key, value);
             }
-
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
@@ -722,7 +724,8 @@ pub mod pallet {
             let pending = Self::pending();
 
             let global_state_root = U256::zero();
-            let sequencer_address = ContractAddressWrapper::default();
+            let sequencer_address =
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
             let (transaction_commitment, (event_commitment, event_count)) =
@@ -1012,59 +1015,94 @@ pub mod pallet {
         ///
         /// Note: The `fee` already includes the `tip`.
         fn withdraw_fee(
-            who: &T::AccountId,
+            _who: &T::AccountId,
             call: &T::RuntimeCall,
-            dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+            _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
             fee: Self::Balance,
-            tip: Self::Balance,
+            _tip: Self::Balance,
         ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-            let state = &mut Pallet::<T>::create_state_reader().unwrap();
-            // Get current block
+            // Create state reader.
+            let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
+                log!(error, "Couldn't create the cached state");
+                TransactionValidityError::Unknown(Custom(3_u8))
+            })?;
+            // Get current block.
             let block = Pallet::<T>::current_block();
+            // Create fee transfer transaction.
             let fee_transfer_call = blockifier::execution::entry_point::CallEntryPoint {
                 class_hash: None,
-                entry_point_type: starknet_api::deprecated_contract_class::EntryPointType::External,
-                entry_point_selector: blockifier::abi::abi_utils::selector_from_name(
-                    blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME,
-                ),
+                entry_point_type: EntryPointType::External,
+                entry_point_selector: abi_utils::selector_from_name(TRANSFER_ENTRY_POINT_NAME),
                 calldata: starknet_api::calldata![
-                    StarkFelt::new(block.header().sequencer_address).unwrap(), // Recipient.
-                    StarkFelt::new([
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9
-                    ])
-                    .unwrap(),
-                    StarkFelt::new([
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-                    ])
-                    .unwrap()
+                    StarkFelt::new(block.header().sequencer_address).map_err(|_| {
+                        log!(error, "Couldn't convert sequencer address to StarkFelt");
+                        TransactionValidityError::Unknown(Custom(0_u8))
+                    })?, // Recipient.
+                    StarkFelt::new([[0_u8; 16], fee.to_be_bytes()].concat()[..32].try_into().unwrap()).map_err(
+                        |_| {
+                            log!(error, "Couldn't convert fees to StarkFelt");
+                            TransactionValidityError::Unknown(Custom(0_u8))
+                        }
+                    )?, // low
+                    StarkFelt::default() // high
                 ],
-                storage_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).unwrap())
-                    .unwrap(),
+                storage_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(
+                    |_| {
+                        log!(error, "Couldn't convert fee_token_address to StarkFelt");
+                        TransactionValidityError::Unknown(Custom(0_u8))
+                    },
+                )?)
+                .map_err(|_| {
+                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                    TransactionValidityError::Unknown(Custom(1_u8))
+                })?,
                 caller_address: ContractAddress::try_from(
                     StarkFelt::new([
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                     ])
-                    .unwrap(),
+                    .map_err(|_| {
+                        log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                        TransactionValidityError::Unknown(Custom(1_u8))
+                    })?,
                 )
-                .unwrap(),
+                .map_err(|_| {
+                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                    TransactionValidityError::Unknown(Custom(1_u8))
+                })?, // TODO: implement account id to match starknet and use who
                 call_type: blockifier::execution::entry_point::CallType::Call,
             };
-            log!(error, "COUCOU");
-            let mut execution_context = ExecutionContext::default();
-            let account_ctx = AccountTransactionContext::default();
+            let mut execution_context = ExecutionContext::default(); // TODO: check if it needs a real value.
+            let account_ctx = AccountTransactionContext::default(); // TODO: check if it needs a real value.
             let block_ctx = BlockContext {
-                chain_id: ChainId("SN_GOERLI".to_string()),
+                chain_id: ChainId("SN_GOERLI".to_string()), // TODO: Make it configurable ?
                 block_number: BlockNumber(block.header().block_number.as_u64()),
                 block_timestamp: BlockTimestamp(block.header().block_timestamp),
-                sequencer_address: ContractAddress::try_from(StarkFelt::new(block.header().sequencer_address).unwrap())
-                    .unwrap(),
-                cairo_resource_fee_weights: HashMap::default(),
-                fee_token_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).unwrap())
-                    .unwrap(),
-                invoke_tx_max_n_steps: 1000000,
-                validate_max_n_steps: 1000000,
-                gas_price: 0,
+                sequencer_address: ContractAddress::try_from(
+                    StarkFelt::new(block.header().sequencer_address).map_err(|_| {
+                        log!(error, "Couldn't convert sequencer address to StarkFelt");
+                        TransactionValidityError::Unknown(Custom(0_u8))
+                    })?,
+                )
+                .map_err(|_| {
+                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                    TransactionValidityError::Unknown(Custom(1_u8))
+                })?,
+                cairo_resource_fee_weights: HashMap::default(), // TODO: Use real weights
+                fee_token_address: ContractAddress::try_from(
+                    StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(|_| {
+                        log!(error, "Couldn't convert fee_token_address to StarkFelt");
+                        TransactionValidityError::Unknown(Custom(0_u8))
+                    })?,
+                )
+                .map_err(|_| {
+                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                    TransactionValidityError::Unknown(Custom(1_u8))
+                })?,
+                invoke_tx_max_n_steps: 1000000, // TODO: Make it configurable
+                validate_max_n_steps: 1000000,  // TODO: Make it configurable
+                gas_price: 0,                   // TODO: Use block gas price
             };
+            log!(error, "CALLLLLLLL {:?}", call);
             match fee_transfer_call.execute(
                 state,
                 &mut ExecutionResources::default(),
@@ -1073,15 +1111,18 @@ pub mod pallet {
                 &account_ctx,
             ) {
                 Ok(v) => {
-                    log!(info, "Transaction executed successfully: {:?}", v);
+                    log!(info, "Fees executed successfully: {:?}", v); // TODO: remove this log
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
-                    return Err(TransactionValidityError::Unknown(UnknownTransaction::Custom(1)));
+                    return Err(TransactionValidityError::Invalid(Payment));
                 }
             }
-            Pallet::<T>::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError).unwrap();
-            Ok(U256::from(60))
+            Pallet::<T>::apply_state_diffs(state).map_err(|_| {
+                log!(error, "Couldn't apply the state diffs");
+                TransactionValidityError::Unknown(Custom(3_u8))
+            })?;
+            Ok(U256::from(fee))
         }
 
         /// After the transaction was executed the actual fee can be calculated.
@@ -1090,14 +1131,15 @@ pub mod pallet {
         ///
         /// Note: The `fee` already includes the `tip`.
         fn correct_and_deposit_fee(
-            who: &T::AccountId,
-            dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+            _who: &T::AccountId,
+            _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
             post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-            corrected_fee: Self::Balance,
-            tip: Self::Balance,
-            already_withdrawn: Self::LiquidityInfo,
+            _corrected_fee: Self::Balance,
+            _tip: Self::Balance,
+            _already_withdrawn: Self::LiquidityInfo,
         ) -> Result<(), TransactionValidityError> {
-            log!(error, "toto");
+            post_info.print();
+            log!(info, "here {:}", _corrected_fee);
             Ok(())
         }
     }

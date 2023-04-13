@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use hex::FromHex;
 use madara_runtime::{
@@ -10,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H256, U256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_state_machine::BasicExternalities;
 
@@ -173,12 +175,13 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    let test_class = get_contract_class(include_bytes!("../../../resources/test.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20.json"));
+
+    let test_class = get_contract_class(include_bytes!("../../../ressources/test.json"));
+    let erc20_class = get_contract_class(include_bytes!("../../../ressources/erc20.json"));
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
-        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000101").unwrap();
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
     let class_hash_bytes =
         <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918").unwrap();
 
@@ -189,7 +192,7 @@ fn testnet_genesis(
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001000").unwrap();
 
     let fee_token_address =
-        <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+        <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap();
 
     // ERC20 CONTRACT
     let token_contract_address_str = "040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
@@ -231,7 +234,22 @@ fn testnet_genesis(
                 (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
                 (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
             ],
-            storage: vec![],
+            storage: vec![
+                (
+                    (
+                        fee_token_address,
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+            ],
             fee_token_address,
             _phantom: Default::default(),
         },

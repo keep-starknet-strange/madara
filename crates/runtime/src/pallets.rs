@@ -1,5 +1,7 @@
 //! Configuration of the pallets used in the runtime.
 
+use frame_support::traits::tokens::imbalance::OnUnbalanced;
+use frame_support::traits::Currency;
 pub use frame_support::traits::{
     ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
@@ -9,13 +11,12 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use frame_system::{EnsureRoot, EnsureSigned};
 pub use pallet_balances::Call as BalancesCall;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 use pallet_starknet::StarknetFee;
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter};
+use pallet_transaction_payment::ConstFeeMultiplier;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::generic;
 use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
