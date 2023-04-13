@@ -32,6 +32,8 @@ pub struct DevGenesisExt {
     enable_manual_seal: Option<bool>,
 }
 
+/// If enable_manual_seal is true, then the runtime storage variable EnableManualSeal will be set to
+/// true. This is just a common way to pass information from the chain spec to the runtime.
 impl sp_runtime::BuildStorage for DevGenesisExt {
     fn assimilate_storage(&self, storage: &mut Storage) -> Result<(), String> {
         BasicExternalities::execute_with_storage(storage, || {

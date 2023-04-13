@@ -154,6 +154,8 @@ impl pallet_utility::Config for Runtime {
     type PalletsOrigin = OriginCaller;
 }
 
+/// Implement the OnTimestampSet trait to override the default Aura.
+/// This is needed to support manual sealing.
 pub struct ConsensusOnTimestampSet<T>(PhantomData<T>);
 impl<T: pallet_aura::Config> OnTimestampSet<T::Moment> for ConsensusOnTimestampSet<T> {
     fn on_timestamp_set(moment: T::Moment) {
