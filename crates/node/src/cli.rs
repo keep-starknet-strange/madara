@@ -1,18 +1,13 @@
 use sc_cli::RunCmd;
 
 /// Available Sealing methods.
-#[derive(Debug, Copy, Clone, clap::ValueEnum)]
+#[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
 pub enum Sealing {
     // Seal using rpc method.
+    #[default]
     Manual,
     // Seal when transaction is executed.
     Instant,
-}
-
-impl Default for Sealing {
-    fn default() -> Sealing {
-        Sealing::Manual
-    }
 }
 
 #[derive(Debug, clap::Parser)]

@@ -463,6 +463,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     Ok(task_manager)
 }
 
+#[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
     sealing: Sealing,
     client: Arc<FullClient>,
@@ -550,9 +551,7 @@ where
     Ok(())
 }
 
-pub fn new_chain_ops(
-    mut config: &mut Configuration,
-) -> Result<
+type ChainOpsResult = Result<
     (
         Arc<FullClient>,
         Arc<FullBackend>,
@@ -561,7 +560,9 @@ pub fn new_chain_ops(
         Arc<MadaraBackend>,
     ),
     ServiceError,
-> {
+>;
+
+pub fn new_chain_ops(mut config: &mut Configuration) -> ChainOpsResult {
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
         new_partial::<_>(config, build_aura_grandpa_import_queue)?;
