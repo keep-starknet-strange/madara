@@ -9,8 +9,8 @@ from starkware.cairo.common.math import assert_not_zero, assert_le
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.uint256 import Uint256, uint256_check, uint256_eq, uint256_not
 
-from ressources.erc20.utils.library import SafeUint256
-from ressources.erc20.utils.constants import UINT8_MAX
+from resources.erc20.utils.library import SafeUint256
+from resources.erc20.utils.constants import UINT8_MAX
 
 //
 // Events

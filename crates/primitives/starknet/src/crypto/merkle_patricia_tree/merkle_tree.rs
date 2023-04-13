@@ -105,7 +105,7 @@ impl<H: CryptoHasher> MerkleTree<H> {
     ///
     /// This necessitates recursively calculating the hash of, and
     /// in turn persisting, any changed child nodes. This is necessary
-    /// as the parent node's hash relies on its childrens hashes.
+    /// as the parent node's hash relies on its children hashes.
     ///
     /// In effect, the entire subtree gets persisted.
     ///
@@ -383,7 +383,8 @@ impl<H: CryptoHasher> MerkleTree<H> {
             None => return Vec::new(),
         };
 
-        // A leaf node is redudant data as the information for it is already contained in the previous node.
+        // A leaf node is redundant data as the information for it is already contained in the previous
+        // node.
         if matches!(&*node.borrow(), Node::Leaf(_)) {
             nodes.pop();
         }

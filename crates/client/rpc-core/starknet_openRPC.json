@@ -446,7 +446,7 @@
         {
             "name": "starknet_estimateFee",
             "summary": "estimate the fee for of StarkNet transactions",
-            "description": "estimates the resources required by transactions when applyed on a given state",
+            "description": "estimates the resources required by transactions when applied on a given state",
             "params": [
                 {
                     "name": "request",
@@ -563,7 +563,7 @@
         },
         {
             "name": "starknet_syncing",
-            "summary": "Returns an object about the sync status, or false if the node is not synching",
+            "summary": "Returns an object about the sync status, or false if the node is not syncing",
             "params": [],
             "result": {
                 "name": "syncing",
@@ -2083,7 +2083,7 @@
                     },
                     "abi": {
                         "type": "string",
-                        "descripition": "The class ABI, as supplied by the user declaring the class"
+                        "description": "The class ABI, as supplied by the user declaring the class"
                     }
                 },
                 "required": [
@@ -2363,4 +2363,3 @@
         }
     }
 }
-
