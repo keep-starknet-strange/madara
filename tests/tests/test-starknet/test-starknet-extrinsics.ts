@@ -25,7 +25,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     expect(rdy).to.be.true;
   });
 
-  it.only("should jump 10 blocks", async function () {
+  it("should jump 10 blocks", async function () {
     const rdy = context.polkadotApi.isConnected;
     expect(rdy).to.be.true;
 
