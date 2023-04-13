@@ -18,7 +18,7 @@ pub struct MetaDb<B: BlockT> {
 }
 
 impl<B: BlockT> MetaDb<B> {
-    /// Retrieve the currrent tips of the synced chain
+    /// Retrieve the current tips of the synced chain
     pub fn current_syncing_tips(&self) -> Result<Vec<B::Hash>, String> {
         match self.db.get(crate::columns::META, crate::static_keys::CURRENT_SYNCING_TIPS) {
             Some(raw) => Ok(Vec::<B::Hash>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),

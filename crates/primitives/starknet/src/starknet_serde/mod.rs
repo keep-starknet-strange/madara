@@ -101,7 +101,7 @@ pub struct DeserializeEventWrapper {
     pub keys: Vec<String>,
     /// The data of the event.
     pub data: Vec<String>,
-    /// The address that emited the event
+    /// The address that emitted the event
     pub from_address: String,
 }
 

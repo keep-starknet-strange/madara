@@ -1,4 +1,4 @@
-//! Staknet RPC server API implementation
+//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
 
