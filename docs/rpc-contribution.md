@@ -1,6 +1,6 @@
 # Madara RPC contribution (for new contributors)
 
-This file is intented for very new contributor to onboard on the [madara](https://github.com/keep-starknet-strange/madara)
+This file is intended for very new contributor to onboard on the [madara](https://github.com/keep-starknet-strange/madara)
 project, the sequencer of [Starknet](https://docs.starknet.io/documentation/).
 
 At the [last community call](https://www.youtube.com/watch?v=VyvDAxF46uc), a special accent was put on RPC contributions to
@@ -24,7 +24,7 @@ There are two ways you can build madara to quickly test it:
 2. Using docker as exposed in the [README](https://github.com/keep-starknet-strange/madara#run-in-docker). 
    With the command `docker-compose -f infra/docker/docker-compose.yml up`, you start
    madara with a genesis block already configured + some accounts + some peers. This is very useful if you want to test RPC methods
-   that are targetting the transactions / blocks / etc...
+   that are targeting the transactions / blocks / etc...
    
    This is the preferred method, but using the method 1 can be helpful for a quick start of madara and playing with RPC and substrate.
    
@@ -33,7 +33,7 @@ There are two ways you can build madara to quickly test it:
 Madara is being built on [Substrate](https://docs.substrate.io/learn/welcome-to-substrate/), which already proposes
 an architecture for a modular blockchain development.
 
-To do it short, madara is considered as a `substrate node`, which means madara is being developped using the
+To do it short, madara is considered as a `substrate node`, which means madara is being developed using the
 SDK proposed by substrate to build a node of a blockchain.
 
 A node can be split in two big components:
