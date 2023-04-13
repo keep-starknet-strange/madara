@@ -2,18 +2,22 @@ use core::str::FromStr;
 
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::parameter_types;
-use frame_support::traits::{AsEnsureOriginWithArg, ConstU16, ConstU64, GenesisBuild, Hooks};
-use frame_system::EnsureSigned;
+use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
+use frame_support::weights::IdentityFee;
 use hex::FromHex;
 use mp_starknet::execution::ContractClassWrapper;
-use sp_core::{ConstU32, H256};
+use node_primitives::Balance;
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
+use sp_core::{ConstU32, ConstU8, H256};
 use sp_runtime::testing::Header;
-use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup, One};
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
-use {crate as pallet_starknet, frame_system as system, pallet_balances};
+use {crate as pallet_starknet, frame_system as system, pallet_balances, pallet_transaction_payment};
+
+use crate::StarknetFee;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -35,6 +39,7 @@ frame_support::construct_runtime!(
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
         Balances: pallet_balances,
+        TransactionPayment: pallet_transaction_payment,
     }
 );
 
@@ -72,16 +77,25 @@ impl system::Config for Test {
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
-parameter_types! {
-    pub const AssetId: u32 = 1;
-    pub const AssetName: &'static str = "Ether";
-    pub const AssetSymbol: &'static str = "ETH";
-}
+
 impl pallet_starknet::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+}
+parameter_types! {
+    pub FeeMultiplier: Multiplier = Multiplier::one();
+
+}
+// Provides the logic needed to handle transaction fees
+impl pallet_transaction_payment::Config for Test {
+    type RuntimeEvent = RuntimeEvent;
+    type OnChargeTransaction = StarknetFee;
+    type OperationalFeeMultiplier = ConstU8<5>;
+    type WeightToFee = IdentityFee<Balance>;
+    type LengthToFee = IdentityFee<Balance>;
+    type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 
 impl pallet_balances::Config for Test {

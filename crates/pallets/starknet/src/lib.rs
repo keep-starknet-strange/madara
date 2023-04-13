@@ -1038,12 +1038,14 @@ pub mod pallet {
                         log!(error, "Couldn't convert sequencer address to StarkFelt");
                         TransactionValidityError::Unknown(Custom(0_u8))
                     })?, // Recipient.
-                    StarkFelt::new([[0_u8; 16], fee.to_be_bytes()].concat()[..32].try_into().unwrap()).map_err(
-                        |_| {
-                            log!(error, "Couldn't convert fees to StarkFelt");
-                            TransactionValidityError::Unknown(Custom(0_u8))
-                        }
-                    )?, // low
+                    StarkFelt::new([[0_u8; 16], fee.to_be_bytes()].concat()[..32].try_into().map_err(|_| {
+                        log!(error, "Couldn't convert fees to StarkFelt");
+                        TransactionValidityError::Unknown(Custom(0_u8))
+                    })?)
+                    .map_err(|_| {
+                        log!(error, "Couldn't convert fees to StarkFelt");
+                        TransactionValidityError::Unknown(Custom(0_u8))
+                    })?, // low
                     StarkFelt::default() // high
                 ],
                 storage_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(

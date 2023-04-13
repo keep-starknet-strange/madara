@@ -5122,6 +5122,7 @@ dependencies = [
  "log",
  "mp-digest-log",
  "mp-starknet",
+ "node-primitives",
  "pallet-assets",
  "pallet-balances",
  "pallet-timestamp",
