@@ -1015,6 +1015,15 @@ pub mod pallet {
             })?;
             // Get current block.
             let block = Pallet::<T>::current_block();
+            let fee_token_address =
+                ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(|_| {
+                    log!(error, "Couldn't convert fee_token_address to StarkFelt");
+                    TransactionValidityError::Unknown(Custom(0_u8))
+                })?)
+                .map_err(|_| {
+                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                    TransactionValidityError::Unknown(Custom(1_u8))
+                })?;
             // Create fee transfer transaction.
             let fee_transfer_call = blockifier::execution::entry_point::CallEntryPoint {
                 class_hash: None,
@@ -1035,16 +1044,7 @@ pub mod pallet {
                     })?, // low
                     StarkFelt::default() // high
                 ],
-                storage_address: ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(
-                    |_| {
-                        log!(error, "Couldn't convert fee_token_address to StarkFelt");
-                        TransactionValidityError::Unknown(Custom(0_u8))
-                    },
-                )?)
-                .map_err(|_| {
-                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                    TransactionValidityError::Unknown(Custom(1_u8))
-                })?,
+                storage_address: fee_token_address,
                 caller_address: ContractAddress::try_from(StarkFelt::new(from).map_err(|_| {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
@@ -1072,16 +1072,7 @@ pub mod pallet {
                     TransactionValidityError::Unknown(Custom(1_u8))
                 })?,
                 cairo_resource_fee_weights: HashMap::default(), // TODO: Use real weights
-                fee_token_address: ContractAddress::try_from(
-                    StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(|_| {
-                        log!(error, "Couldn't convert fee_token_address to StarkFelt");
-                        TransactionValidityError::Unknown(Custom(0_u8))
-                    })?,
-                )
-                .map_err(|_| {
-                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                    TransactionValidityError::Unknown(Custom(1_u8))
-                })?,
+                fee_token_address,
                 invoke_tx_max_n_steps: 1000000, // TODO: Make it configurable
                 validate_max_n_steps: 1000000,  // TODO: Make it configurable
                 gas_price: 0,                   // TODO: Use block gas price
