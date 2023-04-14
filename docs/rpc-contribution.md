@@ -181,7 +181,7 @@ Great, now it's finally time to write some integreation tests to ensure everythi
 
 Integration tests are located in the `tests` folder, and are written in
 typescript. They are executed using `mocha` and `chai`.
-We use `starknet.js` to interact with the blockchain and test compatbility
+We use `starknet.js` to interact with the blockchain and test compatibility
 with Starknet's tooling.
 
 You can find the documentation on this [link](https://www.starknetjs.com/docs/api/provider/rpcprovider/).
