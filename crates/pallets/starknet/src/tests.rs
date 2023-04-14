@@ -332,6 +332,19 @@ fn given_contract_declare_tx_works_once_not_twice() {
 }
 
 #[test]
+fn given_balance_on_account_then_transfer_fees_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+        let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15];
+        let to = Starknet::current_block().header().sequencer_address;
+        let amount = 100;
+
+        assert_ok!(Starknet::transfer_fees(from, to, amount));
+        // TODO check event when the fee transfer will emit an event.
+    })
+}
+
+#[test]
 fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);

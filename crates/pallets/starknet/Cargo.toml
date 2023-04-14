@@ -70,6 +70,7 @@ std = [
 	"frame-benchmarking?/std",
 	"scale-info/std",
 	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
 	# Madara
 	"mp-starknet/std",
 	# Starknet

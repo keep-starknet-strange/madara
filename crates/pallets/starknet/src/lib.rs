@@ -1007,6 +1007,7 @@ pub mod pallet {
             to: [u8; 32],
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
+            // TODO: add events from this in the tx
             // Create state reader.
             let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
                 log!(error, "Couldn't create the cached state");
@@ -1096,7 +1097,7 @@ pub mod pallet {
                     log!(info, "Fees executed successfully: {:?}", v); // TODO: remove this log
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Fees execution failed: {:?}", e);
                     return Err(TransactionValidityError::Invalid(Payment));
                 }
             }
@@ -1125,6 +1126,7 @@ pub mod pallet {
             fee: Self::Balance,
             _tip: Self::Balance,
         ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+            // TODO: use real address
             let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
             let to = Pallet::<T>::current_block().header().sequencer_address;
 
@@ -1145,6 +1147,7 @@ pub mod pallet {
             _tip: Self::Balance,
             already_withdrawn: Self::LiquidityInfo,
         ) -> Result<(), TransactionValidityError> {
+            // TODO: use real address
             let to = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
             let from = Pallet::<T>::current_block().header().sequencer_address;
             // TODO: Remove panic

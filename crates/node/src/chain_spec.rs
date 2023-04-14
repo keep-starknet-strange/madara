@@ -177,7 +177,7 @@ fn testnet_genesis(
     let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20.json"));
+    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json"));
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
@@ -238,6 +238,8 @@ fn testnet_genesis(
                 (
                     (
                         fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
+                        // ERC20_balances(0x01).low
                         H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
                     ),
                     U256::from(u128::MAX),
@@ -245,6 +247,8 @@ fn testnet_genesis(
                 (
                     (
                         fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
+                        // for ERC20_balances(0x01).high
                         H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
                     ),
                     U256::from(u128::MAX),
