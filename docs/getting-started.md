@@ -18,6 +18,15 @@ Use Rust's native `cargo` command to build and launch the template node:
 cargo run --release -- --dev
 ```
 
+The node also supports to use manual seal (to produce block manually through RPC).
+This is also used by the typescript tests:
+
+```sh
+$ cargo run --release -- --dev --sealing=manual
+# Or
+$ cargo run --release -- --dev --sealing=instant
+```
+
 Log level can be specified with `-l` flag. For example, `-ldebug` will show debug logs.
 It can also be specified via the `RUST_LOG` environment variable. For example:
 

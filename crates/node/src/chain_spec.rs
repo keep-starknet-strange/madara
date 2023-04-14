@@ -1,21 +1,49 @@
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use hex::FromHex;
 use madara_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    WASM_BINARY,
+    AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
+    SystemConfig, WASM_BINARY,
 };
 use mp_starknet::execution::ContractClassWrapper;
 use sc_service::ChainType;
+use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
+use sp_core::storage::Storage;
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_state_machine::BasicExternalities;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+
+/// Specialized `ChainSpec` for development.
+pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
+
+/// Extension for the dev genesis config to support a custom changes to the genesis state.
+#[derive(Serialize, Deserialize)]
+pub struct DevGenesisExt {
+    /// Genesis config.
+    genesis_config: GenesisConfig,
+    /// The flag that if enable manual-seal mode.
+    enable_manual_seal: Option<bool>,
+}
+
+/// If enable_manual_seal is true, then the runtime storage variable EnableManualSeal will be set to
+/// true. This is just a common way to pass information from the chain spec to the runtime.
+impl sp_runtime::BuildStorage for DevGenesisExt {
+    fn assimilate_storage(&self, storage: &mut Storage) -> Result<(), String> {
+        BasicExternalities::execute_with_storage(storage, || {
+            if let Some(enable_manual_seal) = &self.enable_manual_seal {
+                EnableManualSeal::set(enable_manual_seal);
+            }
+        });
+        self.genesis_config.assimilate_storage(storage)
+    }
+}
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -37,39 +65,42 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config() -> Result<ChainSpec, String> {
+pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
-    Ok(ChainSpec::from_genesis(
+    Ok(DevChainSpec::from_genesis(
         // Name
         "Development",
         // ID
         "dev",
         ChainType::Development,
         move || {
-            testnet_genesis(
-                wasm_binary,
-                // Initial PoA authorities
-                vec![authority_keys_from_seed("Alice")],
-                // Sudo account
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                // Pre-funded accounts
-                vec![
+            DevGenesisExt {
+                genesis_config: testnet_genesis(
+                    wasm_binary,
+                    // Initial PoA authorities
+                    vec![authority_keys_from_seed("Alice")],
+                    // Sudo account
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
-                true,
-            )
+                    // Pre-funded accounts
+                    vec![
+                        get_account_id_from_seed::<sr25519::Public>("Alice"),
+                        get_account_id_from_seed::<sr25519::Public>("Bob"),
+                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                        get_account_id_from_seed::<sr25519::Public>("Dave"),
+                        get_account_id_from_seed::<sr25519::Public>("Eve"),
+                        get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+                        get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+                    ],
+                    true,
+                ),
+                enable_manual_seal,
+            }
         },
         // Bootnodes
         vec![],
