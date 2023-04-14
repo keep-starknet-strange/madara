@@ -123,7 +123,7 @@ pub mod pallet {
     use serde_json::from_str;
     use sp_core::{H256, U256};
     use sp_runtime::offchain::http;
-    use sp_runtime::traits::{DispatchInfoOf, PostDispatchInfoOf, Printable, UniqueSaturatedInto};
+    use sp_runtime::traits::{DispatchInfoOf, PostDispatchInfoOf, UniqueSaturatedInto};
     use sp_runtime::transaction_validity::InvalidTransaction::Payment;
     use sp_runtime::transaction_validity::UnknownTransaction::Custom;
     use sp_runtime::DigestItem;
@@ -1002,25 +1002,11 @@ pub mod pallet {
             }
             Ok(())
         }
-    }
-    pub struct StarknetFee;
-    impl<T: Config> OnChargeTransaction<T> for StarknetFee {
-        /// The underlying integer type in which fees are calculated.
-        type Balance = u128;
-
-        type LiquidityInfo = U256;
-
-        /// Before the transaction is executed the payment of the transaction fees
-        /// need to be secured.
-        ///
-        /// Note: The `fee` already includes the `tip`.
-        fn withdraw_fee(
-            _who: &T::AccountId,
-            call: &T::RuntimeCall,
-            _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-            fee: Self::Balance,
-            _tip: Self::Balance,
-        ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+        pub fn transfer_fees(
+            from: [u8; 32],
+            to: [u8; 32],
+            amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
+        ) -> Result<(), TransactionValidityError> {
             // Create state reader.
             let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
                 log!(error, "Couldn't create the cached state");
@@ -1034,11 +1020,11 @@ pub mod pallet {
                 entry_point_type: EntryPointType::External,
                 entry_point_selector: abi_utils::selector_from_name(TRANSFER_ENTRY_POINT_NAME),
                 calldata: starknet_api::calldata![
-                    StarkFelt::new(block.header().sequencer_address).map_err(|_| {
+                    StarkFelt::new(to).map_err(|_| {
                         log!(error, "Couldn't convert sequencer address to StarkFelt");
                         TransactionValidityError::Unknown(Custom(0_u8))
                     })?, // Recipient.
-                    StarkFelt::new([[0_u8; 16], fee.to_be_bytes()].concat()[..32].try_into().map_err(|_| {
+                    StarkFelt::new([[0_u8; 16], amount.to_be_bytes()].concat()[..32].try_into().map_err(|_| {
                         log!(error, "Couldn't convert fees to StarkFelt");
                         TransactionValidityError::Unknown(Custom(0_u8))
                     })?)
@@ -1058,15 +1044,10 @@ pub mod pallet {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
                 })?,
-                caller_address: ContractAddress::try_from(
-                    StarkFelt::new([
-                        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                    ])
-                    .map_err(|_| {
-                        log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                        TransactionValidityError::Unknown(Custom(1_u8))
-                    })?,
-                )
+                caller_address: ContractAddress::try_from(StarkFelt::new(from).map_err(|_| {
+                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
+                    TransactionValidityError::Unknown(Custom(1_u8))
+                })?)
                 .map_err(|_| {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
@@ -1104,7 +1085,6 @@ pub mod pallet {
                 validate_max_n_steps: 1000000,  // TODO: Make it configurable
                 gas_price: 0,                   // TODO: Use block gas price
             };
-            log!(error, "CALLLLLLLL {:?}", call);
             match fee_transfer_call.execute(
                 state,
                 &mut ExecutionResources::default(),
@@ -1124,6 +1104,31 @@ pub mod pallet {
                 log!(error, "Couldn't apply the state diffs");
                 TransactionValidityError::Unknown(Custom(3_u8))
             })?;
+            Ok(())
+        }
+    }
+    pub struct StarknetFee;
+    impl<T: Config> OnChargeTransaction<T> for StarknetFee {
+        /// The underlying integer type in which fees are calculated.
+        type Balance = u128;
+
+        type LiquidityInfo = U256;
+
+        /// Before the transaction is executed the payment of the transaction fees
+        /// need to be secured.
+        ///
+        /// Note: The `fee` already includes the `tip`.
+        fn withdraw_fee(
+            _who: &T::AccountId,
+            _call: &T::RuntimeCall,
+            _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
+            fee: Self::Balance,
+            _tip: Self::Balance,
+        ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+            let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+            let to = Pallet::<T>::current_block().header().sequencer_address;
+
+            Pallet::<T>::transfer_fees(from, to, fee)?;
             Ok(U256::from(fee))
         }
 
@@ -1135,26 +1140,15 @@ pub mod pallet {
         fn correct_and_deposit_fee(
             _who: &T::AccountId,
             _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-            post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-            _corrected_fee: Self::Balance,
+            _post_info: &PostDispatchInfoOf<T::RuntimeCall>,
+            corrected_fee: Self::Balance,
             _tip: Self::Balance,
-            _already_withdrawn: Self::LiquidityInfo,
+            already_withdrawn: Self::LiquidityInfo,
         ) -> Result<(), TransactionValidityError> {
-            post_info.print();
-            log!(info, "here {:}", _corrected_fee);
-            Ok(())
-        }
-    }
-    impl<T> StarknetFee
-    where
-        T: Config,
-    {
-        fn transfer_fees(
-            from: [u8; 32],
-            to: [u8; 32],
-            amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
-        ) -> Result<(), TransactionValidityError> {
-            Ok(())
+            let to = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+            let from = Pallet::<T>::current_block().header().sequencer_address;
+            // TODO: Remove panic
+            Pallet::<T>::transfer_fees(from, to, already_withdrawn.as_u128() - corrected_fee)
         }
     }
 }
