@@ -4170,7 +4170,6 @@ dependencies = [
  "mp-starknet",
  "node-primitives",
  "pallet-aura",
- "pallet-authorship",
  "pallet-balances",
  "pallet-grandpa",
  "pallet-starknet",
@@ -4916,20 +4915,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-assets"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#76fed9b9082daade5392663f25ed8968f8e8c11c"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40)",
- "sp-runtime",
- "sp-std 5.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40)",
-]
-
-[[package]]
 name = "pallet-aura"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#76fed9b9082daade5392663f25ed8968f8e8c11c"
@@ -5033,7 +5018,6 @@ dependencies = [
  "mp-digest-log",
  "mp-starknet",
  "node-primitives",
- "pallet-assets",
  "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",

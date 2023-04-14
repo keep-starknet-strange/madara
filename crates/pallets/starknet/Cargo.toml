@@ -29,7 +29,6 @@ starknet_api = { workspace = true, default-features = false }
 # Substrate frame
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-pallet-assets = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 # Substrate primitives
 sp-core = { workspace = true }
