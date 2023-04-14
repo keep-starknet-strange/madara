@@ -57,6 +57,19 @@
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A collection of node-specific RPC methods.
 //! Substrate provides the `sc-rpc` crate, which defines the core RPC layer
 //! used by Substrate nodes. This file extends those RPC definitions with
@@ -67,10 +80,12 @@
 </span><span class="kw">mod </span>starknet;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>futures::channel::mpsc;
 <span class="kw">use </span>jsonrpsee::RpcModule;
 <span class="kw">use </span>madara_runtime::opaque::Block;
-<span class="kw">use </span>madara_runtime::{AccountId, Balance, Index};
+<span class="kw">use </span>madara_runtime::{AccountId, Balance, Hash, Index};
 <span class="kw">use </span>sc_client_api::{Backend, StorageProvider};
+<span class="kw">use </span>sc_consensus_manual_seal::rpc::EngineCommand;
 <span class="kw">pub use </span>sc_rpc_api::DenyUnsafe;
 <span class="kw">use </span>sc_transaction_pool_api::TransactionPool;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
@@ -86,6 +101,8 @@
     </span><span class="kw">pub </span>pool: Arc&lt;P&gt;,
     <span class="doccomment">/// Whether to deny unsafe calls
     </span><span class="kw">pub </span>deny_unsafe: DenyUnsafe,
+    <span class="doccomment">/// Manual seal command sink
+    </span><span class="kw">pub </span>command_sink: <span class="prelude-ty">Option</span>&lt;mpsc::Sender&lt;EngineCommand&lt;Hash&gt;&gt;&gt;,
     <span class="doccomment">/// Starknet dependencies
     </span><span class="kw">pub </span>starknet: StarknetDeps&lt;C, Block&gt;,
 }
@@ -105,14 +122,23 @@
 {
     <span class="kw">use </span>mc_rpc::{Starknet, StarknetRpcApiServer};
     <span class="kw">use </span>pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+    <span class="kw">use </span>sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
     <span class="kw">use </span>substrate_frame_rpc_system::{System, SystemApiServer};
 
     <span class="kw">let </span><span class="kw-2">mut </span>module = RpcModule::new(());
-    <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params } = deps;
+    <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink } = deps;
 
     module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())<span class="question-mark">?</span>;
     module.merge(TransactionPayment::new(client.clone()).into_rpc())<span class="question-mark">?</span>;
     module.merge(Starknet::new(client, starknet_params.madara_backend, starknet_params.overrides).into_rpc())<span class="question-mark">?</span>;
+
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(command_sink) = command_sink {
+        module.merge(
+            <span class="comment">// We provide the rpc handler with the sending end of the channel to allow the rpc
+            // send EngineCommands to the background block authorship task.
+            </span>ManualSeal::new(command_sink).into_rpc(),
+        )<span class="question-mark">?</span>;
+    }
 
     <span class="prelude-val">Ok</span>(module)
 }

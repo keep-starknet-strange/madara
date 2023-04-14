@@ -80,6 +80,11 @@
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the runtime.
 </span><span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -161,6 +166,11 @@
         ::max_with_normal_ratio(<span class="number">5 </span>* <span class="number">1024 </span>* <span class="number">1024</span>, NORMAL_DISPATCH_RATIO);
     <span class="kw">pub const </span>SS58Prefix: u8 = <span class="number">42</span>;
     <span class="kw">pub </span>FeeMultiplier: Multiplier = Multiplier::one();
+}
+
+<span class="comment">// This storage item will be used to check if we are in the manual sealing mode
+</span><span class="macro">parameter_types! </span>{
+    <span class="kw">pub </span>storage EnableManualSeal: bool = <span class="bool-val">false</span>;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="madara_runtime" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

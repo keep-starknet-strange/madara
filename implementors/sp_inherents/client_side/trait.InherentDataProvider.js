@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"madara":[["impl InherentDataProvider for <a class=\"struct\" href=\"madara/service/struct.MockTimestampInherentDataProvider.html\" title=\"struct madara::service::MockTimestampInherentDataProvider\">MockTimestampInherentDataProvider</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

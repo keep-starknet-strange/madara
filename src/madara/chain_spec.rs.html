@@ -206,24 +206,83 @@
 <a href="#206" id="206">206</a>
 <a href="#207" id="207">207</a>
 <a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>madara_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    WASM_BINARY,
+    AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
+    SystemConfig, WASM_BINARY,
 };
 <span class="kw">use </span>mp_starknet::execution::ContractClassWrapper;
 <span class="kw">use </span>sc_service::ChainType;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_consensus_grandpa::AuthorityId <span class="kw">as </span>GrandpaId;
+<span class="kw">use </span>sp_core::storage::Storage;
 <span class="kw">use </span>sp_core::{sr25519, Pair, Public};
 <span class="kw">use </span>sp_runtime::traits::{IdentifyAccount, Verify};
+<span class="kw">use </span>sp_state_machine::BasicExternalities;
 
 <span class="comment">// The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &amp;str = &quot;wss://telemetry.polkadot.io/submit/&quot;;
 
 </span><span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 </span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;GenesisConfig&gt;;
+
+<span class="doccomment">/// Specialized `ChainSpec` for development.
+</span><span class="kw">pub type </span>DevChainSpec = sc_service::GenericChainSpec&lt;DevGenesisExt&gt;;
+
+<span class="doccomment">/// Extension for the dev genesis config to support a custom changes to the genesis state.
+</span><span class="attr">#[derive(Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>DevGenesisExt {
+    <span class="doccomment">/// Genesis config.
+    </span>genesis_config: GenesisConfig,
+    <span class="doccomment">/// The flag that if enable manual-seal mode.
+    </span>enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+}
+
+<span class="doccomment">/// If enable_manual_seal is true, then the runtime storage variable EnableManualSeal will be set to
+/// true. This is just a common way to pass information from the chain spec to the runtime.
+</span><span class="kw">impl </span>sp_runtime::BuildStorage <span class="kw">for </span>DevGenesisExt {
+    <span class="kw">fn </span>assimilate_storage(<span class="kw-2">&amp;</span><span class="self">self</span>, storage: <span class="kw-2">&amp;mut </span>Storage) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        BasicExternalities::execute_with_storage(storage, || {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(enable_manual_seal) = <span class="kw-2">&amp;</span><span class="self">self</span>.enable_manual_seal {
+                EnableManualSeal::set(enable_manual_seal);
+            }
+        });
+        <span class="self">self</span>.genesis_config.assimilate_storage(storage)
+    }
+}
 
 <span class="doccomment">/// Generate a crypto pair from seed.
 </span><span class="kw">pub fn </span>get_from_seed&lt;TPublic: Public&gt;(seed: <span class="kw-2">&amp;</span>str) -&gt; &lt;TPublic::Pair <span class="kw">as </span>Pair&gt;::Public {
@@ -245,39 +304,42 @@
     (get_from_seed::&lt;AuraId&gt;(s), get_from_seed::&lt;GrandpaId&gt;(s))
 }
 
-<span class="kw">pub fn </span>development_config() -&gt; <span class="prelude-ty">Result</span>&lt;ChainSpec, String&gt; {
+<span class="kw">pub fn </span>development_config(enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;DevChainSpec, String&gt; {
     <span class="kw">let </span>wasm_binary = WASM_BINARY.ok_or_else(|| <span class="string">&quot;Development wasm not available&quot;</span>.to_string())<span class="question-mark">?</span>;
 
-    <span class="prelude-val">Ok</span>(ChainSpec::from_genesis(
+    <span class="prelude-val">Ok</span>(DevChainSpec::from_genesis(
         <span class="comment">// Name
         </span><span class="string">&quot;Development&quot;</span>,
         <span class="comment">// ID
         </span><span class="string">&quot;dev&quot;</span>,
         ChainType::Development,
         <span class="kw">move </span>|| {
-            testnet_genesis(
-                wasm_binary,
-                <span class="comment">// Initial PoA authorities
-                </span><span class="macro">vec!</span>[authority_keys_from_seed(<span class="string">&quot;Alice&quot;</span>)],
-                <span class="comment">// Sudo account
-                </span>get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
-                <span class="comment">// Pre-funded accounts
-                </span><span class="macro">vec!</span>[
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Bob&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Charlie&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Dave&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Eve&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Ferdie&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice//stash&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Bob//stash&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Charlie//stash&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Dave//stash&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Eve//stash&quot;</span>),
-                    get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Ferdie//stash&quot;</span>),
-                ],
-                <span class="bool-val">true</span>,
-            )
+            DevGenesisExt {
+                genesis_config: testnet_genesis(
+                    wasm_binary,
+                    <span class="comment">// Initial PoA authorities
+                    </span><span class="macro">vec!</span>[authority_keys_from_seed(<span class="string">&quot;Alice&quot;</span>)],
+                    <span class="comment">// Sudo account
+                    </span>get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
+                    <span class="comment">// Pre-funded accounts
+                    </span><span class="macro">vec!</span>[
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Bob&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Charlie&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Dave&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Eve&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Ferdie&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice//stash&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Bob//stash&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Charlie//stash&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Dave//stash&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Eve//stash&quot;</span>),
+                        get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Ferdie//stash&quot;</span>),
+                    ],
+                    <span class="bool-val">true</span>,
+                ),
+                enable_manual_seal,
+            }
         },
         <span class="comment">// Bootnodes
         </span><span class="macro">vec!</span>[],

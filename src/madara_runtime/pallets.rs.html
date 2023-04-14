@@ -150,9 +150,26 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 
-</span><span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
+</span><span class="kw">pub use </span>frame_support::traits::{
+    ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
+};
 <span class="kw">pub use </span>frame_support::weights::constants::{
     BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
 };
@@ -170,6 +187,7 @@
 <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, test))]
 </span><span class="kw">pub use </span>sp_runtime::BuildStorage;
 <span class="kw">pub use </span>sp_runtime::{Perbill, Permill};
+<span class="kw">use </span>sp_std::marker::PhantomData;
 
 <span class="kw">use crate</span>::<span class="kw-2">*</span>;
 
@@ -250,7 +268,7 @@
 </span><span class="kw">impl </span>pallet_timestamp::Config <span class="kw">for </span>Runtime {
     <span class="doccomment">/// A timestamp: milliseconds since the unix epoch.
     </span><span class="kw">type </span>Moment = u64;
-    <span class="kw">type </span>OnTimestampSet = Aura;
+    <span class="kw">type </span>OnTimestampSet = ConsensusOnTimestampSet&lt;<span class="self">Self</span>&gt;;
     <span class="kw">type </span>MinimumPeriod = ConstU64&lt;{ SLOT_DURATION / <span class="number">2 </span>}&gt;;
     <span class="kw">type </span>WeightInfo = ();
 }
@@ -301,6 +319,18 @@
     <span class="kw">type </span>RuntimeCall = RuntimeCall;
     <span class="kw">type </span>WeightInfo = ();
     <span class="kw">type </span>PalletsOrigin = OriginCaller;
+}
+
+<span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.
+/// This is needed to support manual sealing.
+</span><span class="kw">pub struct </span>ConsensusOnTimestampSet&lt;T&gt;(PhantomData&lt;T&gt;);
+<span class="kw">impl</span>&lt;T: pallet_aura::Config&gt; OnTimestampSet&lt;T::Moment&gt; <span class="kw">for </span>ConsensusOnTimestampSet&lt;T&gt; {
+    <span class="kw">fn </span>on_timestamp_set(moment: T::Moment) {
+        <span class="kw">if </span>EnableManualSeal::get() {
+            <span class="kw">return</span>;
+        }
+        &lt;pallet_aura::Pallet&lt;T&gt; <span class="kw">as </span>OnTimestampSet&lt;T::Moment&gt;&gt;::on_timestamp_set(moment)
+    }
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="madara_runtime" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
