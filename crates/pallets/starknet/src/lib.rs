@@ -1145,4 +1145,16 @@ pub mod pallet {
             Ok(())
         }
     }
+    impl<T> StarknetFee
+    where
+        T: Config,
+    {
+        fn transfer_fees(
+            from: [u8; 32],
+            to: [u8; 32],
+            amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
+        ) -> Result<(), TransactionValidityError> {
+            Ok(())
+        }
+    }
 }
