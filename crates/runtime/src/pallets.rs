@@ -1,7 +1,5 @@
 //! Configuration of the pallets used in the runtime.
 
-use frame_support::traits::tokens::imbalance::OnUnbalanced;
-use frame_support::traits::Currency;
 pub use frame_support::traits::{
     ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
@@ -23,6 +21,7 @@ use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
+use sp_std::marker::PhantomData;
 
 use crate::*;
 

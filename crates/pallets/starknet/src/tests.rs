@@ -418,7 +418,7 @@ fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) 
     let declare_transaction = Transaction {
         sender_address: sender_account,
         call_entrypoint: CallEntryPointWrapper::new(
-            Some(ERC20_CLASS_HASH.clone()),
+            Some(ERC20_CLASS_HASH),
             EntryPointTypeWrapper::External,
             None,
             bounded_vec![],
