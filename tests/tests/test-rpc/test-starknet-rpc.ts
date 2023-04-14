@@ -4,6 +4,7 @@ import { expect } from "chai";
 
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { RpcProvider, validateAndParseAddress } from "starknet";
+import { jumpBlocks } from "../../util/block";
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -29,6 +30,12 @@ describeDevMadara("Starknet RPC", (context) => {
     console.log(blockNumber);
 
     expect(blockNumber).to.not.be.undefined;
+
+    await jumpBlocks(context, 10);
+
+    let blockNumber2 = await providerRPC.getBlockNumber();
+
+    expect(blockNumber2).to.be.equal(blockNumber + 10);
   });
 
   it("getBlockTransactionCount", async function () {
