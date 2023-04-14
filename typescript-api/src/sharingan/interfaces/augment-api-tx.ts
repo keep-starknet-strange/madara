@@ -14,6 +14,7 @@ import type {
 import type {
   Bytes,
   Compact,
+  U8aFixed,
   Vec,
   bool,
   u128,
@@ -442,6 +443,28 @@ declare module "@polkadot/api-base/types/submittable" {
       >;
       /** Ping the pallet to check if it is alive. */
       ping: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
+       * Set the value of the fee token address.
+       *
+       * # Arguments
+       *
+       * - `origin` - The origin of the transaction.
+       * - `fee_token_address` - The value of the fee token address.
+       *
+       * # Returns
+       *
+       * - `DispatchResult` - The result of the transaction.
+       *
+       * # TODO
+       *
+       * - Add some limitations on how often this can be called.
+       */
+      setFeeTokenAddress: AugmentedSubmittable<
+        (
+          feeTokenAddress: U8aFixed | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [U8aFixed]
+      >;
       /** Generic tx */
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
