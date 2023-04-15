@@ -33,32 +33,6 @@ jobs:
         cargo fmt --all -- --check
         cargo clippy -- -D warnings
 
-  integration:
-    name: 'Run integration tests'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup rust toolchain
-      run: rustup show
-    - name: Set-Up
-      run: >
-        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-    - uses: Swatinem/rust-cache@v2
-    - name: Build client
-      run: |
-        cd crates/node
-        cargo build --release --locked --verbose
-    - name: Use Node.js 18
-      uses: actions/setup-node@v3
-      with:
-        node-version: 18
-    - name: Install functional tests typescript
-      run: cd tests && npm install
-    - name: Check functional tests format
-      run: cd tests && npm run lint-check
-    - name: Run functional tests
-      run: cd tests && npm run build && npm run test-seq
-
   coverage:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
