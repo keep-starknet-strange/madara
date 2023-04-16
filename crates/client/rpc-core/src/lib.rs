@@ -26,11 +26,21 @@ pub struct BlockHashAndNumber {
     pub block_number: BlockNumber,
 }
 
+/// Function call information
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub struct FunctionCall {
+    pub contract_address: FieldElement,
+    pub entry_point_selector: FieldElement,
+    pub calldata: Vec<FieldElement>,
+}
+
 /// A block hash, number or tag
+/// TODO: fix block_tag
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(untagged)]
 pub enum BlockId {
-    BlockHash(FieldElement),
+    #[serde(rename = "block_hash")]
+    BlockHash(BlockHash),
+    #[serde(rename = "block_number")]
     BlockNumber(BlockNumber),
     BlockTag(BlockTag),
 }
@@ -49,4 +59,8 @@ pub trait StarknetRpcApi {
     /// Get the number of transactions in a block given a block id
     #[method(name = "getBlockTransactionCount")]
     fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
+
+    /// Call a contract function at a given block id
+    #[method(name = "call")]
+    fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>>;
 }

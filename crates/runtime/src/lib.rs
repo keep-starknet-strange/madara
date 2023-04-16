@@ -21,20 +21,22 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use mp_starknet::execution::ContractAddressWrapper;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
+use pallet_starknet::types::StarkFeltWrapper;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::crypto::KeyTypeId;
-use sp_core::{OpaqueMetadata, H256};
+use sp_core::{OpaqueMetadata, H256, U256};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT, NumberFor};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{generic, ApplyExtrinsicResult};
+use sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
@@ -268,6 +270,10 @@ impl_runtime_apis! {
 
         fn current_block() -> mp_starknet::block::Block {
             Starknet::current_block()
+        }
+
+        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {
+            Starknet::call_contract(address, function_selector, calldata)
         }
     }
 
