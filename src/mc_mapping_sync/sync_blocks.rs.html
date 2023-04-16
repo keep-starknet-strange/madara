@@ -204,16 +204,16 @@
 
             <span class="kw">match </span>log {
                 Log::Post(post_log) =&gt; <span class="kw">match </span>post_log {
-                    PostLog::BlockHash(expect_eth_block_hash) =&gt; {
+                    PostLog::BlockHash(expect_starknet_block_hash) =&gt; {
                         <span class="kw">let </span>starknet_block =
                             overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
                         <span class="kw">match </span>starknet_block {
                             <span class="prelude-val">Some</span>(block) =&gt; {
-                                <span class="kw">let </span>got_eth_block_hash = block.header().hash();
-                                <span class="kw">if </span>got_eth_block_hash != expect_eth_block_hash {
+                                <span class="kw">let </span>got_starknet_block_hash = block.header().hash();
+                                <span class="kw">if </span>got_starknet_block_hash != expect_starknet_block_hash {
                                     <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-                                        <span class="string">&quot;Ethereum block hash mismatch: frontier consensus digest \
-                                         ({expect_eth_block_hash:?}), db state ({got_eth_block_hash:?})&quot;
+                                        <span class="string">&quot;Starknet block hash mismatch: frontier consensus digest \
+                                         ({expect_starknet_block_hash:?}), db state ({got_starknet_block_hash:?})&quot;
                                     </span>))
                                 } <span class="kw">else </span>{
                                     <span class="kw">let </span>mapping_commitment = gen_from_block(block);

@@ -333,6 +333,12 @@
 <a href="#333" id="333">333</a>
 <a href="#334" id="334">334</a>
 <a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
 </pre><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 </span><span class="comment">// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 </span><span class="attr">#![recursion_limit = <span class="string">&quot;256&quot;</span>]
@@ -356,20 +362,22 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
+<span class="kw">use </span>mp_starknet::execution::ContractAddressWrapper;
 <span class="kw">pub use </span>pallet_balances::Call <span class="kw">as </span>BalancesCall;
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
+<span class="kw">use </span>pallet_starknet::types::StarkFeltWrapper;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
 <span class="kw">use </span>sp_api::impl_runtime_apis;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_core::crypto::KeyTypeId;
-<span class="kw">use </span>sp_core::{OpaqueMetadata, H256};
+<span class="kw">use </span>sp_core::{OpaqueMetadata, H256, U256};
 <span class="kw">use </span>sp_runtime::traits::{BlakeTwo256, Block <span class="kw">as </span>BlockT, NumberFor};
 <span class="kw">use </span>sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, test))]
 </span><span class="kw">pub use </span>sp_runtime::BuildStorage;
-<span class="kw">use </span>sp_runtime::{generic, ApplyExtrinsicResult};
+<span class="kw">use </span>sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
 <span class="kw">pub use </span>sp_runtime::{Perbill, Permill};
 <span class="kw">use </span>sp_std::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>sp_version::RuntimeVersion;
@@ -603,6 +611,10 @@
 
         <span class="kw">fn </span>current_block() -&gt; mp_starknet::block::Block {
             Starknet::current_block()
+        }
+
+        <span class="kw">fn </span>call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarkFeltWrapper&gt;, DispatchError&gt; {
+            Starknet::call_contract(address, function_selector, calldata)
         }
     }
 

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["BlockId","BlockTag"],"struct":["BlockHashAndNumber"],"trait":["StarknetRpcApiServer"],"type":["BlockHash","BlockNumber","FieldElement"]};
+window.SIDEBAR_ITEMS = {"enum":["BlockId","BlockTag"],"struct":["BlockHashAndNumber","FunctionCall"],"trait":["StarknetRpcApiServer"],"type":["BlockHash","BlockNumber","FieldElement"]};

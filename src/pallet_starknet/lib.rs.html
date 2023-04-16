@@ -957,6 +957,46 @@
 <a href="#957" id="957">957</a>
 <a href="#958" id="958">958</a>
 <a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1062,7 +1102,9 @@
     <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader};
     <span class="kw">use </span>mp_starknet::crypto::commitment;
     <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    <span class="kw">use </span>mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+    <span class="kw">use </span>mp_starknet::execution::{
+        CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+    };
     <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
     <span class="kw">use </span>mp_starknet::transaction::types::{
@@ -1303,6 +1345,7 @@
         StateReaderError,
         EmitEventError,
         StateDiffError,
+        ContractNotFound,
     }
 
     <span class="doccomment">/// The Starknet pallet external functions.
@@ -1624,6 +1667,43 @@
         </span><span class="attr">#[inline(always)]
         </span><span class="kw">pub fn </span>event_count() -&gt; u128 {
             <span class="self">Self</span>::pending().iter().flat_map(|tx| tx.events.iter()).count() <span class="kw">as </span>u128
+        }
+
+        <span class="doccomment">/// Call a smart contract function.
+        </span><span class="kw">pub fn </span>call_contract(
+            address: ContractAddressWrapper,
+            function_selector: H256,
+            calldata: Vec&lt;U256&gt;,
+        ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;U256&gt;, DispatchError&gt; {
+            <span class="comment">// Get current block
+            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
+            <span class="comment">// Get fee token address
+            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
+            <span class="comment">// Get state
+            </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
+            <span class="comment">// Get class hash
+            </span><span class="kw">let </span>class_hash = ContractClassHashes::&lt;T&gt;::try_get(address).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ContractNotFound)<span class="question-mark">?</span>;
+
+            <span class="kw">let </span>entrypoint = CallEntryPointWrapper::new(
+                <span class="prelude-val">Some</span>(class_hash),
+                EntryPointTypeWrapper::External,
+                <span class="prelude-val">Some</span>(function_selector),
+                BoundedVec::try_from(calldata).unwrap_or_default(),
+                address,
+                ContractAddressWrapper::default(),
+            );
+
+            <span class="kw">match </span>entrypoint.execute(state, block, fee_token_address) {
+                <span class="prelude-val">Ok</span>(v) =&gt; {
+                    <span class="comment">// log!(debug, &quot;Transaction executed successfully: {:?}&quot;, v.unwrap());
+                    </span><span class="kw">let </span>result = v.execution.retdata.<span class="number">0</span>.iter().map(|x| U256::from(x.<span class="number">0</span>)).collect();
+                    <span class="prelude-val">Ok</span>(result)
+                }
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                    <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
+                }
+            }
         }
 
         <span class="doccomment">/// Store a Starknet block in the blockchain.
