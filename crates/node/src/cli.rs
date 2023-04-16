@@ -1,5 +1,15 @@
 use sc_cli::RunCmd;
 
+/// Available Sealing methods.
+#[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
+pub enum Sealing {
+    // Seal using rpc method.
+    #[default]
+    Manual,
+    // Seal when transaction is executed.
+    Instant,
+}
+
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
     #[command(subcommand)]
@@ -7,6 +17,10 @@ pub struct Cli {
 
     #[clap(flatten)]
     pub run: RunCmd,
+
+    /// Choose sealing method.
+    #[arg(long, value_enum, ignore_case = true)]
+    pub sealing: Option<Sealing>,
 }
 
 #[allow(clippy::large_enum_variant)]

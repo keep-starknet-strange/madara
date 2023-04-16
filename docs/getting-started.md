@@ -2,13 +2,6 @@
 
 Follow the steps below to get started with Madara :hammer_and_wrench:
 
-### Using Nix
-
-Install [nix](https://nixos.org/) and optionally [direnv](https://github.com/direnv/direnv) and
-[lorri](https://github.com/nix-community/lorri) for a fully plug and play experience for setting up
-the development environment. To get all the correct dependencies activate direnv `direnv allow` and
-lorri `lorri shell`.
-
 ### Rust Setup
 
 First, Install rust using the [rustup](https://rustup.rs/) toolchain installer, then run:
@@ -23,6 +16,15 @@ Use Rust's native `cargo` command to build and launch the template node:
 
 ```sh
 cargo run --release -- --dev
+```
+
+The node also supports to use manual seal (to produce block manually through RPC).
+This is also used by the typescript tests:
+
+```sh
+$ cargo run --release -- --dev --sealing=manual
+# Or
+$ cargo run --release -- --dev --sealing=instant
 ```
 
 Log level can be specified with `-l` flag. For example, `-ldebug` will show debug logs.
@@ -40,6 +42,13 @@ without launching it:
 ```sh
 cargo build --release
 ```
+
+### Using Nix (optional, only for degens)
+
+Install [nix](https://nixos.org/) and optionally [direnv](https://github.com/direnv/direnv) and
+[lorri](https://github.com/nix-community/lorri) for a fully plug and play experience for setting up
+the development environment. To get all the correct dependencies activate direnv `direnv allow` and
+lorri `lorri shell`.
 
 ### Embedded Docs
 

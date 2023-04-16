@@ -218,6 +218,18 @@ declare module "@polkadot/api-base/types/storage" {
         []
       > &
         QueryableStorageEntry<ApiType, []>;
+      /** The address of the fee token ERC20 contract. */
+      feeTokenAddress: AugmentedQuery<ApiType, () => Observable<U8aFixed>, []> &
+        QueryableStorageEntry<ApiType, []>;
+      /**
+       * The last processed Ethereum block number for L1 messages consumption.
+       * This is used to avoid re-processing the same Ethereum block multiple
+       * times. This is used by the offchain worker.
+       *
+       * # TODO
+       *
+       * - Find a more relevant name for this.
+       */
       lastKnownEthBlock: AugmentedQuery<
         ApiType,
         () => Observable<Option<u64>>,

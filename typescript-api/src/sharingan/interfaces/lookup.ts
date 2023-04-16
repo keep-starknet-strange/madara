@@ -254,6 +254,10 @@ export default {
     _enum: {
       KeepStarknetStrange: "Null",
       StarknetEvent: "MpStarknetTransactionTypesEventWrapper",
+      FeeTokenAddressChanged: {
+        oldFeeTokenAddress: "[u8;32]",
+        newFeeTokenAddress: "[u8;32]",
+      },
     },
   },
   /** Lookup43: mp_starknet::transaction::types::EventWrapper */
@@ -624,6 +628,9 @@ export default {
       },
       consume_l1_message: {
         transaction: "MpStarknetTransactionTypesTransaction",
+      },
+      set_fee_token_address: {
+        feeTokenAddress: "[u8;32]",
       },
     },
   },

@@ -96,7 +96,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_invalid_version.json");
+        let json_content: &str = include_str!("../../../../resources/transactions/invoke_invalid_version.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
@@ -111,7 +111,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../ressources/transactions/invoke.json");
+        let json_content: &str = include_str!("../../../../resources/transactions/invoke.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         let tx = Message {
@@ -139,7 +139,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../ressources/transactions/invoke_emit_event.json");
+        let json_content: &str = include_str!("../../../../resources/transactions/invoke_emit_event.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
@@ -178,7 +178,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../ressources/transactions/storage_read_write.json");
+        let json_content: &str = include_str!("../../../../resources/transactions/storage_read_write.json");
         let transaction =
             transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
 
@@ -494,8 +494,8 @@ fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) 
 /// * `sender_account` - The address of the sender account.
 fn deploy_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
     let deploy_transaction = transaction_from_json(
-        include_str!("../../../../ressources/transactions/deploy_erc20.json"),
-        include_bytes!("../../../../ressources/account/account.json"),
+        include_str!("../../../../resources/transactions/deploy_erc20.json"),
+        include_bytes!("../../../../resources/account/account.json"),
     )
     .unwrap();
     assert_ok!(Starknet::invoke(origin, deploy_transaction));
@@ -506,14 +506,14 @@ fn deploy_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) 
 /// * `origin` - The origin of the transaction.
 /// * `sender_account` - The address of the sender account.
 fn invoke_transfer_erc20(origin: RuntimeOrigin, _sender_account: ContractAddressWrapper) {
-    let erc20_mint_tx_json: &str = include_str!("../../../../ressources/transactions/invoke_erc20_transfer.json");
+    let erc20_mint_tx_json: &str = include_str!("../../../../resources/transactions/invoke_erc20_transfer.json");
     let erc20_mint_tx = transaction_from_json(erc20_mint_tx_json, &[]).expect("Failed to create Transaction from JSON");
     assert_ok!(Starknet::invoke(origin, erc20_mint_tx));
 }
 
 lazy_static! {
     static ref ERC20_CONTRACT_CLASS: ContractClassWrapper =
-        get_contract_class_wrapper(include_bytes!("../../../../ressources/erc20/erc20.json"));
+        get_contract_class_wrapper(include_bytes!("../../../../resources/erc20/erc20.json"));
 }
 const ERC20_CLASS_HASH: [u8; 32] = hex!("01d1aacf8f874c4a865b974236419a46383a5161925626e9053202d8e87257e9");
 
