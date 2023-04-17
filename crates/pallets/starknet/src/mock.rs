@@ -166,7 +166,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (
                 (
                     fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
+                    // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) which is the key in the starknet contract for
                     // ERC20_balances(0x0F).low
                     H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap(),
                 ),
@@ -175,7 +175,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (
                 (
                     fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract for
+                    // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) + 1 which is the key in the starknet contract for
                     // ERC20_balances(0x0F).high
                     H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap(),
                 ),

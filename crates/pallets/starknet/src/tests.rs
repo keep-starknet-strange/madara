@@ -21,10 +21,7 @@ use sp_runtime::DispatchError;
 
 use crate::mock::*;
 use crate::types::Message;
-use crate::{Error, Event};
-
-const SEQUENCER_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
+use crate::{Error, Event, SEQUENCER_ADDRESS};
 
 #[test]
 fn should_calculate_contract_addr_correct() {
@@ -341,8 +338,46 @@ fn given_balance_on_account_then_transfer_fees_works() {
         let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15];
         let to = Starknet::current_block().header().sequencer_address;
         let amount = 100;
+        let token_address = Starknet::fee_token_address();
 
         assert_ok!(Starknet::transfer_fees(from, to, amount));
+        // Check that balance is deducted from sn account
+        assert_eq!(
+            Starknet::storage((
+                token_address, // Fee token address
+                // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) which is the key in the starknet contract for
+                // ERC20_balances(0x0F).low
+                H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap(),
+            )),
+            U256::from(u128::MAX) - amount
+        );
+        assert_eq!(
+            Starknet::storage((
+                token_address, // Fee token address
+                // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) + 1 which is the key in the starknet contract for
+                // ERC20_balances(0x0F).high
+                H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap(),
+            )),
+            U256::from(u128::MAX)
+        );
+        assert_eq!(
+            Starknet::storage((
+                token_address, // Fee token address
+                // pedersen(sn_keccak(b"ERC20_balances"), 0x02) which is the key in the starknet contract for
+                // ERC20_balances(0x0F).low
+                H256::from_str("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f").unwrap(),
+            )),
+            U256::from(amount)
+        );
+        assert_eq!(
+            Starknet::storage((
+                token_address, // Fee token address
+                // pedersen(sn_keccak(b"ERC20_balances"), 0x02) + 1 which is the key in the starknet contract for
+                // ERC20_balances(0x0F).high
+                H256::from_str("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f21470").unwrap(),
+            )),
+            U256::zero()
+        )
         // TODO check event when the fee transfer will emit an event.
     })
 }
@@ -355,6 +390,25 @@ fn given_no_balance_on_account_then_transfer_fees_fails() {
         let amount = 100;
 
         assert_err!(Starknet::transfer_fees(from, to, amount), Invalid(Payment));
+        // Check that balance is not deducted from sn account
+        assert_eq!(
+            Starknet::storage((
+                <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap(), // Fee token address
+                // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
+                // ERC20_balances(0x0F).low
+                H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap(),
+            )),
+            U256::from(u128::MAX)
+        );
+        assert_eq!(
+            Starknet::storage((
+                <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap(), // Fee token address
+                // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract for
+                // ERC20_balances(0x0F).high
+                H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap(),
+            )),
+            U256::from(u128::MAX)
+        )
         // TODO check event when the fee transfer will emit an event.
     })
 }

@@ -68,6 +68,9 @@ pub use self::pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
+pub const SEQUENCER_ADDRESS: [u8; 32] =
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
+
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
 
@@ -722,8 +725,7 @@ pub mod pallet {
             let pending = Self::pending();
 
             let global_state_root = U256::zero();
-            let sequencer_address =
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
+            let sequencer_address = SEQUENCER_ADDRESS;
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
             let (transaction_commitment, (event_commitment, event_count)) =
@@ -1083,7 +1085,7 @@ pub mod pallet {
                 &account_ctx,
             ) {
                 Ok(v) => {
-                    log!(info, "Fees executed successfully: {:?}", v); // TODO: remove this log
+                    log!(error, "Fees executed successfully: {:?}", v); // TODO: remove this log
                 }
                 Err(e) => {
                     log!(error, "Fees execution failed: {:?}", e);
