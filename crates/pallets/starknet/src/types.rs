@@ -3,7 +3,7 @@ use mp_starknet::execution::ContractAddressWrapper;
 use scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::Deserialize;
-use sp_core::{H256, U256};
+use sp_core::{ConstU32, H256, U256};
 use sp_runtime::offchain::http::Error;
 use sp_runtime::offchain::HttpError;
 use sp_runtime::{DispatchError, RuntimeDebug};
@@ -12,6 +12,11 @@ extern crate alloc;
 use alloc::string::String;
 use alloc::vec::Vec;
 use core::str::Utf8Error;
+
+use blockifier::execution::contract_class::ContractClass;
+use starknet_api::api_core::ClassHash;
+use starknet_api::stdlib::collections::HashMap;
+
 /// TODO: Replace with a proper type for field element.
 
 /// Nonce of a Starknet transaction.
@@ -22,6 +27,11 @@ pub type StorageKey = H256;
 pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKey);
 /// Felt
 pub type StarkFeltWrapper = U256;
+
+/// Make this configurable. Max transaction/block
+pub type MaxTransactionsPendingBlock = ConstU32<1073741824>;
+
+pub type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 
 /// Representation of the origin of a Starknet transaction.
 /// For now, we still don't know how to represent the origin of a Starknet transaction,

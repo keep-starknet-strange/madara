@@ -38,7 +38,6 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
-use sp_core::ConstU32;
 
 /// The Starknet pallet's runtime custom types.
 pub mod types;
@@ -64,9 +63,6 @@ mod tests;
 // TODO: Uncomment when benchmarking is implemented.
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
-/// Make this configurable.
-type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 
 pub use self::pallet::*;
 
@@ -96,7 +92,6 @@ pub mod pallet {
 
     use blockifier::abi::abi_utils;
     use blockifier::block_context::BlockContext;
-    use blockifier::execution::contract_class::ContractClass;
     use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
     use blockifier::state::cached_state::{CachedState, ContractStorageKey};
     use blockifier::state::state_api::State;
@@ -139,7 +134,10 @@ pub mod pallet {
 
     use super::*;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
+    use crate::types::{
+        ContractClassMapping, ContractStorageKeyWrapper, EthLogs, MaxTransactionsPendingBlock, NonceWrapper,
+        StarkFeltWrapper,
+    };
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -156,7 +154,7 @@ pub mod pallet {
         /// The time idk what.
         type TimestampProvider: Time;
     }
-    type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+
     /// The Starknet pallet hooks.
     /// HOOKS
     /// # TODO
