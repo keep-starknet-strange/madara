@@ -1,6 +1,12 @@
+use mc_storage::OverrideHandle;
+use mp_starknet::block::Block;
+use sc_client_api::backend::{Backend, StorageProvider};
+use sp_api::BlockId;
 use sp_blockchain::HeaderBackend;
 use sp_core::H256;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+
+use crate::errors::StarknetRpcApiError;
 
 pub fn load_hash<B: BlockT, C>(client: &C, backend: &mc_db::Backend<B>, hash: H256) -> Result<Option<B::Hash>, String>
 where
@@ -30,4 +36,26 @@ where
         }
     }
     false
+}
+
+pub fn starknet_block_from_substrate_hash<B: BlockT, C, BE>(
+    client: &C,
+    overrides: &OverrideHandle<B>,
+    target_hash: <<B>::Header as HeaderT>::Number,
+) -> Result<Block, StarknetRpcApiError>
+where
+    B: BlockT,
+    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
+{
+    let substrate_block_hash = client.block_hash_from_id(&BlockId::Number(target_hash));
+
+    match substrate_block_hash {
+        Ok(Some(block_hash)) => {
+            let block = overrides.for_block_hash(client, block_hash).current_block(block_hash).unwrap_or_default();
+
+            Ok(block)
+        }
+        _ => Err(StarknetRpcApiError::BlockNotFound),
+    }
 }

@@ -342,4 +342,8 @@ pub trait StarknetRpcApi {
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
     fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
+
+    /// Get an object about the sync status, or false if the node is not synching
+    #[method(name = "syncing")]
+    async fn syncing(&self) -> RpcResult<bool>;
 }

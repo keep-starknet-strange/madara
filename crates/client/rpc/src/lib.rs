@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use hex::FromHex;
-use jsonrpsee::core::RpcResult;
+use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
@@ -21,6 +21,7 @@ use mc_rpc_core::{
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
+use sc_network_sync::SyncingService;
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -32,12 +33,18 @@ pub struct Starknet<B: BlockT, BE, C> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
+    sync_service: Arc<SyncingService<B>>,
     _marker: PhantomData<(B, BE)>,
 }
 
 impl<B: BlockT, BE, C> Starknet<B, BE, C> {
-    pub fn new(client: Arc<C>, backend: Arc<mc_db::Backend<B>>, overrides: Arc<OverrideHandle<B>>) -> Self {
-        Self { client, backend, overrides, _marker: PhantomData }
+    pub fn new(
+        client: Arc<C>,
+        backend: Arc<mc_db::Backend<B>>,
+        overrides: Arc<OverrideHandle<B>>,
+        sync_service: Arc<SyncingService<B>>,
+    ) -> Self {
+        Self { client, backend, overrides, sync_service, _marker: PhantomData }
     }
 }
 
@@ -93,6 +100,7 @@ where
     }
 }
 
+#[async_trait]
 impl<B, BE, C> StarknetRpcApiServer for Starknet<B, BE, C>
 where
     B: BlockT,
@@ -213,6 +221,48 @@ where
         // })?;
 
         Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
+    }
+
+    async fn syncing(&self) -> RpcResult<bool> {
+        match self.sync_service.best_seen_block().await {
+            Ok(best_seen_block) => {
+                let best_number = self.client.info().best_number;
+
+                let current_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    &self.overrides,
+                    best_number,
+                );
+
+                let highest_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    &self.overrides,
+                    best_seen_block.unwrap_or(best_number),
+                );
+
+                // use block hash to get the full block from the 3 numbers
+                // handle errors
+
+                if current_block.is_ok() && highest_block.is_ok() {
+                    println!("Current block: {}", current_block?.header().block_number);
+                    println!("Highest block: {}", highest_block?.header().block_number);
+                }
+
+                // let status = SyncStatus {
+                //     starting_block_num: 0,
+                //     starting_block_hash: 0,
+                //     current_block_num: best_number,
+                //     current_block_hash: self.client.hash(best_number),
+                //     highest_block_num: best_seen_block.unwrap_or(best_number),
+                //     highest_block_hash: best_seen_block.unwrap_or(best_number),
+                // };
+                Ok(true)
+            }
+            Err(_) => {
+                log::error!("`SyncingEngine` shut down");
+                Ok(false)
+            }
+        }
     }
 }
 
