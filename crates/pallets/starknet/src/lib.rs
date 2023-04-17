@@ -107,7 +107,7 @@ pub mod pallet {
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
     use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
-    use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
+    use mp_digest_log::MADARA_ENGINE_ID;
     use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
@@ -786,7 +786,7 @@ pub mod pallet {
             Pending::<T>::kill();
             PendingEvents::<T>::kill();
 
-            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
+            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
             frame_system::Pallet::<T>::deposit_log(digest);
         }
 

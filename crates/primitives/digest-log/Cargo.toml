@@ -11,9 +11,8 @@ repository = { workspace = true }
 mp-starknet = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, default-features = false }
 # Substrate
-sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 
 [features]
 default = ["std"]
-std = ["mp-starknet/std", "scale-codec/std", "sp-core/std", "sp-runtime/std"]
+std = ["mp-starknet/std", "scale-codec/std", "sp-runtime/std"]

@@ -1,11 +1,13 @@
 use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
-use mp_digest_log::{FindLogError, Hashes, Log, PostLog};
+use mp_digest_log::{FindLogError, Log};
+use mp_starknet::block::Block as StarknetBlock;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Backend as _, HeaderBackend};
+use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
 fn sync_block<B: BlockT, C, BE>(
@@ -21,36 +23,33 @@ where
     let substrate_block_hash = header.hash();
     match mp_digest_log::find_log(header.digest()) {
         Ok(log) => {
-            let gen_from_hashes = |hashes: Hashes| -> mc_db::MappingCommitment<B> {
-                mc_db::MappingCommitment { block_hash: substrate_block_hash, starknet_block_hash: hashes.block_hash }
+            let gen_from_hashes = |starknet_block_hash: H256| -> mc_db::MappingCommitment<B> {
+                mc_db::MappingCommitment { block_hash: substrate_block_hash, starknet_block_hash }
             };
-            let gen_from_block = |block| -> mc_db::MappingCommitment<B> {
-                let hashes = Hashes::from_block(block);
-                gen_from_hashes(hashes)
-            };
+            let gen_from_block =
+                |block: StarknetBlock| -> mc_db::MappingCommitment<B> { gen_from_hashes(block.header().hash()) };
 
             match log {
-                Log::Post(post_log) => match post_log {
-                    PostLog::BlockHash(expect_starknet_block_hash) => {
-                        let starknet_block =
-                            overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
-                        match starknet_block {
-                            Some(block) => {
-                                let got_starknet_block_hash = block.header().hash();
-                                if got_starknet_block_hash != expect_starknet_block_hash {
-                                    Err(format!(
-                                        "Starknet block hash mismatch: frontier consensus digest \
-                                         ({expect_starknet_block_hash:?}), db state ({got_starknet_block_hash:?})"
-                                    ))
-                                } else {
-                                    let mapping_commitment = gen_from_block(block);
-                                    backend.mapping().write_hashes(mapping_commitment)
-                                }
+                Log::Block(digest_starknet_block) => {
+                    let opt_storage_starknet_block =
+                        overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
+                    match opt_storage_starknet_block {
+                        Some(storage_starknet_block) => {
+                            let digest_starknet_block_hash = digest_starknet_block.header().hash();
+                            let storage_starknet_block_hash = storage_starknet_block.header().hash();
+                            if digest_starknet_block_hash != storage_starknet_block_hash {
+                                Err(format!(
+                                    "Starknet block hash mismatch: madara consensus digest \
+                                     ({digest_starknet_block_hash:?}), db state ({storage_starknet_block_hash:?})"
+                                ))
+                            } else {
+                                let mapping_commitment = gen_from_block(storage_starknet_block);
+                                backend.mapping().write_hashes(mapping_commitment)
                             }
-                            None => backend.mapping().write_none(substrate_block_hash),
                         }
+                        None => backend.mapping().write_none(substrate_block_hash),
                     }
-                },
+                }
             }
         }
         Err(FindLogError::NotFound) => backend.mapping().write_none(substrate_block_hash),

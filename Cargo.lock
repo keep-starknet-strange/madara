@@ -4247,10 +4247,12 @@ dependencies = [
  "mc-db",
  "mc-storage",
  "mp-digest-log",
+ "mp-starknet",
  "pallet-starknet",
  "sc-client-api",
  "sp-api",
  "sp-blockchain",
+ "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40)",
  "sp-runtime",
 ]
 
@@ -4437,7 +4439,6 @@ version = "0.1.0-dev"
 dependencies = [
  "mp-starknet",
  "parity-scale-codec",
- "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40)",
  "sp-runtime",
 ]
 
