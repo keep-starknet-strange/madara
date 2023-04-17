@@ -15,6 +15,8 @@ use mp_starknet::execution::{
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
+use sp_runtime::transaction_validity::InvalidTransaction::Payment;
+use sp_runtime::transaction_validity::TransactionValidityError::Invalid;
 use sp_runtime::DispatchError;
 
 use crate::mock::*;
@@ -340,6 +342,18 @@ fn given_balance_on_account_then_transfer_fees_works() {
         let amount = 100;
 
         assert_ok!(Starknet::transfer_fees(from, to, amount));
+        // TODO check event when the fee transfer will emit an event.
+    })
+}
+#[test]
+fn given_no_balance_on_account_then_transfer_fees_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+        let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+        let to = Starknet::current_block().header().sequencer_address;
+        let amount = 100;
+
+        assert_err!(Starknet::transfer_fees(from, to, amount), Invalid(Payment));
         // TODO check event when the fee transfer will emit an event.
     })
 }
