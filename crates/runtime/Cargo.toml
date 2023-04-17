@@ -113,7 +113,7 @@ try-runtime = [
 	"pallet-grandpa/try-runtime",
 	"pallet-sudo/try-runtime",
 	"pallet-utility/try-runtime",
-	# Kaiohsin pallets
+	# Madara pallets
 	"pallet-starknet/try-runtime",
 ]
 default = ["std"]
@@ -127,6 +127,6 @@ runtime-benchmarks = [
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	# Kaiohsin pallets
+	# Madara pallets
 	"pallet-starknet/runtime-benchmarks",
 ]
