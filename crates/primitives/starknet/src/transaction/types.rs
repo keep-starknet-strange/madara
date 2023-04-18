@@ -6,7 +6,7 @@ use starknet_api::StarknetApiError;
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
 /// Max size of arrays.
-/// TODO: add real value
+/// TODO: add real value (#250)
 pub type MaxArraySize = ConstU32<4294967295>;
 
 /// Wrapper type for transaction execution result.

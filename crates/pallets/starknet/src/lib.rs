@@ -399,7 +399,7 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).unwrap(),
                         transaction_hash: transaction.hash,
                         tx_type: TxType::InvokeTx,
-                        actual_fee: U256::zero(), // TODO: switch to actual fee
+                        actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
                     };
                     log!(debug, "Transaction executed successfully: {:?}", v);
                 }

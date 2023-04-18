@@ -11,7 +11,8 @@ use crate::transaction::types::Transaction;
 pub mod serialize;
 
 /// Block transactions max size
-pub type MaxTransactions = ConstU32<4294967295>; // TODO: add real value
+// TODO: add real value (#250)
+pub type MaxTransactions = ConstU32<4294967295>;
 
 /// Block Transactions
 #[derive(
