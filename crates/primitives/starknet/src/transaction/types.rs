@@ -5,7 +5,8 @@ use starknet_api::StarknetApiError;
 
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
-/// Max size of the event array.
+/// Max size of arrays.
+/// TODO: add real value
 pub type MaxArraySize = ConstU32<4294967295>;
 
 /// Wrapper type for transaction execution result.
@@ -24,6 +25,17 @@ pub enum TransactionExecutionErrorWrapper {
 
 /// Different tx types.
 /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum TxType {
     /// Regular invoke transaction.
     InvokeTx,
@@ -66,6 +78,31 @@ pub struct Transaction {
     pub contract_class: Option<ContractClassWrapper>,
     /// Contract Address Salt
     pub contract_address_salt: Option<H256>,
+}
+
+/// Representation of a Starknet transaction receipt.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct TransactionReceiptWrapper {
+    /// Transaction hash.
+    pub transaction_hash: H256,
+    /// Fee paid for the transaction.
+    pub actual_fee: U256,
+    /// Transaction type
+    pub tx_type: TxType,
+    /// Messages sent in the transaction.
+    // pub messages_sent: BoundedVec<Message, MaxArraySize>, // TODO: add messages
+    /// Events emitted in the transaction.
+    pub events: BoundedVec<EventWrapper, MaxArraySize>,
 }
 
 /// Representation of a Starknet event.
