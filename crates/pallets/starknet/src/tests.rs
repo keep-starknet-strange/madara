@@ -378,6 +378,7 @@ fn given_balance_on_account_then_transfer_fees_works() {
             )),
             U256::zero()
         )
+        // FIXME: #236 when events are added in transfer call check them
         // TODO check event when the fee transfer will emit an event.
     })
 }
@@ -409,7 +410,6 @@ fn given_no_balance_on_account_then_transfer_fees_fails() {
             )),
             U256::from(u128::MAX)
         )
-        // TODO check event when the fee transfer will emit an event.
     })
 }
 

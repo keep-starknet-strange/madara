@@ -725,6 +725,8 @@ pub mod pallet {
             let pending = Self::pending();
 
             let global_state_root = U256::zero();
+            // TODO: use the real sequencer address (our own address)
+            // FIXME #243
             let sequencer_address = SEQUENCER_ADDRESS;
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
@@ -1007,6 +1009,7 @@ pub mod pallet {
             to: [u8; 32],
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
+            // FIXME #236
             // TODO: add events from this in the tx
             // Create state reader.
             let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
@@ -1053,10 +1056,13 @@ pub mod pallet {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
                 })?, // TODO: implement account id to match starknet and use who
+                // FIXME #244
                 call_type: blockifier::execution::entry_point::CallType::Call,
             };
+            // FIXME #245
             let mut execution_context = ExecutionContext::default(); // TODO: check if it needs a real value.
             let account_ctx = AccountTransactionContext::default(); // TODO: check if it needs a real value.
+            // FIXME #256
             let block_ctx = BlockContext {
                 chain_id: ChainId("SN_GOERLI".to_string()), // TODO: Make it configurable ?
                 block_number: BlockNumber(block.header().block_number.as_u64()),
@@ -1085,7 +1091,7 @@ pub mod pallet {
                 &account_ctx,
             ) {
                 Ok(v) => {
-                    log!(error, "Fees executed successfully: {:?}", v); // TODO: remove this log
+                    log!(trace, "Fees executed successfully: {:?}", v);
                 }
                 Err(e) => {
                     log!(error, "Fees execution failed: {:?}", e);
@@ -1104,12 +1110,29 @@ pub mod pallet {
         /// The underlying integer type in which fees are calculated.
         type Balance = u128;
 
+        /// The underlying integer type of the quantity of tokens.
         type LiquidityInfo = U256;
 
         /// Before the transaction is executed the payment of the transaction fees
         /// need to be secured.
         ///
         /// Note: The `fee` already includes the `tip`.
+        ///
+        /// # Arguments
+        ///
+        /// * `who` - Initiator of the transaction.
+        /// * `call` - type of the call.
+        /// * `dispatch_info` - dispatch infos.
+        /// * `fee` - total fees set by the user.
+        /// * `tip` - tip set by the user.
+        ///
+        /// # Returns
+        ///
+        /// Fees transfered from the user.
+        ///
+        /// Error
+        ///
+        /// Returns an error if any step of the fee transfer fails.
         fn withdraw_fee(
             _who: &T::AccountId,
             _call: &T::RuntimeCall,
@@ -1130,6 +1153,19 @@ pub mod pallet {
         /// the corrected amount.
         ///
         /// Note: The `fee` already includes the `tip`.
+        ///
+        /// # Arguments
+        ///
+        /// * `who` - Initiator of the transaction.
+        /// * `dispatch_info` - dispatch infos.
+        /// * `post_info` - post infos.
+        /// * `corrected_fee` - corrected fees after tx execution.
+        /// * `tip` - tip set by the user.
+        /// * `already_withdrawn` - fees already transfered in the `withdraw_fee` function.
+        ///
+        /// Error
+        ///
+        /// Returns an error if any step of the fee transfer refund fails.
         fn correct_and_deposit_fee(
             _who: &T::AccountId,
             _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
