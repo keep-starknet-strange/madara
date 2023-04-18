@@ -21,7 +21,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use mp_starknet::execution::ContractAddressWrapper;
+use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
@@ -274,6 +274,14 @@ impl_runtime_apis! {
 
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {
             Starknet::call_contract(address, function_selector, calldata)
+        }
+
+        fn contract_class_hash_by_address(address: ContractAddressWrapper) -> ClassHashWrapper {
+            Starknet::contract_class_hash_by_address(address)
+        }
+
+        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> ContractClassWrapper {
+            Starknet::contract_class_by_class_hash(class_hash)
         }
     }
 
