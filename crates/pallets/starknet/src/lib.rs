@@ -139,10 +139,7 @@ pub mod pallet {
 
     use super::*;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    use crate::types::{
-        ContractClassMapping, ContractStorageKeyWrapper, EthLogs, MaxTransactionsPendingBlock, NonceWrapper,
-        StarkFeltWrapper,
-    };
+    use crate::types::{ContractClassMapping, ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
