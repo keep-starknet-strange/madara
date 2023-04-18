@@ -130,6 +130,43 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -137,8 +174,9 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
-<span class="doccomment">/// Max size of the event array.
-</span><span class="kw">pub type </span>MaxArraySize = ConstU32&lt;<span class="number">4294967295</span>&gt;;
+<span class="doccomment">/// Max size of arrays.
+/// TODO: add real value (#250)
+</span><span class="kw">pub type </span>MaxArraySize = ConstU32&lt;<span class="number">10000</span>&gt;;
 
 <span class="doccomment">/// Wrapper type for transaction execution result.
 </span><span class="kw">pub type </span>TransactionExecutionResultWrapper&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, TransactionExecutionErrorWrapper&gt;;
@@ -156,6 +194,17 @@
 
 <span class="doccomment">/// Different tx types.
 /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
+</span><span class="attr">#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub enum </span>TxType {
     <span class="doccomment">/// Regular invoke transaction.
     </span>InvokeTx,
@@ -198,6 +247,31 @@
     </span><span class="kw">pub </span>contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
     <span class="doccomment">/// Contract Address Salt
     </span><span class="kw">pub </span>contract_address_salt: <span class="prelude-ty">Option</span>&lt;H256&gt;,
+}
+
+<span class="doccomment">/// Representation of a Starknet transaction receipt.
+</span><span class="attr">#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub struct </span>TransactionReceiptWrapper {
+    <span class="doccomment">/// Transaction hash.
+    </span><span class="kw">pub </span>transaction_hash: H256,
+    <span class="doccomment">/// Fee paid for the transaction.
+    </span><span class="kw">pub </span>actual_fee: U256,
+    <span class="doccomment">/// Transaction type
+    </span><span class="kw">pub </span>tx_type: TxType,
+    <span class="doccomment">/// Messages sent in the transaction.
+    </span><span class="comment">// pub messages_sent: BoundedVec&lt;Message, MaxArraySize&gt;, // TODO: add messages
+    </span><span class="doccomment">/// Events emitted in the transaction.
+    </span><span class="kw">pub </span>events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
 }
 
 <span class="doccomment">/// Representation of a Starknet event.
