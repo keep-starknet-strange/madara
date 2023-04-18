@@ -13,7 +13,7 @@ use mp_starknet::execution::{
     CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
 };
 use mp_starknet::starknet_serde::transaction_from_json;
-use mp_starknet::transaction::types::{EventWrapper, Transaction};
+use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 use sp_core::{H256, U256};
 use sp_runtime::DispatchError;
 
@@ -128,8 +128,17 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         .try_into_transaction()
         .unwrap();
 
-        assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
+        assert_ok!(Starknet::invoke(none_origin.clone(), transaction.clone()));
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
+
+        let pending = Starknet::pending();
+        pretty_assertions::assert_eq!(pending.len(), 2);
+
+        let receipt = &pending.get(0).unwrap().1;
+        pretty_assertions::assert_eq!(receipt.actual_fee, U256::from(0));
+        pretty_assertions::assert_eq!(receipt.events.len(), 0);
+        pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
+        pretty_assertions::assert_eq!(receipt.tx_type, TxType::InvokeTx);
     });
 }
 
@@ -144,24 +153,23 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let json_content: &str = include_str!("../../../../resources/transactions/invoke_emit_event.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
-        assert_ok!(Starknet::invoke(none_origin, transaction));
+        assert_ok!(Starknet::invoke(none_origin, transaction.clone()));
 
-        System::assert_last_event(
-            Event::StarknetEvent(EventWrapper {
-                keys: bounded_vec![
-                    H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()
-                ],
-                data: bounded_vec!(
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap()
-                ),
-                from_address: H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7")
-                    .unwrap()
-                    .to_fixed_bytes(),
-            })
-            .into(),
-        );
+        let emitted_event = EventWrapper {
+            keys: bounded_vec![
+                H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()
+            ],
+            data: bounded_vec!(
+                H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap()
+            ),
+            from_address: H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7")
+                .unwrap()
+                .to_fixed_bytes(),
+        };
+
+        System::assert_last_event(Event::StarknetEvent(emitted_event.clone()).into());
         let pending = Starknet::pending();
-        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+        let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(transaction, _)| transaction).collect();
         let transactions_slice: &[Transaction] = &transactions;
         let (_transaction_commitment, (event_commitment, event_count)) =
             commitment::calculate_commitments::<PedersenHasher>(transactions_slice);
@@ -170,6 +178,15 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             H256::from_str("0x01e95b35377e090a7448a6d09f207557f5fcc962f128ad8416d41c387dda3ec3").unwrap()
         );
         assert_eq!(event_count, 1);
+
+        pretty_assertions::assert_eq!(pending.len(), 1);
+
+        let receipt = &pending.get(0).unwrap().1;
+        pretty_assertions::assert_eq!(receipt.actual_fee, U256::from(0));
+        pretty_assertions::assert_eq!(receipt.events.len(), 1);
+        pretty_assertions::assert_eq!(receipt.events.get(0).unwrap(), &emitted_event);
+        pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
+        pretty_assertions::assert_eq!(receipt.tx_type, TxType::InvokeTx);
     });
 }
 
