@@ -4281,6 +4281,7 @@ dependencies = [
 name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
+ "blockifier",
  "jsonrpsee",
  "serde",
  "serde_json",
