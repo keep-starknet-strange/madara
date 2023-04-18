@@ -68,6 +68,7 @@ pub use self::pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
+// TODO: don't use a const for this.
 // FIXME #243
 pub const SEQUENCER_ADDRESS: [u8; 32] =
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
@@ -147,6 +148,8 @@ pub mod pallet {
     pub struct Pallet<T>(_);
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
+    /// We're coupling the starknet pallet to the tx payment pallet to be able to override the fee
+    /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
     pub trait Config: frame_system::Config + pallet_transaction_payment::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.

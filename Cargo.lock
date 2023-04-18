@@ -5003,7 +5003,6 @@ dependencies = [
  "log",
  "mp-digest-log",
  "mp-starknet",
- "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "parity-scale-codec",
