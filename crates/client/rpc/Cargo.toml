@@ -38,3 +38,6 @@ jsonrpsee = { workspace = true, default-features = true, features = [
 thiserror = { workspace = true }
 log = { workspace = true, default-features = true }
 hex = { workspace = true, default-features = true }
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }

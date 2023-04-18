@@ -4260,6 +4260,7 @@ dependencies = [
 name = "mc-rpc"
 version = "0.1.0"
 dependencies = [
+ "blockifier",
  "hex",
  "jsonrpsee",
  "log",
