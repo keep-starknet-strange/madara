@@ -4292,6 +4292,7 @@ dependencies = [
 name = "mc-storage"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "mp-starknet",
  "pallet-starknet",
  "parity-scale-codec",
