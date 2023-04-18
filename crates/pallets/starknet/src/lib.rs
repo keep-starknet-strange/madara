@@ -68,6 +68,7 @@ pub use self::pallet::*;
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
+// FIXME #243
 pub const SEQUENCER_ADDRESS: [u8; 32] =
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
 
@@ -1004,6 +1005,18 @@ pub mod pallet {
             }
             Ok(())
         }
+
+        /// Helper function that will transfer some fee token.
+        ///
+        /// # Arguments
+        ///
+        /// * `from` - the sender of the tokens
+        /// * `to` - recipient of the tokens
+        /// * `amount` - amount of the tokens
+        ///
+        /// # Error
+        ///
+        /// Returns an error if a step of the transfer fails
         pub fn transfer_fees(
             from: [u8; 32],
             to: [u8; 32],
@@ -1128,7 +1141,7 @@ pub mod pallet {
         ///
         /// # Returns
         ///
-        /// Fees transfered from the user.
+        /// Fees transferred from the user.
         ///
         /// Error
         ///
@@ -1161,7 +1174,7 @@ pub mod pallet {
         /// * `post_info` - post infos.
         /// * `corrected_fee` - corrected fees after tx execution.
         /// * `tip` - tip set by the user.
-        /// * `already_withdrawn` - fees already transfered in the `withdraw_fee` function.
+        /// * `already_withdrawn` - fees already transferred in the `withdraw_fee` function.
         ///
         /// Error
         ///
