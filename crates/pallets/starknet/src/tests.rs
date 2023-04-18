@@ -155,9 +155,10 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             .into(),
         );
         let pending = Starknet::pending();
-
+        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+        let transactions_slice: &[Transaction] = &transactions;
         let (_transaction_commitment, (event_commitment, event_count)) =
-            commitment::calculate_commitments::<PedersenHasher>(&pending);
+            commitment::calculate_commitments::<PedersenHasher>(transactions_slice);
         assert_eq!(
             event_commitment,
             H256::from_str("0x01e95b35377e090a7448a6d09f207557f5fcc962f128ad8416d41c387dda3ec3").unwrap()
