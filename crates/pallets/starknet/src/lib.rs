@@ -108,7 +108,7 @@ pub mod pallet {
     use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
     use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
-    use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
+    use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{
@@ -117,7 +117,7 @@ pub mod pallet {
     use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{
-        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TxType,
+        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TransactionReceiptWrapper, TxType,
     };
     use pallet_transaction_payment::OnChargeTransaction;
     use serde_json::from_str;
@@ -139,10 +139,7 @@ pub mod pallet {
 
     use super::*;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    use crate::types::{
-        ContractClassMapping, ContractStorageKeyWrapper, EthLogs, MaxTransactionsPendingBlock, NonceWrapper,
-        StarkFeltWrapper,
-    };
+    use crate::types::{ContractClassMapping, ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -211,7 +208,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn pending)]
     pub(super) type Pending<T: Config> =
-        StorageValue<_, BoundedVec<Transaction, MaxTransactionsPendingBlock>, ValueQuery>;
+        StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
 
     /// The current Starknet block.
     #[pallet::storage]
@@ -372,7 +369,8 @@ pub mod pallet {
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             // Make sure the caller is from a signed origin and retrieve the signer.
             let _deployer_account = ensure_signed(origin)?;
-            Pending::<T>::try_append(Transaction::default()).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
+            Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
+                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
@@ -406,9 +404,16 @@ pub mod pallet {
             let fee_token_address = Self::fee_token_address();
             let state = &mut Self::create_state_reader()?;
             let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
+            let receipt;
             match call_info {
                 Ok(Some(mut v)) => {
-                    Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
+                    let events = Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
+                    receipt = TransactionReceiptWrapper {
+                        events: BoundedVec::try_from(events).unwrap(),
+                        transaction_hash: transaction.hash,
+                        tx_type: TxType::InvokeTx,
+                        actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
+                    };
                     log!(debug, "Transaction executed successfully: {:?}", v);
                 }
                 Ok(None) => {
@@ -424,9 +429,7 @@ pub mod pallet {
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
-
-            // TODO: Apply state diff and update state root
+            Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
             Ok(())
         }
@@ -492,7 +495,8 @@ pub mod pallet {
             }
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
+            Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
+                .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
             Self::set_contract_class_hash(class_hash, contract_class.into())?;
@@ -545,7 +549,8 @@ pub mod pallet {
                 }
             }
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction.clone()).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
+            Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
+                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
             // Associate contract class to class hash
             // TODO: update state root
@@ -588,7 +593,8 @@ pub mod pallet {
             }
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append(transaction.clone()).or(Err(Error::<T>::TooManyPendingTransactions))?;
+            Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
+                .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
@@ -678,7 +684,7 @@ pub mod pallet {
         /// Get the number of events in the block.
         #[inline(always)]
         pub fn event_count() -> u128 {
-            Self::pending().iter().flat_map(|tx| tx.events.iter()).count() as u128
+            Self::pending().iter().flat_map(|tx| tx.0.events.iter()).count() as u128
         }
 
         /// Call a smart contract function.
@@ -734,24 +740,29 @@ pub mod pallet {
             let sequencer_address = SEQUENCER_ADDRESS;
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
+            let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+            let transactions_slice: &[Transaction] = &transactions;
             let (transaction_commitment, (event_commitment, event_count)) =
-                commitment::calculate_commitments::<PedersenHasher>(&pending);
+                commitment::calculate_commitments::<PedersenHasher>(transactions_slice);
             let protocol_version = None;
             let extra_data = None;
 
-            let block = StarknetBlock::new(StarknetHeader::new(
-                parent_block_hash,
-                block_number,
-                global_state_root,
-                sequencer_address,
-                block_timestamp,
-                transaction_count,
-                transaction_commitment,
-                event_count,
-                event_commitment,
-                protocol_version,
-                extra_data,
-            ));
+            let block = StarknetBlock::new(
+                StarknetHeader::new(
+                    parent_block_hash,
+                    block_number,
+                    global_state_root,
+                    sequencer_address,
+                    block_timestamp,
+                    transaction_count,
+                    transaction_commitment,
+                    event_count,
+                    event_commitment,
+                    protocol_version,
+                    extra_data,
+                ),
+                BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            );
             // Save the current block.
             CurrentBlock::<T>::put(block.clone());
             // Save the block number <> hash mapping.
@@ -813,13 +824,22 @@ pub mod pallet {
         ///
         /// The result of the operation.
         #[inline(always)]
-        fn emit_events(call_info: &mut CallInfo, transaction: &mut Transaction) -> Result<(), EventError> {
-            call_info.inner_calls.iter_mut().try_for_each(|inner_call: &mut CallInfo| {
+        fn emit_events(
+            call_info: &mut CallInfo,
+            transaction: &mut Transaction,
+        ) -> Result<Vec<StarknetEventType>, EventError> {
+            let mut events = Vec::new();
+
+            for inner_call in &mut call_info.inner_calls {
                 inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-                inner_call.execution.events.iter().try_for_each(|ordered_event| {
-                    Self::emit_event(&ordered_event.event, inner_call.call.storage_address, transaction)
-                })
-            })
+                for ordered_event in &inner_call.execution.events {
+                    let event_type =
+                        Self::emit_event(&ordered_event.event, inner_call.call.storage_address, transaction)?;
+                    events.push(event_type);
+                }
+            }
+
+            Ok(events)
         }
 
         /// Emit an event from the call info in substrate.
@@ -837,15 +857,15 @@ pub mod pallet {
             event: &EventContent,
             from_address: ContractAddress,
             transaction: &mut Transaction,
-        ) -> Result<(), EventError> {
+        ) -> Result<StarknetEventType, EventError> {
             log!(debug, "Transaction event: {:?}", event);
             let sn_event = StarknetEventType::builder()
                 .with_event_content(event.clone())
                 .with_from_address(from_address)
                 .build()?;
             transaction.events.try_push(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
-            Self::deposit_event(Event::StarknetEvent(sn_event));
-            Ok(())
+            Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
+            Ok(sn_event)
         }
 
         /// Apply the state diff returned by the starknet execution.
