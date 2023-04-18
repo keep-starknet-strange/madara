@@ -34,7 +34,7 @@ pub enum BlockTransactions {
 
 impl Default for BlockTransactions {
     fn default() -> Self {
-        Self::Hashes(BoundedVec::default())
+        Self::Full(BoundedVec::default())
     }
 }
 
@@ -60,6 +60,11 @@ pub struct Block {
 
 impl Block {
     /// Creates a new block.
+    ///
+    /// # Arguments
+    ///
+    /// * `header` - The block header.
+    /// * `transactions` - The block transactions.
     pub fn new(header: Header, transactions: BlockTransactions) -> Self {
         Self { header, transactions }
     }
@@ -67,5 +72,19 @@ impl Block {
     /// Return a reference to the block header
     pub fn header(&self) -> &Header {
         &self.header
+    }
+
+    /// Return a reference to all transactions
+    pub fn transactions(&self) -> &BlockTransactions {
+        &self.transactions
+    }
+
+    /// Return a reference to all transaction hashes
+    pub fn transactions_hashes(&self) -> Vec<H256> {
+        match &self.transactions {
+            BlockTransactions::Full(transactions) => transactions.into_iter().map(|tx| tx.hash).collect(),
+
+            BlockTransactions::Hashes(hashes) => hashes.to_vec(),
+        }
     }
 }

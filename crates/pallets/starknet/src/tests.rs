@@ -2,7 +2,7 @@ use core::str::FromStr;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH};
-use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
+use frame_support::{assert_err, assert_ok, bounded_vec, debug, BoundedVec};
 use hex::FromHex;
 use hexlit::hex;
 use lazy_static::lazy_static;
@@ -61,7 +61,13 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             ..StarknetHeader::default()
         };
 
-        pretty_assertions::assert_eq!(*current_block.header(), expected_current_block)
+        pretty_assertions::assert_eq!(*current_block.header(), expected_current_block);
+        pretty_assertions::assert_eq!(current_block.transactions_hashes().len(), 1);
+        pretty_assertions::assert_eq!(
+            current_block.transactions_hashes().get(0).unwrap(),
+            &H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap()
+        );
+        debug(&current_block);
     });
 }
 
