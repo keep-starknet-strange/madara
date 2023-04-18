@@ -38,8 +38,6 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
-use sp_core::ConstU32;
-
 /// The Starknet pallet's runtime custom types.
 pub mod types;
 
@@ -64,9 +62,6 @@ mod tests;
 // TODO: Uncomment when benchmarking is implemented.
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
-
-/// Make this configurable.
-type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 
 pub use self::pallet::*;
 
@@ -100,7 +95,7 @@ pub mod pallet {
     use blockifier::state::state_api::State;
     use blockifier::test_utils::DictStateReader;
     use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
-    use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
+    use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
     use mp_starknet::execution::{
@@ -198,8 +193,7 @@ pub mod pallet {
     /// Current building block's transactions.
     #[pallet::storage]
     #[pallet::getter(fn pending)]
-    pub(super) type Pending<T: Config> =
-        StorageValue<_, BoundedVec<Transaction, MaxTransactionsPendingBlock>, ValueQuery>;
+    pub(super) type Pending<T: Config> = StorageValue<_, BoundedVec<Transaction, MaxTransactions>, ValueQuery>;
 
     /// The current Starknet block.
     #[pallet::storage]
@@ -726,19 +720,22 @@ pub mod pallet {
             let protocol_version = None;
             let extra_data = None;
 
-            let block = StarknetBlock::new(StarknetHeader::new(
-                parent_block_hash,
-                block_number,
-                global_state_root,
-                sequencer_address,
-                block_timestamp,
-                transaction_count,
-                transaction_commitment,
-                event_count,
-                event_commitment,
-                protocol_version,
-                extra_data,
-            ));
+            let block = StarknetBlock::new(
+                StarknetHeader::new(
+                    parent_block_hash,
+                    block_number,
+                    global_state_root,
+                    sequencer_address,
+                    block_timestamp,
+                    transaction_count,
+                    transaction_commitment,
+                    event_count,
+                    event_commitment,
+                    protocol_version,
+                    extra_data,
+                ),
+                BlockTransactions::Full(pending),
+            );
             // Save the current block.
             CurrentBlock::<T>::put(block.clone());
             // Save the block number <> hash mapping.
