@@ -5,7 +5,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
-import { hash } from "starknet";
+import { hash, addAddressPadding } from "starknet";
 
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
