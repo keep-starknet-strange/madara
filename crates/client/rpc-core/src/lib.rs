@@ -7,6 +7,7 @@
 #[cfg(test)]
 mod tests;
 
+use blockifier::execution::contract_class::ContractClass;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub type FieldElement = String;
 pub type BlockNumber = u64;
 pub type BlockHash = FieldElement;
+
+pub type ContractAddress = FieldElement;
 
 /// A tag specifying a dynamic reference to a block
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -112,4 +115,8 @@ pub trait StarknetRpcApi {
     /// Call a contract function at a given block id
     #[method(name = "call")]
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>>;
+
+    /// Get the contract class at a givent contract address for a given block id
+    #[method(name = "getClassAt")]
+    fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<ContractClass>;
 }
