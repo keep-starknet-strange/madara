@@ -7,7 +7,7 @@ use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractCl
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
-pub type MaxArraySize = ConstU32<4294967295>;
+pub type MaxArraySize = ConstU32<10000>;
 
 /// Wrapper type for transaction execution result.
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;

@@ -24,12 +24,13 @@ use starknet_api::transaction::Calldata;
 use self::types::{EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper};
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
+use crate::transaction::types::MaxArraySize;
 
 /// The address of a contract.
 pub type ContractAddressWrapper = [u8; 32];
 
 /// Maximum vector sizes.
-type MaxCalldataSize = ConstU32<4294967295>;
+// type MaxCalldataSize = ConstU32<4294967295>;
 // type MaxAbiSize = ConstU32<4294967295>;
 type MaxProgramSize = ConstU32<4294967295>;
 type MaxEntryPoints = ConstU32<4294967295>;
@@ -212,7 +213,7 @@ pub struct CallEntryPointWrapper {
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
     pub entrypoint_selector: Option<H256>,
     /// The Calldata
-    pub calldata: BoundedVec<U256, MaxCalldataSize>,
+    pub calldata: BoundedVec<U256, MaxArraySize>,
     /// The storage address
     pub storage_address: ContractAddressWrapper,
     /// The caller address
@@ -235,7 +236,7 @@ impl CallEntryPointWrapper {
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: Option<H256>,
-        calldata: BoundedVec<U256, MaxCalldataSize>,
+        calldata: BoundedVec<U256, MaxArraySize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
     ) -> Self {

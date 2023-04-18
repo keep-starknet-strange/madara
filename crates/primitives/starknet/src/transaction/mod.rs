@@ -146,7 +146,7 @@ impl Default for EventWrapper {
 impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
     type Error = EventError;
 
-    /// TODO: add block hash and block number
+    // TODO: add block hash and block number (#252)
     fn try_into(self) -> Result<TransactionReceiptWrapper, Self::Error> {
         let _events: Result<vec::Vec<EventWrapper>, EventError> = self
             .output

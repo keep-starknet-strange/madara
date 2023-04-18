@@ -1,6 +1,8 @@
 //! StarkNet block primitives.
 
 mod header;
+use alloc::vec::Vec;
+
 use frame_support::BoundedVec;
 pub use header::*;
 use sp_core::{ConstU32, H256};
