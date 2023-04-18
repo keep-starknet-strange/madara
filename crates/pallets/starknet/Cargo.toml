@@ -30,14 +30,13 @@ starknet_api = { workspace = true, default-features = false }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
-
 # Substrate primitives
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-api = { workspace = true }
 sp-std = { workspace = true }
-
+pallet-transaction-payment = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
@@ -69,6 +68,7 @@ std = [
 	"frame-benchmarking?/std",
 	"scale-info/std",
 	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
 	# Madara
 	"mp-starknet/std",
 	# Starknet
