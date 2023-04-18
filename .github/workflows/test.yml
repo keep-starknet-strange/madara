@@ -31,7 +31,8 @@ jobs:
     - name: Check Build and run tests
       run: |
         cargo fmt --all -- --check
-        cargo clippy -- -D warnings
+        cargo clippy --all -- -D warnings
+        cargo clippy --tests -- -D warnings
 
   coverage:
     # The type of runner that the job will run on
@@ -46,10 +47,12 @@ jobs:
       run: rustup show
     - name: Set-Up
       run: >
-        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler && cargo install cargo-tarpaulin
+        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+    - name: Install cargo-llvm-cov
+      uses: taiki-e/install-action@cargo-llvm-cov
     - uses: Swatinem/rust-cache@v2
     - name: Coverage
-      run: cargo tarpaulin --workspace --skip-clean
+      run: cargo llvm-cov --lcov --output-path lcov.info
     - name: Upload coverage to codecov.io
       uses: codecov/codecov-action@v3
       with:
