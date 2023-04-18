@@ -6,7 +6,6 @@ use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use frame_support::weights::IdentityFee;
 use hex::FromHex;
 use mp_starknet::execution::ContractClassWrapper;
-use node_primitives::Balance;
 use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use sp_core::{ConstU8, H256, U256};
 use sp_runtime::testing::Header;
@@ -91,8 +90,8 @@ impl pallet_transaction_payment::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = StarknetFee;
     type OperationalFeeMultiplier = ConstU8<5>;
-    type WeightToFee = IdentityFee<Balance>;
-    type LengthToFee = IdentityFee<Balance>;
+    type WeightToFee = IdentityFee<u128>;
+    type LengthToFee = IdentityFee<u128>;
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 

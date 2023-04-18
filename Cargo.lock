@@ -4168,7 +4168,6 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
  "mp-starknet",
- "node-primitives",
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
@@ -4693,19 +4692,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "node-primitives"
-version = "2.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#76fed9b9082daade5392663f25ed8968f8e8c11c"
-dependencies = [
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-application-crypto",
- "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40)",
- "sp-runtime",
-]
-
-[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5017,7 +5003,6 @@ dependencies = [
  "log",
  "mp-digest-log",
  "mp-starknet",
- "node-primitives",
  "pallet-balances",
  "pallet-timestamp",
  "pallet-transaction-payment",

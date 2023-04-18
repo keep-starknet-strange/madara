@@ -6,7 +6,6 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use node_primitives::Balance;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_transaction_payment::Multiplier;
 use sp_runtime::create_runtime_str;
@@ -80,15 +79,6 @@ parameter_types! {
         ::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
     pub const SS58Prefix: u8 = 42;
     pub FeeMultiplier: Multiplier = Multiplier::one();
-
-    pub const AssetDeposit: Balance = 100;
-    pub const ApprovalDeposit: Balance = 1;
-    pub const StringLimit: u32 = 1028;
-    pub const MetadataDepositBase: Balance = 10;
-    pub const MetadataDepositPerByte: Balance = 1;
-    pub const AssetId: u128 = 1;
-    pub const AssetName: &'static str = "Ether";
-    pub const AssetSymbol: &'static str = "ETH";
 }
 
 // This storage item will be used to check if we are in the manual sealing mode
