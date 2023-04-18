@@ -46,20 +46,21 @@ capabilities and configuration parameters that it exposes:
 ```shell
 ./target/release/madara --help
 ```
+
 ### Runtime
 
 In Substrate, the terms
 "runtime" and "state transition function"
 are analogous - they refer to the core logic of the blockchain that is responsible for validating
 blocks and executing the state changes they define. The Substrate project in this repository uses
-[FRAME](https://docs.substrate.io/main-docs/fundamentals/runtime-intro/#frame) to construct a
+[FRAME](https://docs.substrate.io/reference/glossary/#frame) to construct a
 blockchain runtime. FRAME allows runtime developers to declare domain-specific logic in modules
 called "pallets". At the heart of FRAME is a helpful
 [macro language](https://docs.substrate.io/reference/frame-macros/) that makes it easy to
 create pallets and flexibly compose them to create blockchains that can address
 [a variety of needs](https://substrate.io/ecosystem/projects/).
 
-Review the [FRAME runtime implementation](./crates/runtime/src/lib.rs) included in this template and note
+Review the [FRAME runtime implementation](../crates/runtime/src/lib.rs) included in this template and note
 the following:
 
 - This file configures several pallets to include in the runtime. Each pallet configuration is
@@ -86,4 +87,3 @@ A FRAME pallet is compromised of a number of blockchain primitives:
 - Errors: When a dispatchable fails, it returns an error.
 - Config: The `Config` configuration interface is used to define the types and parameters upon
   which a FRAME pallet depends.
-
