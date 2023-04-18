@@ -1,10 +1,17 @@
 //! Starknet execution functionality.
 
+/// Types related to entrypoints.
+pub mod types;
+
 use alloc::sync::Arc;
 use alloc::{format, vec};
 
+use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallEntryPoint, CallType};
+use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::state::cached_state::CachedState;
+use blockifier::state::state_api::StateReader;
+use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
@@ -13,6 +20,10 @@ use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, Entr
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
+
+use self::types::{EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper};
+use crate::block::serialize::SerializeBlockContext;
+use crate::block::Block as StarknetBlock;
 
 /// The address of a contract.
 pub type ContractAddressWrapper = [u8; 32];
@@ -252,6 +263,39 @@ impl CallEntryPointWrapper {
             caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
             call_type: CallType::Call,
         }
+    }
+
+    /// Executes an entry point.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The entry point to execute.
+    /// * `state` - The state to execute the entry point on.
+    /// * `block` - The block to execute the entry point on.
+    /// * `fee_token_address` - The fee token address.
+    ///
+    /// # Returns
+    ///
+    /// * The result of the entry point execution.
+    pub fn execute<S: StateReader>(
+        &self,
+        state: &mut CachedState<S>,
+        block: StarknetBlock,
+        fee_token_address: ContractAddressWrapper,
+    ) -> EntryPointExecutionResultWrapper<CallInfo> {
+        let call_entry_point = self.to_starknet_call_entry_point();
+
+        let execution_resources = &mut ExecutionResources::default();
+        let execution_context = &mut ExecutionContext::default();
+        let account_context = AccountTransactionContext::default();
+
+        // Create the block context.
+        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+            .map_err(|_| EntryPointExecutionErrorWrapper::BlockContextSerializationError)?;
+
+        call_entry_point
+            .execute(state, execution_resources, execution_context, &block_context, &account_context)
+            .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution)
     }
 }
 impl Default for CallEntryPointWrapper {

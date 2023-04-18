@@ -37,7 +37,7 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { version = "1.0.95", default-features = false }
+serde_json = { version = "1.0.96", default-features = false }
 bitvec = { workspace = true, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
 

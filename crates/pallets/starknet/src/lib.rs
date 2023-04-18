@@ -103,7 +103,9 @@ pub mod pallet {
     use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader};
     use mp_starknet::crypto::commitment;
     use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+    use mp_starknet::execution::{
+        CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+    };
     use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{
@@ -344,6 +346,7 @@ pub mod pallet {
         StateReaderError,
         EmitEventError,
         StateDiffError,
+        ContractNotFound,
     }
 
     /// The Starknet pallet external functions.
@@ -665,6 +668,43 @@ pub mod pallet {
         #[inline(always)]
         pub fn event_count() -> u128 {
             Self::pending().iter().flat_map(|tx| tx.events.iter()).count() as u128
+        }
+
+        /// Call a smart contract function.
+        pub fn call_contract(
+            address: ContractAddressWrapper,
+            function_selector: H256,
+            calldata: Vec<U256>,
+        ) -> Result<Vec<U256>, DispatchError> {
+            // Get current block
+            let block = Self::current_block();
+            // Get fee token address
+            let fee_token_address = Self::fee_token_address();
+            // Get state
+            let state = &mut Self::create_state_reader()?;
+            // Get class hash
+            let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
+
+            let entrypoint = CallEntryPointWrapper::new(
+                Some(class_hash),
+                EntryPointTypeWrapper::External,
+                Some(function_selector),
+                BoundedVec::try_from(calldata).unwrap_or_default(),
+                address,
+                ContractAddressWrapper::default(),
+            );
+
+            match entrypoint.execute(state, block, fee_token_address) {
+                Ok(v) => {
+                    // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
+                    let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
+                    Ok(result)
+                }
+                Err(e) => {
+                    log!(error, "Transaction execution failed: {:?}", e);
+                    Err(Error::<T>::TransactionExecutionFailed.into())
+                }
+            }
         }
 
         /// Store a Starknet block in the blockchain.

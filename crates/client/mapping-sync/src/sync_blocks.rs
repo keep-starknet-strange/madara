@@ -31,16 +31,16 @@ where
 
             match log {
                 Log::Post(post_log) => match post_log {
-                    PostLog::BlockHash(expect_eth_block_hash) => {
+                    PostLog::BlockHash(expect_starknet_block_hash) => {
                         let starknet_block =
                             overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
                         match starknet_block {
                             Some(block) => {
-                                let got_eth_block_hash = block.header().hash();
-                                if got_eth_block_hash != expect_eth_block_hash {
+                                let got_starknet_block_hash = block.header().hash();
+                                if got_starknet_block_hash != expect_starknet_block_hash {
                                     Err(format!(
-                                        "Ethereum block hash mismatch: frontier consensus digest \
-                                         ({expect_eth_block_hash:?}), db state ({got_eth_block_hash:?})"
+                                        "Starknet block hash mismatch: frontier consensus digest \
+                                         ({expect_starknet_block_hash:?}), db state ({got_starknet_block_hash:?})"
                                     ))
                                 } else {
                                     let mapping_commitment = gen_from_block(block);

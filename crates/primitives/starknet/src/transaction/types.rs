@@ -34,6 +34,7 @@ pub enum TxType {
     /// Message sent from ethereum.
     L1HandlerTx,
 }
+
 /// Representation of a Starknet transaction.
 #[derive(
     Clone,
