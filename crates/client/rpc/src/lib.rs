@@ -15,7 +15,7 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
+    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FieldElement, FunctionCall, RPCContractClass,
     SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
@@ -148,6 +148,84 @@ where
             .unwrap_or_default();
 
         Ok(block.header().transaction_count)
+    }
+
+    /// Get the contract class definition in the given block associated with the given hash.
+    fn get_class(&self, block_id: StarknetBlockId, class_hash: FieldElement) -> RpcResult<ContractClassWrapper> {
+        let substrate_block_hash = match block_id {
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+                self.client.as_ref(),
+                &self.backend,
+                H256::from_str(&h).map_err(|e| {
+                    error!("Failed to convert '{h}' to H256: {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?,
+            )
+            .map_err(|e| {
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
+                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::BlockTag::Pending => None,
+            },
+        }
+        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+
+        let class_hash_bytes = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
+            error!("Failed to convert '{class_hash}' to [u8; 32]: {e}");
+            StarknetRpcApiError::ClassHashNotFound
+        })?;
+
+        let contract_class =
+            self.client.runtime_api().get_class(substrate_block_hash, class_hash_bytes).unwrap_or_default();
+
+        Ok(contract_class)
+    }
+
+    /// Get the contract class definition in the given block associated with the given hash.
+    fn get_class(&self, block_id: StarknetBlockId, class_hash: FieldElement) -> RpcResult<ContractClassWrapper> {
+        let substrate_block_hash = match block_id {
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+                self.client.as_ref(),
+                &self.backend,
+                H256::from_str(&h).map_err(|e| {
+                    error!("Failed to convert '{h}' to H256: {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?,
+            )
+            .map_err(|e| {
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
+                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::BlockTag::Pending => None,
+            },
+        }
+        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+
+        let class_hash_bytes = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
+            error!("Failed to convert '{class_hash}' to [u8; 32]: {e}");
+            StarknetRpcApiError::ClassHashNotFound
+        })?;
+
+        let contract_class =
+            self.client.runtime_api().get_class(substrate_block_hash, class_hash_bytes).unwrap_or_default();
+
+        Ok(contract_class)
     }
 
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {

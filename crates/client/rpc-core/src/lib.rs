@@ -354,6 +354,10 @@ pub trait StarknetRpcApi {
     #[method(name = "getBlockTransactionCount")]
     fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
 
+    /// Get the contract class definition in the given block associated with the given hash.
+    #[method(name = "getClass")]
+    fn get_class(&self, block_id: BlockId, class_hash: FieldElement) -> RpcResult<ContractClassWrapper>;
+
     /// Call a contract function at a given block id
     #[method(name = "call")]
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>>;
