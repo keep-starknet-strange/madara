@@ -1,0 +1,42 @@
+name: Typos and markdown formatting
+
+on: [push, pull_request]
+
+jobs:
+  spell-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: codespell-project/actions-codespell@v1
+        with:
+          check_filenames: true
+          check_hidden: true
+          ignore_words_file: ./.codespellignore
+          skip: Cargo.lock,package-lock.json,target,yarn.lock,.git,resources
+
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key:
+            ${{ runner.os }}-npm-${{ hashFiles('**/workflows/prettier.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+      - name: Run prettier
+        run: |-
+          npx prettier --check  ./**/*.md
+
+  lint:
+    name: Lint markdown files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: avto-dev/markdown-lint@v1
+        with:
+          config: "./.markdownlint.json"
+          args: "."
+          ignore: "./target"

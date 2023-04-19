@@ -1,3 +1,5 @@
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="256">
   <br />
@@ -10,6 +12,8 @@
 
 <div align="center">
 <br />
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
 [![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
@@ -19,9 +23,16 @@
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
-Welcome to **Madara**, a blazing fast ⚡ Starknet sequencer built on the Substrate framework and written in Rust. The project aims to provide a highly performant and scalable zk-rollup for general-purpose smart contracts. We're always looking for contributors, so dive in and explore the code!
+Welcome to **Madara**, a blazing fast ⚡ Starknet sequencer built on the
+Substrate framework and written in Rust. The project aims to provide a highly
+performant and scalable zk-rollup for general-purpose smart contracts. We're
+always looking for contributors, so dive in and explore the code!
 
-Experience the flexibility and power of Madara, enabling you to launch your very own Starknet appchain or L3. Harness the capabilities of Cairo while maintaining complete control over your custom appchain, tailored to your specific requirements. Madara is designed to empower a multitude of projects, fueling growth within the Starknet ecosystem.
+Experience the flexibility and power of Madara, enabling you to launch your very
+own Starknet appchain or L3. Harness the capabilities of Cairo while maintaining
+complete control over your custom appchain, tailored to your specific
+requirements. Madara is designed to empower a multitude of projects, fueling
+growth within the Starknet ecosystem.
 
 ## 🌟 Features
 
@@ -34,7 +45,8 @@ Experience the flexibility and power of Madara, enabling you to launch your very
 
 ## 📚 Documentation
 
-Get started with our comprehensive documentation, which covers everything from project structure and architecture to benchmarking and running Madara:
+Get started with our comprehensive documentation, which covers everything from
+project structure and architecture to benchmarking and running Madara:
 
 - [Architecture Overview](./docs/architecture.md)
 - [Project Structure](./docs/project-structure.md)
@@ -43,15 +55,21 @@ Get started with our comprehensive documentation, which covers everything from p
 
 ## 🏗️ Build & Run
 
-Want to dive straight in? Check out our [Getting Started Guide](./docs/getting-started.md) for instructions on how to build and run Madara on your local machine.
+Want to dive straight in? Check out our
+[Getting Started Guide](./docs/getting-started.md) for instructions on how to
+build and run Madara on your local machine.
 
 ## 🌐 Connect to Polkadot-JS Apps
 
-Once your Madara node is up and running, you can connect to the Polkadot-JS Apps front-end to interact with your chain. [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
+Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
+front-end to interact with your chain.
+[Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
 
 ## 🤝 Contribute
 
-We're always looking for passionate developers to join our community and contribute to Madara. Check out our [contributing guide](./docs/CONTRIBUTING.md) for more information on how to get started.
+We're always looking for passionate developers to join our community and
+contribute to Madara. Check out our [contributing guide](./docs/CONTRIBUTING.md)
+for more information on how to get started.
 
 ## 📖 License
 
@@ -63,7 +81,8 @@ Happy coding! 🎉
 
 ## Contributors ✨
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks goes to these wonderful people
+([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -100,4 +119,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+This project follows the
+[all-contributors](https://github.com/all-contributors/all-contributors)
+specification. Contributions of any kind welcome!
