@@ -401,7 +401,24 @@ fn given_balance_on_account_then_transfer_fees_works() {
                 H256::from_str("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f21470").unwrap(),
             )),
             U256::zero()
-        )
+        );
+        System::assert_last_event(
+            Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec!(
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ),
+                data: bounded_vec!(
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000064").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+                ),
+                from_address: [
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170,
+                ],
+            })
+            .into(),
+        );
         // FIXME: #236 when events are added in transfer call check them
         // TODO check event when the fee transfer will emit an event.
     })

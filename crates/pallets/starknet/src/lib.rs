@@ -839,6 +839,12 @@ pub mod pallet {
         fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
             let mut events = Vec::new();
 
+            call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+            for ordered_event in &call_info.execution.events {
+                let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+                events.push(event_type);
+            }
+
             for inner_call in &mut call_info.inner_calls {
                 inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
                 for ordered_event in &inner_call.execution.events {
@@ -868,6 +874,7 @@ pub mod pallet {
                 .with_from_address(from_address)
                 .build()?;
             Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
+
             PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
             Ok(sn_event)
         }
@@ -1130,8 +1137,9 @@ pub mod pallet {
                 &block_ctx,
                 &account_ctx,
             ) {
-                Ok(v) => {
-                    log!(trace, "Fees executed successfully: {:?}", v);
+                Ok(mut v) => {
+                    log!(trace, "Fees executed successfully: {:?}", v.execution.events);
+                    Self::emit_events(&mut v).map_err(|_| TransactionValidityError::Unknown(Custom(4_u8)))?;
                 }
                 Err(e) => {
                     log!(error, "Fees execution failed: {:?}", e);
