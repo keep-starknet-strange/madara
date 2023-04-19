@@ -31,13 +31,14 @@ sp-blockchain = { workspace = true, default-features = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 # Others
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }
+hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
 	"server",
 	"macros",
 ] }
-thiserror = { workspace = true }
 log = { workspace = true, default-features = true }
-hex = { workspace = true, default-features = true }
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
+serde_json = { workspace = true, default-features = true }
+thiserror = { workspace = true }
