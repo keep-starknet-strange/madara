@@ -23,8 +23,6 @@ blockifier = { workspace = true, default-features = false, features = [
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, features = ["server"], default-features = true }
 serde = { workspace = true, default-features = true }
+serde_json = { workspace = true }
 sp-blockchain = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = false }
-
-[dev-dependencies]
-serde_json = { workspace = true }
