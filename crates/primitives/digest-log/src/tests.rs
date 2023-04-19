@@ -1,4 +1,3 @@
-
 use assert_matches::assert_matches;
 use sp_runtime::{Digest, DigestItem};
 
@@ -22,7 +21,7 @@ fn multiple_logs() {
     let block = StarknetBlock::default();
 
     digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block.clone()).encode()));
-    digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block.clone()).encode()));
+    digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block).encode()));
 
     assert_matches!(ensure_log(&digest), Err(FindLogError::MultipleLogs));
     assert_matches!(find_log(&digest), Err(FindLogError::MultipleLogs));
@@ -43,7 +42,7 @@ fn wrong_consensus_engine_id() {
     let mut digest = Digest::default();
     let block = StarknetBlock::default();
 
-    digest.push(DigestItem::Consensus([b'f', b'a', b'k', b'e'], Log::Block(block.clone()).encode()));
+    digest.push(DigestItem::Consensus([b'f', b'a', b'k', b'e'], Log::Block(block).encode()));
 
     assert_matches!(ensure_log(&digest), Err(FindLogError::NotLog));
     assert_matches!(find_log(&digest), Err(FindLogError::NotLog));

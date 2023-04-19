@@ -19,3 +19,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 jsonrpsee = { workspace = true, features = ["server"], default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
