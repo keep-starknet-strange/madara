@@ -13,6 +13,9 @@ scale-codec = { package = "parity-scale-codec", workspace = true, default-featur
 # Substrate
 sp-runtime = { workspace = true }
 
+[dev-dependencies]
+assert_matches = "1.5.0"
+
 [features]
 default = ["std"]
 std = ["mp-starknet/std", "scale-codec/std", "sp-runtime/std"]

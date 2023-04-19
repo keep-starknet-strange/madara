@@ -4437,6 +4437,7 @@ dependencies = [
 name = "mp-digest-log"
 version = "0.1.0-dev"
 dependencies = [
+ "assert_matches",
  "mp-starknet",
  "parity-scale-codec",
  "sp-runtime",

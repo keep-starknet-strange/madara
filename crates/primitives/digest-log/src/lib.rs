@@ -15,6 +15,11 @@
 #![allow(clippy::large_enum_variant)]
 #![deny(unused_crate_dependencies)]
 
+mod error;
+#[cfg(test)]
+mod tests;
+
+pub use error::FindLogError;
 use mp_starknet::block::Block as StarknetBlock;
 use scale_codec::{Decode, Encode};
 use sp_runtime::generic::{Digest, OpaqueDigestItemId};
@@ -22,27 +27,31 @@ use sp_runtime::ConsensusEngineId;
 
 pub const MADARA_ENGINE_ID: ConsensusEngineId = [b'm', b'a', b'd', b'a'];
 
-#[derive(Clone, PartialEq, Eq, Encode, Decode)]
+/// A Madara log
+///
+/// Right now we only expect Madara to log the Starknet block,
+/// but other usecases may appears later on.
+#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub enum Log {
+    #[codec(index = 0)]
     Block(StarknetBlock),
 }
 
-#[derive(Clone, Debug)]
-pub enum FindLogError {
-    NotFound,
-    MultipleLogs,
-}
-
+/// Return the wrapped [StarknetBlock] contained in the [Digest]
 pub fn find_starknet_block(digest: &Digest) -> Result<StarknetBlock, FindLogError> {
     find_log(digest).map(|log| match log {
         Log::Block(b) => b,
     })
 }
 
+/// Return the Madara [Log]
 pub fn find_log(digest: &Digest) -> Result<Log, FindLogError> {
     _find_log(digest, OpaqueDigestItemId::Consensus(&MADARA_ENGINE_ID))
 }
 
+/// Ensure there is a single valid Madara [Log] in the Digest
+///
+/// It can be used to check if the wrapper block does contains the wrapped block
 pub fn ensure_log(digest: &Digest) -> Result<(), FindLogError> {
     find_log(digest).map(|_log| ())
 }
@@ -59,5 +68,5 @@ fn _find_log<Log: Decode>(digest: &Digest, digest_item_id: OpaqueDigestItemId) -
         }
     }
 
-    found.ok_or(FindLogError::NotFound)
+    found.ok_or(FindLogError::NotLog)
 }
