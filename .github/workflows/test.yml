@@ -52,7 +52,7 @@ jobs:
       uses: taiki-e/install-action@cargo-llvm-cov
     - uses: Swatinem/rust-cache@v2
     - name: Coverage
-      run: cargo llvm-cov --lcov --output-path lcov.info
+      run: "(while true; do \n    df -h\n    sleep 15\n    done) & cargo llvm-cov --lcov --output-path lcov.info\n"
     - name: Upload coverage to codecov.io
       uses: codecov/codecov-action@v3
       with:
