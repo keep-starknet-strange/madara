@@ -59,8 +59,14 @@ where
     module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
     module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     module.merge(
-        Starknet::new(client, starknet_params.madara_backend, starknet_params.overrides, starknet_params.sync_service)
-            .into_rpc(),
+        Starknet::new(
+            client,
+            starknet_params.madara_backend,
+            starknet_params.overrides,
+            starknet_params.sync_service,
+            starknet_params.starting_block,
+        )
+        .into_rpc(),
     )?;
 
     if let Some(command_sink) = command_sink {

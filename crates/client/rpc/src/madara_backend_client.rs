@@ -41,14 +41,14 @@ where
 pub fn starknet_block_from_substrate_hash<B: BlockT, C, BE>(
     client: &C,
     overrides: &OverrideHandle<B>,
-    target_hash: <<B>::Header as HeaderT>::Number,
+    target_number: <<B>::Header as HeaderT>::Number,
 ) -> Result<Block, StarknetRpcApiError>
 where
     B: BlockT,
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
 {
-    let substrate_block_hash = client.block_hash_from_id(&BlockId::Number(target_hash));
+    let substrate_block_hash = client.block_hash_from_id(&BlockId::Number(target_number));
 
     match substrate_block_hash {
         Ok(Some(block_hash)) => {

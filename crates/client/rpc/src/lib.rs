@@ -16,7 +16,7 @@ use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
     BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
-    SierraContractClass,
+    SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -26,7 +26,7 @@ use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {
@@ -34,6 +34,7 @@ pub struct Starknet<B: BlockT, BE, C> {
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
     sync_service: Arc<SyncingService<B>>,
+    starting_block: <<B>::Header as HeaderT>::Number,
     _marker: PhantomData<(B, BE)>,
 }
 
@@ -43,8 +44,9 @@ impl<B: BlockT, BE, C> Starknet<B, BE, C> {
         backend: Arc<mc_db::Backend<B>>,
         overrides: Arc<OverrideHandle<B>>,
         sync_service: Arc<SyncingService<B>>,
+        starting_block: <<B>::Header as HeaderT>::Number,
     ) -> Self {
-        Self { client, backend, overrides, sync_service, _marker: PhantomData }
+        Self { client, backend, overrides, sync_service, starting_block, _marker: PhantomData }
     }
 }
 
@@ -223,10 +225,17 @@ where
         Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
     }
 
-    async fn syncing(&self) -> RpcResult<bool> {
+    async fn syncing(&self) -> RpcResult<Syncing> {
         match self.sync_service.best_seen_block().await {
             Ok(best_seen_block) => {
                 let best_number = self.client.info().best_number;
+                let highest_number = best_seen_block.unwrap_or(best_number);
+
+                let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    &self.overrides,
+                    self.starting_block,
+                );
 
                 let current_block = madara_backend_client::starknet_block_from_substrate_hash(
                     self.client.as_ref(),
@@ -237,30 +246,33 @@ where
                 let highest_block = madara_backend_client::starknet_block_from_substrate_hash(
                     self.client.as_ref(),
                     &self.overrides,
-                    best_seen_block.unwrap_or(best_number),
+                    highest_number,
                 );
 
-                // use block hash to get the full block from the 3 numbers
-                // handle errors
+                if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
+                    let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
+                    let starting_block_hash = format!("{:#x}", starting_block?.header().hash());
+                    let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
+                    let current_block_hash = format!("{:#x}", current_block?.header().hash());
+                    let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
+                    let highest_block_hash = format!("{:#x}", highest_block?.header().hash());
 
-                if current_block.is_ok() && highest_block.is_ok() {
-                    println!("Current block: {}", current_block?.header().block_number);
-                    println!("Highest block: {}", highest_block?.header().block_number);
+                    Ok(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
+                        starting_block_num,
+                        starting_block_hash,
+                        current_block_num,
+                        current_block_hash,
+                        highest_block_num,
+                        highest_block_hash,
+                    }))
+                } else {
+                    log::error!("Failed to load Starknet block");
+                    Ok(Syncing::False(false))
                 }
-
-                // let status = SyncStatus {
-                //     starting_block_num: 0,
-                //     starting_block_hash: 0,
-                //     current_block_num: best_number,
-                //     current_block_hash: self.client.hash(best_number),
-                //     highest_block_num: best_seen_block.unwrap_or(best_number),
-                //     highest_block_hash: best_seen_block.unwrap_or(best_number),
-                // };
-                Ok(true)
             }
             Err(_) => {
                 log::error!("`SyncingEngine` shut down");
-                Ok(false)
+                Ok(Syncing::False(false))
             }
         }
     }

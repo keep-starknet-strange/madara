@@ -297,7 +297,6 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     let enable_grandpa = !config.disable_grandpa && sealing.is_none();
     let prometheus_registry = config.prometheus_registry().cloned();
     let starting_block = client.info().best_number;
-    println!("Starting block: {}", starting_block);
 
     // Channel for the rpc handler to communicate with the authorship task.
     // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
@@ -310,7 +309,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
         madara_backend: madara_backend.clone(),
         overrides: overrides.clone(),
         sync_service: sync_service.clone(),
-        // starting_block,
+        starting_block,
     };
 
     let rpc_extensions_builder = {
