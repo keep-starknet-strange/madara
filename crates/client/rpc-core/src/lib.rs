@@ -63,7 +63,7 @@ pub struct FunctionCall {
 
 // In order to mix tagged and untagged {de}serialization for BlockId (see starknet RPC standard)
 // in the same object, we need this kind of workaround with intermediate types
-pub mod block_id {
+mod block_id {
     use super::*;
 
     #[derive(Serialize, Deserialize, Clone)]
