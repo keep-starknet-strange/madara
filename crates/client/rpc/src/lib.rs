@@ -15,8 +15,9 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, ContractClassHash,
-    FieldElement, FunctionCall, RPCContractClass, Syncing,
+    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
+    ContractAddress, ContractClassHash, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass,
+    SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -365,6 +366,55 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?
             .to_string())
+    }
+    fn get_block_with_tx_hashes(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
+        println!("StarknetBlockId {:?}", block_id);
+        let substrate_block_hash = match block_id {
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+                self.client.as_ref(),
+                &self.backend,
+                H256::from_str(&h).map_err(|e| {
+                    error!("Failed to convert '{h}' to H256: {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?,
+            )
+            .map_err(|e| {
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
+                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::BlockTag::Pending => None,
+            },
+        }
+        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let transaction_hashes = block.transactions_hashes();
+        let block_with_tx_hashes = BlockWithTxHashes {
+            transactions: transaction_hashes,
+            status: BlockStatus::Pending, // TODO: get real value
+            block_hash: block.header().hash(),
+            // parent_hash: FieldElement::from("0x0"),
+            parent_hash: block.header().parent_block_hash,
+            block_number: UniqueSaturatedInto::<u64>::unique_saturated_into(block.header().block_number),
+            new_root: block.header().global_state_root,
+            // new_root: FieldElement::from("0x0"),
+            timestamp: block.header().block_timestamp,
+            sequencer_address: block.header().sequencer_address,
+        };
+        Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 }
 

@@ -18,6 +18,8 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use serde::{Deserialize, Serialize};
+use sp_runtime::app_crypto::sp_core::U256;
+use sp_runtime::testing::H256;
 
 pub type FieldElement = String;
 pub type BlockNumber = u64;
@@ -63,7 +65,7 @@ pub struct FunctionCall {
 
 // In order to mix tagged and untagged {de}serialization for BlockId (see starknet RPC standard)
 // in the same object, we need this kind of workaround with intermediate types
-mod block_id {
+pub mod block_id {
     use super::*;
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -205,6 +207,57 @@ pub struct StructABIEntry {
     pub members: Members,
 }
 
+/// The resulting block information with transaction hashes
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum MaybePendingBlockWithTxHashes {
+    Block(BlockWithTxHashes),
+    PendingBlock(PendingBlockWithTxHashes),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlockWithTxHashes {
+    pub status: BlockStatus,
+    pub block_hash: H256,
+    /// The hash of this block's parent
+    pub parent_hash: H256,
+    /// The block number (its height)
+    pub block_number: u64,
+    /// The new global state root
+    pub new_root: U256,
+    /// The time in which the block was created, encoded in Unix time
+    pub timestamp: u64,
+    /// The Starknet identity of the sequencer submitting this block
+    pub sequencer_address: [u8; 32],
+    /// The hashes of the transactions included in this block
+    pub transactions: Vec<H256>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PendingBlockWithTxHashes {
+    /// The hashes of the transactions included in this block
+    pub transactions: Vec<FieldElement>,
+    /// The time in which the block was created, encoded in Unix time
+    pub timestamp: u64,
+    /// The Starknet identity of the sequencer submitting this block
+    pub sequencer_address: FieldElement,
+    /// The hash of this block's parent
+    pub parent_hash: FieldElement,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BlockStatus {
+    #[serde(rename = "PENDING")]
+    Pending,
+    #[serde(rename = "ACCEPTED_ON_L2")]
+    AcceptedOnL2,
+    #[serde(rename = "ACCEPTED_ON_L1")]
+    AcceptedOnL1,
+    #[serde(rename = "REJECTED")]
+    Rejected,
+}
+
+/// A block hash, number or tag
+/// TODO: fix block_tag
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ContractABIEntry {
@@ -374,4 +427,7 @@ pub trait StarknetRpcApi {
     /// Get the contract class definition in the given block associated with the given hash
     #[method(name = "getClass")]
     fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
+    /// Get block information with transaction hashes given the block id
+    #[method(name = "getBlockWithTxHashes")]
+    fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 }

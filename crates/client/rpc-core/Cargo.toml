@@ -27,3 +27,4 @@ serde_json = { workspace = true }
 sp-blockchain = { workspace = true, default-features = true }
 starknet_api = { workspace = true, default-features = false }
 frame-support = { workspace = true }
+sp-runtime = { workspace = true, default-features = true }
