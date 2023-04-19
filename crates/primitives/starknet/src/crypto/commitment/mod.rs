@@ -53,8 +53,8 @@ impl<T: CryptoHasher> CommitmentTree<T> {
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-pub fn calculate_commitments<T: CryptoHasher>(transactions: &[Transaction]) -> (H256, (H256, u128)) {
-    (calculate_transaction_commitment::<T>(transactions), calculate_event_commitment::<T>(transactions))
+pub fn calculate_commitments<T: CryptoHasher>(transactions: &[Transaction], events: &[EventWrapper]) -> (H256, H256) {
+    (calculate_transaction_commitment::<T>(transactions), calculate_event_commitment::<T>(events))
 }
 
 /// Calculate transaction commitment hash value.
@@ -95,15 +95,13 @@ pub fn calculate_transaction_commitment<T: CryptoHasher>(transactions: &[Transac
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-pub fn calculate_event_commitment<T: CryptoHasher>(transactions: &[Transaction]) -> (H256, u128) {
+pub fn calculate_event_commitment<T: CryptoHasher>(events: &[EventWrapper]) -> H256 {
     let mut tree = CommitmentTree::<T>::default();
-    let mut len = 0_u64;
-    transactions.iter().flat_map(|tx| tx.events.iter()).for_each(|event| {
-        len += 1;
+    events.iter().enumerate().for_each(|(id, event)| {
         let final_hash = calculate_event_hash::<T>(event);
-        tree.set(len - 1, final_hash);
+        tree.set(id as u64, final_hash);
     });
-    (H256::from_slice(&tree.commit().to_bytes_be()), len as u128)
+    H256::from_slice(&tree.commit().to_bytes_be())
 }
 
 /// Compute the combined hash of the transaction hash and the signature.

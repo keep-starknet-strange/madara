@@ -66,8 +66,6 @@ pub struct Transaction {
     pub hash: H256,
     /// Signature.
     pub signature: BoundedVec<H256, MaxArraySize>,
-    /// Events.
-    pub events: BoundedVec<EventWrapper, MaxArraySize>,
     /// Sender Address
     pub sender_address: ContractAddressWrapper,
     /// Nonce

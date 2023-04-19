@@ -210,6 +210,12 @@ pub mod pallet {
     pub(super) type Pending<T: Config> =
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
 
+    /// Current building block's events.
+    #[pallet::storage]
+    #[pallet::getter(fn pending_events)]
+    pub(super) type PendingEvents<T: Config> =
+        StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
+
     /// The current Starknet block.
     #[pallet::storage]
     #[pallet::getter(fn current_block)]
@@ -392,7 +398,7 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn invoke(_origin: OriginFor<T>, mut transaction: Transaction) -> DispatchResult {
+        pub fn invoke(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -407,7 +413,7 @@ pub mod pallet {
             let receipt;
             match call_info {
                 Ok(Some(mut v)) => {
-                    let events = Self::emit_events(&mut v, &mut transaction).map_err(|_| Error::<T>::EmitEventError)?;
+                    let events = Self::emit_events(&mut v).map_err(|_| Error::<T>::EmitEventError)?;
                     receipt = TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).unwrap(),
                         transaction_hash: transaction.hash,
@@ -684,7 +690,7 @@ pub mod pallet {
         /// Get the number of events in the block.
         #[inline(always)]
         pub fn event_count() -> u128 {
-            Self::pending().iter().flat_map(|tx| tx.0.events.iter()).count() as u128
+            Self::pending_events().len() as u128
         }
 
         /// Call a smart contract function.
@@ -741,9 +747,9 @@ pub mod pallet {
             let block_timestamp = Self::block_timestamp();
             let transaction_count = pending.len() as u128;
             let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
-            let transactions_slice: &[Transaction] = &transactions;
-            let (transaction_commitment, (event_commitment, event_count)) =
-                commitment::calculate_commitments::<PedersenHasher>(transactions_slice);
+            let events = Self::pending_events();
+            let (transaction_commitment, event_commitment) =
+                commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
             let protocol_version = None;
             let extra_data = None;
 
@@ -756,7 +762,7 @@ pub mod pallet {
                     block_timestamp,
                     transaction_count,
                     transaction_commitment,
-                    event_count,
+                    events.len() as u128,
                     event_commitment,
                     protocol_version,
                     extra_data,
@@ -824,17 +830,13 @@ pub mod pallet {
         ///
         /// The result of the operation.
         #[inline(always)]
-        fn emit_events(
-            call_info: &mut CallInfo,
-            transaction: &mut Transaction,
-        ) -> Result<Vec<StarknetEventType>, EventError> {
+        fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
             let mut events = Vec::new();
 
             for inner_call in &mut call_info.inner_calls {
                 inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
                 for ordered_event in &inner_call.execution.events {
-                    let event_type =
-                        Self::emit_event(&ordered_event.event, inner_call.call.storage_address, transaction)?;
+                    let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address)?;
                     events.push(event_type);
                 }
             }
@@ -853,18 +855,14 @@ pub mod pallet {
         ///
         /// Returns an error if the event construction fails.
         #[inline(always)]
-        fn emit_event(
-            event: &EventContent,
-            from_address: ContractAddress,
-            transaction: &mut Transaction,
-        ) -> Result<StarknetEventType, EventError> {
+        fn emit_event(event: &EventContent, from_address: ContractAddress) -> Result<StarknetEventType, EventError> {
             log!(debug, "Transaction event: {:?}", event);
             let sn_event = StarknetEventType::builder()
                 .with_event_content(event.clone())
                 .with_from_address(from_address)
                 .build()?;
-            transaction.events.try_push(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
             Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
+            PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
             Ok(sn_event)
         }
 
