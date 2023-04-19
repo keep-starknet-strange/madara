@@ -16,8 +16,7 @@ use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
     to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
-    ContractAddress, ContractClassHash, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass,
-    SierraContractClass, Syncing,
+    ContractAddress, ContractClassHash, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -180,7 +179,7 @@ where
                             error!("Address: Failed to convert '{0}' to [u8; 32]: {e}", request.contract_address);
                             StarknetRpcApiError::BlockNotFound
                         })?,
-                        string_to_h256(&request.entry_point_selector).map_err(|e| {
+                        H256::from_str(&request.entry_point_selector).map_err(|e| {
                             error!("Entrypoint: Failed to convert '{0}' to H256: {e}", request.entry_point_selector);
                             StarknetRpcApiError::BlockNotFound
                         })?,
@@ -401,18 +400,18 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let transaction_hashes = block.transactions_hashes();
+        let transaction_hashes = block.transactions_hashes().into_iter().map(|hash| hash.to_string()).collect();
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions: transaction_hashes,
             status: BlockStatus::Pending, // TODO: get real value
-            block_hash: block.header().hash(),
+            block_hash: block.header().hash().to_string(),
             // parent_hash: FieldElement::from("0x0"),
-            parent_hash: block.header().parent_block_hash,
+            parent_hash: block.header().parent_block_hash.to_string(),
             block_number: UniqueSaturatedInto::<u64>::unique_saturated_into(block.header().block_number),
-            new_root: block.header().global_state_root,
+            new_root: block.header().global_state_root.to_string(),
             // new_root: FieldElement::from("0x0"),
             timestamp: block.header().block_timestamp,
-            sequencer_address: block.header().sequencer_address,
+            sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
@@ -421,46 +420,4 @@ where
 /// Removes the "0x" prefix from a given hexadecimal string
 fn remove_prefix(input: &str) -> &str {
     input.strip_prefix("0x").unwrap_or(input)
-}
-
-/// Converts a hexadecimal string to an H256 value, padding with zero bytes on the left if necessary
-fn string_to_h256(hex_str: &str) -> Result<H256, String> {
-    let hex_str = remove_prefix(hex_str);
-    let mut padded_hex_str = hex_str.to_string();
-    while padded_hex_str.len() < 64 {
-        padded_hex_str.insert(0, '0');
-    }
-    let bytes =
-        Vec::from_hex(&padded_hex_str).map_err(|e| format!("Failed to convert hex string to bytes: {:?}", e))?;
-    Ok(H256::from_slice(&bytes))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // Test case for the string_to_h256 function
-    #[test]
-    fn test_string_to_h256() {
-        // Test case 1: Valid input with 64 characters
-        let hex_str_1 = "0x0222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7";
-        let expected_result_1 = H256::from_str(hex_str_1).unwrap();
-        assert_eq!(string_to_h256(hex_str_1).unwrap(), expected_result_1);
-
-        // Test case 2: Input with leading zeros
-        let hex_str_2 = "0x0123456789abcdef";
-        let expected_result_2 =
-            H256::from_str("0x0000000000000000000000000000000000000000000000000123456789abcdef").unwrap();
-        assert_eq!(string_to_h256(hex_str_2).unwrap(), expected_result_2);
-
-        // Test case 3: Input with missing "0x" prefix
-        let hex_str_3 = "222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7";
-        let expected_result_3 =
-            H256::from_str("0x0222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7").unwrap();
-        assert_eq!(string_to_h256(hex_str_3).unwrap(), expected_result_3);
-
-        // Test case 4: Input with invalid length
-        let hex_str_4 = "0x222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7111111";
-        assert!(string_to_h256(hex_str_4).is_err());
-    }
 }
