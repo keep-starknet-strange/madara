@@ -64,9 +64,11 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
-//! Starkware maintains (a description of Starknet API)[https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json] using the openRPC specification.
+//! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
+//! using the openRPC specification.
 //! This crate uses `jsonrpsee` to define such an API in Rust terms.
 
 </span><span class="kw">use </span>jsonrpsee::core::RpcResult;
@@ -77,7 +79,7 @@
 <span class="kw">pub type </span>BlockNumber = u64;
 <span class="kw">pub type </span>BlockHash = FieldElement;
 
-<span class="doccomment">/// A tag specifying a dynamic reference to a blocl
+<span class="doccomment">/// A tag specifying a dynamic reference to a block
 </span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 </span><span class="kw">pub enum </span>BlockTag {
     <span class="attr">#[serde(rename = <span class="string">&quot;latest&quot;</span>)]
