@@ -1056,8 +1056,6 @@ pub mod pallet {
             to: [u8; 32],
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
-            // FIXME #236
-            // TODO: add events from this in the tx
             // Create state reader.
             let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
                 log!(error, "Couldn't create the cached state");

@@ -408,9 +408,13 @@ fn given_balance_on_account_then_transfer_fees_works() {
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
                 ),
                 data: bounded_vec!(
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    // From
+                    H256::from_slice(&from),
+                    // To
+                    H256::from_slice(&SEQUENCER_ADDRESS),
+                    // Amount low
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000064").unwrap(),
+                    // Amount High
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
                 ),
                 from_address: [
@@ -419,8 +423,6 @@ fn given_balance_on_account_then_transfer_fees_works() {
             })
             .into(),
         );
-        // FIXME: #236 when events are added in transfer call check them
-        // TODO check event when the fee transfer will emit an event.
     })
 }
 #[test]
