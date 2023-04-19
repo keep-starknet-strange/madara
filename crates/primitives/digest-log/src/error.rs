@@ -4,7 +4,9 @@
 /// No more, no less.
 #[derive(Clone, Debug)]
 pub enum FindLogError {
+    /// There was no Madara [Log] in the [Digest]
     NotLog,
+    /// There was multiple Madara [Log] in the [Digest]
     MultipleLogs,
 }
 

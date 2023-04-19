@@ -38,11 +38,11 @@ fn no_logs() {
 }
 
 #[test]
-fn wrong_consensus_engine_id() {
+fn other_consensus_engine_id() {
     let mut digest = Digest::default();
     let block = StarknetBlock::default();
 
-    digest.push(DigestItem::Consensus([b'f', b'a', b'k', b'e'], Log::Block(block).encode()));
+    digest.push(DigestItem::Consensus([b'o', b't', b'h', b'r'], Log::Block(block).encode()));
 
     assert_matches!(ensure_log(&digest), Err(FindLogError::NotLog));
     assert_matches!(find_log(&digest), Err(FindLogError::NotLog));

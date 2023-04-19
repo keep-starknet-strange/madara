@@ -37,21 +37,22 @@ pub enum Log {
     Block(StarknetBlock),
 }
 
-/// Return the wrapped [StarknetBlock] contained in the [Digest]
+/// Return the wrapped [StarknetBlock] contained in a given [Digest]
 pub fn find_starknet_block(digest: &Digest) -> Result<StarknetBlock, FindLogError> {
     find_log(digest).map(|log| match log {
         Log::Block(b) => b,
     })
 }
 
-/// Return the Madara [Log]
+/// Return the Madara [Log] contained in a given [Digest]
 pub fn find_log(digest: &Digest) -> Result<Log, FindLogError> {
     _find_log(digest, OpaqueDigestItemId::Consensus(&MADARA_ENGINE_ID))
 }
 
-/// Ensure there is a single valid Madara [Log] in the Digest
+/// Ensure there is a single valid Madara [Log] in a given [Digest]
 ///
 /// It can be used to check if the wrapper block does contains the wrapped block
+/// without reading the wrapped block itself
 pub fn ensure_log(digest: &Digest) -> Result<(), FindLogError> {
     find_log(digest).map(|_log| ())
 }
