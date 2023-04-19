@@ -9,13 +9,14 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use blockifier::execution::contract_class::ContractClass;
 use errors::StarknetRpcApiError;
 use hex::FromHex;
 use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
-use mc_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall};
+use mc_rpc_core::{
+    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, StarknetContractClass,
+};
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -69,6 +70,7 @@ where
         Ok(block.header().hash())
     }
 
+    /// Returns the substrate block corresponding to the given Starknet block id
     fn substrate_block_hash_from_starknet_block(&self, block_id: StarknetBlockId) -> Result<B::Hash, String> {
         match block_id {
             StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
@@ -175,7 +177,12 @@ where
         }
     }
 
-    fn get_class_at(&self, contract_address: ContractAddress, block_id: StarknetBlockId) -> RpcResult<ContractClass> {
+    /// Get the contract class at a given contract address for a given block id
+    fn get_class_at(
+        &self,
+        contract_address: ContractAddress,
+        block_id: StarknetBlockId,
+    ) -> RpcResult<StarknetContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -195,10 +202,13 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        Ok(contract_class.to_starknet_contract_class().map_err(|e| {
-            error!("Failed to convert contract class at '{contract_address}': {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?)
+        Ok(contract_class
+            .to_starknet_contract_class()
+            .map_err(|e| {
+                error!("Failed to convert contract class at '{contract_address}' to starknet contract class: {e}");
+                StarknetRpcApiError::ContractNotFound
+            })?
+            .into())
     }
 }
 
