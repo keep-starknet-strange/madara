@@ -1,6 +1,7 @@
 //! Starknet RPC API trait and types
 //!
-//! Starkware maintains (a description of Starknet API)[https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json] using the openRPC specification.
+//! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
+//! using the openRPC specification.
 //! This crate uses `jsonrpsee` to define such an API in Rust terms.
 
 use jsonrpsee::core::RpcResult;
@@ -11,7 +12,7 @@ pub type FieldElement = String;
 pub type BlockNumber = u64;
 pub type BlockHash = FieldElement;
 
-/// A tag specifying a dynamic reference to a blocl
+/// A tag specifying a dynamic reference to a block
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum BlockTag {
     #[serde(rename = "latest")]
