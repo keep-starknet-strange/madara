@@ -171,7 +171,7 @@ sp_api::decl_runtime_apis! {
 }
 ```
 
-1. Implement your function in the runtime
+2. Implement your function in the runtime
 
 ```rust
 // crates/runtime/src/lib.rs
