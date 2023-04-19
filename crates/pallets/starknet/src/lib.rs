@@ -357,6 +357,7 @@ pub mod pallet {
         InvalidContractClass,
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
+        TooManyPendingEvents,
         StateReaderError,
         EmitEventError,
         StateDiffError,
@@ -377,6 +378,10 @@ pub mod pallet {
             let _deployer_account = ensure_signed(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
                 .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
+            PendingEvents::<T>::try_append(StarknetEventType::default())
+                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
+            PendingEvents::<T>::try_append(StarknetEventType::default())
+                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
@@ -774,6 +779,7 @@ pub mod pallet {
             // Save the block number <> hash mapping.
             BlockHash::<T>::insert(block_number, block.header().hash());
             Pending::<T>::kill();
+            PendingEvents::<T>::kill();
 
             let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
             frame_system::Pallet::<T>::deposit_log(digest);
