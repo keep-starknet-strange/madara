@@ -4269,6 +4269,7 @@ dependencies = [
  "mc-storage",
  "pallet-starknet",
  "sc-client-api",
+ "serde_json",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -4281,11 +4282,14 @@ dependencies = [
 name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
+ "base64 0.21.0",
  "blockifier",
+ "hex",
  "jsonrpsee",
  "serde",
  "serde_json",
  "sp-blockchain",
+ "starknet_api",
 ]
 
 [[package]]
