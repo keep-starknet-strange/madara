@@ -59,10 +59,12 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn contract_class(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClassWrapper>;
 }
 
+/// Returns the storage prefix given the pallet module name and the storage name
 fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
     [twox_128(module), twox_128(storage)].concat().to_vec()
 }
 
+/// Returns the storage key for single key maps using the Twox64Concat storage hasher.
 fn storage_key_build(prefix: Vec<u8>, key: &[u8]) -> Vec<u8> {
     [prefix, Twox64Concat::hash(key)].concat()
 }
