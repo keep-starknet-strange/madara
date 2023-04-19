@@ -11,7 +11,7 @@ then run:
 rustup show
 ```
 
-### Run
+### Cargo Run
 
 Use Rust's native `cargo` command to build and launch the template node:
 
@@ -36,7 +36,7 @@ For example:
 RUSTLOG=runtime=info cargo run --release -- --dev
 ```
 
-### Build
+### Cargo Build
 
 The `cargo run` command will perform an initial build. Use the following command
 to build the node without launching it:

@@ -1,3 +1,5 @@
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="256">
   <br />
@@ -10,6 +12,8 @@
 
 <div align="center">
 <br />
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
 [![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)

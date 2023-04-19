@@ -1,4 +1,6 @@
-# Functional testing for Madara
+# Integration tests
+
+## Functional testing for Madara
 
 :information_source: This is the location of all the typescript based tests for
 Madara
@@ -7,24 +9,24 @@ This folder contains a set of functional tests designed for Madara.
 
 It is written in typescript, using Mocha/Chai as Test framework.
 
-## Test flow
+### Test flow
 
 Each group will start a dev service with the
 [development spec](../node/service/src/chain_spec) before executing the tests.
 
-## Test categories
+### Test categories
 
 - `test`: Tests expected to run by spawning a new dev node (~1-2 minutes)
-- `smoke-test`: Tests veryfing the data (consistency) on an existing chain
+- `smoke-test`: Tests verifying the data (consistency) on an existing chain
   (~5-20 minutes)
 
-## Installation
+### Installation
 
 ```sh
 npm install
 ```
 
-## Run the tests
+### Run the tests
 
 ```sh
 npm run test
@@ -36,9 +38,9 @@ and to print more information:
 npm run test-with-logs
 ```
 
-# Smoke tests
+## Smoke tests
 
-## Adding smoke tests
+### Adding smoke tests
 
 Smoke test should only contain consistency/state checks.
 
@@ -54,7 +56,7 @@ Testing the consistency is usually simple:
 Smoke tests should **never** send an extrinsic to modify the state. They should
 be split by pallet and only need 1 `describeSmokeSuite` per file.
 
-## Running smoke tests
+### Running smoke tests
 
 In order to use smoke tests, you need to provide a blockchain:
 
@@ -68,7 +70,7 @@ You can debug specific smoke test with `debug` library using prefix `smoke:*`:
 DEBUG=smoke:* WSS_URL=wss://localhost:9944 npm run smoke-test
 ```
 
-## Write Tests
+### Write Tests
 
 ### Add a new contract
 
@@ -78,7 +80,7 @@ DEBUG=smoke:* WSS_URL=wss://localhost:9944 npm run smoke-test
 - Create your contract with
   `const { contract, rawTx } = await createContract(context.starknet, "TestContract");`
 
-## Verbose mode
+### Verbose mode
 
 You can also add the node's logs to the output using the `MADARA_LOG` env
 variable. Ex:
@@ -90,7 +92,7 @@ MADARA_LOG="warn,rpc=trace" npm run test
 The test script will find available ports above 20000 in order to ensure that it
 doesn't conflict with any other running services.
 
-# Debugging a Madara node
+## Debugging a Madara node
 
 The repository contains a pre-configured debugger configuration for VSCode with
 the **CodeLLDB** (`vadimcn.vscode-lldb`) extension.
@@ -139,7 +141,7 @@ basic types are displayed correctly (primitive types, Vec, Arc) but more complex
 types such as HashMap/BTreeMap are not "smartly" displayed (content of the
 struct is shown by mapping is hidden in the complexity of the implementation).
 
-## Running Typescript tests with a debug node
+### Running Typescript tests with a debug node
 
 By setting the environment variable `DEBUG_MODE=true`, the Typescript tests will
 not spawn its own node and instead will connect to an external node running on
