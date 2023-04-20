@@ -4282,10 +4282,13 @@ dependencies = [
 name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base64 0.21.0",
  "blockifier",
+ "flate2",
  "hex",
  "jsonrpsee",
+ "mp-starknet",
  "serde",
  "serde_json",
  "sp-blockchain",
