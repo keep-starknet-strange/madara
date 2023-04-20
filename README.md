@@ -38,9 +38,11 @@ your gateway to launching your very own Starknet appchain or L3.
 Harness the prowess of Cairo, while maintaining complete control over your
  tailor-made appchain, designed to meet your project's unique demands.
 
-🌐 Madara is the catalyst for limitless innovation, empowering a diverse range
- of projects and driving exponential growth within the Starknet ecosystem.
-Be a part of the future - get started with Madara today!
+Experience the flexibility and power of Madara, enabling you to launch your very
+own Starknet appchain or L3. Harness the capabilities of Cairo while maintaining
+complete control over your custom appchain, tailored to your specific
+requirements. Madara is designed to empower a multitude of projects, fueling
+growth within the Starknet ecosystem.
 
 ## 🌟 Features
 
@@ -72,6 +74,9 @@ build and run Madara on your local machine.
 Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
 front-end to interact with your chain.
 [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
+
+You can also connect to our customized fork of the Polkadot-JS Apps front-end, deployed on
+[Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
 
 You can also connect to our customized fork of the Polkadot-JS Apps front-end,
  deployed on [Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
