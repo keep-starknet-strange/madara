@@ -15,7 +15,8 @@ use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, StarknetContractClass,
+    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall,
+    RPCContractClass,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -182,7 +183,7 @@ where
         &self,
         contract_address: ContractAddress,
         block_id: StarknetBlockId,
-    ) -> RpcResult<StarknetContractClass> {
+    ) -> RpcResult<RPCContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -202,13 +203,10 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        Ok(contract_class
-            .to_starknet_contract_class()
-            .map_err(|e| {
-                error!("Failed to convert contract class at '{contract_address}' to starknet contract class: {e}");
-                StarknetRpcApiError::ContractNotFound
-            })?
-            .into())
+        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
+            error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
+            StarknetRpcApiError::ContractNotFound
+        })?)
     }
 }
 
