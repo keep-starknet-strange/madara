@@ -23,13 +23,24 @@
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
-Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer designed to make your projects soar! Built on the robust Substrate framework and fast, thanks to Rust 🦀, Madara delivers unmatched performance and scalability to power your Starknet-based Validity Rollup chain.
+Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
+ designed to make your projects soar!
 
-Dive into the world of Madara and join our passionate community of contributors! Together, we're pushing the boundaries of what's possible within the Starknet ecosystem.
+Built on the robust Substrate framework and fast, thanks to Rust 🦀,
+Madara delivers unmatched performance and scalability to power
+ your Starknet-based Validity Rollup chain.
 
-🚀 Discover the unparalleled flexibility and might of Madara, your gateway to launching your very own Starknet appchain or L3. Harness the prowess of Cairo, while maintaining complete control over your tailor-made appchain, designed to meet your project's unique demands.
+Dive into the world of Madara and join our passionate community of contributors!
+Together, we're pushing the boundaries of what's possible within the Starknet ecosystem.
 
-🌐 Madara is the catalyst for limitless innovation, empowering a diverse range of projects and driving exponential growth within the Starknet ecosystem. Be a part of the future - get started with Madara today!
+🚀 Discover the unparalleled flexibility and might of Madara,
+your gateway to launching your very own Starknet appchain or L3.
+Harness the prowess of Cairo, while maintaining complete control over your
+ tailor-made appchain, designed to meet your project's unique demands.
+
+🌐 Madara is the catalyst for limitless innovation, empowering a diverse range
+ of projects and driving exponential growth within the Starknet ecosystem.
+Be a part of the future - get started with Madara today!
 
 ## 🌟 Features
 
@@ -62,8 +73,8 @@ Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
 front-end to interact with your chain.
 [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
 
-You can also connect to our customized fork of the Polkadot-JS Apps front-end, deployed on
-[Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
+You can also connect to our customized fork of the Polkadot-JS Apps front-end,
+ deployed on [Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
 
 ## 🤝 Contribute
 
