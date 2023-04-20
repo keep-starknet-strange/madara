@@ -105,6 +105,7 @@ pub mod pallet {
     use blockifier::transaction::objects::AccountTransactionContext;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
+    use frame_support::sp_tracing::span::Id;
     use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
     use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
@@ -221,33 +222,38 @@ pub mod pallet {
     #[pallet::getter(fn current_block)]
     pub(super) type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock, ValueQuery>;
 
-    // Mapping for block number and hashes.
+    /// Mapping for block number and hashes.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn block_hash)]
-    pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
+    pub(super) type BlockHash<T: Config> = StorageMap<_, Identity, U256, H256, ValueQuery>;
 
     /// Mapping from Starknet contract address to the contract's class hash.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_hash_by_address)]
     pub(super) type ContractClassHashes<T: Config> =
-        StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
+        StorageMap<_, Identity, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
 
     /// Mapping from Starknet class hash to contract class.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
     pub(super) type ContractClasses<T: Config> =
-        StorageMap<_, Twox64Concat, ClassHashWrapper, ContractClassWrapper, ValueQuery>;
+        StorageMap<_, Identity, ClassHashWrapper, ContractClassWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn nonce)]
-    pub(super) type Nonces<T: Config> = StorageMap<_, Twox64Concat, ContractAddressWrapper, NonceWrapper, ValueQuery>;
+    pub(super) type Nonces<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, NonceWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract storage key to its value.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> =
-        StorageMap<_, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
+        StorageMap<_, Identity, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
 
     /// The last processed Ethereum block number for L1 messages consumption.
     /// This is used to avoid re-processing the same Ethereum block multiple times.
