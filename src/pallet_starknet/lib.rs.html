@@ -1218,6 +1218,16 @@
 <a href="#1218" id="1218">1218</a>
 <a href="#1219" id="1219">1219</a>
 <a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1430,6 +1440,12 @@
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>Pending&lt;T: Config&gt; =
         StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;(Transaction, TransactionReceiptWrapper), MaxTransactions&gt;, ValueQuery&gt;;
 
+    <span class="doccomment">/// Current building block&#39;s events.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>pending_events)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>PendingEvents&lt;T: Config&gt; =
+        StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;StarknetEventType, MaxTransactions&gt;, ValueQuery&gt;;
+
     <span class="doccomment">/// The current Starknet block.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>current_block)]
@@ -1571,6 +1587,7 @@
         InvalidContractClass,
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
+        TooManyPendingEvents,
         StateReaderError,
         EmitEventError,
         StateDiffError,
@@ -1591,6 +1608,10 @@
             </span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
             Pending::&lt;T&gt;::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
                 .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
+            PendingEvents::&lt;T&gt;::try_append(StarknetEventType::default())
+                .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingEvents)<span class="question-mark">?</span>;
+            PendingEvents::&lt;T&gt;::try_append(StarknetEventType::default())
+                .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingEvents)<span class="question-mark">?</span>;
             <span class="macro">log!</span>(info, <span class="string">&quot;Keep Starknet Strange!&quot;</span>);
             <span class="self">Self</span>::deposit_event(Event::KeepStarknetStrange);
             <span class="prelude-val">Ok</span>(())
@@ -1612,7 +1633,7 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>invoke(_origin: OriginFor&lt;T&gt;, <span class="kw-2">mut </span>transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>invoke(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// TODO: add origin check when proxy pallet added
 
             // Check if contract is deployed
@@ -1627,7 +1648,7 @@
             <span class="kw">let </span>receipt;
             <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>v)) =&gt; {
-                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>v, <span class="kw-2">&amp;mut </span>transaction).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>v).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
                     receipt = TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).unwrap(),
                         transaction_hash: transaction.hash,
@@ -1904,7 +1925,7 @@
         <span class="doccomment">/// Get the number of events in the block.
         </span><span class="attr">#[inline(always)]
         </span><span class="kw">pub fn </span>event_count() -&gt; u128 {
-            <span class="self">Self</span>::pending().iter().flat_map(|tx| tx.<span class="number">0</span>.events.iter()).count() <span class="kw">as </span>u128
+            <span class="self">Self</span>::pending_events().len() <span class="kw">as </span>u128
         }
 
         <span class="doccomment">/// Call a smart contract function.
@@ -1961,9 +1982,9 @@
             <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
             <span class="kw">let </span>transaction_count = pending.len() <span class="kw">as </span>u128;
             <span class="kw">let </span>transactions: Vec&lt;Transaction&gt; = pending.into_iter().map(|(transaction, <span class="kw">_</span>)| transaction).collect();
-            <span class="kw">let </span>transactions_slice: <span class="kw-2">&amp;</span>[Transaction] = <span class="kw-2">&amp;</span>transactions;
-            <span class="kw">let </span>(transaction_commitment, (event_commitment, event_count)) =
-                commitment::calculate_commitments::&lt;PedersenHasher&gt;(transactions_slice);
+            <span class="kw">let </span>events = <span class="self">Self</span>::pending_events();
+            <span class="kw">let </span>(transaction_commitment, event_commitment) =
+                commitment::calculate_commitments::&lt;PedersenHasher&gt;(<span class="kw-2">&amp;</span>transactions, <span class="kw-2">&amp;</span>events);
             <span class="kw">let </span>protocol_version = <span class="prelude-val">None</span>;
             <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
@@ -1976,7 +1997,7 @@
                     block_timestamp,
                     transaction_count,
                     transaction_commitment,
-                    event_count,
+                    events.len() <span class="kw">as </span>u128,
                     event_commitment,
                     protocol_version,
                     extra_data,
@@ -1988,6 +2009,7 @@
             <span class="comment">// Save the block number &lt;&gt; hash mapping.
             </span>BlockHash::&lt;T&gt;::insert(block_number, block.header().hash());
             Pending::&lt;T&gt;::kill();
+            PendingEvents::&lt;T&gt;::kill();
 
             <span class="kw">let </span>digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
             frame_system::Pallet::&lt;T&gt;::deposit_log(digest);
@@ -2044,17 +2066,19 @@
         ///
         /// The result of the operation.
         </span><span class="attr">#[inline(always)]
-        </span><span class="kw">fn </span>emit_events(
-            call_info: <span class="kw-2">&amp;mut </span>CallInfo,
-            transaction: <span class="kw-2">&amp;mut </span>Transaction,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, EventError&gt; {
+        </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;mut </span>CallInfo) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, EventError&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>events = Vec::new();
+
+            call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+            <span class="kw">for </span>ordered_event <span class="kw">in </span><span class="kw-2">&amp;</span>call_info.execution.events {
+                <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, call_info.call.storage_address)<span class="question-mark">?</span>;
+                events.push(event_type);
+            }
 
             <span class="kw">for </span>inner_call <span class="kw">in </span><span class="kw-2">&amp;mut </span>call_info.inner_calls {
                 inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
                 <span class="kw">for </span>ordered_event <span class="kw">in </span><span class="kw-2">&amp;</span>inner_call.execution.events {
-                    <span class="kw">let </span>event_type =
-                        <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, inner_call.call.storage_address, transaction)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, inner_call.call.storage_address)<span class="question-mark">?</span>;
                     events.push(event_type);
                 }
             }
@@ -2073,18 +2097,15 @@
         ///
         /// Returns an error if the event construction fails.
         </span><span class="attr">#[inline(always)]
-        </span><span class="kw">fn </span>emit_event(
-            event: <span class="kw-2">&amp;</span>EventContent,
-            from_address: ContractAddress,
-            transaction: <span class="kw-2">&amp;mut </span>Transaction,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetEventType, EventError&gt; {
+        </span><span class="kw">fn </span>emit_event(event: <span class="kw-2">&amp;</span>EventContent, from_address: ContractAddress) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetEventType, EventError&gt; {
             <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction event: {:?}&quot;</span>, event);
             <span class="kw">let </span>sn_event = StarknetEventType::builder()
                 .with_event_content(event.clone())
                 .with_from_address(from_address)
                 .build()<span class="question-mark">?</span>;
-            transaction.events.try_push(sn_event.clone()).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>;
             <span class="self">Self</span>::deposit_event(Event::StarknetEvent(sn_event.clone()));
+
+            PendingEvents::&lt;T&gt;::try_append(sn_event.clone()).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(sn_event)
         }
 
@@ -2265,9 +2286,7 @@
             to: [u8; <span class="number">32</span>],
             amount: &lt;StarknetFee <span class="kw">as </span>OnChargeTransaction&lt;T&gt;&gt;::Balance,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
-            <span class="comment">// FIXME #236
-            // TODO: add events from this in the tx
-            // Create state reader.
+            <span class="comment">// Create state reader.
             </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span>Pallet::&lt;T&gt;::create_state_reader().map_err(|<span class="kw">_</span>| {
                 <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t create the cached state&quot;</span>);
                 TransactionValidityError::Unknown(Custom(<span class="number">3_u8</span>))
@@ -2346,8 +2365,9 @@
                 <span class="kw-2">&amp;</span>block_ctx,
                 <span class="kw-2">&amp;</span>account_ctx,
             ) {
-                <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="macro">log!</span>(trace, <span class="string">&quot;Fees executed successfully: {:?}&quot;</span>, v);
+                <span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>v) =&gt; {
+                    <span class="macro">log!</span>(trace, <span class="string">&quot;Fees executed successfully: {:?}&quot;</span>, v.execution.events);
+                    <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>v).map_err(|<span class="kw">_</span>| TransactionValidityError::Unknown(Custom(<span class="number">4_u8</span>)))<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Fees execution failed: {:?}&quot;</span>, e);

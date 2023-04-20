@@ -152,8 +152,6 @@
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
-<a href="#155" id="155">155</a>
-<a href="#156" id="156">156</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
@@ -209,8 +207,8 @@
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-</span><span class="kw">pub fn </span>calculate_commitments&lt;T: CryptoHasher&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction]) -&gt; (H256, (H256, u128)) {
-    (calculate_transaction_commitment::&lt;T&gt;(transactions), calculate_event_commitment::&lt;T&gt;(transactions))
+</span><span class="kw">pub fn </span>calculate_commitments&lt;T: CryptoHasher&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction], events: <span class="kw-2">&amp;</span>[EventWrapper]) -&gt; (H256, H256) {
+    (calculate_transaction_commitment::&lt;T&gt;(transactions), calculate_event_commitment::&lt;T&gt;(events))
 }
 
 <span class="doccomment">/// Calculate transaction commitment hash value.
@@ -251,15 +249,13 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-</span><span class="kw">pub fn </span>calculate_event_commitment&lt;T: CryptoHasher&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction]) -&gt; (H256, u128) {
+</span><span class="kw">pub fn </span>calculate_event_commitment&lt;T: CryptoHasher&gt;(events: <span class="kw-2">&amp;</span>[EventWrapper]) -&gt; H256 {
     <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;T&gt;::default();
-    <span class="kw">let </span><span class="kw-2">mut </span>len = <span class="number">0_u64</span>;
-    transactions.iter().flat_map(|tx| tx.events.iter()).for_each(|event| {
-        len += <span class="number">1</span>;
+    events.iter().enumerate().for_each(|(id, event)| {
         <span class="kw">let </span>final_hash = calculate_event_hash::&lt;T&gt;(event);
-        tree.set(len - <span class="number">1</span>, final_hash);
+        tree.set(id <span class="kw">as </span>u64, final_hash);
     });
-    (H256::from_slice(<span class="kw-2">&amp;</span>tree.commit().to_bytes_be()), len <span class="kw">as </span>u128)
+    H256::from_slice(<span class="kw-2">&amp;</span>tree.commit().to_bytes_be())
 }
 
 <span class="doccomment">/// Compute the combined hash of the transaction hash and the signature.

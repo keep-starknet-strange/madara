@@ -358,16 +358,6 @@
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
 <a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
 </span><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec::Vec;
@@ -587,16 +577,6 @@
         <span class="kw">let </span>signature = BoundedVec::&lt;H256, MaxArraySize&gt;::try_from(signature)
             .map_err(|<span class="kw">_</span>| DeserializeTransactionError::SignatureExceedsMaxSize)<span class="question-mark">?</span>;
 
-        <span class="comment">// Convert events to BoundedVec&lt;EventWrapper, MaxArraySize&gt; and check if it exceeds max size
-        </span><span class="kw">let </span>events = d
-            .events
-            .into_iter()
-            .map(EventWrapper::try_from)
-            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;EventWrapper&gt;, DeserializeEventError&gt;&gt;()
-            .map_err(DeserializeTransactionError::InvalidEvents)<span class="question-mark">?</span>;
-        <span class="kw">let </span>events = BoundedVec::&lt;EventWrapper, MaxArraySize&gt;::try_from(events)
-            .map_err(|<span class="kw">_</span>| DeserializeTransactionError::EventsExceedMaxSize)<span class="question-mark">?</span>;
-
         <span class="comment">// Convert sender_address to ContractAddressWrapper
         </span><span class="kw">let </span>sender_address = ContractAddressWrapper::from_hex(remove_prefix(<span class="kw-2">&amp;</span>d.sender_address))
             .map_err(DeserializeTransactionError::InvalidSenderAddress)<span class="question-mark">?</span>;
@@ -609,7 +589,7 @@
             .map_err(DeserializeTransactionError::InvalidCallEntryPoint)<span class="question-mark">?</span>;
 
         <span class="comment">// Create Transaction with validated and converted fields
-        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ version, hash, signature, events, sender_address, nonce, call_entrypoint, ..Transaction::default() })
+        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ version, hash, signature, sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
 
