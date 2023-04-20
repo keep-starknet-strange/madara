@@ -298,7 +298,7 @@ export async function transfer(
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
 
-  await sendTransaction(api, extrisinc_transfer, user);
+  await sendTransactionNoValidation(api, extrisinc_transfer, user);
 
   return "";
 }
@@ -339,7 +339,7 @@ export async function batchTransfer(
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
 
-  const extrisinc_transfers = Array(50).fill(extrisinc_transfer);
+  const extrisinc_transfers = Array(200).fill(extrisinc_transfer);
 
   await sendTransactionBatchNoValidation(api, extrisinc_transfers, user);
 
