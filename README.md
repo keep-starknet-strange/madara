@@ -23,16 +23,13 @@
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
-Welcome to **Madara**, a blazing fast ⚡ Starknet sequencer built on the
-Substrate framework and written in Rust. The project aims to provide a highly
-performant and scalable zk-rollup for general-purpose smart contracts. We're
-always looking for contributors, so dive in and explore the code!
+Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer designed to make your projects soar! Built on the robust Substrate framework and fast, thanks to Rust 🦀, Madara delivers unmatched performance and scalability to power your Starknet-based Validity Rollup chain.
 
-Experience the flexibility and power of Madara, enabling you to launch your very
-own Starknet appchain or L3. Harness the capabilities of Cairo while maintaining
-complete control over your custom appchain, tailored to your specific
-requirements. Madara is designed to empower a multitude of projects, fueling
-growth within the Starknet ecosystem.
+Dive into the world of Madara and join our passionate community of contributors! Together, we're pushing the boundaries of what's possible within the Starknet ecosystem.
+
+🚀 Discover the unparalleled flexibility and might of Madara, your gateway to launching your very own Starknet appchain or L3. Harness the prowess of Cairo, while maintaining complete control over your tailor-made appchain, designed to meet your project's unique demands.
+
+🌐 Madara is the catalyst for limitless innovation, empowering a diverse range of projects and driving exponential growth within the Starknet ecosystem. Be a part of the future - get started with Madara today!
 
 ## 🌟 Features
 
@@ -59,11 +56,14 @@ Want to dive straight in? Check out our
 [Getting Started Guide](./docs/getting-started.md) for instructions on how to
 build and run Madara on your local machine.
 
-## 🌐 Connect to Polkadot-JS Apps
+## 🌐 Connect to the dev webapp
 
 Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
 front-end to interact with your chain.
 [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
+
+You can also connect to our customized fork of the Polkadot-JS Apps front-end, deployed on
+[Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
 
 ## 🤝 Contribute
 
