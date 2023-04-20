@@ -71,90 +71,63 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-</pre><pre class="rust"><code><span class="comment">// SPDX-License-Identifier: Apache-2.0
-// This file is part of Frontier.
-//
-// Copyright (c) 2020-2022 Parity Technologies (UK) Ltd.
-//
-// Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// 	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+</pre><pre class="rust"><code><span class="doccomment">//! Utility to read the Starknet block form the Substrate block digest
+//!
+//! Following the wrapper block model, each one of the madara block contains a starknet block.
+//! This block is not only stored in the chain storage, but also pushed inton the wrapper block
+//! itself.
+//!
+//! We expect the starknet pallet to push a log into the substrate digest in it&#39;s `on_finalize`
+//! hook. This log must contain the whole new starknet block.
+//!
+//! In the current state of this crate, only one single log must be pushed to the digest each block,
+//! and it should contain the starknet block. Pushing more log will make it impossible for this set
+//! of reader functions to operate properly.
 
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
 #![deny(unused_crate_dependencies)]
 
-</span><span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
+</span><span class="kw">mod </span>error;
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests;
+
+<span class="kw">pub use </span>error::FindLogError;
+<span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span>scale_codec::{Decode, Encode};
-<span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::generic::{Digest, OpaqueDigestItemId};
 <span class="kw">use </span>sp_runtime::ConsensusEngineId;
 
 <span class="kw">pub const </span>MADARA_ENGINE_ID: ConsensusEngineId = [<span class="string">b&#39;m&#39;</span>, <span class="string">b&#39;a&#39;</span>, <span class="string">b&#39;d&#39;</span>, <span class="string">b&#39;a&#39;</span>];
 
-<span class="attr">#[derive(Clone, PartialEq, Eq)]
+<span class="doccomment">/// A Madara log
+///
+/// Right now we only expect Madara to log the Starknet block,
+/// but other usecases may appears later on.
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Encode, Decode)]
 </span><span class="kw">pub enum </span>Log {
-    Post(PostLog),
+    <span class="attr">#[codec(index = <span class="number">0</span>)]
+    </span>Block(StarknetBlock),
 }
 
-<span class="attr">#[derive(Decode, Encode, Clone, PartialEq, Eq)]
-</span><span class="kw">pub enum </span>PostLog {
-    <span class="doccomment">/// Ethereum block hash.
-    </span><span class="attr">#[codec(index = <span class="number">3</span>)]
-    </span>BlockHash(H256),
+<span class="doccomment">/// Return the wrapped [StarknetBlock] contained in a given [Digest]
+</span><span class="kw">pub fn </span>find_starknet_block(digest: <span class="kw-2">&amp;</span>Digest) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetBlock, FindLogError&gt; {
+    find_log(digest).map(|log| <span class="kw">match </span>log {
+        Log::Block(b) =&gt; b,
+    })
 }
 
-<span class="attr">#[derive(Decode, Encode, Clone, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>Hashes {
-    <span class="doccomment">/// Starknet block hash.
-    </span><span class="kw">pub </span>block_hash: H256,
-}
-
-<span class="kw">impl </span>Hashes {
-    <span class="kw">pub fn </span>from_block(block: StarknetBlock) -&gt; <span class="self">Self </span>{
-        Hashes { block_hash: block.header().hash() }
-    }
-}
-
-<span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub enum </span>FindLogError {
-    NotFound,
-    MultipleLogs,
-}
-
-<span class="kw">pub fn </span>find_post_log(digest: <span class="kw-2">&amp;</span>Digest) -&gt; <span class="prelude-ty">Result</span>&lt;PostLog, FindLogError&gt; {
+<span class="doccomment">/// Return the Madara [Log] contained in a given [Digest]
+</span><span class="kw">pub fn </span>find_log(digest: <span class="kw-2">&amp;</span>Digest) -&gt; <span class="prelude-ty">Result</span>&lt;Log, FindLogError&gt; {
     _find_log(digest, OpaqueDigestItemId::Consensus(<span class="kw-2">&amp;</span>MADARA_ENGINE_ID))
+}
+
+<span class="doccomment">/// Ensure there is a single valid Madara [Log] in a given [Digest]
+///
+/// It can be used to check if the wrapper block does contains the wrapped block
+/// without reading the wrapped block itself
+</span><span class="kw">pub fn </span>ensure_log(digest: <span class="kw-2">&amp;</span>Digest) -&gt; <span class="prelude-ty">Result</span>&lt;(), FindLogError&gt; {
+    find_log(digest).map(|_log| ())
 }
 
 <span class="kw">fn </span>_find_log&lt;Log: Decode&gt;(digest: <span class="kw-2">&amp;</span>Digest, digest_item_id: OpaqueDigestItemId) -&gt; <span class="prelude-ty">Result</span>&lt;Log, FindLogError&gt; {
@@ -169,26 +142,7 @@
         }
     }
 
-    found.ok_or(FindLogError::NotFound)
-}
-
-<span class="kw">pub fn </span>find_log(digest: <span class="kw-2">&amp;</span>Digest) -&gt; <span class="prelude-ty">Result</span>&lt;Log, FindLogError&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>found = <span class="prelude-val">None</span>;
-
-    <span class="kw">for </span>log <span class="kw">in </span>digest.logs() {
-        <span class="kw">let </span>post_log = log.try_to::&lt;PostLog&gt;(OpaqueDigestItemId::Consensus(<span class="kw-2">&amp;</span>MADARA_ENGINE_ID));
-        <span class="kw">match </span>(post_log, found.is_some()) {
-            (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="bool-val">true</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(FindLogError::MultipleLogs),
-            (<span class="prelude-val">Some</span>(post_log), <span class="bool-val">false</span>) =&gt; found = <span class="prelude-val">Some</span>(Log::Post(post_log)),
-            (<span class="prelude-val">None</span>, <span class="kw">_</span>) =&gt; (),
-        }
-    }
-
-    found.ok_or(FindLogError::NotFound)
-}
-
-<span class="kw">pub fn </span>ensure_log(digest: <span class="kw-2">&amp;</span>Digest) -&gt; <span class="prelude-ty">Result</span>&lt;(), FindLogError&gt; {
-    find_log(digest).map(|_log| ())
+    found.ok_or(FindLogError::NotLog)
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mp_digest_log" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

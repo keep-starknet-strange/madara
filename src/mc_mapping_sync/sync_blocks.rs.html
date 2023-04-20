@@ -170,11 +170,10 @@
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mc_storage::OverrideHandle;
-<span class="kw">use </span>mp_digest_log::{FindLogError, Hashes, Log, PostLog};
+<span class="kw">use </span>mp_digest_log::FindLogError;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
@@ -191,42 +190,41 @@
     </span>C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
 {
-    <span class="kw">let </span>substrate_block_hash = header.hash();
-    <span class="kw">match </span>mp_digest_log::find_log(header.digest()) {
-        <span class="prelude-val">Ok</span>(log) =&gt; {
-            <span class="kw">let </span>gen_from_hashes = |hashes: Hashes| -&gt; mc_db::MappingCommitment&lt;B&gt; {
-                mc_db::MappingCommitment { block_hash: substrate_block_hash, starknet_block_hash: hashes.block_hash }
-            };
-            <span class="kw">let </span>gen_from_block = |block| -&gt; mc_db::MappingCommitment&lt;B&gt; {
-                <span class="kw">let </span>hashes = Hashes::from_block(block);
-                gen_from_hashes(hashes)
-            };
+    <span class="comment">// Before storing the new block in the Madara backend database, we want to make sure that the
+    // wrapped Starknet block it contains is the same that we can find in the storage at this height.
+    // Then we will store the two block hashes (wrapper and wrapped) alongside in our db.
 
-            <span class="kw">match </span>log {
-                Log::Post(post_log) =&gt; <span class="kw">match </span>post_log {
-                    PostLog::BlockHash(expect_starknet_block_hash) =&gt; {
-                        <span class="kw">let </span>starknet_block =
-                            overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
-                        <span class="kw">match </span>starknet_block {
-                            <span class="prelude-val">Some</span>(block) =&gt; {
-                                <span class="kw">let </span>got_starknet_block_hash = block.header().hash();
-                                <span class="kw">if </span>got_starknet_block_hash != expect_starknet_block_hash {
-                                    <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-                                        <span class="string">&quot;Starknet block hash mismatch: frontier consensus digest \
-                                         ({expect_starknet_block_hash:?}), db state ({got_starknet_block_hash:?})&quot;
-                                    </span>))
-                                } <span class="kw">else </span>{
-                                    <span class="kw">let </span>mapping_commitment = gen_from_block(block);
-                                    backend.mapping().write_hashes(mapping_commitment)
-                                }
-                            }
-                            <span class="prelude-val">None </span>=&gt; backend.mapping().write_none(substrate_block_hash),
-                        }
+    </span><span class="kw">let </span>substrate_block_hash = header.hash();
+    <span class="kw">match </span>mp_digest_log::find_starknet_block(header.digest()) {
+        <span class="prelude-val">Ok</span>(digest_starknet_block) =&gt; {
+            <span class="comment">// Read the runtime storage in order to find the Starknet block stored under this Substrate block
+            </span><span class="kw">let </span>opt_storage_starknet_block =
+                overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
+            <span class="kw">match </span>opt_storage_starknet_block {
+                <span class="prelude-val">Some</span>(storage_starknet_block) =&gt; {
+                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash();
+                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash();
+                    <span class="comment">// Ensure the two blocks sources (chain storage and block digest) agree on the block content
+                    </span><span class="kw">if </span>digest_starknet_block_hash != storage_starknet_block_hash {
+                        <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+                            <span class="string">&quot;Starknet block hash mismatch: madara consensus digest ({digest_starknet_block_hash:?}), \
+                             db state ({storage_starknet_block_hash:?})&quot;
+                        </span>))
+                    } <span class="kw">else </span>{
+                        <span class="comment">// Success, we write the Starknet to Substate hashes mapping to db
+                        </span><span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment {
+                            block_hash: substrate_block_hash,
+                            starknet_block_hash: digest_starknet_block_hash,
+                        };
+                        backend.mapping().write_hashes(mapping_commitment)
                     }
-                },
+                }
+                <span class="comment">// If there is not Starknet block in this Substrate block, we write it in the db
+                </span><span class="prelude-val">None </span>=&gt; backend.mapping().write_none(substrate_block_hash),
             }
         }
-        <span class="prelude-val">Err</span>(FindLogError::NotFound) =&gt; backend.mapping().write_none(substrate_block_hash),
+        <span class="comment">// If there is not Starknet block in this Substrate block, we write it in the db
+        </span><span class="prelude-val">Err</span>(FindLogError::NotLog) =&gt; backend.mapping().write_none(substrate_block_hash),
         <span class="prelude-val">Err</span>(FindLogError::MultipleLogs) =&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;Multiple logs found&quot;</span>.to_string()),
     }
 }

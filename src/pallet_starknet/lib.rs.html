@@ -1342,7 +1342,7 @@
     <span class="kw">use </span>frame_support::sp_runtime::offchain::storage::StorageValueRef;
     <span class="kw">use </span>frame_support::traits::{OriginTrait, Time};
     <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
-    <span class="kw">use </span>mp_digest_log::{PostLog, MADARA_ENGINE_ID};
+    <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
     <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, BlockTransactions, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
     <span class="kw">use </span>mp_starknet::crypto::commitment;
     <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
@@ -2021,7 +2021,7 @@
             Pending::&lt;T&gt;::kill();
             PendingEvents::&lt;T&gt;::kill();
 
-            <span class="kw">let </span>digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
+            <span class="kw">let </span>digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
             frame_system::Pallet::&lt;T&gt;::deposit_log(digest);
         }
 

@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"mp_digest_log":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"mp_digest_log/enum.FindLogError.html\" title=\"enum mp_digest_log::FindLogError\">FindLogError</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
