@@ -105,7 +105,6 @@ pub mod pallet {
     use blockifier::transaction::objects::AccountTransactionContext;
     use frame_support::pallet_prelude::*;
     use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::sp_tracing::span::Id;
     use frame_support::traits::{OriginTrait, Time};
     use frame_system::pallet_prelude::*;
     use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
