@@ -425,6 +425,7 @@ pub trait StarknetRpcApi {
     /// Get the contract class definition in the given block associated with the given hash
     #[method(name = "getClass")]
     fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
+
     /// Get block information with transaction hashes given the block id
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
