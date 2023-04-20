@@ -75,7 +75,9 @@ Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
 front-end to interact with your chain.
 [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
 
-You can also connect to our customized fork of the Polkadot-JS Apps front-end, deployed on
+You can also connect to our customized fork of the Polkadot-JS Apps front-end,
+deployed on
+
 [Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
 
 You can also connect to our customized fork of the Polkadot-JS Apps front-end,
