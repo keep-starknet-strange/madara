@@ -117,7 +117,8 @@ pub mod pallet {
     use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{
-        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TransactionReceiptWrapper, TxType,
+        EventError, EventWrapper as StarknetEventType, FeeTransferInformation, StateDiffError, Transaction,
+        TransactionReceiptWrapper, TxType,
     };
     use pallet_transaction_payment::OnChargeTransaction;
     use serde_json::from_str;
@@ -215,6 +216,11 @@ pub mod pallet {
     #[pallet::getter(fn pending_events)]
     pub(super) type PendingEvents<T: Config> =
         StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
+
+    /// Information of the transaction needed for the fee transfer.
+    #[pallet::storage]
+    #[pallet::getter(fn fee_information)]
+    pub(super) type FeeInformation<T: Config> = StorageValue<_, FeeTransferInformation, ValueQuery>;
 
     /// The current Starknet block.
     #[pallet::storage]
@@ -441,8 +447,11 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
+            // TODO: Compute real fee value
 
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
@@ -509,6 +518,8 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
+            // TODO: Compute real fee value
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
@@ -517,7 +528,7 @@ pub mod pallet {
             // Associate contract class to class hash
             Self::set_contract_class_hash(class_hash, contract_class.into())?;
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
-
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
 
             Ok(())
@@ -567,7 +578,10 @@ pub mod pallet {
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
+            // TODO: Compute real fee value
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // Associate contract class to class hash
             // TODO: update state root
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
@@ -611,9 +625,11 @@ pub mod pallet {
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
+            // TODO: Compute real fee value (might be different for this)
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
             Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
-
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             Ok(())
         }
 
@@ -1057,8 +1073,8 @@ pub mod pallet {
         ///
         /// Returns an error if a step of the transfer fails
         pub fn transfer_fees(
-            from: [u8; 32],
-            to: [u8; 32],
+            from: ContractAddressWrapper,
+            to: ContractAddressWrapper,
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
             // Create state reader.
@@ -1105,8 +1121,7 @@ pub mod pallet {
                 .map_err(|_| {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
-                })?, // TODO: implement account id to match starknet and use who
-                // FIXME #244
+                })?,
                 call_type: blockifier::execution::entry_point::CallType::Call,
             };
             // FIXME #245
@@ -1188,15 +1203,10 @@ pub mod pallet {
             _who: &T::AccountId,
             _call: &T::RuntimeCall,
             _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-            fee: Self::Balance,
+            _fee: Self::Balance,
             _tip: Self::Balance,
         ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-            // TODO: use real address
-            let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-            let to = Pallet::<T>::current_block().header().sequencer_address;
-
-            Pallet::<T>::transfer_fees(from, to, fee)?;
-            Ok(U256::from(fee))
+            Ok(U256::zero())
         }
 
         /// After the transaction was executed the actual fee can be calculated.
@@ -1221,15 +1231,14 @@ pub mod pallet {
             _who: &T::AccountId,
             _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
             _post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-            corrected_fee: Self::Balance,
-            _tip: Self::Balance,
-            already_withdrawn: Self::LiquidityInfo,
+            _corrected_fee: Self::Balance,
+            tip: Self::Balance,
+            _already_withdrawn: Self::LiquidityInfo,
         ) -> Result<(), TransactionValidityError> {
-            // TODO: use real address
-            let to = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-            let from = Pallet::<T>::current_block().header().sequencer_address;
+            let to = Pallet::<T>::current_block().header().sequencer_address;
+            let FeeTransferInformation { actual_fee, payer } = Pallet::<T>::fee_information();
             // TODO: Remove panic
-            Pallet::<T>::transfer_fees(from, to, already_withdrawn.as_u128() - corrected_fee)
+            Pallet::<T>::transfer_fees(payer, to, (actual_fee + tip).as_u128())
         }
     }
 }
