@@ -1228,6 +1228,11 @@
 <a href="#1228" id="1228">1228</a>
 <a href="#1229" id="1229">1229</a>
 <a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1451,33 +1456,38 @@
     #[pallet::getter(<span class="kw">fn </span>current_block)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CurrentBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, StarknetBlock, ValueQuery&gt;;
 
-    <span class="comment">// Mapping for block number and hashes.
+    <span class="doccomment">/// Mapping for block number and hashes.
+    /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>block_hash)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Twox64Concat, U256, H256, ValueQuery&gt;;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, U256, H256, ValueQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet contract address to the contract&#39;s class hash.
+    /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>contract_class_hash_by_address)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClassHashes&lt;T: Config&gt; =
-        StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery&gt;;
+        StorageMap&lt;<span class="kw">_</span>, Identity, ContractAddressWrapper, ClassHashWrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet class hash to contract class.
+    /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>contract_class_by_class_hash)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClasses&lt;T: Config&gt; =
-        StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ClassHashWrapper, ContractClassWrapper, ValueQuery&gt;;
+        StorageMap&lt;<span class="kw">_</span>, Identity, ClassHashWrapper, ContractClassWrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet contract address to its nonce.
+    /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>nonce)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>Nonces&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractAddressWrapper, NonceWrapper, ValueQuery&gt;;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>Nonces&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, ContractAddressWrapper, NonceWrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet contract storage key to its value.
+    /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>storage)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>StorageView&lt;T: Config&gt; =
-        StorageMap&lt;<span class="kw">_</span>, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery&gt;;
+        StorageMap&lt;<span class="kw">_</span>, Identity, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// The last processed Ethereum block number for L1 messages consumption.
     /// This is used to avoid re-processing the same Ethereum block multiple times.
