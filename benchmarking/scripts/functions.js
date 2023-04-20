@@ -7,6 +7,7 @@ const {
   mint,
   declare,
   deploy,
+  transfer,
 } = require("../../tests/build/util/starknet");
 
 module.exports = {
@@ -28,13 +29,13 @@ async function executeERC20Transfer(userContext, events, done) {
   const user = keyring.addFromUri(`//${accountName}`);
 
   const contractAddress =
-    "0x0000000000000000000000000000000000000000000000000000000000000101";
+    "0x0000000000000000000000000000000000000000000000000000000000000001";
   const amount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
 
   // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
 
-  await batchTransfer(
+  await transfer(
     userContext.api,
     user,
     contractAddress,
