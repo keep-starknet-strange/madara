@@ -172,15 +172,15 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         System::assert_last_event(Event::StarknetEvent(emitted_event.clone()).into());
         let pending = Starknet::pending();
+        let events = Starknet::pending_events();
         let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(transaction, _)| transaction).collect();
-        let transactions_slice: &[Transaction] = &transactions;
-        let (_transaction_commitment, (event_commitment, event_count)) =
-            commitment::calculate_commitments::<PedersenHasher>(transactions_slice);
+        let (_transaction_commitment, event_commitment) =
+            commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
         assert_eq!(
             event_commitment,
             H256::from_str("0x01e95b35377e090a7448a6d09f207557f5fcc962f128ad8416d41c387dda3ec3").unwrap()
         );
-        assert_eq!(event_count, 1);
+        assert_eq!(events.len(), 1);
 
         pretty_assertions::assert_eq!(pending.len(), 1);
 
@@ -401,9 +401,28 @@ fn given_balance_on_account_then_transfer_fees_works() {
                 H256::from_str("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f21470").unwrap(),
             )),
             U256::zero()
-        )
-        // FIXME: #236 when events are added in transfer call check them
-        // TODO check event when the fee transfer will emit an event.
+        );
+        System::assert_last_event(
+            Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec!(
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ),
+                data: bounded_vec!(
+                    // From
+                    H256::from_slice(&from),
+                    // To
+                    H256::from_slice(&SEQUENCER_ADDRESS),
+                    // Amount low
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000064").unwrap(),
+                    // Amount High
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+                ),
+                from_address: [
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170,
+                ],
+            })
+            .into(),
+        );
     })
 }
 #[test]

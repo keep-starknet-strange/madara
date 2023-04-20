@@ -16,7 +16,6 @@ fn verify_tx_version_passes_for_valid_version() {
         version: 1_u8,
         hash: H256::from_low_u64_be(6),
         signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-        events: bounded_vec![EventWrapper::default(), EventWrapper::default()],
         sender_address: [0; 32],
         nonce: U256::zero(),
         ..Transaction::default()
@@ -31,7 +30,6 @@ fn verify_tx_version_fails_for_invalid_version() {
         version: 0_u8,
         hash: H256::from_low_u64_be(6),
         signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-        events: bounded_vec![EventWrapper::default(), EventWrapper::default()],
         sender_address: [0; 32],
         nonce: U256::zero(),
         ..Transaction::default()

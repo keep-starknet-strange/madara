@@ -264,24 +264,13 @@ impl Transaction {
         version: u8,
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
-        events: BoundedVec<EventWrapper, MaxArraySize>,
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
         contract_address_salt: Option<H256>,
     ) -> Self {
-        Self {
-            version,
-            hash,
-            signature,
-            events,
-            sender_address,
-            nonce,
-            call_entrypoint,
-            contract_class,
-            contract_address_salt,
-        }
+        Self { version, hash, signature, sender_address, nonce, call_entrypoint, contract_class, contract_address_salt }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -494,7 +483,6 @@ impl Default for Transaction {
             version: 1_u8,
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
-            events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),

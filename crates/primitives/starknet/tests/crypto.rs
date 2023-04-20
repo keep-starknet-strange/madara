@@ -17,7 +17,6 @@ fn test_merkle_tree() {
             version: 0_u8,
             hash: H256::from_low_u64_be(6),
             signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-            events: bounded_vec![EventWrapper::default(), EventWrapper::default()],
             sender_address: [0; 32],
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
@@ -28,7 +27,6 @@ fn test_merkle_tree() {
             version: 0_u8,
             hash: H256::from_low_u64_be(28),
             signature: bounded_vec![H256::from_low_u64_be(40)],
-            events: bounded_vec![],
             sender_address: [1; 32],
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
@@ -37,11 +35,12 @@ fn test_merkle_tree() {
         },
     ];
     let tx_com = calculate_transaction_commitment::<PedersenHasher>(&txs);
-    let event_com = calculate_event_commitment::<PedersenHasher>(&txs);
+    let events = vec![EventWrapper::default(), EventWrapper::default()];
+    let event_com = calculate_event_commitment::<PedersenHasher>(&events);
     // The values we test ours against are computed from the sequencer test.
     assert_eq!(
         H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02").unwrap(),
-        event_com.0
+        event_com
     );
     assert_eq!(H256::from_str("0x054c0fddf3aaf1ca03271712b323822647b66042ccc418ba1d7fb852aebfd2da").unwrap(), tx_com);
 }
