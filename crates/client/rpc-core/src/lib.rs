@@ -9,14 +9,15 @@ mod tests;
 
 use std::collections::HashMap;
 
+use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine;
-use blockifier::execution::contract_class::ContractClass;
 use hex::ToHex;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use mp_starknet::execution::ContractClassWrapper;
 use serde::{Deserialize, Serialize};
-use serde_json::to_string;
+use serde_json::from_slice;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 
 pub type FieldElement = String;
@@ -249,19 +250,38 @@ pub struct ContractClass {
 /// Starknet contract class
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
-pub enum StarknetContractClass {
+pub enum RPCContractClass {
     DeprecatedContractClass(DeprecatedContractClass),
     ContractClass(ContractClass),
 }
 
-impl From<BlockifierContractClass> for StarknetContractClass {
-    fn from(value: BlockifierContractClass) -> Self {
-        StarknetContractClass::DeprecatedContractClass(DeprecatedContractClass {
-            program: general_purpose::STANDARD.encode(to_string(&value.program).unwrap().as_bytes()),
-            entry_points_by_type: to_deprecated_entrypoint_by_type(value.entry_points_by_type),
-            abi: None,
-        })
-    }
+/// Returns a `ContractClassWrapper` from a `RPCContractClass`
+pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
+    Ok(RPCContractClass::DeprecatedContractClass(DeprecatedContractClass {
+        program: compress_and_encode_base64(&contract_class_wrapped.program)?,
+        entry_points_by_type: to_deprecated_entrypoint_by_type(from_slice(
+            &contract_class_wrapped.entry_points_by_type,
+        )?),
+        abi: None,
+    }))
+}
+
+/// Returns a base64 encoded and compressed string of the input bytes
+fn compress_and_encode_base64(data: &[u8]) -> Result<String> {
+    let data_compressed = compress(data)?;
+    Ok(encode_base64(&data_compressed))
+}
+
+/// Returns a compressed vector of bytes
+fn compress(data: &[u8]) -> Result<Vec<u8>> {
+    let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
+    serde_json::to_writer(&mut gzip_encoder, data)?;
+    Ok(gzip_encoder.finish()?)
+}
+
+/// Returns a base64 encoded string of the input bytes
+fn encode_base64(data: &[u8]) -> String {
+    general_purpose::STANDARD.encode(data)
 }
 
 /// Returns a deprecated entry point by type from hash map of entry point types to entrypoint
@@ -289,7 +309,7 @@ impl From<EntryPoint> for DeprecatedCairoEntryPoint {
         let selector = add_prefix(&selector);
         let offset: String = value.offset.0.to_be_bytes().as_slice().encode_hex();
         let offset = add_prefix(remove_leading_zeros(&offset));
-        DeprecatedCairoEntryPoint { selector, offset }
+        Self { selector, offset }
     }
 }
 
@@ -326,5 +346,5 @@ pub trait StarknetRpcApi {
 
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
-    fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<StarknetContractClass>;
+    fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
 }
