@@ -104,7 +104,7 @@ export function describeDevMadara(
       madaraProcess = init.runningNode;
       context.rpcPort = init.rpcPort;
 
-      // Context is given prior to this assignement, so doing
+      // Context is given prior to this assignment, so doing
       // context = init.context will fail because it replace the variable;
 
       context._polkadotApis = [];
@@ -118,7 +118,7 @@ export function describeDevMadara(
         // Necessary hack to allow polkadotApi to finish its internal metadata loading
         // apiPromise.isReady unfortunately doesn't wait for those properly
         await new Promise((resolve) => {
-          setTimeout(resolve, 500);
+          setTimeout(resolve, 1000);
         });
 
         return apiPromise;
@@ -126,8 +126,6 @@ export function describeDevMadara(
 
       context.polkadotApi = await context.createPolkadotApi();
 
-      // Bug WASM not initialized
-      await context.polkadotApi.isReady;
       const keyringSr25519 = new Keyring({ type: "sr25519" });
       context.alice = keyringSr25519.addFromUri("//Alice");
 

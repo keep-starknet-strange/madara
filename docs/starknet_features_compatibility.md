@@ -1,5 +1,5 @@
-
 # StarkNet Features Compatibility
+
 ## Block
 
 | Feature                | State              |
@@ -58,12 +58,12 @@
 
 ## Decentralisation
 
-| Feature                                 | State              |
-| --------------------------------------- | ------------------ |
-| Single node                             | :white_check_mark: |
-| Small pool of nodes  (POA)              | :construction:     |
-| Large pool of nodes  (Base consensus)   | :construction:     |
-| Large pool of nodes  (Custom consensus) | :construction:     |
+| Feature                                | State              |
+| -------------------------------------- | ------------------ |
+| Single node                            | :white_check_mark: |
+| Small pool of nodes (POA)              | :construction:     |
+| Large pool of nodes (Base consensus)   | :construction:     |
+| Large pool of nodes (Custom consensus) | :construction:     |
 
 ## Optimisation
 

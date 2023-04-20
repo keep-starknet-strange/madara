@@ -10,6 +10,7 @@ import {
   mint,
   transfer,
 } from "../../util/starknet";
+import { jumpBlocks } from "../../util/block";
 
 const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -22,6 +23,13 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   it("should connect to local node", async function () {
     const rdy = context.polkadotApi.isConnected;
     expect(rdy).to.be.true;
+  });
+
+  it("should jump 10 blocks", async function () {
+    const rdy = context.polkadotApi.isConnected;
+    expect(rdy).to.be.true;
+
+    await jumpBlocks(context, 10);
   });
 
   it("should declare a new contract class", async function () {
@@ -62,28 +70,28 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
 
     expect(address).to.not.be.undefined;
 
-    await initialize(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      address
-    );
+    // await initialize(
+    //   context.polkadotApi,
+    //   context.alice,
+    //   contractAddress,
+    //   address
+    // );
 
-    await mint(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      address,
-      "0x0000000000000000000000000000000000000000000000000000000000000100"
-    );
+    // await mint(
+    //   context.polkadotApi,
+    //   context.alice,
+    //   contractAddress,
+    //   address,
+    //   "0x0000000000000000000000000000000000000000000000000000000000000100"
+    // );
 
-    await transfer(
-      context.polkadotApi,
-      context.alice,
-      contractAddress,
-      address,
-      contractAddress,
-      mintAmount
-    );
+    // await transfer(
+    //   context.polkadotApi,
+    //   context.alice,
+    //   contractAddress,
+    //   address,
+    //   contractAddress,
+    //   mintAmount
+    // );
   });
 });

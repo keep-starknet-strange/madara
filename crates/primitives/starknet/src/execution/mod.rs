@@ -1,10 +1,17 @@
 //! Starknet execution functionality.
 
+/// Types related to entrypoints.
+pub mod types;
+
 use alloc::sync::Arc;
 use alloc::{format, vec};
 
+use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallEntryPoint, CallType};
+use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::state::cached_state::CachedState;
+use blockifier::state::state_api::StateReader;
+use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
@@ -14,11 +21,16 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
 
+use self::types::{EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper};
+use crate::block::serialize::SerializeBlockContext;
+use crate::block::Block as StarknetBlock;
+use crate::transaction::types::MaxArraySize;
+
 /// The address of a contract.
 pub type ContractAddressWrapper = [u8; 32];
 
 /// Maximum vector sizes.
-type MaxCalldataSize = ConstU32<4294967295>;
+// type MaxCalldataSize = ConstU32<4294967295>;
 // type MaxAbiSize = ConstU32<4294967295>;
 type MaxProgramSize = ConstU32<4294967295>;
 type MaxEntryPoints = ConstU32<4294967295>;
@@ -201,7 +213,7 @@ pub struct CallEntryPointWrapper {
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
     pub entrypoint_selector: Option<H256>,
     /// The Calldata
-    pub calldata: BoundedVec<U256, MaxCalldataSize>,
+    pub calldata: BoundedVec<U256, MaxArraySize>,
     /// The storage address
     pub storage_address: ContractAddressWrapper,
     /// The caller address
@@ -224,7 +236,7 @@ impl CallEntryPointWrapper {
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,
         entrypoint_selector: Option<H256>,
-        calldata: BoundedVec<U256, MaxCalldataSize>,
+        calldata: BoundedVec<U256, MaxArraySize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
     ) -> Self {
@@ -252,6 +264,39 @@ impl CallEntryPointWrapper {
             caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
             call_type: CallType::Call,
         }
+    }
+
+    /// Executes an entry point.
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The entry point to execute.
+    /// * `state` - The state to execute the entry point on.
+    /// * `block` - The block to execute the entry point on.
+    /// * `fee_token_address` - The fee token address.
+    ///
+    /// # Returns
+    ///
+    /// * The result of the entry point execution.
+    pub fn execute<S: StateReader>(
+        &self,
+        state: &mut CachedState<S>,
+        block: StarknetBlock,
+        fee_token_address: ContractAddressWrapper,
+    ) -> EntryPointExecutionResultWrapper<CallInfo> {
+        let call_entry_point = self.to_starknet_call_entry_point();
+
+        let execution_resources = &mut ExecutionResources::default();
+        let execution_context = &mut ExecutionContext::default();
+        let account_context = AccountTransactionContext::default();
+
+        // Create the block context.
+        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+            .map_err(|_| EntryPointExecutionErrorWrapper::BlockContextSerializationError)?;
+
+        call_entry_point
+            .execute(state, execution_resources, execution_context, &block_context, &account_context)
+            .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution)
     }
 }
 impl Default for CallEntryPointWrapper {

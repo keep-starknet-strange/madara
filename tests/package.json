@@ -46,11 +46,13 @@
     "build-clean": "rm -r node_modules && npm i && npm run build",
     "current-test": "mocha -r ts-node/register",
     "lint": "npx prettier --write --ignore-path .gitignore '**/*.(yml|js|ts|json)'",
+    "lint-check": "npx prettier --check --ignore-path .gitignore '**/*.(yml|js|ts|json)'",
     "clean": "rimraf *.log binaries/* runtimes/* specs/*"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@keep-starknet-strange/madara-api-augment": "^0.1.4",
     "@metamask/eth-sig-util": "^4.0.1",
     "@polkadot/api": "^10.1.4",
     "@polkadot/api-augment": "^10.1.4",

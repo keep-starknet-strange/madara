@@ -20,8 +20,11 @@ targets = ["x86_64-unknown-linux-gnu"]
 name = "madara"
 
 [dependencies]
+async-trait = "0.1"
+log = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
+serde = { workspace = true }
 
 sc-cli = { workspace = true }
 sp-core = { workspace = true }
@@ -33,6 +36,7 @@ sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sc-consensus-aura = { workspace = true }
 sp-consensus-aura = { workspace = true }
+sc-consensus-manual-seal = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-grandpa = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
@@ -41,8 +45,11 @@ sp-runtime = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-inherents = { workspace = true }
 sp-keyring = { workspace = true }
+sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
 pallet-transaction-payment = { workspace = true }
+sp-trie = { workspace = true, features = ["default"] }
+
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -53,6 +60,7 @@ sp-blockchain = { workspace = true }
 sp-block-builder = { workspace = true }
 # Substrate client dependencies
 sc-rpc-api = { workspace = true }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
 sc-basic-authorship = { workspace = true }
 # Substrate frame dependencies
 pallet-transaction-payment-rpc = { workspace = true }
@@ -71,8 +79,8 @@ mc-storage = { path = "../client/storage" }
 mc-mapping-sync = { path = "../client/mapping-sync" }
 pallet-starknet = { path = "../pallets/starknet" }
 mp-starknet = { workspace = true }
-blockifier = {workspace = true}
-hex = {workspace = true}
+blockifier = { workspace = true }
+hex = { workspace = true }
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }

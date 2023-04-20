@@ -10,6 +10,7 @@ import type {
   Null,
   Option,
   Result,
+  U8aFixed,
   Vec,
   u128,
   u32,
@@ -125,6 +126,16 @@ declare module "@polkadot/api-base/types/events" {
       [key: string]: AugmentedEvent<ApiType>;
     };
     starknet: {
+      /**
+       * Emitted when fee token address is changed. This is emitted by the
+       * `set_fee_token_address` extrinsic. [old_fee_token_address,
+       * new_fee_token_address]
+       */
+      FeeTokenAddressChanged: AugmentedEvent<
+        ApiType,
+        [oldFeeTokenAddress: U8aFixed, newFeeTokenAddress: U8aFixed],
+        { oldFeeTokenAddress: U8aFixed; newFeeTokenAddress: U8aFixed }
+      >;
       KeepStarknetStrange: AugmentedEvent<ApiType, []>;
       /** Regular Starknet event */
       StarknetEvent: AugmentedEvent<

@@ -101,7 +101,7 @@ pub struct DeserializeEventWrapper {
     pub keys: Vec<String>,
     /// The data of the event.
     pub data: Vec<String>,
-    /// The address that emited the event
+    /// The address that emitted the event
     pub from_address: String,
 }
 
@@ -217,16 +217,6 @@ impl TryFrom<DeserializeTransaction> for Transaction {
         let signature = BoundedVec::<H256, MaxArraySize>::try_from(signature)
             .map_err(|_| DeserializeTransactionError::SignatureExceedsMaxSize)?;
 
-        // Convert events to BoundedVec<EventWrapper, MaxArraySize> and check if it exceeds max size
-        let events = d
-            .events
-            .into_iter()
-            .map(EventWrapper::try_from)
-            .collect::<Result<Vec<EventWrapper>, DeserializeEventError>>()
-            .map_err(DeserializeTransactionError::InvalidEvents)?;
-        let events = BoundedVec::<EventWrapper, MaxArraySize>::try_from(events)
-            .map_err(|_| DeserializeTransactionError::EventsExceedMaxSize)?;
-
         // Convert sender_address to ContractAddressWrapper
         let sender_address = ContractAddressWrapper::from_hex(remove_prefix(&d.sender_address))
             .map_err(DeserializeTransactionError::InvalidSenderAddress)?;
@@ -239,7 +229,7 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .map_err(DeserializeTransactionError::InvalidCallEntryPoint)?;
 
         // Create Transaction with validated and converted fields
-        Ok(Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, ..Transaction::default() })
+        Ok(Self { version, hash, signature, sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
 

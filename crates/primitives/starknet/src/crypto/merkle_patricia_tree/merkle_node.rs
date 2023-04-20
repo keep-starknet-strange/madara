@@ -104,7 +104,7 @@ impl From<Direction> for bool {
 impl BinaryNode {
     /// Maps the key's bit at the binary node's height to a [Direction].
     ///
-    /// This can be used to check which direction the key descibes in the context
+    /// This can be used to check which direction the key describes in the context
     /// of this binary node i.e. which direction the child along the key's path would
     /// take.
     ///
@@ -142,7 +142,7 @@ impl BinaryNode {
     ///
     /// Does nothing if the hash is already [Some].
     ///
-    /// If either childs hash is [None], then the hash cannot
+    /// If either child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
     pub(crate) fn calculate_hash<H: CryptoHasher>(&mut self) {
         if self.hash.is_some() {
@@ -151,12 +151,12 @@ impl BinaryNode {
 
         let left = match self.left.borrow().hash() {
             Some(hash) => hash,
-            None => unreachable!("subtrees have to be commited first"),
+            None => unreachable!("subtrees have to be committed first"),
         };
 
         let right = match self.right.borrow().hash() {
             Some(hash) => hash,
-            None => unreachable!("subtrees have to be commited first"),
+            None => unreachable!("subtrees have to be committed first"),
         };
 
         self.hash = Some(H::hash(left, right));
@@ -256,7 +256,7 @@ impl EdgeNode {
 
         let child = match self.child.borrow().hash() {
             Some(hash) => hash,
-            None => unreachable!("subtree has to be commited before"),
+            None => unreachable!("subtree has to be committed before"),
         };
         let mut temp_path = self.path.clone();
         temp_path.force_align();

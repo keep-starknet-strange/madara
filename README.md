@@ -1,3 +1,5 @@
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="256">
   <br />
@@ -10,6 +12,8 @@
 
 <div align="center">
 <br />
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
 [![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
@@ -19,9 +23,26 @@
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
-Welcome to **Madara**, a blazing fast ⚡ Starknet sequencer built on the Substrate framework and written in Rust. The project aims to provide a highly performant and scalable zk-rollup for general-purpose smart contracts. We're always looking for contributors, so dive in and explore the code!
+Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
+ designed to make your projects soar!
 
-Experience the flexibility and power of Madara, enabling you to launch your very own Starknet-based appchain or L3. Harness the capabilities of Cairo while maintaining complete control over your custom appchain, tailored to your specific requirements. Madara is designed to empower a multitude of projects, fueling growth within the Starknet ecosystem.
+Built on the robust Substrate framework and fast, thanks to Rust 🦀,
+Madara delivers unmatched performance and scalability to power
+ your Starknet-based Validity Rollup chain.
+
+Dive into the world of Madara and join our passionate community of contributors!
+Together, we're pushing the boundaries of what's possible within the Starknet ecosystem.
+
+🚀 Discover the unparalleled flexibility and might of Madara,
+your gateway to launching your very own Starknet appchain or L3.
+Harness the prowess of Cairo, while maintaining complete control over your
+ tailor-made appchain, designed to meet your project's unique demands.
+
+Experience the flexibility and power of Madara, enabling you to launch your very
+own Starknet appchain or L3. Harness the capabilities of Cairo while maintaining
+complete control over your custom appchain, tailored to your specific
+requirements. Madara is designed to empower a multitude of projects, fueling
+growth within the Starknet ecosystem.
 
 ## 🌟 Features
 
@@ -34,7 +55,8 @@ Experience the flexibility and power of Madara, enabling you to launch your very
 
 ## 📚 Documentation
 
-Get started with our comprehensive documentation, which covers everything from project structure and architecture to benchmarking and running Madara:
+Get started with our comprehensive documentation, which covers everything from
+project structure and architecture to benchmarking and running Madara:
 
 - [Architecture Overview](./docs/architecture.md)
 - [Project Structure](./docs/project-structure.md)
@@ -43,15 +65,29 @@ Get started with our comprehensive documentation, which covers everything from p
 
 ## 🏗️ Build & Run
 
-Want to dive straight in? Check out our [Getting Started Guide](./docs/getting-started.md) for instructions on how to build and run Madara on your local machine.
+Want to dive straight in? Check out our
+[Getting Started Guide](./docs/getting-started.md) for instructions on how to
+build and run Madara on your local machine.
 
-## 🌐 Connect to Polkadot-JS Apps
+## 🌐 Connect to the dev webapp
 
-Once your Madara node is up and running, you can connect to the Polkadot-JS Apps front-end to interact with your chain. [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
+Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
+front-end to interact with your chain.
+[Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
+
+You can also connect to our customized fork of the Polkadot-JS Apps front-end,
+deployed on
+
+[Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
+
+You can also connect to our customized fork of the Polkadot-JS Apps front-end,
+ deployed on [Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
 
 ## 🤝 Contribute
 
-We're always looking for passionate developers to join our community and contribute to Madara. Check out our [contributing guide](./docs/CONTRIBUTING.md) for more information on how to get started.
+We're always looking for passionate developers to join our community and
+contribute to Madara. Check out our [contributing guide](./docs/CONTRIBUTING.md)
+for more information on how to get started.
 
 ## 📖 License
 
@@ -63,7 +99,8 @@ Happy coding! 🎉
 
 ## Contributors ✨
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks goes to these wonderful people
+([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -86,6 +123,11 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://zediogoviana.github.io/"><img src="https://avatars.githubusercontent.com/u/25623039?v=4?s=100" width="100px;" alt="Zé Diogo"/><br /><sub><b>Zé Diogo</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=zediogoviana" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Matth26"><img src="https://avatars.githubusercontent.com/u/9798638?v=4?s=100" width="100px;" alt="Matthias Monnier"/><br /><sub><b>Matthias Monnier</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Matth26" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/glihm"><img src="https://avatars.githubusercontent.com/u/7962849?v=4?s=100" width="100px;" alt="glihm"/><br /><sub><b>glihm</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=glihm" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/0xEniotna"><img src="https://avatars.githubusercontent.com/u/101047205?v=4?s=100" width="100px;" alt="Antoine"/><br /><sub><b>Antoine</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=0xEniotna" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/clementwalter/"><img src="https://avatars.githubusercontent.com/u/18620296?v=4?s=100" width="100px;" alt="Clément Walter"/><br /><sub><b>Clément Walter</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ClementWalter" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Eikix"><img src="https://avatars.githubusercontent.com/u/66871571?v=4?s=100" width="100px;" alt="Elias Tazartes"/><br /><sub><b>Elias Tazartes</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Eikix" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -95,4 +137,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
-This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+This project follows the
+[all-contributors](https://github.com/all-contributors/all-contributors)
+specification. Contributions of any kind welcome!

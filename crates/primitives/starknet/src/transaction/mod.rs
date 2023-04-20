@@ -18,13 +18,14 @@ use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPo
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
     ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent, Fee,
-    InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionSignature, TransactionVersion,
+    InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt,
+    TransactionSignature, TransactionVersion,
 };
 use starknet_api::StarknetApiError;
 
 use self::types::{
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
-    TransactionExecutionResultWrapper, TxType,
+    TransactionExecutionResultWrapper, TransactionReceiptWrapper, TxType,
 };
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
@@ -141,6 +142,36 @@ impl Default for EventWrapper {
     }
 }
 
+/// Try to convert a `&TransactionReceipt` into a `TransactionReceiptWrapper`.
+impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
+    type Error = EventError;
+
+    // TODO: add block hash and block number (#252)
+    fn try_into(self) -> Result<TransactionReceiptWrapper, Self::Error> {
+        let _events: Result<vec::Vec<EventWrapper>, EventError> = self
+            .output
+            .events()
+            .iter()
+            .map(|e| {
+                EventWrapper::builder().with_event_content(e.content.clone()).with_from_address(e.from_address).build()
+            })
+            .collect();
+
+        Ok(TransactionReceiptWrapper {
+            transaction_hash: H256::from_slice(self.transaction_hash.0.bytes()),
+            actual_fee: U256::from(self.output.actual_fee().0),
+            tx_type: match self.output {
+                TransactionOutput::Declare(_) => TxType::DeclareTx,
+                TransactionOutput::DeployAccount(_) => TxType::DeployAccountTx,
+                TransactionOutput::Invoke(_) => TxType::InvokeTx,
+                TransactionOutput::L1Handler(_) => TxType::L1HandlerTx,
+                _ => TxType::InvokeTx,
+            },
+            events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
+        })
+    }
+}
+
 /// Try to convert a `&Transaction` into a `DeployAccountTransaction`.
 impl TryInto<DeployAccountTransaction> for &Transaction {
     type Error = StarknetApiError;
@@ -233,24 +264,13 @@ impl Transaction {
         version: u8,
         hash: H256,
         signature: BoundedVec<H256, MaxArraySize>,
-        events: BoundedVec<EventWrapper, MaxArraySize>,
         sender_address: ContractAddressWrapper,
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
         contract_address_salt: Option<H256>,
     ) -> Self {
-        Self {
-            version,
-            hash,
-            signature,
-            events,
-            sender_address,
-            nonce,
-            call_entrypoint,
-            contract_class,
-            contract_address_salt,
-        }
+        Self { version, hash, signature, sender_address, nonce, call_entrypoint, contract_class, contract_address_salt }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -500,12 +520,22 @@ impl Default for Transaction {
             version: 1_u8,
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
-            events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
+        }
+    }
+}
+
+impl Default for TransactionReceiptWrapper {
+    fn default() -> Self {
+        Self {
+            transaction_hash: H256::default(),
+            actual_fee: U256::default(),
+            tx_type: TxType::InvokeTx,
+            events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
         }
     }
 }
