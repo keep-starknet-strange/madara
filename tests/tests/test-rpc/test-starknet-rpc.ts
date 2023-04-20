@@ -198,5 +198,13 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(status["sync_status"]["highest_block_hash"]).to.be.equal(
       current_block["block_hash"]
     );
+  it("getBlockWithTxHashes", async function () {
+    const block = await providerRPC.getBlockHashAndNumber();
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+    const block_with_tx_hashes = await providerRPC.getBlockWithTxHashes(block_hash);
+
+    console.log(`Block with tx hashes: ${block_with_tx_hashes}`);
+    expect(block_with_tx_hashes).to.not.be.undefined;
   });
+});
 });
