@@ -98,8 +98,8 @@ export function describeDevMadara(
         : {
             runningNode: null,
             p2pPort: 19931,
-            wsPort: 19933,
-            rpcPort: 19932,
+            wsPort: 9944,
+            rpcPort: 9933,
           };
       madaraProcess = init.runningNode;
       context.rpcPort = init.rpcPort;
@@ -152,9 +152,8 @@ export function describeDevMadara(
             ? transactions
             : [transactions];
         for await (const call of txs) {
-          console.log(call.isSigned);
           if (typeof call == "string") {
-            // Starknet
+            // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
             //   hash: (
@@ -177,11 +176,6 @@ export function describeDevMadara(
               hash: (await call.send()).toString(),
             });
           } else {
-            // Bug WASM not initialized
-            await context.polkadotApi.isReady;
-            const keyringSr25519 = new Keyring({ type: "sr25519" });
-            const alice = keyringSr25519.addFromUri("//Alice");
-
             const tx = context.polkadotApi.tx(call);
             debug(
               `- Unsigned: ${tx.method.section}.${tx.method.method}(${tx.args
@@ -190,7 +184,7 @@ export function describeDevMadara(
             );
             results.push({
               type: "sub",
-              hash: (await call.signAndSend(alice)).toString(),
+              hash: (await call.send()).toString(),
             });
           }
         }

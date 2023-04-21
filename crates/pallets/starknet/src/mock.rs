@@ -76,11 +76,16 @@ impl system::Config for Test {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+    pub const UnsignedPriority: u64 = 1 << 20;
+}
+
 impl pallet_starknet::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+    type UnsignedPriority = UnsignedPriority;
 }
 parameter_types! {
     pub FeeMultiplier: Multiplier = Multiplier::one();
