@@ -165,6 +165,31 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
@@ -270,6 +295,31 @@
     </span><span class="kw">pub </span>events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
 }
 
+<span class="doccomment">/// Information needed to perform the fee transfer.
+</span><span class="attr">#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    Default,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="kw">pub struct </span>FeeTransferInformation {
+    <span class="doccomment">/// Actual fees paid for the transaction.
+    </span><span class="kw">pub </span>actual_fee: U256,
+    <span class="doccomment">/// Address of the person paying the fees.
+    </span><span class="kw">pub </span>payer: ContractAddressWrapper,
+}
+<span class="kw">impl </span>FeeTransferInformation {
+    <span class="doccomment">/// Creates a new instance of FeeTransferInformation
+    </span><span class="kw">pub fn </span>new(actual_fee: U256, payer: ContractAddressWrapper) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ actual_fee, payer }
+    }
+}
 <span class="doccomment">/// Representation of a Starknet event.
 </span><span class="attr">#[derive(
     Clone,

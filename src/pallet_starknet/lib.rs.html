@@ -1233,6 +1233,15 @@
 <a href="#1233" id="1233">1233</a>
 <a href="#1234" id="1234">1234</a>
 <a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1352,7 +1361,8 @@
     <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
     <span class="kw">use </span>mp_starknet::transaction::types::{
-        EventError, EventWrapper <span class="kw">as </span>StarknetEventType, StateDiffError, Transaction, TransactionReceiptWrapper, TxType,
+        EventError, EventWrapper <span class="kw">as </span>StarknetEventType, FeeTransferInformation, StateDiffError, Transaction,
+        TransactionReceiptWrapper, TxType,
     };
     <span class="kw">use </span>pallet_transaction_payment::OnChargeTransaction;
     <span class="kw">use </span>serde_json::from_str;
@@ -1450,6 +1460,11 @@
     #[pallet::getter(<span class="kw">fn </span>pending_events)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>PendingEvents&lt;T: Config&gt; =
         StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;StarknetEventType, MaxTransactions&gt;, ValueQuery&gt;;
+
+    <span class="doccomment">/// Information of the transaction needed for the fee transfer.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>fee_information)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>FeeInformation&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, FeeTransferInformation, ValueQuery&gt;;
 
     <span class="doccomment">/// The current Starknet block.
     </span><span class="attr">#[pallet::storage]
@@ -1676,10 +1691,13 @@
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             }
+            FeeInformation::&lt;T&gt;::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
+            <span class="comment">// TODO: Compute real fee value
 
-            <span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
+            </span><span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
+            <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
-            <span class="comment">// Append the transaction to the pending transactions.
+            // Append the transaction to the pending transactions.
             </span>Pending::&lt;T&gt;::try_append((transaction, receipt)).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>(())
@@ -1744,6 +1762,8 @@
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             }
+            <span class="comment">// TODO: Compute real fee value
+            </span>FeeInformation::&lt;T&gt;::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
             <span class="comment">// Append the transaction to the pending transactions.
             </span>Pending::&lt;T&gt;::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
@@ -1752,8 +1772,8 @@
             <span class="comment">// Associate contract class to class hash
             </span><span class="self">Self</span>::set_contract_class_hash(class_hash, contract_class.into())<span class="question-mark">?</span>;
             <span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
-
-            <span class="comment">// TODO: Update class hashes root
+            <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
+            // TODO: Update class hashes root
 
             </span><span class="prelude-val">Ok</span>(())
         }
@@ -1802,8 +1822,11 @@
             <span class="comment">// Append the transaction to the pending transactions.
             </span>Pending::&lt;T&gt;::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
+            <span class="comment">// TODO: Compute real fee value
+            </span>FeeInformation::&lt;T&gt;::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
-            <span class="comment">// Associate contract class to class hash
+            <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
+            // Associate contract class to class hash
             // TODO: update state root
             </span><span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
 
@@ -1846,10 +1869,12 @@
             <span class="comment">// Append the transaction to the pending transactions.
             </span>Pending::&lt;T&gt;::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::TooManyPendingTransactions))<span class="question-mark">?</span>;
+            <span class="comment">// TODO: Compute real fee value (might be different for this)
+            </span>FeeInformation::&lt;T&gt;::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
             <span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
-
-            <span class="prelude-val">Ok</span>(())
+            <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
+            </span><span class="prelude-val">Ok</span>(())
         }
 
         <span class="doccomment">/// Set the value of the fee token address.
@@ -2292,8 +2317,8 @@
         ///
         /// Returns an error if a step of the transfer fails
         </span><span class="kw">pub fn </span>transfer_fees(
-            from: [u8; <span class="number">32</span>],
-            to: [u8; <span class="number">32</span>],
+            from: ContractAddressWrapper,
+            to: ContractAddressWrapper,
             amount: &lt;StarknetFee <span class="kw">as </span>OnChargeTransaction&lt;T&gt;&gt;::Balance,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
             <span class="comment">// Create state reader.
@@ -2340,9 +2365,8 @@
                 .map_err(|<span class="kw">_</span>| {
                     <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
                     TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
-                })<span class="question-mark">?</span>, <span class="comment">// TODO: implement account id to match starknet and use who
-                // FIXME #244
-                </span>call_type: blockifier::execution::entry_point::CallType::Call,
+                })<span class="question-mark">?</span>,
+                call_type: blockifier::execution::entry_point::CallType::Call,
             };
             <span class="comment">// FIXME #245
             </span><span class="kw">let </span><span class="kw-2">mut </span>execution_context = ExecutionContext::default(); <span class="comment">// TODO: check if it needs a real value.
@@ -2423,15 +2447,10 @@
             _who: <span class="kw-2">&amp;</span>T::AccountId,
             _call: <span class="kw-2">&amp;</span>T::RuntimeCall,
             _dispatch_info: <span class="kw-2">&amp;</span>DispatchInfoOf&lt;T::RuntimeCall&gt;,
-            fee: <span class="self">Self</span>::Balance,
+            _fee: <span class="self">Self</span>::Balance,
             _tip: <span class="self">Self</span>::Balance,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::LiquidityInfo, TransactionValidityError&gt; {
-            <span class="comment">// TODO: use real address
-            </span><span class="kw">let </span>from = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>];
-            <span class="kw">let </span>to = Pallet::&lt;T&gt;::current_block().header().sequencer_address;
-
-            Pallet::&lt;T&gt;::transfer_fees(from, to, fee)<span class="question-mark">?</span>;
-            <span class="prelude-val">Ok</span>(U256::from(fee))
+            <span class="prelude-val">Ok</span>(U256::zero())
         }
 
         <span class="doccomment">/// After the transaction was executed the actual fee can be calculated.
@@ -2456,15 +2475,14 @@
             _who: <span class="kw-2">&amp;</span>T::AccountId,
             _dispatch_info: <span class="kw-2">&amp;</span>DispatchInfoOf&lt;T::RuntimeCall&gt;,
             _post_info: <span class="kw-2">&amp;</span>PostDispatchInfoOf&lt;T::RuntimeCall&gt;,
-            corrected_fee: <span class="self">Self</span>::Balance,
-            _tip: <span class="self">Self</span>::Balance,
-            already_withdrawn: <span class="self">Self</span>::LiquidityInfo,
+            _corrected_fee: <span class="self">Self</span>::Balance,
+            tip: <span class="self">Self</span>::Balance,
+            _already_withdrawn: <span class="self">Self</span>::LiquidityInfo,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
-            <span class="comment">// TODO: use real address
-            </span><span class="kw">let </span>to = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>];
-            <span class="kw">let </span>from = Pallet::&lt;T&gt;::current_block().header().sequencer_address;
+            <span class="kw">let </span>to = Pallet::&lt;T&gt;::current_block().header().sequencer_address;
+            <span class="kw">let </span>FeeTransferInformation { actual_fee, payer } = Pallet::&lt;T&gt;::fee_information();
             <span class="comment">// TODO: Remove panic
-            </span>Pallet::&lt;T&gt;::transfer_fees(from, to, already_withdrawn.as_u128() - corrected_fee)
+            </span>Pallet::&lt;T&gt;::transfer_fees(payer, to, (actual_fee + tip).as_u128())
         }
     }
 }
