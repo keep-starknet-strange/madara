@@ -199,8 +199,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// # Arguments
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
-    let deployer_account = 1;
-    let deployer_origin = RuntimeOrigin::signed(deployer_account);
+    let deployer_origin = RuntimeOrigin::none();
     for b in System::block_number()..=n {
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);

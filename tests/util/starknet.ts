@@ -101,7 +101,6 @@ export function declare(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
     callEntrypoint: {
@@ -143,7 +142,6 @@ export function deploy(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 1, // nonce of the transaction
     callEntrypoint: {
@@ -180,7 +178,6 @@ export async function initialize(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 1, // nonce of the transaction
     callEntrypoint: {
@@ -219,7 +216,6 @@ export async function mint(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 1, // nonce of the transaction
     callEntrypoint: {
@@ -257,7 +253,6 @@ export function transfer(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 3, // nonce of the transaction
     callEntrypoint: {
@@ -295,7 +290,6 @@ export function batchTransfer(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 3, // nonce of the transaction
     callEntrypoint: {

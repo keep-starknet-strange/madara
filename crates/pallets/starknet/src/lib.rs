@@ -670,25 +670,36 @@ pub mod pallet {
         /// By default unsigned transactions are disallowed, but implementing the validator
         /// here we make sure that some particular calls (in this case all calls)
         /// are being whitelisted and marked as valid.
-        fn validate_unsigned(_source: TransactionSource, _call: &Self::Call) -> TransactionValidity {
+        fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
             // TODO: Call `__validate__` entrypoint of the contract. #69
 
-            ValidTransaction::with_tag_prefix("starknet")
-			// We set base priority to 2**20 and hope it's included before any other
-			// transactions in the pool. We could add some mechanism to increase priority
-			// based on some tip, but it's not clear if it's needed.
-			.priority(T::UnsignedPriority::get())
-			.and_provides("starknet")
-			// The transaction is only valid for next 5 blocks. After that it's
-			// going to be revalidated by the pool.
-			.longevity(5)
-			// It's fine to propagate that transaction to other peers, which means it can be
-			// created even by nodes that don't produce blocks.
-			// Note that sometimes it's better to keep it for yourself (if you are the block
-			// producer), since for instance in some schemes others may copy your solution and
-			// claim a reward.
-			.propagate(true)
-			.build()
+            match call {
+                Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides(transaction.hash)
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides(transaction.hash)
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides(transaction.hash)
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides(transaction.hash)
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                _ => InvalidTransaction::Call.into(),
+            }
         }
     }
 
