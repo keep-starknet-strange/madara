@@ -452,6 +452,8 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
                 Err(e) => {
+                    #[cfg(feature = "std")]
+                    std::println!("here {:?}", e);
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
@@ -523,6 +525,8 @@ pub mod pallet {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
                 Err(e) => {
+                    #[cfg(feature = "std")]
+                    std::println!("here {:?}", e);
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
