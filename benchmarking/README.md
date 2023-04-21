@@ -5,11 +5,12 @@ artillery.
 
 Steps to follow :
 
-- Install the dependencies using `yarn install`
+- Install the dependencies using
+  `yarn install && cd ../tests && npm install && npm run build && cd ../benchmarking`
 - Make sure you've built the project using `cd .. && cargo build --release`
 - Run the benchmark using `yarn test:ci`. If it does not work, just run
-  `sh ../scripts/run_node.sh` and in another terminal run `yarn test` where x is
-  the benchmark you want to run.
+  `cd .. && sh ./scripts/run_node.sh` and in another terminal run `yarn test:x`
+  where x is the benchmark you want to run.
 
 The following benchmarks are available :
 

@@ -137,12 +137,17 @@ impl pallet_sudo::Config for Runtime {
     type RuntimeCall = RuntimeCall;
 }
 
+parameter_types! {
+    pub const UnsignedPriority: u64 = 1 << 20;
+}
+
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+    type UnsignedPriority = UnsignedPriority;
 }
 
 /// A stateless module with helpers for dispatch management which does no re-authentication.

@@ -158,6 +158,12 @@ pub mod pallet {
         type SystemHash: Hasher;
         /// The time idk what.
         type TimestampProvider: Time;
+        /// A configuration for base priority of unsigned transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime, when
+        /// multiple pallets send unsigned transactions.
+        #[pallet::constant]
+        type UnsignedPriority: Get<TransactionPriority>;
     }
 
     /// The Starknet pallet hooks.
@@ -385,8 +391,7 @@ pub mod pallet {
         #[pallet::call_index(0)]
         #[pallet::weight(0)]
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
-            // Make sure the caller is from a signed origin and retrieve the signer.
-            let _deployer_account = ensure_signed(origin)?;
+            ensure_none(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
                 .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
             PendingEvents::<T>::try_append(StarknetEventType::default())
@@ -414,8 +419,9 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn invoke(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn invoke(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
 
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
@@ -475,8 +481,9 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(2)]
         #[pallet::weight(0)]
-        pub fn declare(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn declare(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
 
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
@@ -551,8 +558,9 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(3)]
         #[pallet::weight(0)]
-        pub fn deploy_account(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn deploy_account(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
 
             // Check if contract is deployed
             ensure!(
@@ -604,8 +612,10 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(4)]
         #[pallet::weight(0)]
-        pub fn consume_l1_message(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
+
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
@@ -664,6 +674,48 @@ pub mod pallet {
                 new_fee_token_address: fee_token_address,
             });
             Ok(())
+        }
+    }
+
+    #[pallet::validate_unsigned]
+    impl<T: Config> ValidateUnsigned for Pallet<T> {
+        type Call = Call<T>;
+
+        /// Validate unsigned call to this module.
+        ///
+        /// By default unsigned transactions are disallowed, but implementing the validator
+        /// here we make sure that some particular calls (in this case all calls)
+        /// are being whitelisted and marked as valid.
+        fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+            // TODO: Call `__validate__` entrypoint of the contract. #69
+
+            match call {
+                Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                _ => InvalidTransaction::Call.into(),
+            }
         }
     }
 

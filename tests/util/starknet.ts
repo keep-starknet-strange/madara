@@ -1,6 +1,6 @@
 import "@keep-starknet-strange/madara-api-augment";
 import { ApiPromise } from "@polkadot/api";
-import { SubmittableExtrinsic } from "@polkadot/api/types";
+import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aToHex } from "@polkadot/util";
@@ -8,25 +8,21 @@ import erc20Json from "../contracts/compiled/erc20.json";
 import { hash } from "starknet";
 
 export async function sendTransactionNoValidation(
-  api: ApiPromise,
-  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
-  sender: KeyringPair
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<void> {
-  await transaction.signAndSend(sender, { nonce: -1 });
+  await transaction.send();
 }
 
 export async function sendTransactionBatchNoValidation(
   api: ApiPromise,
-  transactions: SubmittableExtrinsic<"promise", ISubmittableResult>[],
-  sender: KeyringPair
+  transactions: SubmittableExtrinsic<"promise", ISubmittableResult>[]
 ): Promise<void> {
-  await api.tx.utility.batch(transactions).signAndSend(sender, { nonce: -1 });
+  await api.tx.utility.batch(transactions).send();
 }
 
 export async function sendTransaction(
   api: ApiPromise,
-  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
-  sender: KeyringPair
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     let unsubscribe;
@@ -36,58 +32,52 @@ export async function sendTransaction(
     const SPAWNING_TIME = 500000;
 
     transaction
-      .signAndSend(
-        sender,
-        { nonce: -1 },
-        async ({ events = [], status, dispatchError }) => {
-          console.log(`Current status is ${status.type}`);
+      .send(async ({ events = [], status, dispatchError }) => {
+        console.log(`Current status is ${status.type}`);
 
-          // status would still be set, but in the case of error we can shortcut
-          // to just check it (so an error would indicate InBlock or Finalized)
-          if (dispatchError) {
-            if (dispatchError.isModule) {
-              // for module errors, we have the section indexed, lookup
-              const decoded = api.registry.findMetaError(
-                dispatchError.asModule
-              );
-              const { docs, name, section } = decoded;
+        // status would still be set, but in the case of error we can shortcut
+        // to just check it (so an error would indicate InBlock or Finalized)
+        if (dispatchError) {
+          if (dispatchError.isModule) {
+            // for module errors, we have the section indexed, lookup
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
 
-              reject(Error(`${section}.${name}: ${docs.join(" ")}`));
-            } else {
-              // Other, CannotLookup, BadOrigin, no extra info
-              reject(Error(dispatchError.toString()));
-            }
-          }
-
-          if (status.isInBlock) {
-            block_hash = status.asInBlock.toHex();
-            console.log("Included at block hash", block_hash);
-            console.log("Events:");
-
-            events.forEach(({ event: { data, method, section }, phase }) => {
-              console.log(
-                "\t",
-                phase.toString(),
-                `: ${section}.${method}`,
-                data.toString()
-              );
-
-              if (section == "system" && method == "ExtrinsicSuccess") {
-                transaction_success_event = true;
-              }
-            });
-          }
-
-          if (transaction_success_event) {
-            if (unsubscribe) {
-              unsubscribe();
-            }
-
-            clearTimeout(timeout);
-            resolve(block_hash);
+            reject(Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            // Other, CannotLookup, BadOrigin, no extra info
+            reject(Error(dispatchError.toString()));
           }
         }
-      )
+
+        if (status.isInBlock) {
+          block_hash = status.asInBlock.toHex();
+          console.log("Included at block hash", block_hash);
+          console.log("Events:");
+
+          events.forEach(({ event: { data, method, section }, phase }) => {
+            console.log(
+              "\t",
+              phase.toString(),
+              `: ${section}.${method}`,
+              data.toString()
+            );
+
+            if (section == "system" && method == "ExtrinsicSuccess") {
+              transaction_success_event = true;
+            }
+          });
+        }
+
+        if (transaction_success_event) {
+          if (unsubscribe) {
+            unsubscribe();
+          }
+
+          clearTimeout(timeout);
+          resolve(block_hash);
+        }
+      })
       .then((unsub) => {
         unsubscribe = unsub;
       })
@@ -102,17 +92,15 @@ export async function sendTransaction(
   });
 }
 
-export async function declare(
+export function declare(
   api: ApiPromise,
-  user: any,
   contractAddress: string,
   tokenClassHash: string
-): Promise<string> {
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
     callEntrypoint: {
@@ -133,30 +121,27 @@ export async function declare(
 
   const extrisinc_declare = api.tx.starknet.declare(tx_declare);
 
-  await sendTransaction(api, extrisinc_declare, user);
-  return "";
+  return extrisinc_declare;
 }
 
-export async function deploy(
+export function deploy(
   api: ApiPromise,
-  user: any,
   contractAddress: string,
   tokenClassHash: string
-): Promise<string> {
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Compute contract address
-  const deployedContractAddress = hash.calculateContractAddressFromHash(
-    2,
-    tokenClassHash,
-    [],
-    0
-  );
+  // const deployedContractAddress = hash.calculateContractAddressFromHash(
+  //   2,
+  //   tokenClassHash,
+  //   [],
+  //   0
+  // );
 
   // Deploy contract
   let tx_deploy = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 1, // nonce of the transaction
     callEntrypoint: {
@@ -180,14 +165,11 @@ export async function deploy(
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
 
-  await sendTransaction(api, extrisinc_deploy, user);
-
-  return deployedContractAddress;
+  return extrisinc_deploy;
 }
 
 export async function initialize(
   api: ApiPromise,
-  user: any,
   contractAddress: string,
   tokenAddress: string
 ): Promise<string> {
@@ -196,7 +178,6 @@ export async function initialize(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 1, // nonce of the transaction
     callEntrypoint: {
@@ -221,12 +202,11 @@ export async function initialize(
 
   const extrisinc_init = api.tx.starknet.invoke(tx_initialize);
 
-  return sendTransaction(api, extrisinc_init, user);
+  return sendTransaction(api, extrisinc_init);
 }
 
 export async function mint(
   api: ApiPromise,
-  user: any,
   contractAddress: string,
   tokenAddress: string,
   mintAmount: string
@@ -236,7 +216,6 @@ export async function mint(
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 1, // nonce of the transaction
     callEntrypoint: {
@@ -259,25 +238,24 @@ export async function mint(
 
   const extrisinc_mint = api.tx.starknet.invoke(tx_mint);
 
-  return sendTransaction(api, extrisinc_mint, user);
+  return sendTransaction(api, extrisinc_mint);
 }
 
-export async function transfer(
+export function transfer(
   api: ApiPromise,
-  user: any,
   contractAddress: string,
   tokenAddress: string,
   recipientAddress: string,
-  transferAmount: string
-): Promise<string> {
+  transferAmount: string,
+  nonce?: number
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   let tx_transfer = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
-    nonce: 3, // nonce of the transaction
+    nonce: nonce || 0, // nonce of the transaction
     callEntrypoint: {
       // call entrypoint
       classHash: null, // class hash of the contract
@@ -298,25 +276,21 @@ export async function transfer(
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
 
-  await sendTransactionNoValidation(api, extrisinc_transfer, user);
-
-  return "";
+  return extrisinc_transfer;
 }
 
-export async function batchTransfer(
+export function batchTransfer(
   api: ApiPromise,
-  user: any,
   contractAddress: string,
   tokenAddress: string,
   recipientAddress: string,
   transferAmount: string
-): Promise<string> {
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult>[] {
   // Initialize contract
   let tx_transfer = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    events: [], // empty vector for now, will be filled in by the runtime
     sender_address: contractAddress, // address of the sender contract
     nonce: 3, // nonce of the transaction
     callEntrypoint: {
@@ -341,7 +315,5 @@ export async function batchTransfer(
 
   const extrisinc_transfers = Array(200).fill(extrisinc_transfer);
 
-  await sendTransactionBatchNoValidation(api, extrisinc_transfers, user);
-
-  return "";
+  return extrisinc_transfers;
 }
