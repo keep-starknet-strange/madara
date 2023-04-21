@@ -498,21 +498,21 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             version: 1,
             sender_address: sender_account,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(<[u8;32]>::from_hex("06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922").unwrap()), 
+                Some(<[u8;32]>::from_hex(TOKEN_CONTRACT_CLASS_HASH).unwrap()),
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
                     U256::from(15), // Simple contract address
                     U256::from_str("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
                     U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
-                    U256::from_str("0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922").unwrap(), // Class hash
-                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Contract address salt
-                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(), // constructor_calldata_len
-                    U256::from_str("0x000000000000000000000000000000000000000000000000000000000000000A").unwrap(), // name
-                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // symbol
-                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // decimals
-                    U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // initial supply low
-                    U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // initial supply high
+                    U256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
+                    U256::one(), // Contract address salt
+                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(), // Constructor_calldata_len
+                    U256::from_str("0x000000000000000000000000000000000000000000000000000000000000000A").unwrap(), // Name
+                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Symbol
+                    U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Decimals
+                    U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply low
+                    U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
                     U256::from_big_endian(&sender_account) // recipient
                 ],
                 sender_account,
@@ -533,17 +533,17 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::from_str("0x026b160f10156dea0639bec90696772c640b9706a47f5b8c52ea1abe5858b34d").unwrap()
                 ],
                 data: bounded_vec!(
-                    H256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
-                    H256::from_str("0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000a").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
+                    H256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608").unwrap(), // Contract address
+                    H256::zero(), // Deployer (always 0 with this account contract)
+                    H256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(), // Constructor calldata len
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000a").unwrap(), // Name
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Symbol
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Decimals
+                    H256::from_str("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff").unwrap(), // Initial supply low
+                    H256::from_str("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff").unwrap(), // Initial supply high
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(), // Recipient
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Salt
                 ),
                 from_address: sender_account,
             })
@@ -584,10 +584,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
                 ],
                 data: bounded_vec!(
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000F").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000010").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000F").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000F").unwrap(), // From
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000010").unwrap(), // To
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000F").unwrap(), // Amount low
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Amount high
                 ),
                 from_address: H256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608")
                     .unwrap()
