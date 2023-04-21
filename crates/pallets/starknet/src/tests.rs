@@ -1,10 +1,9 @@
 use core::str::FromStr;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH, ERC20_CONTRACT_PATH};
+use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec, debug, BoundedVec};
 use hex::FromHex;
-use hexlit::hex;
 use lazy_static::lazy_static;
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::crypto::commitment;
@@ -324,14 +323,16 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let none_origin = RuntimeOrigin::none();
         let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
 
-        let erc20_class = ContractClassWrapper::from(get_contract_class(ERC20_CONTRACT_PATH));
-        let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+        let balance_contract = ContractClassWrapper::from(get_contract_class(include_bytes!(
+            "../../../../resources/declare/declare_test.json"
+        )));
+        let balance_contract_class_hash =
+            <[u8; 32]>::from_hex("0399998c787e0a063c3ac1d2abac084dcbe09954e3b156d53a8c43a02aa27d35").unwrap();
 
         let mut transaction = Transaction {
             sender_address: account_addr,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(erc20_class_hash),
+                Some(balance_contract_class_hash),
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![],
@@ -346,7 +347,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             Error::<Test>::ContractClassMustBeSpecified
         );
 
-        transaction.contract_class = Some(erc20_class);
+        transaction.contract_class = Some(balance_contract);
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
@@ -495,8 +496,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         run_to_block(1);
         let origin = RuntimeOrigin::none();
         let (sender_account, _, _) = account_helper(TEST_ACCOUNT_SALT);
-        // Declare ERC20 contract
-        declare_erc20(origin.clone(), sender_account);
+        // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
         deploy_erc20(origin.clone(), sender_account);
         // TODO: use dynamic values to craft invoke transaction
@@ -520,27 +520,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             .into(),
         );
     })
-}
-
-/// Helper function to declare ERC20 contract.
-/// # Arguments
-/// * `origin` - The origin of the transaction.
-/// * `sender_account` - The address of the sender account.
-fn declare_erc20(origin: RuntimeOrigin, sender_account: ContractAddressWrapper) {
-    let declare_transaction = Transaction {
-        sender_address: sender_account,
-        call_entrypoint: CallEntryPointWrapper::new(
-            Some(ERC20_CLASS_HASH),
-            EntryPointTypeWrapper::External,
-            None,
-            bounded_vec![],
-            sender_account,
-            sender_account,
-        ),
-        contract_class: Some(ERC20_CONTRACT_CLASS.clone()),
-        ..Transaction::default()
-    };
-    assert_ok!(Starknet::declare(origin, declare_transaction));
 }
 
 /// Helper function to deploy ERC20 contract.
@@ -570,7 +549,6 @@ lazy_static! {
     static ref ERC20_CONTRACT_CLASS: ContractClassWrapper =
         get_contract_class_wrapper(include_bytes!("../../../../resources/erc20/erc20.json"));
 }
-const ERC20_CLASS_HASH: [u8; 32] = hex!("01d1aacf8f874c4a865b974236419a46383a5161925626e9053202d8e87257e9");
 
 fn get_contract_class_wrapper(contract_content: &'static [u8]) -> ContractClassWrapper {
     let contract_class: ContractClass =

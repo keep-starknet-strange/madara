@@ -101,6 +101,7 @@ pub mod pallet {
     use blockifier::execution::contract_class::ContractClass;
     use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
     use blockifier::state::cached_state::CachedState;
+    use blockifier::state::errors::StateError;
     use blockifier::state::state_api::{State, StateReader, StateResult};
     use blockifier::test_utils::DictStateReader;
     use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
@@ -517,8 +518,7 @@ pub mod pallet {
                 .or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone()), fee_token_address)
-            {
+            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class), fee_token_address) {
                 Ok(_) => {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
@@ -534,8 +534,6 @@ pub mod pallet {
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            // Associate contract class to class hash
-            Self::set_contract_class_hash(class_hash, contract_class.into())?;
             // Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
@@ -858,26 +856,6 @@ pub mod pallet {
 
             let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
             frame_system::Pallet::<T>::deposit_log(digest);
-        }
-
-        /// Associate a contract class hash with a contract class info
-        ///
-        /// # Arguments
-        ///
-        /// * `contract_class_hash` - The contract class hash.
-        /// * `class_info` - The contract class info.
-        fn set_contract_class_hash(
-            contract_class_hash: ClassHashWrapper,
-            class_info: ContractClassWrapper,
-        ) -> Result<(), DispatchError> {
-            // Check if the contract address is already associated with a contract class hash.
-            ensure!(
-                !ContractClasses::<T>::contains_key(contract_class_hash),
-                Error::<T>::ContractClassAlreadyAssociated
-            );
-            ContractClasses::<T>::insert(contract_class_hash, class_info);
-
-            Ok(())
         }
 
         /// Associate a contract address with a contract class hash.
@@ -1262,7 +1240,9 @@ pub mod pallet {
         /// Returns the contract class of the given class hash.
         fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
             Ok(Arc::new(
-                Pallet::<T>::contract_class_by_class_hash(class_hash.0.0).to_starknet_contract_class().unwrap(),
+                Pallet::<T>::contract_class_by_class_hash(class_hash.0.0)
+                    .to_starknet_contract_class()
+                    .map_err(|_| StateError::UndeclaredClassHash(*class_hash))?,
             ))
         }
     }
