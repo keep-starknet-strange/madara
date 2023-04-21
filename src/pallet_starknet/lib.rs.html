@@ -1242,6 +1242,58 @@
 <a href="#1242" id="1242">1242</a>
 <a href="#1243" id="1243">1243</a>
 <a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a>
+<a href="#1264" id="1264">1264</a>
+<a href="#1265" id="1265">1265</a>
+<a href="#1266" id="1266">1266</a>
+<a href="#1267" id="1267">1267</a>
+<a href="#1268" id="1268">1268</a>
+<a href="#1269" id="1269">1269</a>
+<a href="#1270" id="1270">1270</a>
+<a href="#1271" id="1271">1271</a>
+<a href="#1272" id="1272">1272</a>
+<a href="#1273" id="1273">1273</a>
+<a href="#1274" id="1274">1274</a>
+<a href="#1275" id="1275">1275</a>
+<a href="#1276" id="1276">1276</a>
+<a href="#1277" id="1277">1277</a>
+<a href="#1278" id="1278">1278</a>
+<a href="#1279" id="1279">1279</a>
+<a href="#1280" id="1280">1280</a>
+<a href="#1281" id="1281">1281</a>
+<a href="#1282" id="1282">1282</a>
+<a href="#1283" id="1283">1283</a>
+<a href="#1284" id="1284">1284</a>
+<a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+<a href="#1291" id="1291">1291</a>
+<a href="#1292" id="1292">1292</a>
+<a href="#1293" id="1293">1293</a>
+<a href="#1294" id="1294">1294</a>
+<a href="#1295" id="1295">1295</a>
+<a href="#1296" id="1296">1296</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1402,6 +1454,12 @@
         </span><span class="kw">type </span>SystemHash: Hasher;
         <span class="doccomment">/// The time idk what.
         </span><span class="kw">type </span>TimestampProvider: Time;
+        <span class="doccomment">/// A configuration for base priority of unsigned transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime, when
+        /// multiple pallets send unsigned transactions.
+        </span><span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>UnsignedPriority: Get&lt;TransactionPriority&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -1629,8 +1687,7 @@
         </span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
         #[pallet::weight(<span class="number">0</span>)]
         </span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
-            <span class="comment">// Make sure the caller is from a signed origin and retrieve the signer.
-            </span><span class="kw">let </span>_deployer_account = ensure_signed(origin)<span class="question-mark">?</span>;
+            ensure_none(origin)<span class="question-mark">?</span>;
             Pending::&lt;T&gt;::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
                 .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
             PendingEvents::&lt;T&gt;::try_append(StarknetEventType::default())
@@ -1658,10 +1715,11 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>invoke(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
-            <span class="comment">// TODO: add origin check when proxy pallet added
+        </span><span class="kw">pub fn </span>invoke(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+            <span class="comment">// This ensures that the function can only be called via unsigned transaction.
+            </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            // Check if contract is deployed
+            <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
             <span class="comment">// Get current block
@@ -1719,10 +1777,11 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>declare(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
-            <span class="comment">// TODO: add origin check when proxy pallet added
+        </span><span class="kw">pub fn </span>declare(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+            <span class="comment">// This ensures that the function can only be called via unsigned transaction.
+            </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            // Check if contract is deployed
+            <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
             <span class="comment">// Check that class hash is not None
@@ -1795,10 +1854,11 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>deploy_account(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
-            <span class="comment">// TODO: add origin check when proxy pallet added
+        </span><span class="kw">pub fn </span>deploy_account(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+            <span class="comment">// This ensures that the function can only be called via unsigned transaction.
+            </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            // Check if contract is deployed
+            <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(
                 !ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address),
                 Error::&lt;T&gt;::AccountAlreadyDeployed
@@ -1848,9 +1908,11 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">4</span>)]
         #[pallet::weight(<span class="number">0</span>)]
-        </span><span class="kw">pub fn </span>consume_l1_message(_origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
-            <span class="comment">// TODO: add origin check when proxy pallet added
-            // Check if contract is deployed
+        </span><span class="kw">pub fn </span>consume_l1_message(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+            <span class="comment">// This ensures that the function can only be called via unsigned transaction.
+            </span>ensure_none(origin)<span class="question-mark">?</span>;
+
+            <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
             <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
@@ -1908,6 +1970,48 @@
                 new_fee_token_address: fee_token_address,
             });
             <span class="prelude-val">Ok</span>(())
+        }
+    }
+
+    <span class="attr">#[pallet::validate_unsigned]
+    </span><span class="kw">impl</span>&lt;T: Config&gt; ValidateUnsigned <span class="kw">for </span>Pallet&lt;T&gt; {
+        <span class="kw">type </span>Call = Call&lt;T&gt;;
+
+        <span class="doccomment">/// Validate unsigned call to this module.
+        ///
+        /// By default unsigned transactions are disallowed, but implementing the validator
+        /// here we make sure that some particular calls (in this case all calls)
+        /// are being whitelisted and marked as valid.
+        </span><span class="kw">fn </span>validate_unsigned(_source: TransactionSource, call: <span class="kw-2">&amp;</span><span class="self">Self</span>::Call) -&gt; TransactionValidity {
+            <span class="comment">// TODO: Call `__validate__` entrypoint of the contract. #69
+
+            </span><span class="kw">match </span>call {
+                Call::invoke { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(<span class="number">64_u64</span>)
+                    .propagate(<span class="bool-val">true</span>)
+                    .build(),
+                Call::declare { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(<span class="number">64_u64</span>)
+                    .propagate(<span class="bool-val">true</span>)
+                    .build(),
+                Call::deploy_account { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(<span class="number">64_u64</span>)
+                    .propagate(<span class="bool-val">true</span>)
+                    .build(),
+                Call::consume_l1_message { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(<span class="number">64_u64</span>)
+                    .propagate(<span class="bool-val">true</span>)
+                    .build(),
+                <span class="kw">_ </span>=&gt; InvalidTransaction::Call.into(),
+            }
         }
     }
 

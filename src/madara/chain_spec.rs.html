@@ -259,6 +259,7 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
@@ -452,7 +453,8 @@
     <span class="kw">let </span>other_class_hash_bytes =
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000001000&quot;</span>).unwrap();
 
-    <span class="kw">let </span>fee_token_address =
+    <span class="comment">// Fee token
+    </span><span class="kw">let </span>fee_token_address =
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00&quot;</span>).unwrap();
 
     <span class="comment">// ERC20 CONTRACT
