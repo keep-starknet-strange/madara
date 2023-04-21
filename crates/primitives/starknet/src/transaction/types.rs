@@ -103,6 +103,31 @@ pub struct TransactionReceiptWrapper {
     pub events: BoundedVec<EventWrapper, MaxArraySize>,
 }
 
+/// Information needed to perform the fee transfer.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    Default,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct FeeTransferInformation {
+    /// Actual fees paid for the transaction.
+    pub actual_fee: U256,
+    /// Address of the person paying the fees.
+    pub payer: ContractAddressWrapper,
+}
+impl FeeTransferInformation {
+    /// Creates a new instance of FeeTransferInformation
+    pub fn new(actual_fee: U256, payer: ContractAddressWrapper) -> Self {
+        Self { actual_fee, payer }
+    }
+}
 /// Representation of a Starknet event.
 #[derive(
     Clone,
