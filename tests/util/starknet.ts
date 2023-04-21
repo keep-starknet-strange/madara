@@ -246,7 +246,8 @@ export function transfer(
   contractAddress: string,
   tokenAddress: string,
   recipientAddress: string,
-  transferAmount: string
+  transferAmount: string,
+  nonce?: number
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   let tx_transfer = {
@@ -254,7 +255,7 @@ export function transfer(
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
-    nonce: 3, // nonce of the transaction
+    nonce: nonce || 0, // nonce of the transaction
     callEntrypoint: {
       // call entrypoint
       classHash: null, // class hash of the contract

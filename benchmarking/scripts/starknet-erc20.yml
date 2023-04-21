@@ -8,12 +8,12 @@ config:
       target: "ws://127.0.0.1:9944"
       phases:
         - duration: 4
-          arrivalCount: 10 # Number of users
+          arrivalCount: 1 # Number of users
           name: Users Connection
         - pause: 60
           name: Performance Testing
   variables:
-    deployed: {}
+    nonce: 0
   engines:
    substrate: {}
 scenarios:
@@ -22,5 +22,5 @@ scenarios:
     flow:
       - loop:
         - function: "executeERC20Transfer"
-        - log: "Executed ERC20 transfer"
-        count: 5000
+        - log: "Executed ERC20 transfer {{ nonce }}"
+        count: 100000
