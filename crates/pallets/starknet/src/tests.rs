@@ -524,6 +524,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             contract_class: None,
             contract_address_salt: None,
         };
+        let expected_erc20_address = "0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608";
 
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction));
 
@@ -533,7 +534,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::from_str("0x026b160f10156dea0639bec90696772c640b9706a47f5b8c52ea1abe5858b34d").unwrap()
                 ],
                 data: bounded_vec!(
-                    H256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608").unwrap(), // Contract address
+                    H256::from_str(expected_erc20_address).unwrap(), // Contract address
                     H256::zero(), // Deployer (always 0 with this account contract)
                     H256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000006").unwrap(), // Constructor calldata len
@@ -560,7 +561,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
-                    U256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608").unwrap(), // Token address
+                    U256::from_str(expected_erc20_address).unwrap(), // Token address
                     U256::from_str("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e").unwrap(), // transfer selector
                     U256::from(3), // Calldata len
                     U256::from(16), // recipient
@@ -576,7 +577,14 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             contract_class: None,
             contract_address_salt: None,
         };
+        // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap())),U256::from_str("ffffffffffffffffffffffffffffff0").unwrap());
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap())),U256::from_str("fffffffffffffffffffffffffffffff").unwrap());
+
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73e").unwrap())),U256::from(15));
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73f").unwrap())),U256::zero());
+
 
         System::assert_last_event(
             Event::StarknetEvent(EventWrapper {
