@@ -199,7 +199,7 @@ fn testnet_genesis(
     let token_contract_address_str = "040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
     let token_contract_address_bytes = <[u8; 32]>::from_hex(token_contract_address_str).unwrap();
 
-    let token_class_hash_str = "06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
+    let token_class_hash_str = "0000000000000000000000000000000000000000000000000000000000010000";
     let token_class_hash_bytes = <[u8; 32]>::from_hex(token_class_hash_str).unwrap();
 
     GenesisConfig {
