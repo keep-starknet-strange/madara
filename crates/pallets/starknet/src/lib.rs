@@ -61,9 +61,6 @@ pub mod blockifier_state_adapter;
 pub mod starknet_fee;
 
 #[cfg(test)]
-mod mock;
-
-#[cfg(test)]
 mod tests;
 
 pub use pallet::*;
