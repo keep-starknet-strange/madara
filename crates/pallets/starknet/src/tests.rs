@@ -249,7 +249,7 @@ fn given_contract_run_deploy_account_tx_works() {
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
-        assert_eq!(Starknet::contract_class_hash_by_address(test_addr), account_class_hash);
+        assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
     });
 }
 
@@ -281,7 +281,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
 
         assert_ok!(Starknet::deploy_account(none_origin.clone(), transaction.clone()));
         // Check that the account was created
-        assert_eq!(Starknet::contract_class_hash_by_address(test_addr), account_class_hash);
+        assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
         assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::AccountAlreadyDeployed);
     });
 }

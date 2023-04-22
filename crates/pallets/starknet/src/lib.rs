@@ -54,6 +54,11 @@ pub mod state_root;
 /// The Starknet pallet's runtime API
 pub mod runtime_api;
 
+/// The implem of the Blockifier trait [StateReader] for the statknet_pallet
+mod state_reader;
+
+extern crate alloc;
+
 #[cfg(test)]
 mod mock;
 
@@ -98,9 +103,8 @@ pub mod pallet {
     use blockifier::abi::abi_utils;
     use blockifier::block_context::BlockContext;
     use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
-    use blockifier::state::cached_state::{CachedState, ContractStorageKey};
+    use blockifier::state::cached_state::CachedState;
     use blockifier::state::state_api::State;
-    use blockifier::test_utils::DictStateReader;
     use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
     use blockifier::transaction::objects::AccountTransactionContext;
     use frame_support::pallet_prelude::*;
@@ -128,19 +132,19 @@ pub mod pallet {
     use sp_runtime::transaction_validity::InvalidTransaction::Payment;
     use sp_runtime::transaction_validity::UnknownTransaction::Custom;
     use sp_runtime::DigestItem;
-    use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, Nonce};
+    use starknet_api::api_core::{ChainId, ContractAddress};
     use starknet_api::block::{BlockNumber, BlockTimestamp};
     use starknet_api::deprecated_contract_class::EntryPointType;
     use starknet_api::hash::StarkFelt;
-    use starknet_api::state::{StateDiff, StorageKey};
+    use starknet_api::state::StateDiff;
     use starknet_api::stdlib::collections::HashMap;
     use starknet_api::transaction::{Calldata, EventContent};
-    use starknet_api::StarknetApiError;
+    use state_reader::BLockifierStateReader;
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
     use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    use crate::types::{ContractClassMapping, ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
+    use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -244,14 +248,14 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn contract_class_hash_by_address)]
     pub(super) type ContractClassHashes<T: Config> =
-        StorageMap<_, Identity, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
+        StorageMap<_, Identity, ContractAddressWrapper, ClassHashWrapper, OptionQuery>;
 
     /// Mapping from Starknet class hash to contract class.
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
     pub(super) type ContractClasses<T: Config> =
-        StorageMap<_, Identity, ClassHashWrapper, ContractClassWrapper, ValueQuery>;
+        StorageMap<_, Identity, ClassHashWrapper, ContractClassWrapper, OptionQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -430,8 +434,8 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            let state = &mut Self::create_state_reader()?;
-            let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
+            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let call_info = transaction.execute(&mut state, block, TxType::InvokeTx, None, fee_token_address);
             let receipt;
             match call_info {
                 Ok(Some(mut v)) => {
@@ -456,7 +460,7 @@ pub mod pallet {
             FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
             // TODO: Compute real fee value
 
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            Self::apply_state_diffs(&state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
             // Append the transaction to the pending transactions.
@@ -504,7 +508,7 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             // Create state reader from substrate storage
-            let state = &mut Self::create_state_reader()?;
+            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
 
             // Parse contract class
             let contract_class = transaction
@@ -515,8 +519,13 @@ pub mod pallet {
                 .or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone()), fee_token_address)
-            {
+            match transaction.execute(
+                &mut state,
+                block,
+                TxType::DeclareTx,
+                Some(contract_class.clone()),
+                fee_token_address,
+            ) {
                 Ok(_) => {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
@@ -534,7 +543,7 @@ pub mod pallet {
 
             // Associate contract class to class hash
             Self::set_contract_class_hash(class_hash, contract_class.into())?;
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            Self::apply_state_diffs(&state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
 
@@ -573,8 +582,8 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
 
-            let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::DeployAccountTx, None, fee_token_address) {
+            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            match transaction.execute(&mut state, block, TxType::DeployAccountTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -592,7 +601,7 @@ pub mod pallet {
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // Associate contract class to class hash
             // TODO: update state root
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            Self::apply_state_diffs(&state).map_err(|_| Error::<T>::StateDiffError)?;
 
             Ok(())
         }
@@ -621,8 +630,8 @@ pub mod pallet {
 
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
-            let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::L1HandlerTx, None, fee_token_address) {
+            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            match transaction.execute(&mut state, block, TxType::L1HandlerTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -638,7 +647,7 @@ pub mod pallet {
             // TODO: Compute real fee value (might be different for this)
             FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            Self::apply_state_diffs(&state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             Ok(())
         }
@@ -782,7 +791,7 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             // Get state
-            let state = &mut Self::create_state_reader()?;
+            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
             // Get class hash
             let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
@@ -795,7 +804,7 @@ pub mod pallet {
                 ContractAddressWrapper::default(),
             );
 
-            match entrypoint.execute(state, block, fee_token_address) {
+            match entrypoint.execute(&mut state, block, fee_token_address) {
                 Ok(v) => {
                     // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                     let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
@@ -961,7 +970,7 @@ pub mod pallet {
         /// # Error
         ///
         /// Returns an error if it fails to apply the state diff of newly deployed contracts.
-        pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
+        pub fn apply_state_diffs(state: &CachedState<BLockifierStateReader<T>>) -> Result<(), StateDiffError> {
             // Get all the state diffs
             let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
                 state.to_state_diff();
@@ -986,63 +995,6 @@ pub mod pallet {
             // Store the new nonces.
             nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
             Ok(())
-        }
-
-        /// Create a state reader.
-        ///
-        /// # Returns
-        ///
-        /// The state reader.
-        fn create_state_reader() -> Result<CachedState<DictStateReader>, DispatchError> {
-            // TODO: Handle errors and propagate them to the caller.
-
-            let address_to_class_hash: HashMap<ContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
-                .map(|(key, value)| {
-                    (
-                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
-                        ClassHash(StarkFelt::new(value).unwrap()),
-                    )
-                })
-                .collect();
-
-            let address_to_nonce: HashMap<ContractAddress, Nonce> = Nonces::<T>::iter()
-                .map(|(key, value)| {
-                    (
-                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
-                        Nonce(StarkFelt::new(value.into()).unwrap()),
-                    )
-                })
-                .collect();
-
-            let storage_view: HashMap<ContractStorageKey, StarkFelt> = StorageView::<T>::iter()
-                .map(|(key, value)| {
-                    (
-                        (
-                            ContractAddress::try_from(StarkFelt::new(key.0).unwrap()).unwrap(),
-                            StorageKey::try_from(StarkFelt::new(key.1.into()).unwrap()).unwrap(),
-                        ),
-                        StarkFelt::new(value.into()).unwrap(),
-                    )
-                })
-                .collect();
-
-            let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter()
-                .map(|(key, value)| {
-                    let class_hash = ClassHash(StarkFelt::new(key)?);
-                    let contract_class = value.to_starknet_contract_class().unwrap();
-                    Ok((class_hash, contract_class))
-                })
-                .collect::<Result<ContractClassMapping, StarknetApiError>>()
-                .map_err(|_| Error::<T>::StateReaderError)?
-                .into_iter()
-                .collect();
-
-            Ok(CachedState::new(DictStateReader {
-                address_to_class_hash,
-                address_to_nonce,
-                storage_view,
-                class_hash_to_class,
-            }))
         }
 
         /// Returns Ethereum RPC URL from Storage
@@ -1130,10 +1082,7 @@ pub mod pallet {
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
             // Create state reader.
-            let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
-                log!(error, "Couldn't create the cached state");
-                TransactionValidityError::Unknown(Custom(3_u8))
-            })?;
+            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
             // Get current block.
             let block = Pallet::<T>::current_block();
             let fee_token_address =
@@ -1201,7 +1150,7 @@ pub mod pallet {
                 gas_price: 0,                   // TODO: Use block gas price
             };
             match fee_transfer_call.execute(
-                state,
+                &mut state,
                 &mut ExecutionResources::default(),
                 &mut execution_context,
                 &block_ctx,
@@ -1216,7 +1165,7 @@ pub mod pallet {
                     return Err(TransactionValidityError::Invalid(Payment));
                 }
             }
-            Pallet::<T>::apply_state_diffs(state).map_err(|_| {
+            Pallet::<T>::apply_state_diffs(&state).map_err(|_| {
                 log!(error, "Couldn't apply the state diffs");
                 TransactionValidityError::Unknown(Custom(3_u8))
             })?;

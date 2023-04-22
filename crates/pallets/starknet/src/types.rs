@@ -1,4 +1,7 @@
 //! Starknet pallet custom types.
+use core::str::Utf8Error;
+
+use blockifier::execution::contract_class::ContractClass;
 use mp_starknet::execution::ContractAddressWrapper;
 use scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -7,24 +10,20 @@ use sp_core::{ConstU32, H256, U256};
 use sp_runtime::offchain::http::Error;
 use sp_runtime::offchain::HttpError;
 use sp_runtime::{DispatchError, RuntimeDebug};
-
-extern crate alloc;
-use alloc::string::String;
-use alloc::vec::Vec;
-use core::str::Utf8Error;
-
-use blockifier::execution::contract_class::ContractClass;
+use sp_std::vec::Vec;
 use starknet_api::api_core::ClassHash;
 use starknet_api::stdlib::collections::HashMap;
+
+use crate::alloc::string::String;
 
 /// TODO: Replace with a proper type for field element.
 
 /// Nonce of a Starknet transaction.
 pub type NonceWrapper = U256;
 /// Storage Key
-pub type StorageKey = H256;
+pub type StorageKeyWrapper = H256;
 /// Contract Storage Key
-pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKey);
+pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKeyWrapper);
 /// Felt
 pub type StarkFeltWrapper = U256;
 
