@@ -114,13 +114,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         <[u8; 32]>::from_hex(BLOCKIFIER_ACCOUNT_CLASS.strip_prefix("0x").unwrap()).unwrap();
 
     // TEST CLASSES
-    let argent_proxy_class = get_contract_class(include_bytes!("../../../../resources/argent_proxy_v0.json"));
-    let argent_account_class = get_contract_class(include_bytes!("../../../../resources/argent_account_v0.json"));
-    let test_class = get_contract_class(include_bytes!("../../../../resources/test.json"));
-    let l1_handler_class = get_contract_class(include_bytes!("../../../../resources/l1_handler.json"));
+    let argent_proxy_class = get_contract_class(include_bytes!("../../../../../resources/argent_proxy_v0.json"));
+    let argent_account_class = get_contract_class(include_bytes!("../../../../../resources/argent_account_v0.json"));
+    let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
+    let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
     let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    let simple_account_class = get_contract_class(include_bytes!("../../../../resources/account/account.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../../resources/erc20/erc20.json"));
+    let simple_account_class = get_contract_class(include_bytes!("../../../../../resources/account/account.json"));
+    let erc20_class = get_contract_class(include_bytes!("../../../../../resources/erc20/erc20.json"));
     let simple_account_address =
         <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
     let simple_account_class_hash =

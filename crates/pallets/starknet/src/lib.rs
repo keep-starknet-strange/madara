@@ -60,9 +60,6 @@ mod state_reader;
 extern crate alloc;
 
 #[cfg(test)]
-mod mock;
-
-#[cfg(test)]
 mod tests;
 
 // TODO: Uncomment when benchmarking is implemented.
