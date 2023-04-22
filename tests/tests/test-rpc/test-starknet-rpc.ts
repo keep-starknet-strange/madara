@@ -2,6 +2,7 @@ import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
+
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { RpcProvider, LibraryError } from "starknet";
@@ -205,6 +206,20 @@ describeDevMadara("Starknet RPC", (context) => {
 
     console.log(`Block with tx hashes: ${block_with_tx_hashes}`);
     expect(block_with_tx_hashes).to.not.be.undefined;
+  });
+  it("getBlockWithTxHashes", async function () {
+    // happy path test
+    const block = await providerRPC.getBlockHashAndNumber();
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+    const block_with_tx_hashes = await providerRPC.getBlockWithTxHashes(block_hash);
+    expect(block_with_tx_hashes).to.not.be.undefined;
+
+    // Invalid block id test
+    try {
+      await providerRPC.getBlockWithTxHashes("0x123");
+    } catch (error) {
+      expect(error.message).to.equal("24: Block not found");
+    }
   });
 });
 });
