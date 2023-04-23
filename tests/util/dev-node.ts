@@ -1,6 +1,5 @@
 import { ChildProcess, spawn } from "child_process";
 import tcpPortUsed from "tcp-port-used";
-import { StringMappingType } from "typescript";
 
 import {
   BASE_PATH,
