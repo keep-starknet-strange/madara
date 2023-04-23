@@ -16,12 +16,9 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-anyhow = "1.0.70"
-base64 = "0.21.0"
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
-flate2 = "1.0.25"
+anyhow = { workspace = true }
+base64 = { workspace = true }
+flate2 = { workspace = true }
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, features = ["server"], default-features = true }
 mp-starknet = { workspace = true, default-features = true }
