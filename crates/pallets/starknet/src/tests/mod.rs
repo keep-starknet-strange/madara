@@ -1,4 +1,5 @@
 mod account_helper;
+mod blockifier_state_reader;
 mod current_block;
 mod declare_tx;
 mod deploy_account_tx;

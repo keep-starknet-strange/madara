@@ -136,7 +136,7 @@ pub mod pallet {
     use starknet_api::state::StateDiff;
     use starknet_api::stdlib::collections::HashMap;
     use starknet_api::transaction::{Calldata, EventContent};
-    use state_reader::BLockifierStateReader;
+    use state_reader::BlockifierStateReader;
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
@@ -431,7 +431,7 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let mut state = CachedState::new(BlockifierStateReader::<T>::new());
             let call_info = transaction.execute(&mut state, block, TxType::InvokeTx, None, fee_token_address);
             let receipt;
             match call_info {
@@ -505,7 +505,7 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             // Create state reader from substrate storage
-            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let mut state = CachedState::new(BlockifierStateReader::<T>::new());
 
             // Parse contract class
             let contract_class = transaction
@@ -579,7 +579,7 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
 
-            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let mut state = CachedState::new(BlockifierStateReader::<T>::new());
             match transaction.execute(&mut state, block, TxType::DeployAccountTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
@@ -627,7 +627,7 @@ pub mod pallet {
 
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
-            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let mut state = CachedState::new(BlockifierStateReader::<T>::new());
             match transaction.execute(&mut state, block, TxType::L1HandlerTx, None, fee_token_address) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
@@ -788,7 +788,7 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             // Get state
-            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let mut state = CachedState::new(BlockifierStateReader::<T>::new());
             // Get class hash
             let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
@@ -967,7 +967,7 @@ pub mod pallet {
         /// # Error
         ///
         /// Returns an error if it fails to apply the state diff of newly deployed contracts.
-        pub fn apply_state_diffs(state: &CachedState<BLockifierStateReader<T>>) -> Result<(), StateDiffError> {
+        pub fn apply_state_diffs(state: &CachedState<BlockifierStateReader<T>>) -> Result<(), StateDiffError> {
             // Get all the state diffs
             let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
                 state.to_state_diff();
@@ -1079,7 +1079,7 @@ pub mod pallet {
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
             // Create state reader.
-            let mut state = CachedState::new(BLockifierStateReader::<T>::new());
+            let mut state = CachedState::new(BlockifierStateReader::<T>::new());
             // Get current block.
             let block = Pallet::<T>::current_block();
             let fee_token_address =

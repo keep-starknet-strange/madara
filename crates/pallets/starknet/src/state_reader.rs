@@ -15,23 +15,23 @@ use crate::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
 use crate::{Config, Pallet};
 
 /// A zero-sized struct to implement StateReader on while being generic over `T`
-pub struct BLockifierStateReader<T> {
+pub struct BlockifierStateReader<T> {
     marker: PhantomData<T>,
 }
 
-impl<T> BLockifierStateReader<T> {
+impl<T> BlockifierStateReader<T> {
     pub fn new() -> Self {
         Self { marker: PhantomData }
     }
 }
 
-impl<T> Default for BLockifierStateReader<T> {
+impl<T> Default for BlockifierStateReader<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: Config> StateReader for BLockifierStateReader<T> {
+impl<T: Config> StateReader for BlockifierStateReader<T> {
     fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
         let contract_address: ContractAddressWrapper = contract_address.0.0.0;
         let key: StorageKeyWrapper = H256::from(key.0.0.0);
