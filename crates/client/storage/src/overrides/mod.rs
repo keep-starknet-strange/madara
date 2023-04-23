@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use frame_support::{StorageHasher, Twox64Concat};
+use frame_support::{Identity, StorageHasher};
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::{ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
@@ -64,9 +64,9 @@ fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
     [twox_128(module), twox_128(storage)].concat().to_vec()
 }
 
-/// Returns the storage key for single key maps using the Twox64Concat storage hasher.
+/// Returns the storage key for single key maps using the Identity storage hasher.
 fn storage_key_build(prefix: Vec<u8>, key: &[u8]) -> Vec<u8> {
-    [prefix, Twox64Concat::hash(key)].concat()
+    [prefix, Identity::hash(key)].concat()
 }
 
 /// A wrapper type for the Runtime API.
