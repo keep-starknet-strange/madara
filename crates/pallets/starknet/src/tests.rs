@@ -244,7 +244,7 @@ fn given_contract_run_deploy_account_tx_works() {
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
-        assert_eq!(Starknet::contract_class_hash_by_address(test_addr), account_class_hash);
+        assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
     });
 }
 
@@ -276,7 +276,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
 
         assert_ok!(Starknet::deploy_account(none_origin.clone(), transaction.clone()));
         // Check that the account was created
-        assert_eq!(Starknet::contract_class_hash_by_address(test_addr), account_class_hash);
+        assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
         assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::AccountAlreadyDeployed);
     });
 }
@@ -557,7 +557,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             version: 1,
             sender_address: sender_account,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(<[u8;32]>::from_hex("06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922").unwrap()), 
+                Some(<[u8;32]>::from_hex("06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922").unwrap()),
                 EntryPointTypeWrapper::External,
                 None,
                 bounded_vec![
