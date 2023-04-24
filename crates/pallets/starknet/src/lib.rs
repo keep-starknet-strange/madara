@@ -503,8 +503,6 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            // Create state reader from substrate storage
-            let state = &mut Substate::<T>::default();
 
             // Parse contract class
             let contract_class = transaction
@@ -515,13 +513,17 @@ pub mod pallet {
                 .or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class), fee_token_address) {
+            match transaction.execute(
+                &mut Substate::<T>::default(),
+                block,
+                TxType::DeclareTx,
+                Some(contract_class),
+                fee_token_address,
+            ) {
                 Ok(_) => {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
                 Err(e) => {
-                    #[cfg(feature = "std")]
-                    std::println!("here {:?}", e);
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
@@ -571,8 +573,13 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
 
-            let state = &mut Substate::<T>::default();
-            match transaction.execute(state, block, TxType::DeployAccountTx, None, fee_token_address) {
+            match transaction.execute(
+                &mut Substate::<T>::default(),
+                block,
+                TxType::DeployAccountTx,
+                None,
+                fee_token_address,
+            ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -618,8 +625,13 @@ pub mod pallet {
 
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
-            let state = &mut Substate::<T>::default();
-            match transaction.execute(state, block, TxType::L1HandlerTx, None, fee_token_address) {
+            match transaction.execute(
+                &mut Substate::<T>::default(),
+                block,
+                TxType::L1HandlerTx,
+                None,
+                fee_token_address,
+            ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -777,8 +789,6 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            // Get state
-            let state = &mut Substate::<T>::default();
             // Get class hash
             let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
@@ -791,7 +801,7 @@ pub mod pallet {
                 ContractAddressWrapper::default(),
             );
 
-            match entrypoint.execute(state, block, fee_token_address) {
+            match entrypoint.execute(&mut Substate::<T>::default(), block, fee_token_address) {
                 Ok(v) => {
                     // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                     let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
@@ -991,8 +1001,6 @@ pub mod pallet {
             to: ContractAddressWrapper,
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
-            // Create state reader.
-            let state = &mut Substate::<T>::default();
             // Get current block.
             let block = Pallet::<T>::current_block();
             let fee_token_address =
@@ -1060,7 +1068,7 @@ pub mod pallet {
                 gas_price: 0,                   // TODO: Use block gas price
             };
             match fee_transfer_call.execute(
-                state,
+                &mut Substate::<T>::default(),
                 &mut ExecutionResources::default(),
                 &mut execution_context,
                 &block_ctx,
