@@ -1,6 +1,0 @@
-[madara]
-exclude-files = []
-
-[report]
-output-dir = "target/tarpaulin"
-out = ["Html", "Xml"]
