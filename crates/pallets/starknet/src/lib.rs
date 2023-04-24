@@ -1217,6 +1217,11 @@ pub mod pallet {
             Pallet::<T>::transfer_fees(payer, to, (actual_fee + tip).as_u128())
         }
     }
+
+    /// Empty struct that implements the traits needed by the blockifier/starknet in rust. We feed
+    /// this struct when executing a transaction so that we directly use the substrate storage and
+    /// not an extra layer that would add overhead. We don't implement those traits directly on the
+    /// pallet to avoid compilation problems.
     pub struct Substate<T: Config>(PhantomData<T>);
     impl<T: Config> Default for Substate<T> {
         fn default() -> Self {
@@ -1229,19 +1234,14 @@ pub mod pallet {
             Ok(StarkFelt::new(Pallet::<T>::storage((contract_address.0.0.0, H256::from_slice(&key.0.0.0))).into())
                 .unwrap())
         }
-        /// Returns the nonce of the given contract instance.
-        /// Default: 0 for an uninitialized contract address.
         fn get_nonce_at(&mut self, contract_address: ContractAddress) -> StateResult<Nonce> {
             Ok(Nonce(StarkFelt::new(Pallet::<T>::nonce(contract_address.0.0.0).into()).unwrap()))
         }
 
-        /// Returns the class hash of the contract class at the given contract instance.
-        /// Default: 0 (uninitialized class hash) for an uninitialized contract address.
         fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
             Ok(ClassHash(StarkFelt::new(Pallet::<T>::contract_class_hash_by_address(contract_address.0.0.0)).unwrap()))
         }
 
-        /// Returns the contract class of the given class hash.
         fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
             Ok(Arc::new(
                 Pallet::<T>::contract_class_by_class_hash(class_hash.0.0)
@@ -1251,32 +1251,27 @@ pub mod pallet {
         }
     }
     impl<T: Config> State for Substate<T> {
-        /// Sets the storage value under the given key in the given contract instance.
         fn set_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
             self::StorageView::<T>::insert((contract_address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0));
         }
 
-        /// Increments the nonce of the given contract instance.
         fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
             let current_nonce = Pallet::<T>::nonce(contract_address.0.0.0);
             self::Nonces::<T>::insert(contract_address.0.0.0, current_nonce + 1);
             Ok(())
         }
 
-        /// Allocates the given address to the given class hash.
-        /// Raises an exception if the address is already assigned;
-        /// meaning: this is a write once action.
         fn set_class_hash_at(&mut self, contract_address: ContractAddress, class_hash: ClassHash) -> StateResult<()> {
             self::ContractClassHashes::<T>::insert(contract_address.0.0.0, class_hash.0.0);
             Ok(())
         }
 
-        /// Sets the given contract class under the given class hash.
         fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
             self::ContractClasses::<T>::insert(class_hash.0.0, ContractClassWrapper::from(contract_class));
             Ok(())
         }
 
+        /// As the state is updated during the execution we don't need this method for now.
         fn to_state_diff(&self) -> StateDiff {
             StateDiff::default()
         }
