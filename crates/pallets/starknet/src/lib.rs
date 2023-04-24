@@ -66,10 +66,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-// TODO: Uncomment when benchmarking is implemented.
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
-
 pub use pallet::*;
 
 pub extern crate alloc;
