@@ -100,10 +100,8 @@ pub mod pallet {
     use blockifier::block_context::BlockContext;
     use blockifier::execution::contract_class::ContractClass;
     use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
-    use blockifier::state::cached_state::CachedState;
     use blockifier::state::errors::StateError;
     use blockifier::state::state_api::{State, StateReader, StateResult};
-    use blockifier::test_utils::DictStateReader;
     use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
     use blockifier::transaction::objects::AccountTransactionContext;
     use frame_support::pallet_prelude::*;
@@ -120,8 +118,8 @@ pub mod pallet {
     use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     use mp_starknet::traits::hash::Hasher;
     use mp_starknet::transaction::types::{
-        EventError, EventWrapper as StarknetEventType, FeeTransferInformation, StateDiffError, Transaction,
-        TransactionReceiptWrapper, TxType,
+        EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
+        TxType,
     };
     use pallet_transaction_payment::OnChargeTransaction;
     use serde_json::from_str;
@@ -453,16 +451,12 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
                 Err(e) => {
-                    #[cfg(feature = "std")]
-                    std::println!("here {:?}", e);
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
             FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
             // TODO: Compute real fee value
-
-            // Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
             // Append the transaction to the pending transactions.
@@ -539,7 +533,6 @@ pub mod pallet {
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            // Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
 
@@ -597,7 +590,6 @@ pub mod pallet {
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // Associate contract class to class hash
             // TODO: update state root
-            // Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             Ok(())
         }
@@ -643,7 +635,6 @@ pub mod pallet {
             // TODO: Compute real fee value (might be different for this)
             FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
-            // Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             Ok(())
         }
@@ -863,27 +854,6 @@ pub mod pallet {
             frame_system::Pallet::<T>::deposit_log(digest);
         }
 
-        /// Associate a contract address with a contract class hash.
-        ///
-        /// # Arguments
-        ///
-        /// * `contract_address` - The contract address.
-        /// * `contract_class_hash` - The contract class hash.
-        fn set_class_hash_at(
-            contract_address: ContractAddressWrapper,
-            contract_class_hash: ClassHashWrapper,
-        ) -> Result<(), DispatchError> {
-            // Check if the contract address is already associated with a contract class hash.
-            ensure!(
-                !ContractClassHashes::<T>::contains_key(contract_address),
-                Error::<T>::ContractAddressAlreadyAssociated
-            );
-
-            ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
-
-            Ok(())
-        }
-
         /// Emit events from the call info.
         ///
         /// # Arguments
@@ -935,42 +905,6 @@ pub mod pallet {
 
             PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
             Ok(sn_event)
-        }
-
-        /// Apply the state diff returned by the starknet execution.
-        ///
-        /// # Argument
-        ///
-        /// * `state` - The state constructed for the starknet execution engine.
-        ///
-        /// # Error
-        ///
-        /// Returns an error if it fails to apply the state diff of newly deployed contracts.
-        pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
-            // Get all the state diffs
-            let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
-                state.to_state_diff();
-            // Store the newly deployed contracts in substrate storage.
-            deployed_contracts.iter().try_for_each(|(address, class_hash)| {
-                Self::set_class_hash_at(address.0.0.0, class_hash.0.0).map_err(|_| {
-                    log!(
-                        error,
-                        "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
-                        address.0.0.0,
-                        class_hash.0.0
-                    );
-                    StateDiffError::DeployedContractError
-                })
-            })?;
-            // Store the modifications of storage vars.
-            storage_diffs.iter().for_each(|(address, diffs)| {
-                diffs.iter().for_each(|(key, value)| {
-                    StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
-                })
-            });
-            // Store the new nonces.
-            nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
-            Ok(())
         }
 
         /// Returns Ethereum RPC URL from Storage
@@ -1141,10 +1075,7 @@ pub mod pallet {
                     return Err(TransactionValidityError::Invalid(Payment));
                 }
             }
-            // Pallet::<T>::apply_state_diffs(state).map_err(|_| {
-            //     log!(error, "Couldn't apply the state diffs");
-            //     TransactionValidityError::Unknown(Custom(3_u8))
-            // })?;
+
             Ok(())
         }
     }
