@@ -99,6 +99,7 @@ impl pallet_transaction_payment::Config for Test {
     type LengthToFee = IdentityFee<u128>;
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
+pub const TOKEN_CONTRACT_CLASS_HASH: &str = "06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -124,7 +125,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let simple_account_address =
         <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
     let simple_account_class_hash =
-        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000E").unwrap();
+        <[u8; 32]>::from_hex("0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
@@ -142,7 +143,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         <[u8; 32]>::from_hex("01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8").unwrap();
 
     // FEE CONTRACT
-    let token_class_hash_str = "0000000000000000000000000000000000000000000000000000000000010000";
+    let token_class_hash_str = TOKEN_CONTRACT_CLASS_HASH;
     let token_class_hash_bytes = <[u8; 32]>::from_hex(token_class_hash_str).unwrap();
     let fee_token_address =
         <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
