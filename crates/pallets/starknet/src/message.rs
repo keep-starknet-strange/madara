@@ -4,9 +4,9 @@ use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, Entr
 use mp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
-use crate::pallet::alloc::format;
-use crate::pallet::alloc::string::String;
-use crate::pallet::alloc::vec::Vec;
+use crate::alloc::format;
+use crate::alloc::string::String;
+use crate::alloc::vec::Vec;
 use crate::types::{Message, OffchainWorkerError};
 
 pub const LAST_FINALIZED_BLOCK_QUERY: &str =

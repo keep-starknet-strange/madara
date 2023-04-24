@@ -70,9 +70,57 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub use starknet_fee::StarknetFee;
+pub use pallet::*;
 
-pub use self::pallet::*;
+pub extern crate alloc;
+use alloc::str::from_utf8;
+use alloc::string::{String, ToString};
+use alloc::vec;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
+
+use blockifier::abi::abi_utils;
+use blockifier::block_context::BlockContext;
+use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
+use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
+use blockifier::transaction::objects::AccountTransactionContext;
+use blockifier_state_adapter::BlockifierStateAdapter;
+use frame_support::pallet_prelude::*;
+use frame_support::sp_runtime::offchain::storage::StorageValueRef;
+use frame_support::traits::{OriginTrait, Time};
+use frame_system::pallet_prelude::*;
+use mp_digest_log::MADARA_ENGINE_ID;
+use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
+use mp_starknet::crypto::commitment;
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::execution::{
+    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+};
+use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+use mp_starknet::traits::hash::Hasher;
+use mp_starknet::transaction::types::{
+    EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
+    TxType,
+};
+use pallet_transaction_payment::OnChargeTransaction;
+use serde_json::from_str;
+use sp_core::{H256, U256};
+use sp_runtime::offchain::http;
+use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::transaction_validity::InvalidTransaction::Payment;
+use sp_runtime::transaction_validity::UnknownTransaction::Custom;
+use sp_runtime::DigestItem;
+use starknet_api::api_core::{ChainId, ContractAddress};
+use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::deprecated_contract_class::EntryPointType;
+use starknet_api::hash::StarkFelt;
+use starknet_api::stdlib::collections::HashMap;
+use starknet_api::transaction::{Calldata, EventContent};
+pub use starknet_fee::StarknetFee;
+use types::{EthBlockNumber, OffchainWorkerError};
+
+use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
+use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -97,55 +145,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    pub extern crate alloc;
-    use alloc::str::from_utf8;
-    use alloc::string::{String, ToString};
-    use alloc::vec;
-    use alloc::vec::Vec;
-    use core::marker::PhantomData;
-
-    use blockifier::abi::abi_utils;
-    use blockifier::block_context::BlockContext;
-    use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
-    use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
-    use blockifier::transaction::objects::AccountTransactionContext;
-    use blockifier_state_adapter::BlockifierStateAdapter;
-    use frame_support::pallet_prelude::*;
-    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::traits::{OriginTrait, Time};
-    use frame_system::pallet_prelude::*;
-    use mp_digest_log::MADARA_ENGINE_ID;
-    use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
-    use mp_starknet::crypto::commitment;
-    use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    use mp_starknet::execution::{
-        CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
-    };
-    use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-    use mp_starknet::traits::hash::Hasher;
-    use mp_starknet::transaction::types::{
-        EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
-        TxType,
-    };
-    use pallet_transaction_payment::OnChargeTransaction;
-    use serde_json::from_str;
-    use sp_core::{H256, U256};
-    use sp_runtime::offchain::http;
-    use sp_runtime::traits::UniqueSaturatedInto;
-    use sp_runtime::transaction_validity::InvalidTransaction::Payment;
-    use sp_runtime::transaction_validity::UnknownTransaction::Custom;
-    use sp_runtime::DigestItem;
-    use starknet_api::api_core::{ChainId, ContractAddress};
-    use starknet_api::block::{BlockNumber, BlockTimestamp};
-    use starknet_api::deprecated_contract_class::EntryPointType;
-    use starknet_api::hash::StarkFelt;
-    use starknet_api::stdlib::collections::HashMap;
-    use starknet_api::transaction::{Calldata, EventContent};
-    use types::{EthBlockNumber, OffchainWorkerError};
-
     use super::*;
-    use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
