@@ -310,7 +310,6 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 /// Types related to entrypoints.
@@ -322,8 +321,7 @@
 <span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
-<span class="kw">use </span>blockifier::state::cached_state::CachedState;
-<span class="kw">use </span>blockifier::state::state_api::StateReader;
+<span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>serde_json::{from_slice, to_string};
@@ -380,9 +378,9 @@
 
     <span class="doccomment">/// Convert to starknet contract class.
     </span><span class="kw">pub fn </span>to_starknet_contract_class(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass, serde_json::Error&gt; {
-        <span class="kw">let </span>program = from_slice::&lt;Program&gt;(<span class="self">self</span>.program.as_ref())<span class="question-mark">?</span>;
         <span class="kw">let </span>entrypoints =
             from_slice::&lt;HashMap&lt;EntryPointType, vec::Vec&lt;EntryPoint&gt;&gt;&gt;(<span class="self">self</span>.entry_points_by_type.as_ref())<span class="question-mark">?</span>;
+        <span class="kw">let </span>program = from_slice::&lt;Program&gt;(<span class="self">self</span>.program.as_ref())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(ContractClass { program, abi: <span class="prelude-val">None</span>, entry_points_by_type: entrypoints })
     }
 }
@@ -591,9 +589,9 @@
     /// # Returns
     ///
     /// * The result of the entry point execution.
-    </span><span class="kw">pub fn </span>execute&lt;S: StateReader&gt;(
+    </span><span class="kw">pub fn </span>execute&lt;S: State&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        state: <span class="kw-2">&amp;mut </span>CachedState&lt;S&gt;,
+        state: <span class="kw-2">&amp;mut </span>S,
         block: StarknetBlock,
         fee_token_address: ContractAddressWrapper,
     ) -&gt; EntryPointExecutionResultWrapper&lt;CallInfo&gt; {

@@ -1230,70 +1230,6 @@
 <a href="#1230" id="1230">1230</a>
 <a href="#1231" id="1231">1231</a>
 <a href="#1232" id="1232">1232</a>
-<a href="#1233" id="1233">1233</a>
-<a href="#1234" id="1234">1234</a>
-<a href="#1235" id="1235">1235</a>
-<a href="#1236" id="1236">1236</a>
-<a href="#1237" id="1237">1237</a>
-<a href="#1238" id="1238">1238</a>
-<a href="#1239" id="1239">1239</a>
-<a href="#1240" id="1240">1240</a>
-<a href="#1241" id="1241">1241</a>
-<a href="#1242" id="1242">1242</a>
-<a href="#1243" id="1243">1243</a>
-<a href="#1244" id="1244">1244</a>
-<a href="#1245" id="1245">1245</a>
-<a href="#1246" id="1246">1246</a>
-<a href="#1247" id="1247">1247</a>
-<a href="#1248" id="1248">1248</a>
-<a href="#1249" id="1249">1249</a>
-<a href="#1250" id="1250">1250</a>
-<a href="#1251" id="1251">1251</a>
-<a href="#1252" id="1252">1252</a>
-<a href="#1253" id="1253">1253</a>
-<a href="#1254" id="1254">1254</a>
-<a href="#1255" id="1255">1255</a>
-<a href="#1256" id="1256">1256</a>
-<a href="#1257" id="1257">1257</a>
-<a href="#1258" id="1258">1258</a>
-<a href="#1259" id="1259">1259</a>
-<a href="#1260" id="1260">1260</a>
-<a href="#1261" id="1261">1261</a>
-<a href="#1262" id="1262">1262</a>
-<a href="#1263" id="1263">1263</a>
-<a href="#1264" id="1264">1264</a>
-<a href="#1265" id="1265">1265</a>
-<a href="#1266" id="1266">1266</a>
-<a href="#1267" id="1267">1267</a>
-<a href="#1268" id="1268">1268</a>
-<a href="#1269" id="1269">1269</a>
-<a href="#1270" id="1270">1270</a>
-<a href="#1271" id="1271">1271</a>
-<a href="#1272" id="1272">1272</a>
-<a href="#1273" id="1273">1273</a>
-<a href="#1274" id="1274">1274</a>
-<a href="#1275" id="1275">1275</a>
-<a href="#1276" id="1276">1276</a>
-<a href="#1277" id="1277">1277</a>
-<a href="#1278" id="1278">1278</a>
-<a href="#1279" id="1279">1279</a>
-<a href="#1280" id="1280">1280</a>
-<a href="#1281" id="1281">1281</a>
-<a href="#1282" id="1282">1282</a>
-<a href="#1283" id="1283">1283</a>
-<a href="#1284" id="1284">1284</a>
-<a href="#1285" id="1285">1285</a>
-<a href="#1286" id="1286">1286</a>
-<a href="#1287" id="1287">1287</a>
-<a href="#1288" id="1288">1288</a>
-<a href="#1289" id="1289">1289</a>
-<a href="#1290" id="1290">1290</a>
-<a href="#1291" id="1291">1291</a>
-<a href="#1292" id="1292">1292</a>
-<a href="#1293" id="1293">1293</a>
-<a href="#1294" id="1294">1294</a>
-<a href="#1295" id="1295">1295</a>
-<a href="#1296" id="1296">1296</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1390,13 +1326,14 @@
     <span class="kw">use </span>alloc::string::{String, ToString};
     <span class="kw">use </span>alloc::vec;
     <span class="kw">use </span>alloc::vec::Vec;
+    <span class="kw">use </span>core::marker::PhantomData;
 
     <span class="kw">use </span>blockifier::abi::abi_utils;
     <span class="kw">use </span>blockifier::block_context::BlockContext;
+    <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
     <span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
-    <span class="kw">use </span>blockifier::state::cached_state::{CachedState, ContractStorageKey};
-    <span class="kw">use </span>blockifier::state::state_api::State;
-    <span class="kw">use </span>blockifier::test_utils::DictStateReader;
+    <span class="kw">use </span>blockifier::state::errors::StateError;
+    <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
     <span class="kw">use </span>blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
     <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
     <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
@@ -1413,8 +1350,8 @@
     <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
     <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
     <span class="kw">use </span>mp_starknet::transaction::types::{
-        EventError, EventWrapper <span class="kw">as </span>StarknetEventType, FeeTransferInformation, StateDiffError, Transaction,
-        TransactionReceiptWrapper, TxType,
+        EventError, EventWrapper <span class="kw">as </span>StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
+        TxType,
     };
     <span class="kw">use </span>pallet_transaction_payment::OnChargeTransaction;
     <span class="kw">use </span>serde_json::from_str;
@@ -1424,6 +1361,7 @@
     <span class="kw">use </span>sp_runtime::transaction_validity::InvalidTransaction::Payment;
     <span class="kw">use </span>sp_runtime::transaction_validity::UnknownTransaction::Custom;
     <span class="kw">use </span>sp_runtime::DigestItem;
+    <span class="kw">use </span>sp_std::sync::Arc;
     <span class="kw">use </span>starknet_api::api_core::{ChainId, ClassHash, ContractAddress, Nonce};
     <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
     <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
@@ -1431,12 +1369,12 @@
     <span class="kw">use </span>starknet_api::state::{StateDiff, StorageKey};
     <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
     <span class="kw">use </span>starknet_api::transaction::{Calldata, EventContent};
-    <span class="kw">use </span>starknet_api::StarknetApiError;
+    <span class="kw">use </span>starknet_api::StarknetApiError::OutOfRange;
     <span class="kw">use </span>types::{EthBlockNumber, OffchainWorkerError};
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    <span class="kw">use </span><span class="kw">crate</span>::types::{ContractClassMapping, ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
+    <span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     <span class="attr">#[pallet::pallet]
     </span><span class="kw">pub struct </span>Pallet&lt;T&gt;(<span class="kw">_</span>);
@@ -1726,8 +1664,8 @@
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="comment">// Get fee token address
             </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
-            <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">let </span>call_info = transaction.execute(state, block, TxType::InvokeTx, <span class="prelude-val">None</span>, fee_token_address);
+            <span class="kw">let </span>call_info =
+                transaction.execute(<span class="kw-2">&amp;mut </span>Substate::&lt;T&gt;::default(), block, TxType::InvokeTx, <span class="prelude-val">None</span>, fee_token_address);
             <span class="kw">let </span>receipt;
             <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>v)) =&gt; {
@@ -1751,9 +1689,7 @@
             }
             FeeInformation::&lt;T&gt;::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
             <span class="comment">// TODO: Compute real fee value
-
-            </span><span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
-            <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
             // Append the transaction to the pending transactions.
             </span>Pending::&lt;T&gt;::try_append((transaction, receipt)).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TooManyPendingTransactions)<span class="question-mark">?</span>;
@@ -1799,8 +1735,6 @@
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="comment">// Get fee token address
             </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
-            <span class="comment">// Create state reader from substrate storage
-            </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
 
             <span class="comment">// Parse contract class
             </span><span class="kw">let </span>contract_class = transaction
@@ -1811,8 +1745,13 @@
                 .or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidContractClass))<span class="question-mark">?</span>;
 
             <span class="comment">// Execute transaction
-            </span><span class="kw">match </span>transaction.execute(state, block, TxType::DeclareTx, <span class="prelude-val">Some</span>(contract_class.clone()), fee_token_address)
-            {
+            </span><span class="kw">match </span>transaction.execute(
+                <span class="kw-2">&amp;mut </span>Substate::&lt;T&gt;::default(),
+                block,
+                TxType::DeclareTx,
+                <span class="prelude-val">Some</span>(contract_class),
+                fee_token_address,
+            ) {
                 <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Declare Transaction executed successfully.&quot;</span>);
                 }
@@ -1828,9 +1767,6 @@
             </span>Pending::&lt;T&gt;::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::TooManyPendingTransactions))<span class="question-mark">?</span>;
 
-            <span class="comment">// Associate contract class to class hash
-            </span><span class="self">Self</span>::set_contract_class_hash(class_hash, contract_class.into())<span class="question-mark">?</span>;
-            <span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
             <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
 
@@ -1869,8 +1805,13 @@
             <span class="comment">// Get fee token address
             </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
 
-            <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">match </span>transaction.execute(state, block, TxType::DeployAccountTx, <span class="prelude-val">None</span>, fee_token_address) {
+            <span class="kw">match </span>transaction.execute(
+                <span class="kw-2">&amp;mut </span>Substate::&lt;T&gt;::default(),
+                block,
+                TxType::DeployAccountTx,
+                <span class="prelude-val">None</span>,
+                fee_token_address,
+            ) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
                 }
@@ -1888,9 +1829,8 @@
             <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // Associate contract class to class hash
             // TODO: update state root
-            </span><span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
 
-            <span class="prelude-val">Ok</span>(())
+            </span><span class="prelude-val">Ok</span>(())
         }
 
         <span class="doccomment">/// Consume a message from L1.
@@ -1917,8 +1857,13 @@
 
             <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
-            <span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
-            <span class="kw">match </span>transaction.execute(state, block, TxType::L1HandlerTx, <span class="prelude-val">None</span>, fee_token_address) {
+            <span class="kw">match </span>transaction.execute(
+                <span class="kw-2">&amp;mut </span>Substate::&lt;T&gt;::default(),
+                block,
+                TxType::L1HandlerTx,
+                <span class="prelude-val">None</span>,
+                fee_token_address,
+            ) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v.unwrap());
                 }
@@ -1934,7 +1879,6 @@
             <span class="comment">// TODO: Compute real fee value (might be different for this)
             </span>FeeInformation::&lt;T&gt;::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
-            <span class="self">Self</span>::apply_state_diffs(state).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateDiffError)<span class="question-mark">?</span>;
             <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             </span><span class="prelude-val">Ok</span>(())
         }
@@ -2077,8 +2021,6 @@
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="comment">// Get fee token address
             </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
-            <span class="comment">// Get state
-            </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span><span class="self">Self</span>::create_state_reader()<span class="question-mark">?</span>;
             <span class="comment">// Get class hash
             </span><span class="kw">let </span>class_hash = ContractClassHashes::&lt;T&gt;::try_get(address).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ContractNotFound)<span class="question-mark">?</span>;
 
@@ -2091,7 +2033,7 @@
                 ContractAddressWrapper::default(),
             );
 
-            <span class="kw">match </span>entrypoint.execute(state, block, fee_token_address) {
+            <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>Substate::&lt;T&gt;::default(), block, fee_token_address) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="comment">// log!(debug, &quot;Transaction executed successfully: {:?}&quot;, v.unwrap());
                     </span><span class="kw">let </span>result = v.execution.retdata.<span class="number">0</span>.iter().map(|x| U256::from(x.<span class="number">0</span>)).collect();
@@ -2154,47 +2096,6 @@
             frame_system::Pallet::&lt;T&gt;::deposit_log(digest);
         }
 
-        <span class="doccomment">/// Associate a contract class hash with a contract class info
-        ///
-        /// # Arguments
-        ///
-        /// * `contract_class_hash` - The contract class hash.
-        /// * `class_info` - The contract class info.
-        </span><span class="kw">fn </span>set_contract_class_hash(
-            contract_class_hash: ClassHashWrapper,
-            class_info: ContractClassWrapper,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
-            <span class="comment">// Check if the contract address is already associated with a contract class hash.
-            </span><span class="macro">ensure!</span>(
-                !ContractClasses::&lt;T&gt;::contains_key(contract_class_hash),
-                Error::&lt;T&gt;::ContractClassAlreadyAssociated
-            );
-            ContractClasses::&lt;T&gt;::insert(contract_class_hash, class_info);
-
-            <span class="prelude-val">Ok</span>(())
-        }
-
-        <span class="doccomment">/// Associate a contract address with a contract class hash.
-        ///
-        /// # Arguments
-        ///
-        /// * `contract_address` - The contract address.
-        /// * `contract_class_hash` - The contract class hash.
-        </span><span class="kw">fn </span>set_class_hash_at(
-            contract_address: ContractAddressWrapper,
-            contract_class_hash: ClassHashWrapper,
-        ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DispatchError&gt; {
-            <span class="comment">// Check if the contract address is already associated with a contract class hash.
-            </span><span class="macro">ensure!</span>(
-                !ContractClassHashes::&lt;T&gt;::contains_key(contract_address),
-                Error::&lt;T&gt;::ContractAddressAlreadyAssociated
-            );
-
-            ContractClassHashes::&lt;T&gt;::insert(contract_address, contract_class_hash);
-
-            <span class="prelude-val">Ok</span>(())
-        }
-
         <span class="doccomment">/// Emit events from the call info.
         ///
         /// # Arguments
@@ -2246,99 +2147,6 @@
 
             PendingEvents::&lt;T&gt;::try_append(sn_event.clone()).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(sn_event)
-        }
-
-        <span class="doccomment">/// Apply the state diff returned by the starknet execution.
-        ///
-        /// # Argument
-        ///
-        /// * `state` - The state constructed for the starknet execution engine.
-        ///
-        /// # Error
-        ///
-        /// Returns an error if it fails to apply the state diff of newly deployed contracts.
-        </span><span class="kw">pub fn </span>apply_state_diffs(state: <span class="kw-2">&amp;</span>CachedState&lt;DictStateReader&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), StateDiffError&gt; {
-            <span class="comment">// Get all the state diffs
-            </span><span class="kw">let </span>StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
-                state.to_state_diff();
-            <span class="comment">// Store the newly deployed contracts in substrate storage.
-            </span>deployed_contracts.iter().try_for_each(|(address, class_hash)| {
-                <span class="self">Self</span>::set_class_hash_at(address.<span class="number">0.0</span>.<span class="number">0</span>, class_hash.<span class="number">0.0</span>).map_err(|<span class="kw">_</span>| {
-                    <span class="macro">log!</span>(
-                        error,
-                        <span class="string">&quot;Failed to save newly deployed contract at address: {:?} with class hash: {:?}&quot;</span>,
-                        address.<span class="number">0.0</span>.<span class="number">0</span>,
-                        class_hash.<span class="number">0.0
-                    </span>);
-                    StateDiffError::DeployedContractError
-                })
-            })<span class="question-mark">?</span>;
-            <span class="comment">// Store the modifications of storage vars.
-            </span>storage_diffs.iter().for_each(|(address, diffs)| {
-                diffs.iter().for_each(|(key, value)| {
-                    StorageView::&lt;T&gt;::insert((address.<span class="number">0.0</span>.<span class="number">0</span>, H256::from_slice(<span class="kw-2">&amp;</span>key.<span class="number">0.0</span>.<span class="number">0</span>)), U256::from(value.<span class="number">0</span>))
-                })
-            });
-            <span class="comment">// Store the new nonces.
-            </span>nonces.iter().for_each(|(address, nonce)| Nonces::&lt;T&gt;::insert(address.<span class="number">0.0</span>.<span class="number">0</span>, U256::from(nonce.<span class="number">0.0</span>)));
-            <span class="prelude-val">Ok</span>(())
-        }
-
-        <span class="doccomment">/// Create a state reader.
-        ///
-        /// # Returns
-        ///
-        /// The state reader.
-        </span><span class="kw">fn </span>create_state_reader() -&gt; <span class="prelude-ty">Result</span>&lt;CachedState&lt;DictStateReader&gt;, DispatchError&gt; {
-            <span class="comment">// TODO: Handle errors and propagate them to the caller.
-
-            </span><span class="kw">let </span>address_to_class_hash: HashMap&lt;ContractAddress, ClassHash&gt; = ContractClassHashes::&lt;T&gt;::iter()
-                .map(|(key, value)| {
-                    (
-                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
-                        ClassHash(StarkFelt::new(value).unwrap()),
-                    )
-                })
-                .collect();
-
-            <span class="kw">let </span>address_to_nonce: HashMap&lt;ContractAddress, Nonce&gt; = Nonces::&lt;T&gt;::iter()
-                .map(|(key, value)| {
-                    (
-                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
-                        Nonce(StarkFelt::new(value.into()).unwrap()),
-                    )
-                })
-                .collect();
-
-            <span class="kw">let </span>storage_view: HashMap&lt;ContractStorageKey, StarkFelt&gt; = StorageView::&lt;T&gt;::iter()
-                .map(|(key, value)| {
-                    (
-                        (
-                            ContractAddress::try_from(StarkFelt::new(key.<span class="number">0</span>).unwrap()).unwrap(),
-                            StorageKey::try_from(StarkFelt::new(key.<span class="number">1</span>.into()).unwrap()).unwrap(),
-                        ),
-                        StarkFelt::new(value.into()).unwrap(),
-                    )
-                })
-                .collect();
-
-            <span class="kw">let </span>class_hash_to_class: ContractClassMapping = ContractClasses::&lt;T&gt;::iter()
-                .map(|(key, value)| {
-                    <span class="kw">let </span>class_hash = ClassHash(StarkFelt::new(key)<span class="question-mark">?</span>);
-                    <span class="kw">let </span>contract_class = value.to_starknet_contract_class().unwrap();
-                    <span class="prelude-val">Ok</span>((class_hash, contract_class))
-                })
-                .collect::&lt;<span class="prelude-ty">Result</span>&lt;ContractClassMapping, StarknetApiError&gt;&gt;()
-                .map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::StateReaderError)<span class="question-mark">?
-                </span>.into_iter()
-                .collect();
-
-            <span class="prelude-val">Ok</span>(CachedState::new(DictStateReader {
-                address_to_class_hash,
-                address_to_nonce,
-                storage_view,
-                class_hash_to_class,
-            }))
         }
 
         <span class="doccomment">/// Returns Ethereum RPC URL from Storage
@@ -2425,11 +2233,6 @@
             to: ContractAddressWrapper,
             amount: &lt;StarknetFee <span class="kw">as </span>OnChargeTransaction&lt;T&gt;&gt;::Balance,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
-            <span class="comment">// Create state reader.
-            </span><span class="kw">let </span>state = <span class="kw-2">&amp;mut </span>Pallet::&lt;T&gt;::create_state_reader().map_err(|<span class="kw">_</span>| {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t create the cached state&quot;</span>);
-                TransactionValidityError::Unknown(Custom(<span class="number">3_u8</span>))
-            })<span class="question-mark">?</span>;
             <span class="comment">// Get current block.
             </span><span class="kw">let </span>block = Pallet::&lt;T&gt;::current_block();
             <span class="kw">let </span>fee_token_address =
@@ -2497,7 +2300,7 @@
                 </span>gas_price: <span class="number">0</span>,                   <span class="comment">// TODO: Use block gas price
             </span>};
             <span class="kw">match </span>fee_transfer_call.execute(
-                state,
+                <span class="kw-2">&amp;mut </span>Substate::&lt;T&gt;::default(),
                 <span class="kw-2">&amp;mut </span>ExecutionResources::default(),
                 <span class="kw-2">&amp;mut </span>execution_context,
                 <span class="kw-2">&amp;</span>block_ctx,
@@ -2512,10 +2315,7 @@
                     <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionValidityError::Invalid(Payment));
                 }
             }
-            Pallet::&lt;T&gt;::apply_state_diffs(state).map_err(|<span class="kw">_</span>| {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t apply the state diffs&quot;</span>);
-                TransactionValidityError::Unknown(Custom(<span class="number">3_u8</span>))
-            })<span class="question-mark">?</span>;
+
             <span class="prelude-val">Ok</span>(())
         }
     }
@@ -2587,6 +2387,78 @@
             <span class="kw">let </span>FeeTransferInformation { actual_fee, payer } = Pallet::&lt;T&gt;::fee_information();
             <span class="comment">// TODO: Remove panic
             </span>Pallet::&lt;T&gt;::transfer_fees(payer, to, (actual_fee + tip).as_u128())
+        }
+    }
+
+    <span class="doccomment">/// Empty struct that implements the traits needed by the blockifier/starknet in rust. We feed
+    /// this struct when executing a transaction so that we directly use the substrate storage and
+    /// not an extra layer that would add overhead. We don&#39;t implement those traits directly on the
+    /// pallet to avoid compilation problems.
+    </span><span class="kw">pub struct </span>Substate&lt;T: Config&gt;(PhantomData&lt;T&gt;);
+    <span class="kw">impl</span>&lt;T: Config&gt; Default <span class="kw">for </span>Substate&lt;T&gt; {
+        <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+            <span class="self">Self</span>(PhantomData)
+        }
+    }
+
+    <span class="kw">impl</span>&lt;T: Config&gt; StateReader <span class="kw">for </span>Substate&lt;T&gt; {
+        <span class="kw">fn </span>get_storage_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, key: StorageKey) -&gt; StateResult&lt;StarkFelt&gt; {
+            StarkFelt::new(Pallet::&lt;T&gt;::storage((contract_address.<span class="number">0.0</span>.<span class="number">0</span>, H256::from_slice(<span class="kw-2">&amp;</span>key.<span class="number">0.0</span>.<span class="number">0</span>))).into()).map_err(
+                |<span class="kw">_</span>| {
+                    StateError::StarknetApiError(OutOfRange {
+                        string: <span class="string">&quot;Couldn&#39;t convert storage value to StarkFelt&quot;</span>.to_string(),
+                    })
+                },
+            )
+        }
+        <span class="kw">fn </span>get_nonce_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;Nonce&gt; {
+            <span class="prelude-val">Ok</span>(Nonce(StarkFelt::new(Pallet::&lt;T&gt;::nonce(contract_address.<span class="number">0.0</span>.<span class="number">0</span>).into()).map_err(|<span class="kw">_</span>| {
+                StateError::StarknetApiError(OutOfRange { string: <span class="string">&quot;Couldn&#39;t convert Nonce to StarkFelt&quot;</span>.to_string() })
+            })<span class="question-mark">?</span>))
+        }
+
+        <span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;ClassHash&gt; {
+            <span class="prelude-val">Ok</span>(ClassHash(StarkFelt::new(Pallet::&lt;T&gt;::contract_class_hash_by_address(contract_address.<span class="number">0.0</span>.<span class="number">0</span>)).map_err(
+                |<span class="kw">_</span>| {
+                    StateError::StarknetApiError(OutOfRange {
+                        string: <span class="string">&quot;Couldn&#39;t convert class hash to StarkFelt&quot;</span>.to_string(),
+                    })
+                },
+            )<span class="question-mark">?</span>))
+        }
+
+        <span class="kw">fn </span>get_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;Arc&lt;ContractClass&gt;&gt; {
+            <span class="prelude-val">Ok</span>(Arc::new(
+                Pallet::&lt;T&gt;::contract_class_by_class_hash(class_hash.<span class="number">0.0</span>)
+                    .to_starknet_contract_class()
+                    .map_err(|<span class="kw">_</span>| StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash))<span class="question-mark">?</span>,
+            ))
+        }
+    }
+    <span class="kw">impl</span>&lt;T: Config&gt; State <span class="kw">for </span>Substate&lt;T&gt; {
+        <span class="kw">fn </span>set_storage_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
+            <span class="self">self</span>::StorageView::&lt;T&gt;::insert((contract_address.<span class="number">0.0</span>.<span class="number">0</span>, H256::from_slice(<span class="kw-2">&amp;</span>key.<span class="number">0.0</span>.<span class="number">0</span>)), U256::from(value.<span class="number">0</span>));
+        }
+
+        <span class="kw">fn </span>increment_nonce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;()&gt; {
+            <span class="kw">let </span>current_nonce = Pallet::&lt;T&gt;::nonce(contract_address.<span class="number">0.0</span>.<span class="number">0</span>);
+            <span class="self">self</span>::Nonces::&lt;T&gt;::insert(contract_address.<span class="number">0.0</span>.<span class="number">0</span>, current_nonce + <span class="number">1</span>);
+            <span class="prelude-val">Ok</span>(())
+        }
+
+        <span class="kw">fn </span>set_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, class_hash: ClassHash) -&gt; StateResult&lt;()&gt; {
+            <span class="self">self</span>::ContractClassHashes::&lt;T&gt;::insert(contract_address.<span class="number">0.0</span>.<span class="number">0</span>, class_hash.<span class="number">0.0</span>);
+            <span class="prelude-val">Ok</span>(())
+        }
+
+        <span class="kw">fn </span>set_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash, contract_class: ContractClass) -&gt; StateResult&lt;()&gt; {
+            <span class="self">self</span>::ContractClasses::&lt;T&gt;::insert(class_hash.<span class="number">0.0</span>, ContractClassWrapper::from(contract_class));
+            <span class="prelude-val">Ok</span>(())
+        }
+
+        <span class="doccomment">/// As the state is updated during the execution we don&#39;t need this method for now.
+        </span><span class="kw">fn </span>to_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateDiff {
+            StateDiff::default()
         }
     }
 }
