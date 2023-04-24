@@ -7,20 +7,20 @@ config:
     local:
       target: "ws://127.0.0.1:9944"
       phases:
-        - duration: 4
-          arrivalCount: 1 # Number of users
-          name: Users Connection
-        - pause: 60
-          name: Performance Testing
+      - duration: 4
+        arrivalCount: 1 # Number of users
+        name: Users Connection
+      - pause: 60
+        name: Performance Testing
   variables:
     nonce: 0
   engines:
-   substrate: {}
+    substrate: {}
 scenarios:
-  - engine: substrate
-    name: starknet_transfer
-    flow:
-      - loop:
-        - function: "executeERC20Transfer"
-        - log: "Executed ERC20 transfer {{ nonce }}"
-        count: 100000
+- engine: substrate
+  name: starknet_transfer
+  flow:
+  - loop:
+    - function: "executeERC20Transfer"
+    - log: "Executed ERC20 transfer {{ nonce }}"
+    count: 100000

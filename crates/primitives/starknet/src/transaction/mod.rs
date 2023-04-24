@@ -7,8 +7,7 @@ use alloc::vec;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
-use blockifier::state::cached_state::CachedState;
-use blockifier::state::state_api::StateReader;
+use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
 use blockifier::transaction::transactions::Executable;
@@ -328,9 +327,9 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
     ///   execution
-    pub fn execute<S: StateReader>(
+    pub fn execute<S: State>(
         &self,
-        state: &mut CachedState<S>,
+        state: &mut S,
         block: StarknetBlock,
         tx_type: TxType,
         contract_class: Option<ContractClass>,

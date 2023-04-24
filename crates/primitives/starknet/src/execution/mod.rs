@@ -9,8 +9,7 @@ use alloc::{format, vec};
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
-use blockifier::state::cached_state::CachedState;
-use blockifier::state::state_api::StateReader;
+use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
@@ -67,9 +66,9 @@ impl ContractClassWrapper {
 
     /// Convert to starknet contract class.
     pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
-        let program = from_slice::<Program>(self.program.as_ref())?;
         let entrypoints =
             from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(self.entry_points_by_type.as_ref())?;
+        let program = from_slice::<Program>(self.program.as_ref())?;
         Ok(ContractClass { program, abi: None, entry_points_by_type: entrypoints })
     }
 }
@@ -278,9 +277,9 @@ impl CallEntryPointWrapper {
     /// # Returns
     ///
     /// * The result of the entry point execution.
-    pub fn execute<S: StateReader>(
+    pub fn execute<S: State>(
         &self,
-        state: &mut CachedState<S>,
+        state: &mut S,
         block: StarknetBlock,
         fee_token_address: ContractAddressWrapper,
     ) -> EntryPointExecutionResultWrapper<CallInfo> {
