@@ -632,7 +632,22 @@ where
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
-        todo!("Not implemented")
+        let substrate_block_hash = self.client.info().best_hash;
+        Ok(self
+            .client
+            .runtime_api()
+            .pending_transactions(substrate_block_hash)
+            .map_err(|e| {
+                error!("{:?}", e);
+                StarknetRpcApiError::InternalServerError
+            })?
+            .into_iter()
+            .map(Transaction::try_from)
+            .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
+            .map_err(|e| {
+                error!("{:#?}", e);
+                StarknetRpcApiError::InternalServerError
+            })?)
     }
 
     /// Returns all events matching the given filter

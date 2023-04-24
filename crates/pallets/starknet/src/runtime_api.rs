@@ -40,6 +40,8 @@ sp_api::decl_runtime_apis! {
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
         /// Returns the hasher used by the runtime.
         fn get_hasher() -> Hasher;
+        // Return pending transactions
+        fn pending_transactions() -> Vec<Transaction>;
     }
 
     pub trait ConvertTransactionRuntimeApi {

@@ -322,6 +322,10 @@ impl_runtime_apis! {
         fn get_hasher() -> Hasher {
             Starknet::get_system_hash().into()
         }
+
+        fn pending_transactions() -> Vec<Transaction> {
+            Starknet::pending().into_iter().map(|(transaction, _)| transaction).collect()
+        }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
