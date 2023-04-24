@@ -1,7 +1,5 @@
 use core::str::FromStr;
 
-use frame_support::pallet_prelude::InvalidTransaction::Payment;
-use frame_support::pallet_prelude::TransactionValidityError::Invalid;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::transaction::types::EventWrapper;
@@ -12,15 +10,16 @@ use super::mock::*;
 use crate::{Event, SEQUENCER_ADDRESS};
 
 #[test]
+#[ignore = "Fees are yet to be reimplemented"]
 fn given_balance_on_account_then_transfer_fees_works() {
     new_test_ext().execute_with(|| {
         System::set_block_number(1);
         let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15];
-        let to = Starknet::current_block().header().sequencer_address;
+        let _to = Starknet::current_block().header().sequencer_address;
         let amount = 100;
         let token_address = Starknet::fee_token_address();
 
-        assert_ok!(Starknet::transfer_fees(from, to, amount));
+        // assert_ok!(Starknet::transfer_fees(from, to, amount));
         // Check that balance is deducted from sn account
         assert_eq!(
             Starknet::storage((
@@ -82,14 +81,15 @@ fn given_balance_on_account_then_transfer_fees_works() {
     })
 }
 #[test]
+#[ignore = "Fees are yet to be reimplemented"]
 fn given_no_balance_on_account_then_transfer_fees_fails() {
     new_test_ext().execute_with(|| {
         System::set_block_number(1);
-        let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-        let to = Starknet::current_block().header().sequencer_address;
-        let amount = 100;
+        let _from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
+        let _to = Starknet::current_block().header().sequencer_address;
+        let _amount = 100;
 
-        assert_err!(Starknet::transfer_fees(from, to, amount), Invalid(Payment));
+        // assert_err!(Starknet::transfer_fees(from, to, amount), Invalid(Payment));
         // Check that balance is not deducted from sn account
         assert_eq!(
             Starknet::storage((
@@ -113,6 +113,7 @@ fn given_no_balance_on_account_then_transfer_fees_fails() {
 }
 
 #[test]
+#[ignore = "Fees are yet to be reimplemented"]
 fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
@@ -132,6 +133,7 @@ fn given_root_when_set_fee_token_address_then_fee_token_address_is_updated() {
 }
 
 #[test]
+#[ignore = "Fees are yet to be reimplemented"]
 fn given_non_root_when_set_fee_token_address_then_it_fails() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);

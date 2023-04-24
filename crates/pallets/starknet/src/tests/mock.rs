@@ -3,20 +3,16 @@ use core::str::FromStr;
 use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
-use frame_support::weights::IdentityFee;
 use hex::FromHex;
 use mp_starknet::execution::ContractClassWrapper;
-use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
-use sp_core::{ConstU8, H256, U256};
+use sp_core::{H256, U256};
 use sp_runtime::testing::Header;
-use sp_runtime::traits::{BlakeTwo256, IdentityLookup, One};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
 use {crate as pallet_starknet, frame_system as system};
-
-use crate::StarknetFee;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -37,7 +33,6 @@ frame_support::construct_runtime!(
         System: frame_system,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
-        TransactionPayment: pallet_transaction_payment,
     }
 );
 
@@ -87,18 +82,7 @@ impl pallet_starknet::Config for Test {
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
 }
-parameter_types! {
-    pub FeeMultiplier: Multiplier = Multiplier::one();
-}
-// Provides the logic needed to handle transaction fees
-impl pallet_transaction_payment::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-    type OnChargeTransaction = StarknetFee;
-    type OperationalFeeMultiplier = ConstU8<5>;
-    type WeightToFee = IdentityFee<u128>;
-    type LengthToFee = IdentityFee<u128>;
-    type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
-}
+
 pub const TOKEN_CONTRACT_CLASS_HASH: &str = "06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
 
 // Build genesis storage according to the mock runtime.
