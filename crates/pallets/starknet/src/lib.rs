@@ -139,6 +139,7 @@ pub mod pallet {
     use starknet_api::state::{StateDiff, StorageKey};
     use starknet_api::stdlib::collections::HashMap;
     use starknet_api::transaction::{Calldata, EventContent};
+    use starknet_api::StarknetApiError::OutOfRange;
     use types::{EthBlockNumber, OffchainWorkerError};
 
     use super::*;
@@ -1231,15 +1232,28 @@ pub mod pallet {
 
     impl<T: Config> StateReader for Substate<T> {
         fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
-            Ok(StarkFelt::new(Pallet::<T>::storage((contract_address.0.0.0, H256::from_slice(&key.0.0.0))).into())
-                .unwrap())
+            StarkFelt::new(Pallet::<T>::storage((contract_address.0.0.0, H256::from_slice(&key.0.0.0))).into()).map_err(
+                |_| {
+                    StateError::StarknetApiError(OutOfRange {
+                        string: "Couldn't convert storage value to StarkFelt".to_string(),
+                    })
+                },
+            )
         }
         fn get_nonce_at(&mut self, contract_address: ContractAddress) -> StateResult<Nonce> {
-            Ok(Nonce(StarkFelt::new(Pallet::<T>::nonce(contract_address.0.0.0).into()).unwrap()))
+            Ok(Nonce(StarkFelt::new(Pallet::<T>::nonce(contract_address.0.0.0).into()).map_err(|_| {
+                StateError::StarknetApiError(OutOfRange { string: "Couldn't convert Nonce to StarkFelt".to_string() })
+            })?))
         }
 
         fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
-            Ok(ClassHash(StarkFelt::new(Pallet::<T>::contract_class_hash_by_address(contract_address.0.0.0)).unwrap()))
+            Ok(ClassHash(StarkFelt::new(Pallet::<T>::contract_class_hash_by_address(contract_address.0.0.0)).map_err(
+                |_| {
+                    StateError::StarknetApiError(OutOfRange {
+                        string: "Couldn't convert class hash to StarkFelt".to_string(),
+                    })
+                },
+            )?))
         }
 
         fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
