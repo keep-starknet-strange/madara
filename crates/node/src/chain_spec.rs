@@ -191,6 +191,7 @@ fn testnet_genesis(
     let other_class_hash_bytes =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001000").unwrap();
 
+    // Fee token
     let fee_token_address =
         <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap();
 

@@ -2,7 +2,9 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use frame_support::{Identity, StorageHasher};
 use mp_starknet::block::Block as StarknetBlock;
+use mp_starknet::execution::{ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
@@ -53,10 +55,18 @@ impl<B: BlockT> OverrideHandle<B> {
 pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Return the current block.
     fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
+    /// Return the contract class at the provided address for the provided block.
+    fn contract_class(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClassWrapper>;
 }
 
+/// Returns the storage prefix given the pallet module name and the storage name
 fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
     [twox_128(module), twox_128(storage)].concat().to_vec()
+}
+
+/// Returns the storage key for single key maps using the Identity storage hasher.
+fn storage_key_build(prefix: Vec<u8>, key: &[u8]) -> Vec<u8> {
+    [prefix, Identity::hash(key)].concat()
 }
 
 /// A wrapper type for the Runtime API.
@@ -84,5 +94,19 @@ where
         let api = self.client.runtime_api();
 
         api.current_block(block_hash).ok()
+    }
+
+    fn contract_class(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ContractClassWrapper> {
+        let api = self.client.runtime_api();
+        let contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()?;
+
+        match contract_class_hash {
+            None => None,
+            Some(contract_class_hash) => api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()?,
+        }
     }
 }

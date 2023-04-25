@@ -76,11 +76,16 @@ impl system::Config for Test {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
+parameter_types! {
+    pub const UnsignedPriority: u64 = 1 << 20;
+}
+
 impl pallet_starknet::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
+    type UnsignedPriority = UnsignedPriority;
 }
 parameter_types! {
     pub FeeMultiplier: Multiplier = Multiplier::one();
@@ -94,6 +99,7 @@ impl pallet_transaction_payment::Config for Test {
     type LengthToFee = IdentityFee<u128>;
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
+pub const TOKEN_CONTRACT_CLASS_HASH: &str = "06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
@@ -109,17 +115,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         <[u8; 32]>::from_hex(BLOCKIFIER_ACCOUNT_CLASS.strip_prefix("0x").unwrap()).unwrap();
 
     // TEST CLASSES
-    let argent_proxy_class = get_contract_class(include_bytes!("../../../../resources/argent_proxy_v0.json"));
-    let argent_account_class = get_contract_class(include_bytes!("../../../../resources/argent_account_v0.json"));
-    let test_class = get_contract_class(include_bytes!("../../../../resources/test.json"));
-    let l1_handler_class = get_contract_class(include_bytes!("../../../../resources/l1_handler.json"));
+    let argent_proxy_class = get_contract_class(include_bytes!("../../../../../resources/argent_proxy_v0.json"));
+    let argent_account_class = get_contract_class(include_bytes!("../../../../../resources/argent_account_v0.json"));
+    let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
+    let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
     let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    let simple_account_class = get_contract_class(include_bytes!("../../../../resources/account/account.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../../resources/erc20/erc20.json"));
+    let simple_account_class = get_contract_class(include_bytes!("../../../../../resources/account/account.json"));
+    let erc20_class = get_contract_class(include_bytes!("../../../../../resources/erc20/erc20.json"));
     let simple_account_address =
         <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
     let simple_account_class_hash =
-        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000E").unwrap();
+        <[u8; 32]>::from_hex("0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
@@ -137,7 +143,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         <[u8; 32]>::from_hex("01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8").unwrap();
 
     // FEE CONTRACT
-    let token_class_hash_str = "0000000000000000000000000000000000000000000000000000000000010000";
+    let token_class_hash_str = TOKEN_CONTRACT_CLASS_HASH;
     let token_class_hash_bytes = <[u8; 32]>::from_hex(token_class_hash_str).unwrap();
     let fee_token_address =
         <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
@@ -194,8 +200,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// # Arguments
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
-    let deployer_account = 1;
-    let deployer_origin = RuntimeOrigin::signed(deployer_account);
+    let deployer_origin = RuntimeOrigin::none();
     for b in System::block_number()..=n {
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);

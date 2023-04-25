@@ -3,8 +3,9 @@ import "@keep-starknet-strange/madara-api-augment";
 import { expect } from "chai";
 
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { RpcProvider, validateAndParseAddress } from "starknet";
+import { RpcProvider } from "starknet";
 import { jumpBlocks } from "../../util/block";
+import { TEST_CONTRACT } from "./constants";
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -58,8 +59,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     let call = await providerRPC.callContract(
       {
-        contractAddress:
-          "0x0000000000000000000000000000000000000000000000000000000000001111", // test contract
+        contractAddress: TEST_CONTRACT,
         entrypoint: "return_result",
         calldata: ["0x19"],
       },
@@ -67,5 +67,17 @@ describeDevMadara("Starknet RPC", (context) => {
     );
 
     expect(call.result).to.contain("0x19");
+  });
+
+  it("getClassAt", async function () {
+    let blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
+    let block_number: number = blockHashAndNumber.block_number;
+
+    let contract_class = await providerRPC.getClassAt(
+      TEST_CONTRACT,
+      block_number
+    );
+
+    expect(contract_class).to.not.be.undefined;
   });
 });

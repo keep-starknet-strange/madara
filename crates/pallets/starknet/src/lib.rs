@@ -54,17 +54,66 @@ pub mod state_root;
 /// The Starknet pallet's runtime API
 pub mod runtime_api;
 
-#[cfg(test)]
-mod mock;
+/// An adapter for the blockifier state related traits
+pub mod blockifier_state_adapter;
+
+/// Implementation of the [OnChargeTransaction] trait for the pallet
+pub mod starknet_fee;
 
 #[cfg(test)]
 mod tests;
 
-// TODO: Uncomment when benchmarking is implemented.
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+pub use pallet::*;
 
-pub use self::pallet::*;
+pub extern crate alloc;
+use alloc::str::from_utf8;
+use alloc::string::{String, ToString};
+use alloc::vec;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
+
+use blockifier::abi::abi_utils;
+use blockifier::block_context::BlockContext;
+use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
+use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
+use blockifier::transaction::objects::AccountTransactionContext;
+use blockifier_state_adapter::BlockifierStateAdapter;
+use frame_support::pallet_prelude::*;
+use frame_support::sp_runtime::offchain::storage::StorageValueRef;
+use frame_support::traits::{OriginTrait, Time};
+use frame_system::pallet_prelude::*;
+use mp_digest_log::MADARA_ENGINE_ID;
+use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
+use mp_starknet::crypto::commitment;
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::execution::{
+    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+};
+use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
+use mp_starknet::traits::hash::Hasher;
+use mp_starknet::transaction::types::{
+    EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
+    TxType,
+};
+use pallet_transaction_payment::OnChargeTransaction;
+use serde_json::from_str;
+use sp_core::{H256, U256};
+use sp_runtime::offchain::http;
+use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::transaction_validity::InvalidTransaction::Payment;
+use sp_runtime::transaction_validity::UnknownTransaction::Custom;
+use sp_runtime::DigestItem;
+use starknet_api::api_core::{ChainId, ContractAddress};
+use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::deprecated_contract_class::EntryPointType;
+use starknet_api::hash::StarkFelt;
+use starknet_api::stdlib::collections::HashMap;
+use starknet_api::transaction::{Calldata, EventContent};
+pub use starknet_fee::StarknetFee;
+use types::{EthBlockNumber, OffchainWorkerError};
+
+use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
+use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -89,57 +138,7 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    pub extern crate alloc;
-    use alloc::str::from_utf8;
-    use alloc::string::{String, ToString};
-    use alloc::vec;
-    use alloc::vec::Vec;
-
-    use blockifier::abi::abi_utils;
-    use blockifier::block_context::BlockContext;
-    use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
-    use blockifier::state::cached_state::{CachedState, ContractStorageKey};
-    use blockifier::state::state_api::State;
-    use blockifier::test_utils::DictStateReader;
-    use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
-    use blockifier::transaction::objects::AccountTransactionContext;
-    use frame_support::pallet_prelude::*;
-    use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-    use frame_support::traits::{OriginTrait, Time};
-    use frame_system::pallet_prelude::*;
-    use mp_digest_log::{PostLog, MADARA_ENGINE_ID};
-    use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
-    use mp_starknet::crypto::commitment;
-    use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    use mp_starknet::execution::{
-        CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
-    };
-    use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-    use mp_starknet::traits::hash::Hasher;
-    use mp_starknet::transaction::types::{
-        EventError, EventWrapper as StarknetEventType, StateDiffError, Transaction, TransactionReceiptWrapper, TxType,
-    };
-    use pallet_transaction_payment::OnChargeTransaction;
-    use serde_json::from_str;
-    use sp_core::{H256, U256};
-    use sp_runtime::offchain::http;
-    use sp_runtime::traits::{DispatchInfoOf, PostDispatchInfoOf, UniqueSaturatedInto};
-    use sp_runtime::transaction_validity::InvalidTransaction::Payment;
-    use sp_runtime::transaction_validity::UnknownTransaction::Custom;
-    use sp_runtime::DigestItem;
-    use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, Nonce};
-    use starknet_api::block::{BlockNumber, BlockTimestamp};
-    use starknet_api::deprecated_contract_class::EntryPointType;
-    use starknet_api::hash::StarkFelt;
-    use starknet_api::state::{StateDiff, StorageKey};
-    use starknet_api::stdlib::collections::HashMap;
-    use starknet_api::transaction::{Calldata, EventContent};
-    use starknet_api::StarknetApiError;
-    use types::{EthBlockNumber, OffchainWorkerError};
-
     use super::*;
-    use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-    use crate::types::{ContractClassMapping, ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -157,6 +156,12 @@ pub mod pallet {
         type SystemHash: Hasher;
         /// The time idk what.
         type TimestampProvider: Time;
+        /// A configuration for base priority of unsigned transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime, when
+        /// multiple pallets send unsigned transactions.
+        #[pallet::constant]
+        type UnsignedPriority: Get<TransactionPriority>;
     }
 
     /// The Starknet pallet hooks.
@@ -216,38 +221,48 @@ pub mod pallet {
     pub(super) type PendingEvents<T: Config> =
         StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
 
+    /// Information of the transaction needed for the fee transfer.
+    #[pallet::storage]
+    #[pallet::getter(fn fee_information)]
+    pub(super) type FeeInformation<T: Config> = StorageValue<_, FeeTransferInformation, ValueQuery>;
+
     /// The current Starknet block.
     #[pallet::storage]
     #[pallet::getter(fn current_block)]
     pub(super) type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock, ValueQuery>;
 
-    // Mapping for block number and hashes.
+    /// Mapping for block number and hashes.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn block_hash)]
-    pub(super) type BlockHash<T: Config> = StorageMap<_, Twox64Concat, U256, H256, ValueQuery>;
+    pub(super) type BlockHash<T: Config> = StorageMap<_, Identity, U256, H256, ValueQuery>;
 
     /// Mapping from Starknet contract address to the contract's class hash.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_hash_by_address)]
     pub(super) type ContractClassHashes<T: Config> =
-        StorageMap<_, Twox64Concat, ContractAddressWrapper, ClassHashWrapper, ValueQuery>;
+        StorageMap<_, Identity, ContractAddressWrapper, ClassHashWrapper, OptionQuery>;
 
     /// Mapping from Starknet class hash to contract class.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
     pub(super) type ContractClasses<T: Config> =
-        StorageMap<_, Twox64Concat, ClassHashWrapper, ContractClassWrapper, ValueQuery>;
+        StorageMap<_, Identity, ClassHashWrapper, ContractClassWrapper, OptionQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn nonce)]
-    pub(super) type Nonces<T: Config> = StorageMap<_, Twox64Concat, ContractAddressWrapper, NonceWrapper, ValueQuery>;
+    pub(super) type Nonces<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, NonceWrapper, ValueQuery>;
 
     /// Mapping from Starknet contract storage key to its value.
+    /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> =
-        StorageMap<_, Twox64Concat, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
+        StorageMap<_, Identity, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
 
     /// The last processed Ethereum block number for L1 messages consumption.
     /// This is used to avoid re-processing the same Ethereum block multiple times.
@@ -374,8 +389,7 @@ pub mod pallet {
         #[pallet::call_index(0)]
         #[pallet::weight(0)]
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
-            // Make sure the caller is from a signed origin and retrieve the signer.
-            let _deployer_account = ensure_signed(origin)?;
+            ensure_none(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
                 .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
             PendingEvents::<T>::try_append(StarknetEventType::default())
@@ -403,8 +417,9 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight(0)]
-        pub fn invoke(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn invoke(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
 
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
@@ -413,8 +428,13 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            let state = &mut Self::create_state_reader()?;
-            let call_info = transaction.execute(state, block, TxType::InvokeTx, None, fee_token_address);
+            let call_info = transaction.execute(
+                &mut BlockifierStateAdapter::<T>::default(),
+                block,
+                TxType::InvokeTx,
+                None,
+                fee_token_address,
+            );
             let receipt;
             match call_info {
                 Ok(Some(mut v)) => {
@@ -436,8 +456,9 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
-
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
+            // TODO: Compute real fee value
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
@@ -461,8 +482,9 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(2)]
         #[pallet::weight(0)]
-        pub fn declare(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn declare(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
 
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
@@ -482,8 +504,6 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            // Create state reader from substrate storage
-            let state = &mut Self::create_state_reader()?;
 
             // Parse contract class
             let contract_class = transaction
@@ -494,8 +514,13 @@ pub mod pallet {
                 .or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(state, block, TxType::DeclareTx, Some(contract_class.clone()), fee_token_address)
-            {
+            match transaction.execute(
+                &mut BlockifierStateAdapter::<T>::default(),
+                block,
+                TxType::DeclareTx,
+                Some(contract_class),
+                fee_token_address,
+            ) {
                 Ok(_) => {
                     log!(debug, "Declare Transaction executed successfully.");
                 }
@@ -504,15 +529,14 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
+            // TODO: Compute real fee value
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            // Associate contract class to class hash
-            Self::set_contract_class_hash(class_hash, contract_class.into())?;
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
-
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
 
             Ok(())
@@ -535,8 +559,9 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(3)]
         #[pallet::weight(0)]
-        pub fn deploy_account(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn deploy_account(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
 
             // Check if contract is deployed
             ensure!(
@@ -549,8 +574,13 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
 
-            let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::DeployAccountTx, None, fee_token_address) {
+            match transaction.execute(
+                &mut BlockifierStateAdapter::<T>::default(),
+                block,
+                TxType::DeployAccountTx,
+                None,
+                fee_token_address,
+            ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -562,10 +592,12 @@ pub mod pallet {
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
+            // TODO: Compute real fee value
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // Associate contract class to class hash
             // TODO: update state root
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
 
             Ok(())
         }
@@ -585,15 +617,22 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(4)]
         #[pallet::weight(0)]
-        pub fn consume_l1_message(_origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
-            // TODO: add origin check when proxy pallet added
+        pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+            // This ensures that the function can only be called via unsigned transaction.
+            ensure_none(origin)?;
+
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
-            let state = &mut Self::create_state_reader()?;
-            match transaction.execute(state, block, TxType::L1HandlerTx, None, fee_token_address) {
+            match transaction.execute(
+                &mut BlockifierStateAdapter::<T>::default(),
+                block,
+                TxType::L1HandlerTx,
+                None,
+                fee_token_address,
+            ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                 }
@@ -606,9 +645,10 @@ pub mod pallet {
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
+            // TODO: Compute real fee value (might be different for this)
+            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
-            Self::apply_state_diffs(state).map_err(|_| Error::<T>::StateDiffError)?;
-
+            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             Ok(())
         }
 
@@ -643,6 +683,48 @@ pub mod pallet {
                 new_fee_token_address: fee_token_address,
             });
             Ok(())
+        }
+    }
+
+    #[pallet::validate_unsigned]
+    impl<T: Config> ValidateUnsigned for Pallet<T> {
+        type Call = Call<T>;
+
+        /// Validate unsigned call to this module.
+        ///
+        /// By default unsigned transactions are disallowed, but implementing the validator
+        /// here we make sure that some particular calls (in this case all calls)
+        /// are being whitelisted and marked as valid.
+        fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+            // TODO: Call `__validate__` entrypoint of the contract. #69
+
+            match call {
+                Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
+                    .priority(T::UnsignedPriority::get())
+                    .and_provides((transaction.sender_address, transaction.nonce))
+                    .longevity(64_u64)
+                    .propagate(true)
+                    .build(),
+                _ => InvalidTransaction::Call.into(),
+            }
         }
     }
 
@@ -708,8 +790,6 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            // Get state
-            let state = &mut Self::create_state_reader()?;
             // Get class hash
             let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
@@ -722,7 +802,7 @@ pub mod pallet {
                 ContractAddressWrapper::default(),
             );
 
-            match entrypoint.execute(state, block, fee_token_address) {
+            match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
                 Ok(v) => {
                     // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
                     let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
@@ -781,49 +861,8 @@ pub mod pallet {
             Pending::<T>::kill();
             PendingEvents::<T>::kill();
 
-            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, PostLog::BlockHash(block.header().hash()).encode());
+            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
             frame_system::Pallet::<T>::deposit_log(digest);
-        }
-
-        /// Associate a contract class hash with a contract class info
-        ///
-        /// # Arguments
-        ///
-        /// * `contract_class_hash` - The contract class hash.
-        /// * `class_info` - The contract class info.
-        fn set_contract_class_hash(
-            contract_class_hash: ClassHashWrapper,
-            class_info: ContractClassWrapper,
-        ) -> Result<(), DispatchError> {
-            // Check if the contract address is already associated with a contract class hash.
-            ensure!(
-                !ContractClasses::<T>::contains_key(contract_class_hash),
-                Error::<T>::ContractClassAlreadyAssociated
-            );
-            ContractClasses::<T>::insert(contract_class_hash, class_info);
-
-            Ok(())
-        }
-
-        /// Associate a contract address with a contract class hash.
-        ///
-        /// # Arguments
-        ///
-        /// * `contract_address` - The contract address.
-        /// * `contract_class_hash` - The contract class hash.
-        fn set_class_hash_at(
-            contract_address: ContractAddressWrapper,
-            contract_class_hash: ClassHashWrapper,
-        ) -> Result<(), DispatchError> {
-            // Check if the contract address is already associated with a contract class hash.
-            ensure!(
-                !ContractClassHashes::<T>::contains_key(contract_address),
-                Error::<T>::ContractAddressAlreadyAssociated
-            );
-
-            ContractClassHashes::<T>::insert(contract_address, contract_class_hash);
-
-            Ok(())
         }
 
         /// Emit events from the call info.
@@ -877,99 +916,6 @@ pub mod pallet {
 
             PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
             Ok(sn_event)
-        }
-
-        /// Apply the state diff returned by the starknet execution.
-        ///
-        /// # Argument
-        ///
-        /// * `state` - The state constructed for the starknet execution engine.
-        ///
-        /// # Error
-        ///
-        /// Returns an error if it fails to apply the state diff of newly deployed contracts.
-        pub fn apply_state_diffs(state: &CachedState<DictStateReader>) -> Result<(), StateDiffError> {
-            // Get all the state diffs
-            let StateDiff { deployed_contracts, storage_diffs, declared_classes: _declared_classes, nonces, .. } =
-                state.to_state_diff();
-            // Store the newly deployed contracts in substrate storage.
-            deployed_contracts.iter().try_for_each(|(address, class_hash)| {
-                Self::set_class_hash_at(address.0.0.0, class_hash.0.0).map_err(|_| {
-                    log!(
-                        error,
-                        "Failed to save newly deployed contract at address: {:?} with class hash: {:?}",
-                        address.0.0.0,
-                        class_hash.0.0
-                    );
-                    StateDiffError::DeployedContractError
-                })
-            })?;
-            // Store the modifications of storage vars.
-            storage_diffs.iter().for_each(|(address, diffs)| {
-                diffs.iter().for_each(|(key, value)| {
-                    StorageView::<T>::insert((address.0.0.0, H256::from_slice(&key.0.0.0)), U256::from(value.0))
-                })
-            });
-            // Store the new nonces.
-            nonces.iter().for_each(|(address, nonce)| Nonces::<T>::insert(address.0.0.0, U256::from(nonce.0.0)));
-            Ok(())
-        }
-
-        /// Create a state reader.
-        ///
-        /// # Returns
-        ///
-        /// The state reader.
-        pub fn create_state_reader() -> Result<CachedState<DictStateReader>, DispatchError> {
-            // TODO: Handle errors and propagate them to the caller.
-
-            let address_to_class_hash: HashMap<ContractAddress, ClassHash> = ContractClassHashes::<T>::iter()
-                .map(|(key, value)| {
-                    (
-                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
-                        ClassHash(StarkFelt::new(value).unwrap()),
-                    )
-                })
-                .collect();
-
-            let address_to_nonce: HashMap<ContractAddress, Nonce> = Nonces::<T>::iter()
-                .map(|(key, value)| {
-                    (
-                        ContractAddress::try_from(StarkFelt::new(key).unwrap()).unwrap(),
-                        Nonce(StarkFelt::new(value.into()).unwrap()),
-                    )
-                })
-                .collect();
-
-            let storage_view: HashMap<ContractStorageKey, StarkFelt> = StorageView::<T>::iter()
-                .map(|(key, value)| {
-                    (
-                        (
-                            ContractAddress::try_from(StarkFelt::new(key.0).unwrap()).unwrap(),
-                            StorageKey::try_from(StarkFelt::new(key.1.into()).unwrap()).unwrap(),
-                        ),
-                        StarkFelt::new(value.into()).unwrap(),
-                    )
-                })
-                .collect();
-
-            let class_hash_to_class: ContractClassMapping = ContractClasses::<T>::iter()
-                .map(|(key, value)| {
-                    let class_hash = ClassHash(StarkFelt::new(key)?);
-                    let contract_class = value.to_starknet_contract_class().unwrap();
-                    Ok((class_hash, contract_class))
-                })
-                .collect::<Result<ContractClassMapping, StarknetApiError>>()
-                .map_err(|_| Error::<T>::StateReaderError)?
-                .into_iter()
-                .collect();
-
-            Ok(CachedState::new(DictStateReader {
-                address_to_class_hash,
-                address_to_nonce,
-                storage_view,
-                class_hash_to_class,
-            }))
         }
 
         /// Returns Ethereum RPC URL from Storage
@@ -1052,15 +998,10 @@ pub mod pallet {
         ///
         /// Returns an error if a step of the transfer fails
         pub fn transfer_fees(
-            from: [u8; 32],
-            to: [u8; 32],
+            from: ContractAddressWrapper,
+            to: ContractAddressWrapper,
             amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
         ) -> Result<(), TransactionValidityError> {
-            // Create state reader.
-            let state = &mut Pallet::<T>::create_state_reader().map_err(|_| {
-                log!(error, "Couldn't create the cached state");
-                TransactionValidityError::Unknown(Custom(3_u8))
-            })?;
             // Get current block.
             let block = Pallet::<T>::current_block();
             let fee_token_address =
@@ -1100,8 +1041,7 @@ pub mod pallet {
                 .map_err(|_| {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
-                })?, // TODO: implement account id to match starknet and use who
-                // FIXME #244
+                })?,
                 call_type: blockifier::execution::entry_point::CallType::Call,
             };
             // FIXME #245
@@ -1129,7 +1069,7 @@ pub mod pallet {
                 gas_price: 0,                   // TODO: Use block gas price
             };
             match fee_transfer_call.execute(
-                state,
+                &mut BlockifierStateAdapter::<T>::default(),
                 &mut ExecutionResources::default(),
                 &mut execution_context,
                 &block_ctx,
@@ -1144,87 +1084,8 @@ pub mod pallet {
                     return Err(TransactionValidityError::Invalid(Payment));
                 }
             }
-            Pallet::<T>::apply_state_diffs(state).map_err(|_| {
-                log!(error, "Couldn't apply the state diffs");
-                TransactionValidityError::Unknown(Custom(3_u8))
-            })?;
+
             Ok(())
-        }
-    }
-    pub struct StarknetFee;
-    impl<T: Config> OnChargeTransaction<T> for StarknetFee {
-        /// The underlying integer type in which fees are calculated.
-        type Balance = u128;
-
-        /// The underlying integer type of the quantity of tokens.
-        type LiquidityInfo = U256;
-
-        /// Before the transaction is executed the payment of the transaction fees
-        /// need to be secured.
-        ///
-        /// Note: The `fee` already includes the `tip`.
-        ///
-        /// # Arguments
-        ///
-        /// * `who` - Initiator of the transaction.
-        /// * `call` - type of the call.
-        /// * `dispatch_info` - dispatch infos.
-        /// * `fee` - total fees set by the user.
-        /// * `tip` - tip set by the user.
-        ///
-        /// # Returns
-        ///
-        /// Fees transferred from the user.
-        ///
-        /// Error
-        ///
-        /// Returns an error if any step of the fee transfer fails.
-        fn withdraw_fee(
-            _who: &T::AccountId,
-            _call: &T::RuntimeCall,
-            _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-            fee: Self::Balance,
-            _tip: Self::Balance,
-        ) -> Result<Self::LiquidityInfo, TransactionValidityError> {
-            // TODO: use real address
-            let from = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-            let to = Pallet::<T>::current_block().header().sequencer_address;
-
-            Pallet::<T>::transfer_fees(from, to, fee)?;
-            Ok(U256::from(fee))
-        }
-
-        /// After the transaction was executed the actual fee can be calculated.
-        /// This function should refund any overpaid fees and optionally deposit
-        /// the corrected amount.
-        ///
-        /// Note: The `fee` already includes the `tip`.
-        ///
-        /// # Arguments
-        ///
-        /// * `who` - Initiator of the transaction.
-        /// * `dispatch_info` - dispatch infos.
-        /// * `post_info` - post infos.
-        /// * `corrected_fee` - corrected fees after tx execution.
-        /// * `tip` - tip set by the user.
-        /// * `already_withdrawn` - fees already transferred in the `withdraw_fee` function.
-        ///
-        /// Error
-        ///
-        /// Returns an error if any step of the fee transfer refund fails.
-        fn correct_and_deposit_fee(
-            _who: &T::AccountId,
-            _dispatch_info: &DispatchInfoOf<T::RuntimeCall>,
-            _post_info: &PostDispatchInfoOf<T::RuntimeCall>,
-            corrected_fee: Self::Balance,
-            _tip: Self::Balance,
-            already_withdrawn: Self::LiquidityInfo,
-        ) -> Result<(), TransactionValidityError> {
-            // TODO: use real address
-            let to = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-            let from = Pallet::<T>::current_block().header().sequencer_address;
-            // TODO: Remove panic
-            Pallet::<T>::transfer_fees(from, to, already_withdrawn.as_u128() - corrected_fee)
         }
     }
 }

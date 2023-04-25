@@ -13,13 +13,7 @@ from starkware.starknet.common.syscalls import (
 
 @event
 func ContractDeployed(
-    address: felt,
-    deployer: felt,
-    classHash: felt,
-    calldata_len: felt,
-    calldata: felt*,
-    salt: felt,
-    metadata: felt,
+    address: felt, deployer: felt, classHash: felt, calldata_len: felt, calldata: felt*, salt: felt
 ) {
 }
 
@@ -73,7 +67,6 @@ func deploy_contract{syscall_ptr: felt*, range_check_ptr}(
         calldata_len=constructor_calldata_len,
         calldata=constructor_calldata,
         salt=contract_address_salt,
-        metadata='fuck Abdel',
     );
     return (contract_address=0);
 }

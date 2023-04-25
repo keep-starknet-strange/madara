@@ -23,11 +23,7 @@ function rpcMethods(userContext, events, done) {
 }
 
 async function executeERC20Transfer(userContext, events, done) {
-  const { accountName } = userContext.vars;
-
-  const keyring = new Keyring({ type: "sr25519" });
-  const user = keyring.addFromUri(`//${accountName}`);
-
+  const { nonce } = userContext.vars;
   const contractAddress =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
   const amount =
@@ -37,12 +33,15 @@ async function executeERC20Transfer(userContext, events, done) {
 
   await transfer(
     userContext.api,
-    user,
     contractAddress,
     "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
     contractAddress,
-    amount
-  );
+    amount,
+    nonce
+  ).send();
+
+  // Update userContext nonce
+  userContext.vars.nonce = nonce + 1;
 
   return done();
 }
