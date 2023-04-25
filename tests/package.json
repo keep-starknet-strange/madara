@@ -5,7 +5,7 @@
   "main": "index.js",
   "engines": {
     "node": ">=20",
-    "npm": ">=9.6.5"
+    "npm": ">=9.6.4"
   },
   "type": "commonjs",
   "watch": {
@@ -49,8 +49,8 @@
     "build": "npx tsc && cp -r contracts build/",
     "build-clean": "rm -r node_modules && npm i && npm run build",
     "current-test": "mocha -r ts-node/register",
-    "lint": "npx prettier --write --ignore-path .gitignore '**/*.(yml|js|ts|json)'",
-    "lint-check": "npx prettier --check --ignore-path .gitignore '**/*.(yml|js|ts|json)'",
+    "lint": "npx prettier --write . && npx eslint --fix .",
+    "lint-check": "npx prettier --check . && npx eslint .",
     "clean": "rimraf *.log binaries/* runtimes/* specs/*"
   },
   "author": "",

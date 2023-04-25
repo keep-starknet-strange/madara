@@ -1,11 +1,10 @@
-name: Typos and markdown formatting
+name: Linters
 
 on: [push, pull_request]
 
 jobs:
   spell-check:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
       - uses: codespell-project/actions-codespell@v1
@@ -23,8 +22,25 @@ jobs:
         run: |-
           npx prettier --check .
 
-  lint:
-    name: Lint markdown files
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ">=20"
+          cache: "npm"
+          cache-dependency-path: ./tests/package-lock.json
+      - name: Install
+        run: |-
+          cd tests
+          npm install
+      - name: Run eslint
+        run: |-
+          cd tests
+          npx eslint .
+
+  markdownlint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
