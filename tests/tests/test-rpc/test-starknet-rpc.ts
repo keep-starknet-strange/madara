@@ -2,7 +2,6 @@ import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
-
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { RpcProvider, LibraryError } from "starknet";
@@ -12,6 +11,17 @@ import {
   TEST_CONTRACT,
   TEST_CONTRACT_CLASS_HASH,
 } from "./constants";
+
+import {
+  transfer,
+} from "../../util/starknet";
+
+const mintAmount =
+  "0x0000000000000000000000000000000000000000000000000000000000000001";
+const contractAddress =
+  "0x0000000000000000000000000000000000000000000000000000000000000001";
+const feeTokenAddress =
+  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -220,6 +230,36 @@ describeDevMadara("Starknet RPC", (context) => {
     } catch (error) {
       expect(error.message).to.equal("24: Block not found");
     }
+  });
+  it("getBlockWithTxHashes", async function () {
+    const result = await context.createBlock(
+      transfer(
+        context.polkadotApi,
+        contractAddress,
+        feeTokenAddress,
+        contractAddress,
+        mintAmount
+      )
+    );
+
+    const chain_result = await context.polkadotApi.rpc.chain.getBlock(result.block.hash);
+    console.log("extrensics: ", chain_result.block.extrinsics[0].method.args);
+    const block_number = chain_result.block.header.number.toNumber();
+
+    // happy path test
+    let block_with_tx_hashes = await providerRPC.getBlockWithTxHashes(block_number);
+    console.log("getBlockWithTxHashes(): ", block_with_tx_hashes);
+    expect(block_with_tx_hashes).to.not.be.undefined;
+    // expect(block_with_tx_hashes.transactions.length).to.have.length(1);
+
+    // Invalid block id test
+    try {
+      await providerRPC.getBlockWithTxHashes("0x123");
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("24: Block not found");
+    }
+
   });
 });
 });
