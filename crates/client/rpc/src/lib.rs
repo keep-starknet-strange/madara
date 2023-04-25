@@ -15,8 +15,8 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FieldElement, FunctionCall, RPCContractClass,
-    SierraContractClass, Syncing,
+    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, ContractClassHash,
+    FunctionCall, RPCContractClass,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -189,45 +189,6 @@ where
         Ok(contract_class)
     }
 
-    /// Get the contract class definition in the given block associated with the given hash.
-    fn get_class(&self, block_id: StarknetBlockId, class_hash: FieldElement) -> RpcResult<ContractClassWrapper> {
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_str(&h).map_err(|e| {
-                    error!("Failed to convert '{h}' to H256: {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?,
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::BlockNumber(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
-
-        let class_hash_bytes = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
-            error!("Failed to convert '{class_hash}' to [u8; 32]: {e}");
-            StarknetRpcApiError::ClassHashNotFound
-        })?;
-
-        let contract_class =
-            self.client.runtime_api().get_class(substrate_block_hash, class_hash_bytes).unwrap_or_default();
-
-        Ok(contract_class)
-    }
-
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
@@ -293,67 +254,14 @@ where
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        // let contract_class: SierraContractClass = self
-        //     .overrides
-        //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
-        //     .contract_class(substrate_block_hash, contract_address_wrapped)
-        //     .ok_or_else(|| {
-        //         error!("Failed to retrieve contract class at '{contract_address}'");
-        //         StarknetRpcApiError::ContractNotFound
-        //     })?
-        //     .try_into()
-        //     .map_err(|e| {
-        //         error!(
-        //             "Failed to convert `ContractClassWrapper` at '{contract_address}' to
-        // `ContractClass`: {e}"
-        //         );
-        //     StarknetRpcApiError::ContractNotFound
-        // })?;
-
-        Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
-    }
-
-    // Implementation of the `syncing` RPC Endpoint.
-    // It's an async function because it uses `sync_service.best_seen_block()`.
-    //
-    // # Returns
-    // * `Syncing` - An Enum that can be a `mc_rpc_core::SyncStatus` struct or a `Boolean`.
-    async fn syncing(&self) -> RpcResult<Syncing> {
-        // obtain best seen (highest) block number
-        match self.sync_service.best_seen_block().await {
-            Ok(best_seen_block) => {
-                let best_number = self.client.info().best_number;
-                let highest_number = best_seen_block.unwrap_or(best_number);
-
-                // get a starknet block from the starting substrate block number
-                let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    self.client.as_ref(),
-                    &self.overrides,
-                    self.starting_block,
-                );
-
-                // get a starknet block from the current substrate block number
-                let current_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    self.client.as_ref(),
-                    &self.overrides,
-                    best_number,
-                );
-
-                // get a starknet block from the highest substrate block number
-                let highest_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    self.client.as_ref(),
-                    &self.overrides,
-                    highest_number,
-                );
-
-                if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
-                    // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
-                    let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = format!("{:#x}", starting_block?.header().hash());
-                    let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = format!("{:#x}", current_block?.header().hash());
-                    let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = format!("{:#x}", highest_block?.header().hash());
+        let contract_class = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .contract_class(substrate_block_hash, contract_address_wrapped)
+            .ok_or_else(|| {
+                error!("Failed to retrieve contract class at '{contract_address}'");
+                StarknetRpcApiError::ContractNotFound
+            })?;
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
@@ -378,6 +286,33 @@ where
                 Ok(Syncing::False(false))
             }
         }
+    }
+
+    /// Get the contract class definition in the given block associated with the given hash.
+    fn get_class(&self, block_id: StarknetBlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let contract_clash_hashed_wrapped = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
+            error!("Failed to convert '{class_hash}' to array: {e}");
+            StarknetRpcApiError::ContractNotFound
+        })?;
+
+        let contract_class = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped)
+            .ok_or_else(|| {
+                error!("Failed to retrieve contract class from hash '{class_hash}'");
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
+            error!("Failed to convert contract class from hash '{class_hash}' to RPC contract class: {e}");
+            StarknetRpcApiError::ContractNotFound
+        })?)
     }
 }
 

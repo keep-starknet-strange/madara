@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::types::{ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
@@ -56,7 +56,17 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Return the current block.
     fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
     /// Return the contract class at the provided address for the provided block.
-    fn contract_class(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClassWrapper>;
+    fn contract_class_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ContractClassWrapper>;
+    /// Return the contract class for a provided class_hash and block hash.
+    fn contract_class_by_class_hash(
+        &self,
+        block_hash: B::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<ContractClassWrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -96,7 +106,7 @@ where
         api.current_block(block_hash).ok()
     }
 
-    fn contract_class(
+    fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
@@ -108,5 +118,13 @@ where
             None => None,
             Some(contract_class_hash) => api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()?,
         }
+    }
+
+    fn contract_class_by_class_hash(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<ContractClassWrapper> {
+        self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
     }
 }

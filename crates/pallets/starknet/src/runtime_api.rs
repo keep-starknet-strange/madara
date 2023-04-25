@@ -20,8 +20,6 @@ sp_api::decl_runtime_apis! {
         fn current_block_hash() -> H256;
         /// Returns the current block.
         fn current_block() -> mp_starknet::block::Block;
-        /// Returns the contract class definition associated with the given class hash.
-        fn get_class(class_hash: ClassHashWrapper) -> ContractClassWrapper;
         /// Returns a `Call` response.
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError>;
         /// Returns the contract class hash at the given address.

@@ -287,10 +287,6 @@ impl_runtime_apis! {
             Starknet::current_block()
         }
 
-        fn get_class(class_hash: mp_starknet::execution::ClassHashWrapper) -> mp_starknet::execution::ContractClassWrapper {
-            StarkNet::contract_class_by_class_hash(class_hash)
-        }
-
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {
             Starknet::call_contract(address, function_selector, calldata)
         }

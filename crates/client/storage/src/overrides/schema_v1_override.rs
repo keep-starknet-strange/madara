@@ -57,7 +57,7 @@ where
         .map(Into::into)
     }
 
-    fn contract_class(
+    fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
@@ -68,6 +68,18 @@ where
             &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &address[..])),
         )?;
 
+        let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
+        self.query_storage::<ContractClassWrapper>(
+            block_hash,
+            &StorageKey(storage_key_build(storage_contract_class_prefix, &contract_class_hash[..])),
+        )
+    }
+
+    fn contract_class_by_class_hash(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        contract_class_hash: mp_starknet::execution::ClassHashWrapper,
+    ) -> Option<mp_starknet::execution::ContractClassWrapper> {
         let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
         self.query_storage::<ContractClassWrapper>(
             block_hash,
