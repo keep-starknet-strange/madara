@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { RpcProvider } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { TEST_CONTRACT } from "./constants";
+import { TEST_CONTRACT, TEST_CLASS_HASH } from "./constants";
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -75,6 +75,18 @@ describeDevMadara("Starknet RPC", (context) => {
 
     const contract_class = await providerRPC.getClassAt(
       TEST_CONTRACT,
+      block_number
+    );
+
+    expect(contract_class).to.not.be.undefined;
+  });
+
+  it("getClass", async function () {
+    let blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
+    let block_number: number = blockHashAndNumber.block_number;
+
+    let contract_class = await providerRPC.getClass(
+      TEST_CLASS_HASH,
       block_number
     );
 
