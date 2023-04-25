@@ -1,4 +1,4 @@
-use mp_starknet::execution::ContractAddressWrapper;
+use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -15,5 +15,9 @@ sp_api::decl_runtime_apis! {
         fn current_block() -> mp_starknet::block::Block;
         /// Returns a `Call` response.
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError>;
+        /// Returns the contract class hash at the given address.
+        fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper>;
+        /// Returns the contract class for the given class hash.
+        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
     }
 }

@@ -10,6 +10,10 @@ pub const PALLET_STARKNET_SCHEMA: &[u8] = b":starknet_schema";
 pub const PALLET_STARKNET: &[u8] = b"Starknet";
 /// Starknet current block storage item.
 pub const STARKNET_CURRENT_BLOCK: &[u8] = b"CurrentBlock";
+/// Starknet contract class hash storage item.
+pub const STARKNET_CONTRACT_CLASS_HASH: &[u8] = b"ContractClassHashes";
+/// Starknet contract class storage item.
+pub const STARKNET_CONTRACT_CLASS: &[u8] = b"ContractClasses";
 
 /// The schema version for Pallet Starknet's storage.
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]

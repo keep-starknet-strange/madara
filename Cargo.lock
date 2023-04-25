@@ -4260,6 +4260,7 @@ dependencies = [
 name = "mc-rpc"
 version = "0.1.0"
 dependencies = [
+ "blockifier",
  "hex",
  "jsonrpsee",
  "log",
@@ -4268,6 +4269,7 @@ dependencies = [
  "mc-storage",
  "pallet-starknet",
  "sc-client-api",
+ "serde_json",
  "sp-api",
  "sp-arithmetic",
  "sp-blockchain",
@@ -4280,16 +4282,23 @@ dependencies = [
 name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "base64 0.21.0",
+ "flate2",
+ "hex",
  "jsonrpsee",
+ "mp-starknet",
  "serde",
  "serde_json",
  "sp-blockchain",
+ "starknet_api",
 ]
 
 [[package]]
 name = "mc-storage"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "mp-starknet",
  "pallet-starknet",
  "parity-scale-codec",
