@@ -29,6 +29,24 @@ jobs:
           cargo clippy --all -- -D warnings
           cargo clippy --tests -- -D warnings
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace
+      - name: Store build
+        uses: actions/upload-artifact@v3
+        with:
+          path: target
+          name: target
+
   coverage:
     runs-on: ubuntu-latest
     steps:
@@ -43,20 +61,17 @@ jobs:
         uses: taiki-e/install-action@cargo-llvm-cov
       - uses: Swatinem/rust-cache@v2
       - name: Coverage
-        run: cargo llvm-cov --lcov --output-path lcov.info
+        run: cargo llvm-cov --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: codecov.json
           fail_ci_if_error: true
-      - name: Store build
-        uses: actions/upload-artifact@v3
-        with:
-          path: ./target/debug/madara
-          name: madara
 
   integration-tests:
     runs-on: ubuntu-latest
-    needs: coverage
+    needs: build
     env:
       BINARY_PATH: ../target/debug/madara
     steps:
@@ -73,8 +88,8 @@ jobs:
       - name: Load build artifact
         uses: actions/download-artifact@v3
         with:
-          name: madara
-          path: ./target/debug/madara
+          path: target
+          name: target
       - name: Run test
         run: |-
           cd tests
