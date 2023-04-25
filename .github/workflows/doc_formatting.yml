@@ -19,16 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key:
-            ${{ runner.os }}-npm-${{ hashFiles('**/workflows/prettier.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
       - name: Run prettier
         run: |-
-          npx prettier --check  ./**/*.md
+          npx prettier --check .
 
   lint:
     name: Lint markdown files

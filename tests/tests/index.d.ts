@@ -1,2 +1,2 @@
-declare module 'randchacha';
-declare module 'tcp-port-used';
+declare module "randchacha";
+declare module "tcp-port-used";
