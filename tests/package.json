@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "engines": {
+    "node": ">=20",
+    "npm": ">=9.6.5"
+  },
   "type": "commonjs",
   "watch": {
     "build": {
