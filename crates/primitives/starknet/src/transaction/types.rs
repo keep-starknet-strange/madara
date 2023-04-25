@@ -1,3 +1,4 @@
+use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
@@ -21,6 +22,8 @@ pub enum TransactionExecutionErrorWrapper {
     StarknetApi(StarknetApiError),
     /// Block context serialization error.
     BlockContextSerializationError,
+    /// State error.
+    StateError(StateError),
 }
 
 /// Different tx types.

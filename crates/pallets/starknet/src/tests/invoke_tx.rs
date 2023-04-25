@@ -7,7 +7,6 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
-
 use sp_core::{H256, U256};
 
 use super::mock::*;
@@ -171,12 +170,11 @@ fn test_verify_nonce() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
-
-        // Test for a valid nonce
+        // Test for a valid nonce (0)
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx.clone()));
 
-        // Test for an invalid nonce
-        let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke_nonce.json");
+        // Test for an invalid nonce (actual: 0, expected: 1)
+        let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON");
         assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<Test>::TransactionExecutionFailed);
     });
