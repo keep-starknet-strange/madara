@@ -104,6 +104,9 @@ where
         let api = self.client.runtime_api();
         let contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()?;
 
-        api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()
+        match contract_class_hash {
+            None => None,
+            Some(contract_class_hash) => api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()?,
+        }
     }
 }
