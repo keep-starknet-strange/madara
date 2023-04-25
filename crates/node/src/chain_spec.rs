@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
 use hex::FromHex;
 use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
@@ -166,6 +165,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
+pub const ACCOUNT_CONTRACT_PATH: &'static [u8] =
+    include_bytes!("../feature_contracts/compiled/account_without_validations_compiled.json");
+
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -174,10 +176,10 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let account_class = serde_json::from_slice(ACCOUNT_CONTRACT_PATH).unwrap();
 
-    let test_class = get_contract_class(include_bytes!("../../../resources/test.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json"));
+    let test_class = serde_json::from_slice(include_bytes!("../../../resources/test.json")).unwrap();
+    let erc20_class = serde_json::from_slice(include_bytes!("../../../resources/erc20/erc20.json")).unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =

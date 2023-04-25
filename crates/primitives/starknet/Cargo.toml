@@ -25,10 +25,9 @@ starknet-ff = { workspace = true, default-features = false, features = [
 	"alloc",
 ] }
 poseidon_hash = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
+blockifier = { workspace = true, default-features = false }
 starknet_api = { workspace = true, default-features = false }
+cairo-vm = { workspace = true }
 
 # Other third party dependencies
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
@@ -40,6 +39,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.96", default-features = false }
 bitvec = { workspace = true, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
+thiserror-no-std = { workspace = true }
 
 [dev-dependencies]
 rand = "0.8.5"
@@ -63,4 +63,5 @@ std = [
 	"sp-core/std",
 	"sp-std/std",
 	"sp-runtime/std",
+	"thiserror-no-std/std",
 ]
