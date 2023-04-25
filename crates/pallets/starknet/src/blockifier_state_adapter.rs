@@ -61,7 +61,8 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
         let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
         match opt_contract_class {
             Some(contract_class) => Ok(Arc::new(
-                contract_class.to_starknet_contract_class().map_err(|e| StateError::StateReadError(e.to_string()))?,
+                TryInto::<ContractClass>::try_into(contract_class)
+                    .map_err(|e| StateError::StateReadError(e.to_string()))?,
             )),
             None => Err(StateError::UndeclaredClassHash(*class_hash)),
         }
@@ -97,7 +98,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
         let class_hash: ClassHashWrapper = class_hash.0.0;
-        let contract_class: ContractClassWrapper = ContractClassWrapper::from(contract_class);
+        let contract_class: ContractClassWrapper = ContractClassWrapper::try_from(contract_class).unwrap();
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 

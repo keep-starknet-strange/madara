@@ -9,16 +9,21 @@ use alloc::{format, vec};
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::execution::execution_utils::{cairo_vm_program_to_sn_api, sn_api_to_cairo_vm_program};
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
+use cairo_vm::types::errors::program_errors::ProgramError;
 use frame_support::BoundedVec;
 use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType, Program};
+use starknet_api::deprecated_contract_class::{
+    EntryPoint, EntryPointOffset, EntryPointType, Program as DeprecatedProgram,
+};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::Calldata;
+use thiserror_no_std::Error;
 
 use self::types::{EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper};
 use crate::block::serialize::SerializeBlockContext;
@@ -63,24 +68,39 @@ impl ContractClassWrapper {
     pub fn new(program: BoundedVec<u8, MaxProgramSize>, entry_points_by_type: BoundedVec<u8, MaxProgramSize>) -> Self {
         Self { program, entry_points_by_type }
     }
+}
 
-    /// Convert to starknet contract class.
-    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
+#[derive(Debug, Error)]
+pub enum ContractClassFromWrapperError {
+    #[error(transparent)]
+    Program(#[from] ProgramError),
+    #[error(transparent)]
+    Serde(#[from] serde_json::Error),
+}
+
+impl TryFrom<ContractClassWrapper> for ContractClass {
+    type Error = ContractClassFromWrapperError;
+
+    fn try_from(wrapper: ContractClassWrapper) -> Result<Self, Self::Error> {
         let entrypoints =
-            from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(self.entry_points_by_type.as_ref())?;
-        let program = from_slice::<Program>(self.program.as_ref())?;
-        Ok(ContractClass { program, abi: None, entry_points_by_type: entrypoints })
+            from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(wrapper.entry_points_by_type.as_ref())?;
+        let program = from_slice::<DeprecatedProgram>(wrapper.program.as_ref())?;
+        let program = sn_api_to_cairo_vm_program(program)?;
+        Ok(ContractClass { program, entry_points_by_type: entrypoints })
     }
 }
 
-impl From<ContractClass> for ContractClassWrapper {
-    fn from(contract_class: ContractClass) -> Self {
-        let program_string = to_string(&contract_class.program).unwrap();
+impl TryFrom<ContractClass> for ContractClassWrapper {
+    type Error = serde_json::Error;
+
+    fn try_from(contract_class: ContractClass) -> Result<Self, Self::Error> {
+        let program = cairo_vm_program_to_sn_api(contract_class.program)?;
+        let program_string = to_string(&program).unwrap();
         let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
-        Self {
+        Ok(Self {
             program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
             entry_points_by_type: BoundedVec::try_from(entrypoints_string.as_bytes().to_vec()).unwrap(),
-        }
+        })
     }
 }
 
@@ -262,6 +282,10 @@ impl CallEntryPointWrapper {
             storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address).unwrap()).unwrap(),
             caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address).unwrap()).unwrap(),
             call_type: CallType::Call,
+            // I have no idea what I'm doing
+            // starknet-lib is constantly breaking it's api
+            // I hope it's nothing important ¯\_(ツ)_/¯
+            code_address: None,
         }
     }
 

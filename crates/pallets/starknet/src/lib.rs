@@ -506,12 +506,8 @@ pub mod pallet {
             let fee_token_address = Self::fee_token_address();
 
             // Parse contract class
-            let contract_class = transaction
-                .clone()
-                .contract_class
-                .unwrap()
-                .to_starknet_contract_class()
-                .or(Err(Error::<T>::InvalidContractClass))?;
+            let contract_class =
+                transaction.clone().contract_class.unwrap().try_into().or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
             match transaction.execute(
@@ -1043,6 +1039,8 @@ pub mod pallet {
                     TransactionValidityError::Unknown(Custom(1_u8))
                 })?,
                 call_type: blockifier::execution::entry_point::CallType::Call,
+                // I have no idea what I should put in this field
+                code_address: None,
             };
             // FIXME #245
             let mut execution_context = ExecutionContext::default(); // TODO: check if it needs a real value.
@@ -1062,7 +1060,7 @@ pub mod pallet {
                     log!(error, "Couldn't convert StarkFelt to ContractAddress");
                     TransactionValidityError::Unknown(Custom(1_u8))
                 })?,
-                cairo_resource_fee_weights: HashMap::default(), // TODO: Use real weights
+                vm_resource_fee_cost: HashMap::default(), // TODO: Use real weights
                 fee_token_address,
                 invoke_tx_max_n_steps: 1000000, // TODO: Make it configurable
                 validate_max_n_steps: 1000000,  // TODO: Make it configurable

@@ -109,7 +109,7 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
-cairo-vm = { git = "https://github.com/lambdaclass/cairo-rs", rev = "725c17e6b4c50ecf9fbb0113ecf172d85837295", default-features = false }
+cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-support", default-features = false }
 starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "0.4.2", default-features = false }
 starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "0.3.1", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
@@ -136,3 +136,4 @@ serde = { version = "1.0.160", default-features = false }
 serde_json = { version = "1.0.96", default-features = false }
 bitvec = { version = "0.17.4", default-features = false }
 thiserror = "1.0.40"
+thiserror-no-std = "2.0.2"

@@ -62,7 +62,7 @@ impl SerializeBlockContext for BlockContext {
             block_number: BlockNumber(block_header.block_number.as_u64()),
             block_timestamp: BlockTimestamp(block_header.block_timestamp),
             sequencer_address,
-            cairo_resource_fee_weights: HashMap::default(),
+            vm_resource_fee_cost: HashMap::default(),
             fee_token_address,
             invoke_tx_max_n_steps: 1000000,
             validate_max_n_steps: 1000000,
