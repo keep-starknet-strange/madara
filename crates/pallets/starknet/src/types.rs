@@ -22,9 +22,9 @@ use starknet_api::stdlib::collections::HashMap;
 /// Nonce of a Starknet transaction.
 pub type NonceWrapper = U256;
 /// Storage Key
-pub type StorageKey = H256;
+pub type StorageKeyWrapper = H256;
 /// Contract Storage Key
-pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKey);
+pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKeyWrapper);
 /// Felt
 pub type StarkFeltWrapper = U256;
 
