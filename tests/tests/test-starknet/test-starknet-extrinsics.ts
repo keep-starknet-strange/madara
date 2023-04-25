@@ -2,16 +2,9 @@ import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
-import { describeDevMadara } from "../../util/setup-dev-tests";
-import {
-  declare,
-  deploy,
-  initialize,
-  mint,
-  transfer,
-} from "../../util/starknet";
 import { jumpBlocks } from "../../util/block";
-import { createBlockWithExtrinsic } from "../../util/substrate-rpc";
+import { describeDevMadara } from "../../util/setup-dev-tests";
+import { declare, deploy, transfer } from "../../util/starknet";
 
 const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";

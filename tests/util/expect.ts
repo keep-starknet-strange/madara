@@ -1,12 +1,12 @@
-import { BlockCreationResponse } from "./setup-dev-tests";
-import type { EventRecord } from "@polkadot/types/interfaces";
 import {
-  ApiTypes,
-  AugmentedEvent,
-  AugmentedEvents,
-  SubmittableExtrinsic,
+  type ApiTypes,
+  type AugmentedEvent,
+  type AugmentedEvents,
+  type SubmittableExtrinsic,
 } from "@polkadot/api/types";
-import { IEvent } from "@polkadot/types/types";
+import type { EventRecord } from "@polkadot/types/interfaces";
+import { type IEvent } from "@polkadot/types/types";
+import { type BlockCreationResponse } from "./setup-dev-tests";
 
 import { expect } from "chai";
 
@@ -24,7 +24,7 @@ export async function expectOk<
   Calls extends Call | Call[],
   BlockCreation extends BlockCreationResponse<
     ApiType,
-    Calls extends Call[] ? Awaited<Call>[] : Awaited<Call>
+    Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
   >
 >(call: Promise<BlockCreation>): Promise<BlockCreation> {
   const block = await call;
@@ -62,14 +62,14 @@ export function expectSubstrateEvent<
 >(
   block: BlockCreationResponse<
     ApiType,
-    Calls extends Call[] ? Awaited<Call>[] : Awaited<Call>
+    Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
   >,
   section: Section,
   method: Method
 ): IEvent<Tuple> {
   let event: EventRecord = null;
   if (Array.isArray(block.result)) {
-    block.result.forEach((r, idx) => {
+    block.result.forEach((r) => {
       const foundEvents = r.events.filter(
         ({ event }) =>
           event.section.toString() == section &&
@@ -101,6 +101,7 @@ export function expectSubstrateEvent<
     }
   }
   expect(event).to.not.be.null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return event.event as any;
 }
 
@@ -119,15 +120,15 @@ export function expectSubstrateEvents<
 >(
   block: BlockCreationResponse<
     ApiType,
-    Calls extends Call[] ? Awaited<Call>[] : Awaited<Call>
+    Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
   >,
   section: Section,
   method: Method,
   count = 0 // if 0, doesn't check
-): IEvent<Tuple>[] {
-  let events: EventRecord[] = [];
+): Array<IEvent<Tuple>> {
+  const events: EventRecord[] = [];
   if (Array.isArray(block.result)) {
-    block.result.forEach((r, idx) => {
+    block.result.forEach((r) => {
       const foundEvents = r.events.filter(
         ({ event }) =>
           event.section.toString() == section &&
@@ -147,5 +148,7 @@ export function expectSubstrateEvents<
     }
   }
   expect(events.length > 0).to.not.be.null;
+  expect(count === 0 || events.length === count).to.be.true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return events.map(({ event }) => event) as any;
 }

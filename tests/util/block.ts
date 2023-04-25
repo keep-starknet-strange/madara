@@ -1,24 +1,24 @@
 import "@keep-starknet-strange/madara-api-augment/sharingan";
+import { type ApiPromise } from "@polkadot/api";
+import { type Option, type u128, type u32 } from "@polkadot/types";
+import { type RuntimeDispatchInfo } from "@polkadot/types/interfaces";
 import type { RuntimeDispatchInfoV1 } from "@polkadot/types/interfaces/payment";
-import { ApiPromise } from "@polkadot/api";
-import { RuntimeDispatchInfo } from "@polkadot/types/interfaces";
-import { u32, u128, Option } from "@polkadot/types";
 
-// import { WEIGHT_PER_STEP } from "./constants";
-import { DevTestContext } from "./setup-dev-tests";
+import { type DevTestContext } from "./setup-dev-tests";
 
-import type {
-  Block,
-  AccountId20,
-} from "@polkadot/types/interfaces/runtime/types";
 import type { TxWithEvent } from "@polkadot/api-derive/types";
 import type { ITuple } from "@polkadot/types-codec/types";
+import type {
+  AccountId20,
+  Block,
+} from "@polkadot/types/interfaces/runtime/types";
 import Bottleneck from "bottleneck";
-const debug = require("debug")("test:blocks");
+import debugFactory from "debug";
+const debug = debugFactory("test:blocks");
 export async function createAndFinalizeBlock(
   api: ApiPromise,
   parentHash?: string,
-  finalize: boolean = true
+  finalize = true
 ): Promise<{
   duration: number;
   hash: string;
@@ -56,6 +56,7 @@ export async function jumpBlocks(context: DevTestContext, blockCount: number) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getBlockTime = (signedBlock: any) =>
   signedBlock.block.extrinsics
     .find((item) => item.method.section == "timestamp")
@@ -103,11 +104,11 @@ export const getBlockArray = async (
   if (limiter == null) {
     limiter = new Bottleneck({ maxConcurrent: 10, minTime: 100 });
   }
-  const finalizedHead = await limiter.schedule(() =>
-    api.rpc.chain.getFinalizedHead()
+  const finalizedHead = await limiter.schedule(
+    async () => await api.rpc.chain.getFinalizedHead()
   );
-  const signedBlock = await limiter.schedule(() =>
-    api.rpc.chain.getBlock(finalizedHead)
+  const signedBlock = await limiter.schedule(
+    async () => await api.rpc.chain.getBlock(finalizedHead)
   );
 
   const lastBlockNumber = signedBlock.block.header.number.toNumber();
