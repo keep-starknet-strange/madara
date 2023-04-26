@@ -400,6 +400,12 @@ impl<T> Default for VecWrapper<T> {
     }
 }
 
+impl<T> Default for VecWrapper<T> {
+    fn default() -> Self {
+        Self(Vec::new())
+    }
+}
+
 impl<O, D, S> TryFrom<VecWrapper<O>> for BoundedVec<D, S>
 where
     S: Get<u32>,

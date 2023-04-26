@@ -9,6 +9,7 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use blockifier::execution::contract_class::ContractClass;
 use errors::StarknetRpcApiError;
 use hex::FromHex;
 use jsonrpsee::core::RpcResult;
