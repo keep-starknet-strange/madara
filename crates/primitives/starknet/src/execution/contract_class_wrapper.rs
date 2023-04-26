@@ -1,5 +1,6 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
+use core::fmt::Display;
 
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::execution_utils::{cairo_vm_program_to_sn_api, sn_api_to_cairo_vm_program};
@@ -72,6 +73,8 @@ pub enum ContractClassFromWrapperError {
     /// Serde error.
     #[error(transparent)]
     Serde(#[from] serde_json::Error),
+    #[error("something else happend")]
+    Other,
 }
 
 // Traits implementation.
@@ -84,18 +87,18 @@ impl TryFrom<ContractClassWrapper> for ContractClass {
         wrapper.entry_points_by_type.into_iter().for_each(|(key, val)| {
             entrypoints.insert(key.into(), val.iter().map(|entrypoint| EntryPoint::from(entrypoint.clone())).collect());
         });
-        let program = from_slice::<DeprecatedProgram>(wrapper.program.as_ref())?;
-        let program = sn_api_to_cairo_vm_program(program)?;
-        Ok(ContractClass { program, entry_points_by_type: entrypoints })
+
+        Ok(ContractClass {
+            program: wrapper.program.try_into().map_err(|_| ContractClassFromWrapperError::Other)?,
+            entry_points_by_type: entrypoints,
+        })
     }
 }
 
 impl TryFrom<ContractClass> for ContractClassWrapper {
-    type Error = serde_json::Error;
+    type Error = ContractClassFromWrapperError;
 
     fn try_from(contract_class: ContractClass) -> Result<Self, Self::Error> {
-        let program = cairo_vm_program_to_sn_api(contract_class.program)?;
-        let program_string = to_string(&program).unwrap();
         let mut entrypoints = BTreeMap::new();
         for (key, val) in contract_class.entry_points_by_type.iter() {
             entrypoints.insert(
@@ -105,8 +108,9 @@ impl TryFrom<ContractClass> for ContractClassWrapper {
             );
         }
         Ok(Self {
-            program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
-            entry_points_by_type: BoundedBTreeMap::try_from(entrypoints).unwrap(),
+            program: contract_class.program.try_into().map_err(|_| ContractClassFromWrapperError::Other)?,
+            entry_points_by_type: BoundedBTreeMap::try_from(entrypoints)
+                .map_err(|_| ContractClassFromWrapperError::Other)?,
         })
     }
 }

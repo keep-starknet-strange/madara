@@ -6,10 +6,12 @@ use core::hash::Hash;
 
 use cairo_vm::felt::Felt252;
 use cairo_vm::serde::deserialize_program::{
-    ApTracking, Attribute, FlowTrackingData, Identifier, Member, OffsetValue, Reference, ValueAddress,
+    ApTracking, Attribute, BuiltinName, FlowTrackingData, HintLocation, HintParams, Identifier, InputFile,
+    InstructionLocation, Location, Member, OffsetValue, Reference, ReferenceManager, ValueAddress,
 };
-use cairo_vm::types::instruction::Register;
+use cairo_vm::types::instruction::{ApUpdate, FpUpdate, Instruction, Op1Addr, Opcode, PcUpdate, Register, Res};
 use cairo_vm::types::program::Program;
+use cairo_vm::types::relocatable::{MaybeRelocatable, Relocatable};
 use derive_more::Constructor;
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use sp_core::{ConstU32, Get, U256};
@@ -35,7 +37,44 @@ type MaxAccessibleScopeSize = ConstU32<{ u32::MAX }>;
 type MaxReferenceIdsSize = ConstU32<{ u32::MAX }>;
 type MaxStringLength = ConstU32<{ u32::MAX }>;
 type MaxMemberLength = ConstU32<{ u32::MAX }>;
-type MaybeRelocatableWrapper = U256;
+
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum MaybeRelocatableWrapper {
+    RelocatableValue { segment_index: i128, offset: u128 },
+    Int(Felt252Wrapper),
+}
+
+impl From<MaybeRelocatable> for MaybeRelocatableWrapper {
+    fn from(value: MaybeRelocatable) -> Self {
+        match value {
+            MaybeRelocatable::Int(val) => Self::Int(val.into()),
+            MaybeRelocatable::RelocatableValue(v) => {
+                Self::RelocatableValue { segment_index: v.segment_index as i128, offset: v.offset as u128 }
+            }
+        }
+    }
+}
+impl From<MaybeRelocatableWrapper> for MaybeRelocatable {
+    fn from(value: MaybeRelocatableWrapper) -> Self {
+        match value {
+            MaybeRelocatableWrapper::Int(val) => Self::Int(val.into()),
+            MaybeRelocatableWrapper::RelocatableValue { segment_index, offset } => {
+                Self::RelocatableValue(Relocatable { segment_index: segment_index as isize, offset: offset as usize })
+            }
+        }
+    }
+}
+
 #[derive(
     Clone,
     Debug,
@@ -78,7 +117,6 @@ impl From<StringWrapper> for String {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ProgramWrapper {
@@ -99,21 +137,95 @@ pub struct ProgramWrapper {
     scale_codec::Decode,
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
-    Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-struct Felt252Wrapper(pub U256);
+pub enum ProgramConversionError {
+    HashConversion(HashMapConversionError),
+    VecConversion(VecConversionError),
+    Other,
+}
 
-impl From<Felt252> for Felt252Wrapper {
-    fn from(value: Felt252) -> Self {
-        Self(U256::from_big_endian(&value.to_be_bytes()))
+impl From<HashMapConversionError> for ProgramConversionError {
+    fn from(error: HashMapConversionError) -> Self {
+        ProgramConversionError::HashConversion(error)
     }
 }
-impl From<Felt252Wrapper> for Felt252 {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        Felt252::from_bytes_be(&buff)
+
+impl From<VecConversionError> for ProgramConversionError {
+    fn from(error: VecConversionError) -> Self {
+        ProgramConversionError::VecConversion(error)
+    }
+}
+
+impl TryFrom<Program> for ProgramWrapper {
+    type Error = ProgramConversionError;
+
+    fn try_from(value: Program) -> Result<Self, Self::Error> {
+        let constants = HashMapWrapper(value.constants().clone()).try_into()?;
+        let reference_manager = VecWrapper(value.reference_manager().references.clone()).try_into()?;
+
+        let hints = BoundedBTreeMap::try_from(
+            value
+                .hints()
+                .into_iter()
+                .map(|(k, v)| VecWrapper(v.clone()).try_into().map(|v| (k.clone() as u128, v)))
+                .collect::<Result<BTreeMap<u128, BoundedVec<HintParamsWrapper, MaxHintMapSize>>, VecConversionError>>(
+                )?,
+        )
+        .map_err(|_| ProgramConversionError::HashConversion(HashMapConversionError))?;
+
+        let shared_program_data = SharedProgramDataWrapper {
+            builtins: VecWrapper(value.builtins().clone()).try_into()?,
+            data: VecWrapper(value.data().clone()).try_into()?,
+            hints,
+            main: value.main().map(|m| m as u128),
+            start: value.start().map(|m| m as u128),
+            end: value.end().map(|m| m as u128),
+            error_message_attributes: VecWrapper(value.error_message_attributes().clone()).try_into()?,
+            instruction_locations: match value.instruction_locations().clone() {
+                Some(il) => Some(HashMapWrapper(il).try_into()?),
+                None => None,
+            },
+
+            identifiers: HashMapWrapper(value.identifiers().clone()).try_into()?,
+        };
+
+        Ok(Self { constants, shared_program_data, reference_manager })
+    }
+}
+
+impl TryFrom<ProgramWrapper> for Program {
+    type Error = ProgramConversionError;
+
+    fn try_from(value: ProgramWrapper) -> Result<Self, Self::Error> {
+        let builtins: VecWrapper<BuiltinName> = value.shared_program_data.builtins.into();
+        let data: VecWrapper<MaybeRelocatable> = value.shared_program_data.data.into();
+
+        let hints: HashMap<usize, Vec<HintParams>> = value
+            .shared_program_data
+            .hints
+            .into_iter()
+            .map(|(k, v)| {
+                // Ok to unwrap because accessible scope wont ever be too long of a string
+                let v: VecWrapper<HintParams> =
+                    VecWrapper(v.into_inner().iter().map(|elt| elt.clone().try_into().unwrap()).collect());
+                (k as usize, v.0)
+            })
+            .collect::<HashMap<usize, Vec<HintParams>>>();
+        Program::new(
+            builtins.0,
+            data.0,
+            value.shared_program_data.main.map(|m| m as usize),
+            hints,
+            ReferenceManager { references: VecWrapper::from(value.reference_manager).0 },
+            HashMapWrapper::try_from(value.shared_program_data.identifiers)?.0,
+            VecWrapper::from(value.shared_program_data.error_message_attributes).0,
+            match value.shared_program_data.instruction_locations {
+                Some(il) => Some(HashMapWrapper::try_from(il)?.0),
+                None => None,
+            },
+        )
+        .map_err(|_| ProgramConversionError::Other)
     }
 }
 
@@ -129,7 +241,88 @@ impl From<Felt252Wrapper> for Felt252 {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-struct HashMapConversionError;
+pub struct Felt252Wrapper(pub U256);
+
+impl From<Felt252> for Felt252Wrapper {
+    fn from(value: Felt252) -> Self {
+        Self(U256::from_big_endian(&value.to_be_bytes()))
+    }
+}
+impl From<Felt252Wrapper> for Felt252 {
+    fn from(value: Felt252Wrapper) -> Self {
+        let mut buff: [u8; 32] = [0u8; 32];
+        value.0.to_big_endian(&mut buff);
+        Felt252::from_bytes_be(&buff)
+    }
+}
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+    Default,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct VecConversionError;
+
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+    Default,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct VecWrapper<T>(Vec<T>);
+
+impl<O, D, S> TryFrom<VecWrapper<O>> for BoundedVec<D, S>
+where
+    S: Get<u32>,
+    D: TryFrom<O>,
+    O: Clone,
+{
+    type Error = VecConversionError;
+    fn try_from(value: VecWrapper<O>) -> Result<Self, Self::Error> {
+        let bv = value
+            .0
+            .into_iter()
+            .map(|elt| elt.try_into().map_err(|_| VecConversionError))
+            .collect::<Result<Vec<D>, Self::Error>>()?;
+        BoundedVec::try_from(bv).map_err(|_| VecConversionError)
+    }
+}
+impl<O, D, S> From<BoundedVec<O, S>> for VecWrapper<D>
+where
+    S: Get<u32>,
+    D: From<O>,
+    O: Clone,
+{
+    fn from(value: BoundedVec<O, S>) -> Self {
+        VecWrapper(value.into_inner().iter().map(|elt| elt.clone().into()).collect())
+    }
+}
+
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+    Default,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct HashMapConversionError;
 #[derive(
     Clone,
     Debug,
@@ -148,7 +341,7 @@ where
 
 impl<KEY, VALUE, K, V, S> TryFrom<HashMapWrapper<KEY, VALUE>> for BoundedBTreeMap<K, V, S>
 where
-    K: From<KEY> + Clone + Ord,
+    K: TryFrom<KEY> + Clone + Ord,
     V: TryFrom<VALUE> + Clone,
     <V as TryFrom<VALUE>>::Error: Debug,
     S: Get<u32>,
@@ -158,31 +351,37 @@ where
     fn try_from(value: HashMapWrapper<KEY, VALUE>) -> Result<Self, Self::Error> {
         let btree = value
             .0
-            .iter()
-            .map(|(&key, &val)| val.try_into().map(|v| (key.into(), v)))
-            .collect::<Result<BTreeMap<K, V>, <V as TryFrom<VALUE>>::Error>>()
-            .map_err(|_| HashMapConversionError)?;
+            .into_iter()
+            .map(|(key, val)| match (key.try_into(), val.try_into()) {
+                (Ok(key), Ok(val)) => Ok((key, val)),
+                _ => Err(HashMapConversionError),
+            })
+            .collect::<Result<BTreeMap<K, V>, HashMapConversionError>>()?;
         BoundedBTreeMap::try_from(btree).map_err(|_| HashMapConversionError)
     }
 }
 
-impl<KEY, VALUE, K, V, S> From<BoundedBTreeMap<K, V, S>> for HashMapWrapper<KEY, VALUE>
+impl<KEY, VALUE, K, V, S> TryFrom<BoundedBTreeMap<K, V, S>> for HashMapWrapper<KEY, VALUE>
 where
-    KEY: Eq + Hash + From<K>,
-    VALUE: From<V>,
+    KEY: Eq + Hash + TryFrom<K>,
+    VALUE: TryFrom<V>,
+    <VALUE as TryFrom<V>>::Error: Debug,
 {
-    fn from(value: BoundedBTreeMap<K, V, S>) -> Self {
-        let hash_map = value.into_iter().map(|(key, val)| (key.into(), val.into())).collect::<HashMap<KEY, VALUE>>();
-        HashMapWrapper(hash_map)
+    type Error = HashMapConversionError;
+
+    fn try_from(value: BoundedBTreeMap<K, V, S>) -> Result<Self, Self::Error> {
+        value
+            .into_iter()
+            .map(|(key, val)| match (key.try_into(), val.try_into()) {
+                (Ok(key), Ok(val)) => Ok((key, val)),
+                _ => Err(HashMapConversionError),
+            })
+            .collect::<Result<HashMap<KEY, VALUE>, HashMapConversionError>>()
+            .map(HashMapWrapper)
     }
 }
 
-impl From<Program> for ProgramWrapper {
-    fn from(value: Program) -> Self {
-        ProgramWrapper::default()
-    }
-}
-
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -193,7 +392,6 @@ impl From<Program> for ProgramWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct SharedProgramDataWrapper {
@@ -223,7 +421,7 @@ pub struct SharedProgramDataWrapper {
     )]
     identifiers: BoundedBTreeMap<StringWrapper, IdentifierWrapper, MaxIdentifiersSize>,
 }
-
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -247,6 +445,37 @@ pub enum BuiltinNameWrapper {
     poseidon,
 }
 
+impl From<BuiltinName> for BuiltinNameWrapper {
+    fn from(value: BuiltinName) -> Self {
+        match value {
+            BuiltinName::output => Self::output,
+            BuiltinName::range_check => Self::range_check,
+            BuiltinName::pedersen => Self::pedersen,
+            BuiltinName::ecdsa => Self::ecdsa,
+            BuiltinName::keccak => Self::keccak,
+            BuiltinName::bitwise => Self::bitwise,
+            BuiltinName::ec_op => Self::ec_op,
+            BuiltinName::poseidon => Self::poseidon,
+        }
+    }
+}
+
+impl From<BuiltinNameWrapper> for BuiltinName {
+    fn from(value: BuiltinNameWrapper) -> Self {
+        match value {
+            BuiltinNameWrapper::output => Self::output,
+            BuiltinNameWrapper::range_check => Self::range_check,
+            BuiltinNameWrapper::pedersen => Self::pedersen,
+            BuiltinNameWrapper::ecdsa => Self::ecdsa,
+            BuiltinNameWrapper::keccak => Self::keccak,
+            BuiltinNameWrapper::bitwise => Self::bitwise,
+            BuiltinNameWrapper::ec_op => Self::ec_op,
+            BuiltinNameWrapper::poseidon => Self::poseidon,
+        }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -257,7 +486,6 @@ pub enum BuiltinNameWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct HintParamsWrapper {
@@ -265,7 +493,26 @@ pub struct HintParamsWrapper {
     accessible_scopes: BoundedVec<StringWrapper, MaxAccessibleScopeSize>,
     flow_tracking_data: FlowTrackingDataWrapper,
 }
-
+impl TryFrom<HintParams> for HintParamsWrapper {
+    type Error = VecConversionError;
+    fn try_from(value: HintParams) -> Result<Self, Self::Error> {
+        Ok(Self {
+            code: value.code.into(),
+            accessible_scopes: VecWrapper(value.accessible_scopes).try_into()?,
+            flow_tracking_data: value.flow_tracking_data.into(),
+        })
+    }
+}
+impl From<HintParamsWrapper> for HintParams {
+    fn from(value: HintParamsWrapper) -> Self {
+        Self {
+            code: value.code.into(),
+            accessible_scopes: value.accessible_scopes.into_inner().iter().map(|scope| scope.clone().into()).collect(),
+            flow_tracking_data: value.flow_tracking_data.into(),
+        }
+    }
+}
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -276,8 +523,8 @@ pub struct HintParamsWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
+// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct FlowTrackingDataWrapper {
     ap_tracking: ApTrackingWrapper,
@@ -297,6 +544,15 @@ impl From<FlowTrackingData> for FlowTrackingDataWrapper {
         }
     }
 }
+impl From<FlowTrackingDataWrapper> for FlowTrackingData {
+    fn from(value: FlowTrackingDataWrapper) -> Self {
+        // When the map size will be u128 it will never overflow because references can go only up to u128
+        Self {
+            ap_tracking: value.ap_tracking.into(),
+            reference_ids: HashMapWrapper::<String, usize>::try_from(value.reference_ids).unwrap().0,
+        }
+    }
+}
 
 // DONE
 #[derive(
@@ -309,7 +565,6 @@ impl From<FlowTrackingData> for FlowTrackingDataWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApTrackingWrapper {
@@ -327,6 +582,8 @@ impl From<ApTrackingWrapper> for ApTracking {
         Self { group: value.group as usize, offset: value.offset as usize }
     }
 }
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -339,11 +596,38 @@ impl From<ApTrackingWrapper> for ApTracking {
     Default,
     Constructor,
 )]
+// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct InstructionLocationWrapper {
     inst: LocationWrapper,
     hints: BoundedVec<HintLocationWrapper, MaxHintSize>,
 }
+
+impl From<InstructionLocation> for InstructionLocationWrapper {
+    fn from(value: InstructionLocation) -> Self {
+        Self {
+            inst: value.inst.into(),
+            hints: value
+                .hints
+                .iter()
+                .map(|hint| hint.clone().into())
+                .collect::<Vec<HintLocationWrapper>>()
+                .try_into()
+                .unwrap(),
+        }
+    }
+}
+
+impl From<InstructionLocationWrapper> for InstructionLocation {
+    fn from(value: InstructionLocationWrapper) -> Self {
+        Self {
+            inst: value.inst.into(),
+            hints: value.hints.into_inner().iter().map(|hint| hint.clone().into()).collect(),
+        }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -354,7 +638,6 @@ pub struct InstructionLocationWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct LocationWrapper {
@@ -365,6 +648,43 @@ pub struct LocationWrapper {
     start_line: u32,
     start_col: u32,
 }
+
+impl From<Location> for LocationWrapper {
+    fn from(value: Location) -> Self {
+        let InputFile { filename } = value.input_file;
+        let parent_loc = match value.parent_location {
+            Some((loc, name)) => Some((Box::from(LocationWrapper::from(*loc)), name.into())),
+            None => None,
+        };
+        Self {
+            end_line: value.end_line,
+            end_col: value.end_col,
+            input_file: filename.into(),
+            parent_location: parent_loc,
+            start_line: value.start_line,
+            start_col: value.start_col,
+        }
+    }
+}
+
+impl From<LocationWrapper> for Location {
+    fn from(value: LocationWrapper) -> Self {
+        let parent_loc = match value.parent_location {
+            Some((loc, name)) => Some((Box::from(Location::from(*loc)), name.into())),
+            None => None,
+        };
+        Self {
+            end_line: value.end_line,
+            end_col: value.end_col,
+            input_file: InputFile { filename: value.input_file.into() },
+            parent_location: parent_loc,
+            start_line: value.start_line,
+            start_col: value.start_col,
+        }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -383,6 +703,18 @@ pub struct HintLocationWrapper {
     n_prefix_newlines: u32,
 }
 
+impl From<HintLocation> for HintLocationWrapper {
+    fn from(value: HintLocation) -> Self {
+        Self { location: value.location.into(), n_prefix_newlines: value.n_prefix_newlines }
+    }
+}
+impl From<HintLocationWrapper> for HintLocation {
+    fn from(value: HintLocationWrapper) -> Self {
+        Self { location: value.location.into(), n_prefix_newlines: value.n_prefix_newlines }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -393,7 +725,6 @@ pub struct HintLocationWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct AttributeWrapper {
@@ -416,6 +747,19 @@ impl From<Attribute> for AttributeWrapper {
     }
 }
 
+impl From<AttributeWrapper> for Attribute {
+    fn from(value: AttributeWrapper) -> Self {
+        Self {
+            name: value.name.into(),
+            start_pc: value.start_pc as usize,
+            end_pc: value.end_pc as usize,
+            value: value.value.into(),
+            // Only way it panics is if u128 to usize fails which is safe so we can unwrap
+            flow_tracking_data: value.flow_tracking_data.map(|flow| flow.try_into().unwrap()),
+        }
+    }
+}
+
 // DONE
 #[derive(
     Clone,
@@ -427,7 +771,6 @@ impl From<Attribute> for AttributeWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct IdentifierWrapper {
@@ -469,7 +812,7 @@ impl From<IdentifierWrapper> for Identifier {
             full_name: value.full_name.map(|v| v.into()),
             // Nothing should have more than 2**32-1 members so it shouldn't panic.
             members: value.members.map(|v| {
-                let hash_map: HashMapWrapper<String, Member> = v.into();
+                let hash_map: HashMapWrapper<String, Member> = v.try_into().unwrap();
                 hash_map.0
             }),
             cairo_type: value.cairo_type.map(|v| v.into()),
@@ -488,7 +831,6 @@ impl From<IdentifierWrapper> for Identifier {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct MemberWrapper {
@@ -601,14 +943,13 @@ impl Default for OffsetValueWrapper {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValueAddressWrapper {
     pub offset1: OffsetValueWrapper,
     pub offset2: OffsetValueWrapper,
     pub dereference: bool,
-    pub value_type: StringWrapper,
+    value_type: StringWrapper,
 }
 
 impl From<ValueAddress> for ValueAddressWrapper {
@@ -663,6 +1004,309 @@ impl From<RegisterWrapper> for Register {
         match value {
             RegisterWrapper::AP => Self::AP,
             RegisterWrapper::FP => Self::FP,
+        }
+    }
+}
+
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct InstructionWrapper {
+    pub off0: u128,
+    pub off1: u128,
+    pub off2: u128,
+    pub imm: Option<Felt252Wrapper>,
+    pub dst_register: RegisterWrapper,
+    pub op0_register: RegisterWrapper,
+    pub op1_addr: Op1AddrWrapper,
+    pub res: ResWrapper,
+    pub pc_update: PcUpdateWrapper,
+    pub ap_update: ApUpdateWrapper,
+    pub fp_update: FpUpdateWrapper,
+    pub opcode: OpcodeWrapper,
+}
+
+impl From<Instruction> for InstructionWrapper {
+    fn from(value: Instruction) -> Self {
+        Self {
+            off0: value.off0 as u128,
+            off1: value.off1 as u128,
+            off2: value.off2 as u128,
+            imm: value.imm.map(Felt252Wrapper::from),
+            dst_register: value.dst_register.into(),
+            op0_register: value.op0_register.into(),
+            op1_addr: value.op1_addr.into(),
+            res: value.res.into(),
+            pc_update: value.pc_update.into(),
+            ap_update: value.ap_update.into(),
+            fp_update: value.fp_update.into(),
+            opcode: value.opcode.into(),
+        }
+    }
+}
+
+impl From<InstructionWrapper> for Instruction {
+    fn from(value: InstructionWrapper) -> Self {
+        Self {
+            off0: value.off0 as isize,
+            off1: value.off1 as isize,
+            off2: value.off2 as isize,
+            imm: value.imm.map(Felt252::from),
+            dst_register: value.dst_register.into(),
+            op0_register: value.op0_register.into(),
+            op1_addr: value.op1_addr.into(),
+            res: value.res.into(),
+            pc_update: value.pc_update.into(),
+            ap_update: value.ap_update.into(),
+            fp_update: value.fp_update.into(),
+            opcode: value.opcode.into(),
+        }
+    }
+}
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum Op1AddrWrapper {
+    Imm,
+    AP,
+    FP,
+    Op0,
+}
+
+impl From<Op1Addr> for Op1AddrWrapper {
+    fn from(value: Op1Addr) -> Self {
+        match value {
+            Op1Addr::Imm => Self::Imm,
+            Op1Addr::AP => Self::AP,
+            Op1Addr::FP => Self::FP,
+            Op1Addr::Op0 => Self::Op0,
+        }
+    }
+}
+
+impl From<Op1AddrWrapper> for Op1Addr {
+    fn from(value: Op1AddrWrapper) -> Self {
+        match value {
+            Op1AddrWrapper::Imm => Self::Imm,
+            Op1AddrWrapper::AP => Self::AP,
+            Op1AddrWrapper::FP => Self::FP,
+            Op1AddrWrapper::Op0 => Self::Op0,
+        }
+    }
+}
+
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum ResWrapper {
+    Op1,
+    Add,
+    Mul,
+    Unconstrained,
+}
+
+impl From<Res> for ResWrapper {
+    fn from(value: Res) -> Self {
+        match value {
+            Res::Op1 => Self::Op1,
+            Res::Add => Self::Add,
+            Res::Mul => Self::Mul,
+            Res::Unconstrained => Self::Unconstrained,
+        }
+    }
+}
+
+impl From<ResWrapper> for Res {
+    fn from(value: ResWrapper) -> Self {
+        match value {
+            ResWrapper::Op1 => Self::Op1,
+            ResWrapper::Add => Self::Add,
+            ResWrapper::Mul => Self::Mul,
+            ResWrapper::Unconstrained => Self::Unconstrained,
+        }
+    }
+}
+
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum PcUpdateWrapper {
+    Regular,
+    Jump,
+    JumpRel,
+    Jnz,
+}
+
+impl From<PcUpdate> for PcUpdateWrapper {
+    fn from(value: PcUpdate) -> Self {
+        match value {
+            PcUpdate::Regular => Self::Regular,
+            PcUpdate::Jump => Self::Jump,
+            PcUpdate::JumpRel => Self::JumpRel,
+            PcUpdate::Jnz => Self::Jnz,
+        }
+    }
+}
+impl From<PcUpdateWrapper> for PcUpdate {
+    fn from(value: PcUpdateWrapper) -> Self {
+        match value {
+            PcUpdateWrapper::Regular => Self::Regular,
+            PcUpdateWrapper::Jump => Self::Jump,
+            PcUpdateWrapper::JumpRel => Self::JumpRel,
+            PcUpdateWrapper::Jnz => Self::Jnz,
+        }
+    }
+}
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum ApUpdateWrapper {
+    Regular,
+    Add,
+    Add1,
+    Add2,
+}
+
+impl From<ApUpdate> for ApUpdateWrapper {
+    fn from(value: ApUpdate) -> Self {
+        match value {
+            ApUpdate::Regular => Self::Regular,
+            ApUpdate::Add => Self::Add,
+            ApUpdate::Add1 => Self::Add1,
+            ApUpdate::Add2 => Self::Add2,
+        }
+    }
+}
+
+impl From<ApUpdateWrapper> for ApUpdate {
+    fn from(value: ApUpdateWrapper) -> Self {
+        match value {
+            ApUpdateWrapper::Regular => Self::Regular,
+            ApUpdateWrapper::Add => Self::Add,
+            ApUpdateWrapper::Add1 => Self::Add1,
+            ApUpdateWrapper::Add2 => Self::Add2,
+        }
+    }
+}
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum FpUpdateWrapper {
+    Regular,
+    APPlus2,
+    Dst,
+}
+
+impl From<FpUpdate> for FpUpdateWrapper {
+    fn from(value: FpUpdate) -> Self {
+        match value {
+            FpUpdate::Regular => Self::Regular,
+            FpUpdate::APPlus2 => Self::APPlus2,
+            FpUpdate::Dst => Self::Dst,
+        }
+    }
+}
+
+impl From<FpUpdateWrapper> for FpUpdate {
+    fn from(value: FpUpdateWrapper) -> Self {
+        match value {
+            FpUpdateWrapper::Regular => Self::Regular,
+            FpUpdateWrapper::APPlus2 => Self::APPlus2,
+            FpUpdateWrapper::Dst => Self::Dst,
+        }
+    }
+}
+
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum OpcodeWrapper {
+    NOp,
+    AssertEq,
+    Call,
+    Ret,
+}
+
+impl From<Opcode> for OpcodeWrapper {
+    fn from(value: Opcode) -> Self {
+        match value {
+            Opcode::AssertEq => Self::AssertEq,
+            Opcode::Call => Self::Call,
+            Opcode::NOp => Self::NOp,
+            Opcode::Ret => Self::Ret,
+        }
+    }
+}
+impl From<OpcodeWrapper> for Opcode {
+    fn from(value: OpcodeWrapper) -> Self {
+        match value {
+            OpcodeWrapper::AssertEq => Self::AssertEq,
+            OpcodeWrapper::Call => Self::Call,
+            OpcodeWrapper::NOp => Self::NOp,
+            OpcodeWrapper::Ret => Self::Ret,
         }
     }
 }
