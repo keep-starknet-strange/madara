@@ -28,10 +28,13 @@ pub type EntryPointExecutionResultWrapper<T> = Result<T, EntryPointExecutionErro
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum EntryPointTypeWrapper {
     /// Constructor.
+    #[cfg_attr(feature = "std", serde(rename = "CONSTRUCTOR"))]
     Constructor,
     /// External.
+    #[cfg_attr(feature = "std", serde(rename = "EXTERNAL"))]
     External,
     /// L1 Handler.
+    #[cfg_attr(feature = "std", serde(rename = "L1_HANDLER"))]
     L1Handler,
 }
 
@@ -84,8 +87,10 @@ impl From<EntryPointTypeWrapper> for EntryPointType {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryPointWrapper {
     /// The entrypoint selector
+    #[cfg_attr(feature = "std", serde(rename = "selector"))]
     pub entrypoint_selector: H256,
     /// The entrypoint offset
+    #[cfg_attr(feature = "std", serde(rename = "offset"))]
     pub entrypoint_offset: u128,
 }
 
