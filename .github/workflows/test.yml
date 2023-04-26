@@ -44,8 +44,8 @@ jobs:
       - name: Store build
         uses: actions/upload-artifact@v3
         with:
-          path: target
-          name: target
+          path: target/debug/madara
+          name: madara-debug
 
   coverage:
     runs-on: ubuntu-latest
@@ -88,8 +88,8 @@ jobs:
       - name: Load build artifact
         uses: actions/download-artifact@v3
         with:
-          path: target
-          name: target
+          path: target/debug/madara
+          name: madara-debug
       - name: Run test
         run: |-
           cd tests
