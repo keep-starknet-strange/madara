@@ -3,7 +3,7 @@ use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::StarknetApiError;
 
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)

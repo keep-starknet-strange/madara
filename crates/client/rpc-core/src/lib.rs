@@ -16,9 +16,8 @@ use frame_support::storage::bounded_vec::BoundedVec;
 use hex::ToHex;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
-use mp_starknet::execution::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
+use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use serde::{Deserialize, Serialize};
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 
 pub type FieldElement = String;
 pub type BlockNumber = u64;

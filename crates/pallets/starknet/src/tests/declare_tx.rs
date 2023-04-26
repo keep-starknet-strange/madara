@@ -1,7 +1,6 @@
-use blockifier::test_utils::{get_contract_class, ERC20_CONTRACT_PATH};
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::Transaction;
 
 use super::mock::*;
@@ -16,7 +15,9 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let none_origin = RuntimeOrigin::none();
         let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
 
-        let erc20_class = ContractClassWrapper::from(get_contract_class(ERC20_CONTRACT_PATH));
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(include_bytes!(
+            "../../../../../resources/erc20/erc20.json"
+        )));
         let erc20_class_hash =
             <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -38,7 +39,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             Error::<Test>::ContractClassMustBeSpecified
         );
 
-        transaction.contract_class = Some(erc20_class);
+        transaction.contract_class = Some(erc20_class.unwrap());
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support

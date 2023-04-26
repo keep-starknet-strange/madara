@@ -6,7 +6,7 @@ use starknet_api::stdlib::collections::HashMap;
 
 use crate::alloc::string::ToString;
 use crate::block::header::Header;
-use crate::execution::ContractAddressWrapper;
+use crate::execution::types::ContractAddressWrapper;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {

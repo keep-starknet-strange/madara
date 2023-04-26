@@ -9,7 +9,9 @@ use hex::{FromHex, FromHexError};
 use serde::{Deserialize, Serialize};
 use sp_core::{H256, U256};
 
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use crate::execution::types::{
+    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper, MaxCalldataSize,
+};
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
 /// Removes the "0x" prefix from a given hexadecimal string
@@ -275,7 +277,7 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             .into_iter()
             .map(|hex_str| string_to_u256(&hex_str).map_err(DeserializeCallEntrypointError::InvalidCalldata))
             .collect();
-        let calldata = BoundedVec::<U256, MaxArraySize>::try_from(calldata?)
+        let calldata = BoundedVec::<U256, MaxCalldataSize>::try_from(calldata?)
             .map_err(|_| DeserializeCallEntrypointError::CalldataExceedsMaxSize)?;
 
         // Convert storage_address to [u8; 32]

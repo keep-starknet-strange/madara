@@ -1,11 +1,11 @@
 use core::str::FromStr;
 
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+use blockifier::execution::contract_class::ContractClass;
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use frame_support::weights::IdentityFee;
 use hex::FromHex;
-use mp_starknet::execution::ContractClassWrapper;
+use mp_starknet::execution::types::ContractClassWrapper;
 use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use sp_core::{ConstU8, H256, U256};
 use sp_runtime::testing::Header;
@@ -27,6 +27,9 @@ pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
 pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
 
+pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
+    serde_json::from_slice(contract_content).unwrap()
+}
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
     pub enum Test where
@@ -119,7 +122,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let argent_account_class = get_contract_class(include_bytes!("../../../../../resources/argent_account_v0.json"));
     let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
-    let blockifier_account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let blockifier_account_class = get_contract_class(include_bytes!("../../../../../resources/account/account.json"));
     let simple_account_class = get_contract_class(include_bytes!("../../../../../resources/account/account.json"));
     let erc20_class = get_contract_class(include_bytes!("../../../../../resources/erc20/erc20.json"));
     let simple_account_address =
@@ -158,13 +161,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (fee_token_address, token_class_hash_bytes),
         ],
         contract_classes: vec![
-            (proxy_class_hash, ContractClassWrapper::from(argent_proxy_class)),
-            (account_class_hash, ContractClassWrapper::from(argent_account_class)),
-            (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-            (l1_handler_class_hash_bytes, ContractClassWrapper::from(l1_handler_class)),
-            (blockifier_account_class_hash, ContractClassWrapper::from(blockifier_account_class)),
-            (simple_account_class_hash, ContractClassWrapper::from(simple_account_class)),
-            (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
+            (proxy_class_hash, ContractClassWrapper::try_from(argent_proxy_class).unwrap()),
+            (account_class_hash, ContractClassWrapper::try_from(argent_account_class).unwrap()),
+            (other_class_hash_bytes, ContractClassWrapper::try_from(test_class).unwrap()),
+            (l1_handler_class_hash_bytes, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
+            (blockifier_account_class_hash, ContractClassWrapper::try_from(blockifier_account_class).unwrap()),
+            (simple_account_class_hash, ContractClassWrapper::try_from(simple_account_class).unwrap()),
+            (token_class_hash_bytes, ContractClassWrapper::try_from(erc20_class).unwrap()),
         ],
         fee_token_address,
         storage: vec![

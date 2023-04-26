@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
-use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use sp_core::{H256, U256};
 use sp_std::sync::Arc;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};

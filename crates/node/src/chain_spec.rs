@@ -5,7 +5,7 @@ use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
 };
-use mp_starknet::execution::ContractClassWrapper;
+
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -165,7 +165,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
-pub const ACCOUNT_CONTRACT_PATH: &'static [u8] =
+pub const ACCOUNT_CONTRACT_PATH: &[u8] =
     include_bytes!("../feature_contracts/compiled/account_without_validations_compiled.json");
 
 /// Configure initial storage state for FRAME modules.
@@ -233,9 +233,9 @@ fn testnet_genesis(
                 (token_contract_address_bytes, token_class_hash_bytes),
             ],
             contract_classes: vec![
-                (class_hash_bytes, ContractClassWrapper::from(account_class)),
-                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-                (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
+                (class_hash_bytes, account_class),
+                (other_class_hash_bytes, test_class),
+                (token_class_hash_bytes, erc20_class),
             ],
             storage: vec![
                 (

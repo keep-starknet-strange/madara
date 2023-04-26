@@ -2,7 +2,7 @@ use core::str::FromStr;
 
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
-use mp_starknet::execution::{CallEntryPointWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::types::{CallEntryPointWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::Transaction;
 use sp_core::{H256, U256};
 
