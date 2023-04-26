@@ -490,6 +490,7 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             // Check that class hash is not None
+            // TODO: delete this check when we will have a way to generate class hash from contract class (https://github.com/keep-starknet-strange/madara/issues/302)
             ensure!(transaction.call_entrypoint.class_hash.is_some(), Error::<T>::ClassHashMustBeSpecified);
 
             let class_hash = transaction.call_entrypoint.class_hash.unwrap();
