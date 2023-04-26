@@ -1,5 +1,6 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
+use core::fmt::Display;
 
 use blockifier::execution::contract_class::ContractClass;
 use cairo_vm::types::errors::program_errors::ProgramError;

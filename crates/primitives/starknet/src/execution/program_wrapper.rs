@@ -140,7 +140,6 @@ pub struct ProgramWrapper {
     scale_codec::Decode,
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
-    Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [ReferenceManager] using substrate compatible types.
@@ -281,16 +280,87 @@ impl TryFrom<ProgramWrapper> for Program {
 /// Wrapper type from [Felt252] using [U256] (substrate compatible type).
 pub struct Felt252Wrapper(pub U256);
 
-impl From<Felt252> for Felt252Wrapper {
-    fn from(value: Felt252) -> Self {
-        Self(U256::from_big_endian(&value.to_be_bytes()))
+impl From<HashMapConversionError> for ProgramConversionError {
+    fn from(error: HashMapConversionError) -> Self {
+        ProgramConversionError::HashConversion(error)
     }
 }
-impl From<Felt252Wrapper> for Felt252 {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        Felt252::from_bytes_be(&buff)
+
+impl From<VecConversionError> for ProgramConversionError {
+    fn from(error: VecConversionError) -> Self {
+        ProgramConversionError::VecConversion(error)
+    }
+}
+
+impl TryFrom<Program> for ProgramWrapper {
+    type Error = ProgramConversionError;
+
+    fn try_from(value: Program) -> Result<Self, Self::Error> {
+        let constants = HashMapWrapper(value.constants().clone()).try_into()?;
+        let reference_manager = VecWrapper(value.reference_manager().references.clone()).try_into()?;
+
+        let hints = BoundedBTreeMap::try_from(
+            value
+                .hints()
+                .into_iter()
+                .map(|(k, v)| VecWrapper(v.clone()).try_into().map(|v| (k.clone() as u128, v)))
+                .collect::<Result<BTreeMap<u128, BoundedVec<HintParamsWrapper, MaxHintMapSize>>, VecConversionError>>(
+                )?,
+        )
+        .map_err(|_| ProgramConversionError::HashConversion(HashMapConversionError))?;
+
+        let shared_program_data = SharedProgramDataWrapper {
+            builtins: VecWrapper(value.builtins().clone()).try_into()?,
+            data: VecWrapper(value.data().clone()).try_into()?,
+            hints,
+            main: value.main().map(|m| m as u128),
+            start: value.start().map(|m| m as u128),
+            end: value.end().map(|m| m as u128),
+            error_message_attributes: VecWrapper(value.error_message_attributes().clone()).try_into()?,
+            instruction_locations: match value.instruction_locations().clone() {
+                Some(il) => Some(HashMapWrapper(il).try_into()?),
+                None => None,
+            },
+
+            identifiers: HashMapWrapper(value.identifiers().clone()).try_into()?,
+        };
+
+        Ok(Self { constants, shared_program_data, reference_manager })
+    }
+}
+
+impl TryFrom<ProgramWrapper> for Program {
+    type Error = ProgramConversionError;
+
+    fn try_from(value: ProgramWrapper) -> Result<Self, Self::Error> {
+        let builtins: VecWrapper<BuiltinName> = value.shared_program_data.builtins.into();
+        let data: VecWrapper<MaybeRelocatable> = value.shared_program_data.data.into();
+
+        let hints: HashMap<usize, Vec<HintParams>> = value
+            .shared_program_data
+            .hints
+            .into_iter()
+            .map(|(k, v)| {
+                // Ok to unwrap because accessible scope wont ever be too long of a string
+                let v: VecWrapper<HintParams> =
+                    VecWrapper(v.into_inner().iter().map(|elt| elt.clone().try_into().unwrap()).collect());
+                (k as usize, v.0)
+            })
+            .collect::<HashMap<usize, Vec<HintParams>>>();
+        Program::new(
+            builtins.0,
+            data.0,
+            value.shared_program_data.main.map(|m| m as usize),
+            hints,
+            ReferenceManager { references: VecWrapper::from(value.reference_manager).0 },
+            HashMapWrapper::try_from(value.shared_program_data.identifiers)?.0,
+            VecWrapper::from(value.shared_program_data.error_message_attributes).0,
+            match value.shared_program_data.instruction_locations {
+                Some(il) => Some(HashMapWrapper::try_from(il)?.0),
+                None => None,
+            },
+        )
+        .map_err(|_| ProgramConversionError::Other)
     }
 }
 #[derive(
@@ -432,6 +502,7 @@ where
     }
 }
 
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -472,7 +543,7 @@ struct SharedProgramDataWrapper {
     )]
     identifiers: BoundedBTreeMap<StringWrapper, IdentifierWrapper, MaxIdentifiersSize>,
 }
-
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -553,7 +624,6 @@ struct HintParamsWrapper {
     accessible_scopes: BoundedVec<StringWrapper, MaxAccessibleScopeSize>,
     flow_tracking_data: FlowTrackingDataWrapper,
 }
-
 impl TryFrom<HintParams> for HintParamsWrapper {
     type Error = VecConversionError;
     fn try_from(value: HintParams) -> Result<Self, Self::Error> {
@@ -573,7 +643,6 @@ impl From<HintParamsWrapper> for HintParams {
         }
     }
 }
-
 #[derive(
     Clone,
     Debug,
@@ -585,6 +654,7 @@ impl From<HintParamsWrapper> for HintParams {
     scale_codec::MaxEncodedLen,
     Default,
 )]
+// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [FlowTrackingData] using (substrate compatible type).
 struct FlowTrackingDataWrapper {
@@ -669,6 +739,7 @@ impl From<ApTrackingWrapper> for ApTracking {
     Default,
     Constructor,
 )]
+// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [InstructionLocation] using (substrate compatible type).
 pub struct InstructionLocationWrapper {
@@ -751,6 +822,18 @@ impl From<LocationWrapper> for Location {
     }
 }
 
+impl From<HintLocation> for HintLocationWrapper {
+    fn from(value: HintLocation) -> Self {
+        Self { location: value.location.into(), n_prefix_newlines: value.n_prefix_newlines }
+    }
+}
+impl From<HintLocationWrapper> for HintLocation {
+    fn from(value: HintLocationWrapper) -> Self {
+        Self { location: value.location.into(), n_prefix_newlines: value.n_prefix_newlines }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -761,7 +844,6 @@ impl From<LocationWrapper> for Location {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [HintLocation] using (substrate compatible type).
@@ -789,6 +871,19 @@ impl From<Attribute> for AttributeWrapper {
             end_pc: value.end_pc as u128,
             value: value.value.into(),
             flow_tracking_data: value.flow_tracking_data.map(|flow| flow.into()),
+        }
+    }
+}
+
+impl From<AttributeWrapper> for Attribute {
+    fn from(value: AttributeWrapper) -> Self {
+        Self {
+            name: value.name.into(),
+            start_pc: value.start_pc as usize,
+            end_pc: value.end_pc as usize,
+            value: value.value.into(),
+            // Only way it panics is if u128 to usize fails which is safe so we can unwrap
+            flow_tracking_data: value.flow_tracking_data.map(|flow| flow.try_into().unwrap()),
         }
     }
 }
@@ -940,7 +1035,6 @@ impl From<IdentifierWrapper> for Identifier {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
-    Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct MemberWrapper {
@@ -1223,7 +1317,6 @@ impl From<InstructionWrapper> for Instruction {
         }
     }
 }
-
 #[derive(
     Clone,
     Debug,
@@ -1342,7 +1435,6 @@ impl From<PcUpdateWrapper> for PcUpdate {
         }
     }
 }
-
 #[derive(
     Clone,
     Debug,
@@ -1382,7 +1474,6 @@ impl From<ApUpdateWrapper> for ApUpdate {
         }
     }
 }
-
 #[derive(
     Clone,
     Debug,
