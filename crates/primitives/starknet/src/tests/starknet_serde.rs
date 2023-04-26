@@ -1,4 +1,4 @@
-use mp_starknet::starknet_serde::{transaction_from_json, DeserializeCallEntrypointError, DeserializeTransactionError};
+use crate::starknet_serde::{transaction_from_json, DeserializeCallEntrypointError, DeserializeTransactionError};
 
 #[test]
 fn test_missing_not_optional_field() {

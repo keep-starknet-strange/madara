@@ -1,5 +1,4 @@
 use frame_support::bounded_vec;
-use mp_starknet::transaction::types::{EventError, EventWrapper, Transaction, TransactionReceiptWrapper, TxType};
 use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockHash, BlockNumber};
@@ -9,6 +8,8 @@ use starknet_api::transaction::{
     Event, EventContent, EventData, EventKey, Fee, InvokeTransactionOutput, TransactionHash, TransactionOutput,
     TransactionReceipt,
 };
+
+use crate::transaction::types::{EventError, EventWrapper, Transaction, TransactionReceiptWrapper, TxType};
 
 #[test]
 fn verify_tx_version_passes_for_valid_version() {

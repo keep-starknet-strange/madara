@@ -38,3 +38,7 @@ pub mod traits;
 
 /// Starknet Execution related functionality.
 pub mod execution;
+
+/// Tests.
+#[cfg(test)]
+pub mod tests;
