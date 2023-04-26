@@ -93,7 +93,7 @@ jobs:
       - name: Run test
         run: |-
           cd tests
-          npx run test
+          npm run test
 
   check:
     runs-on: ubuntu-latest
