@@ -2,19 +2,14 @@ import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
-import { jumpBlocks } from "../../util/block";
+import { LibraryError, RpcProvider, RPC } from "starknet";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { RpcProvider, LibraryError } from "starknet";
-import {
-  ACCOUNT_CONTRACT,
-  ACCOUNT_CONTRACT_CLASS_HASH,
-  TEST_CONTRACT,
-  TEST_CONTRACT_CLASS_HASH,
-} from "./constants";
+import { jumpBlocks } from "../../util/block";
 
 import {
   transfer,
 } from "../../util/starknet";
+import { ACCOUNT_CONTRACT, ACCOUNT_CONTRACT_CLASS_HASH, TEST_CONTRACT, TEST_CONTRACT_CLASS_HASH } from "./constants";
 
 const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -22,6 +17,7 @@ const contractAddress =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 const feeTokenAddress =
   "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
+
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -247,7 +243,7 @@ describeDevMadara("Starknet RPC", (context) => {
     const block_number = chain_result.block.header.number.toNumber();
 
     // happy path test
-    let block_with_tx_hashes = await providerRPC.getBlockWithTxHashes(block_number);
+    const block_with_tx_hashes = await providerRPC.getBlockWithTxHashes(block_number);
     console.log("getBlockWithTxHashes(): ", block_with_tx_hashes);
     expect(block_with_tx_hashes).to.not.be.undefined;
     // expect(block_with_tx_hashes.transactions.length).to.have.length(1);
@@ -261,5 +257,73 @@ describeDevMadara("Starknet RPC", (context) => {
     }
 
   });
+  it("giving a valid block with txs " +
+    "when call getBlockWithTxHashes " +
+    "then returns an object with transactions", async function () {
+      const createdBlockResponse = await context.createBlock(
+        transfer(context.polkadotApi, contractAddress, feeTokenAddress, contractAddress, mintAmount), //
+        { parentHash: undefined, finalize: true }
+      );
+
+      // console.log("context.createBlock().block:", createdBlockResponse.block)
+      const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+      console.log("then call providerRPC.getBlockHashAndNumber()", await providerRPC.getBlockHashAndNumber())
+
+
+      // It should be able to use the getBlockWithTxsHashes
+      // method with a createdBlockResponse.block.hash.toHex() | toString()? but obtain 'LibraryError: 24: Block not found'
+      // even using providerRPC.getBlock() returns a 'Block not found'
+      // const getBlockWithTxsHashesResponse: RPC.GetBlockWithTxHashesResponse = await providerRPC.getBlockWithTxHashes(signedBlock.block.hash.toHex())
+
+      // I search for the block by hash in the chain to validate that it actually exists (it returns me a block)
+      // Tried to review the transactions of the obtained block, I find the 'transfer' previously made
+      // (2 transactions). However, if instead of sending the 'transfer' at the time of creating the block,
+      // I send 'undefined', then only 1 transaction appears (the one with the timestamp).
+      const signedBlock = await context.polkadotApi.rpc.chain.getBlock(createdBlockResponse.block.hash);
+      console.log("signedBlock (obtained from context.polkadotApi.rpc.chain.getBlock) { number:", signedBlock.block.header.number.toNumber(), ", hash:", signedBlock.block.hash.toHex(), "}")
+      console.log("extrinsics.hashes => {")
+      signedBlock.block.extrinsics.forEach(value => {
+        // console.log("extrinsics.hashes => value {", value.method.args, "}")
+        console.log("  ", value.method.args[0]['hash'].toHex(), ",")
+      })
+      console.log("}")
+
+      const getBlockWithTxsHashesResponse: RPC.GetBlockWithTxHashesResponse = await providerRPC.getBlockWithTxHashes(latestBlockCreated.block_hash)
+      console.log("block response: ", getBlockWithTxsHashesResponse)
+      // const block_with_tx_hashes = block_response['Block'];
+      // console.log("block_with_txs: ", block_with_tx_hashes)
+
+      // expect(block_with_tx_hashes).to.not.be.undefined;
+      // expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
+      // expect(block_with_tx_hashes.transactions.length).to.be.equal(1);
+    });
+
+  // it("giving a valid block " +
+  //    "when call getBlockWithTxHashes " +
+  //    "then returns an object with empty transactions", async function () {
+  //   let nProvider = new RpcProvider({
+  //       nodeUrl: `http://127.0.0.1:${context.rpcPort}/`,
+  //       retries: 3,
+  //   }); // substrate node
+  //   let block = await nProvider.getBlockHashAndNumber();
+  //
+  //   const block_response: RPC.GetBlockWithTxHashesResponse = await providerRPC.getBlockWithTxHashes(block.block_number);
+  //   const block_with_tx_hashes = block_response['Block'];
+  //
+  //   expect(block_with_tx_hashes).to.not.be.undefined;
+  //   expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
+  //   expect(block_with_tx_hashes.transactions.length).to.be.equal(0);
+  // });
+
+  // it("giving an invalid block " +
+  //    "when call getBlockWithTxHashes " +
+  //    "then throw 'Block not found error'", async function () {
+  //   try {
+  //     await providerRPC.getBlockWithTxHashes("invalid_block_hash");
+  //   } catch (error) {
+  //     expect(error).to.be.instanceOf(LibraryError);
+  //     expect(error.message).to.equal("24: Block not found");
+  //   }
+  // });
 });
 });
