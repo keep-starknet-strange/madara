@@ -80,4 +80,16 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(contract_class).to.not.be.undefined;
   });
+
+  it("syncing", async function () {
+    const status = await providerRPC.getSyncingStats();
+
+    expect(status["sync_status"]["starting_block_num"]).to.be.equal(0);
+    expect(status["sync_status"]["current_block_num"]).to.be.greaterThan(0);
+    expect(status["sync_status"]["highest_block_num"]).to.be.greaterThan(0);
+
+    expect(status["sync_status"]["starting_block_hash"]).to.contain("0xaf");
+    expect(status["sync_status"]["current_block_hash"]).to.contain("0x13");
+    expect(status["sync_status"]["highest_block_hash"]).to.contain("0x13");
+  });
 });

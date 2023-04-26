@@ -38,6 +38,15 @@ where
     false
 }
 
+// Get a starknet block from a substrate hash.
+// # Arguments
+// * `client` - The Madara client
+// * `overrides` - The OverrideHandle
+// * `target_number` - A substrate block hash
+//
+// # Returns
+// * `Result<Block, StarknetRpcApiError>` - A Result with the corresponding Starknet block
+// or Error.
 pub fn starknet_block_from_substrate_hash<B: BlockT, C, BE>(
     client: &C,
     overrides: &OverrideHandle<B>,
