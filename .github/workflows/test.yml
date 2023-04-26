@@ -90,6 +90,8 @@ jobs:
         with:
           path: target/debug/madara
           name: madara-debug
+      - name: Set execute permission
+        run: chmod +x target/debug/madara
       - name: Run test
         run: |-
           cd tests
