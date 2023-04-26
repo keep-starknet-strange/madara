@@ -3,11 +3,11 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use alloc::{fmt, format};
 
-use blockifier::execution::contract_class::ContractClass;
 use frame_support::BoundedVec;
 use hex::{FromHex, FromHexError};
 use serde::{Deserialize, Serialize};
 use sp_core::{H256, U256};
+use starknet_api::deprecated_contract_class::ContractClass;
 
 use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
@@ -353,10 +353,7 @@ pub fn transaction_from_json(
     if !contract_content.is_empty() {
         let raw_contract_class: ContractClass = serde_json::from_slice(contract_content)
             .map_err(|e| DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e)))?;
-        transaction.contract_class =
-            Some(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
-                DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
-            })?);
+        transaction.contract_class = Some(ContractClassWrapper::from(raw_contract_class));
     } else {
         transaction.contract_class = None;
     }

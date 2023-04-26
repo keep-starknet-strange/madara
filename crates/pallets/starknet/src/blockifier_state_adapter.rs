@@ -98,7 +98,8 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
         let class_hash: ClassHashWrapper = class_hash.0.0;
-        let contract_class: ContractClassWrapper = ContractClassWrapper::try_from(contract_class).unwrap();
+
+        let contract_class: ContractClassWrapper = ContractClassWrapper::from(contract_class);
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 

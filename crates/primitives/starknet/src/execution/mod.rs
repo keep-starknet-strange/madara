@@ -9,7 +9,7 @@ use alloc::{format, vec};
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
-use blockifier::execution::execution_utils::{cairo_vm_program_to_sn_api, sn_api_to_cairo_vm_program};
+use blockifier::execution::execution_utils::sn_api_to_cairo_vm_program;
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use cairo_vm::types::errors::program_errors::ProgramError;
@@ -18,7 +18,8 @@ use serde_json::{from_slice, to_string};
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::deprecated_contract_class::{
-    EntryPoint, EntryPointOffset, EntryPointType, Program as DeprecatedProgram,
+    ContractClass as DeprecatedContractClass, EntryPoint, EntryPointOffset, EntryPointType,
+    Program as DeprecatedProgram,
 };
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
@@ -90,17 +91,14 @@ impl TryFrom<ContractClassWrapper> for ContractClass {
     }
 }
 
-impl TryFrom<ContractClass> for ContractClassWrapper {
-    type Error = serde_json::Error;
-
-    fn try_from(contract_class: ContractClass) -> Result<Self, Self::Error> {
-        let program = cairo_vm_program_to_sn_api(contract_class.program)?;
-        let program_string = to_string(&program).unwrap();
+impl From<DeprecatedContractClass> for ContractClassWrapper {
+    fn from(contract_class: DeprecatedContractClass) -> Self {
+        let program_string = to_string(&contract_class.program).unwrap();
         let entrypoints_string = to_string(&contract_class.entry_points_by_type).unwrap();
-        Ok(Self {
+        Self {
             program: BoundedVec::try_from(program_string.as_bytes().to_vec()).unwrap(),
             entry_points_by_type: BoundedVec::try_from(entrypoints_string.as_bytes().to_vec()).unwrap(),
-        })
+        }
     }
 }
 
