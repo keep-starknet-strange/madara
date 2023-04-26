@@ -12,6 +12,7 @@ use starknet_api::stdlib::collections::HashMap;
 use thiserror_no_std::Error;
 
 use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
+use super::program_wrapper::ProgramWrapper;
 #[cfg(feature = "std")]
 use super::{deserialize_bounded_btreemap, serialize_bounded_btreemap};
 
@@ -37,7 +38,7 @@ type MaxProgramSize = ConstU32<{ u32::MAX }>;
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct ContractClassWrapper {
     /// Contract class program json.
-    pub program: BoundedVec<u8, MaxProgramSize>,
+    pub program: ProgramWrapper,
     /// Contract class entrypoints.
     #[cfg_attr(
         feature = "std",
@@ -51,7 +52,7 @@ pub struct ContractClassWrapper {
 impl ContractClassWrapper {
     /// Creates a new instance of a contract class.
     pub fn new(
-        program: BoundedVec<u8, MaxProgramSize>,
+        program: ProgramWrapper,
         entry_points_by_type: BoundedBTreeMap<
             EntryPointTypeWrapper,
             BoundedVec<EntryPointWrapper, MaxEntryPoints>,
