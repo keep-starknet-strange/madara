@@ -4557,6 +4557,7 @@ dependencies = [
  "bitvec 0.17.4",
  "blockifier",
  "cairo-vm",
+ "derive_more",
  "frame-support",
  "hex",
  "parity-scale-codec",

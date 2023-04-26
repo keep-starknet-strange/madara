@@ -4,11 +4,7 @@ use alloc::vec::Vec;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::execution_utils::{cairo_vm_program_to_sn_api, sn_api_to_cairo_vm_program};
 use cairo_vm::types::errors::program_errors::ProgramError;
-#[cfg(feature = "std")]
-use frame_support::Deserialize;
 use frame_support::{BoundedBTreeMap, BoundedVec};
-use serde::de::Error as DeserializationError;
-use serde::{Deserializer, Serializer};
 use serde_json::{from_slice, to_string};
 use sp_core::ConstU32;
 use starknet_api::deprecated_contract_class::{EntryPoint, Program as DeprecatedProgram};
@@ -16,6 +12,8 @@ use starknet_api::stdlib::collections::HashMap;
 use thiserror_no_std::Error;
 
 use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
+#[cfg(feature = "std")]
+use super::{deserialize_bounded_btreemap, serialize_bounded_btreemap};
 
 /// Max number of entrypoints types (EXTERNAL/L1_HANDLER/CONSTRUCTOR)
 type MaxEntryPointsType = ConstU32<3>;
@@ -43,35 +41,10 @@ pub struct ContractClassWrapper {
     /// Contract class entrypoints.
     #[cfg_attr(
         feature = "std",
-        serde(deserialize_with = "deserialize_entrypoints", serialize_with = "serialize_entrypoints")
+        serde(deserialize_with = "deserialize_bounded_btreemap", serialize_with = "serialize_bounded_btreemap")
     )]
     pub entry_points_by_type:
         BoundedBTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>, MaxEntryPointsType>,
-}
-/// Deserialization of the entrypoints object.
-/// This is needed for the genesis config.
-#[cfg(feature = "std")]
-pub fn deserialize_entrypoints<'de, D: Deserializer<'de>>(
-    deserializer: D,
-) -> Result<
-    BoundedBTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>, MaxEntryPointsType>,
-    D::Error,
-> {
-    let entrypoints = BTreeMap::deserialize(deserializer)?;
-    BoundedBTreeMap::try_from(entrypoints)
-        .map_err(|_| DeserializationError::custom("Couldn't convert BTreeMap to BoundedBTreeMap".to_string()))
-}
-
-/// Serialization of the entrypoints object.
-/// This is needed for the genesis config.
-#[cfg(feature = "std")]
-pub fn serialize_entrypoints<S: Serializer>(
-    v: &BoundedBTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>, MaxEntryPointsType>,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    use frame_support::Serialize;
-
-    v.clone().into_inner().serialize(serializer)
 }
 
 // Regular implementaiton.
