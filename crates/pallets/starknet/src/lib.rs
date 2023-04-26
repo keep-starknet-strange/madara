@@ -439,6 +439,10 @@ pub mod pallet {
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
+                    #[cfg(feature = "std")]
+                    use std::println;
+                    #[cfg(feature = "std")]
+                    println!("Invoke error {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
