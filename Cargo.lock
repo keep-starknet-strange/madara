@@ -4381,6 +4381,7 @@ dependencies = [
  "anyhow",
  "base64 0.21.0",
  "flate2",
+ "frame-support",
  "hex",
  "jsonrpsee",
  "mp-starknet",
