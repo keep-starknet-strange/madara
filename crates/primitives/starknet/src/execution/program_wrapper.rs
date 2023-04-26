@@ -1,5 +1,7 @@
 use alloc::boxed::Box;
 use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::cmp::Eq;
 use core::fmt::Debug;
 use core::hash::Hash;
@@ -278,10 +280,15 @@ pub struct VecConversionError;
     scale_codec::Decode,
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
-    Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct VecWrapper<T>(Vec<T>);
+
+impl<T> Default for VecWrapper<T> {
+    fn default() -> Self {
+        Self(Vec::new())
+    }
+}
 
 impl<O, D, S> TryFrom<VecWrapper<O>> for BoundedVec<D, S>
 where
@@ -306,7 +313,7 @@ where
     O: Clone,
 {
     fn from(value: BoundedVec<O, S>) -> Self {
-        VecWrapper(value.into_inner().iter().map(|elt| elt.clone().into()).collect())
+        VecWrapper::<D>(value.into_inner().iter().map(|elt| D::from(elt.clone())).collect())
     }
 }
 
@@ -498,7 +505,7 @@ impl TryFrom<HintParams> for HintParamsWrapper {
     fn try_from(value: HintParams) -> Result<Self, Self::Error> {
         Ok(Self {
             code: value.code.into(),
-            accessible_scopes: VecWrapper(value.accessible_scopes).try_into()?,
+            accessible_scopes: VecWrapper::<String>(value.accessible_scopes).try_into()?,
             flow_tracking_data: value.flow_tracking_data.into(),
         })
     }

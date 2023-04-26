@@ -9,15 +9,13 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use blockifier::execution::contract_class::ContractClass;
 use errors::StarknetRpcApiError;
 use hex::FromHex;
 use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
-use mc_rpc_core::{
-    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall,
-    RPCContractClass,
-};
+use mc_rpc_core::{BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass};
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -194,19 +192,21 @@ where
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        let contract_class = self
+        let contract_class: ContractClass = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
             .contract_class(substrate_block_hash, contract_address_wrapped)
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
+            })?
+            .try_into()
+            .map_err(|e| {
+                error!("Failed to convert `ContractClassWrapper` at '{contract_address}' to `ContractClass`: {e}");
+                StarknetRpcApiError::ContractNotFound
             })?;
 
-        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
-            error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?)
+        Ok(RPCContractClass::ContractClass(contract_class))
     }
 }
 

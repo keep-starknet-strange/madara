@@ -256,13 +256,7 @@ pub enum RPCContractClass {
 
 /// Returns a `ContractClassWrapper` from a `RPCContractClass`
 pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
-    Ok(RPCContractClass::DeprecatedContractClass(DeprecatedContractClass {
-        program: compress_and_encode_base64(&contract_class_wrapped.program)?,
-        entry_points_by_type: to_deprecated_entrypoint_by_type(
-            contract_class_wrapped.entry_points_by_type.into_inner(),
-        ),
-        abi: None,
-    }))
+    Ok(RPCContractClass::ContractClass(Default::default()))
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
