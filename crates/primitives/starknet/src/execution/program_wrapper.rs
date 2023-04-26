@@ -615,6 +615,17 @@ impl From<FlowTrackingDataWrapper> for FlowTrackingData {
     }
 }
 
+impl From<FlowTrackingData> for FlowTrackingDataWrapper {
+    fn from(value: FlowTrackingData) -> Self {
+        // When the map size will be u128 it will never overflow because references can go only up to u128
+        Self {
+            ap_tracking: value.ap_tracking.into(),
+            reference_ids: HashMapWrapper(value.reference_ids).try_into().unwrap(),
+        }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -770,6 +781,19 @@ impl From<HintLocationWrapper> for HintLocation {
     }
 }
 
+impl From<Attribute> for AttributeWrapper {
+    fn from(value: Attribute) -> Self {
+        Self {
+            name: value.name.into(),
+            start_pc: value.start_pc as u128,
+            end_pc: value.end_pc as u128,
+            value: value.value.into(),
+            flow_tracking_data: value.flow_tracking_data.map(|flow| flow.into()),
+        }
+    }
+}
+
+// DONE
 #[derive(
     Clone,
     Debug,
@@ -875,6 +899,67 @@ impl From<IdentifierWrapper> for Identifier {
         }
     }
 }
+impl From<Identifier> for IdentifierWrapper {
+    fn from(value: Identifier) -> Self {
+        Self {
+            pc: value.pc.map(|v| v as u128),
+            type_: value.type_.map(|v| v.into()),
+            value: value.value.map(|v| v.into()),
+            full_name: value.full_name.map(|v| v.into()),
+            // Nothing should have more than 2**32-1 members so it shouldn't panic.
+            members: value.members.map(|v| HashMapWrapper(v).try_into().unwrap()),
+            cairo_type: value.cairo_type.map(|v| v.into()),
+        }
+    }
+}
+impl From<IdentifierWrapper> for Identifier {
+    fn from(value: IdentifierWrapper) -> Self {
+        Self {
+            pc: value.pc.map(|v| v as usize),
+            type_: value.type_.map(|v| v.into()),
+            value: value.value.map(|v| v.into()),
+            full_name: value.full_name.map(|v| v.into()),
+            // Nothing should have more than 2**32-1 members so it shouldn't panic.
+            members: value.members.map(|v| {
+                let hash_map: HashMapWrapper<String, Member> = v.into();
+                hash_map.0
+            }),
+            cairo_type: value.cairo_type.map(|v| v.into()),
+        }
+    }
+}
+
+// DONE
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+    Default,
+    Constructor,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct MemberWrapper {
+    cairo_type: StringWrapper,
+    offset: u128,
+}
+
+impl From<Member> for MemberWrapper {
+    fn from(value: Member) -> Self {
+        Self { cairo_type: value.cairo_type.into(), offset: value.offset as u128 }
+    }
+}
+impl From<MemberWrapper> for Member {
+    fn from(value: MemberWrapper) -> Self {
+        Self { cairo_type: value.cairo_type.into(), offset: value.offset as usize }
+    }
+}
+
+// DONE
 
 #[derive(
     Clone,
