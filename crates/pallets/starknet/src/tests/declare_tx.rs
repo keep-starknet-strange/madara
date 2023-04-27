@@ -147,6 +147,6 @@ fn given_contract_declare_tx_fails_if_invalid_class() {
             ..Transaction::default()
         };
 
-        assert_err!(Starknet::declare(none_origin.clone(), transaction.clone()), Error::<Test>::InvalidContractClass);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::InvalidContractClass);
     });
 }
