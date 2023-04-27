@@ -128,8 +128,38 @@ pub struct ProgramWrapper {
     )]
     constants: BoundedBTreeMap<StringWrapper, Felt252Wrapper, MaxConstantSize>,
     shared_program_data: SharedProgramDataWrapper,
-    reference_manager: BoundedVec<ReferenceWrapper, MaxReferenceSize>,
+    reference_manager: ReferenceManagerWrapper,
 }
+
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+    Default,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct ReferenceManagerWrapper {
+    references: BoundedVec<ReferenceWrapper, MaxReferenceSize>,
+}
+
+impl TryFrom<ReferenceManager> for ReferenceManagerWrapper {
+    type Error = VecConversionError;
+    fn try_from(value: ReferenceManager) -> Result<Self, Self::Error> {
+        Ok(Self { references: VecWrapper(value.references).try_into()? })
+    }
+}
+
+impl From<ReferenceManagerWrapper> for ReferenceManager {
+    fn from(value: ReferenceManagerWrapper) -> Self {
+        Self { references: VecWrapper::from(value.references).0 }
+    }
+}
+
 #[derive(
     Clone,
     Debug,
@@ -164,7 +194,7 @@ impl TryFrom<Program> for ProgramWrapper {
 
     fn try_from(value: Program) -> Result<Self, Self::Error> {
         let constants = HashMapWrapper(value.constants().clone()).try_into()?;
-        let reference_manager = VecWrapper(value.reference_manager().references.clone()).try_into()?;
+        let reference_manager = value.reference_manager().clone().try_into()?;
 
         let hints = BoundedBTreeMap::try_from(
             value
@@ -219,7 +249,7 @@ impl TryFrom<ProgramWrapper> for Program {
             data.0,
             value.shared_program_data.main.map(|m| m as usize),
             hints,
-            ReferenceManager { references: VecWrapper::from(value.reference_manager).0 },
+            value.reference_manager.into(),
             HashMapWrapper::try_from(value.shared_program_data.identifiers)?.0,
             VecWrapper::from(value.shared_program_data.error_message_attributes).0,
             match value.shared_program_data.instruction_locations {
