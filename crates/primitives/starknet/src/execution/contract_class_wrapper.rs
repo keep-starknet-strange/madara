@@ -1,14 +1,11 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
-use core::fmt::Display;
 
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::execution_utils::{cairo_vm_program_to_sn_api, sn_api_to_cairo_vm_program};
 use cairo_vm::types::errors::program_errors::ProgramError;
 use frame_support::{BoundedBTreeMap, BoundedVec};
-use serde_json::{from_slice, to_string};
 use sp_core::ConstU32;
-use starknet_api::deprecated_contract_class::{EntryPoint, Program as DeprecatedProgram};
+use starknet_api::deprecated_contract_class::EntryPoint;
 use starknet_api::stdlib::collections::HashMap;
 use thiserror_no_std::Error;
 
@@ -19,10 +16,6 @@ use super::{deserialize_bounded_btreemap, serialize_bounded_btreemap};
 
 /// Max number of entrypoints types (EXTERNAL/L1_HANDLER/CONSTRUCTOR)
 type MaxEntryPointsType = ConstU32<3>;
-
-// TODO: use real value
-/// Maximum size of a program
-type MaxProgramSize = ConstU32<{ u32::MAX }>;
 
 /// Contract Class type wrapper.
 #[derive(
@@ -74,7 +67,8 @@ pub enum ContractClassFromWrapperError {
     #[error(transparent)]
     Serde(#[from] serde_json::Error),
     #[error("something else happend")]
-    Other,
+    /// Error in the conversion of a contract class.
+    ContractClassConversionError,
 }
 
 // Traits implementation.
@@ -89,7 +83,10 @@ impl TryFrom<ContractClassWrapper> for ContractClass {
         });
 
         Ok(ContractClass {
-            program: wrapper.program.try_into().map_err(|_| ContractClassFromWrapperError::Other)?,
+            program: wrapper
+                .program
+                .try_into()
+                .map_err(|_| ContractClassFromWrapperError::ContractClassConversionError)?,
             entry_points_by_type: entrypoints,
         })
     }
@@ -108,9 +105,12 @@ impl TryFrom<ContractClass> for ContractClassWrapper {
             );
         }
         Ok(Self {
-            program: contract_class.program.try_into().map_err(|_| ContractClassFromWrapperError::Other)?,
+            program: contract_class
+                .program
+                .try_into()
+                .map_err(|_| ContractClassFromWrapperError::ContractClassConversionError)?,
             entry_points_by_type: BoundedBTreeMap::try_from(entrypoints)
-                .map_err(|_| ContractClassFromWrapperError::Other)?,
+                .map_err(|_| ContractClassFromWrapperError::ContractClassConversionError)?,
         })
     }
 }

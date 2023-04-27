@@ -238,7 +238,7 @@ pub struct EntryPointsByType {
 pub type ABI = String;
 /// Cairo sierra contract class
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-pub struct ContractClass {
+pub struct SierraContractClass {
     pub sierra_program: SierraProgram,
     pub contract_class_version: ContractClassVersion,
     pub entry_points_by_type: EntryPointsByType,
@@ -251,34 +251,34 @@ pub struct ContractClass {
 #[serde(untagged)]
 pub enum RPCContractClass {
     DeprecatedContractClass(DeprecatedContractClass),
-    ContractClass(ContractClass),
+    ContractClass(SierraContractClass),
 }
 
 /// Returns a `ContractClassWrapper` from a `RPCContractClass`
-pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
+pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
     Ok(RPCContractClass::ContractClass(Default::default()))
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
-fn compress_and_encode_base64(data: &[u8]) -> Result<String> {
-    let data_compressed = compress(data)?;
-    Ok(encode_base64(&data_compressed))
+fn _compress_and_encode_base64(data: &[u8]) -> Result<String> {
+    let data_compressed = _compress(data)?;
+    Ok(_encode_base64(&data_compressed))
 }
 
 /// Returns a compressed vector of bytes
-fn compress(data: &[u8]) -> Result<Vec<u8>> {
+fn _compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(&mut gzip_encoder, data)?;
     Ok(gzip_encoder.finish()?)
 }
 
 /// Returns a base64 encoded string of the input bytes
-fn encode_base64(data: &[u8]) -> String {
+fn _encode_base64(data: &[u8]) -> String {
     general_purpose::STANDARD.encode(data)
 }
 
 /// Returns a deprecated entry point by type from hash map of entry point types to entrypoint
-fn to_deprecated_entrypoint_by_type(
+fn _to_deprecated_entrypoint_by_type(
     entries: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
 ) -> DeprecatedEntryPointsByType {
     let mut constructor = vec![];

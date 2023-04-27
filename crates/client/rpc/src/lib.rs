@@ -15,7 +15,8 @@ use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, ContractClass, FunctionCall, RPCContractClass,
+    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
+    SierraContractClass,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -183,17 +184,18 @@ where
         contract_address: ContractAddress,
         block_id: StarknetBlockId,
     ) -> RpcResult<RPCContractClass> {
-        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+        // TODO: Fix it when we deal with cairo 1.
+        let _substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = <[u8; 32]>::from_hex(remove_prefix(&contract_address)).map_err(|e| {
+        let _contract_address_wrapped = <[u8; 32]>::from_hex(remove_prefix(&contract_address)).map_err(|e| {
             error!("Failed to convert '{contract_address}' to array: {e}");
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        // let contract_class: ContractClass = self
+        // let contract_class: SierraContractClass = self
         //     .overrides
         //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
         //     .contract_class(substrate_block_hash, contract_address_wrapped)
@@ -203,11 +205,14 @@ where
         //     })?
         //     .try_into()
         //     .map_err(|e| {
-        //         error!("Failed to convert `ContractClassWrapper` at '{contract_address}' to
-        // `ContractClass`: {e}");         StarknetRpcApiError::ContractNotFound
-        //     })?;
+        //         error!(
+        //             "Failed to convert `ContractClassWrapper` at '{contract_address}' to
+        // `ContractClass`: {e}"
+        //         );
+        //     StarknetRpcApiError::ContractNotFound
+        // })?;
 
-        Ok(RPCContractClass::ContractClass(ContractClass::default()))
+        Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
     }
 }
 

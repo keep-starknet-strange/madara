@@ -51,7 +51,7 @@ type MaxMemberLength = ConstU32<{ u32::MAX }>;
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum MaybeRelocatableWrapper {
+enum MaybeRelocatableWrapper {
     RelocatableValue { segment_index: i128, offset: u128 },
     Int(Felt252Wrapper),
 }
@@ -93,7 +93,6 @@ impl From<MaybeRelocatableWrapper> for MaybeRelocatable {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 struct StringWrapper(BoundedVec<u8, MaxStringLength>);
-struct StringConversionError;
 
 impl From<String> for StringWrapper {
     /// WARNING This function can panic if the string is over 2**32-1 bytes but in our case it can
@@ -121,10 +120,11 @@ impl From<StringWrapper> for String {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// This struct wraps the [Program] type from the cairo vm.
 pub struct ProgramWrapper {
     #[cfg_attr(
         feature = "std",
-        serde(deserialize_with = "deserialize_bounded_btreemap", serialize_with = "serialize_bounded_btreemap")
+        serde(deserialize_with = "deserialize_bounded_btreemap", serialize_with = "serialize_bounded_btreemap",)
     )]
     constants: BoundedBTreeMap<StringWrapper, Felt252Wrapper, MaxConstantSize>,
     shared_program_data: SharedProgramDataWrapper,
@@ -143,7 +143,8 @@ pub struct ProgramWrapper {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct ReferenceManagerWrapper {
+/// Wrapper type from [ReferenceManager] using substrate compatible types.
+struct ReferenceManagerWrapper {
     references: BoundedVec<ReferenceWrapper, MaxReferenceSize>,
 }
 
@@ -171,10 +172,14 @@ impl From<ReferenceManagerWrapper> for ReferenceManager {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Error type when converting a [Program] to [ProgramWrapper] and the other way around.
 pub enum ProgramConversionError {
+    /// Failed to convert a [HashMap] into a [BoundedBTreeMap]
     HashConversion(HashMapConversionError),
+    /// Failed to convert a [Vec] into a [BoundedVec]
     VecConversion(VecConversionError),
-    Other,
+    /// Failed to create a [Program]
+    PogramCreationError,
 }
 
 impl From<HashMapConversionError> for ProgramConversionError {
@@ -199,8 +204,8 @@ impl TryFrom<Program> for ProgramWrapper {
         let hints = BoundedBTreeMap::try_from(
             value
                 .hints()
-                .into_iter()
-                .map(|(k, v)| VecWrapper(v.clone()).try_into().map(|v| (k.clone() as u128, v)))
+                .iter()
+                .map(|(k, v)| VecWrapper(v.clone()).try_into().map(|v| (*k as u128, v)))
                 .collect::<Result<BTreeMap<u128, BoundedVec<HintParamsWrapper, MaxHintMapSize>>, VecConversionError>>(
                 )?,
         )
@@ -257,7 +262,7 @@ impl TryFrom<ProgramWrapper> for Program {
                 None => None,
             },
         )
-        .map_err(|_| ProgramConversionError::Other)
+        .map_err(|_| ProgramConversionError::PogramCreationError)
     }
 }
 
@@ -273,6 +278,7 @@ impl TryFrom<ProgramWrapper> for Program {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [Felt252] using [U256] (substrate compatible type).
 pub struct Felt252Wrapper(pub U256);
 
 impl From<Felt252> for Felt252Wrapper {
@@ -299,6 +305,7 @@ impl From<Felt252Wrapper> for Felt252 {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Error type when converting a [Vec] to [BoundedVec] and the other way around.
 pub struct VecConversionError;
 
 #[derive(
@@ -312,7 +319,10 @@ pub struct VecConversionError;
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct VecWrapper<T>(Vec<T>);
+/// Wrapper type from [Vec] using [BoundedVec] (substrate compatible type). We wrap this in order to
+/// be able to easily convert a [Vec<T>] into a [BoundedVec<T, Size>] by implementing the [From] and
+/// [TryFrom] traits.
+struct VecWrapper<T>(Vec<T>);
 
 impl<T> Default for VecWrapper<T> {
     fn default() -> Self {
@@ -359,6 +369,7 @@ where
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Error type when converting a [HashMap] to [BoundedBTreeMap] and the other way around.
 pub struct HashMapConversionError;
 #[derive(
     Clone,
@@ -372,6 +383,9 @@ pub struct HashMapConversionError;
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [HashMap] using [BoundedBTreeMap] (substrate compatible type). We wrap this in
+/// order to be able to easily convert a [HashMap<K, V>] into a [BoundedBTreeMap<K, V, Size>] by
+/// implementing the [From] and [TryFrom] traits.
 struct HashMapWrapper<K, V>(HashMap<K, V>)
 where
     K: Eq + Hash;
@@ -418,7 +432,6 @@ where
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -431,7 +444,8 @@ where
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct SharedProgramDataWrapper {
+/// Wrapper type from [SharedProgramData] using substrate compatible types.
+struct SharedProgramDataWrapper {
     builtins: BoundedVec<BuiltinNameWrapper, MaxBuiltinSize>,
     data: BoundedVec<MaybeRelocatableWrapper, MaxDataSize>,
     #[cfg_attr(
@@ -458,7 +472,7 @@ pub struct SharedProgramDataWrapper {
     )]
     identifiers: BoundedBTreeMap<StringWrapper, IdentifierWrapper, MaxIdentifiersSize>,
 }
-// DONE
+
 #[derive(
     Clone,
     Debug,
@@ -471,14 +485,23 @@ pub struct SharedProgramDataWrapper {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types)]
-pub enum BuiltinNameWrapper {
+/// Wrapper type from [BuiltinName] using (substrate compatible type).
+enum BuiltinNameWrapper {
+    /// Output builtin.
     output,
+    /// Range check builtin.
     range_check,
+    /// Pedersen builtin.
     pedersen,
+    /// Ecdsa builtin.
     ecdsa,
+    /// Keccak builtin.
     keccak,
+    /// Bitwise builtin.
     bitwise,
+    /// Ec op builtin.
     ec_op,
+    /// Poseidon builtin.
     poseidon,
 }
 
@@ -512,7 +535,6 @@ impl From<BuiltinNameWrapper> for BuiltinName {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -525,11 +547,13 @@ impl From<BuiltinNameWrapper> for BuiltinName {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct HintParamsWrapper {
+/// Wrapper type from [HintParams] using (substrate compatible type).
+struct HintParamsWrapper {
     code: StringWrapper,
     accessible_scopes: BoundedVec<StringWrapper, MaxAccessibleScopeSize>,
     flow_tracking_data: FlowTrackingDataWrapper,
 }
+
 impl TryFrom<HintParams> for HintParamsWrapper {
     type Error = VecConversionError;
     fn try_from(value: HintParams) -> Result<Self, Self::Error> {
@@ -549,7 +573,7 @@ impl From<HintParamsWrapper> for HintParams {
         }
     }
 }
-// DONE
+
 #[derive(
     Clone,
     Debug,
@@ -561,9 +585,9 @@ impl From<HintParamsWrapper> for HintParams {
     scale_codec::MaxEncodedLen,
     Default,
 )]
-// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct FlowTrackingDataWrapper {
+/// Wrapper type from [FlowTrackingData] using (substrate compatible type).
+struct FlowTrackingDataWrapper {
     ap_tracking: ApTrackingWrapper,
     #[cfg_attr(
         feature = "std",
@@ -591,7 +615,6 @@ impl From<FlowTrackingDataWrapper> for FlowTrackingData {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -604,8 +627,11 @@ impl From<FlowTrackingDataWrapper> for FlowTrackingData {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [ApTracking] using (substrate compatible type).
 pub struct ApTrackingWrapper {
+    /// Ap group.
     pub group: u128,
+    /// Ap offest.
     pub offset: u128,
 }
 
@@ -620,7 +646,6 @@ impl From<ApTrackingWrapper> for ApTracking {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -633,8 +658,8 @@ impl From<ApTrackingWrapper> for ApTracking {
     Default,
     Constructor,
 )]
-// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [InstructionLocation] using (substrate compatible type).
 pub struct InstructionLocationWrapper {
     inst: LocationWrapper,
     hints: BoundedVec<HintLocationWrapper, MaxHintSize>,
@@ -664,7 +689,6 @@ impl From<InstructionLocationWrapper> for InstructionLocation {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -677,6 +701,7 @@ impl From<InstructionLocationWrapper> for InstructionLocation {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [Location] using (substrate compatible type).
 pub struct LocationWrapper {
     end_line: u32,
     end_col: u32,
@@ -689,10 +714,7 @@ pub struct LocationWrapper {
 impl From<Location> for LocationWrapper {
     fn from(value: Location) -> Self {
         let InputFile { filename } = value.input_file;
-        let parent_loc = match value.parent_location {
-            Some((loc, name)) => Some((Box::from(LocationWrapper::from(*loc)), name.into())),
-            None => None,
-        };
+        let parent_loc = value.parent_location.map(|(loc, name)| (Box::from(LocationWrapper::from(*loc)), name.into()));
         Self {
             end_line: value.end_line,
             end_col: value.end_col,
@@ -706,10 +728,7 @@ impl From<Location> for LocationWrapper {
 
 impl From<LocationWrapper> for Location {
     fn from(value: LocationWrapper) -> Self {
-        let parent_loc = match value.parent_location {
-            Some((loc, name)) => Some((Box::from(Location::from(*loc)), name.into())),
-            None => None,
-        };
+        let parent_loc = value.parent_location.map(|(loc, name)| (Box::from(Location::from(*loc)), name.into()));
         Self {
             end_line: value.end_line,
             end_col: value.end_col,
@@ -721,7 +740,6 @@ impl From<LocationWrapper> for Location {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -735,6 +753,7 @@ impl From<LocationWrapper> for Location {
     Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [HintLocation] using (substrate compatible type).
 pub struct HintLocationWrapper {
     location: LocationWrapper,
     n_prefix_newlines: u32,
@@ -751,7 +770,6 @@ impl From<HintLocationWrapper> for HintLocation {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -764,7 +782,8 @@ impl From<HintLocationWrapper> for HintLocation {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct AttributeWrapper {
+/// Wrapper type from [Attribute] using (substrate compatible type).
+struct AttributeWrapper {
     name: StringWrapper,
     start_pc: u128,
     end_pc: u128,
@@ -797,7 +816,6 @@ impl From<AttributeWrapper> for Attribute {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -810,7 +828,8 @@ impl From<AttributeWrapper> for Attribute {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct IdentifierWrapper {
+/// Wrapper type from [Identifier] using (substrate compatible type).
+struct IdentifierWrapper {
     pc: Option<u128>,
     #[cfg_attr(feature = "std", serde(rename(deserialize = "type")))]
     type_: Option<StringWrapper>,
@@ -857,7 +876,6 @@ impl From<IdentifierWrapper> for Identifier {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -870,7 +888,8 @@ impl From<IdentifierWrapper> for Identifier {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct MemberWrapper {
+/// Wrapper type from [Member] using (substrate compatible type).
+struct MemberWrapper {
     cairo_type: StringWrapper,
     offset: u128,
 }
@@ -886,8 +905,6 @@ impl From<MemberWrapper> for Member {
     }
 }
 
-// DONE
-
 #[derive(
     Clone,
     Debug,
@@ -901,10 +918,14 @@ impl From<MemberWrapper> for Member {
     Constructor,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct ReferenceWrapper {
-    pub ap_tracking_data: ApTrackingWrapper,
-    pub pc: Option<u128>,
-    pub value_address: ValueAddressWrapper,
+/// Wrapper type from [Reference] using (substrate compatible type).
+struct ReferenceWrapper {
+    /// Ap tracking data.
+    ap_tracking_data: ApTrackingWrapper,
+    /// Program counter.
+    pc: Option<u128>,
+    /// Address of the reference.
+    value_address: ValueAddressWrapper,
 }
 
 impl From<Reference> for ReferenceWrapper {
@@ -926,7 +947,6 @@ impl From<ReferenceWrapper> for Reference {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -938,9 +958,13 @@ impl From<ReferenceWrapper> for Reference {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [OffsetValue] using (substrate compatible type).
 pub enum OffsetValueWrapper {
+    /// Imediate.
     Immediate(Felt252Wrapper),
+    /// Value.
     Value(i32),
+    /// Reference.
     Reference(RegisterWrapper, i32, bool),
 }
 
@@ -969,7 +993,6 @@ impl Default for OffsetValueWrapper {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -982,9 +1005,13 @@ impl Default for OffsetValueWrapper {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [ValueAddress] using (substrate compatible type).
 pub struct ValueAddressWrapper {
+    /// First offset.
     pub offset1: OffsetValueWrapper,
+    /// Second offset.
     pub offset2: OffsetValueWrapper,
+    /// Dereference.
     pub dereference: bool,
     value_type: StringWrapper,
 }
@@ -1011,7 +1038,6 @@ impl From<ValueAddressWrapper> for ValueAddress {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1023,8 +1049,11 @@ impl From<ValueAddressWrapper> for ValueAddress {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+/// Wrapper type from [Register] using (substrate compatible type).
 pub enum RegisterWrapper {
+    /// AP.
     AP,
+    /// FP.
     FP,
 }
 
@@ -1045,7 +1074,6 @@ impl From<RegisterWrapper> for Register {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1057,19 +1085,20 @@ impl From<RegisterWrapper> for Register {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct InstructionWrapper {
-    pub off0: u128,
-    pub off1: u128,
-    pub off2: u128,
-    pub imm: Option<Felt252Wrapper>,
-    pub dst_register: RegisterWrapper,
-    pub op0_register: RegisterWrapper,
-    pub op1_addr: Op1AddrWrapper,
-    pub res: ResWrapper,
-    pub pc_update: PcUpdateWrapper,
-    pub ap_update: ApUpdateWrapper,
-    pub fp_update: FpUpdateWrapper,
-    pub opcode: OpcodeWrapper,
+/// Wrapper type from [Instruction] using (substrate compatible type).
+struct InstructionWrapper {
+    off0: u128,
+    off1: u128,
+    off2: u128,
+    imm: Option<Felt252Wrapper>,
+    dst_register: RegisterWrapper,
+    op0_register: RegisterWrapper,
+    op1_addr: Op1AddrWrapper,
+    res: ResWrapper,
+    pc_update: PcUpdateWrapper,
+    ap_update: ApUpdateWrapper,
+    fp_update: FpUpdateWrapper,
+    opcode: OpcodeWrapper,
 }
 
 impl From<Instruction> for InstructionWrapper {
@@ -1109,7 +1138,7 @@ impl From<InstructionWrapper> for Instruction {
         }
     }
 }
-// DONE
+
 #[derive(
     Clone,
     Debug,
@@ -1121,7 +1150,7 @@ impl From<InstructionWrapper> for Instruction {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum Op1AddrWrapper {
+enum Op1AddrWrapper {
     Imm,
     AP,
     FP,
@@ -1150,7 +1179,6 @@ impl From<Op1AddrWrapper> for Op1Addr {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1162,7 +1190,7 @@ impl From<Op1AddrWrapper> for Op1Addr {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum ResWrapper {
+enum ResWrapper {
     Op1,
     Add,
     Mul,
@@ -1191,7 +1219,6 @@ impl From<ResWrapper> for Res {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1203,7 +1230,7 @@ impl From<ResWrapper> for Res {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum PcUpdateWrapper {
+enum PcUpdateWrapper {
     Regular,
     Jump,
     JumpRel,
@@ -1230,7 +1257,7 @@ impl From<PcUpdateWrapper> for PcUpdate {
         }
     }
 }
-// DONE
+
 #[derive(
     Clone,
     Debug,
@@ -1242,7 +1269,7 @@ impl From<PcUpdateWrapper> for PcUpdate {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum ApUpdateWrapper {
+enum ApUpdateWrapper {
     Regular,
     Add,
     Add1,
@@ -1270,7 +1297,7 @@ impl From<ApUpdateWrapper> for ApUpdate {
         }
     }
 }
-// DONE
+
 #[derive(
     Clone,
     Debug,
@@ -1282,7 +1309,7 @@ impl From<ApUpdateWrapper> for ApUpdate {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum FpUpdateWrapper {
+enum FpUpdateWrapper {
     Regular,
     APPlus2,
     Dst,
@@ -1308,7 +1335,6 @@ impl From<FpUpdateWrapper> for FpUpdate {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1320,7 +1346,7 @@ impl From<FpUpdateWrapper> for FpUpdate {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum OpcodeWrapper {
+enum OpcodeWrapper {
     NOp,
     AssertEq,
     Call,

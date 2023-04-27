@@ -5,8 +5,6 @@ use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, Entr
 use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
 
-use super::{number_or_string, number_or_string_to_bytes};
-
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
 
@@ -30,13 +28,10 @@ pub type EntryPointExecutionResultWrapper<T> = Result<T, EntryPointExecutionErro
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum EntryPointTypeWrapper {
     /// Constructor.
-    #[cfg_attr(feature = "std", serde(rename = "CONSTRUCTOR"))]
     Constructor,
     /// External.
-    #[cfg_attr(feature = "std", serde(rename = "EXTERNAL"))]
     External,
     /// L1 Handler.
-    #[cfg_attr(feature = "std", serde(rename = "L1_HANDLER"))]
     L1Handler,
 }
 
@@ -89,10 +84,8 @@ impl From<EntryPointTypeWrapper> for EntryPointType {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryPointWrapper {
     /// The entrypoint offset
-    #[cfg_attr(feature = "std", serde(deserialize_with = "number_or_string"))]
     pub offset: u128,
     /// The entrypoint selector
-    #[cfg_attr(feature = "std", serde(deserialize_with = "number_or_string_to_bytes"))]
     pub selector: [u8; 32],
 }
 
