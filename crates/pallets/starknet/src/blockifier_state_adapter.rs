@@ -60,9 +60,14 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 
         let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
         match opt_contract_class {
-            Some(contract_class) => Ok(Arc::new(
-                contract_class.to_starknet_contract_class().map_err(|e| StateError::StateReadError(e.to_string()))?,
-            )),
+            Some(contract_class) => {
+                let starknet_contract = contract_class.try_into().map_err(
+                    |e: <ContractClass as TryFrom<ContractClassWrapper>>::Error| {
+                        StateError::StateReadError(e.to_string())
+                    },
+                )?;
+                Ok(Arc::new(starknet_contract))
+            }
             None => Err(StateError::UndeclaredClassHash(*class_hash)),
         }
     }
