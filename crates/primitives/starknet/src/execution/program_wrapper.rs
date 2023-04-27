@@ -297,7 +297,7 @@ impl TryFrom<Program> for ProgramWrapper {
 
     fn try_from(value: Program) -> Result<Self, Self::Error> {
         let constants = HashMapWrapper(value.constants().clone()).try_into()?;
-        let reference_manager = VecWrapper(value.reference_manager().references.clone()).try_into()?;
+        let reference_manager = value.reference_manager().clone().try_into()?;
 
         let hints = BoundedBTreeMap::try_from(
             value
@@ -352,7 +352,7 @@ impl TryFrom<ProgramWrapper> for Program {
             data.0,
             value.shared_program_data.main.map(|m| m as usize),
             hints,
-            ReferenceManager { references: VecWrapper::from(value.reference_manager).0 },
+            value.reference_manager.into(),
             HashMapWrapper::try_from(value.shared_program_data.identifiers)?.0,
             VecWrapper::from(value.shared_program_data.error_message_attributes).0,
             match value.shared_program_data.instruction_locations {
