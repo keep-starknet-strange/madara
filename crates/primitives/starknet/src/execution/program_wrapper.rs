@@ -243,7 +243,7 @@ impl TryFrom<ProgramWrapper> for Program {
             .hints
             .into_iter()
             .map(|(k, v)| {
-                // Ok to unwrap because accessible scope wont ever be too long of a string
+                // Ok to unwrap because accessible scope won't ever be too long of a string
                 let v: VecWrapper<HintParams> =
                     VecWrapper(v.into_inner().iter().map(|elt| elt.clone().try_into().unwrap()).collect());
                 (k as usize, v.0)
@@ -631,7 +631,7 @@ impl From<FlowTrackingDataWrapper> for FlowTrackingData {
 pub struct ApTrackingWrapper {
     /// Ap group.
     pub group: u128,
-    /// Ap offest.
+    /// Ap offset.
     pub offset: u128,
 }
 
@@ -960,7 +960,7 @@ impl From<ReferenceWrapper> for Reference {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [OffsetValue] using (substrate compatible type).
 pub enum OffsetValueWrapper {
-    /// Imediate.
+    /// Immediate.
     Immediate(Felt252Wrapper),
     /// Value.
     Value(i32),

@@ -115,7 +115,7 @@ starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
 	"alloc",
 ] }
-blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "no_std-support", default-features = false }
+blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
 	"testing",
 ], default-features = false }

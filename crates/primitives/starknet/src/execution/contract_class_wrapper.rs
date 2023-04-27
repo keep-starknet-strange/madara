@@ -42,7 +42,7 @@ pub struct ContractClassWrapper {
         BoundedBTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>, MaxEntryPointsType>,
 }
 
-// Regular implementaiton.
+// Regular implementation.
 impl ContractClassWrapper {
     /// Creates a new instance of a contract class.
     pub fn new(
@@ -66,7 +66,7 @@ pub enum ContractClassFromWrapperError {
     /// Serde error.
     #[error(transparent)]
     Serde(#[from] serde_json::Error),
-    #[error("something else happend")]
+    #[error("something else happened")]
     /// Error in the conversion of a contract class.
     ContractClassConversionError,
 }

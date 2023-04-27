@@ -1,6 +1,6 @@
 //! Starknet pallet custom types.
 use blockifier::execution::contract_class::ContractClass;
-use mp_starknet::execution::ContractAddressWrapper;
+use mp_starknet::execution::types::ContractAddressWrapper;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::ClassHash;
 use starknet_api::stdlib::collections::HashMap;

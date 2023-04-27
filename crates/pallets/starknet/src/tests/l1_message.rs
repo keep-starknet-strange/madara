@@ -1,10 +1,10 @@
-use blockifier::test_utils::{get_contract_class, ERC20_CONTRACT_PATH};
 use frame_support::{assert_err, bounded_vec};
 use hex::FromHex;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::Transaction;
 
 use super::mock::*;
+use crate::tests::declare_tx::ERC20_CONTRACT_PATH;
 use crate::Error;
 
 #[test]
@@ -19,7 +19,7 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
         let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let erc20_class = ContractClassWrapper::from(get_contract_class(ERC20_CONTRACT_PATH));
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
         let erc20_class_hash =
             <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 

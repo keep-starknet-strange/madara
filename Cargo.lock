@@ -828,7 +828,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#6becbf688d4fffd8b241e5a6c1f80e01fe24cf66"
+source = "git+https://github.com/tdelabro/blockifier?branch=new-no_std-support#14f4e760d060218b5e5d8908b18799fce09ec8fd"
 dependencies = [
  "cairo-felt",
  "cairo-vm",
