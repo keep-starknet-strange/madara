@@ -31,13 +31,12 @@ config:
       - "Eve//stash"
       - "Ferdie//stash"
   engines:
-   substrate: {}
+    substrate: {}
 scenarios:
   - engine: substrate
     name: cairo_program
     flow:
       - loop:
-        - function: "executeCairoProgram"
-        - log: "Executed cairo program {{ programId }} by {{ accountName }}"
+          - function: "executeCairoProgram"
+          - log: "Executed cairo program {{ programId }} by {{ accountName }}"
         count: 5000
-

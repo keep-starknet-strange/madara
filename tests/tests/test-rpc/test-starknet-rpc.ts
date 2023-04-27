@@ -2,9 +2,9 @@ import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
-import { describeDevMadara } from "../../util/setup-dev-tests";
 import { RpcProvider } from "starknet";
 import { jumpBlocks } from "../../util/block";
+import { describeDevMadara } from "../../util/setup-dev-tests";
 import { TEST_CONTRACT } from "./constants";
 
 describeDevMadara("Starknet RPC", (context) => {
@@ -18,7 +18,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("getBlockhashAndNumber", async function () {
-    let block = await providerRPC.getBlockHashAndNumber();
+    const block = await providerRPC.getBlockHashAndNumber();
 
     console.log(block);
 
@@ -26,7 +26,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("getBlockNumber", async function () {
-    let blockNumber = await providerRPC.getBlockNumber();
+    const blockNumber = await providerRPC.getBlockNumber();
 
     console.log(blockNumber);
 
@@ -34,15 +34,15 @@ describeDevMadara("Starknet RPC", (context) => {
 
     await jumpBlocks(context, 10);
 
-    let blockNumber2 = await providerRPC.getBlockNumber();
+    const blockNumber2 = await providerRPC.getBlockNumber();
 
     expect(blockNumber2).to.be.equal(blockNumber + 10);
   });
 
   it("getBlockTransactionCount", async function () {
-    let block = await providerRPC.getBlockHashAndNumber();
+    const block = await providerRPC.getBlockHashAndNumber();
 
-    let transactionCount = await providerRPC.getTransactionCount(
+    const transactionCount = await providerRPC.getTransactionCount(
       block.block_hash
     );
 
@@ -53,11 +53,11 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("call", async function () {
-    let block = await providerRPC.getBlockHashAndNumber();
+    const block = await providerRPC.getBlockHashAndNumber();
 
-    let block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
 
-    let call = await providerRPC.callContract(
+    const call = await providerRPC.callContract(
       {
         contractAddress: TEST_CONTRACT,
         entrypoint: "return_result",
@@ -70,10 +70,10 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("getClassAt", async function () {
-    let blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
-    let block_number: number = blockHashAndNumber.block_number;
+    const blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
+    const block_number: number = blockHashAndNumber.block_number;
 
-    let contract_class = await providerRPC.getClassAt(
+    const contract_class = await providerRPC.getClassAt(
       TEST_CONTRACT,
       block_number
     );
