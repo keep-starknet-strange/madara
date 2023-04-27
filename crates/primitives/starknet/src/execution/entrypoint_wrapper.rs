@@ -87,18 +87,16 @@ impl From<EntryPointTypeWrapper> for EntryPointType {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryPointWrapper {
     /// The entrypoint selector
-    #[cfg_attr(feature = "std", serde(rename = "selector"))]
-    pub entrypoint_selector: H256,
+    pub selector: [u8; 32],
     /// The entrypoint offset
-    #[cfg_attr(feature = "std", serde(rename = "offset"))]
-    pub entrypoint_offset: u128,
+    pub offset: u128,
 }
 
 // Regular implementation.
 impl EntryPointWrapper {
     /// Creates a new instance of an entrypoint.
-    pub fn new(entrypoint_selector: H256, entrypoint_offset: u128) -> Self {
-        Self { entrypoint_selector, entrypoint_offset }
+    pub fn new(selector: [u8; 32], offset: u128) -> Self {
+        Self { selector, offset }
     }
 }
 
@@ -106,18 +104,15 @@ impl EntryPointWrapper {
 
 impl From<EntryPoint> for EntryPointWrapper {
     fn from(entry_point: EntryPoint) -> Self {
-        Self {
-            entrypoint_selector: H256::from_slice(entry_point.selector.0.bytes()),
-            entrypoint_offset: entry_point.offset.0 as u128,
-        }
+        Self { selector: entry_point.selector.0.0, offset: entry_point.offset.0 as u128 }
     }
 }
 
 impl From<EntryPointWrapper> for EntryPoint {
     fn from(entry_point: EntryPointWrapper) -> Self {
         Self {
-            selector: EntryPointSelector(StarkFelt(entry_point.entrypoint_selector.to_fixed_bytes())),
-            offset: EntryPointOffset(entry_point.entrypoint_offset as usize),
+            selector: EntryPointSelector(StarkFelt(entry_point.selector)),
+            offset: EntryPointOffset(entry_point.offset as usize),
         }
     }
 }

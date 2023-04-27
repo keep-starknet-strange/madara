@@ -300,9 +300,9 @@ fn to_deprecated_entrypoint_by_type(
 
 impl From<EntryPointWrapper> for DeprecatedCairoEntryPoint {
     fn from(value: EntryPointWrapper) -> Self {
-        let selector: String = value.entrypoint_selector.as_fixed_bytes().encode_hex();
+        let selector: String = value.selector.encode_hex();
         let selector = add_prefix(&selector);
-        let offset: String = value.entrypoint_offset.to_be_bytes().as_slice().encode_hex();
+        let offset: String = value.offset.to_be_bytes().as_slice().encode_hex();
         let offset = add_prefix(remove_leading_zeros(&offset));
         Self { selector, offset }
     }

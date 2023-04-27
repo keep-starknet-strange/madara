@@ -178,8 +178,7 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let account_class =
-        get_contract_class(include_bytes!("../../../resources/account/account.json")).try_into().unwrap();
+    let account_class = serde_json::from_slice(include_bytes!("../../../resources/account/account.json")).unwrap();
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
     let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
