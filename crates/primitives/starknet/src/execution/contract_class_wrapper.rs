@@ -1,6 +1,5 @@
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
-use core::fmt::Display;
 
 use blockifier::execution::contract_class::ContractClass;
 use cairo_vm::types::errors::program_errors::ProgramError;
@@ -67,7 +66,7 @@ pub enum ContractClassFromWrapperError {
     /// Serde error.
     #[error(transparent)]
     Serde(#[from] serde_json::Error),
-    #[error("something else happened")]
+    #[error("something else happend")]
     /// Error in the conversion of a contract class.
     ContractClassConversionError,
 }

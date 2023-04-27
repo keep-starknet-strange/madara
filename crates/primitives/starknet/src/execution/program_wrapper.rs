@@ -360,7 +360,7 @@ impl TryFrom<ProgramWrapper> for Program {
                 None => None,
             },
         )
-        .map_err(|_| ProgramConversionError::Other)
+        .map_err(|_| ProgramConversionError::PogramCreationError)
     }
 }
 #[derive(
@@ -508,7 +508,6 @@ where
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -549,7 +548,7 @@ struct SharedProgramDataWrapper {
     )]
     identifiers: BoundedBTreeMap<StringWrapper, IdentifierWrapper, MaxIdentifiersSize>,
 }
-// DONE
+
 #[derive(
     Clone,
     Debug,
@@ -630,6 +629,7 @@ struct HintParamsWrapper {
     accessible_scopes: BoundedVec<StringWrapper, MaxAccessibleScopeSize>,
     flow_tracking_data: FlowTrackingDataWrapper,
 }
+
 impl TryFrom<HintParams> for HintParamsWrapper {
     type Error = VecConversionError;
     fn try_from(value: HintParams) -> Result<Self, Self::Error> {
@@ -660,7 +660,6 @@ impl From<HintParamsWrapper> for HintParams {
     scale_codec::MaxEncodedLen,
     Default,
 )]
-// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [FlowTrackingData] using (substrate compatible type).
 struct FlowTrackingDataWrapper {
@@ -745,7 +744,6 @@ impl From<ApTrackingWrapper> for ApTracking {
     Default,
     Constructor,
 )]
-// DONE
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [InstructionLocation] using (substrate compatible type).
 pub struct InstructionLocationWrapper {
@@ -839,7 +837,6 @@ impl From<HintLocationWrapper> for HintLocation {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -894,7 +891,6 @@ impl From<AttributeWrapper> for Attribute {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1030,7 +1026,6 @@ impl From<IdentifierWrapper> for Identifier {
     }
 }
 
-// DONE
 #[derive(
     Clone,
     Debug,
@@ -1043,7 +1038,8 @@ impl From<IdentifierWrapper> for Identifier {
     Default,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct MemberWrapper {
+/// Wrapper type from [Member] using (substrate compatible type).
+struct MemberWrapper {
     cairo_type: StringWrapper,
     offset: u128,
 }
@@ -1058,8 +1054,6 @@ impl From<MemberWrapper> for Member {
         Self { cairo_type: value.cairo_type.into(), offset: value.offset as usize }
     }
 }
-
-// DONE
 
 #[derive(
     Clone,
