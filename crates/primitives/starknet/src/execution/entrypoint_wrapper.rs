@@ -1,9 +1,11 @@
 use blockifier::execution::errors::EntryPointExecutionError;
-use sp_core::{ConstU32, H256};
+use sp_core::ConstU32;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
+
+use super::{number_or_string, number_or_string_to_bytes};
 
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
@@ -86,10 +88,12 @@ impl From<EntryPointTypeWrapper> for EntryPointType {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EntryPointWrapper {
-    /// The entrypoint selector
-    pub selector: [u8; 32],
     /// The entrypoint offset
+    #[cfg_attr(feature = "std", serde(deserialize_with = "number_or_string"))]
     pub offset: u128,
+    /// The entrypoint selector
+    #[cfg_attr(feature = "std", serde(deserialize_with = "number_or_string_to_bytes"))]
+    pub selector: [u8; 32],
 }
 
 // Regular implementation.
