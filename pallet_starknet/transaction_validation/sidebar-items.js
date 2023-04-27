@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["ensure_starknet_transaction"],"struct":["EnsureStarknetTransaction"]};
+window.SIDEBAR_ITEMS = {"enum":["RawOrigin"],"fn":["ensure_starknet_transaction"],"struct":["EnsureStarknetTransaction"]};

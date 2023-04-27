@@ -310,6 +310,9 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 /// Types related to entrypoints.
@@ -375,12 +378,15 @@
     </span><span class="kw">pub fn </span>new(program: BoundedVec&lt;u8, MaxProgramSize&gt;, entry_points_by_type: BoundedVec&lt;u8, MaxProgramSize&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ program, entry_points_by_type }
     }
+}
 
-    <span class="doccomment">/// Convert to starknet contract class.
-    </span><span class="kw">pub fn </span>to_starknet_contract_class(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass, serde_json::Error&gt; {
+<span class="kw">impl </span>TryFrom&lt;ContractClassWrapper&gt; <span class="kw">for </span>ContractClass {
+    <span class="kw">type </span>Error = serde_json::Error;
+
+    <span class="kw">fn </span>try_from(value: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span>entrypoints =
-            from_slice::&lt;HashMap&lt;EntryPointType, vec::Vec&lt;EntryPoint&gt;&gt;&gt;(<span class="self">self</span>.entry_points_by_type.as_ref())<span class="question-mark">?</span>;
-        <span class="kw">let </span>program = from_slice::&lt;Program&gt;(<span class="self">self</span>.program.as_ref())<span class="question-mark">?</span>;
+            from_slice::&lt;HashMap&lt;EntryPointType, vec::Vec&lt;EntryPoint&gt;&gt;&gt;(value.entry_points_by_type.as_ref())<span class="question-mark">?</span>;
+        <span class="kw">let </span>program = from_slice::&lt;Program&gt;(value.program.as_ref())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(ContractClass { program, abi: <span class="prelude-val">None</span>, entry_points_by_type: entrypoints })
     }
 }

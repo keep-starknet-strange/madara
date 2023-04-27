@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["OffchainWorkerError","RawOrigin"],"struct":["EthBlockNumber","EthLogs","Message","NumberRes"],"type":["ContractClassMapping","ContractStorageKeyWrapper","MaxTransactionsPendingBlock","NonceWrapper","StarkFeltWrapper","StorageKeyWrapper"]};
+window.SIDEBAR_ITEMS = {"type":["ContractClassMapping","ContractStorageKeyWrapper","MaxTransactionsPendingBlock","NonceWrapper","StarkFeltWrapper","StorageKeyWrapper"]};

@@ -133,19 +133,34 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
+<span class="kw">use </span>scale_codec::{Decode, Encode};
+<span class="kw">use </span>serde::Deserialize;
 <span class="kw">use </span>sp_core::{H256, U256};
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::format;
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::String;
 <span class="kw">use </span><span class="kw">crate</span>::alloc::vec::Vec;
-<span class="kw">use </span><span class="kw">crate</span>::types::{Message, OffchainWorkerError};
+<span class="kw">use </span><span class="kw">crate</span>::offchain_worker::OffchainWorkerError;
 
-<span class="kw">pub const </span>LAST_FINALIZED_BLOCK_QUERY: <span class="kw-2">&amp;</span>str =
-    <span class="string">r#&quot;{&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;method&quot;: &quot;eth_getBlockByNumber&quot;, &quot;params&quot;: [&quot;finalized&quot;, true], &quot;id&quot;: 0}&quot;#</span>;
+<span class="attr">#[derive(Deserialize, Encode, Decode, Default, Debug)]
+</span><span class="kw">pub struct </span>Message {
+    <span class="doccomment">/// Topics of the event.
+    </span><span class="kw">pub </span>topics: Vec&lt;String&gt;,
+    <span class="doccomment">/// Data of the event.
+    </span><span class="kw">pub </span>data: String,
+}
 
 <span class="attr">#[inline(always)]
 </span><span class="kw">pub fn </span>get_messages_events(from_block: u64, to_block: u64) -&gt; String {
@@ -221,7 +236,8 @@
     <span class="kw">use </span>pretty_assertions;
     <span class="kw">use </span>sp_core::{H256, U256};
 
-    <span class="kw">use </span><span class="kw">crate</span>::types::{Message, OffchainWorkerError};
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::offchain_worker::OffchainWorkerError;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_into_transaction_correct_message_should_work() {

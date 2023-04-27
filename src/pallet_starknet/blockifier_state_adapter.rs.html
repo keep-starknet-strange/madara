@@ -111,6 +111,11 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::marker::PhantomData;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
@@ -173,9 +178,14 @@
 
         <span class="kw">let </span>opt_contract_class = Pallet::&lt;T&gt;::contract_class_by_class_hash(wrapped_class_hash);
         <span class="kw">match </span>opt_contract_class {
-            <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(Arc::new(
-                contract_class.to_starknet_contract_class().map_err(|e| StateError::StateReadError(e.to_string()))<span class="question-mark">?</span>,
-            )),
+            <span class="prelude-val">Some</span>(contract_class) =&gt; {
+                <span class="kw">let </span>starknet_contract = contract_class.try_into().map_err(
+                    |e: &lt;ContractClass <span class="kw">as </span>TryFrom&lt;ContractClassWrapper&gt;&gt;::Error| {
+                        StateError::StateReadError(e.to_string())
+                    },
+                )<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(Arc::new(starknet_contract))
+            }
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash)),
         }
     }

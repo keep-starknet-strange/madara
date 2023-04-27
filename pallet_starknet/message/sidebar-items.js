@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["LAST_FINALIZED_BLOCK_QUERY"],"fn":["get_messages_events"]};
+window.SIDEBAR_ITEMS = {"fn":["get_messages_events"],"struct":["Message"]};
