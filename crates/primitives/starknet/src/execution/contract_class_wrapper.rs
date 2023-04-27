@@ -66,7 +66,7 @@ pub enum ContractClassFromWrapperError {
     /// Serde error.
     #[error(transparent)]
     Serde(#[from] serde_json::Error),
-    #[error("something else happend")]
+    #[error("something else happened")]
     /// Error in the conversion of a contract class.
     ContractClassConversionError,
 }
