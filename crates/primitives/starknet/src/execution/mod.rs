@@ -1,20 +1,17 @@
 //! Starknet execution functionality.
+use alloc::borrow::ToOwned;
 use alloc::collections::BTreeMap;
-
-use frame_support::BoundedBTreeMap;
-#[cfg(feature = "std")]
-use frame_support::{Deserialize, Serialize};
-use serde::de::Error as DeserializationError;
-use serde::{Deserializer, Serializer};
-use sp_core::Get;
-
-use alloc::collections::BTreeMap;
+use alloc::format;
+use core::num::ParseIntError;
 
 use frame_support::BoundedBTreeMap;
 #[cfg(feature = "std")]
 use frame_support::Serialize;
+#[cfg(feature = "std")]
+use frame_support::Serialize;
 use serde::de::Error as DeserializationError;
-use serde::{Deserialize, Deserializer, Serializer};
+use serde::{Deserialize, Deserialize, Deserializer, Deserializer, Serializer, Serializer};
+use serde_json::Value;
 use sp_core::Get;
 
 /// Call Entrypoint Wrapper related types
@@ -92,6 +89,46 @@ where
         }
         None => None,
     })
+}
+
+pub fn number_or_string<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u128, D::Error> {
+    let u128_value = match Value::deserialize(deserializer)? {
+        Value::Number(number) => {
+            number.as_u64().ok_or(DeserializationError::custom("Cannot cast number to u128."))? as u128
+        }
+        Value::String(s) => hex_string_try_into_u128(&s).map_err(DeserializationError::custom)?,
+        _ => return Err(DeserializationError::custom("Cannot cast value into u128.")),
+    };
+    Ok(u128_value)
+}
+pub fn number_or_string_to_bytes<'de, D: Deserializer<'de>>(deserializer: D) -> Result<[u8; 32], D::Error> {
+    let u128_value = match Value::deserialize(deserializer)? {
+        Value::Number(number) => {
+            let mut bytes: [u8; 32] = [0u8; 32];
+            bytes[25..].copy_from_slice(
+                &number.as_u64().ok_or(DeserializationError::custom("Cannot cast number to u128."))?.to_be_bytes(),
+            );
+            bytes
+        }
+        Value::String(s) => {
+            hex_string_to_bytes(&s).map_err(|_| DeserializationError::custom("Failed to parse hex to bytes"))?
+        }
+        _ => return Err(DeserializationError::custom("Cannot cast value into bytes.")),
+    };
+    Ok(u128_value)
+}
+
+fn hex_string_to_bytes(s: &str) -> Result<[u8; 32], ParseIntError> {
+    let mut bytes = [0u8; 32];
+    let s = s.trim_start_matches("0x");
+    let s = if s.len() % 2 != 0 { format!("0{:}", s) } else { s.to_owned() };
+    for (id, i) in (0..s.len()).step_by(2).enumerate() {
+        bytes[id] = u8::from_str_radix(&s[i..i + 2], 16)?;
+    }
+    Ok(bytes)
+}
+fn hex_string_try_into_u128(hex_string: &str) -> Result<u128, ParseIntError> {
+    u128::from_str_radix(hex_string.trim_start_matches("0x"), 16)
 }
 
 /// All the types related to the execution of a transaction.
