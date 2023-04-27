@@ -2,15 +2,22 @@ use frame_support::BoundedVec;
 use hex::FromHex;
 use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::Transaction;
+use scale_codec::{Decode, Encode};
+use serde::Deserialize;
 use sp_core::{H256, U256};
 
 use crate::alloc::format;
 use crate::alloc::string::String;
 use crate::alloc::vec::Vec;
-use crate::types::{Message, OffchainWorkerError};
+use crate::offchain_worker::OffchainWorkerError;
 
-pub const LAST_FINALIZED_BLOCK_QUERY: &str =
-    r#"{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["finalized", true], "id": 0}"#;
+#[derive(Deserialize, Encode, Decode, Default, Debug)]
+pub struct Message {
+    /// Topics of the event.
+    pub topics: Vec<String>,
+    /// Data of the event.
+    pub data: String,
+}
 
 #[inline(always)]
 pub fn get_messages_events(from_block: u64, to_block: u64) -> String {
@@ -86,7 +93,8 @@ mod test {
     use pretty_assertions;
     use sp_core::{H256, U256};
 
-    use crate::types::{Message, OffchainWorkerError};
+    use super::*;
+    use crate::offchain_worker::OffchainWorkerError;
 
     #[test]
     fn test_try_into_transaction_correct_message_should_work() {

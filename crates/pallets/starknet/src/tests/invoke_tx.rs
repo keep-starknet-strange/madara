@@ -10,7 +10,7 @@ use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 use sp_core::{H256, U256};
 
 use super::mock::*;
-use crate::types::Message;
+use crate::message::Message;
 use crate::{Error, Event};
 
 #[test]
