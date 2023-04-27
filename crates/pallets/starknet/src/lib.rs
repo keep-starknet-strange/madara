@@ -110,7 +110,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::{Calldata, EventContent};
 pub use starknet_fee::StarknetFee;
-use types::{EthBlockNumber, OffchainWorkerError};
+use types::{EthGetBlockByNumberResponse, OffchainWorkerError};
 
 use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
 use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
@@ -377,6 +377,7 @@ pub mod pallet {
         EmitEventError,
         StateDiffError,
         ContractNotFound,
+        ReachedBoundedVecLimit,
     }
 
     /// The Starknet pallet external functions.
@@ -435,17 +436,17 @@ pub mod pallet {
                 None,
                 fee_token_address,
             );
-            let receipt;
-            match call_info {
+            let receipt = match call_info {
                 Ok(Some(mut v)) => {
                     let events = Self::emit_events(&mut v).map_err(|_| Error::<T>::EmitEventError)?;
-                    receipt = TransactionReceiptWrapper {
-                        events: BoundedVec::try_from(events).unwrap(),
+                    let receipt = TransactionReceiptWrapper {
+                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::InvokeTx,
                         actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
                     };
                     log!(debug, "Transaction executed successfully: {:?}", v);
+                    receipt
                 }
                 Ok(None) => {
                     log!(error, "Transaction execution failed: no call info while it was expected");
@@ -455,7 +456,7 @@ pub mod pallet {
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
-            }
+            };
             FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
             // TODO: Compute real fee value
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
@@ -486,20 +487,17 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
+            // Check that contract class is not None
+            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+
+            // Check that the class hash is not None
+            let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
+
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            // Check that class hash is not None
-            // TODO: delete this check when we will have a way to generate class hash from contract class (https://github.com/keep-starknet-strange/madara/issues/302)
-            ensure!(transaction.call_entrypoint.class_hash.is_some(), Error::<T>::ClassHashMustBeSpecified);
-
-            let class_hash = transaction.call_entrypoint.class_hash.unwrap();
-
             // Check class hash is not already declared
             ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
-
-            // Check that contract class is not None
-            ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
 
             // Get current block
             let block = Self::current_block();
@@ -507,12 +505,7 @@ pub mod pallet {
             let fee_token_address = Self::fee_token_address();
 
             // Parse contract class
-            let contract_class = transaction
-                .clone()
-                .contract_class
-                .unwrap()
-                .to_starknet_contract_class()
-                .or(Err(Error::<T>::InvalidContractClass))?;
+            let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
             match transaction.execute(
@@ -583,7 +576,7 @@ pub mod pallet {
                 fee_token_address,
             ) {
                 Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v);
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -635,7 +628,7 @@ pub mod pallet {
                 fee_token_address,
             ) {
                 Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v);
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -805,7 +798,7 @@ pub mod pallet {
 
             match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
                 Ok(v) => {
-                    // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v);
                     let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
                     Ok(result)
                 }
@@ -853,6 +846,8 @@ pub mod pallet {
                     protocol_version,
                     extra_data,
                 ),
+                // Safe because `transactions` is build form the `pending` bounded vec,
+                // which has the same size limit of `MaxTransactions`
                 BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
             );
             // Save the current block.
@@ -970,8 +965,9 @@ pub mod pallet {
             let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
             // Query L1 for the last finalized block.
             let body_str = Self::query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
-            let res: EthBlockNumber = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
-            let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
+            let last_finalized_block: u64 = from_str::<EthGetBlockByNumberResponse>(&body_str)
+                .map_err(|_| OffchainWorkerError::SerdeError)?
+                .try_into()?;
             // Check if there are new messages to be processed.
             if last_finalized_block > last_known_eth_block {
                 // Read the new messages from L1.

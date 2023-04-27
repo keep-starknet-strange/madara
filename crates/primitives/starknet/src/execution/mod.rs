@@ -63,12 +63,15 @@ impl ContractClassWrapper {
     pub fn new(program: BoundedVec<u8, MaxProgramSize>, entry_points_by_type: BoundedVec<u8, MaxProgramSize>) -> Self {
         Self { program, entry_points_by_type }
     }
+}
 
-    /// Convert to starknet contract class.
-    pub fn to_starknet_contract_class(&self) -> Result<ContractClass, serde_json::Error> {
+impl TryFrom<ContractClassWrapper> for ContractClass {
+    type Error = serde_json::Error;
+
+    fn try_from(value: ContractClassWrapper) -> Result<Self, Self::Error> {
         let entrypoints =
-            from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(self.entry_points_by_type.as_ref())?;
-        let program = from_slice::<Program>(self.program.as_ref())?;
+            from_slice::<HashMap<EntryPointType, vec::Vec<EntryPoint>>>(value.entry_points_by_type.as_ref())?;
+        let program = from_slice::<Program>(value.program.as_ref())?;
         Ok(ContractClass { program, abi: None, entry_points_by_type: entrypoints })
     }
 }
