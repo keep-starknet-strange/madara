@@ -54,11 +54,35 @@
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
-<span class="kw">use </span>mp_starknet::storage::{PALLET_STARKNET, STARKNET_CURRENT_BLOCK};
+<span class="kw">use </span>mp_starknet::execution::{ClassHashWrapper, ContractClassWrapper};
+<span class="kw">use </span>mp_starknet::storage::{
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK,
+};
 <span class="comment">// Substrate
 </span><span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>scale_codec::Decode;
@@ -66,7 +90,7 @@
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>sp_storage::StorageKey;
 
-<span class="kw">use super</span>::{storage_prefix_build, StorageOverride};
+<span class="kw">use super</span>::{storage_key_build, storage_prefix_build, StorageOverride};
 
 <span class="doccomment">/// An override for runtimes that use Schema V1
 </span><span class="kw">pub struct </span>SchemaV1Override&lt;B: BlockT, C, BE&gt; {
@@ -108,6 +132,24 @@
             <span class="kw-2">&amp;</span>StorageKey(storage_prefix_build(PALLET_STARKNET, STARKNET_CURRENT_BLOCK)),
         )
         .map(Into::into)
+    }
+
+    <span class="kw">fn </span>contract_class(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+        address: mp_starknet::execution::ContractAddressWrapper,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;mp_starknet::execution::ContractClassWrapper&gt; {
+        <span class="kw">let </span>storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS_HASH);
+        <span class="kw">let </span>contract_class_hash: [u8; <span class="number">32</span>] = <span class="self">self</span>.query_storage::&lt;ClassHashWrapper&gt;(
+            block_hash,
+            <span class="kw-2">&amp;</span>StorageKey(storage_key_build(storage_contract_class_hash_prefix, <span class="kw-2">&amp;</span>address[..])),
+        )<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
+        <span class="self">self</span>.query_storage::&lt;ContractClassWrapper&gt;(
+            block_hash,
+            <span class="kw-2">&amp;</span>StorageKey(storage_key_build(storage_contract_class_prefix, <span class="kw-2">&amp;</span>contract_class_hash[..])),
+        )
     }
 }
 </code></pre></div>

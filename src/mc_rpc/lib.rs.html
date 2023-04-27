@@ -244,6 +244,18 @@
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -260,15 +272,17 @@
 <span class="kw">use </span>jsonrpsee::core::RpcResult;
 <span class="kw">use </span>log::error;
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
-<span class="kw">use </span>mc_rpc_core::{BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, FunctionCall};
+<span class="kw">use </span>mc_rpc_core::{
+    to_rpc_contract_class, BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, ContractAddress, FunctionCall,
+    RPCContractClass,
+};
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
-<span class="kw">use </span>sp_core::U256;
-<span class="kw">use </span>sp_runtime::testing::H256;
+<span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 
 <span class="doccomment">/// A Starknet RPC server for Madara
@@ -314,6 +328,27 @@
 
         <span class="prelude-val">Ok</span>(block.header().hash())
     }
+
+    <span class="doccomment">/// Returns the substrate block corresponding to the given Starknet block id
+    </span><span class="kw">fn </span>substrate_block_hash_from_starknet_block(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId) -&gt; <span class="prelude-ty">Result</span>&lt;B::Hash, String&gt; {
+        <span class="kw">match </span>block_id {
+            StarknetBlockId::BlockHash(h) =&gt; madara_backend_client::load_hash(
+                <span class="self">self</span>.client.as_ref(),
+                <span class="kw-2">&amp;</span><span class="self">self</span>.backend,
+                H256::from_str(<span class="kw-2">&amp;</span>h).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to convert &#39;{h}&#39; to H256: {e}&quot;</span>))<span class="question-mark">?</span>,
+            )
+            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to load Starknet block hash for Substrate block with hash &#39;{h}&#39;: {e}&quot;</span>))<span class="question-mark">?</span>,
+            StarknetBlockId::BlockNumber(n) =&gt; <span class="self">self
+                </span>.client
+                .hash(UniqueSaturatedInto::unique_saturated_into(n))
+                .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to retrieve the hash of block number &#39;{n}&#39;: {e}&quot;</span>))<span class="question-mark">?</span>,
+            StarknetBlockId::BlockTag(t) =&gt; <span class="kw">match </span>t {
+                mc_rpc_core::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
+                mc_rpc_core::BlockTag::Pending =&gt; <span class="prelude-val">None</span>,
+            },
+        }
+        .ok_or(<span class="string">&quot;Failed to retrieve the substrate block id&quot;</span>.to_string())
+    }
 }
 
 <span class="kw">impl</span>&lt;B, BE, C&gt; StarknetRpcApiServer <span class="kw">for </span>Starknet&lt;B, BE, C&gt;
@@ -339,31 +374,10 @@
     }
 
     <span class="kw">fn </span>get_block_transaction_count(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId) -&gt; RpcResult&lt;u128&gt; {
-        <span class="kw">let </span>substrate_block_hash = <span class="kw">match </span>block_id {
-            StarknetBlockId::BlockHash(h) =&gt; madara_backend_client::load_hash(
-                <span class="self">self</span>.client.as_ref(),
-                <span class="kw-2">&amp;</span><span class="self">self</span>.backend,
-                H256::from_str(<span class="kw-2">&amp;</span>h).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to convert &#39;{h}&#39; to H256: {e}&quot;</span>);
-                    StarknetRpcApiError::BlockNotFound
-                })<span class="question-mark">?</span>,
-            )
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to load Starknet block hash for Substrate block with hash &#39;{h}&#39;: {e}&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>,
-            StarknetBlockId::BlockNumber(n) =&gt; {
-                <span class="self">self</span>.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve the hash of block number &#39;{n}&#39;: {e}&quot;</span>);
-                    StarknetRpcApiError::BlockNotFound
-                })<span class="question-mark">?
-            </span>}
-            StarknetBlockId::BlockTag(t) =&gt; <span class="kw">match </span>t {
-                mc_rpc_core::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending =&gt; <span class="prelude-val">None</span>,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>block = <span class="self">self
             </span>.overrides
@@ -375,31 +389,10 @@
     }
 
     <span class="kw">fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>, request: FunctionCall, block_id: StarknetBlockId) -&gt; RpcResult&lt;Vec&lt;String&gt;&gt; {
-        <span class="kw">let </span>substrate_block_hash = <span class="kw">match </span>block_id {
-            StarknetBlockId::BlockHash(h) =&gt; madara_backend_client::load_hash(
-                <span class="self">self</span>.client.as_ref(),
-                <span class="kw-2">&amp;</span><span class="self">self</span>.backend,
-                H256::from_str(<span class="kw-2">&amp;</span>h).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to convert &#39;{h}&#39; to H256: {e}&quot;</span>);
-                    StarknetRpcApiError::BlockNotFound
-                })<span class="question-mark">?</span>,
-            )
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to load Starknet block hash for Substrate block with hash &#39;{h}&#39;: {e}&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>,
-            StarknetBlockId::BlockNumber(n) =&gt; {
-                <span class="self">self</span>.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve the hash of block number &#39;{n}&#39;: {e}&quot;</span>);
-                    StarknetRpcApiError::BlockNotFound
-                })<span class="question-mark">?
-            </span>}
-            StarknetBlockId::BlockTag(t) =&gt; <span class="kw">match </span>t {
-                mc_rpc_core::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending =&gt; <span class="prelude-val">None</span>,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)<span class="question-mark">?</span>;
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>runtime_api = <span class="self">self</span>.client.runtime_api();
 
@@ -441,6 +434,37 @@
             }
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.into()),
         }
+    }
+
+    <span class="doccomment">/// Get the contract class at a given contract address for a given block id
+    </span><span class="kw">fn </span>get_class_at(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        contract_address: ContractAddress,
+        block_id: StarknetBlockId,
+    ) -&gt; RpcResult&lt;RPCContractClass&gt; {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>contract_address_wrapped = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>contract_address)).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert &#39;{contract_address}&#39; to array: {e}&quot;</span>);
+            StarknetRpcApiError::ContractNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>contract_class = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .contract_class(substrate_block_hash, contract_address_wrapped)
+            .ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class at &#39;{contract_address}&#39;&quot;</span>);
+                StarknetRpcApiError::ContractNotFound
+            })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(to_rpc_contract_class(contract_class).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert contract class at &#39;{contract_address}&#39; to RPC contract class: {e}&quot;</span>);
+            StarknetRpcApiError::ContractNotFound
+        })<span class="question-mark">?</span>)
     }
 }
 

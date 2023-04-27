@@ -1089,6 +1089,7 @@
 <a href="#1089" id="1089">1089</a>
 <a href="#1090" id="1090">1090</a>
 <a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1581,6 +1582,7 @@
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
             <span class="comment">// Check that class hash is not None
+            // TODO: delete this check when we will have a way to generate class hash from contract class (https://github.com/keep-starknet-strange/madara/issues/302)
             </span><span class="macro">ensure!</span>(transaction.call_entrypoint.class_hash.is_some(), Error::&lt;T&gt;::ClassHashMustBeSpecified);
 
             <span class="kw">let </span>class_hash = transaction.call_entrypoint.class_hash.unwrap();
