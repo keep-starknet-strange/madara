@@ -343,7 +343,8 @@ pub trait StarknetRpcApi {
     #[method(name = "getClassAt")]
     fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
 
-    /// Get the contract class definition in the given block at the given address
+    /// Get the contract class hash in the given block for the contract deployed at the given
+    /// address
     #[method(name = "getClassHashAt")]
     fn get_class_hash_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<FieldElement>;
 }
