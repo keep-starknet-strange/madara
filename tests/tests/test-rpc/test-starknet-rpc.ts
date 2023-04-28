@@ -87,11 +87,11 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("getClassHashAt", async function () {
-    let blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
-    let block_hash = blockHashAndNumber.block_hash;
+    const blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
+    const block_hash = blockHashAndNumber.block_hash;
 
     // Account Contract
-    let account_contract_class_hash = await providerRPC.getClassHashAt(
+    const account_contract_class_hash = await providerRPC.getClassHashAt(
       ACCOUNT_CONTRACT,
       block_hash
     );
@@ -103,7 +103,7 @@ describeDevMadara("Starknet RPC", (context) => {
       ACCOUNT_CONTRACT_CLASS_HASH
     );
 
-    let test_contract_class_hash = await providerRPC.getClassHashAt(
+    const test_contract_class_hash = await providerRPC.getClassHashAt(
       TEST_CONTRACT,
       block_hash
     );
