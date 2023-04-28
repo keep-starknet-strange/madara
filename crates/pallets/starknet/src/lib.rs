@@ -57,9 +57,6 @@ pub mod runtime_api;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
 
-/// Implementation of the [OnChargeTransaction] trait for the pallet
-pub mod starknet_fee;
-
 /// Everything needed to run the pallet offchain workers
 mod offchain_worker;
 
@@ -96,7 +93,6 @@ use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::ContractAddress;
 use starknet_api::transaction::EventContent;
-pub use starknet_fee::StarknetFee;
 
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper};
 
@@ -132,7 +128,7 @@ pub mod pallet {
     /// We're coupling the starknet pallet to the tx payment pallet to be able to override the fee
     /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_transaction_payment::Config {
+    pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// How Starknet state root is calculated.
