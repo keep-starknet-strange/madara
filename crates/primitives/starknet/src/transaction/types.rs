@@ -1,4 +1,5 @@
 use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
 use starknet_api::StarknetApiError;
@@ -21,6 +22,8 @@ pub enum TransactionExecutionErrorWrapper {
     StarknetApi(StarknetApiError),
     /// Block context serialization error.
     BlockContextSerializationError,
+    /// Fee computation error,
+    FeeComputationError,
 }
 
 /// Different tx types.
@@ -38,15 +41,34 @@ pub enum TransactionExecutionErrorWrapper {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum TxType {
     /// Regular invoke transaction.
-    InvokeTx,
+    Invoke,
     /// Declare transaction.
-    DeclareTx,
+    Declare,
     /// Deploy account transaction.
-    DeployAccountTx,
+    DeployAccount,
     /// Message sent from ethereum.
-    L1HandlerTx,
+    L1Handler,
 }
-
+impl From<TransactionType> for TxType {
+    fn from(value: TransactionType) -> Self {
+        match value {
+            TransactionType::Declare => Self::Declare,
+            TransactionType::DeployAccount => Self::DeployAccount,
+            TransactionType::InvokeFunction => Self::Invoke,
+            TransactionType::L1Handler => Self::L1Handler,
+        }
+    }
+}
+impl From<TxType> for TransactionType {
+    fn from(value: TxType) -> Self {
+        match value {
+            TxType::Declare => Self::Declare,
+            TxType::DeployAccount => Self::DeployAccount,
+            TxType::Invoke => Self::InvokeFunction,
+            TxType::L1Handler => Self::L1Handler,
+        }
+    }
+}
 /// Representation of a Starknet transaction.
 #[derive(
     Clone,

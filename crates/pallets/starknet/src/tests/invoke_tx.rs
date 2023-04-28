@@ -79,7 +79,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         pretty_assertions::assert_eq!(receipt.actual_fee, U256::from(0));
         pretty_assertions::assert_eq!(receipt.events.len(), 0);
         pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
-        pretty_assertions::assert_eq!(receipt.tx_type, TxType::InvokeTx);
+        pretty_assertions::assert_eq!(receipt.tx_type, TxType::Invoke);
     });
 }
 
@@ -127,7 +127,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         pretty_assertions::assert_eq!(receipt.events.len(), 1);
         pretty_assertions::assert_eq!(receipt.events.get(0).unwrap(), &emitted_event);
         pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
-        pretty_assertions::assert_eq!(receipt.tx_type, TxType::InvokeTx);
+        pretty_assertions::assert_eq!(receipt.tx_type, TxType::Invoke);
     });
 }
 

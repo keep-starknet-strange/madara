@@ -1,3 +1,4 @@
+use alloc::collections::BTreeSet;
 use core::marker::PhantomData;
 
 use blockifier::execution::contract_class::ContractClass;
@@ -19,10 +20,15 @@ use crate::{Config, Pallet};
 /// We feed this struct when executing a transaction so that we directly use the substrate storage
 /// and not an extra layer that would add overhead.
 /// We don't implement those traits directly on the pallet to avoid compilation problems.
-pub struct BlockifierStateAdapter<T: Config>(PhantomData<T>);
+pub struct BlockifierStateAdapter<T: Config> {
+    storage_update: BTreeSet<(ContractAddress, StorageKey, StarkFelt)>,
+    class_hash_update: u128,
+    _phantom: PhantomData<T>,
+}
+
 impl<T: Config> Default for BlockifierStateAdapter<T> {
     fn default() -> Self {
-        Self(PhantomData)
+        Self { storage_update: BTreeSet::default(), class_hash_update: u128::default(), _phantom: PhantomData }
     }
 }
 
@@ -71,6 +77,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 
 impl<T: Config> State for BlockifierStateAdapter<T> {
     fn set_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
+        self.storage_update.insert((contract_address, key, value));
         let contract_address: ContractAddressWrapper = contract_address.0.0.0;
         let key: StorageKeyWrapper = H256::from(key.0.0.0);
 
@@ -88,6 +95,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     }
 
     fn set_class_hash_at(&mut self, contract_address: ContractAddress, class_hash: ClassHash) -> StateResult<()> {
+        self.class_hash_update += 1;
         let contract_address: ContractAddressWrapper = contract_address.0.0.0;
         let class_hash: ClassHashWrapper = class_hash.0.0;
 

@@ -413,7 +413,7 @@ pub mod pallet {
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::InvokeTx,
+                TxType::Invoke,
                 None,
                 fee_token_address,
             );
@@ -423,7 +423,7 @@ pub mod pallet {
                     let receipt = TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
-                        tx_type: TxType::InvokeTx,
+                        tx_type: TxType::Invoke,
                         actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
                     };
                     log!(debug, "Transaction executed successfully: {:?}", v);
@@ -492,7 +492,7 @@ pub mod pallet {
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::DeclareTx,
+                TxType::Declare,
                 Some(contract_class),
                 fee_token_address,
             ) {
@@ -552,7 +552,7 @@ pub mod pallet {
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::DeployAccountTx,
+                TxType::DeployAccount,
                 None,
                 fee_token_address,
             ) {
@@ -604,7 +604,7 @@ pub mod pallet {
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::L1HandlerTx,
+                TxType::L1Handler,
                 None,
                 fee_token_address,
             ) {
