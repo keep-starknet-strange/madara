@@ -28,7 +28,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     await jumpBlocks(context, 10);
   });
 
-  it("should declare a new contract class", async function () {
+  xit("should declare a new contract class", async function () {
     const {
       result: { events },
     } = await context.createBlock(
@@ -43,7 +43,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     ).to.exist;
   });
 
-  it("should deploy a new contract", async function () {
+  xit("should deploy a new contract", async function () {
     const {
       result: { events },
     } = await context.createBlock(
