@@ -196,7 +196,9 @@ fn testnet_genesis(
 
     // Fee token
     let fee_token_address =
-        <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap();
+        <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01").unwrap();
+    let fee_token_class_hash_str = "0000000000000000000000000000000000000000000000000000000000020000";
+    let fee_token_class_hash_bytes = <[u8; 32]>::from_hex(fee_token_class_hash_str).unwrap();
 
     // ERC20 CONTRACT
     let token_contract_address_str = "040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
@@ -232,6 +234,8 @@ fn testnet_genesis(
                 (contract_address_bytes, class_hash_bytes),
                 (other_contract_address_bytes, other_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
+                (token_contract_address_bytes, token_class_hash_bytes),
+                (fee_token_address, fee_token_class_hash_bytes),
             ],
             contract_classes: vec![
                 (class_hash_bytes, account_class),
@@ -251,6 +255,24 @@ fn testnet_genesis(
                 (
                     (
                         fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
+                        // for ERC20_balances(0x01).high
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        token_contract_address_bytes,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
+                        // ERC20_balances(0x01).low
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        token_contract_address_bytes,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),

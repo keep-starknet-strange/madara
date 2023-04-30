@@ -5,11 +5,8 @@ use alloc::collections::BTreeMap;
 use frame_support::BoundedBTreeMap;
 #[cfg(feature = "std")]
 use frame_support::Serialize;
-#[cfg(feature = "std")]
-use frame_support::Serialize;
 use serde::de::Error as DeserializationError;
-use serde::{Deserialize, Deserializer, Deserializer, Serializer, Serializer};
-use serde_json::Value;
+use serde::{Deserialize, Deserializer, Serializer};
 use sp_core::Get;
 
 /// Call Entrypoint Wrapper related types

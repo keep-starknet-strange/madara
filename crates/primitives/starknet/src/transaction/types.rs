@@ -1,7 +1,12 @@
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+
+use blockifier::execution::entry_point::CallInfo;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
+use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
@@ -24,6 +29,17 @@ pub enum TransactionExecutionErrorWrapper {
     BlockContextSerializationError,
     /// Fee computation error,
     FeeComputationError,
+    /// Fee transfer error,
+    FeeTransferError {
+        /// Max fee specified by the user.
+        max_fee: Fee,
+        /// Actual fee.
+        actual_fee: Fee,
+    },
+    /// Cairo resources are not contained in the fee costs.
+    CairoResourcesNotContainedInFeeCosts,
+    /// Failed to compute the L1 gas usage.
+    FailedToComputeL1GasUsage,
 }
 
 /// Different tx types.
@@ -169,6 +185,22 @@ pub struct EventWrapper {
     pub data: BoundedVec<H256, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
+}
+
+/// This struct wraps the [TransactionExecutionInfo] type from the blockifier.
+#[derive(Debug)]
+pub struct TransactionExecutionInfoWrapper {
+    /// Transaction validation call info; [None] for `L1Handler`.
+    pub validate_call_info: Option<CallInfo>,
+    /// Transaction execution call info; [None] for `Declare`.
+    pub execute_call_info: Option<CallInfo>,
+    /// Fee transfer call info; [None] for `L1Handler`.
+    pub fee_transfer_call_info: Option<CallInfo>,
+    /// The actual fee that was charged (in Wei).
+    pub actual_fee: Fee,
+    /// Actual execution resources the transaction is charged for,
+    /// including L1 gas and additional OS resources estimation.
+    pub actual_resources: BTreeMap<String, usize>,
 }
 
 /// Error enum wrapper for events.

@@ -85,8 +85,8 @@ use mp_starknet::execution::types::{
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::Hasher;
 use mp_starknet::transaction::types::{
-    EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
-    TxType,
+    EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction,
+    TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -418,20 +418,31 @@ pub mod pallet {
                 fee_token_address,
             );
             let receipt = match call_info {
-                Ok(Some(mut v)) => {
-                    let events = Self::emit_events(&mut v).map_err(|_| Error::<T>::EmitEventError)?;
-                    let receipt = TransactionReceiptWrapper {
+                Ok(TransactionExecutionInfoWrapper {
+                    validate_call_info: _validate_call_info,
+                    execute_call_info,
+                    fee_transfer_call_info,
+                    actual_fee: _actual_fee,
+                    actual_resources: _actual_resources,
+                }) => {
+                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
+
+                    let events = match (execute_call_info, fee_transfer_call_info) {
+                        (Some(mut exec), Some(mut fee)) => {
+                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            events
+                        }
+                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        _ => Vec::default(),
+                    };
+
+                    TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
-                    };
-                    log!(debug, "Transaction executed successfully: {:?}", v);
-                    receipt
-                }
-                Ok(None) => {
-                    log!(error, "Transaction execution failed: no call info while it was expected");
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                    }
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
