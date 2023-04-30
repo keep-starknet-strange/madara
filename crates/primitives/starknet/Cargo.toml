@@ -30,6 +30,10 @@ starknet_api = { workspace = true, default-features = false }
 cairo-vm = { workspace = true }
 
 # Other third party dependencies
+bitvec = { workspace = true, features = ["alloc"] }
+hex = { version = "0.4.3", default-features = false }
+itertools = { workspace = true }
+log = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 	"derive",
 	"max-encoded-len",

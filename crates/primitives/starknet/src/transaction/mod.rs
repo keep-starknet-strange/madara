@@ -1,26 +1,34 @@
 //! Starknet transaction related functionality.
+/// Constants related to transactions.
+pub mod constants;
 /// Types related to transactions.
 pub mod types;
 
+use alloc::string::{String, ToString};
 use alloc::vec;
 
+use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallEntryPoint, ExecutionResources};
+use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
+use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contracts;
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
+use itertools::concat;
 use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent, Fee,
-    InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt,
+    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent,
+    Fee, InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt,
     TransactionSignature, TransactionVersion,
 };
-use starknet_api::StarknetApiError;
+use starknet_api::{calldata, StarknetApiError};
 
 use self::types::{
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
@@ -298,6 +306,101 @@ impl Transaction {
         Self { hash, ..Self::default() }
     }
 
+    /// Returns the validate entry point selector.
+    pub fn validate_entry_point_selector(
+        &self,
+        tx_type: &TxType,
+    ) -> TransactionExecutionResultWrapper<EntryPointSelector> {
+        let validate_entry_point_name = match tx_type {
+            TxType::DeclareTx => Ok(constants::VALIDATE_DECLARE_ENTRY_POINT_NAME),
+            TxType::DeployAccountTx => Ok(constants::VALIDATE_DEPLOY_ENTRY_POINT_NAME),
+            TxType::InvokeTx => Ok(constants::VALIDATE_ENTRY_POINT_NAME),
+            TxType::L1HandlerTx => Err(EntryPointExecutionError::InvalidExecutionInput {
+                input_descriptor: "tx_type".to_string(),
+                info: "l1 handler transaction should not be validated".to_string(),
+            })
+            .map_err(TransactionExecutionErrorWrapper::from),
+        }?;
+
+        Ok(selector_from_name(validate_entry_point_name))
+    }
+
+    // Calldata for validation contains transaction fields that cannot be obtained by calling
+    // `get_tx_info()`.
+    fn validate_entrypoint_calldata(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<Calldata> {
+        match tx_type {
+            TxType::DeclareTx => {
+                let declare_tx: DeclareTransaction =
+                    self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
+                Ok(calldata![declare_tx.class_hash().0])
+            }
+            TxType::DeployAccountTx => {
+                let deploy_account_tx: DeployAccountTransaction =
+                    self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
+                let validate_calldata = concat(vec![
+                    vec![deploy_account_tx.class_hash.0, deploy_account_tx.contract_address_salt.0],
+                    (*deploy_account_tx.constructor_calldata.0).clone(),
+                ]);
+                Ok(Calldata(validate_calldata.into()))
+            }
+            // Calldata for validation is the same calldata as for the execution itself.
+            TxType::InvokeTx => {
+                let invoke_tx: InvokeTransactionV1 =
+                    self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
+                Ok(Calldata(invoke_tx.calldata.0))
+            }
+            TxType::L1HandlerTx => Err(EntryPointExecutionError::InvalidExecutionInput {
+                input_descriptor: "tx_type".to_string(),
+                info: "l1 handler transaction should not be validated".to_string(),
+            })
+            .map_err(TransactionExecutionErrorWrapper::from),
+        }
+    }
+
+    /// Validates a transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to validate.
+    /// * `state` - The state to validate the transaction on.
+    /// * `execution_resources` - The execution resources to validate the transaction on.
+    /// * `block_context` - The block context to validate the transaction on.
+    /// * `account_tx_context` - The account transaction context to validate the transaction on.
+    /// * `tx_type` - The type of the transaction to execute.
+    pub fn validate_tx<S: State>(
+        &self,
+        state: &mut S,
+        execution_resources: &mut ExecutionResources,
+        block_context: &BlockContext,
+        account_tx_context: &AccountTransactionContext,
+        tx_type: TxType,
+    ) -> TransactionExecutionResultWrapper<()> {
+        let validate_call = CallEntryPoint {
+            entry_point_type: EntryPointType::External,
+            entry_point_selector: self.validate_entry_point_selector(&tx_type)?,
+            calldata: self.validate_entrypoint_calldata(&tx_type)?,
+            class_hash: None,
+            storage_address: account_tx_context.sender_address,
+            caller_address: StarknetContractAddress::default(),
+            call_type: CallType::Call,
+        };
+        let mut execution_context = ExecutionContext::default();
+
+        log::info!("Validating tx: {:?}, {:?}", validate_call, &tx_type);
+        log::info!("Signature in tx: {:?}", self.signature);
+        log::info!("Signature in account: {:?}", account_tx_context.signature);
+
+        let validate_call_info = validate_call
+            .execute(state, execution_resources, &mut execution_context, block_context, account_tx_context)
+            .map_err(TransactionExecutionErrorWrapper::from)?;
+        verify_no_calls_to_other_contracts(&validate_call_info, String::from(constants::VALIDATE_ENTRY_POINT_NAME))
+            .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
+
+        log::info!("Transaction validated successfully");
+
+        Ok(())
+    }
+
     /// Verifies if a transaction has the correct version
     ///
     /// # Arguments
@@ -378,6 +481,10 @@ impl Transaction {
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
 
+                // Validate.
+                self.validate_tx(state, execution_resources, &block_context, &account_context, tx_type)?;
+
+                // Execute.
                 (
                     tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
@@ -396,8 +503,12 @@ impl Transaction {
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
+
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
+
+                // Validate.
+                self.validate_tx(state, execution_resources, &block_context, &account_context, tx_type)?;
 
                 // Execute.
                 (
@@ -411,6 +522,9 @@ impl Transaction {
                 let account_context = self.get_deploy_account_transaction_context(&tx);
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
+
+                // Validate.
+                self.validate_tx(state, execution_resources, &block_context, &account_context, tx_type)?;
 
                 // Execute.
                 (

@@ -55,6 +55,14 @@ pub enum TransactionExecutionErrorWrapper {
     UnexpectedHoles(String),
 }
 
+impl From<EntryPointExecutionError> for TransactionExecutionErrorWrapper {
+    fn from(error: EntryPointExecutionError) -> Self {
+        TransactionExecutionErrorWrapper::TransactionExecution(TransactionExecutionError::EntryPointExecutionError(
+            error,
+        ))
+    }
+}
+
 /// Different tx types.
 /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
 #[derive(
