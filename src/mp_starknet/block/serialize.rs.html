@@ -143,7 +143,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 <span class="kw">use </span><span class="kw">crate</span>::block::header::Header;
-<span class="kw">use </span><span class="kw">crate</span>::execution::ContractAddressWrapper;
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::ContractAddressWrapper;
 
 <span class="doccomment">/// Trait for serializing objects into a `BlockContext`.
 </span><span class="kw">pub trait </span>SerializeBlockContext {
@@ -199,7 +199,7 @@
             block_number: BlockNumber(block_header.block_number.as_u64()),
             block_timestamp: BlockTimestamp(block_header.block_timestamp),
             sequencer_address,
-            cairo_resource_fee_weights: HashMap::default(),
+            vm_resource_fee_cost: HashMap::default(),
             fee_token_address,
             invoke_tx_max_n_steps: <span class="number">1000000</span>,
             validate_max_n_steps: <span class="number">1000000</span>,

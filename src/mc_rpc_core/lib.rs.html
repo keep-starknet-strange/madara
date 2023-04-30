@@ -343,11 +343,6 @@
 <a href="#343" id="343">343</a>
 <a href="#344" id="344">344</a>
 <a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -357,18 +352,17 @@
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
-<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::collections::{BTreeMap, HashMap};
 
 <span class="kw">use </span>anyhow::Result;
 <span class="kw">use </span>base64::engine::general_purpose;
 <span class="kw">use </span>base64::Engine;
+<span class="kw">use </span>frame_support::storage::bounded_vec::BoundedVec;
 <span class="kw">use </span>hex::ToHex;
 <span class="kw">use </span>jsonrpsee::core::RpcResult;
 <span class="kw">use </span>jsonrpsee::proc_macros::rpc;
-<span class="kw">use </span>mp_starknet::execution::ContractClassWrapper;
+<span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>serde_json::from_slice;
-<span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 
 <span class="kw">pub type </span>FieldElement = String;
 <span class="kw">pub type </span>BlockNumber = u64;
@@ -589,7 +583,7 @@
 <span class="kw">pub type </span>ABI = String;
 <span class="doccomment">/// Cairo sierra contract class
 </span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-</span><span class="kw">pub struct </span>ContractClass {
+</span><span class="kw">pub struct </span>SierraContractClass {
     <span class="kw">pub </span>sierra_program: SierraProgram,
     <span class="kw">pub </span>contract_class_version: ContractClassVersion,
     <span class="kw">pub </span>entry_points_by_type: EntryPointsByType,
@@ -602,62 +596,58 @@
 #[serde(untagged)]
 </span><span class="kw">pub enum </span>RPCContractClass {
     DeprecatedContractClass(DeprecatedContractClass),
-    ContractClass(ContractClass),
+    ContractClass(SierraContractClass),
 }
 
 <span class="doccomment">/// Returns a `ContractClassWrapper` from a `RPCContractClass`
-</span><span class="kw">pub fn </span>to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;RPCContractClass&gt; {
-    <span class="prelude-val">Ok</span>(RPCContractClass::DeprecatedContractClass(DeprecatedContractClass {
-        program: compress_and_encode_base64(<span class="kw-2">&amp;</span>contract_class_wrapped.program)<span class="question-mark">?</span>,
-        entry_points_by_type: to_deprecated_entrypoint_by_type(from_slice(
-            <span class="kw-2">&amp;</span>contract_class_wrapped.entry_points_by_type,
-        )<span class="question-mark">?</span>),
-        abi: <span class="prelude-val">None</span>,
-    }))
+</span><span class="kw">pub fn </span>to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;RPCContractClass&gt; {
+    <span class="prelude-val">Ok</span>(RPCContractClass::ContractClass(Default::default()))
 }
 
 <span class="doccomment">/// Returns a base64 encoded and compressed string of the input bytes
-</span><span class="kw">fn </span>compress_and_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
-    <span class="kw">let </span>data_compressed = compress(data)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(encode_base64(<span class="kw-2">&amp;</span>data_compressed))
+</span><span class="kw">fn </span>_compress_and_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
+    <span class="kw">let </span>data_compressed = _compress(data)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(_encode_base64(<span class="kw-2">&amp;</span>data_compressed))
 }
 
 <span class="doccomment">/// Returns a compressed vector of bytes
-</span><span class="kw">fn </span>compress(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+</span><span class="kw">fn </span>_compress(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(<span class="kw-2">&amp;mut </span>gzip_encoder, data)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(gzip_encoder.finish()<span class="question-mark">?</span>)
 }
 
 <span class="doccomment">/// Returns a base64 encoded string of the input bytes
-</span><span class="kw">fn </span>encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+</span><span class="kw">fn </span>_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
     general_purpose::STANDARD.encode(data)
 }
 
 <span class="doccomment">/// Returns a deprecated entry point by type from hash map of entry point types to entrypoint
-</span><span class="kw">fn </span>to_deprecated_entrypoint_by_type(entries: HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;) -&gt; DeprecatedEntryPointsByType {
+</span><span class="kw">fn </span>_to_deprecated_entrypoint_by_type(
+    entries: BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt;,
+) -&gt; DeprecatedEntryPointsByType {
     <span class="kw">let </span><span class="kw-2">mut </span>constructor = <span class="macro">vec!</span>[];
     <span class="kw">let </span><span class="kw-2">mut </span>external = <span class="macro">vec!</span>[];
     <span class="kw">let </span><span class="kw-2">mut </span>l_1_handler = <span class="macro">vec!</span>[];
     entries.into_iter().for_each(|(entry_type, entry_points)| <span class="kw">match </span>entry_type {
-        EntryPointType::Constructor =&gt; {
+        EntryPointTypeWrapper::Constructor =&gt; {
             constructor = entry_points.into_iter().map(Into::into).collect();
         }
-        EntryPointType::External =&gt; {
+        EntryPointTypeWrapper::External =&gt; {
             external = entry_points.into_iter().map(Into::into).collect();
         }
-        EntryPointType::L1Handler =&gt; {
+        EntryPointTypeWrapper::L1Handler =&gt; {
             l_1_handler = entry_points.into_iter().map(Into::into).collect();
         }
     });
     DeprecatedEntryPointsByType { constructor, external, l_1_handler }
 }
 
-<span class="kw">impl </span>From&lt;EntryPoint&gt; <span class="kw">for </span>DeprecatedCairoEntryPoint {
-    <span class="kw">fn </span>from(value: EntryPoint) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>selector: String = value.selector.<span class="number">0.0</span>.encode_hex();
+<span class="kw">impl </span>From&lt;EntryPointWrapper&gt; <span class="kw">for </span>DeprecatedCairoEntryPoint {
+    <span class="kw">fn </span>from(value: EntryPointWrapper) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>selector: String = value.selector.encode_hex();
         <span class="kw">let </span>selector = add_prefix(<span class="kw-2">&amp;</span>selector);
-        <span class="kw">let </span>offset: String = value.offset.<span class="number">0</span>.to_be_bytes().as_slice().encode_hex();
+        <span class="kw">let </span>offset: String = value.offset.to_be_bytes().as_slice().encode_hex();
         <span class="kw">let </span>offset = add_prefix(remove_leading_zeros(<span class="kw-2">&amp;</span>offset));
         <span class="self">Self </span>{ selector, offset }
     }

@@ -143,7 +143,7 @@
 <a href="#143" id="143">143</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>hex::FromHex;
-<span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
 <span class="kw">use </span>scale_codec::{Decode, Encode};
 <span class="kw">use </span>serde::Deserialize;
@@ -231,7 +231,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use </span>frame_support::bounded_vec;
-    <span class="kw">use </span>mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+    <span class="kw">use </span>mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
     <span class="kw">use </span>pretty_assertions;
     <span class="kw">use </span>sp_core::{H256, U256};

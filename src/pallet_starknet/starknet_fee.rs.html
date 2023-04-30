@@ -198,6 +198,8 @@
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::string::ToString;
 
 <span class="kw">use </span>blockifier::abi::abi_utils;
@@ -205,7 +207,7 @@
 <span class="kw">use </span>blockifier::execution::entry_point::{ExecutionContext, ExecutionResources};
 <span class="kw">use </span>blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
-<span class="kw">use </span>mp_starknet::execution::ContractAddressWrapper;
+<span class="kw">use </span>mp_starknet::execution::types::ContractAddressWrapper;
 <span class="kw">use </span>mp_starknet::transaction::types::FeeTransferInformation;
 <span class="kw">use </span>pallet_transaction_payment::OnChargeTransaction;
 <span class="kw">use </span>sp_core::U256;
@@ -323,6 +325,14 @@
                 <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
                 TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
             })<span class="question-mark">?</span>;
+        <span class="kw">let </span>caller = ContractAddress::try_from(StarkFelt::new(from).map_err(|<span class="kw">_</span>| {
+            <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
+            TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
+        })<span class="question-mark">?</span>)
+        .map_err(|<span class="kw">_</span>| {
+            <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
+            TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
+        })<span class="question-mark">?</span>;
         <span class="comment">// Create fee transfer transaction.
         </span><span class="kw">let </span>fee_transfer_call = blockifier::execution::entry_point::CallEntryPoint {
             class_hash: <span class="prelude-val">None</span>,
@@ -344,15 +354,9 @@
                 </span>StarkFelt::default() <span class="comment">// high
             </span>],
             storage_address: fee_token_address,
-            caller_address: ContractAddress::try_from(StarkFelt::new(from).map_err(|<span class="kw">_</span>| {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
-                TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
-            })<span class="question-mark">?</span>)
-            .map_err(|<span class="kw">_</span>| {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
-                TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
-            })<span class="question-mark">?</span>,
+            caller_address: caller,
             call_type: blockifier::execution::entry_point::CallType::Call,
+            code_address: <span class="prelude-val">Some</span>(caller),
         };
         <span class="comment">// FIXME #245
         </span><span class="kw">let </span><span class="kw-2">mut </span>execution_context = ExecutionContext::default(); <span class="comment">// TODO: check if it needs a real value.
@@ -372,11 +376,11 @@
                 <span class="macro">log!</span>(error, <span class="string">&quot;Couldn&#39;t convert StarkFelt to ContractAddress&quot;</span>);
                 TransactionValidityError::Unknown(Custom(<span class="number">1_u8</span>))
             })<span class="question-mark">?</span>,
-            cairo_resource_fee_weights: HashMap::default(), <span class="comment">// TODO: Use real weights
-            </span>fee_token_address,
-            invoke_tx_max_n_steps: <span class="number">1000000</span>, <span class="comment">// TODO: Make it configurable
-            </span>validate_max_n_steps: <span class="number">1000000</span>,  <span class="comment">// TODO: Make it configurable
-            </span>gas_price: <span class="number">0</span>,                   <span class="comment">// TODO: Use block gas price
+            fee_token_address,
+            invoke_tx_max_n_steps: <span class="number">1000000</span>,           <span class="comment">// TODO: Make it configurable
+            </span>validate_max_n_steps: <span class="number">1000000</span>,            <span class="comment">// TODO: Make it configurable
+            </span>gas_price: <span class="number">0</span>,                             <span class="comment">// TODO: Use block gas price
+            </span>vm_resource_fee_cost: HashMap::default(), <span class="comment">// TODO: get real weights
         </span>};
         <span class="kw">match </span>fee_transfer_call.execute(
             <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),

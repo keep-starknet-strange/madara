@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["EntryPointTypeWrapper"],"mod":["types"],"struct":["CallEntryPointWrapper","ContractClassWrapper","EntryPointWrapper"],"type":["ClassHashWrapper","ContractAddressWrapper"]};
+window.SIDEBAR_ITEMS = {"fn":["deserialize_bounded_btreemap","deserialize_option_bounded_btreemap","serialize_bounded_btreemap","serialize_option_bounded_btreemap"],"mod":["types"]};

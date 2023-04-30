@@ -260,15 +260,17 @@
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
 <a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
-<span class="kw">use </span>blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
 };
-<span class="kw">use </span>mp_starknet::execution::ContractClassWrapper;
 <span class="kw">use </span>sc_service::ChainType;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -428,6 +430,9 @@
     ))
 }
 
+<span class="kw">pub fn </span>get_contract_class(contract_content: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8]) -&gt; ContractClass {
+    serde_json::from_slice(contract_content).unwrap()
+}
 <span class="doccomment">/// Configure initial storage state for FRAME modules.
 </span><span class="kw">fn </span>testnet_genesis(
     wasm_binary: <span class="kw-2">&amp;</span>[u8],
@@ -436,10 +441,11 @@
     endowed_accounts: Vec&lt;AccountId&gt;,
     _enable_println: bool,
 ) -&gt; GenesisConfig {
-    <span class="kw">let </span>account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    <span class="kw">let </span>account_class =
+        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/account.json&quot;</span>)).try_into().unwrap();
 
-    <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/test.json&quot;</span>));
-    <span class="kw">let </span>erc20_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/erc20/erc20.json&quot;</span>));
+    <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/test.json&quot;</span>)).try_into().unwrap();
+    <span class="kw">let </span>erc20_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/erc20/erc20.json&quot;</span>)).try_into().unwrap();
 
     <span class="comment">// ACCOUNT CONTRACT
     </span><span class="kw">let </span>contract_address_bytes =
@@ -493,9 +499,9 @@
                 (token_contract_address_bytes, token_class_hash_bytes),
             ],
             contract_classes: <span class="macro">vec!</span>[
-                (class_hash_bytes, ContractClassWrapper::from(account_class)),
-                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-                (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
+                (class_hash_bytes, account_class),
+                (other_class_hash_bytes, test_class),
+                (token_class_hash_bytes, erc20_class),
             ],
             storage: <span class="macro">vec!</span>[
                 (
