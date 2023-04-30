@@ -123,7 +123,8 @@ fn execute_fee_transfer(
     account_tx_context: &AccountTransactionContext,
     actual_fee: Fee,
 ) -> Result<CallInfo, TransactionExecutionErrorWrapper> {
-    let max_fee = account_tx_context.max_fee;
+    // TODO: use real value.
+    let max_fee = Fee(u128::MAX);
     if actual_fee > max_fee {
         return Err(TransactionExecutionErrorWrapper::FeeTransferError { max_fee, actual_fee });
     }
@@ -190,7 +191,6 @@ pub fn calculate_tx_fee(
     } else {
         total_l1_gas_usage as u128
     };
-
     Ok(Fee(total_l1_gas_usage * block_context.gas_price))
 }
 
