@@ -10,6 +10,8 @@ const mintAmount =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 const contractAddress =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
+const openzeppelinContractAddress =
+  "0x0000000000000000000000000000000000000000000000000000000000011111";
 const feeTokenAddress =
   "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
 const tokenClassHash =
@@ -48,6 +50,21 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
       result: { events },
     } = await context.createBlock(
       deploy(context.polkadotApi, contractAddress, tokenClassHash)
+    );
+
+    expect(
+      events.find(
+        ({ event: { section, method } }) =>
+          section == "system" && method == "ExtrinsicSuccess"
+      )
+    ).to.exist;
+  });
+
+  it("should deploy a new account and validate", async function () {
+    const {
+      result: { events },
+    } = await context.createBlock(
+      deploy(context.polkadotApi, openzeppelinContractAddress, tokenClassHash)
     );
 
     expect(

@@ -181,8 +181,10 @@ fn testnet_genesis(
         get_contract_class(include_bytes!("../../../resources/account/account.json")).try_into().unwrap();
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
-    let erc20_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
+    let openzeppelin_class =
+        get_contract_class(include_bytes!("../../../resources/account/openzeppelin/account.json")).try_into().unwrap();
+
+    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
@@ -195,6 +197,12 @@ fn testnet_genesis(
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001111").unwrap();
     let other_class_hash_bytes =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001000").unwrap();
+
+    // OPENZEPPELIN ACCOUNT CONTRACT
+    let openzeppelin_contract_address_bytes =
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000011111").unwrap();
+    let openzeppelin_class_hash_bytes =
+        <[u8; 32]>::from_hex("0347f7fe44852b9991a280671b19821b171362a9303baa9b26ad52e49ee4a0fd").unwrap();
 
     // Fee token
     let fee_token_address =
@@ -235,6 +243,7 @@ fn testnet_genesis(
             contracts: vec![
                 (contract_address_bytes, class_hash_bytes),
                 (other_contract_address_bytes, other_class_hash_bytes),
+                (openzeppelin_contract_address_bytes, openzeppelin_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (fee_token_address, fee_token_class_hash_bytes),
@@ -242,6 +251,7 @@ fn testnet_genesis(
             contract_classes: vec![
                 (class_hash_bytes, account_class),
                 (other_class_hash_bytes, test_class),
+                (openzeppelin_class_hash_bytes, openzeppelin_class),
                 (token_class_hash_bytes, erc20_class.clone()),
                 (fee_token_class_hash_bytes, erc20_class),
             ],
