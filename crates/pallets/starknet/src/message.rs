@@ -1,6 +1,6 @@
 use frame_support::BoundedVec;
 use hex::FromHex;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::Transaction;
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
@@ -88,7 +88,7 @@ impl Message {
 #[cfg(test)]
 mod test {
     use frame_support::bounded_vec;
-    use mp_starknet::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+    use mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     use mp_starknet::transaction::types::Transaction;
     use pretty_assertions;
     use sp_core::{H256, U256};

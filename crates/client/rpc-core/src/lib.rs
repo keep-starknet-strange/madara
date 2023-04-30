@@ -7,18 +7,17 @@
 #[cfg(test)]
 mod tests;
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine;
+use frame_support::storage::bounded_vec::BoundedVec;
 use hex::ToHex;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
-use mp_starknet::execution::ContractClassWrapper;
+use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use serde::{Deserialize, Serialize};
-use serde_json::from_slice;
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 
 pub type FieldElement = String;
 pub type BlockNumber = u64;
@@ -239,7 +238,7 @@ pub struct EntryPointsByType {
 pub type ABI = String;
 /// Cairo sierra contract class
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
-pub struct ContractClass {
+pub struct SierraContractClass {
     pub sierra_program: SierraProgram,
     pub contract_class_version: ContractClassVersion,
     pub entry_points_by_type: EntryPointsByType,
@@ -252,62 +251,58 @@ pub struct ContractClass {
 #[serde(untagged)]
 pub enum RPCContractClass {
     DeprecatedContractClass(DeprecatedContractClass),
-    ContractClass(ContractClass),
+    ContractClass(SierraContractClass),
 }
 
 /// Returns a `ContractClassWrapper` from a `RPCContractClass`
-pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
-    Ok(RPCContractClass::DeprecatedContractClass(DeprecatedContractClass {
-        program: compress_and_encode_base64(&contract_class_wrapped.program)?,
-        entry_points_by_type: to_deprecated_entrypoint_by_type(from_slice(
-            &contract_class_wrapped.entry_points_by_type,
-        )?),
-        abi: None,
-    }))
+pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
+    Ok(RPCContractClass::ContractClass(Default::default()))
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
-fn compress_and_encode_base64(data: &[u8]) -> Result<String> {
-    let data_compressed = compress(data)?;
-    Ok(encode_base64(&data_compressed))
+fn _compress_and_encode_base64(data: &[u8]) -> Result<String> {
+    let data_compressed = _compress(data)?;
+    Ok(_encode_base64(&data_compressed))
 }
 
 /// Returns a compressed vector of bytes
-fn compress(data: &[u8]) -> Result<Vec<u8>> {
+fn _compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(&mut gzip_encoder, data)?;
     Ok(gzip_encoder.finish()?)
 }
 
 /// Returns a base64 encoded string of the input bytes
-fn encode_base64(data: &[u8]) -> String {
+fn _encode_base64(data: &[u8]) -> String {
     general_purpose::STANDARD.encode(data)
 }
 
 /// Returns a deprecated entry point by type from hash map of entry point types to entrypoint
-fn to_deprecated_entrypoint_by_type(entries: HashMap<EntryPointType, Vec<EntryPoint>>) -> DeprecatedEntryPointsByType {
+fn _to_deprecated_entrypoint_by_type(
+    entries: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
+) -> DeprecatedEntryPointsByType {
     let mut constructor = vec![];
     let mut external = vec![];
     let mut l_1_handler = vec![];
     entries.into_iter().for_each(|(entry_type, entry_points)| match entry_type {
-        EntryPointType::Constructor => {
+        EntryPointTypeWrapper::Constructor => {
             constructor = entry_points.into_iter().map(Into::into).collect();
         }
-        EntryPointType::External => {
+        EntryPointTypeWrapper::External => {
             external = entry_points.into_iter().map(Into::into).collect();
         }
-        EntryPointType::L1Handler => {
+        EntryPointTypeWrapper::L1Handler => {
             l_1_handler = entry_points.into_iter().map(Into::into).collect();
         }
     });
     DeprecatedEntryPointsByType { constructor, external, l_1_handler }
 }
 
-impl From<EntryPoint> for DeprecatedCairoEntryPoint {
-    fn from(value: EntryPoint) -> Self {
-        let selector: String = value.selector.0.0.encode_hex();
+impl From<EntryPointWrapper> for DeprecatedCairoEntryPoint {
+    fn from(value: EntryPointWrapper) -> Self {
+        let selector: String = value.selector.encode_hex();
         let selector = add_prefix(&selector);
-        let offset: String = value.offset.0.to_be_bytes().as_slice().encode_hex();
+        let offset: String = value.offset.to_be_bytes().as_slice().encode_hex();
         let offset = add_prefix(remove_leading_zeros(&offset));
         Self { selector, offset }
     }

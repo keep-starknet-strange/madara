@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::{ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};

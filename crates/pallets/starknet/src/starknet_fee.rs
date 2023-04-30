@@ -5,7 +5,7 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{ExecutionContext, ExecutionResources};
 use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
 use blockifier::transaction::objects::AccountTransactionContext;
-use mp_starknet::execution::ContractAddressWrapper;
+use mp_starknet::execution::types::ContractAddressWrapper;
 use mp_starknet::transaction::types::FeeTransferInformation;
 use pallet_transaction_payment::OnChargeTransaction;
 use sp_core::U256;
@@ -123,6 +123,14 @@ impl<T: Config> Pallet<T> {
                 log!(error, "Couldn't convert StarkFelt to ContractAddress");
                 TransactionValidityError::Unknown(Custom(1_u8))
             })?;
+        let caller = ContractAddress::try_from(StarkFelt::new(from).map_err(|_| {
+            log!(error, "Couldn't convert StarkFelt to ContractAddress");
+            TransactionValidityError::Unknown(Custom(1_u8))
+        })?)
+        .map_err(|_| {
+            log!(error, "Couldn't convert StarkFelt to ContractAddress");
+            TransactionValidityError::Unknown(Custom(1_u8))
+        })?;
         // Create fee transfer transaction.
         let fee_transfer_call = blockifier::execution::entry_point::CallEntryPoint {
             class_hash: None,
@@ -144,15 +152,9 @@ impl<T: Config> Pallet<T> {
                 StarkFelt::default() // high
             ],
             storage_address: fee_token_address,
-            caller_address: ContractAddress::try_from(StarkFelt::new(from).map_err(|_| {
-                log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                TransactionValidityError::Unknown(Custom(1_u8))
-            })?)
-            .map_err(|_| {
-                log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                TransactionValidityError::Unknown(Custom(1_u8))
-            })?,
+            caller_address: caller,
             call_type: blockifier::execution::entry_point::CallType::Call,
+            code_address: Some(caller),
         };
         // FIXME #245
         let mut execution_context = ExecutionContext::default(); // TODO: check if it needs a real value.
@@ -172,11 +174,11 @@ impl<T: Config> Pallet<T> {
                 log!(error, "Couldn't convert StarkFelt to ContractAddress");
                 TransactionValidityError::Unknown(Custom(1_u8))
             })?,
-            cairo_resource_fee_weights: HashMap::default(), // TODO: Use real weights
             fee_token_address,
-            invoke_tx_max_n_steps: 1000000, // TODO: Make it configurable
-            validate_max_n_steps: 1000000,  // TODO: Make it configurable
-            gas_price: 0,                   // TODO: Use block gas price
+            invoke_tx_max_n_steps: 1000000,           // TODO: Make it configurable
+            validate_max_n_steps: 1000000,            // TODO: Make it configurable
+            gas_price: 0,                             // TODO: Use block gas price
+            vm_resource_fee_cost: HashMap::default(), // TODO: get real weights
         };
         match fee_transfer_call.execute(
             &mut BlockifierStateAdapter::<T>::default(),

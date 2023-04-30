@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::{ClassHashWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK,
 };
@@ -60,8 +60,8 @@ where
     fn contract_class(
         &self,
         block_hash: <B as BlockT>::Hash,
-        address: mp_starknet::execution::ContractAddressWrapper,
-    ) -> Option<mp_starknet::execution::ContractClassWrapper> {
+        address: ContractAddressWrapper,
+    ) -> Option<ContractClassWrapper> {
         let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS_HASH);
         let contract_class_hash: [u8; 32] = self.query_storage::<ClassHashWrapper>(
             block_hash,

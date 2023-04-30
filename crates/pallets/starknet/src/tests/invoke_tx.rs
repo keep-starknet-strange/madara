@@ -1,6 +1,5 @@
 use core::str::FromStr;
 
-use blockifier::test_utils::ACCOUNT_CONTRACT_PATH;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::crypto::commitment;
@@ -142,7 +141,8 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
         let json_content: &str = include_str!("../../../../../resources/transactions/storage_read_write.json");
         let transaction =
-            transaction_from_json(json_content, ACCOUNT_CONTRACT_PATH).expect("Failed to create Transaction from JSON");
+            transaction_from_json(json_content, include_bytes!("../../../../../resources/account/account.json"))
+                .expect("Failed to create Transaction from JSON");
 
         let target_contract_address =
             U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();

@@ -828,7 +828,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/tdelabro/blockifier?branch=no_std-support#63f91714b2db3da88904b355407bfb3b4acdad8b"
+source = "git+https://github.com/tdelabro/blockifier?branch=new-no_std-support#14f4e760d060218b5e5d8908b18799fce09ec8fd"
 dependencies = [
  "cairo-felt",
  "cairo-vm",
@@ -938,7 +938,7 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.3.0-rc1"
-source = "git+https://github.com/lambdaclass/cairo-rs?rev=725c17e6b4c50ecf9fbb0113ecf172d85837295#725c17e6b4c50ecf9fbb0113ecf172d858372954"
+source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#20a5bce375bc660120a0bb763ee3fcc99a5bd9d9"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.3",
@@ -950,7 +950,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.24.2-rc1"
-source = "git+https://github.com/lambdaclass/cairo-rs?rev=725c17e6b4c50ecf9fbb0113ecf172d85837295#725c17e6b4c50ecf9fbb0113ecf172d858372954"
+source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#20a5bce375bc660120a0bb763ee3fcc99a5bd9d9"
 dependencies = [
  "nom",
 ]
@@ -958,7 +958,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.3.0-rc1"
-source = "git+https://github.com/lambdaclass/cairo-rs?rev=725c17e6b4c50ecf9fbb0113ecf172d85837295#725c17e6b4c50ecf9fbb0113ecf172d858372954"
+source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#20a5bce375bc660120a0bb763ee3fcc99a5bd9d9"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
@@ -973,7 +973,9 @@ dependencies = [
  "nom",
  "num-bigint 0.4.3",
  "num-integer",
+ "num-prime",
  "num-traits",
+ "rand 0.8.5",
  "rand_core 0.6.4",
  "serde",
  "serde_bytes",
@@ -3662,7 +3664,7 @@ dependencies = [
  "libp2p-core 0.38.0",
  "libp2p-swarm",
  "log",
- "lru",
+ "lru 0.8.1",
  "prost",
  "prost-build",
  "prost-codec",
@@ -4139,6 +4141,15 @@ dependencies = [
 
 [[package]]
 name = "lru"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e999beba7b6e8345721bd280141ed958096a2e4abdf74f67ff4ce49b4b54e47a"
+dependencies = [
+ "hashbrown 0.12.3",
+]
+
+[[package]]
+name = "lru"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6e8aaa3f231bb4bd57b84b2d5dc3ae7f350265df8aa96492e0bc394a1571909"
@@ -4222,6 +4233,7 @@ dependencies = [
  "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde",
+ "serde_json",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
@@ -4369,6 +4381,7 @@ dependencies = [
  "anyhow",
  "base64 0.21.0",
  "flate2",
+ "frame-support",
  "hex",
  "jsonrpsee",
  "mp-starknet",
@@ -4543,6 +4556,8 @@ version = "0.1.0-dev"
 dependencies = [
  "bitvec 0.17.4",
  "blockifier",
+ "cairo-vm",
+ "derive_more",
  "frame-support",
  "hex",
  "parity-scale-codec",
@@ -4558,6 +4573,7 @@ dependencies = [
  "starknet-crypto 0.4.3 (git+https://github.com/xJonathanLEI/starknet-rs)",
  "starknet-ff 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs)",
  "starknet_api",
+ "thiserror-no-std",
  "zstd 0.12.3+zstd.1.5.2",
 ]
 
@@ -4829,6 +4845,7 @@ dependencies = [
  "autocfg",
  "num-integer",
  "num-traits",
+ "rand 0.8.5",
  "serde",
 ]
 
@@ -4862,6 +4879,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "num-modular"
+version = "0.6.0"
+source = "git+https://github.com/tdelabro/num-modular.git?branch=no_std-standardization#e1a27316fbaf38f1c68c8ffce046acbed6af8d4f"
+dependencies = [
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-prime"
+version = "0.4.3"
+source = "git+https://github.com/tdelabro/num-prime.git?branch=no_std-support#70bfd81292929d694cadff82f43ba223df9225f1"
+dependencies = [
+ "bitvec 1.0.1",
+ "either",
+ "lru 0.7.8",
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-modular",
+ "num-traits",
+ "rand 0.9.0",
+]
+
+[[package]]
 name = "num-rational"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4880,6 +4922,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "578ede34cf02f8924ab9447f50c28075b4d3e5b269972345e7e0372b38c6cdcd"
 dependencies = [
  "autocfg",
+ "libm 0.2.6",
 ]
 
 [[package]]
@@ -5914,6 +5957,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand"
+version = "0.9.0"
+source = "git+https://github.com/rust-random/rand#7fcc5ebf7c72bc9698594d750cb58bb6cc812a3b"
+dependencies = [
+ "rand_core 0.7.0",
+]
+
+[[package]]
 name = "rand_chacha"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5950,6 +6001,11 @@ checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom 0.2.9",
 ]
+
+[[package]]
+name = "rand_core"
+version = "0.7.0"
+source = "git+https://github.com/rust-random/rand#7fcc5ebf7c72bc9698594d750cb58bb6cc812a3b"
 
 [[package]]
 name = "rand_hc"
@@ -6797,7 +6853,7 @@ name = "sc-executor"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#98f2e3451c9143278ec53c6718940aeabcd3b68a"
 dependencies = [
- "lru",
+ "lru 0.8.1",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-executor-common",
@@ -6909,7 +6965,7 @@ dependencies = [
  "libp2p",
  "linked_hash_set",
  "log",
- "lru",
+ "lru 0.8.1",
  "mockall",
  "parity-scale-codec",
  "parking_lot 0.12.1",
@@ -6993,7 +7049,7 @@ dependencies = [
  "futures-timer",
  "libp2p",
  "log",
- "lru",
+ "lru 0.8.1",
  "sc-network",
  "sc-network-common",
  "sc-peerset",
@@ -7036,7 +7092,7 @@ dependencies = [
  "futures-timer",
  "libp2p",
  "log",
- "lru",
+ "lru 0.8.1",
  "mockall",
  "parity-scale-codec",
  "prost",
@@ -7976,7 +8032,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40#98
 dependencies = [
  "futures",
  "log",
- "lru",
+ "lru 0.8.1",
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "sp-api",

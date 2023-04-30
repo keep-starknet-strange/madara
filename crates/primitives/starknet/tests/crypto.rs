@@ -5,7 +5,7 @@ use mp_starknet::crypto::commitment::{
     calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment,
 };
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::execution::CallEntryPointWrapper;
+use mp_starknet::execution::types::CallEntryPointWrapper;
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 use starknet_crypto::FieldElement;
