@@ -23,6 +23,9 @@ pub trait StateChanges {
     /// * `usize` - The number of modified storage vars in the transaction.
     /// * `usize` -  The number of newly declared classes.
     fn count_state_changes(&self) -> (usize, usize, usize);
+
+    /// Clear all the state updates tracking.
+    fn clear(&mut self);
 }
 
 /// A simple implementation of `StateReader` using `HashMap`s as storage.

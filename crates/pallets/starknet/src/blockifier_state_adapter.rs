@@ -38,6 +38,10 @@ where
         let n_contract_updated = BTreeSet::from_iter(keys.clone().map(|&(contract_address, _)| contract_address)).len();
         (n_contract_updated, keys.len(), self.class_hash_update)
     }
+
+    fn clear(&mut self) {
+        self.storage_update.clear()
+    }
 }
 
 impl<T: Config> Default for BlockifierStateAdapter<T> {
