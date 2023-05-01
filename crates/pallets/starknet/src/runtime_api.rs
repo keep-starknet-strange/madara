@@ -1,4 +1,4 @@
-use mp_starknet::execution::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;

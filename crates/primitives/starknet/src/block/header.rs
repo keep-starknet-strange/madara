@@ -1,7 +1,7 @@
 use scale_codec::Encode;
 use sp_core::{H256, U256};
 
-use crate::execution::ContractAddressWrapper;
+use crate::execution::types::ContractAddressWrapper;
 
 #[derive(
     Clone,

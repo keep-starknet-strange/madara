@@ -109,30 +109,32 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
-cairo-vm = { git = "https://github.com/lambdaclass/cairo-rs", rev = "725c17e6b4c50ecf9fbb0113ecf172d85837295", default-features = false }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "0.4.2", default-features = false }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", version = "0.3.1", default-features = false }
+cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-support", default-features = false }
+starknet-crypto = { version = "0.5.1", default-features = false }
+starknet-ff = { version = "0.3.2", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
 	"alloc",
 ] }
-blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "no_std-support", default-features = false }
+blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
 	"testing",
 ], default-features = false }
 # Other third party dependencies
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 base64 = "0.21.0"
-flate2 = "1.0.25"
+flate2 = "1.0.26"
 scale-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-scale-info = { version = "2.5.0", default-features = false }
+scale-info = { version = "2.6.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.17", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
-clap = { version = "4.2.4", default-features = false }
+clap = { version = "4.2.5", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 serde = { version = "1.0.160", default-features = false }
 serde_json = { version = "1.0.96", default-features = false }
 bitvec = { version = "0.17.4", default-features = false }
 thiserror = "1.0.40"
+thiserror-no-std = "2.0.2"
+derive_more = { version = "0.99.17", default-features = false }

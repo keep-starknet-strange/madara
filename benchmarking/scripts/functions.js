@@ -35,7 +35,7 @@ async function executeERC20Transfer(userContext, events, done) {
     userContext.api,
     contractAddress,
     "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
-    contractAddress,
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
     amount,
     nonce
   ).send();

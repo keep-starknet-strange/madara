@@ -1,4 +1,4 @@
-name: Check Set-Up & Build
+name: Check, Build & Tests
 
 # Controls when the action will run.
 on:
@@ -11,67 +11,70 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  check:
-    # The type of runner that the job will run on
+  lint:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-
-    - name: Setup rust toolchain
-      run: rustup show
-    - name: Set-Up
-      run: >
-        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-    - uses: Swatinem/rust-cache@v2
-    - name: Check Build and run tests
-      run: |
-        cargo fmt --all -- --check
-        cargo clippy --all -- -D warnings
-        cargo clippy --tests -- -D warnings
+      - uses: actions/checkout@v3
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - name: Format and clippy
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all -- -D warnings
+          cargo clippy --tests -- -D warnings
 
   coverage:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - uses: Swatinem/rust-cache@v2
+      - name: Coverage
+        run: cargo llvm-cov --codecov --output-path codecov.json
+      - name: Upload coverage to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: codecov.json
+          fail_ci_if_error: true
 
-    - name: Setup rust toolchain
-      run: rustup show
-    - name: Set-Up
-      run: >
-        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-    - name: Install cargo-llvm-cov
-      uses: taiki-e/install-action@cargo-llvm-cov
-    - uses: Swatinem/rust-cache@v2
-    - name: Coverage
-      run: cargo llvm-cov --lcov --output-path lcov.info
-    - name: Upload coverage to codecov.io
-      uses: codecov/codecov-action@v3
-      with:
-        fail_ci_if_error: true
-
-  bench:
-    # The type of runner that the job will run on
+  integration-tests:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    env:
+      BINARY_PATH: ../target/debug/madara
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-    - name: Setup rust toolchain
-      run: rustup show
-    - name: Set-Up
-      run: >
-        sudo apt-get update && sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-    - uses: Swatinem/rust-cache@v2
-    - name: Check Build for Benchmarking
-      run: >
-        pushd crates/node && cargo check --features=runtime-benchmarks --release
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ">=20"
+          cache: "npm"
+          cache-dependency-path: ./tests/package-lock.json
+      - name: Install
+        run: |-
+          cd tests
+          npm install
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace
+      - name: Run test
+        run: |-
+          cd tests
+          npm run test

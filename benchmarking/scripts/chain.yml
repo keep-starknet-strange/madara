@@ -10,7 +10,7 @@ config:
           arrivalCount: 99
           name: Engine test phase
   engines:
-   substrate: {}
+    substrate: {}
 scenarios:
   - engine: substrate
     name: headers_blocks
