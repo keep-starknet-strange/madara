@@ -228,7 +228,11 @@ where
     /// # Returns
     ///
     /// * `class_hash` - The class hash of the given contract
-    fn get_class_hash_at(&self, block_id: StarknetBlockId, contract_address: Address) -> RpcResult<FieldElement> {
+    fn get_class_hash_at(
+        &self,
+        block_id: StarknetBlockId,
+        contract_address: ContractAddress,
+    ) -> RpcResult<FieldElement> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound

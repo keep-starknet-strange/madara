@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::types::{ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
@@ -57,6 +57,12 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
     /// Return the contract class at the provided address for the provided block.
     fn contract_class(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClassWrapper>;
+    /// Return the class hash at the provided address for the provided block.
+    fn contract_class_hash_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ClassHashWrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -108,5 +114,22 @@ where
             None => None,
             Some(contract_class_hash) => api.contract_class_by_class_hash(block_hash, contract_class_hash).ok()?,
         }
+    }
+
+    // Use the runtime api to fetch the class hash at the provided address for the provided block.
+    // # Arguments
+    //
+    // * `block_hash` - The block hash
+    // * `address` - The address to fetch the class hash for
+    //
+    // # Returns
+    // * `Some(class_hash)` - The class hash at the provided address for the provided block
+    fn contract_class_hash_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ClassHashWrapper> {
+        let api = self.client.runtime_api();
+        api.contract_class_hash_by_address(block_hash, address).ok()?
     }
 }
