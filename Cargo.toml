@@ -122,7 +122,7 @@ starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_
 # Other third party dependencies
 anyhow = "1.0.70"
 base64 = "0.21.0"
-flate2 = "1.0.25"
+flate2 = "1.0.26"
 scale-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 scale-info = { version = "2.5.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
