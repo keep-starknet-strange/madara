@@ -1,4 +1,6 @@
 //! Configuration of the pallets used in the runtime.
+//! The pallets used in the runtime are configured here.
+//! This file is used to generate the `construct_runtime!` macro.
 
 pub use frame_support::traits::{
     ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
@@ -27,6 +29,24 @@ use crate::*;
 
 // Configure FRAME pallets to include in runtime.
 
+// --------------------------------------
+// CUSTOM PALLETS
+// --------------------------------------
+
+/// Configure the Starknet pallet in pallets/starknet.
+impl pallet_starknet::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
+    type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
+    type TimestampProvider = Timestamp;
+    type UnsignedPriority = UnsignedPriority;
+}
+
+/// --------------------------------------
+/// FRAME SYSTEM PALLET
+/// --------------------------------------
+
+/// Configuration of `frame_system` pallet.
 impl frame_system::Config for Runtime {
     /// The basic call filter to use in dispatchable.
     type BaseCallFilter = frame_support::traits::Everything;
@@ -79,14 +99,27 @@ impl frame_system::Config for Runtime {
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-// Authority-based consensus protocol used for block production
+// --------------------------------------
+// CONSENSUS RELATED FRAME PALLETS
+// --------------------------------------
+// Notes:
+// Aura is the consensus algorithm used for block production.
+// Grandpa is the consensus algorithm used for block finalization.
+// We want to support multiple flavors of consensus algorithms.
+// Specifically we want to implement some proposals defined in the Starknet community forum.
+// For more information see: https://community.starknet.io/t/starknet-decentralized-protocol-i-introduction/2671
+// You can also follow this issue on github: https://github.com/keep-starknet-strange/madara/issues/83
+
+/// Authority-based consensus protocol used for block production.
+/// TODO: Comment and explain the rationale behind the configuration items.
 impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
     type DisabledValidators = ();
     type MaxAuthorities = ConstU32<32>;
 }
 
-// Deterministic finality mechanism used for block finalization
+/// Deterministic finality mechanism used for block finalization.
+/// TODO: Comment and explain the rationale behind the configuration items.
 impl pallet_grandpa::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
 
@@ -98,7 +131,12 @@ impl pallet_grandpa::Config for Runtime {
     type EquivocationReportSystem = ();
 }
 
-// Timestamp manipulation
+/// --------------------------------------
+/// OTHER 3RD PARTY FRAME PALLETS
+/// --------------------------------------
+
+/// Timestamp manipulation.
+/// For instance, we need it to set the timestamp of the Starkknet block.
 impl pallet_timestamp::Config for Runtime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
@@ -107,7 +145,8 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
-// Provides interaction with balances and accounts
+/// Provides interaction with balances and accounts.
+/// TODO: Comment and explain the rationale behind the configuration items.
 impl pallet_balances::Config for Runtime {
     type MaxLocks = ConstU32<50>;
     type MaxReserves = ();
@@ -122,7 +161,7 @@ impl pallet_balances::Config for Runtime {
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
 }
 
-// Provides the logic needed to handle transaction fees
+/// Provides the logic needed to handle transaction fees
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction = StarknetFee;
@@ -131,7 +170,9 @@ impl pallet_transaction_payment::Config for Runtime {
     type LengthToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
-// Allows executing privileged functions
+
+/// Allows executing privileged functions.
+/// Right now we use it to configure the fee token address for the Starknet pallet.
 impl pallet_sudo::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
@@ -139,15 +180,6 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
-}
-
-/// Configure the Starknet pallet in pallets/starknet.
-impl pallet_starknet::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
-    type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    type TimestampProvider = Timestamp;
-    type UnsignedPriority = UnsignedPriority;
 }
 
 /// A stateless module with helpers for dispatch management which does no re-authentication.

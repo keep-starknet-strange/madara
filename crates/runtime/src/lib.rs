@@ -1,3 +1,10 @@
+//! Definition of the Starknet Appchain runtime.
+//! A Starknet Appchain runtime can be used to run a Starknet Appchain, either as a standalone
+//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
+//! public Starknet L2.
+//! For now this is the same because we don't support yet validity proofs and state updates to
+//! another layer.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -63,6 +70,7 @@ construct_runtime!(
         Starknet: pallet_starknet,
     }
 );
+
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
