@@ -5,8 +5,6 @@ use sp_core::{ConstU32, H256, U256};
 use starknet_api::api_core::ClassHash;
 use starknet_api::stdlib::collections::HashMap;
 
-/// TODO: Replace with a proper type for field element.
-
 /// Nonce of a Starknet transaction.
 pub type NonceWrapper = U256;
 /// Storage Key
