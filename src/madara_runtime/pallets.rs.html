@@ -170,7 +170,41 @@
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
+//! The pallets used in the runtime are configured here.
+//! This file is used to generate the `construct_runtime!` macro.
 
 </span><span class="kw">pub use </span>frame_support::traits::{
     ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
@@ -199,6 +233,24 @@
 
 <span class="comment">// Configure FRAME pallets to include in runtime.
 
+// --------------------------------------
+// CUSTOM PALLETS
+// --------------------------------------
+
+</span><span class="doccomment">/// Configure the Starknet pallet in pallets/starknet.
+</span><span class="kw">impl </span>pallet_starknet::Config <span class="kw">for </span>Runtime {
+    <span class="kw">type </span>RuntimeEvent = RuntimeEvent;
+    <span class="kw">type </span>StateRoot = pallet_starknet::state_root::IntermediateStateRoot&lt;<span class="self">Self</span>&gt;;
+    <span class="kw">type </span>SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
+    <span class="kw">type </span>TimestampProvider = Timestamp;
+    <span class="kw">type </span>UnsignedPriority = UnsignedPriority;
+}
+
+<span class="doccomment">/// --------------------------------------
+/// FRAME SYSTEM PALLET
+/// --------------------------------------
+
+/// Configuration of `frame_system` pallet.
 </span><span class="kw">impl </span>frame_system::Config <span class="kw">for </span>Runtime {
     <span class="doccomment">/// The basic call filter to use in dispatchable.
     </span><span class="kw">type </span>BaseCallFilter = frame_support::traits::Everything;
@@ -251,14 +303,27 @@
     <span class="kw">type </span>MaxConsumers = frame_support::traits::ConstU32&lt;<span class="number">16</span>&gt;;
 }
 
-<span class="comment">// Authority-based consensus protocol used for block production
+<span class="comment">// --------------------------------------
+// CONSENSUS RELATED FRAME PALLETS
+// --------------------------------------
+// Notes:
+// Aura is the consensus algorithm used for block production.
+// Grandpa is the consensus algorithm used for block finalization.
+// We want to support multiple flavors of consensus algorithms.
+// Specifically we want to implement some proposals defined in the Starknet community forum.
+// For more information see: https://community.starknet.io/t/starknet-decentralized-protocol-i-introduction/2671
+// You can also follow this issue on github: https://github.com/keep-starknet-strange/madara/issues/83
+
+</span><span class="doccomment">/// Authority-based consensus protocol used for block production.
+/// TODO: Comment and explain the rationale behind the configuration items.
 </span><span class="kw">impl </span>pallet_aura::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>AuthorityId = AuraId;
     <span class="kw">type </span>DisabledValidators = ();
     <span class="kw">type </span>MaxAuthorities = ConstU32&lt;<span class="number">32</span>&gt;;
 }
 
-<span class="comment">// Deterministic finality mechanism used for block finalization
+<span class="doccomment">/// Deterministic finality mechanism used for block finalization.
+/// TODO: Comment and explain the rationale behind the configuration items.
 </span><span class="kw">impl </span>pallet_grandpa::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>RuntimeEvent = RuntimeEvent;
 
@@ -270,7 +335,12 @@
     <span class="kw">type </span>EquivocationReportSystem = ();
 }
 
-<span class="comment">// Timestamp manipulation
+<span class="doccomment">/// --------------------------------------
+/// OTHER 3RD PARTY FRAME PALLETS
+/// --------------------------------------
+
+/// Timestamp manipulation.
+/// For instance, we need it to set the timestamp of the Starkknet block.
 </span><span class="kw">impl </span>pallet_timestamp::Config <span class="kw">for </span>Runtime {
     <span class="doccomment">/// A timestamp: milliseconds since the unix epoch.
     </span><span class="kw">type </span>Moment = u64;
@@ -279,7 +349,8 @@
     <span class="kw">type </span>WeightInfo = ();
 }
 
-<span class="comment">// Provides interaction with balances and accounts
+<span class="doccomment">/// Provides interaction with balances and accounts.
+/// TODO: Comment and explain the rationale behind the configuration items.
 </span><span class="kw">impl </span>pallet_balances::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>MaxLocks = ConstU32&lt;<span class="number">50</span>&gt;;
     <span class="kw">type </span>MaxReserves = ();
@@ -294,7 +365,7 @@
     <span class="kw">type </span>WeightInfo = pallet_balances::weights::SubstrateWeight&lt;Runtime&gt;;
 }
 
-<span class="comment">// Provides the logic needed to handle transaction fees
+<span class="doccomment">/// Provides the logic needed to handle transaction fees
 </span><span class="kw">impl </span>pallet_transaction_payment::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>RuntimeEvent = RuntimeEvent;
     <span class="kw">type </span>OnChargeTransaction = StarknetFee;
@@ -303,7 +374,9 @@
     <span class="kw">type </span>LengthToFee = IdentityFee&lt;Balance&gt;;
     <span class="kw">type </span>FeeMultiplierUpdate = ConstFeeMultiplier&lt;FeeMultiplier&gt;;
 }
-<span class="comment">// Allows executing privileged functions
+
+<span class="doccomment">/// Allows executing privileged functions.
+/// Right now we use it to configure the fee token address for the Starknet pallet.
 </span><span class="kw">impl </span>pallet_sudo::Config <span class="kw">for </span>Runtime {
     <span class="kw">type </span>RuntimeEvent = RuntimeEvent;
     <span class="kw">type </span>RuntimeCall = RuntimeCall;
@@ -311,15 +384,6 @@
 
 <span class="macro">parameter_types! </span>{
     <span class="kw">pub const </span>UnsignedPriority: u64 = <span class="number">1 </span>&lt;&lt; <span class="number">20</span>;
-}
-
-<span class="doccomment">/// Configure the Starknet pallet in pallets/starknet.
-</span><span class="kw">impl </span>pallet_starknet::Config <span class="kw">for </span>Runtime {
-    <span class="kw">type </span>RuntimeEvent = RuntimeEvent;
-    <span class="kw">type </span>StateRoot = pallet_starknet::state_root::IntermediateStateRoot&lt;<span class="self">Self</span>&gt;;
-    <span class="kw">type </span>SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
-    <span class="kw">type </span>TimestampProvider = Timestamp;
-    <span class="kw">type </span>UnsignedPriority = UnsignedPriority;
 }
 
 <span class="doccomment">/// A stateless module with helpers for dispatch management which does no re-authentication.

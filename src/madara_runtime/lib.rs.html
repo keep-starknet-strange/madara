@@ -347,7 +347,22 @@
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
 <a href="#349" id="349">349</a>
-</pre><pre class="rust"><code><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+</pre><pre class="rust"><code><span class="doccomment">//! Definition of the Starknet Appchain runtime.
+//! A Starknet Appchain runtime can be used to run a Starknet Appchain, either as a standalone
+//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
+//! public Starknet L2.
+//! For now this is the same because we don&#39;t support yet validity proofs and state updates to
+//! another layer.
+
+</span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 </span><span class="comment">// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 </span><span class="attr">#![recursion_limit = <span class="string">&quot;256&quot;</span>]
 
@@ -412,6 +427,7 @@
         </span>Starknet: pallet_starknet,
     }
 );
+
 <span class="doccomment">/// The address format for describing accounts.
 </span><span class="kw">pub type </span>Address = sp_runtime::MultiAddress&lt;AccountId, ()&gt;;
 <span class="doccomment">/// Block header type as expected by this runtime.
