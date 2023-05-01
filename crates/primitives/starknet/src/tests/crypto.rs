@@ -6,7 +6,7 @@ use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment};
 use crate::crypto::hash::pedersen::PedersenHasher;
-use crate::execution::CallEntryPointWrapper;
+use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::transaction::types::{EventWrapper, Transaction};
 
 #[test]

@@ -9,10 +9,10 @@ use serde::de::Error as DeserializationError;
 use serde::{Deserialize, Deserializer, Serializer};
 use sp_core::Get;
 
-mod call_entrypoint_wrapper;
-mod contract_class_wrapper;
-mod entrypoint_wrapper;
-mod program_wrapper;
+pub mod call_entrypoint_wrapper;
+pub mod contract_class_wrapper;
+pub mod entrypoint_wrapper;
+pub mod program_wrapper;
 
 /// Serialization of [BoundedBTreeMap].
 /// This is needed for the genesis config.

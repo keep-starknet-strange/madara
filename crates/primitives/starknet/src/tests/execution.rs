@@ -1,15 +1,13 @@
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::test_utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
-use frame_support::{assert_ok, bounded_vec, debug};
+use frame_support::{assert_ok, bounded_vec};
 use sp_core::{H256, U256};
-use starknet_api::api_core::ClassHash;
-use starknet_api::hash::StarkFelt;
 use starknet_api::serde_utils::bytes_from_hex_str;
-use starknet_api::stark_felt;
 
 use crate::block::Block;
-use crate::execution::types::EntryPointExecutionErrorWrapper;
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
+use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
+use crate::execution::types::ContractAddressWrapper;
 
 #[test]
 fn test_call_entry_point_execute_works() {
