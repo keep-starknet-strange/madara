@@ -15,7 +15,7 @@ use jsonrpsee::core::RpcResult;
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
+    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FieldElement, FunctionCall, RPCContractClass,
     SierraContractClass,
 };
 use mc_storage::OverrideHandle;
@@ -26,6 +26,7 @@ use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::traits::Block as BlockT;
+use starknet_api::hash::StarkFelt;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {
@@ -213,6 +214,46 @@ where
         // })?;
 
         Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
+    }
+
+    /// Get the contract class hash in the given block for the contract deployed at the given
+    /// address
+    ///
+    /// # Arguments
+    ///
+    /// * `block_id` - The hash of the requested block, or number (height) of the requested block,
+    ///   or a block tag
+    /// * `contract_address` - The address of the contract whose class hash will be returned
+    ///
+    /// # Returns
+    ///
+    /// * `class_hash` - The class hash of the given contract
+    fn get_class_hash_at(&self, block_id: StarknetBlockId, contract_address: Address) -> RpcResult<FieldElement> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let contract_address_wrapped = <[u8; 32]>::from_hex(remove_prefix(&contract_address)).map_err(|e| {
+            error!("Failed to convert '{contract_address}' to array: {e}");
+            StarknetRpcApiError::ContractNotFound
+        })?;
+
+        let class_hash = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped)
+            .ok_or_else(|| {
+                error!("Failed to retrieve contract class hash at '{contract_address}'");
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        Ok(StarkFelt::new(class_hash)
+            .map_err(|e| {
+                error!("Failed to convert contract class hash at '{contract_address}': {e}");
+                StarknetRpcApiError::ContractNotFound
+            })?
+            .to_string())
     }
 }
 

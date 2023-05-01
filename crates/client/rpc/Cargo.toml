@@ -30,6 +30,8 @@ sp-arithmetic = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
+# Starknet
+starknet_api = { workspace = true, default-features = false }
 # Others
 blockifier = { workspace = true, default-features = false, features = [
   "testing",

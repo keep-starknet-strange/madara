@@ -4311,6 +4311,7 @@ dependencies = [
  "sp-blockchain",
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.40)",
  "sp-runtime",
+ "starknet_api",
  "thiserror",
 ]
 
