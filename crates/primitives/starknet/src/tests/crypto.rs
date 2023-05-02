@@ -6,7 +6,9 @@ use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment};
 use crate::crypto::hash::pedersen::PedersenHasher;
+use crate::crypto::hash::{hash, HashType};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
+use crate::traits::hash::Hasher;
 use crate::transaction::types::{EventWrapper, Transaction};
 
 #[test]
@@ -59,4 +61,21 @@ fn test_event_hash() {
         calculate_event_hash::<PedersenHasher>(&EventWrapper { from_address, ..EventWrapper::empty() }),
         FieldElement::from_str("0x754233cddfc3670a8e9c47f714397312a0319691a8762a49351fad896b37462").unwrap()
     )
+}
+
+#[test]
+fn test_pedersen_hash() {
+    let pedersen_hasher = PedersenHasher::default();
+    let hash_result = pedersen_hasher.hash(&test_data());
+    let expected_hash = hash(HashType::Pedersen, &test_data());
+
+    assert_eq!(hash_result, expected_hash);
+}
+
+// test_data() function returns a Vec<u8> as an example data
+fn test_data() -> Vec<u8> {
+    vec![
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+        31, 32,
+    ]
 }
