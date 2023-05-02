@@ -4137,7 +4137,7 @@ dependencies = [
 
 [[package]]
 name = "madara"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 dependencies = [
  "async-trait",
  "blockifier",
@@ -4194,7 +4194,7 @@ dependencies = [
 
 [[package]]
 name = "madara-runtime"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",
@@ -4491,7 +4491,7 @@ dependencies = [
 
 [[package]]
 name = "mp-digest-log"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 dependencies = [
  "assert_matches",
  "mp-starknet",
@@ -4501,7 +4501,7 @@ dependencies = [
 
 [[package]]
 name = "mp-starknet"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 dependencies = [
  "bitvec 0.17.4",
  "blockifier",
@@ -5079,7 +5079,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-starknet"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 dependencies = [
  "blockifier",
  "frame-benchmarking",
