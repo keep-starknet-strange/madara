@@ -1,5 +1,4 @@
 use blockifier::abi::abi_utils::selector_from_name;
-use blockifier::test_utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 use frame_support::{assert_ok, bounded_vec};
 use sp_core::{H256, U256};
 use starknet_api::serde_utils::bytes_from_hex_str;
@@ -8,6 +7,7 @@ use crate::block::Block;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::ContractAddressWrapper;
+use crate::tests::utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 
 #[test]
 fn test_call_entry_point_execute_works() {
