@@ -92,7 +92,7 @@ export function declare(
   api: ApiPromise,
   contractAddress: string,
   tokenClassHash: string,
-  private_key: string = ""
+  private_key = ""
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
@@ -127,7 +127,7 @@ export function deploy(
   api: ApiPromise,
   contractAddress: string,
   tokenClassHash: string,
-  private_key: string = ""
+  private_key = ""
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Compute contract address
   // const deployedContractAddress = hash.calculateContractAddressFromHash(

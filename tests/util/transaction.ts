@@ -1,9 +1,6 @@
 import { ec, number, Signature, addAddressPadding } from "starknet";
 
-export function signTransaction(
-  txHash: string,
-  privateKey: string = ""
-): Signature {
+export function signTransaction(txHash: string, privateKey = ""): Signature {
   if (privateKey === "") {
     return [];
   }
