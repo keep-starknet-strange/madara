@@ -380,23 +380,18 @@ impl Transaction {
             entry_point_selector: self.validate_entry_point_selector(&tx_type)?,
             calldata: self.validate_entrypoint_calldata(&tx_type)?,
             class_hash: None,
+            code_address: None,
             storage_address: account_tx_context.sender_address,
             caller_address: StarknetContractAddress::default(),
             call_type: CallType::Call,
         };
         let mut execution_context = ExecutionContext::default();
 
-        log::info!("Validating tx: {:?}, {:?}", validate_call, &tx_type);
-        log::info!("Signature in tx: {:?}", self.signature);
-        log::info!("Signature in account: {:?}", account_tx_context.signature);
-
         let validate_call_info = validate_call
             .execute(state, execution_resources, &mut execution_context, block_context, account_tx_context)
             .map_err(TransactionExecutionErrorWrapper::from)?;
         verify_no_calls_to_other_contracts(&validate_call_info, String::from(constants::VALIDATE_ENTRY_POINT_NAME))
             .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
-
-        log::info!("Transaction validated successfully");
 
         Ok(())
     }

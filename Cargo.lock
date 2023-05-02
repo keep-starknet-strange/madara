@@ -4607,7 +4607,6 @@ dependencies = [
  "frame-support",
  "hex",
  "itertools",
- "log",
  "parity-scale-codec",
  "poseidon",
  "pretty_assertions",

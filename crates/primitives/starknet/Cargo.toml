@@ -33,7 +33,6 @@ cairo-vm = { workspace = true }
 bitvec = { workspace = true, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
 itertools = { workspace = true }
-log = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 	"derive",
 	"max-encoded-len",
