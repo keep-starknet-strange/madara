@@ -1,6 +1,6 @@
 [package]
 name = "madara"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 description = "Madara node."
 authors = [
 	"Abdelhamid Bakhta <@keep-starknet-strange>",
