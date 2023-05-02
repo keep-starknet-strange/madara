@@ -4,6 +4,7 @@
 
 mod errors;
 mod madara_backend_client;
+mod mappers;
 
 use std::marker::PhantomData;
 use std::str::FromStr;
@@ -13,6 +14,7 @@ use errors::StarknetRpcApiError;
 use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
+use mappers::{h256_to_string, remove_prefix, string_to_h256, u256_to_string, u8_array_to_string};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
     to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
