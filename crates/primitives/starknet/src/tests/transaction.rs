@@ -1,4 +1,4 @@
-use frame_support::bounded_vec;
+use frame_support::{bounded_vec, BoundedVec};
 use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockHash, BlockNumber};
@@ -9,7 +9,10 @@ use starknet_api::transaction::{
     TransactionReceipt,
 };
 
-use crate::transaction::types::{EventError, EventWrapper, Transaction, TransactionReceiptWrapper, TxType};
+use crate::execution::types::ContractAddressWrapper;
+use crate::transaction::types::{
+    EventError, EventWrapper, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
+};
 
 #[test]
 fn verify_tx_version_passes_for_valid_version() {
@@ -134,4 +137,59 @@ fn test_try_into_transaction_receipt_wrapper_with_too_many_events() {
     // Check if the conversion fails with the expected error
     assert!(result.is_err());
     assert_eq!(result.unwrap_err(), EventError::TooManyEvents);
+}
+
+#[test]
+fn test_event_wrapper_new() {
+    let keys: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::zero(), H256::from([1; 32])];
+    let data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
+    let from_address = ContractAddressWrapper::from(H256::from([3; 32]));
+
+    let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address.clone());
+
+    assert_eq!(event_wrapper.keys, keys);
+    assert_eq!(event_wrapper.data, data);
+    assert_eq!(event_wrapper.from_address, from_address);
+}
+
+#[test]
+fn test_event_wrapper_empty() {
+    let event_wrapper = EventWrapper::empty();
+    assert_eq!(event_wrapper.keys.len(), 0);
+    assert_eq!(event_wrapper.data.len(), 0);
+    assert_eq!(event_wrapper.from_address, ContractAddressWrapper::default());
+}
+
+#[test]
+fn test_event_wrapper_builder() {
+    let keys = vec![H256::zero(), H256::from([1; 32])];
+    let data = vec![H256::from([1; 32]), H256::from([2; 32])];
+    let from_address = ContractAddressWrapper::from(H256::from([3; 32]));
+
+    let event_wrapper = EventWrapper::builder()
+        .with_keys(keys.clone())
+        .with_data(data.clone())
+        .with_from_address(ContractAddress::try_from(StarkFelt::new(from_address).unwrap()).unwrap())
+        .build()
+        .unwrap();
+
+    assert_eq!(event_wrapper.keys, keys);
+    assert_eq!(event_wrapper.data, data);
+    assert_eq!(event_wrapper.from_address, from_address);
+}
+
+#[test]
+fn test_event_wrapper_builder_with_event_content() {
+    let event_content = EventContent {
+        keys: vec![EventKey(StarkFelt::new([0; 32]).unwrap())],
+        data: EventData(vec![StarkFelt::new([1; 32]).unwrap(), StarkFelt::new([2; 32]).unwrap()]),
+    };
+
+    let event_wrapper = EventWrapper::builder().with_event_content(event_content).build().unwrap();
+
+    let bounded_keys: BoundedVec<H256, MaxArraySize> = bounded_vec!(H256::zero());
+    let bounded_data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
+
+    assert_eq!(event_wrapper.keys, bounded_keys);
+    assert_eq!(event_wrapper.data, bounded_data);
 }
