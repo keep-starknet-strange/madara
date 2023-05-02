@@ -1,8 +1,9 @@
 import "@keep-starknet-strange/madara-api-augment";
 import { type ApiPromise } from "@polkadot/api";
+import { signTransaction } from "./transaction";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
-import { stringify, u8aToHex } from "@polkadot/util";
+import { stringify, u8aWrapBytes } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
@@ -90,11 +91,12 @@ export async function sendTransaction(
 export function declare(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string
+  tokenClassHash: string,
+  private_key: string = ""
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
-    hash: "", // leave empty for now, will be filled in by the runtime
+    hash: "0x0000000000000000000000000000000000000000000000000000000000000001", // set to 0x1 for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
@@ -107,12 +109,14 @@ export function declare(
       callerAddress: contractAddress,
     },
     contractClass: {
-      program: u8aToHex(Buffer.from(stringify(erc20Json.program))),
-      entryPointsByType: u8aToHex(
+      program: u8aWrapBytes(Buffer.from(stringify(erc20Json.program))),
+      entryPointsByType: u8aWrapBytes(
         Buffer.from(stringify(erc20Json.entry_points_by_type))
       ),
     },
   };
+
+  tx_declare.signature = signTransaction(tx_declare.hash, private_key);
 
   const extrisinc_declare = api.tx.starknet.declare(tx_declare);
 
@@ -122,7 +126,8 @@ export function declare(
 export function deploy(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string
+  tokenClassHash: string,
+  private_key: string = ""
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Compute contract address
   // const deployedContractAddress = hash.calculateContractAddressFromHash(
@@ -135,6 +140,7 @@ export function deploy(
   // Deploy contract
   const tx_deploy = {
     version: 1, // version of the transaction
+    hash: "0x0000000000000000000000000000000000000000000000000000000000000001", // set to 0x1 for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
@@ -157,6 +163,8 @@ export function deploy(
     max_fee:
       "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
   };
+
+  tx_deploy.signature = signTransaction(tx_deploy.hash, private_key);
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
 
