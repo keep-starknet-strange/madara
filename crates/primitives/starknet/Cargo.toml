@@ -1,6 +1,6 @@
 [package]
 name = "mp-starknet"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 license = "MIT"
 description = "Starknet primitives for Substrate."
 authors = { workspace = true }

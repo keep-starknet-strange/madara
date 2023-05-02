@@ -1,6 +1,6 @@
 [package]
 name = "madara-runtime"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 description = "Madara runtime."
 authors = [
 	"Abdelhamid Bakhta <@abdelhamidbakhta>",
