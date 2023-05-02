@@ -25,7 +25,7 @@ starknet-ff = { workspace = true, default-features = false, features = [
 	"alloc",
 ] }
 poseidon_hash = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false }
+blockifier = { workspace = true, default-features = false, features = ["testing"]}
 starknet_api = { workspace = true, default-features = false }
 cairo-vm = { workspace = true }
 
