@@ -195,7 +195,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
         let json_content: &str = include_str!("../../../../../resources/transactions/storage_read_write.json");
         let transaction =
-            transaction_from_json(json_content, include_bytes!("../../../../../resources/account/account.json"))
+            transaction_from_json(json_content, include_bytes!("../../../../../resources/account/simple/account.json"))
                 .expect("Failed to create Transaction from JSON")
                 .into();
 

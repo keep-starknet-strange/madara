@@ -51,7 +51,6 @@ func __validate__{
     range_check_ptr
 }(contract_address, selector: felt, calldata_len: felt, calldata: felt*) {
     let (tx_info) = get_tx_info();
-    assert tx_info.signature_len = 2;
     Account.is_valid_signature(tx_info.transaction_hash, tx_info.signature_len, tx_info.signature);
     return ();
 }
