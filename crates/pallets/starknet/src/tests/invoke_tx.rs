@@ -171,7 +171,7 @@ fn test_verify_nonce() {
         let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         // Test for a valid nonce (0)
-        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx.clone()));
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx));
 
         // Test for an invalid nonce (actual: 0, expected: 1)
         let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
