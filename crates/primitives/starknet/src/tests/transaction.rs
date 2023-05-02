@@ -146,18 +146,19 @@ fn test_event_wrapper_new() {
     let from_address = ContractAddressWrapper::from(H256::from([3; 32]));
 
     let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address);
+    let expected_event = EventWrapper { keys, data, from_address };
 
-    pretty_assertions::assert_eq!(event_wrapper, EventWrapper { keys, data, from_address });
+    pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }
 
 #[test]
 fn test_event_wrapper_empty() {
     let event_wrapper = EventWrapper::empty();
 
-    pretty_assertions::assert_eq!(
-        event_wrapper,
-        EventWrapper { keys: bounded_vec![], data: bounded_vec![], from_address: ContractAddressWrapper::default() }
-    );
+    let expected_event =
+        EventWrapper { keys: bounded_vec![], data: bounded_vec![], from_address: ContractAddressWrapper::default() };
+
+    pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }
 
 #[test]
@@ -173,14 +174,13 @@ fn test_event_wrapper_builder() {
         .build()
         .unwrap();
 
-    pretty_assertions::assert_eq!(
-        event_wrapper,
-        EventWrapper {
-            keys: BoundedVec::<H256, MaxArraySize>::try_from(keys).unwrap(),
-            data: BoundedVec::<H256, MaxArraySize>::try_from(data).unwrap(),
-            from_address
-        }
-    );
+    let expected_event = EventWrapper {
+        keys: BoundedVec::<H256, MaxArraySize>::try_from(keys).unwrap(),
+        data: BoundedVec::<H256, MaxArraySize>::try_from(data).unwrap(),
+        from_address,
+    };
+
+    pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }
 
 #[test]
@@ -195,8 +195,8 @@ fn test_event_wrapper_builder_with_event_content() {
     let bounded_keys: BoundedVec<H256, MaxArraySize> = bounded_vec!(H256::zero());
     let bounded_data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
 
-    pretty_assertions::assert_eq!(
-        event_wrapper,
-        EventWrapper { keys: bounded_keys, data: bounded_data, from_address: ContractAddressWrapper::default() }
-    );
+    let expected_event =
+        EventWrapper { keys: bounded_keys, data: bounded_data, from_address: ContractAddressWrapper::default() };
+
+    pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }
