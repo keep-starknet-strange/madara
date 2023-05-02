@@ -147,17 +147,17 @@ fn test_event_wrapper_new() {
 
     let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address);
 
-    assert_eq!(event_wrapper.keys, keys);
-    assert_eq!(event_wrapper.data, data);
-    assert_eq!(event_wrapper.from_address, from_address);
+    pretty_assertions::assert_eq!(event_wrapper, EventWrapper { keys, data, from_address });
 }
 
 #[test]
 fn test_event_wrapper_empty() {
     let event_wrapper = EventWrapper::empty();
-    assert_eq!(event_wrapper.keys.len(), 0);
-    assert_eq!(event_wrapper.data.len(), 0);
-    assert_eq!(event_wrapper.from_address, ContractAddressWrapper::default());
+
+    pretty_assertions::assert_eq!(
+        event_wrapper,
+        EventWrapper { keys: bounded_vec![], data: bounded_vec![], from_address: ContractAddressWrapper::default() }
+    );
 }
 
 #[test]
@@ -173,9 +173,14 @@ fn test_event_wrapper_builder() {
         .build()
         .unwrap();
 
-    assert_eq!(event_wrapper.keys, keys);
-    assert_eq!(event_wrapper.data, data);
-    assert_eq!(event_wrapper.from_address, from_address);
+    pretty_assertions::assert_eq!(
+        event_wrapper,
+        EventWrapper {
+            keys: BoundedVec::<H256, MaxArraySize>::try_from(keys).unwrap(),
+            data: BoundedVec::<H256, MaxArraySize>::try_from(data).unwrap(),
+            from_address
+        }
+    );
 }
 
 #[test]
@@ -190,6 +195,8 @@ fn test_event_wrapper_builder_with_event_content() {
     let bounded_keys: BoundedVec<H256, MaxArraySize> = bounded_vec!(H256::zero());
     let bounded_data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
 
-    assert_eq!(event_wrapper.keys, bounded_keys);
-    assert_eq!(event_wrapper.data, bounded_data);
+    pretty_assertions::assert_eq!(
+        event_wrapper,
+        EventWrapper { keys: bounded_keys, data: bounded_data, from_address: ContractAddressWrapper::default() }
+    );
 }
