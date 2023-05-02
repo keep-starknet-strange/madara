@@ -9,7 +9,7 @@ use starknet_crypto::FieldElement;
 use crate::crypto::commitment::{calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment};
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::crypto::hash::{hash, HashType};
-use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node};
+use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::traits::hash::{CryptoHasher, Hasher};
 use crate::transaction::types::{EventWrapper, Transaction};
@@ -138,7 +138,7 @@ fn test_binary_node_calculate_hash() {
         right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
     };
 
-    let _ = binary_node.calculate_hash::<TestCryptoHasher>();
+    binary_node.calculate_hash::<TestCryptoHasher>();
     assert_eq!(binary_node.hash, Some(FieldElement::from(5_u32)));
 }
 
