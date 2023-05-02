@@ -413,6 +413,7 @@ impl Transaction {
         if current_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionErrorWrapper::TransactionExecution(
                 TransactionExecutionError::InvalidNonce {
+                    address,
                     expected_nonce: current_nonce,
                     actual_nonce: account_tx_context.nonce,
                 },
