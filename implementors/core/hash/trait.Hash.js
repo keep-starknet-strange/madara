@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"mp_starknet":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"enum\" href=\"mp_starknet/execution/types/enum.EntryPointTypeWrapper.html\" title=\"enum mp_starknet::execution::types::EntryPointTypeWrapper\">EntryPointTypeWrapper</a>"]]
+"mp_starknet":[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/hash/trait.Hash.html\" title=\"trait core::hash::Hash\">Hash</a> for <a class=\"enum\" href=\"mp_starknet/execution/entrypoint_wrapper/enum.EntryPointTypeWrapper.html\" title=\"enum mp_starknet::execution::entrypoint_wrapper::EntryPointTypeWrapper\">EntryPointTypeWrapper</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
