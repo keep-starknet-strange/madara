@@ -1,7 +1,14 @@
 //! Transaction validation logic.
 use frame_support::traits::EnsureOrigin;
 
-use crate::types::RawOrigin;
+/// Representation of the origin of a Starknet transaction.
+/// For now, we still don't know how to represent the origin of a Starknet transaction,
+/// given that Starknet has native account abstraction.
+/// For now, we just use a dummy origin.
+/// See: `https://github.com/keep-starknet-strange/madara/issues/21`
+pub enum RawOrigin {
+    StarknetTransaction,
+}
 
 /// Ensure that the origin is a Starknet transaction.
 /// See: `https://github.com/keep-starknet-strange/madara/issues/21`

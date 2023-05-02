@@ -4,7 +4,7 @@ use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
 use lazy_static::lazy_static;
-use mp_starknet::execution::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction};
 use sp_core::{H256, U256};
 
@@ -14,7 +14,7 @@ use crate::Event;
 fn get_contract_class_wrapper(contract_content: &'static [u8]) -> ContractClassWrapper {
     let contract_class: ContractClass =
         serde_json::from_slice(contract_content).expect("File must contain the content of a compiled contract.");
-    ContractClassWrapper::from(contract_class)
+    ContractClassWrapper::try_from(contract_class).unwrap()
 }
 
 lazy_static! {

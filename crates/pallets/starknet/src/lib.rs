@@ -60,33 +60,29 @@ pub mod blockifier_state_adapter;
 /// Implementation of the [OnChargeTransaction] trait for the pallet
 pub mod starknet_fee;
 
+/// Everything needed to run the pallet offchain workers
+mod offchain_worker;
+
 #[cfg(test)]
 mod tests;
 
 pub use pallet::*;
 
+#[macro_use]
 pub extern crate alloc;
-use alloc::str::from_utf8;
-use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
-use core::marker::PhantomData;
 
-use blockifier::abi::abi_utils;
-use blockifier::block_context::BlockContext;
-use blockifier::execution::entry_point::{CallInfo, ExecutionContext, ExecutionResources};
-use blockifier::transaction::constants::TRANSFER_ENTRY_POINT_NAME;
-use blockifier::transaction::objects::AccountTransactionContext;
+use blockifier::execution::entry_point::CallInfo;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
-use frame_support::sp_runtime::offchain::storage::StorageValueRef;
-use frame_support::traits::{OriginTrait, Time};
+use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::execution::{
+use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
 };
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
@@ -95,25 +91,14 @@ use mp_starknet::transaction::types::{
     EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
     TxType,
 };
-use pallet_transaction_payment::OnChargeTransaction;
-use serde_json::from_str;
 use sp_core::{H256, U256};
-use sp_runtime::offchain::http;
 use sp_runtime::traits::UniqueSaturatedInto;
-use sp_runtime::transaction_validity::InvalidTransaction::Payment;
-use sp_runtime::transaction_validity::UnknownTransaction::Custom;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::{ChainId, ContractAddress};
-use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::hash::StarkFelt;
-use starknet_api::stdlib::collections::HashMap;
-use starknet_api::transaction::{Calldata, EventContent};
+use starknet_api::api_core::ContractAddress;
+use starknet_api::transaction::EventContent;
 pub use starknet_fee::StarknetFee;
-use types::{EthBlockNumber, OffchainWorkerError};
 
-use crate::message::{get_messages_events, LAST_FINALIZED_BLOCK_QUERY};
-use crate::types::{ContractStorageKeyWrapper, EthLogs, NonceWrapper, StarkFeltWrapper};
+use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -198,7 +183,7 @@ pub mod pallet {
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
                 Err(err) => match err {
-                    OffchainWorkerError::NoLastKnownEthBlock => {
+                    offchain_worker::OffchainWorkerError::NoLastKnownEthBlock => {
                         log!(info, "No last known Ethereum block number found. Skipping execution of L1 messages.")
                     }
                     _ => log!(error, "Failed to execute L1 messages: {:?}", err),
@@ -377,6 +362,7 @@ pub mod pallet {
         EmitEventError,
         StateDiffError,
         ContractNotFound,
+        ReachedBoundedVecLimit,
     }
 
     /// The Starknet pallet external functions.
@@ -435,17 +421,17 @@ pub mod pallet {
                 None,
                 fee_token_address,
             );
-            let receipt;
-            match call_info {
+            let receipt = match call_info {
                 Ok(Some(mut v)) => {
                     let events = Self::emit_events(&mut v).map_err(|_| Error::<T>::EmitEventError)?;
-                    receipt = TransactionReceiptWrapper {
-                        events: BoundedVec::try_from(events).unwrap(),
+                    let receipt = TransactionReceiptWrapper {
+                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::InvokeTx,
                         actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
                     };
                     log!(debug, "Transaction executed successfully: {:?}", v);
+                    receipt
                 }
                 Ok(None) => {
                     log!(error, "Transaction execution failed: no call info while it was expected");
@@ -455,7 +441,7 @@ pub mod pallet {
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
-            }
+            };
             FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
             // TODO: Compute real fee value
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
@@ -486,19 +472,17 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
+            // Check that contract class is not None
+            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+
+            // Check that the class hash is not None
+            let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
+
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            // Check that class hash is not None
-            ensure!(transaction.call_entrypoint.class_hash.is_some(), Error::<T>::ClassHashMustBeSpecified);
-
-            let class_hash = transaction.call_entrypoint.class_hash.unwrap();
-
             // Check class hash is not already declared
             ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
-
-            // Check that contract class is not None
-            ensure!(transaction.contract_class.is_some(), Error::<T>::ContractClassMustBeSpecified);
 
             // Get current block
             let block = Self::current_block();
@@ -506,12 +490,7 @@ pub mod pallet {
             let fee_token_address = Self::fee_token_address();
 
             // Parse contract class
-            let contract_class = transaction
-                .clone()
-                .contract_class
-                .unwrap()
-                .to_starknet_contract_class()
-                .or(Err(Error::<T>::InvalidContractClass))?;
+            let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
             match transaction.execute(
@@ -582,7 +561,7 @@ pub mod pallet {
                 fee_token_address,
             ) {
                 Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v);
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -634,7 +613,7 @@ pub mod pallet {
                 fee_token_address,
             ) {
                 Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
+                    log!(debug, "Transaction executed successfully: {:?}", v);
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
@@ -727,365 +706,191 @@ pub mod pallet {
             }
         }
     }
+}
 
-    /// The Starknet pallet internal functions.
-    impl<T: Config> Pallet<T> {
-        /// Get current block hash.
-        ///
-        /// # Returns
-        ///
-        /// The current block hash.
-        #[inline(always)]
-        pub fn current_block_hash() -> H256 {
-            Self::current_block().header().hash()
-        }
+/// The Starknet pallet internal functions.
+impl<T: Config> Pallet<T> {
+    /// Get current block hash.
+    ///
+    /// # Returns
+    ///
+    /// The current block hash.
+    #[inline(always)]
+    pub fn current_block_hash() -> H256 {
+        Self::current_block().header().hash()
+    }
 
-        /// Get the block hash of the previous block.
-        ///
-        /// # Arguments
-        ///
-        /// * `current_block_number` - The number of the current block.
-        ///
-        /// # Returns
-        ///
-        /// The block hash of the parent (previous) block or 0 if the current block is 0.
-        #[inline(always)]
-        pub fn parent_block_hash(current_block_number: &U256) -> H256 {
-            if current_block_number == &U256::zero() {
-                H256::zero()
-            } else {
-                Self::block_hash(current_block_number - 1)
+    /// Get the block hash of the previous block.
+    ///
+    /// # Arguments
+    ///
+    /// * `current_block_number` - The number of the current block.
+    ///
+    /// # Returns
+    ///
+    /// The block hash of the parent (previous) block or 0 if the current block is 0.
+    #[inline(always)]
+    pub fn parent_block_hash(current_block_number: &U256) -> H256 {
+        if current_block_number == &U256::zero() { H256::zero() } else { Self::block_hash(current_block_number - 1) }
+    }
+
+    /// Get the current block timestamp.
+    ///
+    /// # Returns
+    ///
+    /// The current block timestamp.
+    #[inline(always)]
+    pub fn block_timestamp() -> u64 {
+        T::TimestampProvider::now().unique_saturated_into()
+    }
+
+    /// Get the number of transactions in the block.
+    #[inline(always)]
+    pub fn transaction_count() -> u128 {
+        Self::pending().len() as u128
+    }
+
+    /// Get the number of events in the block.
+    #[inline(always)]
+    pub fn event_count() -> u128 {
+        Self::pending_events().len() as u128
+    }
+
+    /// Call a smart contract function.
+    pub fn call_contract(
+        address: ContractAddressWrapper,
+        function_selector: H256,
+        calldata: Vec<U256>,
+    ) -> Result<Vec<U256>, DispatchError> {
+        // Get current block
+        let block = Self::current_block();
+        // Get fee token address
+        let fee_token_address = Self::fee_token_address();
+        // Get class hash
+        let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
+
+        let entrypoint = CallEntryPointWrapper::new(
+            Some(class_hash),
+            EntryPointTypeWrapper::External,
+            Some(function_selector),
+            BoundedVec::try_from(calldata).unwrap_or_default(),
+            address,
+            ContractAddressWrapper::default(),
+        );
+
+        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
+            Ok(v) => {
+                log!(debug, "Transaction executed successfully: {:?}", v);
+                let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
+                Ok(result)
+            }
+            Err(e) => {
+                log!(error, "Transaction execution failed: {:?}", e);
+                Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
+    }
 
-        /// Get the current block timestamp.
-        ///
-        /// # Returns
-        ///
-        /// The current block timestamp.
-        #[inline(always)]
-        pub fn block_timestamp() -> u64 {
-            T::TimestampProvider::now().unique_saturated_into()
+    /// Store a Starknet block in the blockchain.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_number` - The block number.
+    fn store_block(block_number: U256) {
+        // TODO: Use actual values.
+        let parent_block_hash = Self::parent_block_hash(&block_number);
+        let pending = Self::pending();
+
+        let global_state_root = U256::zero();
+        // TODO: use the real sequencer address (our own address)
+        // FIXME #243
+        let sequencer_address = SEQUENCER_ADDRESS;
+        let block_timestamp = Self::block_timestamp();
+        let transaction_count = pending.len() as u128;
+        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+        let events = Self::pending_events();
+        let (transaction_commitment, event_commitment) =
+            commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
+        let protocol_version = None;
+        let extra_data = None;
+
+        let block = StarknetBlock::new(
+            StarknetHeader::new(
+                parent_block_hash,
+                block_number,
+                global_state_root,
+                sequencer_address,
+                block_timestamp,
+                transaction_count,
+                transaction_commitment,
+                events.len() as u128,
+                event_commitment,
+                protocol_version,
+                extra_data,
+            ),
+            // Safe because `transactions` is build form the `pending` bounded vec,
+            // which has the same size limit of `MaxTransactions`
+            BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+        );
+        // Save the current block.
+        CurrentBlock::<T>::put(block.clone());
+        // Save the block number <> hash mapping.
+        BlockHash::<T>::insert(block_number, block.header().hash());
+        Pending::<T>::kill();
+        PendingEvents::<T>::kill();
+
+        let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
+        frame_system::Pallet::<T>::deposit_log(digest);
+    }
+
+    /// Emit events from the call info.
+    ///
+    /// # Arguments
+    ///
+    /// * `call_info` - The call info.
+    ///
+    /// # Returns
+    ///
+    /// The result of the operation.
+    #[inline(always)]
+    fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
+        let mut events = Vec::new();
+
+        call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+        for ordered_event in &call_info.execution.events {
+            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+            events.push(event_type);
         }
 
-        /// Get the number of transactions in the block.
-        #[inline(always)]
-        pub fn transaction_count() -> u128 {
-            Self::pending().len() as u128
-        }
-
-        /// Get the number of events in the block.
-        #[inline(always)]
-        pub fn event_count() -> u128 {
-            Self::pending_events().len() as u128
-        }
-
-        /// Call a smart contract function.
-        pub fn call_contract(
-            address: ContractAddressWrapper,
-            function_selector: H256,
-            calldata: Vec<U256>,
-        ) -> Result<Vec<U256>, DispatchError> {
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
-            // Get class hash
-            let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
-
-            let entrypoint = CallEntryPointWrapper::new(
-                Some(class_hash),
-                EntryPointTypeWrapper::External,
-                Some(function_selector),
-                BoundedVec::try_from(calldata).unwrap_or_default(),
-                address,
-                ContractAddressWrapper::default(),
-            );
-
-            match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
-                Ok(v) => {
-                    // log!(debug, "Transaction executed successfully: {:?}", v.unwrap());
-                    let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
-                    Ok(result)
-                }
-                Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
-                    Err(Error::<T>::TransactionExecutionFailed.into())
-                }
-            }
-        }
-
-        /// Store a Starknet block in the blockchain.
-        ///
-        /// # Arguments
-        ///
-        /// * `block_number` - The block number.
-        fn store_block(block_number: U256) {
-            // TODO: Use actual values.
-            let parent_block_hash = Self::parent_block_hash(&block_number);
-            let pending = Self::pending();
-
-            let global_state_root = U256::zero();
-            // TODO: use the real sequencer address (our own address)
-            // FIXME #243
-            let sequencer_address = SEQUENCER_ADDRESS;
-            let block_timestamp = Self::block_timestamp();
-            let transaction_count = pending.len() as u128;
-            let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
-            let events = Self::pending_events();
-            let (transaction_commitment, event_commitment) =
-                commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
-            let protocol_version = None;
-            let extra_data = None;
-
-            let block = StarknetBlock::new(
-                StarknetHeader::new(
-                    parent_block_hash,
-                    block_number,
-                    global_state_root,
-                    sequencer_address,
-                    block_timestamp,
-                    transaction_count,
-                    transaction_commitment,
-                    events.len() as u128,
-                    event_commitment,
-                    protocol_version,
-                    extra_data,
-                ),
-                BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
-            );
-            // Save the current block.
-            CurrentBlock::<T>::put(block.clone());
-            // Save the block number <> hash mapping.
-            BlockHash::<T>::insert(block_number, block.header().hash());
-            Pending::<T>::kill();
-            PendingEvents::<T>::kill();
-
-            let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
-            frame_system::Pallet::<T>::deposit_log(digest);
-        }
-
-        /// Emit events from the call info.
-        ///
-        /// # Arguments
-        ///
-        /// * `call_info` - The call info.
-        ///
-        /// # Returns
-        ///
-        /// The result of the operation.
-        #[inline(always)]
-        fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
-            let mut events = Vec::new();
-
-            call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-            for ordered_event in &call_info.execution.events {
-                let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+        for inner_call in &mut call_info.inner_calls {
+            inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
+            for ordered_event in &inner_call.execution.events {
+                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address)?;
                 events.push(event_type);
             }
-
-            for inner_call in &mut call_info.inner_calls {
-                inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-                for ordered_event in &inner_call.execution.events {
-                    let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address)?;
-                    events.push(event_type);
-                }
-            }
-
-            Ok(events)
         }
 
-        /// Emit an event from the call info in substrate.
-        ///
-        /// # Arguments
-        ///
-        /// * `event` - The Starknet event.
-        /// * `from_address` - The contract address that emitted the event.
-        ///
-        /// # Error
-        ///
-        /// Returns an error if the event construction fails.
-        #[inline(always)]
-        fn emit_event(event: &EventContent, from_address: ContractAddress) -> Result<StarknetEventType, EventError> {
-            log!(debug, "Transaction event: {:?}", event);
-            let sn_event = StarknetEventType::builder()
-                .with_event_content(event.clone())
-                .with_from_address(from_address)
-                .build()?;
-            Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
+        Ok(events)
+    }
 
-            PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
-            Ok(sn_event)
-        }
+    /// Emit an event from the call info in substrate.
+    ///
+    /// # Arguments
+    ///
+    /// * `event` - The Starknet event.
+    /// * `from_address` - The contract address that emitted the event.
+    ///
+    /// # Error
+    ///
+    /// Returns an error if the event construction fails.
+    #[inline(always)]
+    fn emit_event(event: &EventContent, from_address: ContractAddress) -> Result<StarknetEventType, EventError> {
+        log!(debug, "Transaction event: {:?}", event);
+        let sn_event =
+            StarknetEventType::builder().with_event_content(event.clone()).with_from_address(from_address).build()?;
+        Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
 
-        /// Returns Ethereum RPC URL from Storage
-        fn get_eth_rpc_url() -> Result<String, OffchainWorkerError> {
-            let eth_execution_rpc_url = StorageValueRef::persistent(ETHEREUM_EXECUTION_RPC)
-                .get::<Vec<u8>>()
-                .map_err(|_| OffchainWorkerError::GetStorageFailed)?
-                .ok_or(OffchainWorkerError::EthRpcNotSet)?;
-
-            let endpoint: &str =
-                core::str::from_utf8(&eth_execution_rpc_url).map_err(|_| OffchainWorkerError::FormatBytesFailed)?;
-
-            if endpoint.is_empty() {
-                return Err(OffchainWorkerError::EthRpcNotSet);
-            }
-
-            Ok(endpoint.to_string())
-        }
-
-        /// Queries an Eth json rpc node.
-        ///
-        /// # Arguments
-        ///
-        /// * `request` - The request to be sent.
-        ///
-        /// # Returns
-        ///
-        /// The result of the query formatted as a `String`.
-        ///
-        /// # Errors
-        ///
-        /// If and error happens during the query or deserialization.
-        fn query_eth(request: &str) -> Result<String, OffchainWorkerError> {
-            let res = http::Request::post(&Self::get_eth_rpc_url()?, vec![request])
-                .add_header("content-type", "application/json")
-                .send()
-                .map_err(OffchainWorkerError::HttpError)?
-                .wait()
-                .map_err(OffchainWorkerError::RequestError)?;
-            let body_bytes = res.body().collect::<Vec<u8>>();
-            Ok(from_utf8(&body_bytes).map_err(OffchainWorkerError::ToBytesError)?.to_string())
-        }
-
-        /// Fetches L1 messages and execute them.
-        /// This function is called by the offchain worker.
-        /// It is executed in a separate thread.
-        /// # Returns
-        /// The result of the offchain worker execution.
-        fn process_l1_messages() -> Result<(), OffchainWorkerError> {
-            // Get the last known block from storage.
-            let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
-            // Query L1 for the last finalized block.
-            let body_str = Self::query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
-            let res: EthBlockNumber = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
-            let last_finalized_block = u64::from_str_radix(&res.result.number[2..], 16).unwrap();
-            // Check if there are new messages to be processed.
-            if last_finalized_block > last_known_eth_block {
-                // Read the new messages from L1.
-                let body_str = Self::query_eth(&get_messages_events(last_known_eth_block, last_finalized_block))?;
-                let res: EthLogs = from_str(&body_str).map_err(|_| OffchainWorkerError::SerdeError)?;
-                // Iterate over the messages and execute them.
-                res.result.iter().try_for_each(|message| {
-                    // Execute the message.
-                    Self::consume_l1_message(OriginFor::<T>::none(), message.try_into_transaction()?)
-                        .map_err(OffchainWorkerError::ConsumeMessageError)
-                })?;
-            }
-            Ok(())
-        }
-
-        /// Helper function that will transfer some fee token.
-        ///
-        /// # Arguments
-        ///
-        /// * `from` - the sender of the tokens
-        /// * `to` - recipient of the tokens
-        /// * `amount` - amount of the tokens
-        ///
-        /// # Error
-        ///
-        /// Returns an error if a step of the transfer fails
-        pub fn transfer_fees(
-            from: ContractAddressWrapper,
-            to: ContractAddressWrapper,
-            amount: <StarknetFee as OnChargeTransaction<T>>::Balance,
-        ) -> Result<(), TransactionValidityError> {
-            // Get current block.
-            let block = Pallet::<T>::current_block();
-            let fee_token_address =
-                ContractAddress::try_from(StarkFelt::new(Pallet::<T>::fee_token_address()).map_err(|_| {
-                    log!(error, "Couldn't convert fee_token_address to StarkFelt");
-                    TransactionValidityError::Unknown(Custom(0_u8))
-                })?)
-                .map_err(|_| {
-                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                    TransactionValidityError::Unknown(Custom(1_u8))
-                })?;
-            // Create fee transfer transaction.
-            let fee_transfer_call = blockifier::execution::entry_point::CallEntryPoint {
-                class_hash: None,
-                entry_point_type: EntryPointType::External,
-                entry_point_selector: abi_utils::selector_from_name(TRANSFER_ENTRY_POINT_NAME),
-                calldata: starknet_api::calldata![
-                    StarkFelt::new(to).map_err(|_| {
-                        log!(error, "Couldn't convert sequencer address to StarkFelt");
-                        TransactionValidityError::Unknown(Custom(0_u8))
-                    })?, // Recipient.
-                    StarkFelt::new([[0_u8; 16], amount.to_be_bytes()].concat()[..32].try_into().map_err(|_| {
-                        log!(error, "Couldn't convert fees to StarkFelt");
-                        TransactionValidityError::Unknown(Custom(0_u8))
-                    })?)
-                    .map_err(|_| {
-                        log!(error, "Couldn't convert fees to StarkFelt");
-                        TransactionValidityError::Unknown(Custom(0_u8))
-                    })?, // low
-                    StarkFelt::default() // high
-                ],
-                storage_address: fee_token_address,
-                caller_address: ContractAddress::try_from(StarkFelt::new(from).map_err(|_| {
-                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                    TransactionValidityError::Unknown(Custom(1_u8))
-                })?)
-                .map_err(|_| {
-                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                    TransactionValidityError::Unknown(Custom(1_u8))
-                })?,
-                call_type: blockifier::execution::entry_point::CallType::Call,
-            };
-            // FIXME #245
-            let mut execution_context = ExecutionContext::default(); // TODO: check if it needs a real value.
-            let account_ctx = AccountTransactionContext::default(); // TODO: check if it needs a real value.
-            // FIXME #256
-            let block_ctx = BlockContext {
-                chain_id: ChainId("SN_GOERLI".to_string()), // TODO: Make it configurable ?
-                block_number: BlockNumber(block.header().block_number.as_u64()),
-                block_timestamp: BlockTimestamp(block.header().block_timestamp),
-                sequencer_address: ContractAddress::try_from(
-                    StarkFelt::new(block.header().sequencer_address).map_err(|_| {
-                        log!(error, "Couldn't convert sequencer address to StarkFelt");
-                        TransactionValidityError::Unknown(Custom(0_u8))
-                    })?,
-                )
-                .map_err(|_| {
-                    log!(error, "Couldn't convert StarkFelt to ContractAddress");
-                    TransactionValidityError::Unknown(Custom(1_u8))
-                })?,
-                cairo_resource_fee_weights: HashMap::default(), // TODO: Use real weights
-                fee_token_address,
-                invoke_tx_max_n_steps: 1000000, // TODO: Make it configurable
-                validate_max_n_steps: 1000000,  // TODO: Make it configurable
-                gas_price: 0,                   // TODO: Use block gas price
-            };
-            match fee_transfer_call.execute(
-                &mut BlockifierStateAdapter::<T>::default(),
-                &mut ExecutionResources::default(),
-                &mut execution_context,
-                &block_ctx,
-                &account_ctx,
-            ) {
-                Ok(mut v) => {
-                    log!(trace, "Fees executed successfully: {:?}", v.execution.events);
-                    Self::emit_events(&mut v).map_err(|_| TransactionValidityError::Unknown(Custom(4_u8)))?;
-                }
-                Err(e) => {
-                    log!(error, "Fees execution failed: {:?}", e);
-                    return Err(TransactionValidityError::Invalid(Payment));
-                }
-            }
-
-            Ok(())
-        }
+        PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
+        Ok(sn_event)
     }
 }

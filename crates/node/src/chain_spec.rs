@@ -1,12 +1,11 @@
 use std::str::FromStr;
 
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+use blockifier::execution::contract_class::ContractClass;
 use hex::FromHex;
 use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
 };
-use mp_starknet::execution::ContractClassWrapper;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -166,6 +165,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
+pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
+    serde_json::from_slice(contract_content).unwrap()
+}
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -174,10 +176,11 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
+    let account_class =
+        get_contract_class(include_bytes!("../../../resources/account/account.json")).try_into().unwrap();
 
-    let test_class = get_contract_class(include_bytes!("../../../resources/test.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json"));
+    let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
+    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
@@ -231,9 +234,9 @@ fn testnet_genesis(
                 (token_contract_address_bytes, token_class_hash_bytes),
             ],
             contract_classes: vec![
-                (class_hash_bytes, ContractClassWrapper::from(account_class)),
-                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-                (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
+                (class_hash_bytes, account_class),
+                (other_class_hash_bytes, test_class),
+                (token_class_hash_bytes, erc20_class),
             ],
             storage: vec![
                 (

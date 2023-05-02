@@ -128,6 +128,8 @@ Thanks goes to these wonderful people
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://www.linkedin.com/in/clementwalter/"><img src="https://avatars.githubusercontent.com/u/18620296?v=4?s=100" width="100px;" alt="Clément Walter"/><br /><sub><b>Clément Walter</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ClementWalter" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Eikix"><img src="https://avatars.githubusercontent.com/u/66871571?v=4?s=100" width="100px;" alt="Elias Tazartes"/><br /><sub><b>Elias Tazartes</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Eikix" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xJonathanLEI"><img src="https://avatars.githubusercontent.com/u/19556359?v=4?s=100" width="100px;" alt="Jonathan LEI"/><br /><sub><b>Jonathan LEI</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=xJonathanLEI" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/greged93"><img src="https://avatars.githubusercontent.com/u/82421016?v=4?s=100" width="100px;" alt="greged93"/><br /><sub><b>greged93</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=greged93" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

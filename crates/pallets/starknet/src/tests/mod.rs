@@ -5,5 +5,6 @@ mod deploy_account_tx;
 mod erc20;
 mod fee;
 mod invoke_tx;
+mod l1_message;
 
 mod mock;

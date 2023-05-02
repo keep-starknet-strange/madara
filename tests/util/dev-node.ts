@@ -1,4 +1,4 @@
-import { ChildProcess, spawn } from "child_process";
+import { spawn, type ChildProcess } from "child_process";
 import tcpPortUsed from "tcp-port-used";
 
 import {
@@ -11,14 +11,15 @@ import {
   WASM_RUNTIME_OVERRIDES,
 } from "./constants";
 
-const debug = require("debug")("test:dev-node");
+import debugFactory from "debug";
+const debug = debugFactory("test:dev-node");
 
 export async function findAvailablePorts() {
   const availablePorts = await Promise.all(
     [null, null, null].map(async (_, index) => {
       let selectedPort = 0;
       let port = 1024 + index * 20000 + (process.pid % 20000);
-      let endingPort = 65535;
+      const endingPort = 65535;
       while (!selectedPort && port < endingPort) {
         const inUse = await tcpPortUsed.check(port, "127.0.0.1");
         if (!inUse) {
@@ -27,7 +28,7 @@ export async function findAvailablePorts() {
         port++;
       }
       if (!selectedPort) {
-        throw new Error(`No available port`);
+        throw new Error("No available port");
       }
       return selectedPort;
     })
@@ -52,6 +53,7 @@ let nodeStarted = false;
 // This will prevent race condition on the findAvailablePorts which uses the PID of the process
 export async function startMadaraDevNode(
   withWasm?: boolean,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   runtime: RuntimeChain = "madara"
 ): Promise<{
   p2pPort: number;
@@ -73,33 +75,33 @@ export async function startMadaraDevNode(
   }
 
   const cmd = BINARY_PATH;
-  let args = [
-    withWasm ? `--execution=Wasm` : `--execution=Native`, // Faster execution using native
+  const args = [
+    withWasm ? "--execution=Wasm" : "--execution=Native", // Faster execution using native
     process.env.FORCE_COMPILED_WASM
-      ? `--wasm-execution=compiled`
-      : `--wasm-execution=interpreted-i-know-what-i-do`,
-    `--no-telemetry`,
-    `--reserved-only`,
-    `--no-grandpa`,
-    `--no-prometheus`,
-    `--force-authoring`,
-    `--rpc-cors=all`,
-    `--alice`,
-    `--dev`,
-    `--sealing=manual`,
-    `--in-peers=0`,
-    `--out-peers=0`,
+      ? "--wasm-execution=compiled"
+      : "--wasm-execution=interpreted-i-know-what-i-do",
+    "--no-telemetry",
+    "--reserved-only",
+    "--no-grandpa",
+    "--no-prometheus",
+    "--force-authoring",
+    "--rpc-cors=all",
+    "--alice",
+    "--dev",
+    "--sealing=manual",
+    "--in-peers=0",
+    "--out-peers=0",
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
     `--rpc-port=${rpcPort}`,
     `--ws-port=${wsPort}`,
-    `--tmp`,
+    "--tmp",
     "--rpc-methods=unsafe",
   ];
   if (WASM_RUNTIME_OVERRIDES != "") {
     args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
     // For tracing tests now we require to enable archive block pruning.
-    args.push(`--blocks-pruning=archive`);
+    args.push("--blocks-pruning=archive");
   }
   debug(
     `Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort} --ws-port=${wsPort}`
@@ -127,9 +129,10 @@ export async function startMadaraDevNode(
   });
 
   runningNode.on("error", (err) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((err as any).errno == "ENOENT") {
       console.error(
-        `\x1b[31mMissing Madara binary ` +
+        "\x1b[31mMissing Madara binary " +
           `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
       );
     } else {
@@ -138,16 +141,18 @@ export async function startMadaraDevNode(
     process.exit(1);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const binaryLogs: any[] = [];
   await new Promise<void>((resolve) => {
     const timer = setTimeout(() => {
-      console.error(`\x1b[31m Failed to start Madara Test Node.\x1b[0m`);
+      console.error("\x1b[31m Failed to start Madara Test Node.\x1b[0m");
       console.error(`Command: ${cmd} ${args.join(" ")}`);
-      console.error(`Logs:`);
+      console.error("Logs:");
       console.error(binaryLogs.map((chunk) => chunk.toString()).join("\n"));
       throw new Error("Failed to launch node");
     }, SPAWNING_TIME - 2000);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onData = async (chunk: any) => {
       if (DISPLAY_LOG) {
         console.log(chunk.toString());
@@ -189,21 +194,21 @@ export async function startMadaraForkedNode(
   nodeStarted = true;
 
   const cmd = BINARY_PATH;
-  let args = [
-    `--execution=Native`,
-    `--no-hardware-benchmarks`,
-    `--no-telemetry`,
-    `--database=paritydb`,
-    `--no-prometheus`,
-    `--alice`,
+  const args = [
+    "--execution=Native",
+    "--no-hardware-benchmarks",
+    "--no-telemetry",
+    "--database=paritydb",
+    "--no-prometheus",
+    "--alice",
     `--chain=${CUSTOM_SPEC_PATH}`,
-    `--sealing=manual`,
+    "--sealing=manual",
     `-l${MADARA_LOG}`,
     `--rpc-port=${rpcPort}`,
     `--ws-port=${wsPort}`,
-    `--trie-cache-size=0`,
-    `--db-cache=5000`,
-    `--collator`,
+    "--trie-cache-size=0",
+    "--db-cache=5000",
+    "--collator",
     `--base-path=${BASE_PATH}`,
   ];
 
@@ -229,9 +234,10 @@ export async function startMadaraForkedNode(
   });
 
   runningNode.on("error", (err) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if ((err as any).errno == "ENOENT") {
       console.error(
-        `\x1b[31mMissing Madara binary ` +
+        "\x1b[31mMissing Madara binary " +
           `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
       );
     } else {
@@ -240,16 +246,18 @@ export async function startMadaraForkedNode(
     process.exit(1);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const binaryLogs: any[] = [];
   await new Promise<void>((resolve) => {
     const timer = setTimeout(() => {
-      console.error(`\x1b[31m Failed to start Madara Test Node.\x1b[0m`);
+      console.error("\x1b[31m Failed to start Madara Test Node.\x1b[0m");
       console.error(`Command: ${cmd} ${args.join(" ")}`);
-      console.error(`Logs:`);
+      console.error("Logs:");
       console.error(binaryLogs.map((chunk) => chunk.toString()).join("\n"));
       throw new Error("Failed to launch node");
     }, SPAWNING_TIME - 2000);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onData = async (chunk: any) => {
       if (DISPLAY_LOG) {
         console.log(chunk.toString());

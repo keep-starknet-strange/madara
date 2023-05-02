@@ -28,7 +28,7 @@ use self::types::{
 };
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
 
 impl EventWrapper {
     /// Creates a new instance of an event.

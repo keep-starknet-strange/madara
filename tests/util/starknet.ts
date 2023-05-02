@@ -1,7 +1,7 @@
 import "@keep-starknet-strange/madara-api-augment";
-import { ApiPromise } from "@polkadot/api";
-import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-import { ISubmittableResult } from "@polkadot/types/types";
+import { type ApiPromise } from "@polkadot/api";
+import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
+import { type ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 
@@ -13,7 +13,7 @@ export async function sendTransactionNoValidation(
 
 export async function sendTransactionBatchNoValidation(
   api: ApiPromise,
-  transactions: SubmittableExtrinsic<"promise", ISubmittableResult>[]
+  transactions: Array<SubmittableExtrinsic<"promise", ISubmittableResult>>
 ): Promise<void> {
   await api.tx.utility.batch(transactions).send();
 }
@@ -22,12 +22,14 @@ export async function sendTransaction(
   api: ApiPromise,
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return await new Promise((resolve, reject) => {
     let unsubscribe;
-    let timeout;
+    const SPAWNING_TIME = 500000;
+    const timeout = setTimeout(() => {
+      reject(new Error("Transaction timeout"));
+    }, SPAWNING_TIME);
     let transaction_success_event = false;
     let block_hash;
-    const SPAWNING_TIME = 500000;
 
     transaction
       .send(async ({ events = [], status, dispatchError }) => {
@@ -83,10 +85,6 @@ export async function sendTransaction(
         console.error(error);
         reject(error);
       });
-
-    timeout = setTimeout(() => {
-      reject(new Error("Transaction timeout"));
-    }, SPAWNING_TIME);
   });
 }
 
@@ -136,7 +134,7 @@ export function deploy(
   // );
 
   // Deploy contract
-  let tx_deploy = {
+  const tx_deploy = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
@@ -172,7 +170,7 @@ export async function initialize(
   tokenAddress: string
 ): Promise<string> {
   // Initialize contract
-  let tx_initialize = {
+  const tx_initialize = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
@@ -200,7 +198,7 @@ export async function initialize(
 
   const extrisinc_init = api.tx.starknet.invoke(tx_initialize);
 
-  return sendTransaction(api, extrisinc_init);
+  return await sendTransaction(api, extrisinc_init);
 }
 
 export async function mint(
@@ -210,7 +208,7 @@ export async function mint(
   mintAmount: string
 ): Promise<string> {
   // Initialize contract
-  let tx_mint = {
+  const tx_mint = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
@@ -236,7 +234,7 @@ export async function mint(
 
   const extrisinc_mint = api.tx.starknet.invoke(tx_mint);
 
-  return sendTransaction(api, extrisinc_mint);
+  return await sendTransaction(api, extrisinc_mint);
 }
 
 export function transfer(
@@ -248,7 +246,7 @@ export function transfer(
   nonce?: number
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
-  let tx_transfer = {
+  const tx_transfer = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
@@ -283,9 +281,9 @@ export function batchTransfer(
   tokenAddress: string,
   recipientAddress: string,
   transferAmount: string
-): SubmittableExtrinsic<ApiTypes, ISubmittableResult>[] {
+): Array<SubmittableExtrinsic<ApiTypes, ISubmittableResult>> {
   // Initialize contract
-  let tx_transfer = {
+  const tx_transfer = {
     version: 1, // version of the transaction
     hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
