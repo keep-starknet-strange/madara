@@ -158,9 +158,10 @@ fn execute_fee_transfer(
     };
     let mut execution_context = ExecutionContext::default();
 
-    fee_transfer_call
+    Ok(fee_transfer_call
         .execute(state, execution_resources, &mut execution_context, block_context, account_tx_context)
-        .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)
+        // .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)
+        .unwrap())
 }
 
 /// Computes the fees from the execution resources.

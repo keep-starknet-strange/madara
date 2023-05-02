@@ -64,9 +64,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let expected_erc20_address = "0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608";
 
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction));
-
-         System::assert_last_event(
-            Event::StarknetEvent(EventWrapper {
+        let events = System::events();
+        // Check transaction event (deployment)
+        pretty_assertions::assert_eq!(
+            Event::<Test>::StarknetEvent(EventWrapper {
                 keys: bounded_vec![
                     H256::from_str("0x026b160f10156dea0639bec90696772c640b9706a47f5b8c52ea1abe5858b34d").unwrap()
                 ],
@@ -84,10 +85,25 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Salt
                 ),
                 from_address: sender_account,
-            })
-            .into(),
+            }),
+            events[events.len() - 2].event.clone().try_into().unwrap(),
         );
-
+        // Check fee transfer event
+        pretty_assertions::assert_eq!(
+            Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec![
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ],
+                data: bounded_vec!(
+                    H256::from_slice(&sender_account), // From
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Sequencer address
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000002b5a2").unwrap(), // Amount low
+                    H256::zero(), // Amount high
+                ),
+                from_address:Starknet::fee_token_address(),
+            }),
+            events.last().unwrap().event.clone().try_into().unwrap(),
+        );
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
         let transfer_transaction = Transaction {
@@ -116,14 +132,14 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         };
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
-        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap())),U256::from_str("ffffffffffffffffffffffffffffff0").unwrap());
-        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap())),U256::from_str("fffffffffffffffffffffffffffffff").unwrap());
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap())),U256::from_str("ffffffffffffffffffffffffffffff0").unwrap());
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap())),U256::from_str("fffffffffffffffffffffffffffffff").unwrap());
 
-        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73e").unwrap())),U256::from(15));
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73e").unwrap())),U256::from(15));
         pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73f").unwrap())),U256::zero());
 
-
-        System::assert_last_event(
+        let events = System::events();
+       pretty_assertions::assert_eq!(
             Event::StarknetEvent(EventWrapper {
                 keys: bounded_vec![
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
@@ -138,7 +154,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     .unwrap()
                     .to_fixed_bytes(),
             })
-            .into(),
+            ,events[events.len() - 2].event.clone().try_into().unwrap(),
         );
     })
 }

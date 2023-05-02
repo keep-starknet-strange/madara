@@ -176,6 +176,30 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 ),
                 U256::from(u128::MAX),
             ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77) which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77).low (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x06afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00aa").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77) + 1 which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77).high (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x06afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00ab").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
         ],
         ..Default::default()
     }

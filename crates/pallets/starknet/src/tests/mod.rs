@@ -4,7 +4,6 @@ mod current_block;
 mod declare_tx;
 mod deploy_account_tx;
 mod erc20;
-mod fee;
 mod invoke_tx;
 mod l1_message;
 

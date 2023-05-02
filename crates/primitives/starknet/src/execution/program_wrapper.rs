@@ -388,7 +388,7 @@ pub struct HashMapConversionError;
 /// implementing the [From] and [TryFrom] traits.
 struct HashMapWrapper<K, V>(HashMap<K, V>)
 where
-    K: Eq + Hash;
+    K: Eq + Hash + Ord;
 
 impl<KEY, VALUE, K, V, S> TryFrom<HashMapWrapper<KEY, VALUE>> for BoundedBTreeMap<K, V, S>
 where
@@ -396,7 +396,7 @@ where
     V: TryFrom<VALUE> + Clone,
     <V as TryFrom<VALUE>>::Error: Debug,
     S: Get<u32>,
-    KEY: Eq + Hash,
+    KEY: Eq + Hash + Ord,
 {
     type Error = HashMapConversionError;
     fn try_from(value: HashMapWrapper<KEY, VALUE>) -> Result<Self, Self::Error> {
@@ -414,7 +414,7 @@ where
 
 impl<KEY, VALUE, K, V, S> TryFrom<BoundedBTreeMap<K, V, S>> for HashMapWrapper<KEY, VALUE>
 where
-    KEY: Eq + Hash + TryFrom<K>,
+    KEY: Eq + Hash + TryFrom<K> + Ord,
     VALUE: TryFrom<V>,
     <VALUE as TryFrom<V>>::Error: Debug,
 {
