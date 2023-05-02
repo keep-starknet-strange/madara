@@ -145,7 +145,7 @@ fn test_event_wrapper_new() {
     let data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
     let from_address = ContractAddressWrapper::from(H256::from([3; 32]));
 
-    let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address.clone());
+    let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address);
 
     assert_eq!(event_wrapper.keys, keys);
     assert_eq!(event_wrapper.data, data);

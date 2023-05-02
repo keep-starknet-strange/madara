@@ -15,7 +15,7 @@ fn test_call_entry_point_execute_works() {
 
     let class_hash = bytes_from_hex_str::<32, true>(TEST_CLASS_HASH).unwrap();
     let address = bytes_from_hex_str::<32, true>(TEST_CONTRACT_ADDRESS).unwrap();
-    let selector = H256::from_slice(&selector_from_name("return_result").0.bytes());
+    let selector = H256::from_slice(selector_from_name("return_result").0.bytes());
     let calldata = bounded_vec![U256::from(42)];
 
     let entrypoint = CallEntryPointWrapper::new(
@@ -37,7 +37,7 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
     let mut test_state = create_test_state();
 
     let address = bytes_from_hex_str::<32, true>(TEST_CONTRACT_ADDRESS).unwrap();
-    let selector = H256::from_slice(&selector_from_name("return_result").0.bytes());
+    let selector = H256::from_slice(selector_from_name("return_result").0.bytes());
     let calldata = bounded_vec![U256::from(42)];
 
     let entrypoint = CallEntryPointWrapper::new(
