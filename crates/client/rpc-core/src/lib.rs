@@ -19,11 +19,32 @@ use jsonrpsee::proc_macros::rpc;
 use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use serde::{Deserialize, Serialize};
 
-pub type FieldElement = String;
-pub type BlockNumber = u64;
+pub type ABI = String;
 pub type BlockHash = FieldElement;
-
+pub type BlockNumber = u64;
+pub type Constructor = Vec<SierraEntryPoint>;
+pub type ContractABI = Vec<ContractABIEntry>;
 pub type ContractAddress = FieldElement;
+pub type ContractClassVersion = String;
+pub type DeprecatedConstructor = Vec<DeprecatedCairoEntryPoint>;
+pub type DeprecatedExternal = Vec<DeprecatedCairoEntryPoint>;
+pub type DeprecatedL1Handler = Vec<DeprecatedCairoEntryPoint>;
+pub type EventName = String;
+pub type External = Vec<SierraEntryPoint>;
+pub type FieldElement = String;
+pub type FunctionIndex = i64;
+pub type FunctionName = String;
+pub type L1Handler = Vec<SierraEntryPoint>;
+pub type Members = Vec<StructMember>;
+pub type Offset = String;
+pub type ParameterName = String;
+pub type ParameterType = String;
+pub type Program = String;
+pub type Selector = FieldElement;
+pub type SierraProgram = Vec<FieldElement>;
+pub type Size = i64;
+pub type StructMember = HashMap<String, serde_json::Value>;
+pub type StructName = String;
 
 /// A tag specifying a dynamic reference to a block
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -51,7 +72,12 @@ pub struct FunctionCall {
 }
 
 // In order to mix tagged and untagged {de}serialization for BlockId (see starknet RPC standard)
-// in the same object, we need this kind of workaround with intermediate types
+// in the same object, we need this kind of workaround with intermediate types.
+// block_id actually accepts one of the following values:
+// {"block_id": {"block_number: <a number>}}
+// {"block_id": {"block_hash: <a hash>}}
+// {"block_id": <a tag>}
+// so while "block_number" and "block_hash" are tagged, block tag is not
 mod block_id {
     use super::*;
 
@@ -103,10 +129,6 @@ mod block_id {
     }
 }
 
-pub type Program = String;
-
-pub type Offset = String;
-pub type Selector = FieldElement;
 /// Deprecated Cairo entry point (pre Sierra)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct DeprecatedCairoEntryPoint {
@@ -114,9 +136,6 @@ pub struct DeprecatedCairoEntryPoint {
     pub selector: Selector,
 }
 
-pub type DeprecatedConstructor = Vec<DeprecatedCairoEntryPoint>;
-pub type DeprecatedExternal = Vec<DeprecatedCairoEntryPoint>;
-pub type DeprecatedL1Handler = Vec<DeprecatedCairoEntryPoint>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct DeprecatedEntryPointsByType {
     #[serde(rename = "CONSTRUCTOR")]
@@ -138,9 +157,6 @@ pub enum FunctionABIType {
     Constructor,
 }
 
-pub type FunctionName = String;
-pub type ParameterName = String;
-pub type ParameterType = String;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct TypedParameter {
     pub name: ParameterName,
@@ -164,7 +180,6 @@ pub enum EventABIType {
     Event,
 }
 
-pub type EventName = String;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct EventABIEntry {
     #[serde(rename = "type")]
@@ -181,10 +196,6 @@ pub enum StructABIType {
     Struct,
 }
 
-pub type StructName = String;
-pub type Size = i64;
-pub type StructMember = HashMap<String, serde_json::Value>;
-pub type Members = Vec<StructMember>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct StructABIEntry {
     #[serde(rename = "type")]
@@ -202,7 +213,6 @@ pub enum ContractABIEntry {
     StructABIEntry(StructABIEntry),
 }
 
-pub type ContractABI = Vec<ContractABIEntry>;
 /// Deprecated Cairo contract class (pre Sierra)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct DeprecatedContractClass {
@@ -212,10 +222,6 @@ pub struct DeprecatedContractClass {
     pub abi: Option<ContractABI>,
 }
 
-pub type SierraProgram = Vec<FieldElement>;
-pub type ContractClassVersion = String;
-
-pub type FunctionIndex = i64;
 /// Cairo sierra entry point
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct SierraEntryPoint {
@@ -223,9 +229,6 @@ pub struct SierraEntryPoint {
     pub function_idx: FunctionIndex,
 }
 
-pub type Constructor = Vec<SierraEntryPoint>;
-pub type External = Vec<SierraEntryPoint>;
-pub type L1Handler = Vec<SierraEntryPoint>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct EntryPointsByType {
     #[serde(rename = "CONSTRUCTOR")]
@@ -235,7 +238,7 @@ pub struct EntryPointsByType {
     #[serde(rename = "L1_HANDLER")]
     pub l_1_handler: L1Handler,
 }
-pub type ABI = String;
+
 /// Cairo sierra contract class
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct SierraContractClass {
@@ -256,7 +259,7 @@ pub enum RPCContractClass {
 
 /// Returns a `ContractClassWrapper` from a `RPCContractClass`
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<RPCContractClass> {
-    Ok(RPCContractClass::ContractClass(Default::default()))
+    todo!("https://github.com/keep-starknet-strange/madara/issues/309");
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
