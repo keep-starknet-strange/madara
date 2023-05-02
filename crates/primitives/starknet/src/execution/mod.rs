@@ -9,13 +9,13 @@ use serde::de::Error as DeserializationError;
 use serde::{Deserialize, Deserializer, Serializer};
 use sp_core::Get;
 
-/// Call Entrypoint Wrapper type
+/// Call Entrypoint Wrapper related types
 pub mod call_entrypoint_wrapper;
-/// Contract Class Wrapper type
+/// Contract Class Wrapper related types
 pub mod contract_class_wrapper;
-/// Entrypoint Wrapper type
+/// Entrypoint Wrapper related types
 pub mod entrypoint_wrapper;
-/// Program Wrapper type
+/// Program Wrapper related types
 pub mod program_wrapper;
 
 /// Serialization of [BoundedBTreeMap].

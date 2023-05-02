@@ -51,7 +51,5 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
 
     let block = Block::create_for_testing();
 
-    let error = entrypoint.execute(&mut test_state, block, [0; 32]).unwrap_err();
-
-    println!("{:?}", error);
+    assert!(entrypoint.execute(&mut test_state, block, [0; 32]).is_err());
 }
