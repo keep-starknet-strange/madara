@@ -364,7 +364,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Ping the pallet to check if it is alive.
         #[pallet::call_index(0)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             ensure_none(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
@@ -393,7 +393,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(1)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -466,7 +466,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(2)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -556,7 +556,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(3)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -635,7 +635,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(4)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -682,7 +682,7 @@ pub mod pallet {
         /// # TODO
         /// * Add some limitations on how often this can be called.
         #[pallet::call_index(5)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn set_fee_token_address(
             origin: OriginFor<T>,
             fee_token_address: ContractAddressWrapper,
