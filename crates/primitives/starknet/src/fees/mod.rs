@@ -85,7 +85,7 @@ pub fn get_transaction_resources<S: State + StateChanges>(
 /// # Arguments
 ///
 /// * `state` - State object to get the state changes.
-/// * `block_context` - Block context to get informations needed to compute the fees.
+/// * `block_context` - Block context to get information needed to compute the fees.
 /// * `account_tx_context` - Account context.
 /// * `resources` - Execution resources.
 ///
@@ -172,7 +172,7 @@ fn execute_fee_transfer(
 /// # Arguments
 ///
 /// * `resources` - Execution resources to compute the fees from.
-/// * `block_context` - Block context to get informations needed to compute the fees.
+/// * `block_context` - Block context to get information needed to compute the fees.
 ///
 /// # Returns
 ///
