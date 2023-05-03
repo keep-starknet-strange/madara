@@ -43,6 +43,8 @@ pub enum TransactionExecutionErrorWrapper {
     FailedToComputeL1GasUsage,
     /// Entrypoint execution error
     EntrypointExecution(EntryPointExecutionError),
+    /// Unexpected holes.
+    UnexpectedHoles(String),
 }
 
 /// Different tx types.

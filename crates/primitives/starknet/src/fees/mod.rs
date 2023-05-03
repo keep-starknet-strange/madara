@@ -57,7 +57,7 @@ pub fn get_transaction_resources<S: State + StateChanges>(
         l2_to_l1_payloads_length.extend(
             call_info
                 .get_sorted_l2_to_l1_payloads_length()
-                .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?,
+                .map_err(|err| TransactionExecutionErrorWrapper::UnexpectedHoles(err.to_string()))?,
         );
     }
     let l1_gas_usage = calculate_tx_gas_usage(
