@@ -1,8 +1,16 @@
+use alloc::sync::Arc;
+use core::str::FromStr;
+
 use blockifier::abi::abi_utils::selector_from_name;
-use blockifier::execution::entry_point::CallEntryPoint;
+use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
 use sp_core::{H256, U256};
+use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::deprecated_contract_class::EntryPointType;
+use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::serde_utils::bytes_from_hex_str;
+use starknet_api::transaction::Calldata;
+use starknet_api::{patricia_key, stark_felt};
 
 use crate::block::Block;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
@@ -96,4 +104,35 @@ fn test_try_into_entrypoint_fails() {
     };
     let entrypoint: Result<CallEntryPoint, _> = entrypoint_wrapper.try_into();
     assert!(entrypoint.is_err());
+}
+
+#[test]
+fn test_try_into_entrypoint_works() {
+    let entrypoint_wrapper = CallEntryPointWrapper {
+        class_hash: Some(
+            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap().into(),
+        ),
+        entrypoint_type: EntryPointTypeWrapper::External,
+        entrypoint_selector: None,
+        calldata: bounded_vec![U256::from(1), U256::from(2), U256::from(3)],
+        storage_address: H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001")
+            .unwrap()
+            .into(),
+        caller_address: H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002")
+            .unwrap()
+            .into(),
+    };
+    let entrypoint: CallEntryPoint = entrypoint_wrapper.try_into().unwrap();
+    let expected_entrypoint = CallEntryPoint {
+        call_type: CallType::Call,
+        calldata: Calldata(Arc::new(vec![stark_felt!(1), stark_felt!(2), stark_felt!(3)])),
+        caller_address: ContractAddress(patricia_key!(2)),
+        storage_address: ContractAddress(patricia_key!(1)),
+        class_hash: Some(ClassHash(stark_felt!(1))),
+        code_address: None,
+        entry_point_selector: EntryPointSelector(stark_felt!(0)),
+        entry_point_type: EntryPointType::External,
+    };
+
+    pretty_assertions::assert_eq!(entrypoint, expected_entrypoint);
 }
