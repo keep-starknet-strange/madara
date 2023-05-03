@@ -43,7 +43,7 @@ fn given_call_contract_call_works() {
                 Some(<[u8; 32]>::from_hex(TOKEN_CONTRACT_CLASS_HASH).unwrap()),
                 EntryPointTypeWrapper::External,
                 None,
-                constructor_calldata.clone(),
+                constructor_calldata,
                 sender_account,
                 sender_account,
             ),
@@ -54,7 +54,7 @@ fn given_call_contract_call_works() {
             contract_address_salt: None,
         };
 
-        assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction));
+        assert_ok!(Starknet::invoke(origin, deploy_transaction));
 
         let expected_erc20_address = <[u8; 32]>::from_hex("0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608").unwrap();
 
@@ -64,7 +64,7 @@ fn given_call_contract_call_works() {
         let calldata = bounded_vec![
             U256::from_big_endian(&sender_account) // owner address
         ];
-        let res = Starknet::call_contract(expected_erc20_address.clone(), balance_of_selector, calldata);
+        let res = Starknet::call_contract(expected_erc20_address, balance_of_selector, calldata);
         assert_ok!(res.clone());
 		pretty_assertions::assert_eq!(res.unwrap(), vec![U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(),U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap()]);
 
