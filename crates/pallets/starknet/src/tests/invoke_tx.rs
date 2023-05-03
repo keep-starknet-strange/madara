@@ -76,10 +76,25 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         pretty_assertions::assert_eq!(pending.len(), 2);
 
         let receipt = &pending.get(0).unwrap().1;
-        pretty_assertions::assert_eq!(receipt.actual_fee, U256::from(52770));
-        pretty_assertions::assert_eq!(receipt.events.len(), 1);
-        pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
-        pretty_assertions::assert_eq!(receipt.tx_type, TxType::Invoke);
+        let expected_receipt = TransactionReceiptWrapper {
+            transaction_hash: transaction.hash,
+            actual_fee: U256::from(52770),
+            tx_type: TxType::Invoke,
+            events: bounded_vec![EventWrapper {
+                keys: bounded_vec!(
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
+                ),
+                data: bounded_vec![
+                    H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000ce22").unwrap(),
+                    H256::zero(),
+                ],
+                from_address: Starknet::fee_token_address(),
+            },],
+        };
+
+        pretty_assertions::assert_eq!(*receipt, expected_receipt);
     });
 }
 
