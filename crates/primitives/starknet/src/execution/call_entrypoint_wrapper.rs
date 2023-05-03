@@ -1,5 +1,5 @@
+use alloc::format;
 use alloc::sync::Arc;
-use alloc::{format, vec};
 
 use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
@@ -133,7 +133,7 @@ impl Default for CallEntryPointWrapper {
             class_hash: None,
             entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: Some(H256::default()),
-            calldata: BoundedVec::try_from(vec![]).unwrap(),
+            calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
         }
