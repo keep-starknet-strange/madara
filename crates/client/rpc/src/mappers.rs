@@ -100,6 +100,7 @@ mod tests {
         assert!(string_to_h256(hex_str_4).is_err());
     }
 
+	#[test]
     fn test_h256_to_string() {
         // Test case 1: Valid input with 64 characters
         let hex_str_1 = "0x0222882e457847df7ebaf981db2ff8ebb22c19d5b0a6a41dcc13cc2d775fbeb7";
