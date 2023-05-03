@@ -6,6 +6,7 @@ use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
 };
+use mp_starknet::execution::types::ContractClassWrapper;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -180,7 +181,8 @@ fn testnet_genesis(
         get_contract_class(include_bytes!("../../../resources/account/account.json")).try_into().unwrap();
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
-    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
+    let erc20_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
@@ -240,7 +242,8 @@ fn testnet_genesis(
             contract_classes: vec![
                 (class_hash_bytes, account_class),
                 (other_class_hash_bytes, test_class),
-                (token_class_hash_bytes, erc20_class),
+                (token_class_hash_bytes, erc20_class.clone()),
+                (fee_token_class_hash_bytes, erc20_class),
             ],
             storage: vec![
                 (
