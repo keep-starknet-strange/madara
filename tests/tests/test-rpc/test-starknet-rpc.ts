@@ -82,14 +82,31 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("syncing", async function () {
+    await jumpBlocks(context, 10);
+
     const status = await providerRPC.getSyncingStats();
+    const current_block = await providerRPC.getBlockHashAndNumber();
 
+    // starknet starting block number should be 0 with this test setup
     expect(status["sync_status"]["starting_block_num"]).to.be.equal(0);
-    expect(status["sync_status"]["current_block_num"]).to.be.greaterThan(0);
-    expect(status["sync_status"]["highest_block_num"]).to.be.greaterThan(0);
+    // starknet current and highest block number should be equal to
+    // the current block with this test setup
+    expect(status["sync_status"]["current_block_num"]).to.be.equal(
+      current_block["block_number"]
+    );
+    expect(status["sync_status"]["highest_block_num"]).to.be.equal(
+      current_block["block_number"]
+    );
 
+    // the starknet block hash for number 0 starts with "0xaf" with this test setup
     expect(status["sync_status"]["starting_block_hash"]).to.contain("0xaf");
-    expect(status["sync_status"]["current_block_hash"]).to.contain("0x13");
-    expect(status["sync_status"]["highest_block_hash"]).to.contain("0x13");
+    // starknet current and highest block number should be equal to
+    // the current block with this test setup
+    expect(status["sync_status"]["current_block_hash"]).to.be.equal(
+      current_block["block_hash"]
+    );
+    expect(status["sync_status"]["highest_block_hash"]).to.be.equal(
+      current_block["block_hash"]
+    );
   });
 });
