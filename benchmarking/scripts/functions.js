@@ -31,7 +31,7 @@ async function executeERC20Transfer(userContext, events, done) {
 
   // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
 
-  await transfer(
+  transfer(
     userContext.api,
     contractAddress,
     "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
