@@ -350,7 +350,7 @@ impl Transaction {
 
         // Verify the transaction version.
         self.verify_tx_version(&tx_type)?;
-        // TODO: Investigate the use of tx.execute() instead of tx.run_execute()
+
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
@@ -399,7 +399,6 @@ impl Transaction {
         let tx_resources = fees::get_transaction_resources(state, &execute_call_info, execution_resources, tx_type)?;
         let (actual_fee, fee_transfer_call_info) =
             charge_fee(state, &block_context, &_account_context, &tx_resources).unwrap();
-        state.clear();
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info: None,
             execute_call_info,
