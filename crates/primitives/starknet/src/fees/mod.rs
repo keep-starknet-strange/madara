@@ -225,6 +225,7 @@ pub fn calculate_l1_gas_by_vm_usage(
     vm_resource_usage: &BTreeMap<String, usize>,
 ) -> Result<f64, TransactionExecutionErrorWrapper> {
     // TODO: add real values here.
+    // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
     let vm_resource_fee_costs = BTreeMap::from([
         (String::from("n_steps"), 1_f64),
         (String::from("pedersen_builtin"), 1_f64),
