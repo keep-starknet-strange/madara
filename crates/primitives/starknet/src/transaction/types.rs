@@ -2,6 +2,7 @@ use alloc::collections::BTreeMap;
 use alloc::string::String;
 
 use blockifier::execution::entry_point::CallInfo;
+use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
@@ -40,6 +41,8 @@ pub enum TransactionExecutionErrorWrapper {
     CairoResourcesNotContainedInFeeCosts,
     /// Failed to compute the L1 gas usage.
     FailedToComputeL1GasUsage,
+    /// Entrypoint execution error
+    EntrypointExecution(EntryPointExecutionError),
 }
 
 /// Different tx types.

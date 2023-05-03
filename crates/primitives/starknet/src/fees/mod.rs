@@ -48,6 +48,9 @@ pub fn get_transaction_resources<S: State + StateChanges>(
     tx_type: TxType,
 ) -> Result<BTreeMap<String, usize>, TransactionExecutionErrorWrapper> {
     let (n_modified_contracts, n_modified_keys, n_class_updates) = state.count_state_changes();
+    // TODO: consider the `validate` resources.
+    // FIXME: https://github.com/keep-starknet-strange/madara/issues/227
+    // The `&None` corresponds to the `validate` execution for now.
     let non_optional_call_infos: Vec<&CallInfo> = vec![execute_call_info, &None].into_iter().flatten().collect();
     let mut l2_to_l1_payloads_length = vec![];
     for call_info in non_optional_call_infos {
@@ -108,8 +111,7 @@ pub fn charge_fee<S: State + StateChanges>(
     }
 
     let actual_fee = calculate_tx_fee(resources, block_context)
-        .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)
-        .unwrap();
+        .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
     let fee_transfer_call_info =
         execute_fee_transfer(state, &mut ExecutionResources::default(), block_context, account_tx_context, actual_fee)?;
 
@@ -124,11 +126,13 @@ fn execute_fee_transfer(
     actual_fee: Fee,
 ) -> Result<CallInfo, TransactionExecutionErrorWrapper> {
     // TODO: use real value.
+    // FIXME: https://github.com/keep-starknet-strange/madara/issues/331
     let max_fee = Fee(u128::MAX);
     if actual_fee > max_fee {
         return Err(TransactionExecutionErrorWrapper::FeeTransferError { max_fee, actual_fee });
     }
-
+    // TODO: This is what's done in the blockifier but this should be improved.
+    // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
     // The least significant 128 bits of the amount transferred.
     let lsb_amount = StarkFelt::from(actual_fee.0 as u64);
     // The most significant 128 bits of the amount transferred.
@@ -158,10 +162,9 @@ fn execute_fee_transfer(
     };
     let mut execution_context = ExecutionContext::default();
 
-    Ok(fee_transfer_call
+    fee_transfer_call
         .execute(state, execution_resources, &mut execution_context, block_context, account_tx_context)
-        // .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)
-        .unwrap())
+        .map_err(TransactionExecutionErrorWrapper::EntrypointExecution)
 }
 
 /// Computes the fees from the execution resources.
