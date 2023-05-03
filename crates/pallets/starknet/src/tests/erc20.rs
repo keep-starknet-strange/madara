@@ -88,9 +88,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             }),
             events[events.len() - 2].event.clone().try_into().unwrap(),
         );
-        // Check fee transfer event
-        pretty_assertions::assert_eq!(
-            Event::StarknetEvent(EventWrapper {
+        let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
                 keys: bounded_vec![
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
                 ],
@@ -101,9 +99,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::zero(), // Amount high
                 ),
                 from_address:Starknet::fee_token_address(),
-            }),
-            events.last().unwrap().event.clone().try_into().unwrap(),
-        );
+            });
+        // Check fee transfer event
+        pretty_assertions::assert_eq!(expected_fee_transfer_event, events.last().unwrap().event.clone().try_into().unwrap());
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
         let transfer_transaction = Transaction {
@@ -139,8 +137,8 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73f").unwrap())),U256::zero());
 
         let events = System::events();
-       pretty_assertions::assert_eq!(
-            Event::StarknetEvent(EventWrapper {
+        // Check regular event.
+        let expected_event = Event::StarknetEvent(EventWrapper {
                 keys: bounded_vec![
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
                 ],
@@ -153,8 +151,22 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 from_address: H256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608")
                     .unwrap()
                     .to_fixed_bytes(),
-            })
-            ,events[events.len() - 2].event.clone().try_into().unwrap(),
-        );
+            });
+        pretty_assertions::assert_eq!(expected_event, events[events.len() - 2].event.clone().try_into().unwrap());
+        // Check fee transfer.
+        let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
+                keys: bounded_vec![
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ],
+                data: bounded_vec!(
+                    H256::from_slice(&sender_account), // From
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Sequencer address
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000001e55a").unwrap(), // Amount low
+                    H256::zero(), // Amount high
+                ),
+                from_address:Starknet::fee_token_address(),
+            });
+        pretty_assertions::assert_eq!(expected_fee_transfer_event, events.last().unwrap().event.clone().try_into().unwrap());
+
     })
 }
