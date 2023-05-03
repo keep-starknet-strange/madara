@@ -5,12 +5,11 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::ContractStorageKey;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
-use lazy_static::lazy_static;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::state::StateChanges;
 use sp_core::{H256, U256};
 use sp_std::sync::Arc;
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce, PatriciaKey};
+use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{StateDiff, StorageKey};
 
@@ -49,13 +48,7 @@ impl<T: Config> Default for BlockifierStateAdapter<T> {
         Self { storage_update: BTreeMap::default(), class_hash_update: usize::default(), _phantom: PhantomData }
     }
 }
-fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-    serde_json::from_slice(contract_content).unwrap()
-}
-lazy_static! {
-    static ref ERC20_CLASS: ContractClass =
-        get_contract_class(include_bytes!("../../../../resources/erc20/erc20.json"));
-}
+
 impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
         let contract_address: ContractAddressWrapper = contract_address.0.0.0;
@@ -87,16 +80,6 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 
     fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
         let wrapped_class_hash: ClassHashWrapper = class_hash.0.0;
-        if *class_hash
-            == self
-                .get_class_hash_at(ContractAddress(PatriciaKey(
-                    StarkFelt::new(Pallet::<T>::fee_token_address()).unwrap(),
-                )))
-                .unwrap()
-        {
-            return Ok(Arc::new(ERC20_CLASS.clone()));
-        }
-
         let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
         match opt_contract_class {
             Some(contract_class) => Ok(Arc::new(

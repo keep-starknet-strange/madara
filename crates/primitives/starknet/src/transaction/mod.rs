@@ -339,9 +339,11 @@ impl Transaction {
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Create the block context.
         // TODO: don't do that.
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
         let mut block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
             .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
         // TODO: use real value.
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         block_context.gas_price = 10;
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();

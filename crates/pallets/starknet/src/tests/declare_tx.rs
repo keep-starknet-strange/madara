@@ -38,7 +38,6 @@ fn given_contract_declare_tx_works_once_not_twice() {
         );
         let none_origin = RuntimeOrigin::none();
         let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
-        println!("{:?}", H256::from_slice(&account_addr));
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH));
         let erc20_class_hash =
