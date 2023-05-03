@@ -118,6 +118,7 @@ pub fn charge_fee<S: State + StateChanges>(
     Ok((actual_fee, Some(fee_transfer_call_info)))
 }
 
+/// Executes the fee transfer tx
 fn execute_fee_transfer(
     state: &mut dyn State,
     execution_resources: &mut ExecutionResources,
