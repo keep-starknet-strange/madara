@@ -130,10 +130,10 @@ impl CallEntryPointWrapper {
 impl Default for CallEntryPointWrapper {
     fn default() -> Self {
         Self {
-            class_hash: Some(ClassHashWrapper::default()),
+            class_hash: None,
             entrypoint_type: EntryPointTypeWrapper::External,
             entrypoint_selector: Some(H256::default()),
-            calldata: BoundedVec::try_from(vec![U256::zero(); 32]).unwrap(),
+            calldata: BoundedVec::try_from(vec![]).unwrap(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
         }
