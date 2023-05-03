@@ -1,12 +1,22 @@
 import "@keep-starknet-strange/madara-api-augment";
 import { expect } from "chai";
-import { LibraryError, RpcProvider, RPC } from "starknet";
-import { describeDevMadara } from "../../util/setup-dev-tests";
-import { jumpBlocks } from "../../util/block";
-import { TEST_CONTRACT, CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS, MINT_AMOUNT, TOKEN_CLASS_HASH, ACCOUNT_CONTRACT, ACCOUNT_CONTRACT_CLASS_HASH, TEST_CONTRACT_CLASS_HASH } from "./constants";
 import {
-  transfer,
-} from "../../util/starknet";
+  describeDevMadara,
+} from "../../util/setup-dev-tests";
+import { LibraryError, RPC, RpcProvider } from "starknet";
+import { jumpBlocks } from "../../util/block";
+import {
+  TEST_CONTRACT,
+  CONTRACT_ADDRESS,
+  FEE_TOKEN_ADDRESS,
+  TOKEN_CLASS_HASH,
+  MINT_AMOUNT,
+  ACCOUNT_CONTRACT,
+  ACCOUNT_CONTRACT_CLASS_HASH,
+  TEST_CONTRACT_CLASS_HASH,
+} from "./constants";
+
+import { transfer } from "../../util/starknet";
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
