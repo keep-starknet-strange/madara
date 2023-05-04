@@ -360,7 +360,7 @@ pub trait StarknetRpcApi {
     #[method(name = "call")]
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>>;
 
-    /// Get block informations with full transactions given the block id
+    /// Get block information with full transactions given the block id
     #[method(name = "getBlockWithTxs")]
     fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<StarknetBlock>;
 

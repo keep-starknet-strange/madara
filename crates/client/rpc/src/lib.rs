@@ -199,7 +199,7 @@ where
         }
     }
 
-    /// Get block informations with full transactions given the block id
+    /// Get block information with full transactions given the block id
     fn get_block_with_txs(&self, block_id: StarknetBlockId) -> RpcResult<StarknetBlock> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
