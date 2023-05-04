@@ -24,6 +24,7 @@ pub type BlockNumber = u64;
 pub type BlockHash = FieldElement;
 
 pub type ContractAddress = FieldElement;
+pub type ContractClassHash = FieldElement;
 
 /// A tag specifying a dynamic reference to a block
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -365,4 +366,8 @@ pub trait StarknetRpcApi {
     /// Get an object about the sync status, or false if the node is not syncing
     #[method(name = "syncing")]
     async fn syncing(&self) -> RpcResult<Syncing>;
+
+    /// Get the contract class definition in the given block associated with the given hash
+    #[method(name = "getClass")]
+    fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
 }
