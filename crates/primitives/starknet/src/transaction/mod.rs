@@ -325,9 +325,9 @@ impl Transaction {
         Ok(selector_from_name(validate_entry_point_name))
     }
 
-    // Calldata for validation contains transaction fields that cannot be obtained by calling
-    // `get_tx_info()`.
-    fn validate_entrypoint_calldata(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<Calldata> {
+    /// Calldata for validation contains transaction fields that cannot be obtained by calling
+    /// `get_tx_info()`.
+    pub fn validate_entrypoint_calldata(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<Calldata> {
         match tx_type {
             TxType::Declare => {
                 let declare_tx: DeclareTransaction =
