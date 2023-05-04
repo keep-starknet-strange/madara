@@ -4,22 +4,22 @@
 
 <!-- Please try to limit your pull request to one type; submit multiple pull requests if needed. -->
 
-Please check the type of change your PR introduces:
+Please add the labels corresponding to the type of changes your PR introduces:
 
-- [ ] Bugfix
-- [ ] Feature
-- [ ] Code style update (formatting, renaming)
-- [ ] Refactoring (no functional changes, no API changes)
-- [ ] Build-related changes
-- [ ] Documentation content changes
-- [ ] Testing
-- [ ] Other (please describe):
+- Bugfix
+- Feature
+- Code style update (formatting, renaming)
+- Refactoring (no functional changes, no API changes)
+- Build-related changes
+- Documentation content changes
+- Testing
+- Other (please describe):
 
 # What is the current behavior?
 
 <!-- Please describe the current behavior that you are modifying, or link to a relevant issue. -->
 
-Issue Number: N/A
+Resolves: #NA
 
 # What is the new behavior?
 
@@ -31,9 +31,7 @@ Issue Number: N/A
 
 # Does this introduce a breaking change?
 
-- [ ] Yes
-- [ ] No
-
+<!-- Yes or No -->
 <!-- If this does introduce a breaking change, please describe the impact and migration path for existing applications below. -->
 
 # Other information
