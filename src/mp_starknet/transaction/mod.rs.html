@@ -501,6 +501,32 @@
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
 <a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -509,7 +535,7 @@
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
+<span class="kw">use </span>blockifier::execution::entry_point::ExecutionResources;
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
@@ -527,11 +553,13 @@
 
 <span class="kw">use </span><span class="self">self</span>::types::{
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
-    TransactionExecutionResultWrapper, TransactionReceiptWrapper, TxType,
+    TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper, TxType,
 };
 <span class="kw">use </span><span class="kw">crate</span>::block::serialize::SerializeBlockContext;
 <span class="kw">use </span><span class="kw">crate</span>::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+<span class="kw">use </span><span class="kw">crate</span>::fees::{<span class="self">self</span>, charge_fee};
+<span class="kw">use </span><span class="kw">crate</span>::state::StateChanges;
 
 <span class="kw">impl </span>EventWrapper {
     <span class="doccomment">/// Creates a new instance of an event.
@@ -663,11 +691,11 @@
             transaction_hash: H256::from_slice(<span class="self">self</span>.transaction_hash.<span class="number">0</span>.bytes()),
             actual_fee: U256::from(<span class="self">self</span>.output.actual_fee().<span class="number">0</span>),
             tx_type: <span class="kw">match </span><span class="self">self</span>.output {
-                TransactionOutput::Declare(<span class="kw">_</span>) =&gt; TxType::DeclareTx,
-                TransactionOutput::DeployAccount(<span class="kw">_</span>) =&gt; TxType::DeployAccountTx,
-                TransactionOutput::Invoke(<span class="kw">_</span>) =&gt; TxType::InvokeTx,
-                TransactionOutput::L1Handler(<span class="kw">_</span>) =&gt; TxType::L1HandlerTx,
-                <span class="kw">_ </span>=&gt; TxType::InvokeTx,
+                TransactionOutput::Declare(<span class="kw">_</span>) =&gt; TxType::Declare,
+                TransactionOutput::DeployAccount(<span class="kw">_</span>) =&gt; TxType::DeployAccount,
+                TransactionOutput::Invoke(<span class="kw">_</span>) =&gt; TxType::Invoke,
+                TransactionOutput::L1Handler(<span class="kw">_</span>) =&gt; TxType::L1Handler,
+                <span class="kw">_ </span>=&gt; TxType::Invoke,
             },
             events: BoundedVec::try_from(_events<span class="question-mark">?</span>).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>,
         })
@@ -799,7 +827,7 @@
         };
 
         <span class="kw">let </span>allowed_versions: vec::Vec&lt;TransactionVersion&gt; = <span class="kw">match </span>tx_type {
-            TxType::DeclareTx =&gt; {
+            TxType::Declare =&gt; {
                 <span class="comment">// Support old versions in order to allow bootstrapping of a new system.
                 </span><span class="macro">vec!</span>[TransactionVersion(StarkFelt::from(<span class="number">0</span>)), TransactionVersion(StarkFelt::from(<span class="number">1</span>))]
             }
@@ -830,59 +858,83 @@
     ///
     /// * `TransactionExecutionResult&lt;TransactionExecutionInfo&gt;` - The result of the transaction
     ///   execution
-    </span><span class="kw">pub fn </span>execute&lt;S: State&gt;(
+    </span><span class="kw">pub fn </span>execute&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
         block: StarknetBlock,
         tx_type: TxType,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
         fee_token_address: ContractAddressWrapper,
-    ) -&gt; TransactionExecutionResultWrapper&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
+    ) -&gt; TransactionExecutionResultWrapper&lt;TransactionExecutionInfoWrapper&gt; {
         <span class="comment">// Create the block context.
-        </span><span class="kw">let </span>block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+        // TODO: don&#39;t do that.
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
+        </span><span class="kw">let </span><span class="kw-2">mut </span>block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
             .map_err(|<span class="kw">_</span>| TransactionExecutionErrorWrapper::BlockContextSerializationError)<span class="question-mark">?</span>;
+        <span class="comment">// TODO: use real value.
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+        </span>block_context.gas_price = <span class="number">10</span>;
         <span class="comment">// Initialize the execution resources.
         </span><span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
 
         <span class="comment">// Verify the transaction version.
         </span><span class="self">self</span>.verify_tx_version(<span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
-        <span class="kw">match </span>tx_type {
-            TxType::InvokeTx =&gt; {
+        <span class="comment">// Going one lower level gives us more flexibility like not validating the tx as we could do
+        // it before the tx lands in the mempool.
+        // However it also means we need to copy/paste internal code from the tx.execute() method.
+        </span><span class="kw">let </span>(execute_call_info, _account_context) = <span class="kw">match </span>tx_type {
+            TxType::Invoke =&gt; {
                 <span class="kw">let </span>tx: InvokeTransactionV1 = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_invoke_transaction_context(<span class="kw-2">&amp;</span>tx);
 
-                tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
-                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
+                (
+                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
+                    account_context,
+                )
             }
-            TxType::L1HandlerTx =&gt; {
+            TxType::L1Handler =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_l1_handler_transaction_context(<span class="kw-2">&amp;</span>tx);
-                tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
-                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
+                (
+                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
+                    account_context,
+                )
             }
-            TxType::DeclareTx =&gt; {
+            TxType::Declare =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_declare_transaction_context(<span class="kw-2">&amp;</span>tx);
                 <span class="comment">// Execute.
-                </span>tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
-                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
+                </span>(
+                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
+                    account_context,
+                )
             }
-            TxType::DeployAccountTx =&gt; {
+            TxType::DeployAccount =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_deploy_account_transaction_context(<span class="kw-2">&amp;</span>tx);
 
                 <span class="comment">// Execute.
-                </span>tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
-                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)
+                </span>(
+                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
+                    account_context,
+                )
             }
-        }
-
-        <span class="comment">// TODO: Investigate the use of tx.execute() instead of tx.run_execute()
-        // Going one lower level gives us more flexibility like not validating the tx as we could do
-        // it before the tx lands in the mempool.
-        // However it also means we need to copy/paste internal code from the tx.execute() method.
-    </span>}
+        };
+        <span class="kw">let </span>tx_resources = fees::get_transaction_resources(state, <span class="kw-2">&amp;</span>execute_call_info, execution_resources, tx_type)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>_account_context, <span class="kw-2">&amp;</span>tx_resources)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
+            validate_call_info: <span class="prelude-val">None</span>,
+            execute_call_info,
+            fee_transfer_call_info,
+            actual_fee,
+            actual_resources: tx_resources,
+        })
+    }
 
     <span class="doccomment">/// Get the transaction context for a l1 handler transaction
     ///
@@ -999,7 +1051,7 @@
         <span class="self">Self </span>{
             transaction_hash: H256::default(),
             actual_fee: U256::default(),
-            tx_type: TxType::InvokeTx,
+            tx_type: TxType::Invoke,
             events: BoundedVec::try_from(<span class="macro">vec!</span>[EventWrapper::default(), EventWrapper::default()]).unwrap(),
         }
     }

@@ -190,9 +190,50 @@
 <a href="#190" id="190">190</a>
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
-</pre><pre class="rust"><code><span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+</pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
+<span class="kw">use </span>alloc::string::String;
+
+<span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
+<span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
+<span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
+<span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, H256, U256};
+<span class="kw">use </span>starknet_api::transaction::Fee;
 <span class="kw">use </span>starknet_api::StarknetApiError;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
@@ -213,6 +254,23 @@
     </span>StarknetApi(StarknetApiError),
     <span class="doccomment">/// Block context serialization error.
     </span>BlockContextSerializationError,
+    <span class="doccomment">/// Fee computation error,
+    </span>FeeComputationError,
+    <span class="doccomment">/// Fee transfer error,
+    </span>FeeTransferError {
+        <span class="doccomment">/// Max fee specified by the user.
+        </span>max_fee: Fee,
+        <span class="doccomment">/// Actual fee.
+        </span>actual_fee: Fee,
+    },
+    <span class="doccomment">/// Cairo resources are not contained in the fee costs.
+    </span>CairoResourcesNotContainedInFeeCosts,
+    <span class="doccomment">/// Failed to compute the L1 gas usage.
+    </span>FailedToComputeL1GasUsage,
+    <span class="doccomment">/// Entrypoint execution error
+    </span>EntrypointExecution(EntryPointExecutionError),
+    <span class="doccomment">/// Unexpected holes.
+    </span>UnexpectedHoles(String),
 }
 
 <span class="doccomment">/// Different tx types.
@@ -230,15 +288,34 @@
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub enum </span>TxType {
     <span class="doccomment">/// Regular invoke transaction.
-    </span>InvokeTx,
+    </span>Invoke,
     <span class="doccomment">/// Declare transaction.
-    </span>DeclareTx,
+    </span>Declare,
     <span class="doccomment">/// Deploy account transaction.
-    </span>DeployAccountTx,
+    </span>DeployAccount,
     <span class="doccomment">/// Message sent from ethereum.
-    </span>L1HandlerTx,
+    </span>L1Handler,
 }
-
+<span class="kw">impl </span>From&lt;TransactionType&gt; <span class="kw">for </span>TxType {
+    <span class="kw">fn </span>from(value: TransactionType) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>value {
+            TransactionType::Declare =&gt; <span class="self">Self</span>::Declare,
+            TransactionType::DeployAccount =&gt; <span class="self">Self</span>::DeployAccount,
+            TransactionType::InvokeFunction =&gt; <span class="self">Self</span>::Invoke,
+            TransactionType::L1Handler =&gt; <span class="self">Self</span>::L1Handler,
+        }
+    }
+}
+<span class="kw">impl </span>From&lt;TxType&gt; <span class="kw">for </span>TransactionType {
+    <span class="kw">fn </span>from(value: TxType) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>value {
+            TxType::Declare =&gt; <span class="self">Self</span>::Declare,
+            TxType::DeployAccount =&gt; <span class="self">Self</span>::DeployAccount,
+            TxType::Invoke =&gt; <span class="self">Self</span>::InvokeFunction,
+            TxType::L1Handler =&gt; <span class="self">Self</span>::L1Handler,
+        }
+    }
+}
 <span class="doccomment">/// Representation of a Starknet transaction.
 </span><span class="attr">#[derive(
     Clone,
@@ -295,31 +372,6 @@
     </span><span class="kw">pub </span>events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
 }
 
-<span class="doccomment">/// Information needed to perform the fee transfer.
-</span><span class="attr">#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    Default,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub struct </span>FeeTransferInformation {
-    <span class="doccomment">/// Actual fees paid for the transaction.
-    </span><span class="kw">pub </span>actual_fee: U256,
-    <span class="doccomment">/// Address of the person paying the fees.
-    </span><span class="kw">pub </span>payer: ContractAddressWrapper,
-}
-<span class="kw">impl </span>FeeTransferInformation {
-    <span class="doccomment">/// Creates a new instance of FeeTransferInformation
-    </span><span class="kw">pub fn </span>new(actual_fee: U256, payer: ContractAddressWrapper) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ actual_fee, payer }
-    }
-}
 <span class="doccomment">/// Representation of a Starknet event.
 </span><span class="attr">#[derive(
     Clone,
@@ -339,6 +391,22 @@
     </span><span class="kw">pub </span>data: BoundedVec&lt;H256, MaxArraySize&gt;,
     <span class="doccomment">/// The address that emitted the event
     </span><span class="kw">pub </span>from_address: ContractAddressWrapper,
+}
+
+<span class="doccomment">/// This struct wraps the [TransactionExecutionInfo] type from the blockifier.
+</span><span class="attr">#[derive(Debug)]
+</span><span class="kw">pub struct </span>TransactionExecutionInfoWrapper {
+    <span class="doccomment">/// Transaction validation call info; [None] for `L1Handler`.
+    </span><span class="kw">pub </span>validate_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
+    <span class="doccomment">/// Transaction execution call info; [None] for `Declare`.
+    </span><span class="kw">pub </span>execute_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
+    <span class="doccomment">/// Fee transfer call info; [None] for `L1Handler`.
+    </span><span class="kw">pub </span>fee_transfer_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
+    <span class="doccomment">/// The actual fee that was charged (in Wei).
+    </span><span class="kw">pub </span>actual_fee: Fee,
+    <span class="doccomment">/// Actual execution resources the transaction is charged for,
+    /// including L1 gas and additional OS resources estimation.
+    </span><span class="kw">pub </span>actual_resources: BTreeMap&lt;String, usize&gt;,
 }
 
 <span class="doccomment">/// Error enum wrapper for events.

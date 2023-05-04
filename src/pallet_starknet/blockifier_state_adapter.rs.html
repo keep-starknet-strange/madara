@@ -112,12 +112,35 @@
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
-</pre><pre class="rust"><code><span class="kw">use </span>core::marker::PhantomData;
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+</pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
+<span class="kw">use </span>core::marker::PhantomData;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<span class="kw">use </span>blockifier::state::cached_state::ContractStorageKey;
 <span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
 <span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+<span class="kw">use </span>mp_starknet::state::StateChanges;
 <span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>sp_std::sync::Arc;
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
@@ -133,10 +156,26 @@
 /// We feed this struct when executing a transaction so that we directly use the substrate storage
 /// and not an extra layer that would add overhead.
 /// We don&#39;t implement those traits directly on the pallet to avoid compilation problems.
-</span><span class="kw">pub struct </span>BlockifierStateAdapter&lt;T: Config&gt;(PhantomData&lt;T&gt;);
+</span><span class="kw">pub struct </span>BlockifierStateAdapter&lt;T: Config&gt; {
+    storage_update: BTreeMap&lt;ContractStorageKey, StarkFelt&gt;,
+    class_hash_update: usize,
+    _phantom: PhantomData&lt;T&gt;,
+}
+
+<span class="kw">impl</span>&lt;T&gt; StateChanges <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt;
+<span class="kw">where
+    </span>T: Config,
+{
+    <span class="kw">fn </span>count_state_changes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, usize, usize) {
+        <span class="kw">let </span>keys = <span class="self">self</span>.storage_update.keys();
+        <span class="kw">let </span>n_contract_updated = BTreeSet::from_iter(keys.clone().map(|<span class="kw-2">&amp;</span>(contract_address, <span class="kw">_</span>)| contract_address)).len();
+        (n_contract_updated, keys.len(), <span class="self">self</span>.class_hash_update)
+    }
+}
+
 <span class="kw">impl</span>&lt;T: Config&gt; Default <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(PhantomData)
+        <span class="self">Self </span>{ storage_update: BTreeMap::default(), class_hash_update: usize::default(), _phantom: PhantomData }
     }
 }
 
@@ -171,7 +210,6 @@
 
     <span class="kw">fn </span>get_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;Arc&lt;ContractClass&gt;&gt; {
         <span class="kw">let </span>wrapped_class_hash: ClassHashWrapper = class_hash.<span class="number">0.0</span>;
-
         <span class="kw">let </span>opt_contract_class = Pallet::&lt;T&gt;::contract_class_by_class_hash(wrapped_class_hash);
         <span class="kw">match </span>opt_contract_class {
             <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(Arc::new(
@@ -185,6 +223,7 @@
 
 <span class="kw">impl</span>&lt;T: Config&gt; State <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
     <span class="kw">fn </span>set_storage_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
+        <span class="self">self</span>.storage_update.insert((contract_address, key), value);
         <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>;
         <span class="kw">let </span>key: StorageKeyWrapper = H256::from(key.<span class="number">0.0</span>.<span class="number">0</span>);
 
@@ -202,6 +241,7 @@
     }
 
     <span class="kw">fn </span>set_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, class_hash: ClassHash) -&gt; StateResult&lt;()&gt; {
+        <span class="self">self</span>.class_hash_update += <span class="number">1</span>;
         <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>;
         <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0.0</span>;
 

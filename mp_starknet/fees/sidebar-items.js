@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FEE_TRANSFER_N_STORAGE_CHANGES","FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE"],"fn":["calculate_l1_gas_by_vm_usage","calculate_tx_fee","charge_fee","extract_l1_gas_and_vm_usage","get_transaction_resources"]};
