@@ -49,7 +49,6 @@ scale-info = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 hex = { workspace = true }
 
-
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
 pretty_assertions = "1.3.0"

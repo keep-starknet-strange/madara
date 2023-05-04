@@ -25,7 +25,7 @@ fn verify_tx_version_passes_for_valid_version() {
         ..Transaction::default()
     };
 
-    assert!(tx.verify_tx_version(&TxType::InvokeTx).is_ok())
+    assert!(tx.verify_tx_version(&TxType::Invoke).is_ok())
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn verify_tx_version_fails_for_invalid_version() {
         ..Transaction::default()
     };
 
-    assert!(tx.verify_tx_version(&TxType::InvokeTx).is_err())
+    assert!(tx.verify_tx_version(&TxType::Invoke).is_err())
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn test_try_into_transaction_receipt_wrapper() {
     // Check if the transaction hash, actual fee, and tx type are correctly converted
     assert_eq!(transaction_receipt_wrapper.transaction_hash, H256::from_slice(&[1; 32]));
     assert_eq!(transaction_receipt_wrapper.actual_fee, U256::from(0));
-    assert_eq!(transaction_receipt_wrapper.tx_type, TxType::InvokeTx);
+    assert_eq!(transaction_receipt_wrapper.tx_type, TxType::Invoke);
 
     // Check if the events are correctly converted
     let event_wrapper1 = EventWrapper::builder()

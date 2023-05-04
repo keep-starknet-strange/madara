@@ -42,6 +42,16 @@ pub struct BlockHashAndNumber {
     pub block_number: BlockNumber,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub struct SyncStatus {
+    pub starting_block_hash: FieldElement,
+    pub starting_block_num: BlockNumber,
+    pub current_block_hash: FieldElement,
+    pub current_block_num: BlockNumber,
+    pub highest_block_hash: FieldElement,
+    pub highest_block_num: BlockNumber,
+}
+
 /// Function call information
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct FunctionCall {
@@ -320,6 +330,15 @@ fn remove_leading_zeros(s: &str) -> &str {
 
 pub use block_id::BlockId;
 
+/// Boolean or SyncStatus
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum Syncing {
+    #[serde(rename = "sync_status")]
+    False(bool),
+    #[serde(rename = "sync_status")]
+    SyncStatus(SyncStatus),
+}
+
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetRpcApi {
@@ -342,4 +361,8 @@ pub trait StarknetRpcApi {
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
     fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
+
+    /// Get an object about the sync status, or false if the node is not syncing
+    #[method(name = "syncing")]
+    async fn syncing(&self) -> RpcResult<Syncing>;
 }

@@ -5,7 +5,7 @@ use hex::FromHex;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::starknet_serde::transaction_from_json;
-use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
+use mp_starknet::transaction::types::{EventWrapper, Transaction, TransactionReceiptWrapper, TxType};
 use sp_core::{H256, U256};
 
 use super::mock::*;
@@ -76,10 +76,25 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         pretty_assertions::assert_eq!(pending.len(), 2);
 
         let receipt = &pending.get(0).unwrap().1;
-        pretty_assertions::assert_eq!(receipt.actual_fee, U256::from(0));
-        pretty_assertions::assert_eq!(receipt.events.len(), 0);
-        pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
-        pretty_assertions::assert_eq!(receipt.tx_type, TxType::InvokeTx);
+        let expected_receipt = TransactionReceiptWrapper {
+            transaction_hash: transaction.hash,
+            actual_fee: U256::from(52770),
+            tx_type: TxType::Invoke,
+            events: bounded_vec![EventWrapper {
+                keys: bounded_vec!(
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
+                ),
+                data: bounded_vec![
+                    H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000ce22").unwrap(),
+                    H256::zero(),
+                ],
+                from_address: Starknet::fee_token_address(),
+            },],
+        };
+
+        pretty_assertions::assert_eq!(*receipt, expected_receipt);
     });
 }
 
@@ -107,27 +122,51 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 .unwrap()
                 .to_fixed_bytes(),
         };
+        let expected_fee_transfer_event = EventWrapper {
+                keys: bounded_vec![
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                ],
+                data: bounded_vec!(
+                    H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap(), // From
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // To
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d020").unwrap(), // Amount low
+                    H256::zero(), // Amount high
+                ),
+                from_address: Starknet::fee_token_address(),
+            };
+        let events = System::events();
+        // Actual event.
+        pretty_assertions::assert_eq!(
+            Event::StarknetEvent(emitted_event.clone()),
+            events[events.len() - 2].event.clone().try_into().unwrap()
+        );
+        // Fee transfer event.
+        pretty_assertions::assert_eq!(
+            Event::StarknetEvent(expected_fee_transfer_event.clone())
+            ,events.last().unwrap().event.clone().try_into().unwrap(),
+        );
 
-        System::assert_last_event(Event::StarknetEvent(emitted_event.clone()).into());
         let pending = Starknet::pending();
         let events = Starknet::pending_events();
         let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(transaction, _)| transaction).collect();
         let (_transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
+
         assert_eq!(
             event_commitment,
-            H256::from_str("0x01e95b35377e090a7448a6d09f207557f5fcc962f128ad8416d41c387dda3ec3").unwrap()
+            H256::from_str("0x05299be42440a75a8afcee70587fe6b24060debff2587a7945c2faed0a817047").unwrap()
         );
-        assert_eq!(events.len(), 1);
+        assert_eq!(events.len(), 2);
+        assert_eq!(pending.len(), 1);
 
-        pretty_assertions::assert_eq!(pending.len(), 1);
-
+        let expected_receipt = TransactionReceiptWrapper {
+            transaction_hash: transaction.hash,
+            actual_fee: U256::from(53280),
+            tx_type: TxType::Invoke,
+            events: bounded_vec!( emitted_event,expected_fee_transfer_event),
+        };
         let receipt = &pending.get(0).unwrap().1;
-        pretty_assertions::assert_eq!(receipt.actual_fee, U256::from(0));
-        pretty_assertions::assert_eq!(receipt.events.len(), 1);
-        pretty_assertions::assert_eq!(receipt.events.get(0).unwrap(), &emitted_event);
-        pretty_assertions::assert_eq!(receipt.transaction_hash, transaction.hash);
-        pretty_assertions::assert_eq!(receipt.tx_type, TxType::InvokeTx);
+        pretty_assertions::assert_eq!(*receipt, expected_receipt);
     });
 }
 
