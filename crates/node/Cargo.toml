@@ -49,7 +49,7 @@ sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
-
+sc-network-sync = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -83,7 +83,7 @@ blockifier = { workspace = true }
 hex = { workspace = true }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 
 serde_json = { workspace = true }
 
