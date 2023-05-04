@@ -551,29 +551,6 @@
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
 <a href="#553" id="553">553</a>
-<a href="#554" id="554">554</a>
-<a href="#555" id="555">555</a>
-<a href="#556" id="556">556</a>
-<a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
-<a href="#563" id="563">563</a>
-<a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -593,7 +570,6 @@
 <span class="kw">use </span>sc_consensus_aura::{SlotProportion, StartAuraParams};
 <span class="kw">use </span>sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 <span class="kw">pub use </span>sc_executor::NativeElseWasmExecutor;
-<span class="kw">use </span>sc_keystore::LocalKeystore;
 <span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
 <span class="kw">use </span>sc_service::{Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
@@ -666,10 +642,6 @@
         Arc&lt;MadaraBackend&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(BasicImportQueue&lt;FullClient&gt;, BoxBlockImport&lt;FullClient&gt;), ServiceError&gt;,
 {
-    <span class="kw">if </span>config.keystore_remote.is_some() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(ServiceError::Other(<span class="string">&quot;Remote Keystores are not supported.&quot;</span>.into()));
-    }
-
     <span class="kw">let </span>telemetry = config
         .telemetry_endpoints
         .clone()
@@ -681,12 +653,7 @@
         })
         .transpose()<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>executor = NativeElseWasmExecutor::&lt;ExecutorDispatch&gt;::new(
-        config.wasm_method,
-        config.default_heap_pages,
-        config.max_runtime_instances,
-        config.runtime_cache_size,
-    );
+    <span class="kw">let </span>executor = sc_service::new_native_or_wasm_executor(config);
 
     <span class="kw">let </span>(client, backend, keystore_container, task_manager) = sc_service::new_full_parts::&lt;Block, RuntimeApi, <span class="kw">_</span>&gt;(
         config,
@@ -740,13 +707,6 @@
         transaction_pool,
         other: (block_import, grandpa_link, telemetry, madara_backend),
     })
-}
-
-<span class="kw">fn </span>remote_keystore(_url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;LocalKeystore&gt;, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
-    <span class="comment">// FIXME: here would the concrete keystore be built,
-    //        must return a concrete type (NOT `LocalKeystore`) that
-    //        implements `CryptoStore` and `SyncCryptoStore`
-    </span><span class="prelude-val">Err</span>(<span class="string">&quot;Remote Keystore not supported.&quot;</span>)
 }
 
 <span class="doccomment">/// Build the import queue for the template runtime (aura + grandpa).
@@ -822,18 +782,12 @@
         backend,
         <span class="kw-2">mut </span>task_manager,
         import_queue,
-        <span class="kw-2">mut </span>keystore_container,
+        keystore_container,
         select_chain,
         transaction_pool,
         other: (block_import, grandpa_link, <span class="kw-2">mut </span>telemetry, madara_backend),
     } = new_partial(<span class="kw-2">&amp;</span>config, build_import_queue)<span class="question-mark">?</span>;
 
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(url) = <span class="kw-2">&amp;</span>config.keystore_remote {
-        <span class="kw">match </span>remote_keystore(url) {
-            <span class="prelude-val">Ok</span>(k) =&gt; keystore_container.set_remote_keystore(k),
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(ServiceError::Other(<span class="macro">format!</span>(<span class="string">&quot;Error hooking up remote keystore for {}: {}&quot;</span>, url, e))),
-        };
-    }
     <span class="kw">let </span>grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
         <span class="kw-2">&amp;</span>client.block_hash(<span class="number">0</span>).ok().flatten().expect(<span class="string">&quot;Genesis block exists; qed&quot;</span>),
         <span class="kw-2">&amp;</span>config.chain_spec,
@@ -907,7 +861,7 @@
     <span class="kw">let </span>_rpc_handlers = sc_service::spawn_tasks(sc_service::SpawnTasksParams {
         network: network.clone(),
         client: client.clone(),
-        keystore: keystore_container.sync_keystore(),
+        keystore: keystore_container.keystore(),
         task_manager: <span class="kw-2">&amp;mut </span>task_manager,
         transaction_pool: transaction_pool.clone(),
         rpc_builder: rpc_extensions_builder,
@@ -984,7 +938,7 @@
             },
             force_authoring,
             backoff_authoring_blocks,
-            keystore: keystore_container.sync_keystore(),
+            keystore: keystore_container.keystore(),
             sync_oracle: sync_service.clone(),
             justification_sync_link: sync_service.clone(),
             block_proposal_slot_portion: SlotProportion::new(<span class="number">2f32 </span>/ <span class="number">3f32</span>),
@@ -1001,7 +955,7 @@
     <span class="kw">if </span>enable_grandpa {
         <span class="comment">// if the node isn&#39;t actively participating in consensus then it doesn&#39;t
         // need a keystore, regardless of which protocol we use below.
-        </span><span class="kw">let </span>keystore = <span class="kw">if </span>role.is_authority() { <span class="prelude-val">Some</span>(keystore_container.sync_keystore()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
+        </span><span class="kw">let </span>keystore = <span class="kw">if </span>role.is_authority() { <span class="prelude-val">Some</span>(keystore_container.keystore()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
 
         <span class="kw">let </span>grandpa_config = sc_consensus_grandpa::Config {
             <span class="comment">// FIXME #1578 make this available through chainspec

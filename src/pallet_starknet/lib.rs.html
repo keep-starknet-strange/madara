@@ -925,12 +925,6 @@
 <a href="#925" id="925">925</a>
 <a href="#926" id="926">926</a>
 <a href="#927" id="927">927</a>
-<a href="#928" id="928">928</a>
-<a href="#929" id="929">929</a>
-<a href="#930" id="930">930</a>
-<a href="#931" id="931">931</a>
-<a href="#932" id="932">932</a>
-<a href="#933" id="933">933</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -971,24 +965,18 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// &lt;https://docs.substrate.io/reference/frame-pallets/&gt;
 </span><span class="kw">pub use </span>pallet::<span class="kw-2">*</span>;
-
-<span class="doccomment">/// The Starknet pallet&#39;s runtime custom types.
-</span><span class="kw">pub mod </span>types;
-
-<span class="doccomment">/// The implementation of the message type.
-</span><span class="kw">pub mod </span>message;
-
-<span class="doccomment">/// Transaction validation logic.
-</span><span class="kw">pub mod </span>transaction_validation;
-
-<span class="doccomment">/// State root logic.
-</span><span class="kw">pub mod </span>state_root;
-
-<span class="doccomment">/// The Starknet pallet&#39;s runtime API
-</span><span class="kw">pub mod </span>runtime_api;
-
 <span class="doccomment">/// An adapter for the blockifier state related traits
 </span><span class="kw">pub mod </span>blockifier_state_adapter;
+<span class="doccomment">/// The implementation of the message type.
+</span><span class="kw">pub mod </span>message;
+<span class="doccomment">/// The Starknet pallet&#39;s runtime API
+</span><span class="kw">pub mod </span>runtime_api;
+<span class="doccomment">/// State root logic.
+</span><span class="kw">pub mod </span>state_root;
+<span class="doccomment">/// Transaction validation logic.
+</span><span class="kw">pub mod </span>transaction_validation;
+<span class="doccomment">/// The Starknet pallet&#39;s runtime custom types.
+</span><span class="kw">pub mod </span>types;
 
 <span class="doccomment">/// Everything needed to run the pallet offchain workers
 </span><span class="kw">mod </span>offchain_worker;
@@ -1297,7 +1285,7 @@
     </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
         <span class="doccomment">/// Ping the pallet to check if it is alive.
         </span><span class="attr">#[pallet::call_index(<span class="number">0</span>)]
-        #[pallet::weight(<span class="number">0</span>)]
+        #[pallet::weight({<span class="number">0</span>})]
         </span><span class="kw">pub fn </span>ping(origin: OriginFor&lt;T&gt;) -&gt; DispatchResult {
             ensure_none(origin)<span class="question-mark">?</span>;
             Pending::&lt;T&gt;::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
@@ -1326,7 +1314,7 @@
         /// # TODO
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
-        #[pallet::weight(<span class="number">0</span>)]
+        #[pallet::weight({<span class="number">0</span>})]
         </span><span class="kw">pub fn </span>invoke(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
@@ -1399,7 +1387,7 @@
         /// # TODO
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
-        #[pallet::weight(<span class="number">0</span>)]
+        #[pallet::weight({<span class="number">0</span>})]
         </span><span class="kw">pub fn </span>declare(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
@@ -1489,7 +1477,7 @@
         /// # TODO
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
-        #[pallet::weight(<span class="number">0</span>)]
+        #[pallet::weight({<span class="number">0</span>})]
         </span><span class="kw">pub fn </span>deploy_account(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
@@ -1568,7 +1556,7 @@
         /// # TODO
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">4</span>)]
-        #[pallet::weight(<span class="number">0</span>)]
+        #[pallet::weight({<span class="number">0</span>})]
         </span><span class="kw">pub fn </span>consume_l1_message(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
@@ -1615,7 +1603,7 @@
         /// # TODO
         /// * Add some limitations on how often this can be called.
         </span><span class="attr">#[pallet::call_index(<span class="number">5</span>)]
-        #[pallet::weight(<span class="number">0</span>)]
+        #[pallet::weight({<span class="number">0</span>})]
         </span><span class="kw">pub fn </span>set_fee_token_address(
             origin: OriginFor&lt;T&gt;,
             fee_token_address: ContractAddressWrapper,
