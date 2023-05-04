@@ -65,7 +65,8 @@ impl CallEntryPointWrapper {
 
     /// Convert to Starknet CallEntryPoint
     fn to_starknet_call_entry_point(&self) -> Result<CallEntryPoint, StarknetApiError> {
-        let class_hash = self.class_hash.map(|class_hash| ClassHash(StarkFelt::new(class_hash).unwrap()));
+        let class_hash =
+            if let Some(class_hash) = self.class_hash { Some(ClassHash(StarkFelt::new(class_hash)?)) } else { None };
 
         let entrypoint = CallEntryPoint {
             class_hash,
@@ -144,7 +145,6 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<CallEntryPoint, Self::Error> {
-        let entrypoint = self.to_starknet_call_entry_point()?;
-        Ok(entrypoint)
+        Ok(self.to_starknet_call_entry_point()?)
     }
 }
