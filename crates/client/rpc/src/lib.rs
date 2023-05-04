@@ -150,45 +150,6 @@ where
         Ok(block.header().transaction_count)
     }
 
-    /// Get the contract class definition in the given block associated with the given hash.
-    fn get_class(&self, block_id: StarknetBlockId, class_hash: FieldElement) -> RpcResult<ContractClassWrapper> {
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_str(&h).map_err(|e| {
-                    error!("Failed to convert '{h}' to H256: {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?,
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::BlockNumber(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
-
-        let class_hash_bytes = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
-            error!("Failed to convert '{class_hash}' to [u8; 32]: {e}");
-            StarknetRpcApiError::ClassHashNotFound
-        })?;
-
-        let contract_class =
-            self.client.runtime_api().get_class(substrate_block_hash, class_hash_bytes).unwrap_or_default();
-
-        Ok(contract_class)
-    }
-
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
@@ -261,53 +222,6 @@ where
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-
-                    // Build the `SyncStatus` struct with the respective syn information
-                    Ok(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
-                        starting_block_num,
-                        starting_block_hash,
-                        current_block_num,
-                        current_block_hash,
-                        highest_block_num,
-                        highest_block_hash,
-                    }))
-                } else {
-                    // If there was an error when getting a starknet block, then we return `false`,
-                    // as per the endpoint specification
-                    log::error!("Failed to load Starknet block");
-                    Ok(Syncing::False(false))
-                }
-            }
-            Err(_) => {
-                // If there was an error when getting a starknet block, then we return `false`,
-                // as per the endpoint specification
-                log::error!("`SyncingEngine` shut down");
-                Ok(Syncing::False(false))
-            }
-        }
-    }
-
-    /// Get the contract class definition in the given block associated with the given hash.
-    fn get_class(&self, block_id: StarknetBlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass> {
-        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            error!("'{e}'");
-            StarknetRpcApiError::BlockNotFound
-        })?;
-
-        let contract_clash_hashed_wrapped = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
-            error!("Failed to convert '{class_hash}' to array: {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?;
-
-        let contract_class = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped)
-            .ok_or_else(|| {
-                error!("Failed to retrieve contract class from hash '{class_hash}'");
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
         Ok(to_rpc_contract_class(contract_class).map_err(|e| {
             error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
             StarknetRpcApiError::ContractNotFound
