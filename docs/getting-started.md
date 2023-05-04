@@ -156,7 +156,7 @@ To test the Madara RPC endpoints, follow the steps below:
 1. Run Madara locally (by default, it runs on port 9933):
 
 ```bash
-cargo run --release -- --dev 
+cargo run --release -- --dev
 # Alternatively, use other methods to run Madara
 ```
 
