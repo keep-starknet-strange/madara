@@ -4424,6 +4424,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-blockchain",
+ "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42)",
  "starknet_api",
 ]
 

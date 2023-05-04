@@ -9,6 +9,7 @@
     "sourceType": "module",
     "project": ["./tsconfig.json"]
   },
+  "ignorePatterns": ["**/*.js"],
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"]
 }
