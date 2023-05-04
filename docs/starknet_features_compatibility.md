@@ -36,7 +36,7 @@
 | starknet_getTransactionByHash            | :construction:     |
 | starknet_getTransactionByBlockIdAndIndex | :construction:     |
 | starknet_getTransactionReceipt           | :construction:     |
-| starknet_getClass                        | :construction:     |
+| starknet_getClass                        | :white_check_mark: |
 | starknet_getClassHashAt                  | :construction:     |
 | starknet_getClassAt                      | :construction:     |
 | starknet_getBlockTransactionCount        | :white_check_mark: |
