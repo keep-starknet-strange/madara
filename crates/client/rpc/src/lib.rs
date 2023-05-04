@@ -19,6 +19,7 @@ use mc_rpc_core::{
     SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
+use mp_starknet::execution::types::ContractClassWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -215,24 +216,24 @@ where
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        // let contract_class: SierraContractClass = self
-        //     .overrides
-        //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
-        //     .contract_class(substrate_block_hash, contract_address_wrapped)
-        //     .ok_or_else(|| {
-        //         error!("Failed to retrieve contract class at '{contract_address}'");
-        //         StarknetRpcApiError::ContractNotFound
-        //     })?
-        //     .try_into()
-        //     .map_err(|e| {
-        //         error!(
-        //             "Failed to convert `ContractClassWrapper` at '{contract_address}' to
-        // `ContractClass`: {e}"
-        //         );
-        //     StarknetRpcApiError::ContractNotFound
-        // })?;
+        let contract_class_wrapper: ContractClassWrapper = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), _substrate_block_hash)
+            .contract_class(_substrate_block_hash, _contract_address_wrapped)
+            .ok_or_else(|| {
+                error!("Failed to retrieve contract class at '{contract_address}'");
+                StarknetRpcApiError::ContractNotFound
+            })?;
 
-        Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
+        let contract_class: SierraContractClass = contract_class_wrapper.try_into().map_err(|e| {
+            error!(
+                "Failed to convert `ContractClassWrapper` at '{contract_address}' to
+        `ContractClass`: {e}"
+            );
+            StarknetRpcApiError::ContractNotFound
+        })?;
+
+        Ok(RPCContractClass::ContractClass(contract_class))
     }
 
     // Implementation of the `syncing` RPC Endpoint.

@@ -12,13 +12,15 @@ use std::collections::{BTreeMap, HashMap};
 use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine;
+use blockifier::execution::contract_class::ContractClass;
 use frame_support::storage::bounded_vec::BoundedVec;
 use hex::ToHex;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
-use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
+use mp_starknet::execution::types::{
+    ContractClassFromWrapperError, ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints,
+};
 use serde::{Deserialize, Serialize};
-
 pub type FieldElement = String;
 pub type BlockNumber = u64;
 pub type BlockHash = FieldElement;
@@ -254,6 +256,31 @@ pub struct SierraContractClass {
     pub entry_points_by_type: EntryPointsByType,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub abi: Option<ABI>,
+}
+
+// Conversion from ContractClassWrapper to SierraContractClass.
+impl TryFrom<ContractClassWrapper> for SierraContractClass {
+    type Error = ContractClassFromWrapperError;
+
+    fn try_from(wrapper: ContractClassWrapper) -> Result<Self, Self::Error> {
+        // Convert ContractClassWrapper to ContractClass.
+        let contract_class: ContractClass = ContractClass::try_from(wrapper)?;
+
+        // Extract the Sierra program from the ContractClass program.
+        // let sierra_program = contract_class.program.into_iter().map(|fe| fe.to_string()).collect();
+        let sierra_program = todo!();
+
+        // Convert entry_points_by_type from ContractClass to EntryPointsByType.
+        let mut entry_points_by_type = EntryPointsByType::default();
+
+        // Create a SierraContractClass.
+        Ok(Self {
+            sierra_program,
+            contract_class_version: "1.0.0".to_string(), // You can replace this with the appropriate version number.
+            entry_points_by_type,
+            abi: None, // Populate this field if ABI is available.
+        })
+    }
 }
 
 /// Starknet contract class
