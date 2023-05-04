@@ -10,7 +10,7 @@ use alloc::vec;
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::execution::entry_point::{CallEntryPoint, CallType, ExecutionContext, ExecutionResources};
 use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
@@ -312,10 +312,10 @@ impl Transaction {
         tx_type: &TxType,
     ) -> TransactionExecutionResultWrapper<EntryPointSelector> {
         let validate_entry_point_name = match tx_type {
-            TxType::DeclareTx => Ok(constants::VALIDATE_DECLARE_ENTRY_POINT_NAME),
-            TxType::DeployAccountTx => Ok(constants::VALIDATE_DEPLOY_ENTRY_POINT_NAME),
-            TxType::InvokeTx => Ok(constants::VALIDATE_ENTRY_POINT_NAME),
-            TxType::L1HandlerTx => Err(EntryPointExecutionError::InvalidExecutionInput {
+            TxType::Declare => Ok(constants::VALIDATE_DECLARE_ENTRY_POINT_NAME),
+            TxType::DeployAccount => Ok(constants::VALIDATE_DEPLOY_ENTRY_POINT_NAME),
+            TxType::Invoke => Ok(constants::VALIDATE_ENTRY_POINT_NAME),
+            TxType::L1Handler => Err(EntryPointExecutionError::InvalidExecutionInput {
                 input_descriptor: "tx_type".to_string(),
                 info: "l1 handler transaction should not be validated".to_string(),
             })
@@ -329,12 +329,12 @@ impl Transaction {
     // `get_tx_info()`.
     fn validate_entrypoint_calldata(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<Calldata> {
         match tx_type {
-            TxType::DeclareTx => {
+            TxType::Declare => {
                 let declare_tx: DeclareTransaction =
                     self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 Ok(calldata![declare_tx.class_hash().0])
             }
-            TxType::DeployAccountTx => {
+            TxType::DeployAccount => {
                 let deploy_account_tx: DeployAccountTransaction =
                     self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let validate_calldata = concat(vec![
@@ -344,12 +344,12 @@ impl Transaction {
                 Ok(Calldata(validate_calldata.into()))
             }
             // Calldata for validation is the same calldata as for the execution itself.
-            TxType::InvokeTx => {
+            TxType::Invoke => {
                 let invoke_tx: InvokeTransactionV1 =
                     self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 Ok(Calldata(invoke_tx.calldata.0))
             }
-            TxType::L1HandlerTx => Err(EntryPointExecutionError::InvalidExecutionInput {
+            TxType::L1Handler => Err(EntryPointExecutionError::InvalidExecutionInput {
                 input_descriptor: "tx_type".to_string(),
                 info: "l1 handler transaction should not be validated".to_string(),
             })
@@ -373,12 +373,12 @@ impl Transaction {
         execution_resources: &mut ExecutionResources,
         block_context: &BlockContext,
         account_tx_context: &AccountTransactionContext,
-        tx_type: TxType,
+        tx_type: &TxType,
     ) -> TransactionExecutionResultWrapper<()> {
         let validate_call = CallEntryPoint {
             entry_point_type: EntryPointType::External,
-            entry_point_selector: self.validate_entry_point_selector(&tx_type)?,
-            calldata: self.validate_entrypoint_calldata(&tx_type)?,
+            entry_point_selector: self.validate_entry_point_selector(tx_type)?,
+            calldata: self.validate_entrypoint_calldata(tx_type)?,
             class_hash: None,
             code_address: None,
             storage_address: account_tx_context.sender_address,
@@ -477,7 +477,7 @@ impl Transaction {
                 self.handle_nonce(state, &account_context)?;
 
                 // Validate.
-                self.validate_tx(state, execution_resources, &block_context, &account_context, tx_type)?;
+                self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (
@@ -503,7 +503,7 @@ impl Transaction {
                 self.handle_nonce(state, &account_context)?;
 
                 // Validate.
-                self.validate_tx(state, execution_resources, &block_context, &account_context, tx_type)?;
+                self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (
@@ -519,7 +519,7 @@ impl Transaction {
                 self.handle_nonce(state, &account_context)?;
 
                 // Validate.
-                self.validate_tx(state, execution_resources, &block_context, &account_context, tx_type)?;
+                self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (

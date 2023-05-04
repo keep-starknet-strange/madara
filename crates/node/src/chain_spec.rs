@@ -184,7 +184,8 @@ fn testnet_genesis(
     let openzeppelin_class =
         get_contract_class(include_bytes!("../../../resources/account/openzeppelin/account.json")).try_into().unwrap();
 
-    let erc20_class = get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
+    let erc20_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
@@ -289,6 +290,24 @@ fn testnet_genesis(
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x11111) which is the key in the starknet contract
+                        // for ERC20_balances(0x11111).low
+                        H256::from_str("0x056c9bcf2a0a1adda0046c9a572621489281a278a38ec00aecc657995ab8a2c2").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x11111) + 1 which is the key in the starknet
+                        // contract for ERC20_balances(0x11111).high
+                        H256::from_str("0x056c9bcf2a0a1adda0046c9a572621489281a278a38ec00aecc657995ab8a2c3").unwrap(),
                     ),
                     U256::from(u128::MAX),
                 ),
