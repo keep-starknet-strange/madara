@@ -4,7 +4,7 @@
 
 <!-- Please try to limit your pull request to one type; submit multiple pull requests if needed. -->
 
-Please keep only the types of change your PR introduces:
+Please add the labels corresponding to the type of changes your PR introduces:
 
 - Bugfix
 - Feature
