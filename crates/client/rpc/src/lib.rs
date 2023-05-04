@@ -367,7 +367,7 @@ where
             .to_string())
     }
     fn get_block_with_tx_hashes(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
-        println!("StarknetBlockId {:?}", block_id);
+        let mut block_status = BlockStatus::AcceptedOnL2;
         let substrate_block_hash = match block_id {
             StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
@@ -389,7 +389,10 @@ where
             }
             StarknetBlockId::BlockTag(t) => match t {
                 mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
+                mc_rpc_core::BlockTag::Pending => {
+                    block_status = BlockStatus::Pending;
+                    None
+                }
             },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
@@ -402,12 +405,18 @@ where
 
         let transaction_hashes = block.transactions_hashes().into_iter().map(|hash| hash.to_string()).collect();
         let block_with_tx_hashes = BlockWithTxHashes {
-            transactions: transaction_hashes,
-            status: BlockStatus::Pending, // TODO: get real value
-            block_hash: block.header().hash().to_string(),
-            // parent_hash: FieldElement::from("0x0"),
-            parent_hash: block.header().parent_block_hash.to_string(),
-            block_number: UniqueSaturatedInto::<u64>::unique_saturated_into(block.header().block_number),
+            transactions: txs_hashes,
+            // TODO: Status hardcoded, get status from block
+            status: block_status,
+            block_hash: h256_to_string(block.header().hash()).map_err(|e| {
+                error!("BlockHash: Failed to convert '{0}' to String: {e}", block.header().hash());
+                StarknetRpcApiError::InternalServerError
+            })?,
+            parent_hash: h256_to_string(block.header().parent_block_hash).map_err(|e| {
+                error!("ParentHash: Failed to convert '{0}' to String: {e}", block.header().parent_block_hash);
+                StarknetRpcApiError::InternalServerError
+            })?,
+            block_number: block.header().block_number.as_u64(),
             new_root: block.header().global_state_root.to_string(),
             // new_root: FieldElement::from("0x0"),
             timestamp: block.header().block_timestamp,
