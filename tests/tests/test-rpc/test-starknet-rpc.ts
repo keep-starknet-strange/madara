@@ -176,41 +176,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(contract_class).to.not.be.undefined;
   });
-
-  it("syncing", async function () {
-    await jumpBlocks(context, 10);
-
-    const status = await providerRPC.getSyncingStats();
-    const current_block = await providerRPC.getBlockHashAndNumber();
-
-    // starknet starting block number should be 0 with this test setup
-    expect(status["sync_status"]["starting_block_num"]).to.be.equal(0);
-    // starknet current and highest block number should be equal to
-    // the current block with this test setup
-    expect(status["sync_status"]["current_block_num"]).to.be.equal(
-      current_block["block_number"]
-    );
-    expect(status["sync_status"]["highest_block_num"]).to.be.equal(
-      current_block["block_number"]
-    );
-
-    // the starknet block hash for number 0 starts with "0xaf" with this test setup
-    expect(status["sync_status"]["starting_block_hash"]).to.contain("0xaf");
-    // starknet current and highest block number should be equal to
-    // the current block with this test setup
-    expect(status["sync_status"]["current_block_hash"]).to.be.equal(
-      current_block["block_hash"]
-    );
-    expect(status["sync_status"]["highest_block_hash"]).to.be.equal(
-      current_block["block_hash"]
-    );
-  it("getBlockWithTxHashes", async function () {
-    const block = await providerRPC.getBlockHashAndNumber();
-    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
-    const block_with_tx_hashes = await providerRPC.getBlockWithTxHashes(
-      block_hash
-    );
-
+  
   describe("Get block with transaction hashes", () => {
     it(
       "giving a valid block with txs " +
@@ -280,6 +246,35 @@ describeDevMadara("Starknet RPC", (context) => {
         expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
         expect(block_with_tx_hashes.transactions.length).to.deep.equal(0);
       }
+    );
+  });
+
+  it("syncing", async function () {
+    await jumpBlocks(context, 10);
+
+    const status = await providerRPC.getSyncingStats();
+    const current_block = await providerRPC.getBlockHashAndNumber();
+
+    // starknet starting block number should be 0 with this test setup
+    expect(status["sync_status"]["starting_block_num"]).to.be.equal(0);
+    // starknet current and highest block number should be equal to
+    // the current block with this test setup
+    expect(status["sync_status"]["current_block_num"]).to.be.equal(
+      current_block["block_number"]
+    );
+    expect(status["sync_status"]["highest_block_num"]).to.be.equal(
+      current_block["block_number"]
+    );
+
+    // the starknet block hash for number 0 starts with "0xaf" with this test setup
+    expect(status["sync_status"]["starting_block_hash"]).to.contain("0xaf");
+    // starknet current and highest block number should be equal to
+    // the current block with this test setup
+    expect(status["sync_status"]["current_block_hash"]).to.be.equal(
+      current_block["block_hash"]
+    );
+    expect(status["sync_status"]["highest_block_hash"]).to.be.equal(
+      current_block["block_hash"]
     );
   });
 });
