@@ -112,18 +112,6 @@
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
-<a href="#122" id="122">122</a>
-<a href="#123" id="123">123</a>
-<a href="#124" id="124">124</a>
-<a href="#125" id="125">125</a>
-<a href="#126" id="126">126</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
 <span class="kw">use </span>sp_core::ConstU32;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
@@ -159,18 +147,6 @@
     </span>External,
     <span class="doccomment">/// L1 Handler.
     </span>L1Handler,
-}
-
-<span class="comment">// Regular implementation.
-</span><span class="kw">impl </span>EntryPointTypeWrapper {
-    <span class="doccomment">/// Convert Madara entrypoint type to Starknet entrypoint type.
-    </span><span class="kw">pub fn </span>to_starknet(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EntryPointType {
-        <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Constructor =&gt; EntryPointType::Constructor,
-            <span class="self">Self</span>::External =&gt; EntryPointType::External,
-            <span class="self">Self</span>::L1Handler =&gt; EntryPointType::L1Handler,
-        }
-    }
 }
 
 <span class="comment">// Traits implementation.

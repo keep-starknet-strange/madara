@@ -527,6 +527,14 @@
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
 <a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -535,7 +543,7 @@
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>blockifier::execution::entry_point::ExecutionResources;
+<span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, ExecutionResources};
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
@@ -707,6 +715,8 @@
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>)<span class="question-mark">?</span>),
             max_fee: Fee(<span class="number">2</span>),
@@ -716,8 +726,8 @@
             ),
             nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address)<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            class_hash: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
-            constructor_calldata: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().calldata,
+            class_hash: entrypoint.class_hash.unwrap_or_default(),
+            constructor_calldata: entrypoint.calldata,
             contract_address_salt: ContractAddressSalt(StarkFelt::new(
                 <span class="self">self</span>.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
             )<span class="question-mark">?</span>),
@@ -730,12 +740,14 @@
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;L1HandlerTransaction, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(L1HandlerTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>)<span class="question-mark">?</span>),
             version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
             nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address)<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            calldata: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().calldata,
+            calldata: entrypoint.calldata,
             entry_point_selector: EntryPointSelector(StarkHash::new(
                 <span class="kw-2">*</span><span class="self">self</span>.call_entrypoint.entrypoint_selector.unwrap_or_default().as_fixed_bytes(),
             )<span class="question-mark">?</span>),
@@ -748,6 +760,8 @@
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransactionV1, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>)<span class="question-mark">?</span>),
             max_fee: Fee(<span class="number">2</span>),
@@ -756,7 +770,7 @@
             ),
             nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address)<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            calldata: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().calldata,
+            calldata: entrypoint.calldata,
         })
     }
 }
@@ -766,6 +780,8 @@
     <span class="kw">type </span>Error = StarknetApiError;
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
+
         <span class="kw">let </span>tx = DeclareTransactionV0V1 {
             transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.<span class="number">0</span>)<span class="question-mark">?</span>),
             max_fee: Fee(<span class="number">2</span>),
@@ -774,7 +790,7 @@
             ),
             nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address)<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            class_hash: <span class="self">self</span>.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
+            class_hash: entrypoint.class_hash.unwrap_or_default(),
         };
 
         <span class="prelude-val">Ok</span>(<span class="kw">if </span><span class="self">self</span>.version == <span class="number">0_u8 </span>{
