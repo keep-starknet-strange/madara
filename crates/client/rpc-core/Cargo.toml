@@ -20,7 +20,7 @@ anyhow = { workspace = true }
 base64 = { workspace = true }
 flate2 = { workspace = true }
 hex = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, features = ["server"], default-features = true }
+jsonrpsee = { workspace = true, features = ["server", "macros"], default-features = true }
 mp-starknet = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
