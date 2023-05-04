@@ -82,7 +82,7 @@ impl CallEntryPointWrapper {
         fee_token_address: ContractAddressWrapper,
     ) -> EntryPointExecutionResultWrapper<CallInfo> {
         let call_entry_point: CallEntryPoint =
-            CallEntryPointWrapper::try_into(self.clone()).map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
+            self.clone().try_into().map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
 
         let execution_resources = &mut ExecutionResources::default();
         let execution_context = &mut ExecutionContext::default();
