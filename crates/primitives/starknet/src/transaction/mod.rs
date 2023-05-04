@@ -6,7 +6,7 @@ use alloc::vec;
 
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, ExecutionResources};
+use blockifier::execution::entry_point::{CallEntryPoint, ExecutionResources};
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
