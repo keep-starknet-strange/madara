@@ -111,10 +111,10 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("getClass", async function () {
-    let blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
-    let block_number: number = blockHashAndNumber.block_number;
+    const blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
+    const block_number: number = blockHashAndNumber.block_number;
 
-    let contract_class = await providerRPC.getClass(
+    const contract_class = await providerRPC.getClass(
       TEST_CLASS_HASH,
       block_number
     );
