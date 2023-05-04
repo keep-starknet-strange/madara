@@ -19,6 +19,7 @@ use mc_rpc_core::{
     SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
+use mp_starknet::block::Block as StarknetBlock;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -196,6 +197,20 @@ where
             }
             Err(e) => Err(e.into()),
         }
+    }
+
+    /// Get block informations with full transactions given the block id
+    fn get_block_with_txs(&self, block_id: StarknetBlockId) -> RpcResult<StarknetBlock> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        Ok(self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default())
     }
 
     /// Get the contract class at a given contract address for a given block id

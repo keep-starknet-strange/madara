@@ -16,6 +16,7 @@ use frame_support::storage::bounded_vec::BoundedVec;
 use hex::ToHex;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use serde::{Deserialize, Serialize};
 
@@ -357,6 +358,10 @@ pub trait StarknetRpcApi {
     /// Call a contract function at a given block id
     #[method(name = "call")]
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>>;
+
+    /// Get block informations with full transactions given the block id
+    #[method(name = "getBlockWithTxs")]
+    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<StarknetBlock>;
 
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
