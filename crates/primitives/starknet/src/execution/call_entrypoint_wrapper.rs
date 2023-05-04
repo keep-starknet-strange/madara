@@ -63,35 +63,6 @@ impl CallEntryPointWrapper {
         Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
     }
 
-    /// Convert to Starknet CallEntryPoint
-    fn to_starknet_call_entry_point(&self) -> Result<CallEntryPoint, StarknetApiError> {
-        let class_hash =
-            if let Some(class_hash) = self.class_hash { Some(ClassHash(StarkFelt::new(class_hash)?)) } else { None };
-
-        let entrypoint = CallEntryPoint {
-            class_hash,
-            entry_point_type: self.entrypoint_type.clone().into(),
-            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap_or_default().0)?),
-            calldata: Calldata(Arc::new(
-                self.calldata
-                    .clone()
-                    .into_inner()
-                    .iter()
-                    .map(|x| StarkFelt::try_from(format!("0x{x:X}").as_str()).unwrap())
-                    .collect(),
-            )),
-            storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address)?)?,
-            caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address)?)?,
-            call_type: CallType::Call,
-            // I have no idea what I'm doing
-            // starknet-lib is constantly breaking it's api
-            // I hope it's nothing important ¯\_(ツ)_/¯
-            code_address: None,
-        };
-
-        Ok(entrypoint)
-    }
-
     /// Executes an entry point.
     ///
     /// # Arguments
@@ -110,8 +81,8 @@ impl CallEntryPointWrapper {
         block: StarknetBlock,
         fee_token_address: ContractAddressWrapper,
     ) -> EntryPointExecutionResultWrapper<CallInfo> {
-        let call_entry_point =
-            self.to_starknet_call_entry_point().map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
+        let call_entry_point: CallEntryPoint =
+            CallEntryPointWrapper::try_into(self.clone()).map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
 
         let execution_resources = &mut ExecutionResources::default();
         let execution_context = &mut ExecutionContext::default();
@@ -145,6 +116,30 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<CallEntryPoint, Self::Error> {
-        Ok(self.to_starknet_call_entry_point()?)
+        let class_hash =
+            if let Some(class_hash) = self.class_hash { Some(ClassHash(StarkFelt::new(class_hash)?)) } else { None };
+
+        let entrypoint = CallEntryPoint {
+            class_hash,
+            entry_point_type: self.entrypoint_type.clone().into(),
+            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap_or_default().0)?),
+            calldata: Calldata(Arc::new(
+                self.calldata
+                    .clone()
+                    .into_inner()
+                    .iter()
+                    .map(|x| StarkFelt::try_from(format!("0x{x:X}").as_str()).unwrap())
+                    .collect(),
+            )),
+            storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address)?)?,
+            caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address)?)?,
+            call_type: CallType::Call,
+            // I have no idea what I'm doing
+            // starknet-lib is constantly breaking it's api
+            // I hope it's nothing important ¯\_(ツ)_/¯
+            code_address: None,
+        };
+
+        Ok(entrypoint)
     }
 }
