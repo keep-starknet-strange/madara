@@ -266,3 +266,24 @@ curl -X POST \
      -d '{"jsonrpc":"2.0","id":1,"method":"starknet_myEndpoint","params":[{"some_str": "Madara", "some_u64": 1234}]}' \
      http://localhost:9933
 ```
+
+### Testing Madara RPC Endpoints automatically 
+
+To test the Madara RPC endpoints, follow the steps below:
+
+1. Run Madara locally (by default, it runs on port 9933):
+
+```bash
+cargo run --release -- --dev 
+# Alternatively, use other methods to run Madara
+```
+
+2. Execute hurl tests sequentially:
+
+```bash
+hurl --test examples/rpc/**/*.hurl
+```
+
+The output should be similar to the image provided:
+
+![Hurl Test Output](./images/hurl-test-output.png)
