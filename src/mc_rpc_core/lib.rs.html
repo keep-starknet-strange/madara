@@ -375,6 +375,61 @@
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
 <a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -582,7 +637,58 @@
     <span class="kw">pub </span>members: Members,
 }
 
-<span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+<span class="doccomment">/// The resulting block information with transaction hashes
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug)]
+</span><span class="kw">pub enum </span>MaybePendingBlockWithTxHashes {
+    Block(BlockWithTxHashes),
+    PendingBlock(PendingBlockWithTxHashes),
+}
+
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>BlockWithTxHashes {
+    <span class="kw">pub </span>status: BlockStatus,
+    <span class="kw">pub </span>block_hash: FieldElement,
+    <span class="doccomment">/// The hash of this block&#39;s parent
+    </span><span class="kw">pub </span>parent_hash: FieldElement,
+    <span class="doccomment">/// The block number (its height)
+    </span><span class="kw">pub </span>block_number: u64,
+    <span class="doccomment">/// The new global state root
+    </span><span class="kw">pub </span>new_root: FieldElement,
+    <span class="doccomment">/// The time in which the block was created, encoded in Unix time
+    </span><span class="kw">pub </span>timestamp: u64,
+    <span class="doccomment">/// The Starknet identity of the sequencer submitting this block
+    </span><span class="kw">pub </span>sequencer_address: FieldElement,
+    <span class="doccomment">/// The hashes of the transactions included in this block
+    </span><span class="kw">pub </span>transactions: Vec&lt;FieldElement&gt;,
+}
+
+<span class="attr">#[derive(Debug, Clone, Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>PendingBlockWithTxHashes {
+    <span class="doccomment">/// The hashes of the transactions included in this block
+    </span><span class="kw">pub </span>transactions: Vec&lt;FieldElement&gt;,
+    <span class="doccomment">/// The time in which the block was created, encoded in Unix time
+    </span><span class="kw">pub </span>timestamp: u64,
+    <span class="doccomment">/// The Starknet identity of the sequencer submitting this block
+    </span><span class="kw">pub </span>sequencer_address: FieldElement,
+    <span class="doccomment">/// The hash of this block&#39;s parent
+    </span><span class="kw">pub </span>parent_hash: FieldElement,
+}
+
+<span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+</span><span class="kw">pub enum </span>BlockStatus {
+    <span class="attr">#[serde(rename = <span class="string">&quot;PENDING&quot;</span>)]
+    </span>Pending,
+    <span class="attr">#[serde(rename = <span class="string">&quot;ACCEPTED_ON_L2&quot;</span>)]
+    </span>AcceptedOnL2,
+    <span class="attr">#[serde(rename = <span class="string">&quot;ACCEPTED_ON_L1&quot;</span>)]
+    </span>AcceptedOnL1,
+    <span class="attr">#[serde(rename = <span class="string">&quot;REJECTED&quot;</span>)]
+    </span>Rejected,
+}
+
+<span class="doccomment">/// A block hash, number or tag
+/// TODO: fix block_tag
+</span><span class="attr">#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 </span><span class="kw">pub enum </span>ContractABIEntry {
     FunctionABIEntry(FunctionABIEntry),
@@ -751,6 +857,10 @@
     <span class="doccomment">/// Get the contract class definition in the given block associated with the given hash
     </span><span class="attr">#[method(name = <span class="string">&quot;getClass&quot;</span>)]
     </span><span class="kw">fn </span>get_class(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, class_hash: ContractClassHash) -&gt; RpcResult&lt;RPCContractClass&gt;;
+
+    <span class="doccomment">/// Get block information with transaction hashes given the block id
+    </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxHashes&quot;</span>)]
+    </span><span class="kw">fn </span>get_block_with_tx_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxHashes&gt;;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mc_rpc_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
