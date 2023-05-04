@@ -158,6 +158,10 @@ impl pallet_balances::Config for Runtime {
     type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+    type FreezeIdentifier = ();
+    type MaxFreezes = ();
+    type HoldIdentifier = ();
+    type MaxHolds = ();
 }
 
 /// Provides the logic needed to handle transaction fees
