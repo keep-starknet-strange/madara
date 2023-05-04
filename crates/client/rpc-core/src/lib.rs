@@ -18,7 +18,6 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use serde::{Deserialize, Serialize};
-use sp_runtime::testing::H256;
 
 pub type FieldElement = String;
 pub type BlockNumber = u64;
