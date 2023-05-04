@@ -15,8 +15,8 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FieldElement, FunctionCall, RPCContractClass,
-    SierraContractClass, to_rpc_contract_class, ContractClassHash, Syncing,
+    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, ContractClassHash,
+    FieldElement, FunctionCall, RPCContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -26,8 +26,8 @@ use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
-use starknet_api::hash::StarkFelt;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use starknet_api::hash::StarkFelt;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {

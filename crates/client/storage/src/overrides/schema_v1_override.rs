@@ -84,8 +84,8 @@ where
         self.query_storage::<ClassHashWrapper>(
             block_hash,
             &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &address[..])),
-		)
-	}
+        )
+    }
 
     fn contract_class_by_class_hash(
         &self,
