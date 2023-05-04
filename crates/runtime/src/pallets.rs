@@ -14,9 +14,8 @@ pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
-use pallet_starknet::StarknetFee;
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::ConstFeeMultiplier;
+use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::generic;
 use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
@@ -159,12 +158,16 @@ impl pallet_balances::Config for Runtime {
     type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
     type AccountStore = System;
     type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
+    type FreezeIdentifier = ();
+    type MaxFreezes = ();
+    type HoldIdentifier = ();
+    type MaxHolds = ();
 }
 
 /// Provides the logic needed to handle transaction fees
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type OnChargeTransaction = StarknetFee;
+    type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
     type OperationalFeeMultiplier = ConstU8<5>;
     type WeightToFee = IdentityFee<Balance>;
     type LengthToFee = IdentityFee<Balance>;

@@ -46,7 +46,7 @@
 | starknet_blockHashAndNumber              | :white_check_mark: |
 | starknet_chainId                         | :construction:     |
 | starknet_pendingTransactions             | :construction:     |
-| starknet_syncing                         | :construction:     |
+| starknet_syncing                         | :white_check_mark: |
 | starknet_getEvents                       | :construction:     |
 | starknet_getNonce                        | :construction:     |
 | starknet_traceTransaction                | :construction:     |

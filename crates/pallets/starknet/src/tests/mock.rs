@@ -3,11 +3,10 @@ use core::str::FromStr;
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
-use frame_support::weights::IdentityFee;
 use hex::FromHex;
 use mp_starknet::execution::types::ContractClassWrapper;
-use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
-use sp_core::{ConstU8, H256, U256};
+use pallet_transaction_payment::Multiplier;
+use sp_core::{H256, U256};
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, One};
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
@@ -15,8 +14,6 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
 use {crate as pallet_starknet, frame_system as system};
-
-use crate::StarknetFee;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -40,7 +37,6 @@ frame_support::construct_runtime!(
         System: frame_system,
         Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
-        TransactionPayment: pallet_transaction_payment,
     }
 );
 
@@ -92,15 +88,6 @@ impl pallet_starknet::Config for Test {
 }
 parameter_types! {
     pub FeeMultiplier: Multiplier = Multiplier::one();
-}
-// Provides the logic needed to handle transaction fees
-impl pallet_transaction_payment::Config for Test {
-    type RuntimeEvent = RuntimeEvent;
-    type OnChargeTransaction = StarknetFee;
-    type OperationalFeeMultiplier = ConstU8<5>;
-    type WeightToFee = IdentityFee<u128>;
-    type LengthToFee = IdentityFee<u128>;
-    type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 pub const TOKEN_CONTRACT_CLASS_HASH: &str = "06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
 
@@ -186,6 +173,30 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                     // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) + 1 which is the key in the starknet contract for
                     // ERC20_balances(0x0F).high
                     H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77) which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77).low (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x06afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00aa").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77) + 1 which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77).high (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x06afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00ab").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),

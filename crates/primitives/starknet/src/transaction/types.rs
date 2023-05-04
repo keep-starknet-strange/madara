@@ -1,6 +1,13 @@
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+
+use blockifier::execution::entry_point::CallInfo;
+use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::transaction::errors::TransactionExecutionError;
+use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, H256, U256};
+use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
@@ -21,6 +28,23 @@ pub enum TransactionExecutionErrorWrapper {
     StarknetApi(StarknetApiError),
     /// Block context serialization error.
     BlockContextSerializationError,
+    /// Fee computation error,
+    FeeComputationError,
+    /// Fee transfer error,
+    FeeTransferError {
+        /// Max fee specified by the user.
+        max_fee: Fee,
+        /// Actual fee.
+        actual_fee: Fee,
+    },
+    /// Cairo resources are not contained in the fee costs.
+    CairoResourcesNotContainedInFeeCosts,
+    /// Failed to compute the L1 gas usage.
+    FailedToComputeL1GasUsage,
+    /// Entrypoint execution error
+    EntrypointExecution(EntryPointExecutionError),
+    /// Unexpected holes.
+    UnexpectedHoles(String),
 }
 
 /// Different tx types.
@@ -38,15 +62,34 @@ pub enum TransactionExecutionErrorWrapper {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum TxType {
     /// Regular invoke transaction.
-    InvokeTx,
+    Invoke,
     /// Declare transaction.
-    DeclareTx,
+    Declare,
     /// Deploy account transaction.
-    DeployAccountTx,
+    DeployAccount,
     /// Message sent from ethereum.
-    L1HandlerTx,
+    L1Handler,
 }
-
+impl From<TransactionType> for TxType {
+    fn from(value: TransactionType) -> Self {
+        match value {
+            TransactionType::Declare => Self::Declare,
+            TransactionType::DeployAccount => Self::DeployAccount,
+            TransactionType::InvokeFunction => Self::Invoke,
+            TransactionType::L1Handler => Self::L1Handler,
+        }
+    }
+}
+impl From<TxType> for TransactionType {
+    fn from(value: TxType) -> Self {
+        match value {
+            TxType::Declare => Self::Declare,
+            TxType::DeployAccount => Self::DeployAccount,
+            TxType::Invoke => Self::InvokeFunction,
+            TxType::L1Handler => Self::L1Handler,
+        }
+    }
+}
 /// Representation of a Starknet transaction.
 #[derive(
     Clone,
@@ -103,31 +146,6 @@ pub struct TransactionReceiptWrapper {
     pub events: BoundedVec<EventWrapper, MaxArraySize>,
 }
 
-/// Information needed to perform the fee transfer.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    Default,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct FeeTransferInformation {
-    /// Actual fees paid for the transaction.
-    pub actual_fee: U256,
-    /// Address of the person paying the fees.
-    pub payer: ContractAddressWrapper,
-}
-impl FeeTransferInformation {
-    /// Creates a new instance of FeeTransferInformation
-    pub fn new(actual_fee: U256, payer: ContractAddressWrapper) -> Self {
-        Self { actual_fee, payer }
-    }
-}
 /// Representation of a Starknet event.
 #[derive(
     Clone,
@@ -147,6 +165,22 @@ pub struct EventWrapper {
     pub data: BoundedVec<H256, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
+}
+
+/// This struct wraps the [TransactionExecutionInfo] type from the blockifier.
+#[derive(Debug)]
+pub struct TransactionExecutionInfoWrapper {
+    /// Transaction validation call info; [None] for `L1Handler`.
+    pub validate_call_info: Option<CallInfo>,
+    /// Transaction execution call info; [None] for `Declare`.
+    pub execute_call_info: Option<CallInfo>,
+    /// Fee transfer call info; [None] for `L1Handler`.
+    pub fee_transfer_call_info: Option<CallInfo>,
+    /// The actual fee that was charged (in Wei).
+    pub actual_fee: Fee,
+    /// Actual execution resources the transaction is charged for,
+    /// including L1 gas and additional OS resources estimation.
+    pub actual_resources: BTreeMap<String, usize>,
 }
 
 /// Error enum wrapper for events.

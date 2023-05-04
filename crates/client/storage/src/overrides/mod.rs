@@ -55,14 +55,24 @@ impl<B: BlockT> OverrideHandle<B> {
 pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Return the current block.
     fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
-    /// Return the contract class at the provided address for the provided block.
-    fn contract_class(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClassWrapper>;
     /// Return the class hash at the provided address for the provided block.
     fn contract_class_hash_by_address(
-        &self,
+		&self,
         block_hash: B::Hash,
         address: ContractAddressWrapper,
     ) -> Option<ClassHashWrapper>;
+	/// Return the contract class at the provided address for the provided block.
+    fn contract_class_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ContractClassWrapper>;
+    /// Return the contract class for a provided class_hash and block hash.
+    fn contract_class_by_class_hash(
+        &self,
+        block_hash: B::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<ContractClassWrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -102,7 +112,7 @@ where
         api.current_block(block_hash).ok()
     }
 
-    fn contract_class(
+    fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
@@ -131,5 +141,22 @@ where
     ) -> Option<ClassHashWrapper> {
         let api = self.client.runtime_api();
         api.contract_class_hash_by_address(block_hash, address).ok()?
+	}
+
+	/// Return the contract class for a provided class_hash and block hash.
+	///
+	/// # Arguments
+	///
+	/// * `block_hash` - The block hash
+	/// * `contract_class_hash` - The class hash to fetch the contract class for
+	///
+	/// # Returns
+	/// * `Some(contract_class)` - The contract class for the provided class hash and block hash
+    fn contract_class_by_class_hash(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<ContractClassWrapper> {
+        self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
     }
 }

@@ -38,27 +38,18 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
-
-/// The Starknet pallet's runtime custom types.
-pub mod types;
-
-/// The implementation of the message type.
-pub mod message;
-
-/// Transaction validation logic.
-pub mod transaction_validation;
-
-/// State root logic.
-pub mod state_root;
-
-/// The Starknet pallet's runtime API
-pub mod runtime_api;
-
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
-
-/// Implementation of the [OnChargeTransaction] trait for the pallet
-pub mod starknet_fee;
+/// The implementation of the message type.
+pub mod message;
+/// The Starknet pallet's runtime API
+pub mod runtime_api;
+/// State root logic.
+pub mod state_root;
+/// Transaction validation logic.
+pub mod transaction_validation;
+/// The Starknet pallet's runtime custom types.
+pub mod types;
 
 /// Everything needed to run the pallet offchain workers
 mod offchain_worker;
@@ -88,15 +79,14 @@ use mp_starknet::execution::types::{
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::Hasher;
 use mp_starknet::transaction::types::{
-    EventError, EventWrapper as StarknetEventType, FeeTransferInformation, Transaction, TransactionReceiptWrapper,
-    TxType,
+    EventError, EventWrapper as StarknetEventType, Transaction, TransactionExecutionInfoWrapper,
+    TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::ContractAddress;
 use starknet_api::transaction::EventContent;
-pub use starknet_fee::StarknetFee;
 
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper};
 
@@ -132,7 +122,7 @@ pub mod pallet {
     /// We're coupling the starknet pallet to the tx payment pallet to be able to override the fee
     /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
-    pub trait Config: frame_system::Config + pallet_transaction_payment::Config {
+    pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// How Starknet state root is calculated.
@@ -205,11 +195,6 @@ pub mod pallet {
     #[pallet::getter(fn pending_events)]
     pub(super) type PendingEvents<T: Config> =
         StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
-
-    /// Information of the transaction needed for the fee transfer.
-    #[pallet::storage]
-    #[pallet::getter(fn fee_information)]
-    pub(super) type FeeInformation<T: Config> = StorageValue<_, FeeTransferInformation, ValueQuery>;
 
     /// The current Starknet block.
     #[pallet::storage]
@@ -373,7 +358,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Ping the pallet to check if it is alive.
         #[pallet::call_index(0)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             ensure_none(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
@@ -402,7 +387,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(1)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -417,34 +402,42 @@ pub mod pallet {
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::InvokeTx,
+                TxType::Invoke,
                 None,
                 fee_token_address,
             );
             let receipt = match call_info {
-                Ok(Some(mut v)) => {
-                    let events = Self::emit_events(&mut v).map_err(|_| Error::<T>::EmitEventError)?;
-                    let receipt = TransactionReceiptWrapper {
+                Ok(TransactionExecutionInfoWrapper {
+                    validate_call_info: _validate_call_info,
+                    execute_call_info,
+                    fee_transfer_call_info,
+                    actual_fee,
+                    actual_resources: _actual_resources,
+                }) => {
+                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
+
+                    let events = match (execute_call_info, fee_transfer_call_info) {
+                        (Some(mut exec), Some(mut fee)) => {
+                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            events
+                        }
+                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        _ => Vec::default(),
+                    };
+
+                    TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
-                        tx_type: TxType::InvokeTx,
-                        actual_fee: U256::zero(), // TODO: switch to actual fee (#251)
-                    };
-                    log!(debug, "Transaction executed successfully: {:?}", v);
-                    receipt
-                }
-                Ok(None) => {
-                    log!(error, "Transaction execution failed: no call info while it was expected");
-                    return Err(Error::<T>::TransactionExecutionFailed.into());
+                        tx_type: TxType::Invoke,
+                        actual_fee: U256::from(actual_fee.0),
+                    }
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
-            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
-            // TODO: Compute real fee value
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
@@ -467,7 +460,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(2)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -493,29 +486,49 @@ pub mod pallet {
             let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
-            match transaction.execute(
+            let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::DeclareTx,
+                TxType::Declare,
                 Some(contract_class),
                 fee_token_address,
-            ) {
-                Ok(_) => {
-                    log!(debug, "Declare Transaction executed successfully.");
+            );
+            let receipt = match call_info {
+                Ok(TransactionExecutionInfoWrapper {
+                    validate_call_info: _validate_call_info,
+                    execute_call_info,
+                    fee_transfer_call_info,
+                    actual_fee,
+                    actual_resources: _actual_resources,
+                }) => {
+                    log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
+
+                    let events = match (execute_call_info, fee_transfer_call_info) {
+                        (Some(mut exec), Some(mut fee)) => {
+                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            events
+                        }
+                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        _ => Vec::default(),
+                    };
+
+                    TransactionReceiptWrapper {
+                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
+                        transaction_hash: transaction.hash,
+                        tx_type: TxType::Declare,
+                        actual_fee: U256::from(actual_fee.0),
+                    }
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
-            }
-            // TODO: Compute real fee value
-            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
+            };
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
-                .or(Err(Error::<T>::TooManyPendingTransactions))?;
+            Pending::<T>::try_append((transaction.clone(), receipt)).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             // TODO: Update class hashes root
 
             Ok(())
@@ -537,7 +550,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(3)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -552,29 +565,50 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-
-            match transaction.execute(
+            // Execute transaction
+            let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::DeployAccountTx,
+                TxType::DeployAccount,
                 None,
                 fee_token_address,
-            ) {
-                Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v);
+            );
+            let receipt = match call_info {
+                Ok(TransactionExecutionInfoWrapper {
+                    validate_call_info: _validate_call_info,
+                    execute_call_info,
+                    fee_transfer_call_info,
+                    actual_fee,
+                    actual_resources: _actual_resources,
+                }) => {
+                    log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
+
+                    let events = match (execute_call_info, fee_transfer_call_info) {
+                        (Some(mut exec), Some(mut fee)) => {
+                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            events
+                        }
+                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        _ => Vec::default(),
+                    };
+
+                    TransactionReceiptWrapper {
+                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
+                        transaction_hash: transaction.hash,
+                        tx_type: TxType::DeployAccount,
+                        actual_fee: U256::from(actual_fee.0),
+                    }
                 }
                 Err(e) => {
                     log!(error, "Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
-            }
-            // Append the transaction to the pending transactions.
-            Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
-                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
-            // TODO: Compute real fee value
-            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
+            };
 
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
+            // Append the transaction to the pending transactions.
+            Pending::<T>::try_append((transaction.clone(), receipt)).or(Err(Error::<T>::TooManyPendingTransactions))?;
+
             // Associate contract class to class hash
             // TODO: update state root
 
@@ -595,7 +629,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(4)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -608,7 +642,7 @@ pub mod pallet {
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
-                TxType::L1HandlerTx,
+                TxType::L1Handler,
                 None,
                 fee_token_address,
             ) {
@@ -624,10 +658,7 @@ pub mod pallet {
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
-            // TODO: Compute real fee value (might be different for this)
-            FeeInformation::<T>::put(FeeTransferInformation::new(U256::one(), transaction.sender_address));
 
-            // FIXME: https://github.com/keep-starknet-strange/madara/issues/281
             Ok(())
         }
 
@@ -645,7 +676,7 @@ pub mod pallet {
         /// # TODO
         /// * Add some limitations on how often this can be called.
         #[pallet::call_index(5)]
-        #[pallet::weight(0)]
+        #[pallet::weight({0})]
         pub fn set_fee_token_address(
             origin: OriginFor<T>,
             fee_token_address: ContractAddressWrapper,
