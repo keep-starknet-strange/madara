@@ -1,24 +1,20 @@
 extern crate serde;
 extern crate serde_json;
-extern crate derive_builder;
 
-use serde::{Serialize, Deserialize};
-use derive_builder::Builder;
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 /// BlockHash
 ///
 /// The hash of the block in which the event was emitted
-///
 pub type BlockHash = String;
 /// BlockNumber
 ///
 /// The block's number (its height)
-///
 pub type BlockNumber = i64;
 /// BlockTag
 ///
 /// A tag specifying a dynamic reference to a block
-///
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum BlockTag {
     #[serde(rename = "latest")]
@@ -29,45 +25,36 @@ pub enum BlockTag {
 /// ContractAddress
 ///
 /// The address of the deployed contract
-///
 pub type ContractAddress = String;
 /// EntryPointSelector
 ///
 /// A field element. represented by at most 63 hex digits
-///
 pub type EntryPointSelector = String;
 /// FieldElement
 ///
 /// A field element. represented by at most 63 hex digits
-///
 pub type FieldElement = String;
 /// Calldata
 ///
 /// The parameters passed to the function
-///
 pub type Calldata = Vec<FieldElement>;
 /// MaxFee
 ///
 /// The maximal fee that can be charged for including the transaction
-///
 pub type MaxFee = String;
 /// Version
 ///
 /// Version of the transaction scheme
-///
 pub type Version = String;
 pub type Signature = Vec<FieldElement>;
 /// Nonce
 ///
 /// The nonce for the given address at the end of the block
-///
 pub type Nonce = String;
 /// BroadcastedTransactionCommonProperties
 ///
 /// common properties of a transaction that is sent to the sequencer (but is not yet in a block)
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct BroadcastedTransactionCommonProperties {
     pub max_fee: MaxFee,
@@ -75,8 +62,7 @@ pub struct BroadcastedTransactionCommonProperties {
     pub signature: Signature,
     pub nonce: Nonce,
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct Type {
     #[serde(rename = "type")]
@@ -86,9 +72,7 @@ pub type EventEmitter = HashMap<String, serde_json::Value>;
 /// InvokeTransactionV0
 ///
 /// invokes a specific function in the desired contract (not necessarily an account)
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct InvokeTransactionV0 {
     pub contract_address: ContractAddress,
@@ -98,19 +82,15 @@ pub struct InvokeTransactionV0 {
 /// SenderAddress
 ///
 /// A field element. represented by at most 63 hex digits
-///
 pub type SenderAddress = String;
 /// Calldata
 ///
-/// The data expected by the account's `execute` function (in most usecases, this includes the called contract address and a function selector)
-///
-pub type Calldata = Vec<FieldElement>;
+/// The data expected by the account's `execute` function (in most use cases, this includes the
+/// called contract address and a function selector)
 /// InvokeTransactionV1
 ///
 /// initiates a transaction from a given account
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct InvokeTransactionV1 {
     pub sender_address: SenderAddress,
@@ -125,25 +105,20 @@ pub enum InvokeTransactionProperties {
 /// BroadcastedInvokeTransaction
 ///
 /// mempool representation of an invoke transaction
-///
 pub type BroadcastedInvokeTransaction = HashMap<String, serde_json::Value>;
 /// Program
 ///
 /// A base64 representation of the compressed program code
-///
 pub type Program = String;
 /// Offset
 ///
 /// offset of this property within the struct
-///
 pub type Offset = i64;
 /// Selector
 ///
 /// A unique identifier of the entry point (function) in the program
-///
 pub type Selector = String;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct DeprecatedCairoEntryPoint {
     pub offset: Offset,
@@ -152,8 +127,7 @@ pub struct DeprecatedCairoEntryPoint {
 pub type DeprecatedConstructor = Vec<DeprecatedCairoEntryPoint>;
 pub type DeprecatedExternal = Vec<DeprecatedCairoEntryPoint>;
 pub type DeprecatedL1Handler = Vec<DeprecatedCairoEntryPoint>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct DeprecatedEntryPointsByType {
     #[serde(rename = "CONSTRUCTOR", skip_serializing_if = "Option::is_none")]
@@ -175,28 +149,23 @@ pub enum FunctionABIType {
 /// FunctionName
 ///
 /// The function name
-///
 pub type FunctionName = String;
 /// ParameterName
 ///
 /// The parameter's name
-///
 pub type ParameterName = String;
 /// ParameterType
 ///
 /// The parameter's type
-///
 pub type ParameterType = String;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct TypedParameter {
     pub name: ParameterName,
     #[serde(rename = "type")]
     pub _type: ParameterType,
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct FunctionABIEntry {
     #[serde(rename = "type")]
@@ -213,10 +182,8 @@ pub enum EventABIType {
 /// EventName
 ///
 /// The event name
-///
 pub type EventName = String;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct EventABIEntry {
     #[serde(rename = "type")]
@@ -233,13 +200,11 @@ pub enum StructABIType {
 /// StructName
 ///
 /// The struct name
-///
 pub type StructName = String;
 pub type Size = i64;
 pub type StructMember = HashMap<String, serde_json::Value>;
 pub type Members = Vec<StructMember>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct StructABIEntry {
     #[serde(rename = "type")]
@@ -256,8 +221,7 @@ pub enum ContractABIEntry {
     StructABIEntry(StructABIEntry),
 }
 pub type ContractABI = Vec<ContractABIEntry>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct ContractClass {
     pub sierra_program: SierraProgram,
@@ -269,8 +233,6 @@ pub struct ContractClass {
 /// SenderAddress
 ///
 /// The address of the account contract sending the declaration transaction
-///
-pub type SenderAddress = String;
 pub type BroadcastedDeclareTransactionV1 = HashMap<String, serde_json::Value>;
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum Declare {
@@ -280,20 +242,16 @@ pub enum Declare {
 /// SierraProgram
 ///
 /// The list of Sierra instructions of which the program consists
-///
 pub type SierraProgram = Vec<FieldElement>;
 /// ContractClassVersion
 ///
 /// The version of the contract class object. Currently, the Starknet OS supports version 0.1.0
-///
 pub type ContractClassVersion = String;
 /// FunctionIndex
 ///
 /// The index of the function in the program
-///
 pub type FunctionIndex = i64;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct SierraEntryPoint {
     pub selector: Selector,
@@ -302,8 +260,7 @@ pub struct SierraEntryPoint {
 pub type Constructor = Vec<SierraEntryPoint>;
 pub type External = Vec<SierraEntryPoint>;
 pub type L1Handler = Vec<SierraEntryPoint>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct EntryPointsByType {
     #[serde(rename = "CONSTRUCTOR")]
@@ -317,7 +274,6 @@ pub type ABI = String;
 /// CompiledClassHash
 ///
 /// The Cairo assembly hash corresponding to the declared class
-///
 pub type CompiledClassHash = String;
 pub type BroadcastedDeclareTransactionV2 = HashMap<String, serde_json::Value>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -334,20 +290,16 @@ pub enum DeployAccount {
 /// ContractAddressSalt
 ///
 /// The salt for the address of the deployed contract
-///
 pub type ContractAddressSalt = String;
 /// ConstructorCalldata
 ///
 /// The parameters passed to the constructor
-///
 pub type ConstructorCalldata = Vec<FieldElement>;
 /// ClassHash
 ///
 /// The new class hash
-///
 pub type ClassHash = String;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct DeployAccountTransactionProperties {
     #[serde(rename = "type")]
@@ -359,13 +311,12 @@ pub struct DeployAccountTransactionProperties {
 /// BroadcastedDeployAccountTransaction
 ///
 /// Mempool representation of a deploy account transaction
-///
 pub type BroadcastedDeployAccountTransaction = HashMap<String, serde_json::Value>;
 /// BroadcastedTransaction
 ///
-/// a sequence of transactions to estimate, running each transaction on the state resulting from applying all the previous ones
-///
-pub type BroadcastedTransaction = Vec<BroadcastedTransaction>;
+/// a sequence of transactions to estimate, running each transaction on the state resulting from
+/// applying all the previous ones
+pub type BroadcastedTransaction = Vec<BroadcastedDeployAccountTransaction>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum FromBlock {
@@ -383,15 +334,12 @@ pub enum ToBlock {
 /// FromContract
 ///
 /// A field element. represented by at most 63 hex digits
-///
 pub type FromContract = String;
 pub type Keys = Vec<FieldElement>;
 /// EventFilter
 ///
 /// An event filter/query
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct EventFilter {
     pub from_block: FromBlock,
@@ -401,12 +349,11 @@ pub struct EventFilter {
 }
 /// ContinuationToken
 ///
-/// Use this token in a subsequent query to obtain the next page. Should not appear if there are no more pages.
-///
+/// Use this token in a subsequent query to obtain the next page. Should not appear if there are no
+/// more pages.
 pub type ContinuationToken = String;
 pub type ChunkSize = i64;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct ResultPageRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -416,7 +363,6 @@ pub struct ResultPageRequest {
 /// Status
 ///
 /// The status of the transaction
-///
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum Status {
     #[serde(rename = "PENDING")]
@@ -431,25 +377,20 @@ pub enum Status {
 /// ParentHash
 ///
 /// The hash of this block's parent
-///
 pub type ParentHash = String;
 /// NewRoot
 ///
 /// The new global state root
-///
 pub type NewRoot = String;
 /// Timestamp
 ///
 /// The time in which the block was created, encoded in Unix time
-///
 pub type Timestamp = i64;
 /// SequencerAddress
 ///
 /// The StarkNet identity of the sequencer submitting this block
-///
 pub type SequencerAddress = String;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct BlockHeader {
     pub block_hash: BlockHash,
@@ -462,7 +403,6 @@ pub struct BlockHeader {
 /// TransactionHash
 ///
 /// The transaction hash, as assigned in StarkNet
-///
 pub type TransactionHash = String;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
@@ -473,42 +413,33 @@ pub enum Transaction {
     DeployTransaction(DeployTransaction),
     DeployAccountTransaction(DeployAccountTransaction),
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct BlockBodyWithTransactionHashes {
     pub transactions: Transaction,
 }
 pub type BlockWithTransactionHashes = HashMap<String, serde_json::Value>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct BlockBodyWithTransactionsHashes {
     pub transactions: Transaction,
 }
 /// PendingBlockWithTransactionHashes
 ///
-/// The dynamic block being constructed by the sequencer. Note that this object will be deprecated upon decentralization.
-///
+/// The dynamic block being constructed by the sequencer. Note that this object will be deprecated
+/// upon decentralization.
 pub type PendingBlockWithTransactionHashes = HashMap<String, serde_json::Value>;
 pub type CommonTransactionProperties = HashMap<String, serde_json::Value>;
 /// InvokeTransaction
 ///
 /// Initiate a transaction from an account
-///
 pub type InvokeTransaction = HashMap<String, serde_json::Value>;
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum Type {
-    #[serde(rename = "L1_HANDLER")]
-    LOneHandler,
-}
+
 pub type L1HandlerTransaction = HashMap<String, serde_json::Value>;
 /// FunctionCall
 ///
 /// Function call information
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct FunctionCall {
     pub contract_address: ContractAddress,
@@ -528,8 +459,7 @@ pub enum Deploy {
     #[serde(rename = "DEPLOY")]
     Deploy,
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct DeployTransactionProperties {
     pub version: Version,
@@ -540,21 +470,18 @@ pub struct DeployTransactionProperties {
 }
 /// DeployTransaction
 ///
-/// The structure of a deploy transaction. Note that this transaction type is deprecated and will no longer be supported in future versions
-///
+/// The structure of a deploy transaction. Note that this transaction type is deprecated and will no
+/// longer be supported in future versions
 pub type DeployTransaction = HashMap<String, serde_json::Value>;
 /// DeployAccountTransaction
 ///
 /// Deploys an account contract, charges fee from the pre-funded account addresses
-///
 pub type DeployAccountTransaction = HashMap<String, serde_json::Value>;
 /// Transactions
 ///
 /// The transactions in this block
-///
 pub type Transactions = Vec<Transaction>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct BlockBodyWithTransactions {
     pub transactions: Transactions,
@@ -562,44 +489,36 @@ pub struct BlockBodyWithTransactions {
 /// BlockWithTransactions
 ///
 /// The block object
-///
 pub type BlockWithTransactions = HashMap<String, serde_json::Value>;
 /// PendingBlockWithTransactions
 ///
-/// The dynamic block being constructed by the sequencer. Note that this object will be deprecated upon decentralization.
-///
+/// The dynamic block being constructed by the sequencer. Note that this object will be deprecated
+/// upon decentralization.
 pub type PendingBlockWithTransactions = HashMap<String, serde_json::Value>;
 /// OldRoot
 ///
 /// The previous global state root
-///
 pub type OldRoot = String;
 /// Address
 ///
 /// A field element. represented by at most 63 hex digits
-///
 pub type Address = String;
 /// Key
 ///
 /// The key of the changed value
-///
 pub type Key = String;
 /// Value
 ///
 /// The new value applied to the given address
-///
 pub type Value = String;
 /// StorageEntries
 ///
 /// The changes in the storage of the contract
-///
 pub type StorageEntries = Vec<EventEmitter>;
 /// ContractStorageDiffItem
 ///
 /// The changes in the storage per contract address
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct ContractStorageDiffItem {
     pub address: Address,
@@ -611,9 +530,7 @@ pub type DeclaredClasses = Vec<EventEmitter>;
 /// DeployedContractItem
 ///
 /// A new contract deployed as part of the state update
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct DeployedContractItem {
     pub address: Address,
@@ -624,10 +541,9 @@ pub type ReplacedClasses = Vec<EventEmitter>;
 pub type Nonces = Vec<EventEmitter>;
 /// StateDiff
 ///
-/// The change in state applied in this block, given as a mapping of addresses to the new values and/or new contracts
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+/// The change in state applied in this block, given as a mapping of addresses to the new values
+/// and/or new contracts
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct StateDiff {
     pub storage_diffs: StorageDiffs,
@@ -637,8 +553,7 @@ pub struct StateDiff {
     pub replaced_classes: ReplacedClasses,
     pub nonces: Nonces,
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct PendingStateUpdate {
     pub old_root: OldRoot,
@@ -648,20 +563,16 @@ pub type StateUpdate = HashMap<String, serde_json::Value>;
 /// ActualFee
 ///
 /// The fee that was charged by the sequencer
-///
 pub type ActualFee = String;
 /// ToAddress
 ///
 /// The target L1 address the message is sent to
-///
 pub type ToAddress = String;
 /// Payload
 ///
 /// The payload of the message
-///
 pub type Payload = Vec<FieldElement>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct MessageToL1 {
     pub from_address: FieldElement,
@@ -672,15 +583,12 @@ pub type MessagesSent = Vec<MessageToL1>;
 /// FromAddress
 ///
 /// A field element. represented by at most 63 hex digits
-///
 pub type FromAddress = String;
 pub type Data = Vec<FieldElement>;
 /// EventContent
 ///
 /// The content of an event
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct EventContent {
     pub keys: Keys,
@@ -689,19 +597,15 @@ pub struct EventContent {
 /// Event
 ///
 /// The event information
-///
 pub type Event = HashMap<String, serde_json::Value>;
 /// Events
 ///
 /// The events emitted as part of this transaction
-///
 pub type Events = Vec<Event>;
 /// CommonReceiptProperties
 ///
 /// Common properties for a pending transaction receipt
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct CommonReceiptProperties {
     pub transaction_hash: TransactionHash,
@@ -715,7 +619,6 @@ pub type InvokeTransactionReceipt = HashMap<String, serde_json::Value>;
 /// L1HandlerTransactionReceipt
 ///
 /// receipt for l1 handler transaction
-///
 pub type L1HandlerTransactionReceipt = HashMap<String, serde_json::Value>;
 pub type DeclareTransactionReceipt = HashMap<String, serde_json::Value>;
 pub type DeployTransactionReceipt = HashMap<String, serde_json::Value>;
@@ -723,7 +626,6 @@ pub type DeployAccountTransactionReceipt = HashMap<String, serde_json::Value>;
 /// TransactionType
 ///
 /// The type of the transaction
-///
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum TransactionType {
     #[serde(rename = "DECLARE")]
@@ -741,9 +643,7 @@ pub type PendingDeployTransactionReceipt = HashMap<String, serde_json::Value>;
 /// PendingCommonReceiptProperties
 ///
 /// Common properties for a pending transaction receipt
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct PendingCommonReceiptProperties {
     pub transaction_hash: TransactionHash,
@@ -759,8 +659,7 @@ pub enum PendingTransactionReceipt {
     PendingDeployTransactionReceipt(PendingDeployTransactionReceipt),
     PendingCommonReceiptProperties(PendingCommonReceiptProperties),
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct DeprecatedContractClass {
     pub program: Program,
@@ -771,20 +670,16 @@ pub struct DeprecatedContractClass {
 /// GasConsumed
 ///
 /// The Ethereum gas cost of the transaction (see https://docs.starknet.io/docs/Fees/fee-mechanism for more info)
-///
 pub type GasConsumed = String;
 /// GasPrice
 ///
 /// The gas price (in gwei) that was used in the cost estimation
-///
 pub type GasPrice = String;
 /// OverallFee
 ///
 /// The estimated fee for the transaction (in gwei), product of gas_consumed and gas_price
-///
 pub type OverallFee = String;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct FeeEstimation {
     pub gas_consumed: GasConsumed,
@@ -794,44 +689,35 @@ pub struct FeeEstimation {
 /// False
 ///
 /// only legal value is FALSE here
-///
 pub type False = bool;
 /// StartingBlockHash
 ///
 /// The hash of the block from which the sync started
-///
 pub type StartingBlockHash = String;
 /// StartingBlockNumber
 ///
 /// The number (height) of the block from which the sync started
-///
 pub type StartingBlockNumber = String;
 /// CurrentBlockHash
 ///
 /// The hash of the current block being synchronized
-///
 pub type CurrentBlockHash = String;
 /// CurrentBlockNumber
 ///
 /// The number (height) of the current block being synchronized
-///
 pub type CurrentBlockNumber = String;
 /// HighestBlockHash
 ///
 /// The hash of the estimated highest block to be synchronized
-///
 pub type HighestBlockHash = String;
 /// HighestBlockNumber
 ///
 /// The number (height) of the estimated highest block to be synchronized
-///
 pub type HighestBlockNumber = String;
 /// SyncStatus
 ///
 /// An object describing the node synchronization status
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct SyncStatus {
     pub starting_block_hash: StartingBlockHash,
@@ -844,9 +730,7 @@ pub struct SyncStatus {
 /// EventContext
 ///
 /// The event emission information
-///
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct EventContext {
     pub block_hash: BlockHash,
@@ -855,8 +739,8 @@ pub struct EventContext {
 }
 /// EmittedEvent
 ///
-/// Event information decorated with metadata on where it was emitted / An event emitted as a result of transaction execution
-///
+/// Event information decorated with metadata on where it was emitted / An event emitted as a result
+/// of transaction execution
 pub type EmittedEvent = HashMap<String, serde_json::Value>;
 pub type MatchingEvents = Vec<EmittedEvent>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -869,7 +753,6 @@ pub enum BlockId {
 /// StorageKey
 ///
 /// A storage key. Represented as up to 62 hex digits, 3 bits, and 5 leading zeroes.
-///
 pub type StorageKey = String;
 pub type Index = i64;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -900,96 +783,41 @@ pub enum TransactionReceipt {
     DeployAccountTransactionReceipt(DeployAccountTransactionReceipt),
     PendingTransactionReceipt(PendingTransactionReceipt),
 }
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
-pub enum StarknetGetClassResult {
-    DeprecatedContractClass(DeprecatedContractClass),
-    ContractClass(ContractClass),
-}
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(untagged)]
-pub enum StarknetGetClassAtResult {
+pub enum RPCContractClass {
     DeprecatedContractClass(DeprecatedContractClass),
     ContractClass(ContractClass),
 }
 pub type BlockTransactionCount = i64;
 /// Estimation
 ///
-/// a sequence of fee estimatione where the i'th estimate corresponds to the i'th transaction
-///
+/// a sequence of fee estimation where the i'th estimate corresponds to the i'th transaction
 pub type Estimation = Vec<FeeEstimation>;
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
-pub struct StarknetBlockHashAndNumberResult {
+pub struct BlockHashAndNumber {
     pub block_hash: BlockHash,
     pub block_number: BlockNumber,
 }
 /// ChainId
 ///
 /// StarkNet chain id, given in hex representation.
-///
 pub type ChainId = String;
 pub type PendingTransactions = Vec<Transaction>;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum SyncingStatus {
     False(False),
     SyncStatus(SyncStatus),
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Builder, Default)]
-#[builder(setter(strip_option), default)]
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(default)]
 pub struct EventsChunk {
     pub events: MatchingEvents,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub continuation_token: Option<ContinuationToken>,
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(untagged)]
-pub enum AnyOfBlockIdBlockIdBlockIdAddressStorageKeyBlockIdTransactionHashBlockIdIndexTransactionHashBlockIdFieldElementBlockIdAddressBlockIdAddressBlockIdFunctionCallBlockIdBroadcastedTransactionBlockIdEventEmitterBlockIdAddressStarknetGetBlockHashWithTxHashesResultStarknetGetBlockWithTxsResultStarknetGetStateUpdateResultFieldElementTransactionTransactionTransactionReceiptStarknetGetClassResultFieldElementStarknetGetClassAtResultBlockTransactionCountFieldElementEstimationBlockNumberStarknetBlockHashAndNumberResultChainIdPendingTransactionsSyncingStatusEventsChunkFieldElement {
-    BlockId(BlockId),
-    Address(Address),
-    StorageKey(StorageKey),
-    TransactionHash(TransactionHash),
-    Index(Index),
-    FieldElement(FieldElement),
-    FunctionCall(FunctionCall),
-    BroadcastedTransaction(BroadcastedTransaction),
-    EventEmitter(EventEmitter),
-    StarknetGetBlockHashWithTxHashesResult(StarknetGetBlockHashWithTxHashesResult),
-    StarknetGetBlockWithTxsResult(StarknetGetBlockWithTxsResult),
-    StarknetGetStateUpdateResult(StarknetGetStateUpdateResult),
-    Transaction(Transaction),
-    TransactionReceipt(TransactionReceipt),
-    StarknetGetClassResult(StarknetGetClassResult),
-    StarknetGetClassAtResult(StarknetGetClassAtResult),
-    BlockTransactionCount(BlockTransactionCount),
-    Estimation(Estimation),
-    BlockNumber(BlockNumber),
-    StarknetBlockHashAndNumberResult(StarknetBlockHashAndNumberResult),
-    ChainId(ChainId),
-    PendingTransactions(PendingTransactions),
-    SyncingStatus(SyncingStatus),
-    EventsChunk(EventsChunk),
-}
-pub fn StarknetGetBlockWithTxHashes(&mut self, block_id: BlockId) -> RpcRequest<StarknetGetBlockHashWithTxHashesResult>;
-pub fn StarknetGetBlockWithTxs(&mut self, block_id: BlockId) -> RpcRequest<StarknetGetBlockWithTxsResult>;
-pub fn StarknetGetStateUpdate(&mut self, block_id: BlockId) -> RpcRequest<StarknetGetStateUpdateResult>;
-pub fn StarknetGetStorageAt(&mut self, contract_address: Address, key: StorageKey, block_id: BlockId) -> RpcRequest<FieldElement>;
-pub fn StarknetGetTransactionByHash(&mut self, transaction_hash: TransactionHash) -> RpcRequest<Transaction>;
-pub fn StarknetGetTransactionByBlockIdAndIndex(&mut self, block_id: BlockId, index: Index) -> RpcRequest<Transaction>;
-pub fn StarknetGetTransactionReceipt(&mut self, transaction_hash: TransactionHash) -> RpcRequest<TransactionReceipt>;
-pub fn StarknetGetClass(&mut self, block_id: BlockId, class_hash: FieldElement) -> RpcRequest<StarknetGetClassResult>;
-pub fn StarknetGetClassHashAt(&mut self, block_id: BlockId, contract_address: Address) -> RpcRequest<FieldElement>;
-pub fn StarknetGetClassAt(&mut self, block_id: BlockId, contract_address: Address) -> RpcRequest<StarknetGetClassAtResult>;
-pub fn StarknetGetBlockTransactionCount(&mut self, block_id: BlockId) -> RpcRequest<BlockTransactionCount>;
-pub fn StarknetCall(&mut self, request: FunctionCall, block_id: BlockId) -> RpcRequest<FieldElement>;
-pub fn StarknetEstimateFee(&mut self, request: BroadcastedTransaction, block_id: BlockId) -> RpcRequest<Estimation>;
-pub fn StarknetBlockNumber(&mut self) -> RpcRequest<BlockNumber>;
-pub fn StarknetBlockHashAndNumber(&mut self) -> RpcRequest<StarknetBlockHashAndNumberResult>;
-pub fn StarknetChainId(&mut self) -> RpcRequest<ChainId>;
-pub fn StarknetPendingTransactions(&mut self) -> RpcRequest<PendingTransactions>;
-pub fn StarknetSyncing(&mut self) -> RpcRequest<SyncingStatus>;
-pub fn StarknetGetEvents(&mut self, filter: EventEmitter) -> RpcRequest<EventsChunk>;
-pub fn StarknetGetNonce(&mut self, block_id: BlockId, contract_address: Address) -> RpcRequest<FieldElement>;
