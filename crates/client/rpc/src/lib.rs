@@ -11,33 +11,52 @@ use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use hex::FromHex;
-use jsonrpsee::core::RpcResult;
+use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
     BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
-    SierraContractClass,
+    SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
+use sc_network_sync::SyncingService;
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
+    sync_service: Arc<SyncingService<B>>,
+    starting_block: <<B>::Header as HeaderT>::Number,
     _marker: PhantomData<(B, BE)>,
 }
 
+/// Constructor for A Starknet RPC server for Madara
+/// # Arguments
+// * `client` - The Madara client
+// * `backend` - The Madara backend
+// * `overrides` - The OverrideHandle
+// * `sync_service` - The Substrate client sync service
+// * `starting_block` - The starting block for the syncing
+//
+// # Returns
+// * `Self` - The actual Starknet struct
 impl<B: BlockT, BE, C> Starknet<B, BE, C> {
-    pub fn new(client: Arc<C>, backend: Arc<mc_db::Backend<B>>, overrides: Arc<OverrideHandle<B>>) -> Self {
-        Self { client, backend, overrides, _marker: PhantomData }
+    pub fn new(
+        client: Arc<C>,
+        backend: Arc<mc_db::Backend<B>>,
+        overrides: Arc<OverrideHandle<B>>,
+        sync_service: Arc<SyncingService<B>>,
+        starting_block: <<B>::Header as HeaderT>::Number,
+    ) -> Self {
+        Self { client, backend, overrides, sync_service, starting_block, _marker: PhantomData }
     }
 }
 
@@ -93,6 +112,7 @@ where
     }
 }
 
+#[async_trait]
 impl<B, BE, C> StarknetRpcApiServer for Starknet<B, BE, C>
 where
     B: BlockT,
@@ -213,6 +233,73 @@ where
         // })?;
 
         Ok(RPCContractClass::ContractClass(SierraContractClass::default()))
+    }
+
+    // Implementation of the `syncing` RPC Endpoint.
+    // It's an async function because it uses `sync_service.best_seen_block()`.
+    //
+    // # Returns
+    // * `Syncing` - An Enum that can be a `mc_rpc_core::SyncStatus` struct or a `Boolean`.
+    async fn syncing(&self) -> RpcResult<Syncing> {
+        // obtain best seen (highest) block number
+        match self.sync_service.best_seen_block().await {
+            Ok(best_seen_block) => {
+                let best_number = self.client.info().best_number;
+                let highest_number = best_seen_block.unwrap_or(best_number);
+
+                // get a starknet block from the starting substrate block number
+                let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    &self.overrides,
+                    self.starting_block,
+                );
+
+                // get a starknet block from the current substrate block number
+                let current_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    &self.overrides,
+                    best_number,
+                );
+
+                // get a starknet block from the highest substrate block number
+                let highest_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    &self.overrides,
+                    highest_number,
+                );
+
+                if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
+                    // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
+                    let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
+                    let starting_block_hash = format!("{:#x}", starting_block?.header().hash());
+                    let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
+                    let current_block_hash = format!("{:#x}", current_block?.header().hash());
+                    let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
+                    let highest_block_hash = format!("{:#x}", highest_block?.header().hash());
+
+                    // Build the `SyncStatus` struct with the respective syn information
+                    Ok(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
+                        starting_block_num,
+                        starting_block_hash,
+                        current_block_num,
+                        current_block_hash,
+                        highest_block_num,
+                        highest_block_hash,
+                    }))
+                } else {
+                    // If there was an error when getting a starknet block, then we return `false`,
+                    // as per the endpoint specification
+                    log::error!("Failed to load Starknet block");
+                    Ok(Syncing::False(false))
+                }
+            }
+            Err(_) => {
+                // If there was an error when getting a starknet block, then we return `false`,
+                // as per the endpoint specification
+                log::error!("`SyncingEngine` shut down");
+                Ok(Syncing::False(false))
+            }
+        }
     }
 }
 

@@ -49,7 +49,7 @@ sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
-
+sc-network-sync = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }

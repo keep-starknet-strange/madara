@@ -76,6 +76,7 @@ sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polka
 sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
+sc-network-sync = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }
 
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.40" }

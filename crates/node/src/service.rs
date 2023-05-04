@@ -12,7 +12,7 @@ use madara_runtime::{self, Hash, RuntimeApi};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use prometheus_endpoint::Registry;
-use sc_client_api::{BlockBackend, BlockchainEvents};
+use sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
@@ -296,6 +296,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     let name = config.network.node_name.clone();
     let enable_grandpa = !config.disable_grandpa && sealing.is_none();
     let prometheus_registry = config.prometheus_registry().cloned();
+    let starting_block = client.info().best_number;
 
     // Channel for the rpc handler to communicate with the authorship task.
     // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
@@ -303,8 +304,13 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     let (command_sink, commands_stream) = mpsc::channel(1000);
 
     let overrides = overrides_handle(client.clone());
-    let starknet_rpc_params =
-        StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone(), overrides: overrides.clone() };
+    let starknet_rpc_params = StarknetDeps {
+        client: client.clone(),
+        madara_backend: madara_backend.clone(),
+        overrides: overrides.clone(),
+        sync_service: sync_service.clone(),
+        starting_block,
+    };
 
     let rpc_extensions_builder = {
         let client = client.clone();
