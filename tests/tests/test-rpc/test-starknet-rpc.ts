@@ -31,15 +31,11 @@ describeDevMadara("Starknet RPC", (context) => {
   it("getBlockhashAndNumber", async function () {
     const block = await providerRPC.getBlockHashAndNumber();
 
-    console.log(block);
-
     expect(block).to.not.be.undefined;
   });
 
   it("getBlockNumber", async function () {
     const blockNumber = await providerRPC.getBlockNumber();
-
-    console.log(blockNumber);
 
     expect(blockNumber).to.not.be.undefined;
 
@@ -57,8 +53,6 @@ describeDevMadara("Starknet RPC", (context) => {
       block.block_hash
     );
 
-    console.log(transactionCount);
-
     expect(transactionCount).to.not.be.undefined;
     expect(transactionCount).to.be.equal(0);
   });
@@ -66,7 +60,6 @@ describeDevMadara("Starknet RPC", (context) => {
   it("call", async function () {
     const block = await providerRPC.getBlockHashAndNumber();
 
-    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
 
     const call = await providerRPC.callContract(
       {
@@ -74,7 +67,7 @@ describeDevMadara("Starknet RPC", (context) => {
         entrypoint: "return_result",
         calldata: ["0x19"],
       },
-      block_hash
+      block.block_hash
     );
 
     expect(call.result).to.contain("0x19");
@@ -102,8 +95,6 @@ describeDevMadara("Starknet RPC", (context) => {
       block_hash
     );
 
-    console.log(`Class Hash: ${account_contract_class_hash}`);
-
     expect(account_contract_class_hash).to.not.be.undefined;
     expect(account_contract_class_hash).to.be.equal(
       ACCOUNT_CONTRACT_CLASS_HASH
@@ -113,8 +104,6 @@ describeDevMadara("Starknet RPC", (context) => {
       TEST_CONTRACT,
       block_hash
     );
-
-    console.log(`Class Hash: ${test_contract_class_hash}`);
 
     expect(test_contract_class_hash).to.not.be.undefined;
     expect(test_contract_class_hash).to.be.equal(TEST_CONTRACT_CLASS_HASH);
@@ -229,10 +218,7 @@ describeDevMadara("Starknet RPC", (context) => {
         });
 
         const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
-        console.log(
-          "then call providerRPC.getBlockHashAndNumber()",
-          await providerRPC.getBlockHashAndNumber()
-        );
+
 
         const getBlockWithTxsHashesResponse: RPC.GetBlockWithTxHashesResponse =
           await providerRPC.getBlockWithTxHashes(latestBlockCreated.block_hash);

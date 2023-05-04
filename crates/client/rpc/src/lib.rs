@@ -16,7 +16,8 @@ use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
     to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
-    ContractAddress, ContractClassHash, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
+    ContractAddress, ContractClassHash, FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass,
+    Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
