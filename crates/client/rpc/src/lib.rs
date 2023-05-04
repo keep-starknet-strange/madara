@@ -98,7 +98,7 @@ where
             StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
-                H256::from_str(&h).map_err(|e| format!("Failed to convert '{h}' to H256: {e}"))?,
+                H256::from_str(&format_hex(&h)).map_err(|e| format!("Failed to convert '{h}' to H256: {e}"))?,
             )
             .map_err(|e| format!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}"))?,
             StarknetBlockId::BlockNumber(n) => self
@@ -176,11 +176,11 @@ where
                 let result = runtime_api
                     .call(
                         substrate_block_hash,
-                        <[u8; 32]>::from_hex(remove_prefix(&request.contract_address)).map_err(|e| {
+                        <[u8; 32]>::from_hex(format_hex(&request.contract_address)).map_err(|e| {
                             error!("Address: Failed to convert '{0}' to [u8; 32]: {e}", request.contract_address);
                             StarknetRpcApiError::BlockNotFound
                         })?,
-                        H256::from_str(&request.entry_point_selector).map_err(|e| {
+                        H256::from_str(&format_hex(&request.entry_point_selector)).map_err(|e| {
                             error!("Entrypoint: Failed to convert '{0}' to H256: {e}", request.entry_point_selector);
                             StarknetRpcApiError::BlockNotFound
                         })?,
@@ -211,7 +211,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = <[u8; 32]>::from_hex(remove_prefix(&contract_address)).map_err(|e| {
+        let contract_address_wrapped = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
             error!("Failed to convert '{contract_address}' to array: {e}");
             StarknetRpcApiError::ContractNotFound
         })?;
@@ -304,7 +304,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_clash_hashed_wrapped = <[u8; 32]>::from_hex(remove_prefix(&class_hash)).map_err(|e| {
+        let contract_clash_hashed_wrapped = <[u8; 32]>::from_hex(format_hex(&class_hash)).map_err(|e| {
             error!("Failed to convert '{class_hash}' to array: {e}");
             StarknetRpcApiError::ContractNotFound
         })?;
@@ -346,7 +346,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = <[u8; 32]>::from_hex(remove_prefix(&contract_address)).map_err(|e| {
+        let contract_address_wrapped = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
             error!("Failed to convert '{contract_address}' to array: {e}");
             StarknetRpcApiError::ContractNotFound
         })?;
@@ -367,13 +367,15 @@ where
             })?
             .to_string())
     }
+
+    /// Returns the specified block with transaction hashes.
     fn get_block_with_tx_hashes(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
         let mut block_status = BlockStatus::AcceptedOnL2;
         let substrate_block_hash = match block_id {
             StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
-                H256::from_str(&h).map_err(|e| {
+                H256::from_str(&format_hex(&h)).map_err(|e| {
                     error!("Failed to convert '{h}' to H256: {e}");
                     StarknetRpcApiError::BlockNotFound
                 })?,
@@ -421,7 +423,8 @@ where
     }
 }
 
-/// Removes the "0x" prefix from a given hexadecimal string
-fn remove_prefix(input: &str) -> &str {
-    input.strip_prefix("0x").unwrap_or(input)
+/// Removes the "0x" prefix from a given hexadecimal string an pads it with 0s
+#[inline(always)]
+fn format_hex(input: &str) -> String {
+    format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))
 }

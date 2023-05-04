@@ -59,7 +59,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
   it("call", async function () {
     const block = await providerRPC.getBlockHashAndNumber();
-
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
 
     const call = await providerRPC.callContract(
       {
@@ -67,7 +67,7 @@ describeDevMadara("Starknet RPC", (context) => {
         entrypoint: "return_result",
         calldata: ["0x19"],
       },
-      block.block_hash
+      block_hash
     );
 
     expect(call.result).to.contain("0x19");
@@ -94,6 +94,8 @@ describeDevMadara("Starknet RPC", (context) => {
       ACCOUNT_CONTRACT,
       block_hash
     );
+
+    console.log(`Class Hash: ${account_contract_class_hash}`);
 
     expect(account_contract_class_hash).to.not.be.undefined;
     expect(account_contract_class_hash).to.be.equal(
@@ -165,7 +167,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(contract_class).to.not.be.undefined;
   });
-  
+
   describe("Get block with transaction hashes", () => {
     it(
       "giving a valid block with txs " +
@@ -218,7 +220,6 @@ describeDevMadara("Starknet RPC", (context) => {
         });
 
         const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
-
 
         const getBlockWithTxsHashesResponse: RPC.GetBlockWithTxHashesResponse =
           await providerRPC.getBlockWithTxHashes(latestBlockCreated.block_hash);
