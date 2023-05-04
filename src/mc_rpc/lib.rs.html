@@ -349,6 +349,26 @@
 <a href="#349" id="349">349</a>
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -366,8 +386,8 @@
 <span class="kw">use </span>log::error;
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_rpc_core::{
-    BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
-    SierraContractClass, Syncing,
+    to_rpc_contract_class, BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, ContractAddress, ContractClassHash,
+    FunctionCall, RPCContractClass, Syncing,
 };
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -555,35 +575,28 @@
         contract_address: ContractAddress,
         block_id: StarknetBlockId,
     ) -&gt; RpcResult&lt;RPCContractClass&gt; {
-        <span class="comment">// TODO: Fix it when we deal with cairo 1.
-        </span><span class="kw">let </span>_substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>_contract_address_wrapped = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>contract_address)).map_err(|e| {
+        <span class="kw">let </span>contract_address_wrapped = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>contract_address)).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to convert &#39;{contract_address}&#39; to array: {e}&quot;</span>);
             StarknetRpcApiError::ContractNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="comment">// let contract_class: SierraContractClass = self
-        //     .overrides
-        //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
-        //     .contract_class(substrate_block_hash, contract_address_wrapped)
-        //     .ok_or_else(|| {
-        //         error!(&quot;Failed to retrieve contract class at &#39;{contract_address}&#39;&quot;);
-        //         StarknetRpcApiError::ContractNotFound
-        //     })?
-        //     .try_into()
-        //     .map_err(|e| {
-        //         error!(
-        //             &quot;Failed to convert `ContractClassWrapper` at &#39;{contract_address}&#39; to
-        // `ContractClass`: {e}&quot;
-        //         );
-        //     StarknetRpcApiError::ContractNotFound
-        // })?;
-
-        </span><span class="prelude-val">Ok</span>(RPCContractClass::ContractClass(SierraContractClass::default()))
+        <span class="kw">let </span>contract_class = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
+            .ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class at &#39;{contract_address}&#39;&quot;</span>);
+                StarknetRpcApiError::ContractNotFound
+            })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(to_rpc_contract_class(contract_class).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert contract class at &#39;{contract_address}&#39; to RPC contract class: {e}&quot;</span>);
+            StarknetRpcApiError::ContractNotFound
+        })<span class="question-mark">?</span>)
     }
 
     <span class="comment">// Implementation of the `syncing` RPC Endpoint.
@@ -651,6 +664,33 @@
                 <span class="prelude-val">Ok</span>(Syncing::False(<span class="bool-val">false</span>))
             }
         }
+    }
+
+    <span class="doccomment">/// Get the contract class definition in the given block associated with the given hash.
+    </span><span class="kw">fn </span>get_class(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId, class_hash: ContractClassHash) -&gt; RpcResult&lt;RPCContractClass&gt; {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>contract_clash_hashed_wrapped = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>class_hash)).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert &#39;{class_hash}&#39; to array: {e}&quot;</span>);
+            StarknetRpcApiError::ContractNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>contract_class = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped)
+            .ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class from hash &#39;{class_hash}&#39;&quot;</span>);
+                StarknetRpcApiError::ContractNotFound
+            })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(to_rpc_contract_class(contract_class).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert contract class from hash &#39;{class_hash}&#39; to RPC contract class: {e}&quot;</span>);
+            StarknetRpcApiError::ContractNotFound
+        })<span class="question-mark">?</span>)
     }
 }
 
