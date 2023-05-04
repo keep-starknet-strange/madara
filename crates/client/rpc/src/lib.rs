@@ -15,8 +15,8 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_rpc_core::{
-    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, ContractClassHash,
-    FunctionCall, RPCContractClass,
+    BlockHashAndNumber, BlockId as StarknetBlockId, ContractAddress, FunctionCall, RPCContractClass,
+    SierraContractClass, Syncing,
 };
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;

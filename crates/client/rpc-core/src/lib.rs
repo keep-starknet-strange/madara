@@ -370,4 +370,7 @@ pub trait StarknetRpcApi {
     /// Get the contract class definition in the given block associated with the given hash
     #[method(name = "getClass")]
     fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
+    /// Get an object about the sync status, or false if the node is not syncing
+    #[method(name = "syncing")]
+    async fn syncing(&self) -> RpcResult<Syncing>;
 }
