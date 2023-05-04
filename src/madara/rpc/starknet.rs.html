@@ -23,11 +23,21 @@
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mc_db::Backend;
 <span class="kw">use </span>mc_storage::OverrideHandle;
+<span class="kw">use </span>sc_network_sync::SyncingService;
 <span class="kw">use </span>sp_api::BlockT;
+<span class="kw">use </span>sp_runtime::traits::Header <span class="kw">as </span>HeaderT;
 
 <span class="doccomment">/// Extra dependencies for Starknet compatibility.
 </span><span class="kw">pub struct </span>StarknetDeps&lt;C, B: BlockT&gt; {
@@ -37,6 +47,10 @@
     </span><span class="kw">pub </span>madara_backend: Arc&lt;Backend&lt;B&gt;&gt;,
     <span class="doccomment">/// Starknet data access overrides.
     </span><span class="kw">pub </span>overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
+    <span class="doccomment">/// The Substrate client sync service.
+    </span><span class="kw">pub </span>sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
+    <span class="doccomment">/// The starting block for the syncing.
+    </span><span class="kw">pub </span>starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
 }
 
 <span class="kw">impl</span>&lt;C, B: BlockT&gt; Clone <span class="kw">for </span>StarknetDeps&lt;C, B&gt; {
@@ -45,6 +59,8 @@
             client: <span class="self">self</span>.client.clone(),
             madara_backend: <span class="self">self</span>.madara_backend.clone(),
             overrides: <span class="self">self</span>.overrides.clone(),
+            sync_service: <span class="self">self</span>.sync_service.clone(),
+            starting_block: <span class="self">self</span>.starting_block,
         }
     }
 }

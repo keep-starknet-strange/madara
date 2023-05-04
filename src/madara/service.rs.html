@@ -568,6 +568,12 @@
 <a href="#568" id="568">568</a>
 <a href="#569" id="569">569</a>
 <a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -582,7 +588,7 @@
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
 <span class="kw">use </span>prometheus_endpoint::Registry;
-<span class="kw">use </span>sc_client_api::{BlockBackend, BlockchainEvents};
+<span class="kw">use </span>sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
 <span class="kw">use </span>sc_consensus::BasicQueue;
 <span class="kw">use </span>sc_consensus_aura::{SlotProportion, StartAuraParams};
 <span class="kw">use </span>sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
@@ -866,6 +872,7 @@
     <span class="kw">let </span>name = config.network.node_name.clone();
     <span class="kw">let </span>enable_grandpa = !config.disable_grandpa &amp;&amp; sealing.is_none();
     <span class="kw">let </span>prometheus_registry = config.prometheus_registry().cloned();
+    <span class="kw">let </span>starting_block = client.info().best_number;
 
     <span class="comment">// Channel for the rpc handler to communicate with the authorship task.
     // TODO: commands_stream is is currently unused, but should be used to implement the `sealing`
@@ -873,8 +880,13 @@
     </span><span class="kw">let </span>(command_sink, commands_stream) = mpsc::channel(<span class="number">1000</span>);
 
     <span class="kw">let </span>overrides = overrides_handle(client.clone());
-    <span class="kw">let </span>starknet_rpc_params =
-        StarknetDeps { client: client.clone(), madara_backend: madara_backend.clone(), overrides: overrides.clone() };
+    <span class="kw">let </span>starknet_rpc_params = StarknetDeps {
+        client: client.clone(),
+        madara_backend: madara_backend.clone(),
+        overrides: overrides.clone(),
+        sync_service: sync_service.clone(),
+        starting_block,
+    };
 
     <span class="kw">let </span>rpc_extensions_builder = {
         <span class="kw">let </span>client = client.clone();
