@@ -78,8 +78,8 @@ where
     fn contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
-        contract_class_hash: mp_starknet::execution::ClassHashWrapper,
-    ) -> Option<mp_starknet::execution::ContractClassWrapper> {
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<ContractClassWrapper> {
         let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
         self.query_storage::<ContractClassWrapper>(
             block_hash,
