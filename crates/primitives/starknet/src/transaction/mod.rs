@@ -6,7 +6,7 @@ use alloc::vec;
 
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::ExecutionResources;
+use blockifier::execution::entry_point::{CallEntryPoint, ExecutionResources};
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
@@ -178,6 +178,8 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<DeployAccountTransaction, Self::Error> {
+        let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
+
         Ok(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0)?),
             max_fee: Fee(2),
@@ -187,8 +189,8 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
             ),
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
-            class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
-            constructor_calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+            class_hash: entrypoint.class_hash.unwrap_or_default(),
+            constructor_calldata: entrypoint.calldata,
             contract_address_salt: ContractAddressSalt(StarkFelt::new(
                 self.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
             )?),
@@ -201,12 +203,14 @@ impl TryInto<L1HandlerTransaction> for &Transaction {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<L1HandlerTransaction, Self::Error> {
+        let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
+
         Ok(L1HandlerTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0)?),
             version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
-            calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+            calldata: entrypoint.calldata,
             entry_point_selector: EntryPointSelector(StarkHash::new(
                 *self.call_entrypoint.entrypoint_selector.unwrap_or_default().as_fixed_bytes(),
             )?),
@@ -219,6 +223,8 @@ impl TryInto<InvokeTransactionV1> for &Transaction {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<InvokeTransactionV1, Self::Error> {
+        let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
+
         Ok(InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0)?),
             max_fee: Fee(2),
@@ -227,7 +233,7 @@ impl TryInto<InvokeTransactionV1> for &Transaction {
             ),
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
-            calldata: self.call_entrypoint.to_starknet_call_entry_point().calldata,
+            calldata: entrypoint.calldata,
         })
     }
 }
@@ -237,6 +243,8 @@ impl TryInto<DeclareTransaction> for &Transaction {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<DeclareTransaction, Self::Error> {
+        let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
+
         let tx = DeclareTransactionV0V1 {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.0)?),
             max_fee: Fee(2),
@@ -245,7 +253,7 @@ impl TryInto<DeclareTransaction> for &Transaction {
             ),
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address)?)?,
-            class_hash: self.call_entrypoint.to_starknet_call_entry_point().class_hash.unwrap_or_default(),
+            class_hash: entrypoint.class_hash.unwrap_or_default(),
         };
 
         Ok(if self.version == 0_u8 {
