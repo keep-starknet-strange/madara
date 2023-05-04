@@ -4,7 +4,6 @@
 
 mod errors;
 mod madara_backend_client;
-mod mappers;
 
 use std::marker::PhantomData;
 use std::str::FromStr;
