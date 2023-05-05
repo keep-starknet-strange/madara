@@ -29,7 +29,7 @@
 
 | Feature                                  | State              |
 | ---------------------------------------- | ------------------ |
-| starknet_getBlockWithTxHashes            | :construction:     |
+| starknet_getBlockWithTxHashes            | :white_check_mark: |
 | starknet_getBlockWithTxs                 | :construction:     |
 | starknet_getStateUpdate                  | :construction:     |
 | starknet_getStorageAt                    | :construction:     |
