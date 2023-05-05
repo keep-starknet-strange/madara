@@ -264,4 +264,27 @@ describeDevMadara("Starknet RPC", (context) => {
       current_block["block_hash"]
     );
   });
+
+  it("get_storage_at", async function () {
+    await context.createBlock(
+      transfer(
+        context.polkadotApi,
+        CONTRACT_ADDRESS,
+        FEE_TOKEN_ADDRESS,
+        CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      ),
+      { parentHash: undefined, finalize: true }
+    );
+    const block = await providerRPC.getBlockHashAndNumber();
+
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+
+    const value = await providerRPC.getStorageAt(
+      FEE_TOKEN_ADDRESS,
+      "0x004c4fb1ab068f6039d5780c68dd0fa2f8742cceb3426d19667778ca7f3518a9", //decimals
+      block_hash
+    );
+    console.log(value);
+  });
 });

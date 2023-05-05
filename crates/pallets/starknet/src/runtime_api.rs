@@ -5,7 +5,9 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 #![allow(clippy::extra_unused_type_parameters)]
 
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{
+    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
+};
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -20,6 +22,8 @@ sp_api::decl_runtime_apis! {
         fn current_block_hash() -> H256;
         /// Returns the current block.
         fn current_block() -> mp_starknet::block::Block;
+        /// Returns a storage slot value
+        fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<U256, DispatchError>;
         /// Returns a `Call` response.
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError>;
         /// Returns the contract class hash at the given address.

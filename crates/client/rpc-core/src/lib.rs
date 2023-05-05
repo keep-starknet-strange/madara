@@ -20,8 +20,10 @@ use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper,
 use serde::{Deserialize, Serialize};
 
 pub type FieldElement = String;
+pub type StorageKey = String;
 pub type BlockNumber = u64;
 pub type BlockHash = FieldElement;
+pub type Address = FieldElement;
 
 pub type ContractAddress = FieldElement;
 pub type ContractClassHash = FieldElement;
@@ -405,6 +407,10 @@ pub trait StarknetRpcApi {
     /// Get the number of transactions in a block given a block id
     #[method(name = "getBlockTransactionCount")]
     fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
+
+    /// Get the value of the storage at the given address and key, at the given block id
+    #[method(name = "getStorageAt")]
+    fn get_storage_at(&self, contract_address: Address, key: StorageKey, block_id: BlockId) -> RpcResult<FieldElement>;
 
     /// Call a contract function at a given block id
     #[method(name = "call")]

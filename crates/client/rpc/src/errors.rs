@@ -32,6 +32,8 @@ pub enum StarknetRpcApiError {
     ProofLimitExceeded = 10000,
     #[error("Too many keys provided in a filter")]
     TooManyKeysInFilter = 34,
+    #[error("Invalid storage key")]
+    InvalidStorageKey = 35,
     #[error("Internal server error")]
     InternalServerError = 500,
     #[error("Failed to fetch pending transactions")]
