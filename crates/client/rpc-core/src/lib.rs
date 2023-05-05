@@ -24,6 +24,7 @@ pub type BlockNumber = u64;
 pub type BlockHash = FieldElement;
 
 pub type ContractAddress = FieldElement;
+pub type ContractClassHash = FieldElement;
 
 /// A tag specifying a dynamic reference to a block
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -40,6 +41,16 @@ pub enum BlockTag {
 pub struct BlockHashAndNumber {
     pub block_hash: FieldElement,
     pub block_number: BlockNumber,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+pub struct SyncStatus {
+    pub starting_block_hash: FieldElement,
+    pub starting_block_num: BlockNumber,
+    pub current_block_hash: FieldElement,
+    pub current_block_num: BlockNumber,
+    pub highest_block_hash: FieldElement,
+    pub highest_block_num: BlockNumber,
 }
 
 /// Function call information
@@ -194,6 +205,57 @@ pub struct StructABIEntry {
     pub members: Members,
 }
 
+/// The resulting block information with transaction hashes
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum MaybePendingBlockWithTxHashes {
+    Block(BlockWithTxHashes),
+    PendingBlock(PendingBlockWithTxHashes),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlockWithTxHashes {
+    pub status: BlockStatus,
+    pub block_hash: FieldElement,
+    /// The hash of this block's parent
+    pub parent_hash: FieldElement,
+    /// The block number (its height)
+    pub block_number: u64,
+    /// The new global state root
+    pub new_root: FieldElement,
+    /// The time in which the block was created, encoded in Unix time
+    pub timestamp: u64,
+    /// The Starknet identity of the sequencer submitting this block
+    pub sequencer_address: FieldElement,
+    /// The hashes of the transactions included in this block
+    pub transactions: Vec<FieldElement>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PendingBlockWithTxHashes {
+    /// The hashes of the transactions included in this block
+    pub transactions: Vec<FieldElement>,
+    /// The time in which the block was created, encoded in Unix time
+    pub timestamp: u64,
+    /// The Starknet identity of the sequencer submitting this block
+    pub sequencer_address: FieldElement,
+    /// The hash of this block's parent
+    pub parent_hash: FieldElement,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BlockStatus {
+    #[serde(rename = "PENDING")]
+    Pending,
+    #[serde(rename = "ACCEPTED_ON_L2")]
+    AcceptedOnL2,
+    #[serde(rename = "ACCEPTED_ON_L1")]
+    AcceptedOnL1,
+    #[serde(rename = "REJECTED")]
+    Rejected,
+}
+
+/// A block hash, number or tag
+/// TODO: fix block_tag
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ContractABIEntry {
@@ -320,6 +382,15 @@ fn remove_leading_zeros(s: &str) -> &str {
 
 pub use block_id::BlockId;
 
+/// Boolean or SyncStatus
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum Syncing {
+    #[serde(rename = "sync_status")]
+    False(bool),
+    #[serde(rename = "sync_status")]
+    SyncStatus(SyncStatus),
+}
+
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetRpcApi {
@@ -342,4 +413,20 @@ pub trait StarknetRpcApi {
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
     fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
+
+    /// Get the contract class hash in the given block for the contract deployed at the given
+    /// address
+    #[method(name = "getClassHashAt")]
+    fn get_class_hash_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<FieldElement>;
+    /// Get an object about the sync status, or false if the node is not syncing
+    #[method(name = "syncing")]
+    async fn syncing(&self) -> RpcResult<Syncing>;
+
+    /// Get the contract class definition in the given block associated with the given hash
+    #[method(name = "getClass")]
+    fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
+
+    /// Get block information with transaction hashes given the block id
+    #[method(name = "getBlockWithTxHashes")]
+    fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 }

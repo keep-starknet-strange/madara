@@ -35,18 +35,6 @@ pub enum EntryPointTypeWrapper {
     L1Handler,
 }
 
-// Regular implementation.
-impl EntryPointTypeWrapper {
-    /// Convert Madara entrypoint type to Starknet entrypoint type.
-    pub fn to_starknet(&self) -> EntryPointType {
-        match self {
-            Self::Constructor => EntryPointType::Constructor,
-            Self::External => EntryPointType::External,
-            Self::L1Handler => EntryPointType::L1Handler,
-        }
-    }
-}
-
 // Traits implementation.
 impl From<EntryPointType> for EntryPointTypeWrapper {
     fn from(entry_point_type: EntryPointType) -> Self {

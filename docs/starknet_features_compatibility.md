@@ -29,15 +29,15 @@
 
 | Feature                                  | State              |
 | ---------------------------------------- | ------------------ |
-| starknet_getBlockWithTxHashes            | :construction:     |
+| starknet_getBlockWithTxHashes            | :white_check_mark: |
 | starknet_getBlockWithTxs                 | :construction:     |
 | starknet_getStateUpdate                  | :construction:     |
 | starknet_getStorageAt                    | :construction:     |
 | starknet_getTransactionByHash            | :construction:     |
 | starknet_getTransactionByBlockIdAndIndex | :construction:     |
 | starknet_getTransactionReceipt           | :construction:     |
-| starknet_getClass                        | :construction:     |
-| starknet_getClassHashAt                  | :construction:     |
+| starknet_getClass                        | :white_check_mark: |
+| starknet_getClassHashAt                  | :white_check_mark: |
 | starknet_getClassAt                      | :construction:     |
 | starknet_getBlockTransactionCount        | :white_check_mark: |
 | starknet_call                            | :construction:     |
@@ -46,7 +46,7 @@
 | starknet_blockHashAndNumber              | :white_check_mark: |
 | starknet_chainId                         | :construction:     |
 | starknet_pendingTransactions             | :construction:     |
-| starknet_syncing                         | :construction:     |
+| starknet_syncing                         | :white_check_mark: |
 | starknet_getEvents                       | :construction:     |
 | starknet_getNonce                        | :construction:     |
 | starknet_traceTransaction                | :construction:     |
