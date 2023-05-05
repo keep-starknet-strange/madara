@@ -535,6 +535,51 @@
 <a href="#535" id="535">535</a>
 <a href="#536" id="536">536</a>
 <a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -903,6 +948,8 @@
             TxType::Invoke =&gt; {
                 <span class="kw">let </span>tx: InvokeTransactionV1 = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_invoke_transaction_context(<span class="kw-2">&amp;</span>tx);
+                <span class="comment">// Update nonce
+                </span><span class="self">self</span>.handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
 
                 (
                     tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
@@ -922,6 +969,9 @@
             TxType::Declare =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_declare_transaction_context(<span class="kw-2">&amp;</span>tx);
+                <span class="comment">// Update nonce
+                </span><span class="self">self</span>.handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
+
                 <span class="comment">// Execute.
                 </span>(
                     tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
@@ -932,6 +982,8 @@
             TxType::DeployAccount =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_deploy_account_transaction_context(<span class="kw-2">&amp;</span>tx);
+                <span class="comment">// Update nonce
+                </span><span class="self">self</span>.handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
 
                 <span class="comment">// Execute.
                 </span>(
@@ -950,6 +1002,44 @@
             actual_fee,
             actual_resources: tx_resources,
         })
+    }
+
+    <span class="doccomment">/// Handles the nonce of a transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to handle the nonce for
+    /// * `state` - The state to handle the nonce on
+    /// * `account_tx_context` - The transaction context for the account
+    ///
+    /// # Returns
+    ///
+    /// * `TransactionExecutionResult&lt;()&gt;` - The result of the nonce handling
+    </span><span class="kw">pub fn </span>handle_nonce(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        state: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>State,
+        account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+    ) -&gt; TransactionExecutionResultWrapper&lt;()&gt; {
+        <span class="kw">if </span>account_tx_context.version == TransactionVersion(StarkFelt::from(<span class="number">0</span>)) {
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        }
+
+        <span class="kw">let </span>address = account_tx_context.sender_address;
+        <span class="kw">let </span>current_nonce = state.get_nonce_at(address).map_err(TransactionExecutionErrorWrapper::StateError)<span class="question-mark">?</span>;
+        <span class="kw">if </span>current_nonce != account_tx_context.nonce {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionExecutionErrorWrapper::TransactionExecution(
+                TransactionExecutionError::InvalidNonce {
+                    address,
+                    expected_nonce: current_nonce,
+                    actual_nonce: account_tx_context.nonce,
+                },
+            ));
+        }
+
+        <span class="comment">// Increment nonce.
+        </span>state.increment_nonce(address).map_err(TransactionExecutionErrorWrapper::StateError)<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Get the transaction context for a l1 handler transaction

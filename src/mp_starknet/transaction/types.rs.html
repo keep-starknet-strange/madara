@@ -224,11 +224,15 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 
 <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
 <span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
+<span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>frame_support::BoundedVec;
@@ -254,6 +258,8 @@
     </span>StarknetApi(StarknetApiError),
     <span class="doccomment">/// Block context serialization error.
     </span>BlockContextSerializationError,
+    <span class="doccomment">/// State error.
+    </span>StateError(StateError),
     <span class="doccomment">/// Fee computation error,
     </span>FeeComputationError,
     <span class="doccomment">/// Fee transfer error,
