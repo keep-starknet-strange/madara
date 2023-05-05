@@ -40,7 +40,7 @@ fn given_call_contract_call_works() {
             version: 1,
             sender_address: sender_account,
             signature: bounded_vec!(),
-            nonce: U256::one(),
+            nonce: U256::zero(),
             calldata: constructor_calldata,
             salt: U256::one(),
         };

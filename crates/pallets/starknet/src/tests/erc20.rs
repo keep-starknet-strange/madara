@@ -49,7 +49,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     U256::from_big_endian(&sender_account) // recipient
                 ],
             signature: bounded_vec!(),
-            nonce: U256::one(),
+            nonce: U256::zero(),
             salt: U256::zero(),
         };
         let expected_erc20_address = "0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608";

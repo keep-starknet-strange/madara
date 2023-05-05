@@ -243,6 +243,14 @@ fn test_verify_nonce() {
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let tx = InvokeTransaction {
+            version: tx.version,
+            sender_address: tx.sender_address,
+            calldata: tx.call_entrypoint.calldata,
+            nonce: tx.nonce,
+            salt: U256::zero(),
+            signature: tx.signature,
+        };
 
         // Test for a valid nonce (0)
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx));
@@ -250,6 +258,14 @@ fn test_verify_nonce() {
         // Test for an invalid nonce (actual: 0, expected: 1)
         let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON");
+        let tx_2 = InvokeTransaction {
+            version: tx_2.version,
+            sender_address: tx_2.sender_address,
+            calldata: tx_2.call_entrypoint.calldata,
+            nonce: tx_2.nonce,
+            salt: U256::zero(),
+            signature: tx_2.signature,
+        };
         assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<Test>::TransactionExecutionFailed);
     });
 }
