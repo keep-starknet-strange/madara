@@ -50,7 +50,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ],
             signature: bounded_vec!(),
             nonce: U256::zero(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         };
         let expected_erc20_address = "0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608";
 
@@ -108,7 +108,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ],
             signature: bounded_vec!(),
             nonce: U256::one(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         };
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));

@@ -31,7 +31,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             sender_address: contract_address_bytes,
             calldata: bounded_vec!(),
             nonce: U256::zero(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -90,7 +90,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: H256::default(),
+            transaction_hash: H256::from_str("0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8")
+                .unwrap(),
             actual_fee: U256::from(52770),
             tx_type: TxType::Invoke,
             events: bounded_vec![EventWrapper {
@@ -174,7 +175,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         assert_eq!(pending.len(), 1);
 
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: H256::default(),
+            transaction_hash: H256::from_str("0x0353ef24bb96d220f2563ce43c5d7ae99c088b00f22f3f3749847b4948cda403").unwrap(),
             actual_fee: U256::from(53280),
             tx_type: TxType::Invoke,
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),

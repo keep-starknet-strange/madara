@@ -11,6 +11,9 @@ use sp_core::{ConstU32, H256, U256};
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 
+use crate::crypto::commitment::{
+    calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
+};
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
@@ -277,10 +280,9 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
 
 impl From<InvokeTransaction> for Transaction {
     fn from(value: InvokeTransaction) -> Self {
-        // TODO: compute transaction hash
         Self {
             version: value.version,
-            hash: H256::default(),
+            hash: calculate_invoke_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -302,7 +304,7 @@ impl From<DeclareTransaction> for Transaction {
     fn from(value: DeclareTransaction) -> Self {
         Self {
             version: value.version,
-            hash: H256::default(),
+            hash: calculate_declare_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -323,10 +325,9 @@ impl From<DeclareTransaction> for Transaction {
 
 impl From<DeployAccountTransaction> for Transaction {
     fn from(value: DeployAccountTransaction) -> Self {
-        // TODO: compute transaction hash
         Self {
             version: value.version,
-            hash: H256::default(),
+            hash: calculate_deploy_account_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,

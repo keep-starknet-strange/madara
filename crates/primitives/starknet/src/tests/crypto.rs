@@ -6,13 +6,73 @@ use frame_support::bounded_vec;
 use sp_core::{H256, U256};
 use starknet_crypto::FieldElement;
 
-use crate::crypto::commitment::{calculate_event_commitment, calculate_event_hash, calculate_transaction_commitment};
+use crate::crypto::commitment::{
+    calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_event_commitment, calculate_event_hash,
+    calculate_invoke_tx_hash, calculate_transaction_commitment,
+};
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::crypto::hash::{hash, HashType};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
+use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::traits::hash::{CryptoHasher, Hasher};
-use crate::transaction::types::{EventWrapper, Transaction};
+use crate::transaction::types::{
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
+};
+
+#[test]
+fn test_deploy_account_tx_hash() {
+    // Computed with `calculate_deploy_account_transaction_hash` from the cairo lang package
+    let expected_tx_hash =
+        H256::from_str("0x050a9c8ed9d8053fc3cf6704b95c1b368cf9a110ff72b87b760db832155b7022").unwrap();
+
+    let transaction = DeployAccountTransaction {
+        version: 1,
+        sender_address: U256::from(19911991_u32).into(),
+        calldata: bounded_vec!(U256::one(), U256::from(2), U256::from(3)),
+        nonce: U256::zero(),
+        salt: U256::zero(),
+        signature: bounded_vec!(),
+        account_class_hash: U256::from(3).into(),
+        max_fee: U256::one(),
+    };
+    assert_eq!(calculate_deploy_account_tx_hash(transaction), expected_tx_hash);
+}
+
+#[test]
+fn test_declare_tx_hash() {
+    // Computed with `calculate_declare_transaction_hash` from the cairo lang package
+    let expected_tx_hash =
+        H256::from_str("0x077f205d4855199564663dc9810c1edfcf97573393033dedc3f12dac740aac13").unwrap();
+
+    let transaction = DeclareTransaction {
+        version: 1,
+        sender_address: U256::from(19911991_u32).into(),
+        nonce: U256::zero(),
+        signature: bounded_vec!(),
+        max_fee: U256::one(),
+        compiled_class_hash: U256::from(3).into(),
+        contract_class: ContractClassWrapper::default(),
+    };
+    assert_eq!(calculate_declare_tx_hash(transaction), expected_tx_hash);
+}
+
+#[test]
+fn test_invoke_tx_hash() {
+    // Computed with `calculate_transaction_hash_common` from the cairo lang package
+    let expected_tx_hash =
+        H256::from_str("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
+
+    let transaction = InvokeTransaction {
+        version: 1,
+        sender_address: U256::from(19911991_u32).into(),
+        calldata: bounded_vec!(U256::one(), U256::from(2), U256::from(3)),
+        nonce: U256::zero(),
+        signature: bounded_vec!(),
+        max_fee: U256::one(),
+    };
+    assert_eq!(calculate_invoke_tx_hash(transaction), expected_tx_hash);
+}
 
 #[test]
 fn test_merkle_tree() {
@@ -26,7 +86,7 @@ fn test_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         },
         Transaction {
             version: 0_u8,
@@ -37,7 +97,7 @@ fn test_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         },
     ];
     let tx_com = calculate_transaction_commitment::<PedersenHasher>(&txs);

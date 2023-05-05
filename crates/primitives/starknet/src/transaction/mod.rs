@@ -575,7 +575,7 @@ impl Default for Transaction {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         }
     }
 }

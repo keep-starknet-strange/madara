@@ -49,7 +49,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             compiled_class_hash: erc20_class_hash,
             contract_class: erc20_class,
             nonce: U256::zero(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -82,7 +82,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             version: 1,
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -112,7 +112,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             version: wrong_tx_version,
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
             signature: bounded_vec!(),
         };
 

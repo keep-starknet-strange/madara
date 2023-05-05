@@ -1,13 +1,17 @@
+use alloc::vec;
 use alloc::vec::Vec;
 
 use bitvec::vec::BitVec;
 use sp_core::hexdisplay::AsBytesRef;
-use sp_core::H256;
+use sp_core::{H256, U256};
 use starknet_crypto::FieldElement;
 
+use super::hash::pedersen::PedersenHasher;
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
 use crate::traits::hash::CryptoHasher;
-use crate::transaction::types::{EventWrapper, Transaction};
+use crate::transaction::types::{
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
+};
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -128,6 +132,94 @@ where
             .collect::<Vec<FieldElement>>(),
     );
     <T as CryptoHasher>::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
+}
+/// Computes the transaction hash of an invoke transaction.
+///
+/// # Argument
+///
+/// * `transaction` - The invoke transaction to get the hash of.
+pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> H256 {
+    calculate_transaction_hash_common::<PedersenHasher>(
+        transaction.sender_address,
+        &transaction.calldata,
+        transaction.max_fee,
+        transaction.nonce,
+        transaction.version,
+        b"invoke",
+    )
+}
+
+/// Computes the transaction hash of a declare transaction.
+///
+/// # Argument
+///
+/// * `transaction` - The declare transaction to get the hash of.
+pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> H256 {
+    calculate_transaction_hash_common::<PedersenHasher>(
+        transaction.sender_address,
+        &[U256::from_big_endian(&transaction.compiled_class_hash)],
+        transaction.max_fee,
+        transaction.nonce,
+        transaction.version,
+        b"declare",
+    )
+}
+
+/// Computes the transaction hash of a deploy account transaction.
+///
+/// # Argument
+///
+/// * `transaction` - The deploy account transaction to get the hash of.
+pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -> H256 {
+    calculate_transaction_hash_common::<PedersenHasher>(
+        transaction.sender_address,
+        &vec![
+            vec![U256::from_big_endian(&transaction.account_class_hash), transaction.salt],
+            transaction.calldata.into_inner(),
+        ]
+        .concat(),
+        transaction.max_fee,
+        transaction.nonce,
+        transaction.version,
+        b"deploy_account",
+    )
+}
+
+fn calculate_transaction_hash_common<T>(
+    sender_address: [u8; 32],
+    calldata: &[U256],
+    max_fee: U256,
+    nonce: U256,
+    version: u8,
+    tx_prefix: &[u8],
+) -> H256
+where
+    T: CryptoHasher,
+{
+    // All the values are validated before going through this function so it's safe to unwrap.
+    let sender_address = FieldElement::from_bytes_be(&sender_address).unwrap();
+    let calldata_hash = <T as CryptoHasher>::compute_hash_on_elements(
+        &calldata.iter().map(|&val| FieldElement::from_bytes_be(&val.into()).unwrap()).collect::<Vec<FieldElement>>(),
+    );
+    let max_fee = FieldElement::from_bytes_be(&max_fee.into()).unwrap();
+    let nonce = FieldElement::from_bytes_be(&nonce.into()).unwrap();
+    let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
+    let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
+    // TODO: make it configurable
+    // FIXME: https://github.com/keep-starknet-strange/madara/issues/364
+    let chain_id = FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap();
+
+    let tx_hash = <T as CryptoHasher>::compute_hash_on_elements(&vec![
+        tx_prefix,
+        version,
+        sender_address,
+        FieldElement::ZERO,
+        calldata_hash,
+        max_fee,
+        chain_id,
+        nonce,
+    ]);
+    H256::from_slice(&tx_hash.to_bytes_be())
 }
 
 /// Calculate the hash of an event.

@@ -50,7 +50,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 .unwrap(),
             nonce: U256::zero(),
             signature: bounded_vec!(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -114,7 +114,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             version: 1,
             nonce: U256::zero(),
             signature: bounded_vec!(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin.clone(), transaction.clone()));
@@ -142,7 +142,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             nonce: U256::zero(),
             salt: U256::zero(),
             signature: bounded_vec!(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
@@ -172,7 +172,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
             nonce: U256::zero(),
             salt: U256::zero(),
             signature: bounded_vec!(),
-            max_fee: U256::MAX,
+            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
