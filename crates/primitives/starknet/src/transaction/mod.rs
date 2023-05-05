@@ -366,6 +366,8 @@ impl Transaction {
             TxType::Invoke => {
                 let tx: InvokeTransactionV1 = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_invoke_transaction_context(&tx);
+                // Update nonce
+                self.handle_nonce(state, &account_context)?;
 
                 (
                     tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
@@ -385,6 +387,9 @@ impl Transaction {
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
+                // Update nonce
+                self.handle_nonce(state, &account_context)?;
+
                 // Execute.
                 (
                     tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
@@ -395,6 +400,8 @@ impl Transaction {
             TxType::DeployAccount => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_deploy_account_transaction_context(&tx);
+                // Update nonce
+                self.handle_nonce(state, &account_context)?;
 
                 // Execute.
                 (
@@ -413,6 +420,44 @@ impl Transaction {
             actual_fee,
             actual_resources: tx_resources,
         })
+    }
+
+    /// Handles the nonce of a transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to handle the nonce for
+    /// * `state` - The state to handle the nonce on
+    /// * `account_tx_context` - The transaction context for the account
+    ///
+    /// # Returns
+    ///
+    /// * `TransactionExecutionResult<()>` - The result of the nonce handling
+    pub fn handle_nonce(
+        &self,
+        state: &mut dyn State,
+        account_tx_context: &AccountTransactionContext,
+    ) -> TransactionExecutionResultWrapper<()> {
+        if account_tx_context.version == TransactionVersion(StarkFelt::from(0)) {
+            return Ok(());
+        }
+
+        let address = account_tx_context.sender_address;
+        let current_nonce = state.get_nonce_at(address).map_err(TransactionExecutionErrorWrapper::StateError)?;
+        if current_nonce != account_tx_context.nonce {
+            return Err(TransactionExecutionErrorWrapper::TransactionExecution(
+                TransactionExecutionError::InvalidNonce {
+                    address,
+                    expected_nonce: current_nonce,
+                    actual_nonce: account_tx_context.nonce,
+                },
+            ));
+        }
+
+        // Increment nonce.
+        state.increment_nonce(address).map_err(TransactionExecutionErrorWrapper::StateError)?;
+
+        Ok(())
     }
 
     /// Get the transaction context for a l1 handler transaction

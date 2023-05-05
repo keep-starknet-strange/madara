@@ -57,7 +57,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             ),
             hash: H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
             signature: bounded_vec!(),
-            nonce: U256::one(),
+            nonce: U256::zero(),
             contract_class: None,
             contract_address_salt: None,
         };
