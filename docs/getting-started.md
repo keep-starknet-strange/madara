@@ -149,6 +149,27 @@ Run the local testnet:
 ./infra/local-testnet/run.sh
 ```
 
+### Testing Madara RPC Endpoints
+
+To test the Madara RPC endpoints, follow the steps below:
+
+Run Madara locally (by default, it runs on port 9933):
+
+```bash
+cargo run --release -- --dev
+# Alternatively, use other methods to run Madara
+```
+
+Execute hurl tests sequentially:
+
+```bash
+hurl --test examples/rpc/**/*.hurl
+```
+
+The output should be similar to the image provided:
+
+![Hurl Test Output](./images/hurl-test-output.png)
+
 ### Set Ethereum Node URL for offchain worker
 
 In order for the offchain worker to access an Ethereum RPC node, we need to set
