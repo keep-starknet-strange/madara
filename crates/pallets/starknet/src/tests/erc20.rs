@@ -28,14 +28,14 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         System::set_block_number(0);
         run_to_block(1);
         let origin = RuntimeOrigin::none();
-        let sender_account = <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
+        let (sender_account, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
         // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
         let deploy_transaction = InvokeTransaction {
             version: 1,
             sender_address: sender_account,
             calldata: bounded_vec![
-                    U256::from(15), // Simple contract address
+                    U256::from(sender_account), // Simple contract address
                     U256::from_str("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
                     U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
                     U256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
@@ -52,7 +52,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
         };
-        let expected_erc20_address = "0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608";
+        let expected_erc20_address = "00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff";
 
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction));
         let events = System::events();
@@ -72,7 +72,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Decimals
                     H256::from_str("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff").unwrap(), // Initial supply low
                     H256::from_str("0x000000000000000000000000000000000fffffffffffffffffffffffffffffff").unwrap(), // Initial supply high
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000f").unwrap(), // Recipient
+                    H256::from_str("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // Recipient
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), // Salt
                 ),
                 from_address: sender_account,
@@ -86,7 +86,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 data: bounded_vec!(
                     H256::from_slice(&sender_account), // From
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Sequencer address
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000002b5a2").unwrap(), // Amount low
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000002b660").unwrap(), // Amount low
                     H256::zero(), // Amount high
                 ),
                 from_address:Starknet::fee_token_address(),
@@ -112,8 +112,8 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         };
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
-        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap())),U256::from_str("ffffffffffffffffffffffffffffff0").unwrap());
-        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap())),U256::from_str("fffffffffffffffffffffffffffffff").unwrap());
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f").unwrap())),U256::from_str("ffffffffffffffffffffffffffffff0").unwrap());
+        pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040").unwrap())),U256::from_str("fffffffffffffffffffffffffffffff").unwrap());
 
         pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(), H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73e").unwrap())),U256::from(15));
         pretty_assertions::assert_eq!(Starknet::storage((<[u8; 32]>::from_hex(expected_erc20_address).unwrap(),H256::from_str("0x011cb0dc747a73020cbd50eac7460edfaa7d67b0e05823b882b05c3f33b1c73f").unwrap())),U256::zero());
@@ -125,12 +125,12 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
                 ],
                 data: bounded_vec!(
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000F").unwrap(), // From
+                    H256::from_str("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000010").unwrap(), // To
                     H256::from_str("0x000000000000000000000000000000000000000000000000000000000000000F").unwrap(), // Amount low
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), // Amount high
                 ),
-                from_address: H256::from_str("0x0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608")
+                from_address: H256::from_str("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff")
                     .unwrap()
                     .to_fixed_bytes(),
             });
@@ -143,7 +143,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 data: bounded_vec!(
                     H256::from_slice(&sender_account), // From
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // Sequencer address
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000001e55a").unwrap(), // Amount low
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000001e618").unwrap(), // Amount low
                     H256::zero(), // Amount high
                 ),
                 from_address:Starknet::fee_token_address(),

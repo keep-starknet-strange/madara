@@ -14,24 +14,24 @@ fn given_contract_run_deploy_account_tx_works() {
         System::set_block_number(0);
         run_to_block(2);
         // pedersen(sn_keccak(b"ERC20_balances"),
-        // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) which is the key in the
+        // 0x00a13c294af26c4e940d28b1db914e4bb28158638deeeb4ae9ca9b37ab3e4a97) which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).low
         StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
-                H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647766").unwrap(),
+                H256::from_str("0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf").unwrap(),
             ),
             U256::from(u128::MAX),
         );
         // pedersen(sn_keccak(b"ERC20_balances"),
-        // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) + 1 which is the key in the
+        // 0x00a13c294af26c4e940d28b1db914e4bb28158638deeeb4ae9ca9b37ab3e4a97) + 1 which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).high
         StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
-                H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647767").unwrap(),
+                H256::from_str("0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf").unwrap(),
             ),
             U256::from(u128::MAX),
         );
@@ -39,7 +39,7 @@ fn given_contract_run_deploy_account_tx_works() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (test_addr, account_class_hash, calldata) = account_helper(salt);
+        let (test_addr, account_class_hash, calldata) = no_validate_account_helper(salt);
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -62,7 +62,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 data: bounded_vec!(
                     H256::from_slice(&test_addr), // From
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // To
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000001be90").unwrap(), // Amount low
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d3b8").unwrap(), // Amount low
                     H256::zero(), // Amount high
                 ),
                 from_address: Starknet::fee_token_address(),
@@ -77,30 +77,30 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
         System::set_block_number(0);
         run_to_block(2);
         // pedersen(sn_keccak(b"ERC20_balances"),
-        // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) which is the key in the
+        // 0x00a13c294af26c4e940d28b1db914e4bb28158638deeeb4ae9ca9b37ab3e4a97) which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).low
         StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
-                H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647766").unwrap(),
+                H256::from_str("0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf").unwrap(),
             ),
             U256::from(u128::MAX),
         );
         // pedersen(sn_keccak(b"ERC20_balances"),
-        // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) + 1 which is the key in the
+        // 0x00a13c294af26c4e940d28b1db914e4bb28158638deeeb4ae9ca9b37ab3e4a97) + 1 which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).high
         StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
-                H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647767").unwrap(),
+                H256::from_str("0x02450cb55e7682ffca9e1db504e2de1263d587242b9b43e27a1eedf18b4bbabf").unwrap(),
             ),
             U256::from(u128::MAX),
         );
         let none_origin = RuntimeOrigin::none();
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (test_addr, account_class_hash, calldata) = account_helper(salt);
+        let (test_addr, account_class_hash, calldata) = no_validate_account_helper(salt);
 
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)

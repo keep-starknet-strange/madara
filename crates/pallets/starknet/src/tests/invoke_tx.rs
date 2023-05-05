@@ -95,9 +95,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: H256::from_str("0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8")
-                .unwrap(),
-            actual_fee: U256::from(52770),
+            transaction_hash: transaction.hash,
+            actual_fee: U256::from(52980),
             tx_type: TxType::Invoke,
             events: bounded_vec![EventWrapper {
                 keys: bounded_vec!(
@@ -106,7 +105,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 data: bounded_vec![
                     H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap(),
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000ce22").unwrap(),
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000cef4").unwrap(),
                     H256::zero(),
                 ],
                 from_address: Starknet::fee_token_address(),
@@ -147,9 +146,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
                 ],
                 data: bounded_vec!(
-                    H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap(), // From
+                    H256::from_str("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // To
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d020").unwrap(), // Amount low
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d0f2").unwrap(), // Amount low
                     H256::zero(), // Amount high
                 ),
                 from_address: Starknet::fee_token_address(),
@@ -174,14 +173,14 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         assert_eq!(
             event_commitment,
-            H256::from_str("0x05299be42440a75a8afcee70587fe6b24060debff2587a7945c2faed0a817047").unwrap()
+            H256::from_str("0x00ebe70524f4d05a64dc130466d97d0852733d731033a59005c980530b09dd3d").unwrap()
         );
         assert_eq!(events.len(), 2);
         assert_eq!(pending.len(), 1);
 
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: H256::from_str("0x0353ef24bb96d220f2563ce43c5d7ae99c088b00f22f3f3749847b4948cda403").unwrap(),
-            actual_fee: U256::from(53280),
+            transaction_hash: transaction.hash,
+            actual_fee: U256::from(53490),
             tx_type: TxType::Invoke,
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),
         };

@@ -21,6 +21,7 @@ pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245
 pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
 pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH: &str = "039e978a80112c38e76265e5f23deb5711b6f913fdc91542bf158d8e6b62d98a";
 pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
+pub const SIMPLE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
 pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
 pub const TOKEN_CONTRACT_CLASS_HASH: &str = "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
@@ -114,10 +115,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let simple_account_class =
         get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
     let erc20_class = get_contract_class(include_bytes!("../../../../../resources/erc20/erc20.json"));
-    let simple_account_address =
-        <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
-    let simple_account_class_hash =
-        <[u8; 32]>::from_hex("0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
@@ -127,6 +124,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let openzeppelin_class_hash_bytes = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
     let openzeppelin_account_address =
         <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
+
+    // SIMPLE ACCOUNT CONTRACT
+    let simple_account_class_hash =
+        <[u8; 32]>::from_hex(SIMPLE_ACCOUNT_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
+    let (simple_account_address, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
 
     // TEST CONTRACT
     let other_contract_address =
@@ -168,18 +170,22 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (
                 (
                     fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) which is the key in the starknet contract for
-                    // ERC20_balances(0x0F).low
-                    H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9093").unwrap(),
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0) which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0).low
+                    H256::from_str("0x03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
             (
                 (
                     fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"), 0x0F) + 1 which is the key in the starknet contract for
-                    // ERC20_balances(0x0F).high
-                    H256::from_str("0x078e4fa4db2b6f3c7a9ece31571d47ac0e853975f90059f7c9df88df974d9094").unwrap(),
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0) + 1 which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0).high
+                    H256::from_str("0x03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -273,6 +279,16 @@ pub fn account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
         salt,
         "0x0",
     ];
+
+    let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
+    (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
+}
+
+pub fn no_validate_account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
+    let account_class_hash = H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap();
+    let account_salt = H256::from_str(salt).unwrap();
+
+    let cd_raw = vec![];
 
     let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
