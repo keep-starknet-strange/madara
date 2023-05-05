@@ -263,14 +263,10 @@ impl TryFrom<ContractClassWrapper> for SierraContractClass {
     type Error = ContractClassFromWrapperError;
 
     fn try_from(wrapper: ContractClassWrapper) -> Result<Self, Self::Error> {
-        // Convert ContractClassWrapper to ContractClass.
-        let contract_class: ContractClass = ContractClass::try_from(wrapper)?;
-
-        // Extract the Sierra program from the ContractClass program.
-        // let sierra_program = contract_class.program.into_iter().map(|fe| fe.to_string()).collect();
+        // Extract the Sierra program from the ContractClassWrapper program.
         let sierra_program = todo!();
 
-        // Convert entry_points_by_type from ContractClass to EntryPointsByType.
+        // Convert entry_points_by_type from ContractClassWrapper to EntryPointsByType.
         let mut entry_points_by_type = EntryPointsByType::default();
 
         // Create a SierraContractClass.
