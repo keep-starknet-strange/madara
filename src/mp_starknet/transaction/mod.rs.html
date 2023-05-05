@@ -580,6 +580,16 @@
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Types related to transactions.
 </span><span class="kw">pub mod </span>types;
@@ -774,7 +784,7 @@
             class_hash: entrypoint.class_hash.unwrap_or_default(),
             constructor_calldata: entrypoint.calldata,
             contract_address_salt: ContractAddressSalt(StarkFelt::new(
-                <span class="self">self</span>.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
+                <span class="self">self</span>.contract_address_salt.unwrap_or_default().into(),
             )<span class="question-mark">?</span>),
         })
     }
@@ -859,9 +869,20 @@
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
-        contract_address_salt: <span class="prelude-ty">Option</span>&lt;H256&gt;,
+        contract_address_salt: <span class="prelude-ty">Option</span>&lt;U256&gt;,
+        max_fee: U256,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ version, hash, signature, sender_address, nonce, call_entrypoint, contract_class, contract_address_salt }
+        <span class="self">Self </span>{
+            version,
+            hash,
+            signature,
+            sender_address,
+            nonce,
+            call_entrypoint,
+            contract_class,
+            contract_address_salt,
+            max_fee,
+        }
     }
 
     <span class="doccomment">/// Creates a new instance of a transaction without signature.
@@ -930,11 +951,9 @@
         <span class="comment">// Create the block context.
         // TODO: don&#39;t do that.
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-        </span><span class="kw">let </span><span class="kw-2">mut </span>block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+        </span><span class="kw">let </span>block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
             .map_err(|<span class="kw">_</span>| TransactionExecutionErrorWrapper::BlockContextSerializationError)<span class="question-mark">?</span>;
-        <span class="comment">// TODO: use real value.
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-        </span>block_context.gas_price = <span class="number">10</span>;
+
         <span class="comment">// Initialize the execution resources.
         </span><span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
 
@@ -944,7 +963,7 @@
         <span class="comment">// Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
-        </span><span class="kw">let </span>(execute_call_info, _account_context) = <span class="kw">match </span>tx_type {
+        </span><span class="kw">let </span>(execute_call_info, account_context) = <span class="kw">match </span>tx_type {
             TxType::Invoke =&gt; {
                 <span class="kw">let </span>tx: InvokeTransactionV1 = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_invoke_transaction_context(<span class="kw-2">&amp;</span>tx);
@@ -994,7 +1013,7 @@
             }
         };
         <span class="kw">let </span>tx_resources = fees::get_transaction_resources(state, <span class="kw-2">&amp;</span>execute_call_info, execution_resources, tx_type)<span class="question-mark">?</span>;
-        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>_account_context, <span class="kw-2">&amp;</span>tx_resources)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_resources)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
             validate_call_info: <span class="prelude-val">None</span>,
             execute_call_info,
@@ -1148,6 +1167,7 @@
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
+            max_fee: U256::from(u128::MAX),
         }
     }
 }

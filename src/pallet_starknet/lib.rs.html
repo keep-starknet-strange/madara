@@ -925,6 +925,11 @@
 <a href="#925" id="925">925</a>
 <a href="#926" id="926">926</a>
 <a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1006,8 +1011,8 @@
 <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 <span class="kw">use </span>mp_starknet::traits::hash::Hasher;
 <span class="kw">use </span>mp_starknet::transaction::types::{
-    EventError, EventWrapper <span class="kw">as </span>StarknetEventType, Transaction, TransactionExecutionInfoWrapper,
-    TransactionReceiptWrapper, TxType,
+    DeclareTransaction, EventError, EventWrapper <span class="kw">as </span>StarknetEventType, InvokeTransaction, Transaction,
+    TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 <span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
@@ -1040,6 +1045,8 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
+    <span class="kw">use </span>mp_starknet::transaction::types::DeployAccountTransaction;
+
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[pallet::pallet]
@@ -1315,7 +1322,7 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">1</span>)]
         #[pallet::weight({<span class="number">0</span>})]
-        </span><span class="kw">pub fn </span>invoke(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>invoke(origin: OriginFor&lt;T&gt;, transaction: InvokeTransaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
@@ -1326,6 +1333,7 @@
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
             <span class="comment">// Get fee token address
             </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
+            <span class="kw">let </span>transaction: Transaction = transaction.into();
             <span class="kw">let </span>call_info = transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
                 block,
@@ -1388,10 +1396,10 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">2</span>)]
         #[pallet::weight({<span class="number">0</span>})]
-        </span><span class="kw">pub fn </span>declare(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>declare(origin: OriginFor&lt;T&gt;, transaction: DeclareTransaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
-
+            <span class="kw">let </span>transaction: Transaction = transaction.into();
             <span class="comment">// Check that contract class is not None
             </span><span class="kw">let </span>contract_class = transaction.contract_class.clone().ok_or(Error::&lt;T&gt;::ContractClassMustBeSpecified)<span class="question-mark">?</span>;
 
@@ -1454,7 +1462,7 @@
             };
 
             <span class="comment">// Append the transaction to the pending transactions.
-            </span>Pending::&lt;T&gt;::try_append((transaction.clone(), receipt)).or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::TooManyPendingTransactions))<span class="question-mark">?</span>;
+            </span>Pending::&lt;T&gt;::try_append((transaction, receipt)).or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::TooManyPendingTransactions))<span class="question-mark">?</span>;
 
             <span class="comment">// TODO: Update class hashes root
 
@@ -1478,7 +1486,7 @@
         /// * Compute weight
         </span><span class="attr">#[pallet::call_index(<span class="number">3</span>)]
         #[pallet::weight({<span class="number">0</span>})]
-        </span><span class="kw">pub fn </span>deploy_account(origin: OriginFor&lt;T&gt;, transaction: Transaction) -&gt; DispatchResult {
+        </span><span class="kw">pub fn </span>deploy_account(origin: OriginFor&lt;T&gt;, transaction: DeployAccountTransaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
@@ -1487,6 +1495,8 @@
                 !ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address),
                 Error::&lt;T&gt;::AccountAlreadyDeployed
             );
+
+            <span class="kw">let </span>transaction: Transaction = transaction.into();
 
             <span class="comment">// Get current block
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
@@ -1534,7 +1544,7 @@
             };
 
             <span class="comment">// Append the transaction to the pending transactions.
-            </span>Pending::&lt;T&gt;::try_append((transaction.clone(), receipt)).or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::TooManyPendingTransactions))<span class="question-mark">?</span>;
+            </span>Pending::&lt;T&gt;::try_append((transaction, receipt)).or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::TooManyPendingTransactions))<span class="question-mark">?</span>;
 
             <span class="comment">// Associate contract class to class hash
             // TODO: update state root
