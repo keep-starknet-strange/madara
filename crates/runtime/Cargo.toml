@@ -1,6 +1,6 @@
 [package]
 name = "madara-runtime"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 description = "Madara runtime."
 authors = [
 	"Abdelhamid Bakhta <@abdelhamidbakhta>",
@@ -45,7 +45,7 @@ sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
-# Used for the node template's RPCs
+# Used for the node RPCs
 frame-system-rpc-runtime-api = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 
@@ -63,22 +63,6 @@ mp-starknet = { workspace = true, default-features = false }
 substrate-wasm-builder = { workspace = true }
 
 [features]
-try-runtime = [
-	"pallet-timestamp/try-runtime",
-	"pallet-transaction-payment/try-runtime",
-	"frame-try-runtime/try-runtime",
-	"frame-executive/try-runtime",
-	"frame-system/try-runtime",
-	"frame-support/try-runtime",
-	"pallet-aura/try-runtime",
-	"pallet-balances/try-runtime",
-	"pallet-grandpa/try-runtime",
-	"pallet-sudo/try-runtime",
-	"pallet-utility/try-runtime",
-	# Kaiohsin pallets
-	"pallet-starknet/try-runtime",
-]
-default = ["std"]
 std = [
 	# Madara pallets
 	"pallet-starknet/std",
@@ -116,6 +100,22 @@ std = [
 	"scale-codec/std",
 	"scale-info/std",
 ]
+try-runtime = [
+	"pallet-timestamp/try-runtime",
+	"pallet-transaction-payment/try-runtime",
+	"frame-try-runtime/try-runtime",
+	"frame-executive/try-runtime",
+	"frame-system/try-runtime",
+	"frame-support/try-runtime",
+	"pallet-aura/try-runtime",
+	"pallet-balances/try-runtime",
+	"pallet-grandpa/try-runtime",
+	"pallet-sudo/try-runtime",
+	"pallet-utility/try-runtime",
+	# Madara pallets
+	"pallet-starknet/try-runtime",
+]
+default = ["std"]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
@@ -126,6 +126,6 @@ runtime-benchmarks = [
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-utility/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-	# Kaiohsin pallets
+	# Madara pallets
 	"pallet-starknet/runtime-benchmarks",
 ]

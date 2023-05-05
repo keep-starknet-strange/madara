@@ -1,21 +1,51 @@
-use blockifier::test_utils::{get_contract_class, ACCOUNT_CONTRACT_PATH};
+use std::str::FromStr;
+
+use blockifier::execution::contract_class::ContractClass;
 use hex::FromHex;
 use madara_runtime::{
-    AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    WASM_BINARY,
+    AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
+    SystemConfig, WASM_BINARY,
 };
-use mp_starknet::execution::ContractClassWrapper;
+use mp_starknet::execution::types::ContractClassWrapper;
 use sc_service::ChainType;
+use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::storage::Storage;
+use sp_core::{sr25519, Pair, Public, H256, U256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_state_machine::BasicExternalities;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+
+/// Specialized `ChainSpec` for development.
+pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
+
+/// Extension for the dev genesis config to support a custom changes to the genesis state.
+#[derive(Serialize, Deserialize)]
+pub struct DevGenesisExt {
+    /// Genesis config.
+    genesis_config: GenesisConfig,
+    /// The flag that if enable manual-seal mode.
+    enable_manual_seal: Option<bool>,
+}
+
+/// If enable_manual_seal is true, then the runtime storage variable EnableManualSeal will be set to
+/// true. This is just a common way to pass information from the chain spec to the runtime.
+impl sp_runtime::BuildStorage for DevGenesisExt {
+    fn assimilate_storage(&self, storage: &mut Storage) -> Result<(), String> {
+        BasicExternalities::execute_with_storage(storage, || {
+            if let Some(enable_manual_seal) = &self.enable_manual_seal {
+                EnableManualSeal::set(enable_manual_seal);
+            }
+        });
+        self.genesis_config.assimilate_storage(storage)
+    }
+}
 
 /// Generate a crypto pair from seed.
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -37,39 +67,42 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config() -> Result<ChainSpec, String> {
+pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
-    Ok(ChainSpec::from_genesis(
+    Ok(DevChainSpec::from_genesis(
         // Name
         "Development",
         // ID
         "dev",
         ChainType::Development,
         move || {
-            testnet_genesis(
-                wasm_binary,
-                // Initial PoA authorities
-                vec![authority_keys_from_seed("Alice")],
-                // Sudo account
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                // Pre-funded accounts
-                vec![
+            DevGenesisExt {
+                genesis_config: testnet_genesis(
+                    wasm_binary,
+                    // Initial PoA authorities
+                    vec![authority_keys_from_seed("Alice")],
+                    // Sudo account
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
-                true,
-            )
+                    // Pre-funded accounts
+                    vec![
+                        get_account_id_from_seed::<sr25519::Public>("Alice"),
+                        get_account_id_from_seed::<sr25519::Public>("Bob"),
+                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
+                        get_account_id_from_seed::<sr25519::Public>("Dave"),
+                        get_account_id_from_seed::<sr25519::Public>("Eve"),
+                        get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+                        get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+                        get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+                    ],
+                    true,
+                ),
+                enable_manual_seal,
+            }
         },
         // Bootnodes
         vec![],
@@ -133,6 +166,9 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
+pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
+    serde_json::from_slice(contract_content).unwrap()
+}
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -141,13 +177,16 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let account_class = get_contract_class(ACCOUNT_CONTRACT_PATH);
-    let test_class = get_contract_class(include_bytes!("../../../ressources/test.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../ressources/erc20.json"));
+    let account_class =
+        get_contract_class(include_bytes!("../../../resources/account/account.json")).try_into().unwrap();
+
+    let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
+    let erc20_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address_bytes =
-        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000101").unwrap();
+        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
     let class_hash_bytes =
         <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918").unwrap();
 
@@ -157,8 +196,11 @@ fn testnet_genesis(
     let other_class_hash_bytes =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001000").unwrap();
 
+    // Fee token
     let fee_token_address =
-        <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+        <[u8; 32]>::from_hex("040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01").unwrap();
+    let fee_token_class_hash_str = "0000000000000000000000000000000000000000000000000000000000020000";
+    let fee_token_class_hash_bytes = <[u8; 32]>::from_hex(fee_token_class_hash_str).unwrap();
 
     // ERC20 CONTRACT
     let token_contract_address_str = "040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
@@ -194,13 +236,53 @@ fn testnet_genesis(
                 (contract_address_bytes, class_hash_bytes),
                 (other_contract_address_bytes, other_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
+                (token_contract_address_bytes, token_class_hash_bytes),
+                (fee_token_address, fee_token_class_hash_bytes),
             ],
             contract_classes: vec![
-                (class_hash_bytes, ContractClassWrapper::from(account_class)),
-                (other_class_hash_bytes, ContractClassWrapper::from(test_class)),
-                (token_class_hash_bytes, ContractClassWrapper::from(erc20_class)),
+                (class_hash_bytes, account_class),
+                (other_class_hash_bytes, test_class),
+                (token_class_hash_bytes, erc20_class.clone()),
+                (fee_token_class_hash_bytes, erc20_class),
             ],
-            storage: vec![],
+            storage: vec![
+                (
+                    (
+                        fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
+                        // ERC20_balances(0x01).low
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
+                        // for ERC20_balances(0x01).high
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        token_contract_address_bytes,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
+                        // ERC20_balances(0x01).low
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        token_contract_address_bytes,
+                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
+                        // for ERC20_balances(0x01).high
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+            ],
             fee_token_address,
             _phantom: Default::default(),
         },

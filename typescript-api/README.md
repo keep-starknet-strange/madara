@@ -1,11 +1,13 @@
 ## Description
 
-<a href="http://www.typescriptlang.org" target="_blank">TypeScript</a> type definitions that can be used to decorate the <a href="https://www.npmjs.com/package/@polkadot/api" target="_blank">@polkadot/api</a>.
+<a href="http://www.typescriptlang.org" target="_blank">TypeScript</a> type
+definitions that can be used to decorate the
+<a href="https://www.npmjs.com/package/@polkadot/api" target="_blank">@polkadot/api</a>.
 
 ## Installation
 
 ```bash
-npm i @madara/api-augment
+npm i @keep-starknet-strange/madara-api-augment
 ```
 
 > :warning: `@polkadot/api` should be installed in your project!
@@ -14,13 +16,14 @@ npm i @madara/api-augment
 
 Add to your codebase entry point before any imports from the API itself.
 
-- `import '@madara/api-augment'` - applies Madara types and endpoint augmentation
+- `import '@keep-starknet-strange/madara-api-augment'` - applies Madara types
+  and endpoint augmentation
 
 ## Docs
 
-- <a href="https://polkadot.js.org/docs/api/examples/promise/typegen/" target="_blank">@polkadot/api</a> - TS type generation
-- <a href="https://polkadot.js.org/docs/api/FAQ/#since-upgrading-to-the-7x-series-typescript-augmentation-is-missing" target="_blank">@polkadot/api</a> - Since upgrading to the 7.x series, TypeScript augmentation is missing
-- <a href="https://polkadot.js.org/docs/api/start/typescript" target="_blank">@polkadot/api</a> - TypeScript interfaces
+- [TS type generation]("https://polkadot.js.org/docs/api/examples/promise/typegen/")
+- [TypeScript augmentation since 7.x]("https://polkadot.js.org/docs/api/FAQ/#since-upgrading-to-the-7x-series-typescript-augmentation-is-missing")
+- [TypeScript interfaces]("https://polkadot.js.org/docs/api/start/typescript")
 
 ## Publish
 

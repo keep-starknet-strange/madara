@@ -1,6 +1,6 @@
 [package]
 name = "pallet-starknet"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 description = "FRAME pallet to execute Starknet contracts."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 homepage = "https://github.com/keep-starknet-strange/madara"
@@ -30,14 +30,13 @@ starknet_api = { workspace = true, default-features = false }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
-
 # Substrate primitives
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-api = { workspace = true }
 sp-std = { workspace = true }
-
+pallet-transaction-payment = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
@@ -50,11 +49,12 @@ scale-info = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 hex = { workspace = true }
 
-
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
 pretty_assertions = "1.3.0"
 test-case = "3.1.0"
+lazy_static = "1.4.0"
+hexlit = "0.5.5"
 
 [features]
 default = ["std"]
@@ -67,6 +67,7 @@ std = [
 	"frame-benchmarking?/std",
 	"scale-info/std",
 	"pallet-timestamp/std",
+	"pallet-transaction-payment/std",
 	# Madara
 	"mp-starknet/std",
 	# Starknet

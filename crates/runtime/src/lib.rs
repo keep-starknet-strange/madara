@@ -1,3 +1,9 @@
+//! Definition of the Starknet Appchain runtime.
+//! A Starknet Appchain runtime can be used to run a Starknet Appchain, either as a standalone
+//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
+//! public Starknet L2.
+//! For now this is the same because we don't support yet validity proofs and state updates to
+//! another layer.
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -21,20 +27,22 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
+use pallet_starknet::types::StarkFeltWrapper;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::crypto::KeyTypeId;
-use sp_core::{OpaqueMetadata, H256};
+use sp_core::{OpaqueMetadata, H256, U256};
 use sp_runtime::traits::{BlakeTwo256, Block as BlockT, NumberFor};
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidity};
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{generic, ApplyExtrinsicResult};
+use sp_runtime::{generic, ApplyExtrinsicResult, DispatchError};
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
@@ -61,6 +69,7 @@ construct_runtime!(
         Starknet: pallet_starknet,
     }
 );
+
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 /// Block header type as expected by this runtime.
@@ -119,6 +128,14 @@ impl_runtime_apis! {
     impl sp_api::Metadata<Block> for Runtime {
         fn metadata() -> OpaqueMetadata {
             OpaqueMetadata::new(Runtime::metadata().into())
+        }
+
+        fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+            Runtime::metadata_at_version(version)
+        }
+
+        fn metadata_versions() -> sp_std::vec::Vec<u32> {
+            Runtime::metadata_versions()
         }
     }
 
@@ -268,6 +285,18 @@ impl_runtime_apis! {
 
         fn current_block() -> mp_starknet::block::Block {
             Starknet::current_block()
+        }
+
+        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {
+            Starknet::call_contract(address, function_selector, calldata)
+        }
+
+        fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper> {
+            Starknet::contract_class_hash_by_address(address)
+        }
+
+        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper> {
+            Starknet::contract_class_by_class_hash(class_hash)
         }
     }
 

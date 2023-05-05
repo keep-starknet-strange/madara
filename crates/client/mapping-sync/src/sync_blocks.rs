@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
-use mp_digest_log::{FindLogError, Hashes, Log, PostLog};
+use mp_digest_log::FindLogError;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
@@ -18,42 +18,41 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     BE: Backend<B>,
 {
-    let substrate_block_hash = header.hash();
-    match mp_digest_log::find_log(header.digest()) {
-        Ok(log) => {
-            let gen_from_hashes = |hashes: Hashes| -> mc_db::MappingCommitment<B> {
-                mc_db::MappingCommitment { block_hash: substrate_block_hash, starknet_block_hash: hashes.block_hash }
-            };
-            let gen_from_block = |block| -> mc_db::MappingCommitment<B> {
-                let hashes = Hashes::from_block(block);
-                gen_from_hashes(hashes)
-            };
+    // Before storing the new block in the Madara backend database, we want to make sure that the
+    // wrapped Starknet block it contains is the same that we can find in the storage at this height.
+    // Then we will store the two block hashes (wrapper and wrapped) alongside in our db.
 
-            match log {
-                Log::Post(post_log) => match post_log {
-                    PostLog::BlockHash(expect_eth_block_hash) => {
-                        let starknet_block =
-                            overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
-                        match starknet_block {
-                            Some(block) => {
-                                let got_eth_block_hash = block.header().hash();
-                                if got_eth_block_hash != expect_eth_block_hash {
-                                    Err(format!(
-                                        "Ethereum block hash mismatch: frontier consensus digest \
-                                         ({expect_eth_block_hash:?}), db state ({got_eth_block_hash:?})"
-                                    ))
-                                } else {
-                                    let mapping_commitment = gen_from_block(block);
-                                    backend.mapping().write_hashes(mapping_commitment)
-                                }
-                            }
-                            None => backend.mapping().write_none(substrate_block_hash),
-                        }
+    let substrate_block_hash = header.hash();
+    match mp_digest_log::find_starknet_block(header.digest()) {
+        Ok(digest_starknet_block) => {
+            // Read the runtime storage in order to find the Starknet block stored under this Substrate block
+            let opt_storage_starknet_block =
+                overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
+            match opt_storage_starknet_block {
+                Some(storage_starknet_block) => {
+                    let digest_starknet_block_hash = digest_starknet_block.header().hash();
+                    let storage_starknet_block_hash = storage_starknet_block.header().hash();
+                    // Ensure the two blocks sources (chain storage and block digest) agree on the block content
+                    if digest_starknet_block_hash != storage_starknet_block_hash {
+                        Err(format!(
+                            "Starknet block hash mismatch: madara consensus digest ({digest_starknet_block_hash:?}), \
+                             db state ({storage_starknet_block_hash:?})"
+                        ))
+                    } else {
+                        // Success, we write the Starknet to Substate hashes mapping to db
+                        let mapping_commitment = mc_db::MappingCommitment {
+                            block_hash: substrate_block_hash,
+                            starknet_block_hash: digest_starknet_block_hash,
+                        };
+                        backend.mapping().write_hashes(mapping_commitment)
                     }
-                },
+                }
+                // If there is not Starknet block in this Substrate block, we write it in the db
+                None => backend.mapping().write_none(substrate_block_hash),
             }
         }
-        Err(FindLogError::NotFound) => backend.mapping().write_none(substrate_block_hash),
+        // If there is not Starknet block in this Substrate block, we write it in the db
+        Err(FindLogError::NotLog) => backend.mapping().write_none(substrate_block_hash),
         Err(FindLogError::MultipleLogs) => Err("Multiple logs found".to_string()),
     }
 }

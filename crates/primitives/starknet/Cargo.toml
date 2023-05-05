@@ -1,6 +1,6 @@
 [package]
 name = "mp-starknet"
-version = "0.1.0-dev"
+version = "0.1.0-alpha"
 license = "MIT"
 description = "Starknet primitives for Substrate."
 authors = { workspace = true }
@@ -25,10 +25,9 @@ starknet-ff = { workspace = true, default-features = false, features = [
 	"alloc",
 ] }
 poseidon_hash = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
+blockifier = { workspace = true, default-features = false, features = ["testing"]}
 starknet_api = { workspace = true, default-features = false }
+cairo-vm = { workspace = true }
 
 # Other third party dependencies
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
@@ -37,13 +36,16 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { version = "1.0.95", default-features = false }
+serde_json = { version = "1.0.96", default-features = false }
 bitvec = { workspace = true, features = ["alloc"] }
 hex = { version = "0.4.3", default-features = false }
+thiserror-no-std = { workspace = true }
+derive_more = { workspace = true, features = ["constructor"] }
 
 [dev-dependencies]
 rand = "0.8.5"
 zstd = { version = "0.12.3", default-features = false }
+hex = { workspace = true }
 pretty_assertions = "1.3.0"
 
 [features]
@@ -63,4 +65,5 @@ std = [
 	"sp-core/std",
 	"sp-std/std",
 	"sp-runtime/std",
+	"thiserror-no-std/std",
 ]

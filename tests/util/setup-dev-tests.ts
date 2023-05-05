@@ -1,22 +1,22 @@
-import { ApiPromise, Keyring } from "@polkadot/api";
-import { ApiTypes, SubmittableExtrinsic } from "@polkadot/api/types";
-import { EventRecord } from "@polkadot/types/interfaces";
-import { RegistryError } from "@polkadot/types/types";
-import { ChildProcess } from "child_process";
+import { type ApiPromise, Keyring } from "@polkadot/api";
+import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
+import { type EventRecord } from "@polkadot/types/interfaces";
+import { type RegistryError } from "@polkadot/types/types";
+import { type ChildProcess } from "child_process";
 
 import { createAndFinalizeBlock } from "./block";
 import { DEBUG_MODE, SPAWNING_TIME } from "./constants";
 import {
-  RuntimeChain,
+  type RuntimeChain,
   startMadaraDevNode,
   startMadaraForkedNode,
 } from "./dev-node";
 import { providePolkadotApi } from "./providers";
-import { extractError, ExtrinsicCreation } from "./substrate-rpc";
+import { type ExtrinsicCreation, extractError } from "./substrate-rpc";
 
-import type { BlockHash } from "@polkadot/types/interfaces/chain/types";
-import { KeyringPair } from "@polkadot/keyring/types";
-const debug = require("debug")("test:setup");
+import { type KeyringPair } from "@polkadot/keyring/types";
+import debugFactory from "debug";
+const debug = debugFactory("test:setup");
 
 export interface BlockCreation {
   parentHash?: string;
@@ -28,13 +28,13 @@ export interface BlockCreationResponse<
   Call extends
     | SubmittableExtrinsic<ApiType>
     | string
-    | (SubmittableExtrinsic<ApiType> | string)[]
+    | Array<SubmittableExtrinsic<ApiType> | string>
 > {
   block: {
     duration: number;
     hash: string;
   };
-  result: Call extends (string | SubmittableExtrinsic<ApiType>)[]
+  result: Call extends Array<string | SubmittableExtrinsic<ApiType>>
     ? ExtrinsicCreation[]
     : ExtrinsicCreation;
 }
@@ -43,7 +43,7 @@ export interface DevTestContext {
   alice: KeyringPair;
   createPolkadotApi: () => Promise<ApiPromise>;
 
-  createBlock<
+  createBlock: <
     ApiType extends ApiTypes,
     Call extends
       | SubmittableExtrinsic<ApiType>
@@ -54,10 +54,10 @@ export interface DevTestContext {
   >(
     transactions?: Calls,
     options?: BlockCreation
-  ): Promise<
+  ) => Promise<
     BlockCreationResponse<
       ApiType,
-      Calls extends Call[] ? Awaited<Call>[] : Awaited<Call>
+      Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
     >
   >;
 
@@ -83,7 +83,7 @@ export function describeDevMadara(
 
     // The context is initialized empty to allow passing a reference
     // and to be filled once the node information is retrieved
-    let context: InternalDevTestContext = {} as InternalDevTestContext;
+    const context: InternalDevTestContext = {} as InternalDevTestContext;
 
     // The currently running node for this describe
     let madaraProcess: ChildProcess;
@@ -98,13 +98,13 @@ export function describeDevMadara(
         : {
             runningNode: null,
             p2pPort: 19931,
-            wsPort: 19933,
-            rpcPort: 19932,
+            wsPort: 9944,
+            rpcPort: 9933,
           };
       madaraProcess = init.runningNode;
       context.rpcPort = init.rpcPort;
 
-      // Context is given prior to this assignement, so doing
+      // Context is given prior to this assignment, so doing
       // context = init.context will fail because it replace the variable;
 
       context._polkadotApis = [];
@@ -118,7 +118,7 @@ export function describeDevMadara(
         // Necessary hack to allow polkadotApi to finish its internal metadata loading
         // apiPromise.isReady unfortunately doesn't wait for those properly
         await new Promise((resolve) => {
-          setTimeout(resolve, 500);
+          setTimeout(resolve, 1000);
         });
 
         return apiPromise;
@@ -126,8 +126,6 @@ export function describeDevMadara(
 
       context.polkadotApi = await context.createPolkadotApi();
 
-      // Bug WASM not initialized
-      await context.polkadotApi.isReady;
       const keyringSr25519 = new Keyring({ type: "sr25519" });
       context.alice = keyringSr25519.addFromUri("//Alice");
 
@@ -143,10 +141,9 @@ export function describeDevMadara(
         transactions?: Calls,
         options: BlockCreation = {}
       ) => {
-        const results: (
-          | { type: "eth"; hash: string }
-          | { type: "sub"; hash: string }
-        )[] = [];
+        const results: Array<
+          { type: "eth"; hash: string } | { type: "sub"; hash: string }
+        > = [];
         const txs =
           transactions == undefined
             ? []
@@ -154,9 +151,8 @@ export function describeDevMadara(
             ? transactions
             : [transactions];
         for await (const call of txs) {
-          console.log(call.isSigned);
-          if (typeof call == "string") {
-            // Starknet
+          if (typeof call === "string") {
+            // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
             //   hash: (
@@ -179,11 +175,6 @@ export function describeDevMadara(
               hash: (await call.send()).toString(),
             });
           } else {
-            // Bug WASM not initialized
-            await context.polkadotApi.isReady;
-            const keyringSr25519 = new Keyring({ type: "sr25519" });
-            const alice = keyringSr25519.addFromUri("//Alice");
-
             const tx = context.polkadotApi.tx(call);
             debug(
               `- Unsigned: ${tx.method.section}.${tx.method.method}(${tx.args
@@ -192,7 +183,7 @@ export function describeDevMadara(
             );
             results.push({
               type: "sub",
-              hash: (await call.signAndSend(alice)).toString(),
+              hash: (await call.send()).toString(),
             });
           }
         }
@@ -215,7 +206,8 @@ export function describeDevMadara(
         // We retrieve the events for that block
         const allRecords: EventRecord[] = (await (
           await context.polkadotApi.at(blockResult.hash)
-        ).query.system.events()) as any;
+        ).query.system // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .events()) as any;
         // We retrieve the block (including the extrinsics)
         const blockData = await context.polkadotApi.rpc.chain.getBlock(
           blockResult.hash
@@ -265,6 +257,7 @@ export function describeDevMadara(
         }
         return {
           block: blockResult,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           result: Array.isArray(transactions) ? result : (result[0] as any),
         };
       };
@@ -273,7 +266,11 @@ export function describeDevMadara(
     });
 
     after(async function () {
-      await Promise.all(context._polkadotApis.map((p) => p.disconnect()));
+      await Promise.all(
+        context._polkadotApis.map(async (p) => {
+          await p.disconnect();
+        })
+      );
 
       if (madaraProcess) {
         await new Promise((resolve) => {

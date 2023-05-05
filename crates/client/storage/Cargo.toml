@@ -14,6 +14,7 @@ publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
 
 [dependencies]
+frame-support = { workspace = true }
 mp-starknet = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }

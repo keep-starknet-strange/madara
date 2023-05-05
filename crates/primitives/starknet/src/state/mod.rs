@@ -11,6 +11,20 @@ use starknet_api::stdlib::collections::HashMap;
 
 type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 
+/// This trait allows to get the state changes of a starknet tx and therefore enables computing the
+/// fees.
+pub trait StateChanges {
+    /// This function counts the storage var updates implied by a transaction and the newly declared
+    /// class hashes.
+    ///
+    /// # Returns
+    ///
+    /// * `usize` - The number of modified contracts in the transaction.
+    /// * `usize` - The number of modified storage vars in the transaction.
+    /// * `usize` -  The number of newly declared classes.
+    fn count_state_changes(&self) -> (usize, usize, usize);
+}
+
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]
 pub struct DictStateReader {

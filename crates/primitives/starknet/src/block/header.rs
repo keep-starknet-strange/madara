@@ -1,7 +1,7 @@
 use scale_codec::Encode;
 use sp_core::{H256, U256};
 
-use crate::execution::ContractAddressWrapper;
+use crate::execution::types::ContractAddressWrapper;
 
 #[derive(
     Clone,
@@ -80,4 +80,37 @@ impl Header {
     pub fn hash(&self) -> H256 {
         H256::from_slice(frame_support::Hashable::blake2_256(&self.block_number.encode()).as_slice())
     }
+}
+
+#[test]
+fn test_header_hash() {
+    let parent_block_hash = H256::from([1; 32]);
+    let block_number = U256::from(42);
+    let global_state_root = U256::from(12345);
+    let sequencer_address = [2; 32];
+    let block_timestamp = 1620037184;
+    let transaction_count = 2;
+    let transaction_commitment = H256::from([3; 32]);
+    let event_count = 1;
+    let event_commitment = H256::from([4; 32]);
+    let protocol_version = Some(1);
+    let extra_data = None;
+
+    let header = Header::new(
+        parent_block_hash,
+        block_number,
+        global_state_root,
+        sequencer_address,
+        block_timestamp,
+        transaction_count,
+        transaction_commitment,
+        event_count,
+        event_commitment,
+        protocol_version,
+        extra_data,
+    );
+
+    let expected_hash = H256::from_slice(frame_support::Hashable::blake2_256(&block_number.encode()).as_slice());
+
+    assert_eq!(header.hash(), expected_hash);
 }

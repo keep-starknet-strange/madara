@@ -379,7 +379,15 @@ declare module "@polkadot/types/lookup" {
     readonly isKeepStarknetStrange: boolean;
     readonly isStarknetEvent: boolean;
     readonly asStarknetEvent: MpStarknetTransactionTypesEventWrapper;
-    readonly type: "KeepStarknetStrange" | "StarknetEvent";
+    readonly isFeeTokenAddressChanged: boolean;
+    readonly asFeeTokenAddressChanged: {
+      readonly oldFeeTokenAddress: U8aFixed;
+      readonly newFeeTokenAddress: U8aFixed;
+    } & Struct;
+    readonly type:
+      | "KeepStarknetStrange"
+      | "StarknetEvent"
+      | "FeeTokenAddressChanged";
   }
 
   /** @name MpStarknetTransactionTypesEventWrapper (43) */
@@ -851,12 +859,17 @@ declare module "@polkadot/types/lookup" {
     readonly asConsumeL1Message: {
       readonly transaction: MpStarknetTransactionTypesTransaction;
     } & Struct;
+    readonly isSetFeeTokenAddress: boolean;
+    readonly asSetFeeTokenAddress: {
+      readonly feeTokenAddress: U8aFixed;
+    } & Struct;
     readonly type:
       | "Ping"
       | "Invoke"
       | "Declare"
       | "DeployAccount"
-      | "ConsumeL1Message";
+      | "ConsumeL1Message"
+      | "SetFeeTokenAddress";
   }
 
   /** @name MpStarknetTransactionTypesTransaction (117) */

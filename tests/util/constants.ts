@@ -6,12 +6,12 @@ export const MADARA_LOG = process.env.MADARA_LOG || "info";
 export const DEBUG_MODE = process.env.DEBUG_MODE || false;
 
 export const BINARY_PATH =
-  process.env.BINARY_PATH || `../target/release/madara`;
+  process.env.BINARY_PATH || "../target/release/madara";
 
 // Is undefined by default as the path is dependent of the runtime.
 export const OVERRIDE_RUNTIME_PATH =
-  process.env["OVERRIDE_RUNTIME_PATH"] || undefined;
-export const SPAWNING_TIME = 20000;
+  process.env.OVERRIDE_RUNTIME_PATH || undefined;
+export const SPAWNING_TIME = 500000;
 export const WASM_RUNTIME_OVERRIDES = process.env.WASM_RUNTIME_OVERRIDES || "";
 
 // Weight per step mapping

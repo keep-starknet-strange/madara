@@ -1,24 +1,24 @@
-import "@madara/api-augment";
+import "@keep-starknet-strange/madara-api-augment";
 
-import { ApiPromise } from "@polkadot/api";
+import { type ApiPromise } from "@polkadot/api";
 import {
-  AddressOrPair,
-  ApiTypes,
-  SubmittableExtrinsic,
+  type AddressOrPair,
+  type ApiTypes,
+  type SubmittableExtrinsic,
 } from "@polkadot/api/types";
-import { GenericExtrinsic } from "@polkadot/types/extrinsic";
+import { type GenericExtrinsic } from "@polkadot/types/extrinsic";
 import {
-  DispatchError,
-  DispatchInfo,
-  Event,
-  EventRecord,
+  type DispatchError,
+  type DispatchInfo,
+  type Event,
+  type EventRecord,
 } from "@polkadot/types/interfaces";
-import { AnyTuple, RegistryError } from "@polkadot/types/types";
+import { type AnyTuple, type RegistryError } from "@polkadot/types/types";
 import { u8aToHex } from "@polkadot/util";
 
-import { DevTestContext } from "./setup-dev-tests";
+import debugFactory from "debug";
 
-const debug = require("debug")("test:substrateEvents");
+const debug = debugFactory("test:substrateEvents");
 
 export interface ExtrinsicCreation {
   extrinsic: GenericExtrinsic<AnyTuple>;
@@ -28,23 +28,16 @@ export interface ExtrinsicCreation {
   hash: string;
 }
 
-export const createBlockWithExtrinsic = async <
-  Call extends SubmittableExtrinsic<ApiType>[],
-  ApiType extends ApiTypes
->(
-  context: DevTestContext,
-  polkadotCalls: [...Call]
-) => {};
-
 // LAUNCH BASED NETWORK TESTING (PARA TESTS)
 
 export async function waitOneBlock(
   api: ApiPromise,
-  numberOfBlocks: number = 1
-) {
-  return new Promise<void>(async (res) => {
+  numberOfBlocks = 1
+): Promise<void> {
+  // eslint-disable-next-line no-async-promise-executor
+  await new Promise<void>(async (res) => {
     let count = 0;
-    let unsub = await api.derive.chain.subscribeNewHeads(async (header) => {
+    const unsub = await api.derive.chain.subscribeNewHeads(async (header) => {
       console.log(
         `One block elapsed : #${header.number}: author : ${header.author}`
       );
@@ -65,14 +58,17 @@ export async function logEvents(api: ApiPromise, name: string) {
     );
     const allRecords: EventRecord[] = (await (
       await api.at(header.hash)
-    ).query.system.events()) as any;
+    ).query.system // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .events()) as any;
 
     allRecords.forEach((e, i) => {
       debug(
         `${name} Event :`,
         i,
         header.hash.toHex(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (e.toHuman() as any).event.section,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (e.toHuman() as any).event.method
       );
     });
@@ -89,10 +85,12 @@ async function lookForExtrinsicAndEvents(
   // We retrieve the events for that block
   const allRecords: EventRecord[] = (await (
     await api.at(signedBlock.block.header.hash)
-  ).query.system.events()) as any;
+  ).query.system
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .events()) as any;
 
   const extrinsicIndex = signedBlock.block.extrinsics.findIndex((ext) => {
-    return ext.hash.toHex() == u8aToHex(extrinsicHash);
+    return ext.hash.toHex() === u8aToHex(extrinsicHash);
   });
   if (extrinsicIndex < 0) {
     console.log(
@@ -106,7 +104,7 @@ async function lookForExtrinsicAndEvents(
     .filter(
       ({ phase }) =>
         phase.isApplyExtrinsic &&
-        phase.asApplyExtrinsic.toNumber() == extrinsicIndex
+        phase.asApplyExtrinsic.toNumber() === extrinsicIndex
     )
     .map(({ event }) => event);
   return { events, extrinsic };
@@ -117,7 +115,7 @@ async function tryLookingForEvents(
   extrinsicHash: Uint8Array
 ): Promise<ReturnType<typeof lookForExtrinsicAndEvents>> {
   await waitOneBlock(api);
-  let { extrinsic, events } = await lookForExtrinsicAndEvents(
+  const { extrinsic, events } = await lookForExtrinsicAndEvents(
     api,
     extrinsicHash
   );
@@ -146,7 +144,7 @@ export const createBlockWithExtrinsicParachain = async <
   )) as unknown as Uint8Array;
 
   // We create the block which is containing the extrinsic
-  //const blockResult = await context.createBlock();
+  // const blockResult = await context.createBlock();
   return await tryLookingForEvents(api, extrinsicHash);
 };
 

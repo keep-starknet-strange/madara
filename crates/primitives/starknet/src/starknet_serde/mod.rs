@@ -3,13 +3,15 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use alloc::{fmt, format};
 
-use blockifier::test_utils::get_contract_class;
+use blockifier::execution::contract_class::ContractClass;
 use frame_support::BoundedVec;
 use hex::{FromHex, FromHexError};
 use serde::{Deserialize, Serialize};
 use sp_core::{H256, U256};
 
-use crate::execution::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper};
+use crate::execution::types::{
+    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper, MaxCalldataSize,
+};
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
 /// Removes the "0x" prefix from a given hexadecimal string
@@ -101,7 +103,7 @@ pub struct DeserializeEventWrapper {
     pub keys: Vec<String>,
     /// The data of the event.
     pub data: Vec<String>,
-    /// The address that emited the event
+    /// The address that emitted the event
     pub from_address: String,
 }
 
@@ -217,16 +219,6 @@ impl TryFrom<DeserializeTransaction> for Transaction {
         let signature = BoundedVec::<H256, MaxArraySize>::try_from(signature)
             .map_err(|_| DeserializeTransactionError::SignatureExceedsMaxSize)?;
 
-        // Convert events to BoundedVec<EventWrapper, MaxArraySize> and check if it exceeds max size
-        let events = d
-            .events
-            .into_iter()
-            .map(EventWrapper::try_from)
-            .collect::<Result<Vec<EventWrapper>, DeserializeEventError>>()
-            .map_err(DeserializeTransactionError::InvalidEvents)?;
-        let events = BoundedVec::<EventWrapper, MaxArraySize>::try_from(events)
-            .map_err(|_| DeserializeTransactionError::EventsExceedMaxSize)?;
-
         // Convert sender_address to ContractAddressWrapper
         let sender_address = ContractAddressWrapper::from_hex(remove_prefix(&d.sender_address))
             .map_err(DeserializeTransactionError::InvalidSenderAddress)?;
@@ -239,7 +231,7 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .map_err(DeserializeTransactionError::InvalidCallEntryPoint)?;
 
         // Create Transaction with validated and converted fields
-        Ok(Self { version, hash, signature, events, sender_address, nonce, call_entrypoint, ..Transaction::default() })
+        Ok(Self { version, hash, signature, sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
 
@@ -285,7 +277,7 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             .into_iter()
             .map(|hex_str| string_to_u256(&hex_str).map_err(DeserializeCallEntrypointError::InvalidCalldata))
             .collect();
-        let calldata = BoundedVec::<U256, MaxArraySize>::try_from(calldata?)
+        let calldata = BoundedVec::<U256, MaxCalldataSize>::try_from(calldata?)
             .map_err(|_| DeserializeCallEntrypointError::CalldataExceedsMaxSize)?;
 
         // Convert storage_address to [u8; 32]
@@ -361,7 +353,12 @@ pub fn transaction_from_json(
 
     // Set the contract_class field based on contract_content
     if !contract_content.is_empty() {
-        transaction.contract_class = Some(ContractClassWrapper::from(get_contract_class(contract_content)));
+        let raw_contract_class: ContractClass = serde_json::from_slice(contract_content)
+            .map_err(|e| DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e)))?;
+        transaction.contract_class =
+            Some(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
+                DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
+            })?);
     } else {
         transaction.contract_class = None;
     }

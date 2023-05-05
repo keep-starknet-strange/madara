@@ -4,7 +4,9 @@
     "rootDir": ".",
     "outDir": "../../build/sharingan",
     "paths": {
-      "@madara/api-augment/sharingan/*": ["src/sharingan/*"],
+      "@keep-starknet-strange/madara-api-augment/sharingan/*": [
+        "src/sharingan/*"
+      ],
       "@polkadot/api/augment": ["src/sharingan/interfaces/augment-api.ts"],
       "@polkadot/types/augment": ["src/sharingan/interfaces/augment-types.ts"],
       "@polkadot/types/lookup": ["src/sharingan/interfaces/types-lookup.ts"]

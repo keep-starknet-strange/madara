@@ -1,4 +1,4 @@
-//! Substrate Node Template CLI library.
+//! Madara node command line.
 #![warn(missing_docs)]
 
 #[macro_use]

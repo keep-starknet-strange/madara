@@ -80,3 +80,8 @@ parameter_types! {
     pub const SS58Prefix: u8 = 42;
     pub FeeMultiplier: Multiplier = Multiplier::one();
 }
+
+// This storage item will be used to check if we are in the manual sealing mode
+parameter_types! {
+    pub storage EnableManualSeal: bool = false;
+}
