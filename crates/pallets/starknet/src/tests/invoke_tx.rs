@@ -6,13 +6,18 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
-    EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
+    EventWrapper, InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
+use sp_runtime::BoundedVec;
+use starknet_crypto::{sign, FieldElement};
 
 use super::mock::*;
 use crate::message::Message;
 use crate::{Error, Event};
+
+const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
+const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
@@ -234,4 +239,78 @@ fn test_verify_nonce() {
 
         assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<MockRuntime>::TransactionExecutionFailed);
     });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        // Update sender to openzeppelin account
+        transaction.sender_address =
+            <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
+        transaction.signature = sign_message_hash(transaction.hash);
+
+        let target_contract_address =
+            U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
+        let storage_var_selector = U256::from(25);
+
+        let mut contract_address_bytes = [0_u8; 32];
+        target_contract_address.to_big_endian(&mut contract_address_bytes);
+        let mut storage_var_selector_bytes = [0_u8; 32];
+        storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
+
+        assert_ok!(Starknet::invoke(none_origin, transaction));
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.sender_address =
+            <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
+        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+
+        let target_contract_address =
+            U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
+        let storage_var_selector = U256::from(25);
+
+        let mut contract_address_bytes = [0_u8; 32];
+        target_contract_address.to_big_endian(&mut contract_address_bytes);
+        let mut storage_var_selector_bytes = [0_u8; 32];
+        storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
+
+        assert_err!(
+            Starknet::invoke(none_origin, transaction),
+            sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
+                index: 1,
+                error: [1, 0, 0, 0],
+                message: Some("TransactionExecutionFailed")
+            })
+        );
+    });
+}
+
+// TODO: Add test with contract account which calls another contract in __validate__ and check
+// failure
+
+fn sign_message_hash(hash: H256) -> BoundedVec<H256, MaxArraySize> {
+    let signature = sign(
+        &FieldElement::from_str(ACCOUNT_PRIVATE_KEY).unwrap(),
+        &FieldElement::from_bytes_be(&hash.0).unwrap(),
+        &FieldElement::from_str(K).unwrap(),
+    )
+    .unwrap();
+    bounded_vec!(H256::from(signature.r.to_bytes_be()), H256::from(signature.s.to_bytes_be()))
 }
