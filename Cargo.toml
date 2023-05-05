@@ -57,7 +57,9 @@ sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "
 sp-trie = { version = "7.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
 
 # Substrate client dependencies
-sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42", features = [
+	"rocksdb",
+] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-network-sync = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
