@@ -1,7 +1,7 @@
-use frame_support::{assert_err, bounded_vec};
+use frame_support::assert_err;
 use hex::FromHex;
-use mp_starknet::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
-use mp_starknet::transaction::types::Transaction;
+use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::transaction::types::DeclareTransaction;
 
 use super::mock::*;
 use crate::tests::declare_tx::ERC20_CONTRACT_PATH;
@@ -20,21 +20,11 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
-        let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
-        let transaction = Transaction {
+        let transaction = DeclareTransaction {
             sender_address: contract_address_bytes,
-            contract_class: Some(erc20_class),
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(erc20_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            ..Transaction::default()
+            contract_class: erc20_class,
+            ..DeclareTransaction::default()
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::AccountNotDeployed);
