@@ -66,7 +66,7 @@ impl SerializeBlockContext for BlockContext {
             fee_token_address,
             invoke_tx_max_n_steps: 1000000,
             validate_max_n_steps: 1000000,
-            gas_price: 0,
+            gas_price: 10,
         })
     }
 }

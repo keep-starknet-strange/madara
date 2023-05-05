@@ -79,8 +79,8 @@ use mp_starknet::execution::types::{
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::Hasher;
 use mp_starknet::transaction::types::{
-    EventError, EventWrapper as StarknetEventType, Transaction, TransactionExecutionInfoWrapper,
-    TransactionReceiptWrapper, TxType,
+    DeclareTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction, Transaction,
+    TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -113,6 +113,8 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+    use mp_starknet::transaction::types::DeployAccountTransaction;
+
     use super::*;
 
     #[pallet::pallet]
@@ -388,7 +390,7 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(1)]
         #[pallet::weight({0})]
-        pub fn invoke(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -399,6 +401,7 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
+            let transaction: Transaction = transaction.into();
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
@@ -461,10 +464,10 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(2)]
         #[pallet::weight({0})]
-        pub fn declare(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
+            let transaction: Transaction = transaction.into();
             // Check that contract class is not None
             let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
@@ -527,7 +530,7 @@ pub mod pallet {
             };
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append((transaction.clone(), receipt)).or(Err(Error::<T>::TooManyPendingTransactions))?;
+            Pending::<T>::try_append((transaction, receipt)).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // TODO: Update class hashes root
 
@@ -551,7 +554,7 @@ pub mod pallet {
         /// * Compute weight
         #[pallet::call_index(3)]
         #[pallet::weight({0})]
-        pub fn deploy_account(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -560,6 +563,8 @@ pub mod pallet {
                 !ContractClassHashes::<T>::contains_key(transaction.sender_address),
                 Error::<T>::AccountAlreadyDeployed
             );
+
+            let transaction: Transaction = transaction.into();
 
             // Get current block
             let block = Self::current_block();
@@ -607,7 +612,7 @@ pub mod pallet {
             };
 
             // Append the transaction to the pending transactions.
-            Pending::<T>::try_append((transaction.clone(), receipt)).or(Err(Error::<T>::TooManyPendingTransactions))?;
+            Pending::<T>::try_append((transaction, receipt)).or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             // Associate contract class to class hash
             // TODO: update state root

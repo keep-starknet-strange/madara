@@ -5,7 +5,9 @@ use hex::FromHex;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::starknet_serde::transaction_from_json;
-use mp_starknet::transaction::types::{EventWrapper, Transaction, TransactionReceiptWrapper, TxType};
+use mp_starknet::transaction::types::{
+    EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
+};
 use sp_core::{H256, U256};
 
 use super::mock::*;
@@ -24,8 +26,14 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
         let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
         let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
 
-        let transaction =
-            Transaction { version: 1_u8, sender_address: contract_address_bytes, ..Transaction::default() };
+        let transaction = InvokeTransaction {
+            version: 1_u8,
+            sender_address: contract_address_bytes,
+            calldata: bounded_vec!(),
+            nonce: U256::zero(),
+            salt: U256::zero(),
+            signature: bounded_vec!(),
+        };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::AccountNotDeployed);
     })
@@ -39,8 +47,12 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_invalid_version.json");
-        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let transaction = InvokeTransaction {
+            version: 3,
+            sender_address: <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F")
+                .unwrap(),
+            ..InvokeTransaction::default()
+        };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
     });
@@ -68,8 +80,16 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         }
         .try_into_transaction()
         .unwrap();
+        let transaction = InvokeTransaction {
+            version: transaction.version,
+            sender_address: transaction.sender_address,
+            calldata: transaction.call_entrypoint.calldata,
+            nonce: transaction.nonce,
+            salt: U256::zero(),
+            signature: transaction.signature,
+        };
 
-        assert_ok!(Starknet::invoke(none_origin.clone(), transaction.clone()));
+        assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
 
         let pending = Starknet::pending();
@@ -77,7 +97,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: transaction.hash,
+            transaction_hash: H256::default(),
             actual_fee: U256::from(52770),
             tx_type: TxType::Invoke,
             events: bounded_vec![EventWrapper {
@@ -108,8 +128,16 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
         let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let transaction = InvokeTransaction {
+            version: transaction.version,
+            sender_address: transaction.sender_address,
+            calldata: transaction.call_entrypoint.calldata,
+            nonce: transaction.nonce,
+            salt: U256::zero(),
+            signature: transaction.signature,
+        };
 
-        assert_ok!(Starknet::invoke(none_origin, transaction.clone()));
+        assert_ok!(Starknet::invoke(none_origin, transaction));
 
         let emitted_event = EventWrapper {
             keys: bounded_vec![
@@ -160,7 +188,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         assert_eq!(pending.len(), 1);
 
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: transaction.hash,
+            transaction_hash: H256::default(),
             actual_fee: U256::from(53280),
             tx_type: TxType::Invoke,
             events: bounded_vec!( emitted_event,expected_fee_transfer_event),
@@ -182,7 +210,14 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let transaction =
             transaction_from_json(json_content, include_bytes!("../../../../../resources/account/account.json"))
                 .expect("Failed to create Transaction from JSON");
-
+        let transaction = InvokeTransaction {
+            version: transaction.version,
+            sender_address: transaction.sender_address,
+            calldata: transaction.call_entrypoint.calldata,
+            nonce: transaction.nonce,
+            salt: U256::zero(),
+            signature: transaction.signature,
+        };
         let target_contract_address =
             U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
         let storage_var_selector = U256::from(25);

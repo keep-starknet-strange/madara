@@ -2,8 +2,7 @@ use core::str::FromStr;
 
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::execution::types::{CallEntryPointWrapper, EntryPointTypeWrapper};
-use mp_starknet::transaction::types::Transaction;
+use mp_starknet::transaction::types::InvokeTransaction;
 use sp_core::{ConstU32, H256, U256};
 use sp_runtime::BoundedVec;
 
@@ -36,22 +35,14 @@ fn given_call_contract_call_works() {
             U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
             U256::from_big_endian(&sender_account) // recipient
         ];
-        let deploy_transaction = Transaction {
+
+        let deploy_transaction = InvokeTransaction {
             version: 1,
             sender_address: sender_account,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(<[u8; 32]>::from_hex(TOKEN_CONTRACT_CLASS_HASH).unwrap()),
-                EntryPointTypeWrapper::External,
-                None,
-                constructor_calldata,
-                sender_account,
-                sender_account,
-            ),
-            hash: H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
             signature: bounded_vec!(),
-            nonce: U256::zero(),
-            contract_class: None,
-            contract_address_salt: None,
+            nonce: U256::one(),
+            calldata: constructor_calldata,
+            salt: U256::one(),
         };
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction));

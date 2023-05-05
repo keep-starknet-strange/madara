@@ -2,8 +2,8 @@ use core::str::FromStr;
 
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
-use mp_starknet::transaction::types::Transaction;
+use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::transaction::types::DeclareTransaction;
 use sp_core::{H256, U256};
 
 use super::mock::*;
@@ -39,29 +39,20 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let none_origin = RuntimeOrigin::none();
         let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH));
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
         let erc20_class_hash =
             <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
-        let mut transaction = Transaction {
+        let transaction = DeclareTransaction {
             sender_address: account_addr,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(erc20_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                account_addr,
-                account_addr,
-            ),
-            ..Transaction::default()
+            calldata: bounded_vec![],
+            version: 1,
+            class_hash: erc20_class_hash,
+            contract_class: erc20_class,
+            nonce: U256::zero(),
+            salt: U256::zero(),
+            signature: bounded_vec!(),
         };
-        // Cannot declare a class with None
-        assert_err!(
-            Starknet::declare(none_origin.clone(), transaction.clone()),
-            Error::<Test>::ContractClassMustBeSpecified
-        );
-
-        transaction.contract_class = Some(erc20_class.unwrap());
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
@@ -86,18 +77,15 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
         let erc20_class_hash =
             <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
-        let transaction = Transaction {
+        let transaction = DeclareTransaction {
             sender_address: contract_address_bytes,
-            contract_class: Some(erc20_class),
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(erc20_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                contract_address_bytes,
-                contract_address_bytes,
-            ),
-            ..Transaction::default()
+            contract_class: erc20_class,
+            version: 1,
+            class_hash: erc20_class_hash,
+            calldata: bounded_vec!(),
+            nonce: U256::zero(),
+            salt: U256::zero(),
+            signature: bounded_vec!(),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::AccountNotDeployed);
@@ -120,20 +108,15 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
 
         let wrong_tx_version = 50_u8;
 
-        let transaction = Transaction {
+        let transaction = DeclareTransaction {
             sender_address: account_addr,
-            contract_class: Some(erc20_class),
+            contract_class: erc20_class,
             version: wrong_tx_version,
-            call_entrypoint: CallEntryPointWrapper::new(
-                // TODO: change to `None` when the class hash can be derived from ContractClass
-                Some(erc20_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![],
-                account_addr,
-                account_addr,
-            ),
-            ..Transaction::default()
+            class_hash: erc20_class_hash,
+            calldata: bounded_vec!(),
+            nonce: U256::zero(),
+            salt: U256::zero(),
+            signature: bounded_vec!(),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);

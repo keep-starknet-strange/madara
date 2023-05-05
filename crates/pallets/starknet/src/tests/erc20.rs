@@ -4,8 +4,8 @@ use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
 use lazy_static::lazy_static;
-use mp_starknet::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper};
-use mp_starknet::transaction::types::{EventWrapper, Transaction};
+use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 use sp_core::{H256, U256};
 
 use super::mock::*;
@@ -31,14 +31,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let sender_account = <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
         // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
-        let deploy_transaction = Transaction {
+        let deploy_transaction = InvokeTransaction {
             version: 1,
             sender_address: sender_account,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(<[u8;32]>::from_hex(TOKEN_CONTRACT_CLASS_HASH).unwrap()),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![
+            calldata: bounded_vec![
                     U256::from(15), // Simple contract address
                     U256::from_str("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
                     U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
@@ -52,14 +48,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     U256::from_str("0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
                     U256::from_big_endian(&sender_account) // recipient
                 ],
-                sender_account,
-                sender_account,
-            ),
-            hash: H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d212").unwrap(),
             signature: bounded_vec!(),
-            nonce: U256::zero(),
-            contract_class: None,
-            contract_address_salt: None,
+            nonce: U256::one(),
+            salt: U256::zero(),
         };
         let expected_erc20_address = "0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608";
 
@@ -104,14 +95,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         pretty_assertions::assert_eq!(expected_fee_transfer_event, events.last().unwrap().event.clone().try_into().unwrap());
         // TODO: use dynamic values to craft invoke transaction
         // Transfer some token
-        let transfer_transaction = Transaction {
+        let transfer_transaction = InvokeTransaction {
             version: 1,
             sender_address: sender_account,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(<[u8;32]>::from_hex("06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922").unwrap()),
-                EntryPointTypeWrapper::External,
-                None,
-                bounded_vec![
+            calldata: bounded_vec![
                     U256::from_str(expected_erc20_address).unwrap(), // Token address
                     U256::from_str("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e").unwrap(), // transfer selector
                     U256::from(3), // Calldata len
@@ -119,14 +106,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     U256::from(15), // initial supply low
                     U256::zero(), // initial supply high
                 ],
-                sender_account,
-                sender_account,
-            ),
-            hash: H256::from_str("0x06fc3466f58b5c6aaa6633d48702e1f2048fb96b7de25f2bde0bce64dca1d213").unwrap(),
             signature: bounded_vec!(),
             nonce: U256::one(),
-            contract_class: None,
-            contract_address_salt: None,
+            salt: U256::zero()
         };
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
