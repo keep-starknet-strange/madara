@@ -115,17 +115,15 @@ pub struct DeclareTransaction {
     /// Transaction sender address.
     pub sender_address: ContractAddressWrapper,
     /// Class hash to declare.
-    pub class_hash: [u8; 32],
+    pub compiled_class_hash: [u8; 32],
     /// Contract to declare.
     pub contract_class: ContractClassWrapper,
-    /// Transaction calldata.
-    pub calldata: BoundedVec<U256, MaxCalldataSize>,
     /// Account contract nonce.
     pub nonce: U256,
-    /// Transaction salt.
-    pub salt: U256,
     /// Transaction signature.
     pub signature: BoundedVec<H256, MaxArraySize>,
+    /// Max fee.
+    pub max_fee: U256,
 }
 
 /// Deploy account transaction.
@@ -156,6 +154,8 @@ pub struct DeployAccountTransaction {
     pub signature: BoundedVec<H256, MaxArraySize>,
     /// Account class hash.
     pub account_class_hash: [u8; 32],
+    /// Max fee.
+    pub max_fee: U256,
 }
 
 /// Error of conversion between [DeclareTransaction], [InvokeTransaction],
@@ -176,9 +176,11 @@ impl TryFrom<Transaction> for DeclareTransaction {
             sender_address: value.sender_address,
             nonce: value.nonce,
             contract_class: value.contract_class.ok_or(TransactionConversionError::MissingClass)?,
-            class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
-            calldata: value.call_entrypoint.calldata,
-            salt: value.contract_address_salt.unwrap_or_default(),
+            compiled_class_hash: value
+                .call_entrypoint
+                .class_hash
+                .ok_or(TransactionConversionError::MissingClassHash)?,
+            max_fee: value.max_fee,
         })
     }
 }
@@ -205,10 +207,10 @@ pub struct InvokeTransaction {
     pub calldata: BoundedVec<U256, MaxCalldataSize>,
     /// Account contract nonce.
     pub nonce: U256,
-    /// Transaction salt.
-    pub salt: U256,
     /// Transaction signature.
     pub signature: BoundedVec<H256, MaxArraySize>,
+    /// Max fee.
+    pub max_fee: U256,
 }
 
 impl From<Transaction> for InvokeTransaction {
@@ -219,7 +221,7 @@ impl From<Transaction> for InvokeTransaction {
             sender_address: value.sender_address,
             nonce: value.nonce,
             calldata: value.call_entrypoint.calldata,
-            salt: value.contract_address_salt.unwrap_or_default(),
+            max_fee: value.max_fee,
         }
     }
 }
@@ -253,6 +255,8 @@ pub struct Transaction {
     pub contract_class: Option<ContractClassWrapper>,
     /// Contract Address Salt
     pub contract_address_salt: Option<U256>,
+    /// Max fee.
+    pub max_fee: U256,
 }
 
 impl TryFrom<Transaction> for DeployAccountTransaction {
@@ -266,6 +270,7 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
             calldata: value.call_entrypoint.calldata,
             salt: value.contract_address_salt.unwrap_or_default(),
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
+            max_fee: value.max_fee,
         })
     }
 }
@@ -288,7 +293,8 @@ impl From<InvokeTransaction> for Transaction {
                 value.sender_address,
             ),
             contract_class: None,
-            contract_address_salt: Some(value.salt),
+            contract_address_salt: None,
+            max_fee: value.max_fee,
         }
     }
 }
@@ -301,15 +307,16 @@ impl From<DeclareTransaction> for Transaction {
             sender_address: value.sender_address,
             nonce: value.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(value.class_hash),
+                Some(value.compiled_class_hash),
                 EntryPointTypeWrapper::External,
                 None,
-                value.calldata,
+                BoundedVec::default(),
                 value.sender_address,
                 value.sender_address,
             ),
             contract_class: Some(value.contract_class),
-            contract_address_salt: Some(value.salt),
+            contract_address_salt: None,
+            max_fee: value.max_fee,
         }
     }
 }
@@ -333,6 +340,7 @@ impl From<DeployAccountTransaction> for Transaction {
             ),
             contract_class: None,
             contract_address_salt: Some(value.salt),
+            max_fee: value.max_fee,
         }
     }
 }

@@ -45,12 +45,11 @@ fn given_contract_declare_tx_works_once_not_twice() {
 
         let transaction = DeclareTransaction {
             sender_address: account_addr,
-            calldata: bounded_vec![],
             version: 1,
-            class_hash: erc20_class_hash,
+            compiled_class_hash: erc20_class_hash,
             contract_class: erc20_class,
             nonce: U256::zero(),
-            salt: U256::zero(),
+            max_fee: U256::MAX,
             signature: bounded_vec!(),
         };
 
@@ -81,10 +80,9 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             sender_address: contract_address_bytes,
             contract_class: erc20_class,
             version: 1,
-            class_hash: erc20_class_hash,
-            calldata: bounded_vec!(),
+            compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
-            salt: U256::zero(),
+            max_fee: U256::MAX,
             signature: bounded_vec!(),
         };
 
@@ -112,10 +110,9 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             sender_address: account_addr,
             contract_class: erc20_class,
             version: wrong_tx_version,
-            class_hash: erc20_class_hash,
-            calldata: bounded_vec!(),
+            compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
-            salt: U256::zero(),
+            max_fee: U256::MAX,
             signature: bounded_vec!(),
         };
 

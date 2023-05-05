@@ -278,8 +278,19 @@ impl Transaction {
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
         contract_address_salt: Option<U256>,
+        max_fee: U256,
     ) -> Self {
-        Self { version, hash, signature, sender_address, nonce, call_entrypoint, contract_class, contract_address_salt }
+        Self {
+            version,
+            hash,
+            signature,
+            sender_address,
+            nonce,
+            call_entrypoint,
+            contract_class,
+            contract_address_salt,
+            max_fee,
+        }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -564,6 +575,7 @@ impl Default for Transaction {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
+            max_fee: U256::MAX,
         }
     }
 }

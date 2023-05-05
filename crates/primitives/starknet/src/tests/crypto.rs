@@ -26,6 +26,7 @@ fn test_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
+            max_fee: U256::MAX,
         },
         Transaction {
             version: 0_u8,
@@ -36,6 +37,7 @@ fn test_merkle_tree() {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
+            max_fee: U256::MAX,
         },
     ];
     let tx_com = calculate_transaction_commitment::<PedersenHasher>(&txs);

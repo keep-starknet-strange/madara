@@ -31,7 +31,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             sender_address: contract_address_bytes,
             calldata: bounded_vec!(),
             nonce: U256::zero(),
-            salt: U256::zero(),
+            max_fee: U256::MAX,
             signature: bounded_vec!(),
         };
 

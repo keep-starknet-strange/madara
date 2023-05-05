@@ -42,7 +42,7 @@ fn given_call_contract_call_works() {
             signature: bounded_vec!(),
             nonce: U256::zero(),
             calldata: constructor_calldata,
-            salt: U256::one(),
+            max_fee: U256::MAX,
         };
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction));
