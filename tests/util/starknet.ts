@@ -248,26 +248,17 @@ export function transfer(
   // Initialize contract
   const tx_transfer = {
     version: 1, // version of the transaction
-    hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
     nonce: nonce || 0, // nonce of the transaction
-    callEntrypoint: {
-      // call entrypoint
-      classHash: null, // class hash of the contract
-      entrypointSelector: null, // function selector of the transfer function
-      calldata: [
-        tokenAddress, // CONTRACT ADDRESS
-        "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
-        "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
-        recipientAddress,
-        transferAmount,
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      ],
-      storageAddress: contractAddress,
-      callerAddress: contractAddress,
-    },
-    contractClass: null,
+    calldata: [
+      tokenAddress, // CONTRACT ADDRESS
+      "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+      "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+      recipientAddress,
+      transferAmount,
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ],
   };
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
@@ -285,26 +276,17 @@ export function batchTransfer(
   // Initialize contract
   const tx_transfer = {
     version: 1, // version of the transaction
-    hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
-    nonce: 3, // nonce of the transaction
-    callEntrypoint: {
-      // call entrypoint
-      classHash: null, // class hash of the contract
-      entrypointSelector: null, // function selector of the transfer function
-      calldata: [
-        tokenAddress, // CONTRACT ADDRESS
-        "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
-        "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
-        recipientAddress,
-        transferAmount,
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      ],
-      storageAddress: contractAddress,
-      callerAddress: contractAddress,
-    },
-    contractClass: null,
+    nonce: 0, // nonce of the transaction
+    calldata: [
+      tokenAddress, // CONTRACT ADDRESS
+      "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+      "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+      recipientAddress,
+      transferAmount,
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ],
   };
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);

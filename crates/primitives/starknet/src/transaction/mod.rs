@@ -192,7 +192,7 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
             class_hash: entrypoint.class_hash.unwrap_or_default(),
             constructor_calldata: entrypoint.calldata,
             contract_address_salt: ContractAddressSalt(StarkFelt::new(
-                self.contract_address_salt.unwrap_or_default().to_fixed_bytes(),
+                self.contract_address_salt.unwrap_or_default().into(),
             )?),
         })
     }
@@ -277,9 +277,20 @@ impl Transaction {
         nonce: U256,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
-        contract_address_salt: Option<H256>,
+        contract_address_salt: Option<U256>,
+        max_fee: U256,
     ) -> Self {
-        Self { version, hash, signature, sender_address, nonce, call_entrypoint, contract_class, contract_address_salt }
+        Self {
+            version,
+            hash,
+            signature,
+            sender_address,
+            nonce,
+            call_entrypoint,
+            contract_class,
+            contract_address_salt,
+            max_fee,
+        }
     }
 
     /// Creates a new instance of a transaction without signature.
@@ -348,11 +359,9 @@ impl Transaction {
         // Create the block context.
         // TODO: don't do that.
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-        let mut block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
             .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
-        // TODO: use real value.
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-        block_context.gas_price = 10;
+
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
 
@@ -362,7 +371,7 @@ impl Transaction {
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
-        let (execute_call_info, _account_context) = match tx_type {
+        let (execute_call_info, account_context) = match tx_type {
             TxType::Invoke => {
                 let tx: InvokeTransactionV1 = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_invoke_transaction_context(&tx);
@@ -412,7 +421,7 @@ impl Transaction {
             }
         };
         let tx_resources = fees::get_transaction_resources(state, &execute_call_info, execution_resources, tx_type)?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &_account_context, &tx_resources)?;
+        let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &account_context, &tx_resources)?;
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info: None,
             execute_call_info,
@@ -566,6 +575,7 @@ impl Default for Transaction {
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
+            max_fee: U256::from(u128::MAX),
         }
     }
 }
