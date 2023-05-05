@@ -1,11 +1,22 @@
 import "@keep-starknet-strange/madara-api-augment";
-
-import { expect } from "chai";
-
-import { RpcProvider } from "starknet";
-import { jumpBlocks } from "../../util/block";
+import chai, { expect } from "chai";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { TEST_CONTRACT, TEST_CLASS_HASH } from "./constants";
+import { LibraryError, RPC, RpcProvider } from "starknet";
+import { jumpBlocks } from "../../util/block";
+import {
+  TEST_CONTRACT,
+  CONTRACT_ADDRESS,
+  FEE_TOKEN_ADDRESS,
+  MINT_AMOUNT,
+  ACCOUNT_CONTRACT,
+  ACCOUNT_CONTRACT_CLASS_HASH,
+  TEST_CONTRACT_CLASS_HASH,
+  TOKEN_CLASS_HASH,
+} from "./constants";
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
+import { transfer } from "../../util/starknet";
+
+chai.use(deepEqualInAnyOrder);
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -20,15 +31,11 @@ describeDevMadara("Starknet RPC", (context) => {
   it("getBlockhashAndNumber", async function () {
     const block = await providerRPC.getBlockHashAndNumber();
 
-    console.log(block);
-
     expect(block).to.not.be.undefined;
   });
 
   it("getBlockNumber", async function () {
     const blockNumber = await providerRPC.getBlockNumber();
-
-    console.log(blockNumber);
 
     expect(blockNumber).to.not.be.undefined;
 
@@ -46,15 +53,12 @@ describeDevMadara("Starknet RPC", (context) => {
       block.block_hash
     );
 
-    console.log(transactionCount);
-
     expect(transactionCount).to.not.be.undefined;
     expect(transactionCount).to.be.equal(0);
   });
 
   it("call", async function () {
     const block = await providerRPC.getBlockHashAndNumber();
-
     const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
 
     const call = await providerRPC.callContract(
@@ -79,6 +83,48 @@ describeDevMadara("Starknet RPC", (context) => {
     );
 
     expect(contract_class).to.not.be.undefined;
+  });
+
+  it("getClassHashAt", async function () {
+    const blockHashAndNumber = await providerRPC.getBlockHashAndNumber();
+    const block_hash = blockHashAndNumber.block_hash;
+
+    // Account Contract
+    const account_contract_class_hash = await providerRPC.getClassHashAt(
+      ACCOUNT_CONTRACT,
+      block_hash
+    );
+
+    console.log(`Class Hash: ${account_contract_class_hash}`);
+
+    expect(account_contract_class_hash).to.not.be.undefined;
+    expect(account_contract_class_hash).to.be.equal(
+      ACCOUNT_CONTRACT_CLASS_HASH
+    );
+
+    const test_contract_class_hash = await providerRPC.getClassHashAt(
+      TEST_CONTRACT,
+      block_hash
+    );
+
+    expect(test_contract_class_hash).to.not.be.undefined;
+    expect(test_contract_class_hash).to.be.equal(TEST_CONTRACT_CLASS_HASH);
+
+    // Invalid block id
+    try {
+      await providerRPC.getClassHashAt(TEST_CONTRACT, "0x123");
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("24: Block not found");
+    }
+
+    // Invalid/un-deployed contract address
+    try {
+      await providerRPC.getClassHashAt("0x123", block_hash);
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("20: Contract not found");
+    }
   });
 
   it("syncing", async function () {
@@ -115,11 +161,79 @@ describeDevMadara("Starknet RPC", (context) => {
     const block_number: number = blockHashAndNumber.block_number;
 
     const contract_class = await providerRPC.getClass(
-      TEST_CLASS_HASH,
+      TOKEN_CLASS_HASH,
       block_number
     );
 
     expect(contract_class).to.not.be.undefined;
+  });
+
+  describe("Get block with transaction hashes", () => {
+    it(
+      "giving a valid block with txs " +
+        "when call getBlockWithTxHashes " +
+        "then returns an object with transactions",
+      async function () {
+        await context.createBlock(
+          transfer(
+            context.polkadotApi,
+            CONTRACT_ADDRESS,
+            FEE_TOKEN_ADDRESS,
+            CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          ),
+          { parentHash: undefined, finalize: true }
+        );
+
+        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+        const getBlockWithTxsHashesResponse: RPC.GetBlockWithTxHashesResponse =
+          await providerRPC.getBlockWithTxHashes(latestBlockCreated.block_hash);
+
+        const block_with_tx_hashes = getBlockWithTxsHashesResponse["Block"];
+
+        expect(block_with_tx_hashes).to.not.be.undefined;
+        expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
+        expect(block_with_tx_hashes.transactions.length).to.be.equal(1);
+      }
+    );
+
+    it(
+      "giving an invalid block " +
+        "when call getBlockWithTxHashes " +
+        "then throw 'Block not found error'",
+      async function () {
+        await providerRPC.getBlockWithTxHashes("0x123").catch((error) => {
+          expect(error).to.be.instanceOf(LibraryError);
+          expect(error.message).to.equal("24: Block not found");
+        });
+      }
+    );
+
+    it(
+      "giving a valid block without txs" +
+        "when call getBlockWithTxHashes " +
+        "then returns an object with empty transactions",
+      async function () {
+        await context.createBlock(undefined, {
+          parentHash: undefined,
+          finalize: true,
+        });
+
+        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+        const getBlockWithTxsHashesResponse: RPC.GetBlockWithTxHashesResponse =
+          await providerRPC.getBlockWithTxHashes(latestBlockCreated.block_hash);
+        const block_with_tx_hashes = getBlockWithTxsHashesResponse["Block"];
+        const latestBlock = (await providerRPC.getBlockWithTxHashes("latest"))[
+          "Block"
+        ];
+        // Weird that we need that.
+        expect(latestBlock).to.deep.equalInAnyOrder(block_with_tx_hashes);
+        expect(block_with_tx_hashes).to.not.be.undefined;
+        expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
+        expect(block_with_tx_hashes.transactions.length).to.deep.equal(0);
+      }
+    );
   });
 
   it("syncing", async function () {

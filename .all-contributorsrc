@@ -171,6 +171,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "dubzn",
+      "name": "Santiago Galván (Dub)",
+      "avatar_url": "https://avatars.githubusercontent.com/u/58611754?v=4",
+      "profile": "https://github.com/dubzn",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ftupas",
+      "name": "ftupas",
+      "avatar_url": "https://avatars.githubusercontent.com/u/35031356?v=4",
+      "profile": "https://github.com/ftupas",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

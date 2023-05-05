@@ -55,6 +55,12 @@ impl<B: BlockT> OverrideHandle<B> {
 pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Return the current block.
     fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
+    /// Return the class hash at the provided address for the provided block.
+    fn contract_class_hash_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ClassHashWrapper>;
     /// Return the contract class at the provided address for the provided block.
     fn contract_class_by_address(
         &self,
@@ -120,6 +126,32 @@ where
         }
     }
 
+    // Use the runtime api to fetch the class hash at the provided address for the provided block.
+    // # Arguments
+    //
+    // * `block_hash` - The block hash
+    // * `address` - The address to fetch the class hash for
+    //
+    // # Returns
+    // * `Some(class_hash)` - The class hash at the provided address for the provided block
+    fn contract_class_hash_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ClassHashWrapper> {
+        let api = self.client.runtime_api();
+        api.contract_class_hash_by_address(block_hash, address).ok()?
+    }
+
+    /// Return the contract class for a provided class_hash and block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    /// * `contract_class_hash` - The class hash to fetch the contract class for
+    ///
+    /// # Returns
+    /// * `Some(contract_class)` - The contract class for the provided class hash and block hash
     fn contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
