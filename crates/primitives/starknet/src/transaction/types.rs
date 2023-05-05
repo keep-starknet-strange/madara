@@ -158,6 +158,31 @@ pub struct DeployAccountTransaction {
     pub account_class_hash: [u8; 32],
 }
 
+/// Error of conversion between [DeclareTransaction], [InvokeTransaction],
+/// [DeployAccountTransaction] and [Transaction].
+#[derive(Debug)]
+pub enum TransactionConversionError {
+    /// Class hash is missing from the object of type [Transaction]
+    MissingClassHash,
+    /// Class is missing from the object of type [Transaction]
+    MissingClass,
+}
+impl TryFrom<Transaction> for DeclareTransaction {
+    type Error = TransactionConversionError;
+    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+        Ok(Self {
+            version: value.version,
+            signature: value.signature,
+            sender_address: value.sender_address,
+            nonce: value.nonce,
+            contract_class: value.contract_class.ok_or(TransactionConversionError::MissingClass)?,
+            class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
+            calldata: value.call_entrypoint.calldata,
+            salt: value.contract_address_salt.unwrap_or_default(),
+        })
+    }
+}
+
 /// Invoke transaction.
 #[derive(
     Clone,
@@ -184,6 +209,19 @@ pub struct InvokeTransaction {
     pub salt: U256,
     /// Transaction signature.
     pub signature: BoundedVec<H256, MaxArraySize>,
+}
+
+impl From<Transaction> for InvokeTransaction {
+    fn from(value: Transaction) -> Self {
+        Self {
+            version: value.version,
+            signature: value.signature,
+            sender_address: value.sender_address,
+            nonce: value.nonce,
+            calldata: value.call_entrypoint.calldata,
+            salt: value.contract_address_salt.unwrap_or_default(),
+        }
+    }
 }
 
 /// Representation of a Starknet transaction.
@@ -215,6 +253,21 @@ pub struct Transaction {
     pub contract_class: Option<ContractClassWrapper>,
     /// Contract Address Salt
     pub contract_address_salt: Option<U256>,
+}
+
+impl TryFrom<Transaction> for DeployAccountTransaction {
+    type Error = TransactionConversionError;
+    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+        Ok(Self {
+            version: value.version,
+            signature: value.signature,
+            sender_address: value.sender_address,
+            nonce: value.nonce,
+            calldata: value.call_entrypoint.calldata,
+            salt: value.contract_address_salt.unwrap_or_default(),
+            account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
+        })
+    }
 }
 
 impl From<InvokeTransaction> for Transaction {

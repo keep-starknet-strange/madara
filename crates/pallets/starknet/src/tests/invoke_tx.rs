@@ -67,7 +67,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let transaction =
+            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
 
         let tx = Message {
             topics: vec![
@@ -80,14 +81,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         }
         .try_into_transaction()
         .unwrap();
-        let transaction = InvokeTransaction {
-            version: transaction.version,
-            sender_address: transaction.sender_address,
-            calldata: transaction.call_entrypoint.calldata,
-            nonce: transaction.nonce,
-            salt: U256::zero(),
-            signature: transaction.signature,
-        };
 
         assert_ok!(Starknet::invoke(none_origin.clone(), transaction));
         assert_ok!(Starknet::consume_l1_message(none_origin, tx));
@@ -127,15 +120,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
-        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        let transaction = InvokeTransaction {
-            version: transaction.version,
-            sender_address: transaction.sender_address,
-            calldata: transaction.call_entrypoint.calldata,
-            nonce: transaction.nonce,
-            salt: U256::zero(),
-            signature: transaction.signature,
-        };
+        let transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
 
@@ -191,7 +177,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             transaction_hash: H256::default(),
             actual_fee: U256::from(53280),
             tx_type: TxType::Invoke,
-            events: bounded_vec!( emitted_event,expected_fee_transfer_event),
+            events: bounded_vec!(emitted_event, expected_fee_transfer_event),
         };
         let receipt = &pending.get(0).unwrap().1;
         pretty_assertions::assert_eq!(*receipt, expected_receipt);
@@ -209,15 +195,9 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let json_content: &str = include_str!("../../../../../resources/transactions/storage_read_write.json");
         let transaction =
             transaction_from_json(json_content, include_bytes!("../../../../../resources/account/account.json"))
-                .expect("Failed to create Transaction from JSON");
-        let transaction = InvokeTransaction {
-            version: transaction.version,
-            sender_address: transaction.sender_address,
-            calldata: transaction.call_entrypoint.calldata,
-            nonce: transaction.nonce,
-            salt: U256::zero(),
-            signature: transaction.signature,
-        };
+                .expect("Failed to create Transaction from JSON")
+                .into();
+
         let target_contract_address =
             U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
         let storage_var_selector = U256::from(25);
@@ -242,30 +222,15 @@ fn test_verify_nonce() {
         run_to_block(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        let tx = InvokeTransaction {
-            version: tx.version,
-            sender_address: tx.sender_address,
-            calldata: tx.call_entrypoint.calldata,
-            nonce: tx.nonce,
-            salt: U256::zero(),
-            signature: tx.signature,
-        };
+        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
 
         // Test for a valid nonce (0)
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx));
 
         // Test for an invalid nonce (actual: 0, expected: 1)
         let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON");
-        let tx_2 = InvokeTransaction {
-            version: tx_2.version,
-            sender_address: tx_2.sender_address,
-            calldata: tx_2.call_entrypoint.calldata,
-            nonce: tx_2.nonce,
-            salt: U256::zero(),
-            signature: tx_2.signature,
-        };
+        let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON").into();
+
         assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<Test>::TransactionExecutionFailed);
     });
 }
