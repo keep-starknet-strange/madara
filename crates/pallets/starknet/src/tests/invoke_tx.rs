@@ -199,3 +199,22 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         );
     });
 }
+
+#[test]
+fn test_verify_nonce() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+
+        // Test for a valid nonce (0)
+        assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx));
+
+        // Test for an invalid nonce (actual: 0, expected: 1)
+        let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON");
+        assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<Test>::TransactionExecutionFailed);
+    });
+}

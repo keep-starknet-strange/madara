@@ -45,6 +45,7 @@ derive_more = { workspace = true, features = ["constructor"] }
 [dev-dependencies]
 rand = "0.8.5"
 zstd = { version = "0.12.3", default-features = false }
+hex = { workspace = true }
 pretty_assertions = "1.3.0"
 
 [features]

@@ -3,6 +3,7 @@ use alloc::string::String;
 
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
+use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
@@ -28,6 +29,8 @@ pub enum TransactionExecutionErrorWrapper {
     StarknetApi(StarknetApiError),
     /// Block context serialization error.
     BlockContextSerializationError,
+    /// State error.
+    StateError(StateError),
     /// Fee computation error,
     FeeComputationError,
     /// Fee transfer error,
