@@ -518,15 +518,15 @@ impl Transaction {
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
 
+                // Execute.
+                let transaction_execution = tx
+                    .run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
+
                 // Validate.
                 self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
 
-                // Execute.
-                (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
-                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
-                    account_context,
-                )
+                (transaction_execution, account_context)
             }
         };
         let tx_resources = fees::get_transaction_resources(state, &execute_call_info, execution_resources, tx_type)?;
