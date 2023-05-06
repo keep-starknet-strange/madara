@@ -13,12 +13,12 @@ use errors::StarknetRpcApiError;
 use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-pub use mc_rpc_core::StarknetRpcApiServer;
-use mc_rpc_core::{
-    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
-    ContractAddress, ContractClassHash, FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass,
-    Syncing,
+use mc_rpc_core::types::{
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
+    FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
+use mc_rpc_core::utils::to_rpc_contract_class;
+pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -106,8 +106,8 @@ where
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
             StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
+                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending => None,
             },
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
@@ -123,11 +123,11 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
-    fn block_number(&self) -> RpcResult<mc_rpc_core::BlockNumber> {
+    fn block_number(&self) -> RpcResult<mc_rpc_core::types::BlockNumber> {
         self.current_block_number()
     }
 
-    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::BlockHashAndNumber> {
+    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::types::BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
         let block_hash = self.current_block_hash().map_err(|e| {
             error!("Failed to retrieve the current block hash: {}", e);
@@ -273,7 +273,7 @@ where
                     let highest_block_hash = format!("{:#x}", highest_block?.header().hash());
 
                     // Build the `SyncStatus` struct with the respective syn information
-                    Ok(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
+                    Ok(Syncing::SyncStatus(mc_rpc_core::types::SyncStatus {
                         starting_block_num,
                         starting_block_hash,
                         current_block_num,
@@ -391,8 +391,8 @@ where
                 })?
             }
             StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => {
+                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending => {
                     block_status = BlockStatus::Pending;
                     None
                 }
