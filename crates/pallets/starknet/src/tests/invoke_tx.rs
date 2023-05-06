@@ -247,21 +247,9 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        // Update sender to openzeppelin account
-        transaction.sender_address =
-            <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
         transaction.signature = sign_message_hash(transaction.hash);
-
-        let target_contract_address =
-            U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
-        let storage_var_selector = U256::from(25);
-
-        let mut contract_address_bytes = [0_u8; 32];
-        target_contract_address.to_big_endian(&mut contract_address_bytes);
-        let mut storage_var_selector_bytes = [0_u8; 32];
-        storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
     });
@@ -275,20 +263,83 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.sender_address =
-            <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        let target_contract_address =
-            U256::from_str("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
-        let storage_var_selector = U256::from(25);
+        assert_err!(
+            Starknet::invoke(none_origin, transaction),
+            sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
+                index: 1,
+                error: [1, 0, 0, 0],
+                message: Some("TransactionExecutionFailed")
+            })
+        );
+    });
+}
 
-        let mut contract_address_bytes = [0_u8; 32];
-        target_contract_address.to_big_endian(&mut contract_address_bytes);
-        let mut storage_var_selector_bytes = [0_u8; 32];
-        storage_var_selector.to_big_endian(&mut storage_var_selector_bytes);
+#[test]
+fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.signature = sign_message_hash(transaction.hash);
+
+        assert_ok!(Starknet::invoke(none_origin, transaction));
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+
+        assert_err!(
+            Starknet::invoke(none_origin, transaction),
+            sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
+                index: 1,
+                error: [1, 0, 0, 0],
+                message: Some("TransactionExecutionFailed")
+            })
+        );
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.signature = sign_message_hash(transaction.hash);
+
+        assert_ok!(Starknet::invoke(none_origin, transaction));
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
         assert_err!(
             Starknet::invoke(none_origin, transaction),

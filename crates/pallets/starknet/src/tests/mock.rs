@@ -18,8 +18,10 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRunt
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
 pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "05388bb9444c877d410538b9b0c40e665cae3713a95204afdc40b3148d315a4e";
 pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
 pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH: &str = "039e978a80112c38e76265e5f23deb5711b6f913fdc91542bf158d8e6b62d98a";
+pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "051b213463c5fb6fb42636758bcc043bcc8b635c1c8860411efd8d78609387b2";
 pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
 pub const SIMPLE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
@@ -105,9 +107,13 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     // TEST CLASSES
     let argent_proxy_class = get_contract_class(include_bytes!("../../../../../resources/argent_proxy_v0.json"));
-    let argent_account_class = get_contract_class(include_bytes!("../../../../../resources/argent_account_v0.json"));
+    let argent_account_class_v0 = get_contract_class(include_bytes!("../../../../../resources/argent_account_v0.json"));
     let openzeppelin_account_class =
         get_contract_class(include_bytes!("../../../../../resources/account/openzeppelin/account.json"));
+    let argent_account_class =
+        get_contract_class(include_bytes!("../../../../../resources/account/argent/account.json"));
+    let braavos_account_class =
+        get_contract_class(include_bytes!("../../../../../resources/account/braavos/account.json"));
     let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
     let blockifier_account_class =
@@ -124,6 +130,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let openzeppelin_class_hash_bytes = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
     let openzeppelin_account_address =
         <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
+
+    // ARGENT ACCOUNT CONTRACT
+    let argent_class_hash_bytes = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
+    let argent_account_address =
+        <[u8; 32]>::from_hex("0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af").unwrap();
+
+    // BRAAVOS ACCOUNT CONTRACT
+    let braavos_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
+    let braavos_account_address =
+        <[u8; 32]>::from_hex("0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd").unwrap();
 
     // SIMPLE ACCOUNT CONTRACT
     let simple_account_class_hash =
@@ -152,6 +168,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (l1_handler_contract_address, l1_handler_class_hash),
             (blockifier_account_address, blockifier_account_class_hash),
             (openzeppelin_account_address, openzeppelin_class_hash_bytes),
+            (argent_account_address, argent_class_hash_bytes),
+            (braavos_account_address, braavos_class_hash_bytes),
             (simple_account_address, simple_account_class_hash),
             (fee_token_address, token_class_hash),
         ],
@@ -162,6 +180,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (l1_handler_class_hash, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
             (blockifier_account_class_hash, ContractClassWrapper::try_from(blockifier_account_class).unwrap()),
             (openzeppelin_class_hash_bytes, ContractClassWrapper::try_from(openzeppelin_account_class).unwrap()),
+            (argent_class_hash_bytes, ContractClassWrapper::try_from(argent_account_class).unwrap()),
+            (braavos_class_hash_bytes, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
             (simple_account_class_hash, ContractClassWrapper::try_from(simple_account_class).unwrap()),
             (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
         ],
@@ -239,7 +259,71 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             ),
             (
                 (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af) which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af).high (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x040b725979084bd8faa6578e7c022b8bb11db1eb028cfdcbad9e9ebdd48bec05").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af) + 1 which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af).high (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x040b725979084bd8faa6578e7c022b8bb11db1eb028cfdcbad9e9ebdd48bec06").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd) which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd).high (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x04c20cb43fd80d9ae72f77d3bd647b27f4bb125f8d501efc93affca96662ebb2").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
+                    fee_token_address,
+                    // pedersen(sn_keccak(b"ERC20_balances"),
+                    // 0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd) + 1 which is the key in the
+                    // starknet contract for
+                    // ERC20_balances(0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd).high (this
+                    // address corresponds to the sender address of the invoke tx from json)
+                    H256::from_str("0x04c20cb43fd80d9ae72f77d3bd647b27f4bb125f8d501efc93affca96662ebb3").unwrap(),
+                ),
+                U256::from(u128::MAX),
+            ),
+            (
+                (
                     openzeppelin_account_address,
+                    // pedersen(sn_keccak(b"Account_public_key")) which is the key in the starknet contract
+                    H256::from_str("0x01379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f").unwrap(),
+                ),
+                U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
+            ),
+            (
+                (
+                    argent_account_address,
+                    // pedersen(sn_keccak(b"_signer")) which is the key in the starknet contract
+                    H256::from_str("0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05").unwrap(),
+                ),
+                U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
+            ),
+            (
+                (
+                    braavos_account_address,
                     // pedersen(sn_keccak(b"Account_public_key")) which is the key in the starknet contract
                     H256::from_str("0x01379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f").unwrap(),
                 ),
