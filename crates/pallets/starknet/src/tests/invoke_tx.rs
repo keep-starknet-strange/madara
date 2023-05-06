@@ -267,14 +267,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(
-            Starknet::invoke(none_origin, transaction),
-            sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
-                index: 1,
-                error: [1, 0, 0, 0],
-                message: Some("TransactionExecutionFailed")
-            })
-        );
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -304,14 +297,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(
-            Starknet::invoke(none_origin, transaction),
-            sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
-                index: 1,
-                error: [1, 0, 0, 0],
-                message: Some("TransactionExecutionFailed")
-            })
-        );
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -341,14 +327,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(
-            Starknet::invoke(none_origin, transaction),
-            sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
-                index: 1,
-                error: [1, 0, 0, 0],
-                message: Some("TransactionExecutionFailed")
-            })
-        );
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
