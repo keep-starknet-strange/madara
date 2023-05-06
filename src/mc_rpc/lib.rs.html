@@ -443,12 +443,12 @@
 <span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
 <span class="kw">use </span>log::error;
-<span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
-<span class="kw">use </span>mc_rpc_core::{
-    to_rpc_contract_class, BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, BlockStatus, BlockWithTxHashes,
-    ContractAddress, ContractClassHash, FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass,
-    Syncing,
+<span class="kw">use </span>mc_rpc_core::types::{
+    BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
+    FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
+<span class="kw">use </span>mc_rpc_core::utils::to_rpc_contract_class;
+<span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
@@ -536,8 +536,8 @@
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to retrieve the hash of block number &#39;{n}&#39;: {e}&quot;</span>))<span class="question-mark">?</span>,
             StarknetBlockId::BlockTag(t) =&gt; <span class="kw">match </span>t {
-                mc_rpc_core::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending =&gt; <span class="prelude-val">None</span>,
+                mc_rpc_core::types::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending =&gt; <span class="prelude-val">None</span>,
             },
         }
         .ok_or(<span class="string">&quot;Failed to retrieve the substrate block id&quot;</span>.to_string())
@@ -553,11 +553,11 @@
     C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
 {
-    <span class="kw">fn </span>block_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;mc_rpc_core::BlockNumber&gt; {
+    <span class="kw">fn </span>block_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;mc_rpc_core::types::BlockNumber&gt; {
         <span class="self">self</span>.current_block_number()
     }
 
-    <span class="kw">fn </span>block_hash_and_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;mc_rpc_core::BlockHashAndNumber&gt; {
+    <span class="kw">fn </span>block_hash_and_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;mc_rpc_core::types::BlockHashAndNumber&gt; {
         <span class="kw">let </span>block_number = <span class="self">self</span>.current_block_number()<span class="question-mark">?</span>;
         <span class="kw">let </span>block_hash = <span class="self">self</span>.current_block_hash().map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve the current block hash: {}&quot;</span>, e);
@@ -703,7 +703,7 @@
                     <span class="kw">let </span>highest_block_hash = <span class="macro">format!</span>(<span class="string">&quot;{:#x}&quot;</span>, highest_block<span class="question-mark">?</span>.header().hash());
 
                     <span class="comment">// Build the `SyncStatus` struct with the respective syn information
-                    </span><span class="prelude-val">Ok</span>(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
+                    </span><span class="prelude-val">Ok</span>(Syncing::SyncStatus(mc_rpc_core::types::SyncStatus {
                         starting_block_num,
                         starting_block_hash,
                         current_block_num,
@@ -821,8 +821,8 @@
                 })<span class="question-mark">?
             </span>}
             StarknetBlockId::BlockTag(t) =&gt; <span class="kw">match </span>t {
-                mc_rpc_core::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending =&gt; {
+                mc_rpc_core::types::BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending =&gt; {
                     block_status = BlockStatus::Pending;
                     <span class="prelude-val">None
                 </span>}
