@@ -13,7 +13,7 @@ fn block_id_serialization() {
 
 #[test]
 fn block_id_deserialization() {
-    #[derive(Serialize, Deserialize)]
+    #[derive(serde::Serialize, serde::Deserialize)]
     struct Payload {
         #[serde(rename = "block_id")]
         block_id: BlockId,
