@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use super::{EventABIEntry, FunctionABIEntry, StructABIEntry};
 
-/// A block hash, number or tag
-/// TODO: fix block_tag
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(untagged)]
 pub enum ContractABIEntry {
