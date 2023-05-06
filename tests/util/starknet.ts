@@ -4,7 +4,6 @@ import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aToHex } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
-
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<void> {
@@ -136,27 +135,27 @@ export function deploy(
   // Deploy contract
   const tx_deploy = {
     version: 1, // version of the transaction
-    hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
-    nonce: 1, // nonce of the transaction
-    callEntrypoint: {
-      // call entrypoint
-      classHash: tokenClassHash, // class hash of the contract
-      entrypointSelector: null,
-      calldata: [
-        "0x0000000000000000000000000000000000000000000000000000000000001111",
-        "0x0169f135eddda5ab51886052d777a57f2ea9c162d713691b5e04a6d4ed71d47f",
-        "0x0000000000000000000000000000000000000000000000000000000000000004",
-        tokenClassHash,
-        "0x0000000000000000000000000000000000000000000000000000000000000002", // Salt
-        "0x0000000000000000000000000000000000000000000000000000000000000000", // Calldata len
-        "0x0000000000000000000000000000000000000000000000000000000000000001", // Deploy from zero
-      ],
-      storageAddress: contractAddress,
-      callerAddress: contractAddress,
-    },
-    contractClass: null,
+    nonce: 0, // nonce of the transaction
+    account_class_hash: tokenClassHash, // class hash of the contract
+    calldata: [
+      "0x0000000000000000000000000000000000000000000000000000000000001111",
+      "0x0169f135eddda5ab51886052d777a57f2ea9c162d713691b5e04a6d4ed71d47f",
+      "0x000000000000000000000000000000000000000000000000000000000000000A", // Calldata len
+      "0x0000000000000000000000000000000000000000000000000000000000010000", // Class hash
+      "0x0000000000000000000000000000000000000000000000000000000000000001", // Contract address salt
+      "0x0000000000000000000000000000000000000000000000000000000000000006", // Constructor_calldata_len
+      "0x000000000000000000000000000000000000000000000000000000000000000A", // Name
+      "0x0000000000000000000000000000000000000000000000000000000000000001", // Symbol
+      "0x0000000000000000000000000000000000000000000000000000000000000002", // Decimals
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply low
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply high
+      "0x0000000000000000000000000000000000000000000000000000000000001111", // recipient
+      "0x0000000000000000000000000000000000000000000000000000000000000001", // deploy from zero
+    ],
+    max_fee:
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
   };
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);

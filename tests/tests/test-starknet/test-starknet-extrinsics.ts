@@ -13,7 +13,7 @@ const contractAddress =
 const feeTokenAddress =
   "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
 const tokenClassHash =
-  "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+  "0x0000000000000000000000000000000000000000000000000000000000001000";
 
 describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   it("should connect to local node", async function () {
@@ -43,7 +43,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     ).to.exist;
   });
 
-  it.skip("should deploy a new contract", async function () {
+  it("should deploy a new contract", async function () {
     const {
       result: { events },
     } = await context.createBlock(
@@ -59,6 +59,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   });
 
   it("should execute a transfer", async function () {
+    const nonce = 1;
     const {
       result: { events },
     } = await context.createBlock(
@@ -67,7 +68,8 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         contractAddress,
         feeTokenAddress,
         contractAddress,
-        mintAmount
+        mintAmount,
+        nonce
       )
     );
 
