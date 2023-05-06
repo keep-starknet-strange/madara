@@ -181,9 +181,6 @@ fn testnet_genesis(
         get_contract_class(include_bytes!("../../../resources/account/simple/account.json")).try_into().unwrap();
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
-    let openzeppelin_class =
-        get_contract_class(include_bytes!("../../../resources/account/openzeppelin/account.json")).try_into().unwrap();
-
     let erc20_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
@@ -198,12 +195,6 @@ fn testnet_genesis(
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001111").unwrap();
     let other_class_hash_bytes =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001000").unwrap();
-
-    // OPENZEPPELIN ACCOUNT CONTRACT
-    let openzeppelin_contract_address_bytes =
-        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000011111").unwrap();
-    let openzeppelin_class_hash_bytes =
-        <[u8; 32]>::from_hex("039e978a80112c38e76265e5f23deb5711b6f913fdc91542bf158d8e6b62d98a").unwrap();
 
     // Fee token
     let fee_token_address =
@@ -244,7 +235,6 @@ fn testnet_genesis(
             contracts: vec![
                 (contract_address_bytes, class_hash_bytes),
                 (other_contract_address_bytes, other_class_hash_bytes),
-                (openzeppelin_contract_address_bytes, openzeppelin_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (fee_token_address, fee_token_class_hash_bytes),
@@ -252,7 +242,6 @@ fn testnet_genesis(
             contract_classes: vec![
                 (class_hash_bytes, account_class),
                 (other_class_hash_bytes, test_class),
-                (openzeppelin_class_hash_bytes, openzeppelin_class),
                 (token_class_hash_bytes, erc20_class.clone()),
                 (fee_token_class_hash_bytes, erc20_class),
             ],
@@ -292,32 +281,6 @@ fn testnet_genesis(
                         H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
                     ),
                     U256::from(u128::MAX),
-                ),
-                (
-                    (
-                        fee_token_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x11111) which is the key in the starknet contract
-                        // for ERC20_balances(0x11111).low
-                        H256::from_str("0x056c9bcf2a0a1adda0046c9a572621489281a278a38ec00aecc657995ab8a2c2").unwrap(),
-                    ),
-                    U256::from(u128::MAX),
-                ),
-                (
-                    (
-                        fee_token_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x11111) + 1 which is the key in the starknet
-                        // contract for ERC20_balances(0x11111).high
-                        H256::from_str("0x056c9bcf2a0a1adda0046c9a572621489281a278a38ec00aecc657995ab8a2c3").unwrap(),
-                    ),
-                    U256::from(u128::MAX),
-                ),
-                (
-                    (
-                        openzeppelin_contract_address_bytes,
-                        // pedersen(sn_keccak(b"Account_public_key")) which is the key in the starknet contract
-                        H256::from_str("0x01379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f").unwrap(),
-                    ),
-                    U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
                 ),
             ],
             fee_token_address,
