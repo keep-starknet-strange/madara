@@ -52,12 +52,8 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let transaction = InvokeTransaction {
-            version: 3,
-            sender_address: <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F")
-                .unwrap(),
-            ..InvokeTransaction::default()
-        };
+        let (sender_add, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
+        let transaction = InvokeTransaction { version: 3, sender_address: sender_add, ..InvokeTransaction::default() };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
@@ -95,7 +91,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: transaction.hash,
+            transaction_hash: H256::from_str("0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8")
+                .unwrap(),
             actual_fee: U256::from(52980),
             tx_type: TxType::Invoke,
             events: bounded_vec![EventWrapper {
@@ -179,7 +176,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         assert_eq!(pending.len(), 1);
 
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: transaction.hash,
+            transaction_hash: H256::from_str("0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52").unwrap(),
             actual_fee: U256::from(53490),
             tx_type: TxType::Invoke,
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),
@@ -251,7 +248,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
-        assert_ok!(Starknet::invoke(none_origin, transaction));
+        assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
 
@@ -267,7 +264,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -282,7 +279,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
-        assert_ok!(Starknet::invoke(none_origin, transaction));
+        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -297,7 +294,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -312,7 +309,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
-        assert_ok!(Starknet::invoke(none_origin, transaction));
+        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
     });
 }
 
@@ -327,7 +324,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
     });
 }
 

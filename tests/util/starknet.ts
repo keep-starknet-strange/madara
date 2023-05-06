@@ -91,12 +91,10 @@ export async function sendTransaction(
 export function declare(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string,
-  private_key = ""
+  tokenClassHash: string
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
-    hash: "0x0000000000000000000000000000000000000000000000000000000000000001", // set to 0x1 for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
@@ -116,8 +114,6 @@ export function declare(
     },
   };
 
-  tx_declare.signature = signTransaction(tx_declare.hash, private_key);
-
   const extrisinc_declare = api.tx.starknet.declare(tx_declare);
 
   return extrisinc_declare;
@@ -126,8 +122,7 @@ export function declare(
 export function deploy(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string,
-  private_key = ""
+  tokenClassHash: string
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Compute contract address
   // const deployedContractAddress = hash.calculateContractAddressFromHash(
@@ -163,8 +158,6 @@ export function deploy(
     max_fee:
       "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
   };
-
-  tx_deploy.signature = signTransaction(tx_deploy.hash, private_key);
 
   const extrisinc_deploy = api.tx.starknet.invoke(tx_deploy);
 

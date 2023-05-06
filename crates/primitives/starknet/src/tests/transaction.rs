@@ -78,8 +78,8 @@ fn get_test_calldata() -> BoundedVec<U256, MaxCalldataSize> {
     bounded_vec![U256::from_str("0x1").unwrap(), U256::from_str("0x2").unwrap()]
 }
 
-fn get_test_contract_address_salt() -> H256 {
-    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap()
+fn get_test_contract_address_salt() -> U256 {
+    U256::from_str("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap()
 }
 
 fn u256_to_byte_array(x: U256) -> [u8; 32] {
@@ -126,7 +126,9 @@ fn test_validate_entrypoint_calldata_deploy_account() {
         (*tx.validate_entrypoint_calldata(&TxType::DeployAccount).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
 
     // Then
-    let mut expected_calldata = vec![get_test_class_hash(), *get_test_contract_address_salt().as_fixed_bytes()];
+    let mut salt_bytes = [0; 32];
+    get_test_contract_address_salt().to_big_endian(&mut salt_bytes);
+    let mut expected_calldata = vec![get_test_class_hash(), salt_bytes];
     expected_calldata.extend(get_test_calldata().into_iter().map(u256_to_byte_array).collect::<Vec<_>>());
 
     assert_eq!(expected_calldata, actual_calldata);
