@@ -6,18 +6,13 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
-    EventWrapper, InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
+    EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
-use sp_runtime::BoundedVec;
-use starknet_crypto::{sign, FieldElement};
 
 use super::mock::*;
 use crate::message::Message;
 use crate::{Error, Event};
-
-const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
-const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
@@ -52,7 +47,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let (sender_add, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
+        let sender_add = get_account_address(AccountType::NoValidate);
         let transaction = InvokeTransaction { version: 3, sender_address: sender_add, ..InvokeTransaction::default() };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -330,13 +325,3 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
 
 // TODO: Add test with contract account which calls another contract in __validate__ and check
 // failure
-
-fn sign_message_hash(hash: H256) -> BoundedVec<H256, MaxArraySize> {
-    let signature = sign(
-        &FieldElement::from_str(ACCOUNT_PRIVATE_KEY).unwrap(),
-        &FieldElement::from_bytes_be(&hash.0).unwrap(),
-        &FieldElement::from_str(K).unwrap(),
-    )
-    .unwrap();
-    bounded_vec!(H256::from(signature.r.to_bytes_be()), H256::from(signature.s.to_bytes_be()))
-}

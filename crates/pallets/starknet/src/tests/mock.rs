@@ -1,21 +1,27 @@
 use core::str::FromStr;
 
 use blockifier::execution::contract_class::ContractClass;
-use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
+use frame_support::{bounded_vec, parameter_types};
 use hex::FromHex;
 use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::transaction::types::MaxArraySize;
 use sp_core::{H256, U256};
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
+use sp_runtime::BoundedVec;
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
+use starknet_crypto::{sign, FieldElement};
 use {crate as pallet_starknet, frame_system as system};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
+
+const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
+const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
 pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "05388bb9444c877d410538b9b0c40e665cae3713a95204afdc40b3148d315a4e";
@@ -128,23 +134,20 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     // OPENZEPPELIN ACCOUNT CONTRACT
     let openzeppelin_class_hash_bytes = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
-    let openzeppelin_account_address =
-        <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap();
+    let openzeppelin_account_address = get_account_address(AccountType::Openzeppelin);
 
     // ARGENT ACCOUNT CONTRACT
     let argent_class_hash_bytes = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
-    let argent_account_address =
-        <[u8; 32]>::from_hex("0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af").unwrap();
+    let argent_account_address = get_account_address(AccountType::Argent);
 
     // BRAAVOS ACCOUNT CONTRACT
     let braavos_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
-    let braavos_account_address =
-        <[u8; 32]>::from_hex("0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd").unwrap();
+    let braavos_account_address = get_account_address(AccountType::Braavos);
 
     // SIMPLE ACCOUNT CONTRACT
     let simple_account_class_hash =
         <[u8; 32]>::from_hex(SIMPLE_ACCOUNT_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
-    let (simple_account_address, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
+    let simple_account_address = get_account_address(AccountType::NoValidate);
 
     // TEST CONTRACT
     let other_contract_address =
@@ -378,6 +381,28 @@ pub fn no_validate_account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>)
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
 }
 
+pub enum AccountType {
+    Argent,
+    Openzeppelin,
+    Braavos,
+    NoValidate,
+}
+
+pub fn get_account_address(account_type: AccountType) -> [u8; 32] {
+    match account_type {
+        AccountType::Argent => {
+            <[u8; 32]>::from_hex("0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af").unwrap()
+        }
+        AccountType::Openzeppelin => {
+            <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap()
+        }
+        AccountType::Braavos => {
+            <[u8; 32]>::from_hex("0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd").unwrap()
+        }
+        AccountType::NoValidate => no_validate_account_helper(TEST_ACCOUNT_SALT).0,
+    }
+}
+
 /// Calculate the address of a contract.
 /// # Arguments
 /// * `salt` - The salt of the contract.
@@ -405,4 +430,14 @@ pub fn calculate_contract_address(
         ),
         ContractAddress::default(),
     )
+}
+
+pub fn sign_message_hash(hash: H256) -> BoundedVec<H256, MaxArraySize> {
+    let signature = sign(
+        &FieldElement::from_str(ACCOUNT_PRIVATE_KEY).unwrap(),
+        &FieldElement::from_bytes_be(&hash.0).unwrap(),
+        &FieldElement::from_str(K).unwrap(),
+    )
+    .unwrap();
+    bounded_vec!(H256::from(signature.r.to_bytes_be()), H256::from(signature.s.to_bytes_be()))
 }

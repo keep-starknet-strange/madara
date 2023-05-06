@@ -15,7 +15,7 @@ fn given_call_contract_call_works() {
         run_to_block(1);
 
         let origin = RuntimeOrigin::none();
-        let (sender_account, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
+        let sender_account = get_account_address(AccountType::NoValidate);
 
         // Deploy ERC20 Contract, as it is already declared in fixtures
         // Deploy ERC20 contract

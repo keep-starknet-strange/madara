@@ -28,7 +28,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         System::set_block_number(0);
         run_to_block(1);
         let origin = RuntimeOrigin::none();
-        let (sender_account, _, _) = no_validate_account_helper(TEST_ACCOUNT_SALT);
+        let sender_account = get_account_address(AccountType::NoValidate);
         // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
         let deploy_transaction = InvokeTransaction {
