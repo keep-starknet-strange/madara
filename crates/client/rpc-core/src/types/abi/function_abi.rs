@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{FunctionName, TypedParameter};
+use super::TypedParameter;
+
+pub type FunctionName = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Default)]
 pub enum FunctionABIType {

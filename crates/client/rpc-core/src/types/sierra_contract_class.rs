@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{ContractClassVersion, FunctionIndex, Selector, SierraProgram, ABI};
+use super::{ContractClassVersion, Selector, SierraProgram, ABI};
+
+pub type FunctionIndex = i64;
 
 /// Cairo sierra entry point
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]

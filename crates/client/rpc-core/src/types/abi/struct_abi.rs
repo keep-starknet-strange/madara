@@ -1,6 +1,11 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
-use super::{Members, Size, StructName};
+pub type StructMember = HashMap<String, serde_json::Value>;
+pub type Members = Vec<StructMember>;
+pub type Size = i64;
+pub type StructName = String;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Default)]
 pub enum StructABIType {
