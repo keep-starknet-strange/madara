@@ -6,7 +6,7 @@
     "0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096"
   ],
   "events": [],
-  "sender_address": "0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd",
+  "sender_address": "05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122",
   "nonce": 0,
   "call_entrypoint": {
     "class_hash": "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32",

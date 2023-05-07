@@ -111,7 +111,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
         let erc20_class_hash =
             <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
-        let tx_hash = H256::from_str("0x05aadce02f11b18562f0f2a519a34ca53e8f939b9bc829a4ef2a2ec7690a2c7b").unwrap();
+        let tx_hash = H256::from_str("0x04b6608f43263d19966c6cc30f3619c29e8ced2e07a4947b8c0c2fd56d44d4fb").unwrap();
         let transaction = DeclareTransaction {
             sender_address: account_addr,
             contract_class: erc20_class,
@@ -123,6 +123,10 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
         };
 
         assert_ok!(Starknet::declare(none_origin, transaction));
+        assert_eq!(
+            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap()
+        );
     });
 }
 

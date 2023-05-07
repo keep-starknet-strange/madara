@@ -24,10 +24,10 @@ const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fd
 const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "05388bb9444c877d410538b9b0c40e665cae3713a95204afdc40b3148d315a4e";
+pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d";
 pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
-pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH: &str = "039e978a80112c38e76265e5f23deb5711b6f913fdc91542bf158d8e6b62d98a";
-pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "051b213463c5fb6fb42636758bcc043bcc8b635c1c8860411efd8d78609387b2";
+pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH: &str = "006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd";
+pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52";
 pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
 pub const SIMPLE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
@@ -240,11 +240,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 (
                     fee_token_address,
                     // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af) which is the key in the
+                    // 0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012) which is the key in the
                     // starknet contract for
-                    // ERC20_balances(0x01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af).high (this
+                    // ERC20_balances(0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012).low (this
                     // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x068ffac675bcedded95d13802cdab5cdb68e9eb71acd634556e5a9e08f6d662c").unwrap(),
+                    H256::from_str("0x0654f5a2b807de48bfebf66b84267f110e2577edec66de3fb711a04d491e29bc").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -252,11 +252,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 (
                     fee_token_address,
                     // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af) + 1 which is the key in the
+                    // 0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012) + 1 which is the key in the
                     // starknet contract for
-                    // ERC20_balances(0x01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af).high (this
+                    // ERC20_balances(0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012).high (this
                     // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x068ffac675bcedded95d13802cdab5cdb68e9eb71acd634556e5a9e08f6d662d").unwrap(),
+                    H256::from_str("0x0654f5a2b807de48bfebf66b84267f110e2577edec66de3fb711a04d491e29bd").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -264,11 +264,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 (
                     fee_token_address,
                     // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af) which is the key in the
+                    // 0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5) which is the key in the
                     // starknet contract for
-                    // ERC20_balances(0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af).high (this
+                    // ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high (this
                     // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x040b725979084bd8faa6578e7c022b8bb11db1eb028cfdcbad9e9ebdd48bec05").unwrap(),
+                    H256::from_str("0x060b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8e").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -276,11 +276,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 (
                     fee_token_address,
                     // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af) + 1 which is the key in the
+                    // 0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5) + 1 which is the key in the
                     // starknet contract for
-                    // ERC20_balances(0x0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af).high (this
+                    // ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high (this
                     // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x040b725979084bd8faa6578e7c022b8bb11db1eb028cfdcbad9e9ebdd48bec06").unwrap(),
+                    H256::from_str("0x060b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8f").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -288,11 +288,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 (
                     fee_token_address,
                     // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd) which is the key in the
+                    // 0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122) which is the key in the
                     // starknet contract for
-                    // ERC20_balances(0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd).high (this
+                    // ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high (this
                     // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x04c20cb43fd80d9ae72f77d3bd647b27f4bb125f8d501efc93affca96662ebb2").unwrap(),
+                    H256::from_str("0x078f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149a").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -300,11 +300,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 (
                     fee_token_address,
                     // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd) + 1 which is the key in the
+                    // 0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122) + 1 which is the key in the
                     // starknet contract for
-                    // ERC20_balances(0x0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd).high (this
+                    // ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high (this
                     // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x04c20cb43fd80d9ae72f77d3bd647b27f4bb125f8d501efc93affca96662ebb3").unwrap(),
+                    H256::from_str("0x078f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149b").unwrap(),
                 ),
                 U256::from(u128::MAX),
             ),
@@ -391,13 +391,13 @@ pub enum AccountType {
 pub fn get_account_address(account_type: AccountType) -> [u8; 32] {
     match account_type {
         AccountType::Argent => {
-            <[u8; 32]>::from_hex("0299a0359d4f77f2390879d334e2d1aa0fb15fe504c886e7999ecd529a8d24af").unwrap()
+            <[u8; 32]>::from_hex("02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5").unwrap()
         }
         AccountType::Openzeppelin => {
-            <[u8; 32]>::from_hex("01c4c30074f754b57121a0a7fe36ad4ce1118cc26cc6b7d9418401999a1675af").unwrap()
+            <[u8; 32]>::from_hex("04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012").unwrap()
         }
         AccountType::Braavos => {
-            <[u8; 32]>::from_hex("0227bc96607562fb7617cc1b77e979cdbc639a3a49354849c05849956c4b6ddd").unwrap()
+            <[u8; 32]>::from_hex("05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122").unwrap()
         }
         AccountType::NoValidate => no_validate_account_helper(TEST_ACCOUNT_SALT).0,
     }
