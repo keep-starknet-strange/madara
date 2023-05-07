@@ -5,7 +5,6 @@ import { LibraryError, RPC, RpcProvider } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import {
   TEST_CONTRACT,
-  TEST_CONTRACT_OPENZEPPELIN,
   CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
@@ -79,7 +78,7 @@ describeDevMadara("Starknet RPC", (context) => {
     const block_number: number = blockHashAndNumber.block_number;
 
     const contract_class = await providerRPC.getClassAt(
-      TEST_CONTRACT_OPENZEPPELIN,
+      TEST_CONTRACT,
       block_number
     );
 
