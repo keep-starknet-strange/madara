@@ -20,6 +20,7 @@ use {crate as pallet_starknet, frame_system as system};
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
+pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
 const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 
@@ -28,6 +29,7 @@ pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "06f0d6f6ae72e1a507ff4b6518129164288
 pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
 pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH: &str = "006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd";
 pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52";
+pub const BRAAVOS_PROXY_CLASS_HASH: &str = "06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262";
 pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
 pub const SIMPLE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
@@ -120,6 +122,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         get_contract_class(include_bytes!("../../../../../resources/account/argent/account.json"));
     let braavos_account_class =
         get_contract_class(include_bytes!("../../../../../resources/account/braavos/account.json"));
+    let braavos_proxy_class =
+        get_contract_class(include_bytes!("../../../../../resources/account/braavos/openzepellin_deps/proxy.json"));
     let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
     let blockifier_account_class =
@@ -130,7 +134,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
-    let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
+    let (account_addr, _, _) = account_helper_argent_v0(TEST_ACCOUNT_SALT);
 
     // OPENZEPPELIN ACCOUNT CONTRACT
     let openzeppelin_class_hash_bytes = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
@@ -143,6 +147,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     // BRAAVOS ACCOUNT CONTRACT
     let braavos_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
     let braavos_account_address = get_account_address(AccountType::Braavos);
+    let braavos_proxy_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_PROXY_CLASS_HASH).unwrap();
+    let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
 
     // SIMPLE ACCOUNT CONTRACT
     let simple_account_class_hash =
@@ -173,6 +179,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (openzeppelin_account_address, openzeppelin_class_hash_bytes),
             (argent_account_address, argent_class_hash_bytes),
             (braavos_account_address, braavos_class_hash_bytes),
+            (braavos_proxy_address, braavos_proxy_class_hash_bytes),
             (simple_account_address, simple_account_class_hash),
             (fee_token_address, token_class_hash),
         ],
@@ -185,6 +192,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (openzeppelin_class_hash_bytes, ContractClassWrapper::try_from(openzeppelin_account_class).unwrap()),
             (argent_class_hash_bytes, ContractClassWrapper::try_from(argent_account_class).unwrap()),
             (braavos_class_hash_bytes, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
+            (braavos_proxy_class_hash_bytes, ContractClassWrapper::try_from(braavos_proxy_class).unwrap()),
             (simple_account_class_hash, ContractClassWrapper::try_from(simple_account_class).unwrap()),
             (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
         ],
@@ -314,7 +322,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                     // pedersen(sn_keccak(b"Account_public_key")) which is the key in the starknet contract
                     H256::from_str("0x01379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f").unwrap(),
                 ),
-                U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
+                U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
             (
                 (
@@ -322,7 +330,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                     // pedersen(sn_keccak(b"_signer")) which is the key in the starknet contract
                     H256::from_str("0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05").unwrap(),
                 ),
-                U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
+                U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
             (
                 (
@@ -355,7 +363,38 @@ pub(crate) fn run_to_block(n: u64) {
     }
 }
 
-pub fn account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
+#[derive(PartialEq)]
+pub enum AccountType {
+    Argent,
+    Openzeppelin,
+    Braavos,
+    BraavosProxy,
+    NoValidate,
+}
+
+pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 32], Vec<&str>) {
+    let account_class_hash = match account_type {
+        AccountType::Argent => H256::from_str(ARGENT_ACCOUNT_CLASS_HASH).unwrap(),
+        AccountType::Braavos => H256::from_str(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap(),
+        AccountType::BraavosProxy => H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap(),
+        AccountType::Openzeppelin => H256::from_str(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap(),
+        AccountType::NoValidate => H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap(),
+    };
+    let account_salt = H256::from_str(salt).unwrap();
+
+    let mut cd_raw = vec![];
+    if account_type == AccountType::BraavosProxy {
+        cd_raw = vec![
+            "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52", // Braavos account class hash
+            "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' function selector
+        ];
+    }
+
+    let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
+    (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
+}
+
+pub fn account_helper_argent_v0(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
     let account_class_hash = H256::from_str(ARGENT_PROXY_CLASS_HASH_V0).unwrap();
     let account_salt = H256::from_str(salt).unwrap();
 
@@ -371,23 +410,6 @@ pub fn account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
 }
 
-pub fn no_validate_account_helper(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
-    let account_class_hash = H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap();
-    let account_salt = H256::from_str(salt).unwrap();
-
-    let cd_raw = vec![];
-
-    let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
-    (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
-}
-
-pub enum AccountType {
-    Argent,
-    Openzeppelin,
-    Braavos,
-    NoValidate,
-}
-
 pub fn get_account_address(account_type: AccountType) -> [u8; 32] {
     match account_type {
         AccountType::Argent => {
@@ -399,7 +421,10 @@ pub fn get_account_address(account_type: AccountType) -> [u8; 32] {
         AccountType::Braavos => {
             <[u8; 32]>::from_hex("05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122").unwrap()
         }
-        AccountType::NoValidate => no_validate_account_helper(TEST_ACCOUNT_SALT).0,
+        AccountType::BraavosProxy => {
+            <[u8; 32]>::from_hex("04e7b41e2d628e6ab91d6c805bd22fbdb186d4e581266640663bd0094b3ef98b").unwrap()
+        }
+        AccountType::NoValidate => account_helper(TEST_ACCOUNT_SALT, AccountType::NoValidate).0,
     }
 }
 

@@ -75,7 +75,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
         run_to_block(2);
 
         let none_origin = RuntimeOrigin::none();
-        let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
+        let (account_addr, _, _) = account_helper_argent_v0(TEST_ACCOUNT_SALT);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
         // TODO: Delete when the class hash can be derived from ContractClass
@@ -159,7 +159,6 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
 
 #[test]
 fn given_contract_declare_on_braavos_account_then_it_works() {
-    env_logger::init();
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
         run_to_block(2);
