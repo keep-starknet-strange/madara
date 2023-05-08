@@ -327,8 +327,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (
                 (
                     braavos_account_address,
-                    // pedersen(sn_keccak(b"Account_public_key")) which is the key in the starknet contract
-                    H256::from_str("0x01379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f").unwrap(),
+                    // pedersen(sn_keccak(b"Account_signers"), 0x0) which is the key in the starknet contract
+                    H256::from_str("0x01f23302c120008f28b62f70efc67ccd75cfe0b9631d77df231d78b0538dcd8f").unwrap(),
                 ),
                 U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
             ),

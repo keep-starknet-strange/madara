@@ -274,7 +274,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
-        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+        assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
 
@@ -304,7 +304,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
-        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+        assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
 
