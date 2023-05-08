@@ -1,5 +1,6 @@
 use core::str::FromStr;
 
+use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::crypto::commitment;
@@ -9,10 +10,11 @@ use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
+use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
 use crate::message::Message;
-use crate::{Error, Event};
+use crate::{Error, Event, StorageView};
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
@@ -323,5 +325,33 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
     });
 }
 
-// TODO: Add test with contract account which calls another contract in __validate__ and check
-// failure
+#[test]
+fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+        transaction.sender_address = get_account_address(AccountType::InnerCall);
+
+        let storage_key = get_storage_var_address("destination", &[]).unwrap();
+        let destination =
+            <[u8; 32]>::from_hex("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(); // Test contract address
+        StorageView::<Test>::insert(
+            (transaction.sender_address, H256::from(storage_key.0.0.0)),
+            U256::from(destination),
+        );
+
+        let storage_key = get_storage_var_address("function_selector", &[]).unwrap();
+        let selector = get_selector_from_name("without_arg").unwrap();
+        StorageView::<Test>::insert(
+            (transaction.sender_address, H256::from(storage_key.0.0.0)),
+            U256::from(selector.to_bytes_be()),
+        );
+
+        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+    });
+}
