@@ -367,8 +367,7 @@ fn set_signer(address: [u8; 32], account_type: AccountType) {
         AccountType::Argent => ("_signer", vec![]),
         AccountType::Braavos => ("Account_signers", vec![FieldElement::ZERO]),
         AccountType::Openzeppelin => ("Account_public_key", vec![]),
-        AccountType::BraavosProxy => return,
-        AccountType::NoValidate => return,
+        _ => return,
     };
     let storage_key = get_storage_var_address(var_name, &args).unwrap();
     StorageView::<Test>::insert(

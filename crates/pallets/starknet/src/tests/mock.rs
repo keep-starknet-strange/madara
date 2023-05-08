@@ -32,6 +32,8 @@ pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "0244ca3d9fe8b47dd565a6f4270d979ba3
 pub const BRAAVOS_PROXY_CLASS_HASH: &str = "06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262";
 pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
 pub const SIMPLE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
+pub const UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH: &str =
+    "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
 pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
 pub const TOKEN_CONTRACT_CLASS_HASH: &str = "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
@@ -130,6 +132,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
     let simple_account_class =
         get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
+    let inner_call_account_class =
+        get_contract_class(include_bytes!("../../../../../resources/account/unauthorized_inner_call/account.json"));
     let erc20_class = get_contract_class(include_bytes!("../../../../../resources/erc20/erc20.json"));
 
     // ACCOUNT CONTRACT
@@ -149,6 +153,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let braavos_account_address = get_account_address(AccountType::Braavos);
     let braavos_proxy_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_PROXY_CLASS_HASH).unwrap();
     let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
+
+    // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
+    let inner_call_account_class_hash =
+        <[u8; 32]>::from_hex(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
+    let inner_call_account_address = get_account_address(AccountType::InnerCall);
 
     // SIMPLE ACCOUNT CONTRACT
     let simple_account_class_hash =
@@ -181,6 +190,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (braavos_account_address, braavos_class_hash_bytes),
             (braavos_proxy_address, braavos_proxy_class_hash_bytes),
             (simple_account_address, simple_account_class_hash),
+            (inner_call_account_address, inner_call_account_class_hash),
             (fee_token_address, token_class_hash),
         ],
         contract_classes: vec![
@@ -194,6 +204,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (braavos_class_hash_bytes, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
             (braavos_proxy_class_hash_bytes, ContractClassWrapper::try_from(braavos_proxy_class).unwrap()),
             (simple_account_class_hash, ContractClassWrapper::try_from(simple_account_class).unwrap()),
+            (inner_call_account_class_hash, ContractClassWrapper::try_from(inner_call_account_class).unwrap()),
             (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
         ],
         fee_token_address,
@@ -370,6 +381,7 @@ pub enum AccountType {
     Braavos,
     BraavosProxy,
     NoValidate,
+    InnerCall,
 }
 
 pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 32], Vec<&str>) {
@@ -379,6 +391,7 @@ pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 
         AccountType::BraavosProxy => H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap(),
         AccountType::Openzeppelin => H256::from_str(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap(),
         AccountType::NoValidate => H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap(),
+        AccountType::InnerCall => H256::from_str(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap(),
     };
     let account_salt = H256::from_str(salt).unwrap();
 
@@ -411,21 +424,7 @@ pub fn account_helper_argent_v0(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
 }
 
 pub fn get_account_address(account_type: AccountType) -> [u8; 32] {
-    match account_type {
-        AccountType::Argent => {
-            <[u8; 32]>::from_hex("02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5").unwrap()
-        }
-        AccountType::Openzeppelin => {
-            <[u8; 32]>::from_hex("04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012").unwrap()
-        }
-        AccountType::Braavos => {
-            <[u8; 32]>::from_hex("05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122").unwrap()
-        }
-        AccountType::BraavosProxy => {
-            <[u8; 32]>::from_hex("04e7b41e2d628e6ab91d6c805bd22fbdb186d4e581266640663bd0094b3ef98b").unwrap()
-        }
-        AccountType::NoValidate => account_helper(TEST_ACCOUNT_SALT, AccountType::NoValidate).0,
-    }
+    account_helper(TEST_ACCOUNT_SALT, account_type).0
 }
 
 /// Calculate the address of a contract.
