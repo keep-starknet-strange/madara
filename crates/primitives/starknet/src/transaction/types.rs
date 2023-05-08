@@ -55,11 +55,30 @@ pub enum TransactionExecutionErrorWrapper {
     UnexpectedHoles(String),
 }
 
-impl From<EntryPointExecutionError> for TransactionExecutionErrorWrapper {
+impl From<TransactionValidationErrorWrapper> for TransactionExecutionErrorWrapper {
+    fn from(error: TransactionValidationErrorWrapper) -> Self {
+        match error {
+            TransactionValidationErrorWrapper::TransactionValidationError(e) => Self::TransactionExecution(e),
+            TransactionValidationErrorWrapper::CalldataError(e) => Self::StarknetApi(e),
+        }
+    }
+}
+
+/// Wrapper type for transaction validation result.
+pub type TransactionValidationResultWrapper<T> = Result<T, TransactionValidationErrorWrapper>;
+
+/// Wrapper type for transaction validation error.
+#[derive(Debug)]
+pub enum TransactionValidationErrorWrapper {
+    /// Transaction execution error
+    TransactionValidationError(TransactionExecutionError),
+    /// Calldata error
+    CalldataError(StarknetApiError),
+}
+
+impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
     fn from(error: EntryPointExecutionError) -> Self {
-        TransactionExecutionErrorWrapper::TransactionExecution(TransactionExecutionError::EntryPointExecutionError(
-            error,
-        ))
+        Self::TransactionValidationError(TransactionExecutionError::from(error))
     }
 }
 

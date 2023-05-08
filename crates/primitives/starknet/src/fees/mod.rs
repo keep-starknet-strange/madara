@@ -44,14 +44,13 @@ pub const FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE: u8 = FEE_TRANSFER_N_STORAGE_
 pub fn get_transaction_resources<S: State + StateChanges>(
     state: &mut S,
     execute_call_info: &Option<CallInfo>,
+    validate_call_info: &Option<CallInfo>,
     execution_resources: &mut ExecutionResources,
     tx_type: TxType,
 ) -> Result<BTreeMap<String, usize>, TransactionExecutionErrorWrapper> {
     let (n_modified_contracts, n_modified_keys, n_class_updates) = state.count_state_changes();
-    // TODO: consider the `validate` resources.
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/227
-    // The `&None` corresponds to the `validate` execution for now.
-    let non_optional_call_infos: Vec<&CallInfo> = vec![execute_call_info, &None].into_iter().flatten().collect();
+    let non_optional_call_infos: Vec<&CallInfo> =
+        vec![execute_call_info, validate_call_info].into_iter().flatten().collect();
     let mut l2_to_l1_payloads_length = vec![];
     for call_info in non_optional_call_infos {
         l2_to_l1_payloads_length.extend(
