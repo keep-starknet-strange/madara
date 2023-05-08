@@ -1,6 +1,5 @@
 import "@keep-starknet-strange/madara-api-augment";
 import { type ApiPromise } from "@polkadot/api";
-import { signTransaction } from "./transaction";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aWrapBytes } from "@polkadot/util";
@@ -135,7 +134,6 @@ export function deploy(
   // Deploy contract
   const tx_deploy = {
     version: 1, // version of the transaction
-    hash: "0x0000000000000000000000000000000000000000000000000000000000000001", // set to 0x1 for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
