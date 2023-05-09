@@ -423,7 +423,7 @@ where
     }
 }
 
-/// Removes the "0x" prefix from a given hexadecimal string an pads it with 0s
+/// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s
 #[inline(always)]
 fn format_hex(input: &str) -> String {
     format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))
