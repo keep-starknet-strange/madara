@@ -95,7 +95,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
         let none_origin = RuntimeOrigin::none();
         let rand_address =
             <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001234").unwrap();
-        let (_, account_class_hash, _) = account_helper_argent_v0(salt);
+        let (_, account_class_hash, _) = account_helper(salt, AccountType::ArgentV0);
         let transaction = DeployAccountTransaction {
             account_class_hash,
             sender_address: rand_address,
@@ -124,7 +124,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (test_addr, account_class_hash, calldata) = account_helper_argent_v0(salt);
+        let (test_addr, account_class_hash, calldata) = account_helper(salt, AccountType::ArgentV0);
 
         let wrong_tx_version = 50_u8;
 

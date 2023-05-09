@@ -138,7 +138,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
-    let (account_addr, _, _) = account_helper_argent_v0(TEST_ACCOUNT_SALT);
+    let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT, AccountType::ArgentV0);
 
     // OPENZEPPELIN ACCOUNT CONTRACT
     let openzeppelin_class_hash_bytes = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
@@ -374,9 +374,9 @@ pub(crate) fn run_to_block(n: u64) {
     }
 }
 
-#[derive(PartialEq)]
 pub enum AccountType {
     Argent,
+    ArgentV0,
     Openzeppelin,
     Braavos,
     BraavosProxy,
@@ -385,39 +385,31 @@ pub enum AccountType {
 }
 
 pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 32], Vec<&str>) {
-    let account_class_hash = match account_type {
-        AccountType::Argent => H256::from_str(ARGENT_ACCOUNT_CLASS_HASH).unwrap(),
-        AccountType::Braavos => H256::from_str(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap(),
-        AccountType::BraavosProxy => H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap(),
-        AccountType::Openzeppelin => H256::from_str(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap(),
-        AccountType::NoValidate => H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap(),
-        AccountType::InnerCall => H256::from_str(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap(),
+    let (account_class_hash, cd_raw) = match account_type {
+        AccountType::Argent => (H256::from_str(ARGENT_ACCOUNT_CLASS_HASH).unwrap(), vec![]),
+        AccountType::ArgentV0 => (
+            H256::from_str(ARGENT_PROXY_CLASS_HASH_V0).unwrap(),
+            vec![
+                ARGENT_ACCOUNT_CLASS_HASH_V0,
+                "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
+                "0x2",
+                salt,
+                "0x0",
+            ],
+        ),
+        AccountType::Braavos => (H256::from_str(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap(), vec![]),
+        AccountType::BraavosProxy => (
+            H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap(),
+            vec![
+                "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52", // Braavos account class hash
+                "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' selector
+            ],
+        ),
+        AccountType::Openzeppelin => (H256::from_str(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap(), vec![]),
+        AccountType::NoValidate => (H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap(), vec![]),
+        AccountType::InnerCall => (H256::from_str(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap(), vec![]),
     };
     let account_salt = H256::from_str(salt).unwrap();
-
-    let mut cd_raw = vec![];
-    if account_type == AccountType::BraavosProxy {
-        cd_raw = vec![
-            "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52", // Braavos account class hash
-            "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' function selector
-        ];
-    }
-
-    let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
-    (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
-}
-
-pub fn account_helper_argent_v0(salt: &str) -> ([u8; 32], [u8; 32], Vec<&str>) {
-    let account_class_hash = H256::from_str(ARGENT_PROXY_CLASS_HASH_V0).unwrap();
-    let account_salt = H256::from_str(salt).unwrap();
-
-    let cd_raw = vec![
-        ARGENT_ACCOUNT_CLASS_HASH_V0,
-        "0x79dc0da7c54b95f10aa182ad0a46400db63156920adb65eca2654c0945a463",
-        "0x2",
-        salt,
-        "0x0",
-    ];
 
     let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
