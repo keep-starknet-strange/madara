@@ -27,6 +27,6 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
             ..DeclareTransaction::default()
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::AccountNotDeployed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
     })
 }

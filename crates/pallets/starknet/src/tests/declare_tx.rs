@@ -18,7 +18,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         // 0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9) which is the key in the
         // starknet contract for
         // ERC20_balances(0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9).low
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
                 H256::from_str("0x01c522d1063461697a1fdcc59490e7e99f6d6005d883768bae7ebf66c171a7e3").unwrap(),
@@ -29,7 +29,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         // 0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9) + 1 which is the key in the
         // starknet contract for
         // ERC20_balances(0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9).high
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
                 H256::from_str("0x01c522d1063461697a1fdcc59490e7e99f6d6005d883768bae7ebf66c171a7e4").unwrap(),
@@ -56,7 +56,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::ClassHashAlreadyDeclared);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::ClassHashAlreadyDeclared);
     });
 }
 
@@ -86,7 +86,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             signature: bounded_vec!(),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::AccountNotDeployed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
     })
 }
 
@@ -116,6 +116,6 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             signature: bounded_vec!(),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     })
 }
