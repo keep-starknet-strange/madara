@@ -35,7 +35,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             signature: bounded_vec!(),
         };
 
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::AccountNotDeployed);
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
     })
 }
 
@@ -54,7 +54,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
             ..InvokeTransaction::default()
         };
 
-        assert_err!(Starknet::invoke(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -232,6 +232,6 @@ fn test_verify_nonce() {
         let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON").into();
 
-        assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }

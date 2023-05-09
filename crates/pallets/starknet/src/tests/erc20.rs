@@ -58,7 +58,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         let events = System::events();
         // Check transaction event (deployment)
         pretty_assertions::assert_eq!(
-            Event::<Test>::StarknetEvent(EventWrapper {
+            Event::<MockRuntime>::StarknetEvent(EventWrapper {
                 keys: bounded_vec![
                     H256::from_str("0x026b160f10156dea0639bec90696772c640b9706a47f5b8c52ea1abe5858b34d").unwrap()
                 ],
