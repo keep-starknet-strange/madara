@@ -853,7 +853,7 @@
     }
 }
 
-<span class="doccomment">/// Removes the &quot;0x&quot; prefix from a given hexadecimal string an pads it with 0s
+<span class="doccomment">/// Removes the &quot;0x&quot; prefix from a given hexadecimal string and pads it with 0s
 </span><span class="attr">#[inline(always)]
 </span><span class="kw">fn </span>format_hex(input: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(<span class="string">&quot;{:0&gt;64}&quot;</span>, input.strip_prefix(<span class="string">&quot;0x&quot;</span>).unwrap_or(input))

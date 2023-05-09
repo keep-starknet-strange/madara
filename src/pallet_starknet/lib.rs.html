@@ -1024,8 +1024,8 @@
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;runtime::starknet&quot;</span>;
 
-<span class="comment">// TODO: don&#39;t use a const for this.
-// FIXME #243
+<span class="comment">// TODO: don&#39;t use a const for this but a real sequencer address for block header
+// FIXME https://github.com/keep-starknet-strange/madara/issues/243
 </span><span class="kw">pub const </span>SEQUENCER_ADDRESS: [u8; <span class="number">32</span>] =
     [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">2</span>];
 
