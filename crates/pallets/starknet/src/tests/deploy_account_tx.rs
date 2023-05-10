@@ -205,7 +205,10 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             max_fee: U256::from(u128::MAX),
         };
 
-        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::deploy_account(none_origin, transaction),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
@@ -269,7 +272,10 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             max_fee: U256::from(u128::MAX),
         };
 
-        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::deploy_account(none_origin, transaction),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
@@ -342,16 +348,19 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             max_fee: U256::from(u128::MAX),
         };
 
-        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::deploy_account(none_origin, transaction),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
 fn set_infinite_tokens(address: [u8; 32]) {
-    StorageView::<Test>::insert(
+    StorageView::<MockRuntime>::insert(
         get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 0),
         U256::from(u128::MAX),
     );
-    StorageView::<Test>::insert(
+    StorageView::<MockRuntime>::insert(
         get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 1),
         U256::from(u128::MAX),
     );
@@ -364,7 +373,7 @@ fn set_signer(address: [u8; 32], account_type: AccountType) {
         AccountType::Openzeppelin => ("Account_public_key", vec![]),
         _ => return,
     };
-    StorageView::<Test>::insert(
+    StorageView::<MockRuntime>::insert(
         get_storage_key(&address, var_name, &args, 0),
         U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap(),
     );

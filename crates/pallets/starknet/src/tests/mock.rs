@@ -114,7 +114,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     // ARGENT CLASSES
     let proxy_class_hash = H256::from_str(ARGENT_PROXY_CLASS_HASH_V0).unwrap().to_fixed_bytes();
-    let account_class_hash = H256::from_str(ARGENT_ACCOUNT_CLASS_HASH_V0).unwrap().to_fixed_bytes();
+    let account_class_hash_v0 = H256::from_str(ARGENT_ACCOUNT_CLASS_HASH_V0).unwrap().to_fixed_bytes();
 
     let blockifier_account_address = H256::from_str(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap().to_fixed_bytes();
     let blockifier_account_class_hash = H256::from_str(BLOCKIFIER_ACCOUNT_CLASS).unwrap().to_fixed_bytes();
@@ -145,17 +145,17 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT, AccountType::ArgentV0);
 
     // OPENZEPPELIN ACCOUNT CONTRACT
-    let openzeppelin_class_hash_bytes = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
+    let openzeppelin_class_hash = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
     let openzeppelin_account_address = get_account_address(AccountType::Openzeppelin);
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_class_hash_bytes = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
+    let argent_class_hash = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
     let argent_account_address = get_account_address(AccountType::Argent);
 
     // BRAAVOS ACCOUNT CONTRACT
-    let braavos_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
+    let braavos_class_hash = <[u8; 32]>::from_hex(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
     let braavos_account_address = get_account_address(AccountType::Braavos);
-    let braavos_proxy_class_hash_bytes = <[u8; 32]>::from_hex(BRAAVOS_PROXY_CLASS_HASH).unwrap();
+    let braavos_proxy_class_hash = <[u8; 32]>::from_hex(BRAAVOS_PROXY_CLASS_HASH).unwrap();
     let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
 
     // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
@@ -189,24 +189,24 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (other_contract_address, other_class_hash),
             (l1_handler_contract_address, l1_handler_class_hash),
             (blockifier_account_address, blockifier_account_class_hash),
-            (openzeppelin_account_address, openzeppelin_class_hash_bytes),
-            (argent_account_address, argent_class_hash_bytes),
-            (braavos_account_address, braavos_class_hash_bytes),
-            (braavos_proxy_address, braavos_proxy_class_hash_bytes),
+            (openzeppelin_account_address, openzeppelin_class_hash),
+            (argent_account_address, argent_class_hash),
+            (braavos_account_address, braavos_class_hash),
+            (braavos_proxy_address, braavos_proxy_class_hash),
             (simple_account_address, simple_account_class_hash),
             (inner_call_account_address, inner_call_account_class_hash),
             (fee_token_address, token_class_hash),
         ],
         contract_classes: vec![
             (proxy_class_hash, ContractClassWrapper::try_from(argent_proxy_class).unwrap()),
-            (account_class_hash, ContractClassWrapper::try_from(argent_account_class).unwrap()),
+            (account_class_hash_v0, ContractClassWrapper::try_from(argent_account_class_v0).unwrap()),
             (other_class_hash, ContractClassWrapper::try_from(test_class).unwrap()),
             (l1_handler_class_hash, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
             (blockifier_account_class_hash, ContractClassWrapper::try_from(blockifier_account_class).unwrap()),
-            (openzeppelin_class_hash_bytes, ContractClassWrapper::try_from(openzeppelin_account_class).unwrap()),
-            (argent_class_hash_bytes, ContractClassWrapper::try_from(argent_account_class).unwrap()),
-            (braavos_class_hash_bytes, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
-            (braavos_proxy_class_hash_bytes, ContractClassWrapper::try_from(braavos_proxy_class).unwrap()),
+            (openzeppelin_class_hash, ContractClassWrapper::try_from(openzeppelin_account_class).unwrap()),
+            (argent_class_hash, ContractClassWrapper::try_from(argent_account_class).unwrap()),
+            (braavos_class_hash, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
+            (braavos_proxy_class_hash, ContractClassWrapper::try_from(braavos_proxy_class).unwrap()),
             (simple_account_class_hash, ContractClassWrapper::try_from(simple_account_class).unwrap()),
             (inner_call_account_class_hash, ContractClassWrapper::try_from(inner_call_account_class).unwrap()),
             (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),

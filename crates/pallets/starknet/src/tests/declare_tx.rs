@@ -153,7 +153,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -212,7 +212,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
@@ -271,6 +271,6 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }

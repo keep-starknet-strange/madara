@@ -261,7 +261,10 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::invoke(none_origin, transaction.into()),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
@@ -291,7 +294,10 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::invoke(none_origin, transaction.into()),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
@@ -321,7 +327,10 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
 
-        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::invoke(none_origin, transaction.into()),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
@@ -340,18 +349,21 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         let storage_key = get_storage_var_address("destination", &[]).unwrap();
         let destination =
             <[u8; 32]>::from_hex("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(); // Test contract address
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (transaction.sender_address, H256::from(storage_key.0.0.0)),
             U256::from(destination),
         );
 
         let storage_key = get_storage_var_address("function_selector", &[]).unwrap();
         let selector = get_selector_from_name("without_arg").unwrap();
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (transaction.sender_address, H256::from(storage_key.0.0.0)),
             U256::from(selector.to_bytes_be()),
         );
 
-        assert_err!(Starknet::invoke(none_origin, transaction.into()), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::invoke(none_origin, transaction.into()),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
