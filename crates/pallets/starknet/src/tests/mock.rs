@@ -5,31 +5,34 @@ use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use hex::FromHex;
 use mp_starknet::execution::types::ContractClassWrapper;
-use pallet_transaction_payment::Multiplier;
 use sp_core::{H256, U256};
 use sp_runtime::testing::Header;
-use sp_runtime::traits::{BlakeTwo256, IdentityLookup, One};
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
 use {crate as pallet_starknet, frame_system as system};
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
+type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
 pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
 pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
 pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
 pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
+pub const TOKEN_CONTRACT_CLASS_HASH: &str = "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
+pub const BLOCKIFIER_ACCOUNT_ADDRESS: &str = "0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77";
+pub const FEE_TOKEN_ADDRESS: &str = "0x00000000000000000000000000000000000000000000000000000000000000AA";
 
 pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
     serde_json::from_slice(contract_content).unwrap()
 }
+
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-    pub enum Test where
+    pub enum MockRuntime where
         Block = Block,
         NodeBlock = Block,
         UncheckedExtrinsic = UncheckedExtrinsic,
@@ -40,7 +43,7 @@ frame_support::construct_runtime!(
     }
 );
 
-impl pallet_timestamp::Config for Test {
+impl pallet_timestamp::Config for MockRuntime {
     /// A timestamp: milliseconds since the unix epoch.
     type Moment = u64;
     type OnTimestampSet = ();
@@ -48,7 +51,7 @@ impl pallet_timestamp::Config for Test {
     type WeightInfo = ();
 }
 
-impl system::Config for Test {
+impl system::Config for MockRuntime {
     type BaseCallFilter = frame_support::traits::Everything;
     type BlockWeights = ();
     type BlockLength = ();
@@ -79,30 +82,24 @@ parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
 }
 
-impl pallet_starknet::Config for Test {
+impl pallet_starknet::Config for MockRuntime {
     type RuntimeEvent = RuntimeEvent;
     type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
 }
-parameter_types! {
-    pub FeeMultiplier: Multiplier = Multiplier::one();
-}
-pub const TOKEN_CONTRACT_CLASS_HASH: &str = "06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-    let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+    let mut t = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
     // ARGENT CLASSES
-    let proxy_class_hash = <[u8; 32]>::from_hex(ARGENT_PROXY_CLASS_HASH_V0.strip_prefix("0x").unwrap()).unwrap();
-    let account_class_hash = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH_V0.strip_prefix("0x").unwrap()).unwrap();
+    let proxy_class_hash = H256::from_str(ARGENT_PROXY_CLASS_HASH_V0).unwrap().to_fixed_bytes();
+    let account_class_hash = H256::from_str(ARGENT_ACCOUNT_CLASS_HASH_V0).unwrap().to_fixed_bytes();
 
-    let blockifier_account_address =
-        <[u8; 32]>::from_hex("02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap();
-    let blockifier_account_class_hash =
-        <[u8; 32]>::from_hex(BLOCKIFIER_ACCOUNT_CLASS.strip_prefix("0x").unwrap()).unwrap();
+    let blockifier_account_address = H256::from_str(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap().to_fixed_bytes();
+    let blockifier_account_class_hash = H256::from_str(BLOCKIFIER_ACCOUNT_CLASS).unwrap().to_fixed_bytes();
 
     // TEST CLASSES
     let argent_proxy_class = get_contract_class(include_bytes!("../../../../../resources/argent_proxy_v0.json"));
@@ -122,39 +119,37 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
 
     // TEST CONTRACT
-    let other_contract_address_bytes =
+    let other_contract_address =
         <[u8; 32]>::from_hex("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
-    let other_class_hash_bytes = <[u8; 32]>::from_hex(TEST_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
+    let other_class_hash = H256::from_str(TEST_CLASS_HASH).unwrap().to_fixed_bytes();
 
     // L1 HANDLER CONTRACT
-    let l1_handler_contract_address_bytes =
+    let l1_handler_contract_address =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
-    let l1_handler_class_hash_bytes =
+    let l1_handler_class_hash =
         <[u8; 32]>::from_hex("01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8").unwrap();
 
     // FEE CONTRACT
-    let token_class_hash_str = TOKEN_CONTRACT_CLASS_HASH;
-    let token_class_hash_bytes = <[u8; 32]>::from_hex(token_class_hash_str).unwrap();
-    let fee_token_address =
-        <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+    let token_class_hash = H256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap().to_fixed_bytes();
+    let fee_token_address = H256::from_str(FEE_TOKEN_ADDRESS).unwrap().to_fixed_bytes();
 
-    pallet_starknet::GenesisConfig::<Test> {
+    pallet_starknet::GenesisConfig::<MockRuntime> {
         contracts: vec![
             (account_addr, proxy_class_hash),
-            (other_contract_address_bytes, other_class_hash_bytes),
-            (l1_handler_contract_address_bytes, l1_handler_class_hash_bytes),
+            (other_contract_address, other_class_hash),
+            (l1_handler_contract_address, l1_handler_class_hash),
             (blockifier_account_address, blockifier_account_class_hash),
             (simple_account_address, simple_account_class_hash),
-            (fee_token_address, token_class_hash_bytes),
+            (fee_token_address, token_class_hash),
         ],
         contract_classes: vec![
             (proxy_class_hash, ContractClassWrapper::try_from(argent_proxy_class).unwrap()),
             (account_class_hash, ContractClassWrapper::try_from(argent_account_class).unwrap()),
-            (other_class_hash_bytes, ContractClassWrapper::try_from(test_class).unwrap()),
-            (l1_handler_class_hash_bytes, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
+            (other_class_hash, ContractClassWrapper::try_from(test_class).unwrap()),
+            (l1_handler_class_hash, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
             (blockifier_account_class_hash, ContractClassWrapper::try_from(blockifier_account_class).unwrap()),
             (simple_account_class_hash, ContractClassWrapper::try_from(simple_account_class).unwrap()),
-            (token_class_hash_bytes, ContractClassWrapper::try_from(erc20_class).unwrap()),
+            (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
         ],
         fee_token_address,
         storage: vec![

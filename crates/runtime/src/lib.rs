@@ -1,5 +1,3 @@
-//! Definition of the Starknet Appchain runtime.
-//! A Starknet Appchain runtime can be used to run a Starknet Appchain, either as a standalone
 //! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don't support yet validity proofs and state updates to

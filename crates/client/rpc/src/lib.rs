@@ -13,12 +13,12 @@ use errors::StarknetRpcApiError;
 use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-pub use mc_rpc_core::StarknetRpcApiServer;
-use mc_rpc_core::{
-    to_rpc_contract_class, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
-    ContractAddress, ContractClassHash, FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass,
-    Syncing,
+use mc_rpc_core::types::{
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
+    FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
+use mc_rpc_core::utils::to_rpc_contract_class;
+pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -106,8 +106,8 @@ where
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
             StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
+                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending => None,
             },
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
@@ -123,11 +123,11 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
-    fn block_number(&self) -> RpcResult<mc_rpc_core::BlockNumber> {
+    fn block_number(&self) -> RpcResult<mc_rpc_core::types::BlockNumber> {
         self.current_block_number()
     }
 
-    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::BlockHashAndNumber> {
+    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::types::BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
         let block_hash = self.current_block_hash().map_err(|e| {
             error!("Failed to retrieve the current block hash: {}", e);
@@ -152,6 +152,7 @@ where
         Ok(block.header().transaction_count)
     }
 
+    /// get the storage at a given address and key and at a given block
     fn get_storage_at(
         &self,
         contract_address: FieldElement,
@@ -178,15 +179,11 @@ where
                 })?
             }
             StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => None,
+                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending => None,
             },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
-
-        println!("contract_address: {:?}", contract_address);
-        println!("key: {:?}", key);
-        println!("block_id: {:?}", substrate_block_hash);
 
         let runtime_api = self.client.runtime_api();
         let hex_address = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
@@ -196,7 +193,7 @@ where
 
         let hex_key = H256::from_str(&format_hex(&key)).map_err(|e| {
             error!("StorageKey: Failed to convert '{0}' to H256: {e}", key);
-            StarknetRpcApiError::InvalidStorageKey
+            StarknetRpcApiError::InternalServerError
         })?;
         let value = runtime_api
             .get_storage_at(substrate_block_hash, hex_address, hex_key)
@@ -205,8 +202,8 @@ where
                 StarknetRpcApiError::InternalServerError
             })?
             .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                error!("Failed to get storage from contract: {:#?}", e);
+                StarknetRpcApiError::ContractNotFound
             })?;
         Ok(format!("{:#x}", value))
     }
@@ -332,7 +329,7 @@ where
                     let highest_block_hash = format!("{:#x}", highest_block?.header().hash());
 
                     // Build the `SyncStatus` struct with the respective syn information
-                    Ok(Syncing::SyncStatus(mc_rpc_core::SyncStatus {
+                    Ok(Syncing::SyncStatus(mc_rpc_core::types::SyncStatus {
                         starting_block_num,
                         starting_block_hash,
                         current_block_num,
@@ -450,8 +447,8 @@ where
                 })?
             }
             StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::BlockTag::Pending => {
+                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending => {
                     block_status = BlockStatus::Pending;
                     None
                 }
@@ -482,7 +479,7 @@ where
     }
 }
 
-/// Removes the "0x" prefix from a given hexadecimal string an pads it with 0s
+/// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s
 #[inline(always)]
 fn format_hex(input: &str) -> String {
     format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))

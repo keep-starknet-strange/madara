@@ -17,7 +17,7 @@ fn given_contract_run_deploy_account_tx_works() {
         // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).low
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
                 H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647766").unwrap(),
@@ -28,7 +28,7 @@ fn given_contract_run_deploy_account_tx_works() {
         // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) + 1 which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).high
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
                 H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647767").unwrap(),
@@ -80,7 +80,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
         // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).low
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
                 H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647766").unwrap(),
@@ -91,7 +91,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
         // 0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888) + 1 which is the key in the
         // starknet contract for
         // ERC20_balances(0x015c7ddf2e57acc45be4c0dfa3c7b1aca474eeaab0041b89a30317238401c888).high
-        StorageView::<Test>::insert(
+        StorageView::<MockRuntime>::insert(
             (
                 Starknet::fee_token_address(),
                 H256::from_str("0x0202fb79bbf78d825c665d496594cbc6e9ddc4bb0a0e8506f361ba208c647767").unwrap(),
@@ -120,7 +120,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
         assert_ok!(Starknet::deploy_account(none_origin.clone(), transaction.clone()));
         // Check that the account was created
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
-        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::AccountAlreadyDeployed);
+        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<MockRuntime>::AccountAlreadyDeployed);
     });
 }
 
@@ -145,7 +145,10 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             max_fee: U256::from(u128::MAX),
         };
 
-        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::deploy_account(none_origin, transaction),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
 
@@ -175,6 +178,9 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
             max_fee: U256::from(u128::MAX),
         };
 
-        assert_err!(Starknet::deploy_account(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(
+            Starknet::deploy_account(none_origin, transaction),
+            Error::<MockRuntime>::TransactionExecutionFailed
+        );
     });
 }
