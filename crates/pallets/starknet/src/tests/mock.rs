@@ -14,8 +14,12 @@ use starknet_api::api_core::{calculate_contract_address as _calculate_contract_a
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
+use starknet_core::types::FieldElement as CoreFieldElement;
+use starknet_core::utils::get_storage_var_address;
 use starknet_crypto::{sign, FieldElement};
 use {crate as pallet_starknet, frame_system as system};
+
+use crate::types::ContractStorageKeyWrapper;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -210,146 +214,53 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
         fee_token_address,
         storage: vec![
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0) which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0).low
-                    H256::from_str("0x03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb403f").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[simple_account_address], 0),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0) + 1 which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0).high
-                    H256::from_str("0x03701645da930cd7f63318f7f118a9134e72d64ab73c72ece81cae2bd5fb4040").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[simple_account_address], 1),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77) which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77).low (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x06afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00aa").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[blockifier_account_address], 0),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77) + 1 which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77).high (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x06afaa15cba5e9ea552a55fec494d2d859b4b73506794bf5afbb3d73c1fb00ab").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[blockifier_account_address], 1),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012) which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012).low (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x0654f5a2b807de48bfebf66b84267f110e2577edec66de3fb711a04d491e29bc").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[openzeppelin_account_address], 0),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012) + 1 which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x04b6c8fa64a0ce8c8eae8e3d421d74fcb77a87ecb771c882ac5bacdccd598012).high (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x0654f5a2b807de48bfebf66b84267f110e2577edec66de3fb711a04d491e29bd").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[openzeppelin_account_address], 1),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5) which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x060b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8e").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[argent_account_address], 0),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5) + 1 which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5).high (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x060b6ac06a42730e54bfd5d389ca51256c926bc9317adb44f7c1029711f8bf8f").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[argent_account_address], 1),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122) which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x078f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149a").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[braavos_account_address], 0),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    fee_token_address,
-                    // pedersen(sn_keccak(b"ERC20_balances"),
-                    // 0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122) + 1 which is the key in the
-                    // starknet contract for
-                    // ERC20_balances(0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122).high (this
-                    // address corresponds to the sender address of the invoke tx from json)
-                    H256::from_str("0x078f9a7bb317327b7ad49232784f8e6acfa88269879253bbf780c5bc7a18149b").unwrap(),
-                ),
+                get_storage_key(&fee_token_address, "ERC20_balances", &[braavos_account_address], 1),
                 U256::from(u128::MAX),
             ),
             (
-                (
-                    openzeppelin_account_address,
-                    // pedersen(sn_keccak(b"Account_public_key")) which is the key in the starknet contract
-                    H256::from_str("0x01379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f").unwrap(),
-                ),
+                get_storage_key(&openzeppelin_account_address, "Account_public_key", &[], 0),
                 U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
+            (get_storage_key(&argent_account_address, "_signer", &[], 0), U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap()),
             (
-                (
-                    argent_account_address,
-                    // pedersen(sn_keccak(b"_signer")) which is the key in the starknet contract
-                    H256::from_str("0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05").unwrap(),
-                ),
+                get_storage_key(&braavos_account_address, "Account_signers", &[[0; 32]], 0),
                 U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap(),
-            ),
-            (
-                (
-                    braavos_account_address,
-                    // pedersen(sn_keccak(b"Account_signers"), 0x0) which is the key in the starknet contract
-                    H256::from_str("0x01f23302c120008f28b62f70efc67ccd75cfe0b9631d77df231d78b0538dcd8f").unwrap(),
-                ),
-                U256::from_str("0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2").unwrap(),
             ),
         ],
         ..Default::default()
@@ -374,6 +285,26 @@ pub(crate) fn run_to_block(n: u64) {
     }
 }
 
+/// Returns the storage update to set infinite tokens for the provided address
+/// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
+/// starknet contract for storage_name(key_1, key_2, ..., key_n).
+/// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
+pub fn get_storage_key(
+    address: &[u8; 32],
+    storage_name: &str,
+    keys: &[[u8; 32]],
+    storage_key_offset: u64,
+) -> ContractStorageKeyWrapper {
+    let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
+    let mut storage_key = get_storage_var_address(
+        storage_name,
+        keys.iter().filter_map(|x| CoreFieldElement::from_bytes_be(x).ok()).collect::<Vec<_>>().as_slice(),
+    )
+    .unwrap();
+    storage_key = storage_key + CoreFieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
+    (*address, H256::from(storage_key.to_bytes_be()))
+}
+
 pub enum AccountType {
     Argent,
     ArgentV0,
@@ -384,6 +315,7 @@ pub enum AccountType {
     InnerCall,
 }
 
+/// Returns the account class hash, the contract data and the salt for an account type
 pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 32], Vec<&str>) {
     let (account_class_hash, cd_raw) = match account_type {
         AccountType::Argent => (H256::from_str(ARGENT_ACCOUNT_CLASS_HASH).unwrap(), vec![]),
@@ -415,6 +347,7 @@ pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 
     (addr.0.0.0, account_class_hash.to_fixed_bytes(), cd_raw)
 }
 
+/// Returns the account address for an account type
 pub fn get_account_address(account_type: AccountType) -> [u8; 32] {
     account_helper(TEST_ACCOUNT_SALT, account_type).0
 }

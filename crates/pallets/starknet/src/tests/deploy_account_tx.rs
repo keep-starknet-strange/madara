@@ -4,8 +4,6 @@ use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_core::{H256, U256};
-use starknet_core::types::FieldElement;
-use starknet_core::utils::get_storage_var_address;
 
 use super::mock::*;
 use crate::{Error, Event, StorageView};
@@ -349,15 +347,12 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 }
 
 fn set_infinite_tokens(address: [u8; 32]) {
-    let storage_key_low =
-        get_storage_var_address("ERC20_balances", &[FieldElement::from_bytes_be(&address).unwrap()]).unwrap();
-    let storage_key_high = storage_key_low + FieldElement::ONE;
     StorageView::<Test>::insert(
-        (Starknet::fee_token_address(), H256::from(storage_key_low.to_bytes_be())),
+        get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 0),
         U256::from(u128::MAX),
     );
     StorageView::<Test>::insert(
-        (Starknet::fee_token_address(), H256::from(storage_key_high.to_bytes_be())),
+        get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 1),
         U256::from(u128::MAX),
     );
 }
@@ -365,13 +360,12 @@ fn set_infinite_tokens(address: [u8; 32]) {
 fn set_signer(address: [u8; 32], account_type: AccountType) {
     let (var_name, args) = match account_type {
         AccountType::Argent => ("_signer", vec![]),
-        AccountType::Braavos => ("Account_signers", vec![FieldElement::ZERO]),
+        AccountType::Braavos => ("Account_signers", vec![[0; 32]]),
         AccountType::Openzeppelin => ("Account_public_key", vec![]),
         _ => return,
     };
-    let storage_key = get_storage_var_address(var_name, &args).unwrap();
     StorageView::<Test>::insert(
-        (address, H256::from(storage_key.to_bytes_be())),
+        get_storage_key(&address, var_name, &args, 0),
         U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap(),
     );
 }
