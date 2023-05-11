@@ -30,6 +30,15 @@ pub trait StarknetRpcApi {
     #[method(name = "getBlockTransactionCount")]
     fn get_block_transaction_count(&self, block_id: BlockId) -> RpcResult<u128>;
 
+    /// Get the value of the storage at the given address and key, at the given block id
+    #[method(name = "getStorageAt")]
+    fn get_storage_at(
+        &self,
+        contract_address: ContractAddress,
+        key: StorageKey,
+        block_id: BlockId,
+    ) -> RpcResult<FieldElement>;
+
     /// Call a contract function at a given block id
     #[method(name = "call")]
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>>;

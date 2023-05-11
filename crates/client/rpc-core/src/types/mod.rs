@@ -24,6 +24,7 @@ pub type ContractClassVersion = String;
 pub type FieldElement = String;
 pub type Offset = String;
 pub type Program = String;
+pub type StorageKey = String;
 pub type Selector = FieldElement;
 pub type SierraProgram = Vec<FieldElement>;
 pub type MaxFee = String;
