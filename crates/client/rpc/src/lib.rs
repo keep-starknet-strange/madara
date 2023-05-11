@@ -421,6 +421,19 @@ where
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
+
+	/// Returns the chain id.
+	fn get_chain_id(&self) -> RpcResult<String> {
+		let hash = self.client.info().best_hash;
+		let res = self.client
+			.runtime_api()
+			.chain_id(hash)
+			.map_err(| e| {
+				error!("Request parameters error: {e}");
+				StarknetRpcApiError::InternalServerError
+			})?;
+		Ok(res.to_string())
+	}
 }
 
 /// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s

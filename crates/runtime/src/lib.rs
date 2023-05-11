@@ -298,6 +298,9 @@ impl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper> {
             Starknet::contract_class_by_class_hash(class_hash)
         }
+		fn chain_id() -> u128 {
+			Starknet::chain_id()
+		}
     }
 
     #[cfg(feature = "runtime-benchmarks")]

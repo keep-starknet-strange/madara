@@ -25,6 +25,9 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 /// Specialized `ChainSpec` for development.
 pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
 
+/// Starknet testnet SN_GOERLI
+pub const CHAIN_ID_STARKNET_TESTNET: u128 = 0x534e5f474f45524c49;
+
 /// Extension for the dev genesis config to support a custom changes to the genesis state.
 #[derive(Serialize, Deserialize)]
 pub struct DevGenesisExt {
@@ -285,6 +288,7 @@ fn testnet_genesis(
             ],
             fee_token_address,
             _phantom: Default::default(),
+			chain_id: CHAIN_ID_STARKNET_TESTNET,
         },
     }
 }

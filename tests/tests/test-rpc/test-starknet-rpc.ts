@@ -12,6 +12,7 @@ import {
   ACCOUNT_CONTRACT_CLASS_HASH,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
+  CHAIN_ID_STARKNET_TESTNET,
 } from "./constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
@@ -263,5 +264,12 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(status["sync_status"]["highest_block_hash"]).to.be.equal(
       current_block["block_hash"]
     );
+  });
+
+  it("chainId", async function () {
+    const chainId = await providerRPC.getChainId();
+
+    expect(chainId).to.not.be.undefined;
+    expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
   });
 });

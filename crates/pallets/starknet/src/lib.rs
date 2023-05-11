@@ -250,6 +250,11 @@ pub mod pallet {
     #[pallet::getter(fn fee_token_address)]
     pub(super) type FeeTokenAddress<T: Config> = StorageValue<_, ContractAddressWrapper, ValueQuery>;
 
+	/// The chain id.
+	#[pallet::storage]
+	#[pallet::getter(fn chain_id)]
+	pub(super) type ChainId<T: Config> = StorageValue<_, u128, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -270,6 +275,8 @@ pub mod pallet {
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddressWrapper,
         pub _phantom: PhantomData<T>,
+		/// The chain id.
+		pub chain_id: u128,
     }
 
     #[cfg(feature = "std")]
@@ -281,6 +288,7 @@ pub mod pallet {
                 storage: vec![],
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
+				chain_id: Default::default(),
             }
         }
     }
@@ -308,7 +316,9 @@ pub mod pallet {
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
-        }
+			// Set the chain id from the genesis config.
+			ChainId::<T>::put(self.chain_id);
+		}
     }
 
     /// The Starknet pallet events.
