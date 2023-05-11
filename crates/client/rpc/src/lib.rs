@@ -5,11 +5,13 @@
 mod errors;
 mod madara_backend_client;
 
+use std::io::Read;
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
+use flate2::read::GzDecoder;
 use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
@@ -18,12 +20,10 @@ use mc_rpc_core::types::{
     BroadcastedDeclareTransactionV2, ContractAddress, ContractClassHash, FieldElement, FunctionCall,
     MaybePendingBlockWithTxHashes, RPCContractClass, Syncing, Transaction,
 };
-use mc_rpc_core::utils::to_rpc_contract_class;
+use mc_rpc_core::utils::{format_hex, to_btree_map_entrypoints, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::execution::types::{
-    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints, MaxEntryPointsType,
-};
+use mp_starknet::execution::types::{ContractClassWrapper, ProgramWrapper};
 use mp_starknet::transaction::types::DeclareTransaction;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -484,13 +484,16 @@ where
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 
-    /// Declare a new contract class
+    /// Declares a new contract class
     ///
     /// # Arguments
     ///
-    /// * `declare_transaction` - The declaration transaction
+    /// * `declare_transaction` - The declare transaction
     ///
     /// # Returns
+    ///
+    /// * `transaction_hash` - The hash of the transaction
+    /// * `class_hash` - The hash of the declared class
     fn add_declare_transaction(
         &self,
         declare_transaction: Transaction,
@@ -511,55 +514,19 @@ where
 
         let runtime_api = self.client.runtime_api();
 
-        // TODO: clean this code
-        // We can unwrap safely as we already checked the length of the vectors
-        let mut entry_points_by_type: BoundedBTreeMap<
-            EntryPointTypeWrapper,
-            BoundedVec<EntryPointWrapper, MaxEntryPoints>,
-            MaxEntryPointsType,
-        > = BoundedBTreeMap::new();
-        entry_points_by_type
-            .try_insert(
-                EntryPointTypeWrapper::Constructor,
-                BoundedVec::try_from(
-                    tx.contract_class
-                        .entry_points_by_type
-                        .constructor
-                        .iter()
-                        .map(|e| EntryPointWrapper::from(e.clone()))
-                        .collect::<Vec<_>>(),
-                )
-                .unwrap(),
-            )
-            .unwrap();
-        entry_points_by_type
-            .try_insert(
-                EntryPointTypeWrapper::External,
-                BoundedVec::try_from(
-                    tx.contract_class
-                        .entry_points_by_type
-                        .external
-                        .iter()
-                        .map(|e| EntryPointWrapper::from(e.clone()))
-                        .collect::<Vec<_>>(),
-                )
-                .unwrap(),
-            )
-            .unwrap();
-        entry_points_by_type
-            .try_insert(
-                EntryPointTypeWrapper::L1Handler,
-                BoundedVec::try_from(
-                    tx.contract_class
-                        .entry_points_by_type
-                        .l_1_handler
-                        .iter()
-                        .map(|e| EntryPointWrapper::from(e.clone()))
-                        .collect::<Vec<_>>(),
-                )
-                .unwrap(),
-            )
-            .unwrap();
+        // Program is send as gzip + base64 encoded, we need to decompress it
+        // Decode the base64 encoded string
+        let compressed_bytes = base64::decode(&tx.contract_class.program).unwrap();
+
+        // Create a GzipDecoder to decompress the bytes
+        let mut gz = GzDecoder::new(&compressed_bytes[..]);
+
+        // Read the decompressed bytes into a Vec<u8>
+        let mut decompressed_bytes = Vec::new();
+        gz.read_to_end(&mut decompressed_bytes).unwrap();
+
+        // Deserialize the decompressed bytes into a Rust struct using serde_json
+        let program: ProgramWrapper = serde_json::from_slice(&decompressed_bytes).unwrap();
 
         // TODO: Add support for V2 Declare TXs
         // TODO: remove unwraps
@@ -577,8 +544,11 @@ where
                     )
                     .unwrap(),
                     contract_class: ContractClassWrapper {
-                        program: serde_json::from_str(&tx.contract_class.program).unwrap(),
-                        entry_points_by_type,
+                        program,
+                        entry_points_by_type: BoundedBTreeMap::try_from(to_btree_map_entrypoints(
+                            tx.contract_class.entry_points_by_type,
+                        ))
+                        .unwrap(),
                     },
                 },
             )
@@ -590,10 +560,4 @@ where
         // TODO: use output
         Ok(AddDeclareTransactionOutput { transaction_hash: "0x0".to_string(), class_hash: "0x0".to_string() })
     }
-}
-
-/// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s
-#[inline(always)]
-fn format_hex(input: &str) -> String {
-    format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))
 }

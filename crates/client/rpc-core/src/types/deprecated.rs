@@ -46,8 +46,14 @@ impl From<EntryPointWrapper> for DeprecatedCairoEntryPoint {
 
 impl From<DeprecatedCairoEntryPoint> for EntryPointWrapper {
     fn from(value: DeprecatedCairoEntryPoint) -> Self {
-        let selector = <[u8; 32]>::from_hex(&value.selector).unwrap();
-        let offset = value.offset.parse::<u128>().unwrap();
+        let selector = <[u8; 32]>::from_hex(format_hex(&value.selector)).unwrap();
+        let offset = u128::from_str_radix(&format_hex(&value.offset), 16).unwrap();
         Self { selector, offset }
     }
+}
+
+/// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s
+#[inline(always)]
+fn format_hex(input: &str) -> String {
+    format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))
 }

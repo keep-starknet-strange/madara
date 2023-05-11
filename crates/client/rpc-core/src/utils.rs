@@ -61,3 +61,38 @@ pub(crate) fn _to_deprecated_entrypoint_by_type(
     });
     DeprecatedEntryPointsByType { constructor, external, l_1_handler }
 }
+
+/// Returns a hash map of entry point types to entrypoint from deprecated entry point by type
+pub fn to_btree_map_entrypoints(
+    entries: DeprecatedEntryPointsByType,
+) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
+    let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
+        BTreeMap::new();
+    // We can unwrap safely as we already checked the length of the vectors
+    entry_points_by_type.insert(
+        EntryPointTypeWrapper::Constructor,
+        BoundedVec::try_from(
+            entries.constructor.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>(),
+        )
+        .unwrap(),
+    );
+    entry_points_by_type.insert(
+        EntryPointTypeWrapper::External,
+        BoundedVec::try_from(entries.external.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>())
+            .unwrap(),
+    );
+    entry_points_by_type.insert(
+        EntryPointTypeWrapper::L1Handler,
+        BoundedVec::try_from(
+            entries.l_1_handler.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>(),
+        )
+        .unwrap(),
+    );
+    entry_points_by_type
+}
+
+/// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s
+#[inline(always)]
+pub fn format_hex(input: &str) -> String {
+    format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))
+}
