@@ -30,6 +30,8 @@ starknet_api = { workspace = true, default-features = false }
 cairo-vm = { workspace = true }
 
 # Other third party dependencies
+bitvec = { workspace = true, features = ["alloc"] }
+hex = { version = "0.4.3", default-features = false }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 	"derive",
 	"max-encoded-len",
@@ -37,10 +39,9 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.96", default-features = false }
-bitvec = { workspace = true, features = ["alloc"] }
-hex = { version = "0.4.3", default-features = false }
 thiserror-no-std = { workspace = true }
 derive_more = { workspace = true, features = ["constructor"] }
+lazy_static = { workspace = true }
 
 [dev-dependencies]
 rand = "0.8.5"

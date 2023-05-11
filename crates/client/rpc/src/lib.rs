@@ -152,6 +152,62 @@ where
         Ok(block.header().transaction_count)
     }
 
+    /// get the storage at a given address and key and at a given block
+    fn get_storage_at(
+        &self,
+        contract_address: FieldElement,
+        key: FieldElement,
+        block_id: StarknetBlockId,
+    ) -> RpcResult<String> {
+        let substrate_block_hash = match block_id {
+            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+                self.client.as_ref(),
+                &self.backend,
+                H256::from_str(&h).map_err(|e| {
+                    error!("Failed to convert '{h}' to H256: {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?,
+            )
+            .map_err(|e| {
+                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
+            StarknetBlockId::BlockNumber(n) => {
+                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
+                    error!("Failed to retrieve the hash of block number '{n}': {e}");
+                    StarknetRpcApiError::BlockNotFound
+                })?
+            }
+            StarknetBlockId::BlockTag(t) => match t {
+                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
+                mc_rpc_core::types::BlockTag::Pending => None,
+            },
+        }
+        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+
+        let runtime_api = self.client.runtime_api();
+        let hex_address = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
+            error!("Address: Failed to convert '{0}' to [u8; 32]: {e}", contract_address);
+            StarknetRpcApiError::ContractNotFound
+        })?;
+
+        let hex_key = H256::from_str(&format_hex(&key)).map_err(|e| {
+            error!("StorageKey: Failed to convert '{0}' to H256: {e}", key);
+            StarknetRpcApiError::InternalServerError
+        })?;
+        let value = runtime_api
+            .get_storage_at(substrate_block_hash, hex_address, hex_key)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to get storage from contract: {:#?}", e);
+                StarknetRpcApiError::ContractNotFound
+            })?;
+        Ok(format!("{:#x}", value))
+    }
+
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");

@@ -2,7 +2,7 @@ import "@keep-starknet-strange/madara-api-augment";
 import { type ApiPromise } from "@polkadot/api";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
-import { stringify, u8aToHex } from "@polkadot/util";
+import { stringify, u8aWrapBytes } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
@@ -94,7 +94,6 @@ export function declare(
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
-    hash: "", // leave empty for now, will be filled in by the runtime
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
@@ -107,8 +106,8 @@ export function declare(
       callerAddress: contractAddress,
     },
     contractClass: {
-      program: u8aToHex(Buffer.from(stringify(erc20Json.program))),
-      entryPointsByType: u8aToHex(
+      program: u8aWrapBytes(Buffer.from(stringify(erc20Json.program))),
+      entryPointsByType: u8aWrapBytes(
         Buffer.from(stringify(erc20Json.entry_points_by_type))
       ),
     },

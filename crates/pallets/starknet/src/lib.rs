@@ -88,7 +88,7 @@ use sp_runtime::DigestItem;
 use starknet_api::api_core::ContractAddress;
 use starknet_api::transaction::EventContent;
 
-use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper};
+use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -835,6 +835,16 @@ impl<T: Config> Pallet<T> {
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
+    }
+
+    /// Get storage value at
+    pub fn get_storage_at(
+        contract_address: ContractAddressWrapper,
+        key: StorageKeyWrapper,
+    ) -> Result<U256, DispatchError> {
+        // Get state
+        ensure!(ContractClassHashes::<T>::contains_key(contract_address), Error::<T>::ContractNotFound);
+        Ok(Self::storage((contract_address, key)))
     }
 
     /// Store a Starknet block in the blockchain.

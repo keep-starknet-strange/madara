@@ -14,7 +14,7 @@ Steps to follow :
 
 The following benchmarks are available :
 
-- `yarn test:chain` : Simple stresstest of the chain
+- `yarn test:chain` : Simple stress test of the chain
 - `yarn test:storage` : Deploys and execute cairo programs to benchmark the
   storage overhead
 - `yarn test:execution` : Executes fib500 cairo programs

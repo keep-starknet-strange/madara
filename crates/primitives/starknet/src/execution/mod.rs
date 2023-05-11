@@ -91,6 +91,9 @@ pub mod types {
     /// Type wrapper for a contract address.
     pub type ContractAddressWrapper = [u8; 32];
 
+    /// Type wrapper for a storage key;
+    pub type StorageKeyWrapper = sp_core::H256;
+
     /// Wrapper type for class hash field.
     pub type ClassHashWrapper = [u8; 32];
     pub use super::call_entrypoint_wrapper::*;

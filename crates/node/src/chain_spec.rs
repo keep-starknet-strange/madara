@@ -181,7 +181,7 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let account_class =
-        get_contract_class(include_bytes!("../../../resources/account/account.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../resources/account/simple/account.json")).try_into().unwrap();
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
     let erc20_class: ContractClassWrapper =

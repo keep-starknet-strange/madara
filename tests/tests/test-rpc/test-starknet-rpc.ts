@@ -266,6 +266,50 @@ describeDevMadara("Starknet RPC", (context) => {
     );
   });
 
+  it("Gets value from the fee contract storage", async function () {
+    const block = await providerRPC.getBlockHashAndNumber();
+
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+
+    const value = await providerRPC.getStorageAt(
+      FEE_TOKEN_ADDRESS,
+      // ERC20_balances(0x01).low
+      "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
+      block_hash
+    );
+    expect(value).to.be.equal("0xffffffffffffffffffffffffffffffff");
+  });
+
+  it("Returns 0 if the storage slot is not set", async function () {
+    const block = await providerRPC.getBlockHashAndNumber();
+
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+
+    const value = await providerRPC.getStorageAt(
+      FEE_TOKEN_ADDRESS,
+      // ERC20_balances(0x01).low
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      block_hash
+    );
+  });
+
+  it("Returns an error if the contract does not exist", async function () {
+    const block = await providerRPC.getBlockHashAndNumber();
+
+    const block_hash = `0x${block.block_hash.slice(2).padStart(64, "0")}`;
+
+    try {
+      await providerRPC.getStorageAt(
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        block_hash
+      );
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("20: Contract not found");
+    }
+  });
+
   it("chainId", async function () {
     const chainId = await providerRPC.getChainId();
 

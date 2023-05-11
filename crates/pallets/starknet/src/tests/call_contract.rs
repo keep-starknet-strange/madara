@@ -15,14 +15,12 @@ fn given_call_contract_call_works() {
         run_to_block(1);
 
         let origin = RuntimeOrigin::none();
-        // 0x0F == 15
-        let sender_account =
-            <[u8; 32]>::from_hex("000000000000000000000000000000000000000000000000000000000000000F").unwrap();
+        let sender_account = get_account_address(AccountType::NoValidate);
 
         // Deploy ERC20 Contract, as it is already declared in fixtures
         // Deploy ERC20 contract
         let constructor_calldata: BoundedVec<sp_core::U256, ConstU32<{ u32::MAX }>> = bounded_vec![
-            U256::from(15), // Simple contract address
+            U256::from(sender_account), // Simple contract address
             U256::from_str("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
             U256::from_str("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
             U256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
@@ -47,7 +45,7 @@ fn given_call_contract_call_works() {
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction));
 
-        let expected_erc20_address = <[u8; 32]>::from_hex("0348571287631347b50c7d2b7011b22349919ea14e7065a45b79632a6891c608").unwrap();
+        let expected_erc20_address = <[u8; 32]>::from_hex("00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
 
         // Call balanceOf
         let balance_of_selector =
