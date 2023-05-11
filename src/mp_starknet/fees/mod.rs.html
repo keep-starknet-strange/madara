@@ -249,7 +249,6 @@
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec;
@@ -296,14 +295,13 @@
 </span><span class="kw">pub fn </span>get_transaction_resources&lt;S: State + StateChanges&gt;(
     state: <span class="kw-2">&amp;mut </span>S,
     execute_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
+    validate_call_info: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
     execution_resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
     tx_type: TxType,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;BTreeMap&lt;String, usize&gt;, TransactionExecutionErrorWrapper&gt; {
     <span class="kw">let </span>(n_modified_contracts, n_modified_keys, n_class_updates) = state.count_state_changes();
-    <span class="comment">// TODO: consider the `validate` resources.
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/227
-    // The `&amp;None` corresponds to the `validate` execution for now.
-    </span><span class="kw">let </span>non_optional_call_infos: Vec&lt;<span class="kw-2">&amp;</span>CallInfo&gt; = <span class="macro">vec!</span>[execute_call_info, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>].into_iter().flatten().collect();
+    <span class="kw">let </span>non_optional_call_infos: Vec&lt;<span class="kw-2">&amp;</span>CallInfo&gt; =
+        <span class="macro">vec!</span>[execute_call_info, validate_call_info].into_iter().flatten().collect();
     <span class="kw">let </span><span class="kw-2">mut </span>l2_to_l1_payloads_length = <span class="macro">vec!</span>[];
     <span class="kw">for </span>call_info <span class="kw">in </span>non_optional_call_infos {
         l2_to_l1_payloads_length.extend(

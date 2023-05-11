@@ -468,7 +468,7 @@
     _enable_println: bool,
 ) -&gt; GenesisConfig {
     <span class="kw">let </span>account_class =
-        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/account.json&quot;</span>)).try_into().unwrap();
+        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/simple/account.json&quot;</span>)).try_into().unwrap();
 
     <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/test.json&quot;</span>)).try_into().unwrap();
     <span class="kw">let </span>erc20_class: ContractClassWrapper =
