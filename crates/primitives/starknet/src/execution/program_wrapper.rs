@@ -925,7 +925,7 @@ struct ReferenceWrapper {
     /// Program counter.
     pc: Option<u128>,
     /// Address of the reference.
-    value: ValueAddressWrapper,
+    value_address: ValueAddressWrapper,
 }
 
 impl From<Reference> for ReferenceWrapper {
@@ -933,7 +933,7 @@ impl From<Reference> for ReferenceWrapper {
         Self {
             ap_tracking_data: value.ap_tracking_data.into(),
             pc: value.pc.map(|v| v as u128),
-            value: value.value_address.into(),
+            value_address: value.value_address.into(),
         }
     }
 }
@@ -942,7 +942,7 @@ impl From<ReferenceWrapper> for Reference {
         Self {
             ap_tracking_data: value.ap_tracking_data.into(),
             pc: value.pc.map(|v| v as usize),
-            value_address: value.value.into(),
+            value_address: value.value_address.into(),
         }
     }
 }

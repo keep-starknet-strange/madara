@@ -534,7 +534,7 @@ where
             .declare(
                 substrate_block_hash,
                 DeclareTransaction {
-                    version: 1_u8,
+                    version: <[u8; 1]>::from_hex(format_hex(&tx.common.version)).unwrap()[0],
                     max_fee: U256::from_str(&tx.common.max_fee).unwrap(),
                     sender_address: <[u8; 32]>::from_hex(format_hex(&tx.sender_address)).unwrap(),
                     compiled_class_hash: <[u8; 32]>::from_hex(format_hex(&tx.compiled_class_hash)).unwrap(),
