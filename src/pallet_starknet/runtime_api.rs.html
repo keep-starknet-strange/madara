@@ -28,6 +28,10 @@
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -35,7 +39,9 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 </span><span class="attr">#![allow(clippy::extra_unused_type_parameters)]
 
-</span><span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+</span><span class="kw">use </span>mp_starknet::execution::types::{
+    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
+};
 <span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">pub extern crate </span>alloc;
 <span class="kw">use </span>alloc::vec::Vec;
@@ -50,6 +56,8 @@
         </span><span class="kw">fn </span>current_block_hash() -&gt; H256;
         <span class="doccomment">/// Returns the current block.
         </span><span class="kw">fn </span>current_block() -&gt; mp_starknet::block::Block;
+        <span class="doccomment">/// Returns a storage slot value
+        </span><span class="kw">fn </span>get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;U256, DispatchError&gt;;
         <span class="doccomment">/// Returns a `Call` response.
         </span><span class="kw">fn </span>call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarkFeltWrapper&gt;, DispatchError&gt;;
         <span class="doccomment">/// Returns the contract class hash at the given address.

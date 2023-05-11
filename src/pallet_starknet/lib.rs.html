@@ -930,6 +930,16 @@
 <a href="#930" id="930">930</a>
 <a href="#931" id="931">931</a>
 <a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1020,7 +1030,7 @@
 <span class="kw">use </span>starknet_api::api_core::ContractAddress;
 <span class="kw">use </span>starknet_api::transaction::EventContent;
 
-<span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper};
+<span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper, StorageKeyWrapper};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>LOG_TARGET: <span class="kw-2">&amp;</span>str = <span class="string">&quot;runtime::starknet&quot;</span>;
 
@@ -1757,6 +1767,16 @@
                 <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
             }
         }
+    }
+
+    <span class="doccomment">/// Get storage value at
+    </span><span class="kw">pub fn </span>get_storage_at(
+        contract_address: ContractAddressWrapper,
+        key: StorageKeyWrapper,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;U256, DispatchError&gt; {
+        <span class="comment">// Get state
+        </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(contract_address), Error::&lt;T&gt;::ContractNotFound);
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>::storage((contract_address, key)))
     }
 
     <span class="doccomment">/// Store a Starknet block in the blockchain.

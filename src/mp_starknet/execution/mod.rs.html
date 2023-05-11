@@ -98,6 +98,9 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 </span><span class="kw">use </span>alloc::collections::BTreeMap;
@@ -190,6 +193,9 @@
 </span><span class="kw">pub mod </span>types {
     <span class="doccomment">/// Type wrapper for a contract address.
     </span><span class="kw">pub type </span>ContractAddressWrapper = [u8; <span class="number">32</span>];
+
+    <span class="doccomment">/// Type wrapper for a storage key;
+    </span><span class="kw">pub type </span>StorageKeyWrapper = sp_core::H256;
 
     <span class="doccomment">/// Wrapper type for class hash field.
     </span><span class="kw">pub type </span>ClassHashWrapper = [u8; <span class="number">32</span>];

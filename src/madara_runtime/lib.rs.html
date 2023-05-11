@@ -362,9 +362,11 @@
 <a href="#362" id="362">362</a>
 <a href="#363" id="363">363</a>
 <a href="#364" id="364">364</a>
-</pre><pre class="rust"><code><span class="doccomment">//! Definition of the Starknet Appchain runtime.
-//! A Starknet Appchain runtime can be used to run a Starknet Appchain, either as a standalone
-//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+</pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
 //! another layer.
@@ -391,7 +393,9 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{
+    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
+};
 <span class="kw">pub use </span>pallet_balances::Call <span class="kw">as </span>BalancesCall;
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the StarkNet pallet.
@@ -649,6 +653,10 @@
 
         <span class="kw">fn </span>current_block() -&gt; mp_starknet::block::Block {
             Starknet::current_block()
+        }
+
+        <span class="kw">fn </span>get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;StarkFeltWrapper, DispatchError&gt; {
+            Starknet::get_storage_at(address, key)
         }
 
         <span class="kw">fn </span>call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec&lt;U256&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarkFeltWrapper&gt;, DispatchError&gt; {

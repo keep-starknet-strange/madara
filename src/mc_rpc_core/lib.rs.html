@@ -55,6 +55,15 @@
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -86,6 +95,15 @@
     <span class="doccomment">/// Get the number of transactions in a block given a block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getBlockTransactionCount&quot;</span>)]
     </span><span class="kw">fn </span>get_block_transaction_count(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;u128&gt;;
+
+    <span class="doccomment">/// Get the value of the storage at the given address and key, at the given block id
+    </span><span class="attr">#[method(name = <span class="string">&quot;getStorageAt&quot;</span>)]
+    </span><span class="kw">fn </span>get_storage_at(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        contract_address: ContractAddress,
+        key: StorageKey,
+        block_id: BlockId,
+    ) -&gt; RpcResult&lt;FieldElement&gt;;
 
     <span class="doccomment">/// Call a contract function at a given block id
     </span><span class="attr">#[method(name = <span class="string">&quot;call&quot;</span>)]
