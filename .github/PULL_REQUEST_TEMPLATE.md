@@ -15,13 +15,13 @@ Please add the labels corresponding to the type of changes your PR introduces:
 - Testing
 - Other (please describe):
 
-# What is the current behavior?
+## What is the current behavior?
 
 <!-- Please describe the current behavior that you are modifying, or link to a relevant issue. -->
 
 Resolves: #NA
 
-# What is the new behavior?
+## What is the new behavior?
 
 <!-- Please describe the behavior or changes that are being added by this PR. -->
 
@@ -29,11 +29,11 @@ Resolves: #NA
 -
 -
 
-# Does this introduce a breaking change?
+## Does this introduce a breaking change?
 
 <!-- Yes or No -->
 <!-- If this does introduce a breaking change, please describe the impact and migration path for existing applications below. -->
 
-# Other information
+## Other information
 
 <!-- Any other information that is important to this PR, such as screenshots of how the component looks before and after the change. -->
