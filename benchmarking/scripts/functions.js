@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-const { Keyring } = require("@polkadot/keyring");
 const {
-  batchTransfer,
   initialize,
   mint,
   declare,
