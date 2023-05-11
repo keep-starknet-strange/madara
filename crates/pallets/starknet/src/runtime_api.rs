@@ -6,13 +6,14 @@
 #![allow(clippy::extra_unused_type_parameters)]
 
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::transaction::types::DeclareTransaction;
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
 
 use sp_runtime::DispatchError;
 
-use crate::types::StarkFeltWrapper;
+use crate::types::{DeclareTransactionOutput, StarkFeltWrapper};
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
@@ -26,5 +27,7 @@ sp_api::decl_runtime_apis! {
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper>;
         /// Returns the contract class for the given class hash.
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
+        /// Declares a new contract class and return tx hash and class hash
+        fn declare(transaction: DeclareTransaction) -> Result<DeclareTransactionOutput, DispatchError>;
     }
 }

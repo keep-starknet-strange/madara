@@ -28,11 +28,12 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::transaction::types::DeclareTransaction;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
-use pallet_starknet::types::StarkFeltWrapper;
+use pallet_starknet::types::{DeclareTransactionOutput, StarkFeltWrapper};
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -297,6 +298,12 @@ impl_runtime_apis! {
 
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper> {
             Starknet::contract_class_by_class_hash(class_hash)
+        }
+
+        fn declare(transaction: DeclareTransaction) -> Result<DeclareTransactionOutput, sp_runtime::DispatchError> {
+            let declare_result = Starknet::declare(RuntimeOrigin::none(), transaction)?;
+            // TODO: add return values
+            Ok(DeclareTransactionOutput::default())
         }
     }
 

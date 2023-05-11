@@ -15,7 +15,7 @@ use super::program_wrapper::ProgramWrapper;
 use super::{deserialize_bounded_btreemap, serialize_bounded_btreemap};
 
 /// Max number of entrypoints types (EXTERNAL/L1_HANDLER/CONSTRUCTOR)
-type MaxEntryPointsType = ConstU32<3>;
+pub type MaxEntryPointsType = ConstU32<3>;
 
 /// Contract Class type wrapper.
 #[derive(

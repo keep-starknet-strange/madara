@@ -54,4 +54,12 @@ pub trait StarknetRpcApi {
     /// Get block information with transaction hashes given the block id
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
+
+    /// Declare a new contract class
+    #[method(name = "addDeclareTransaction")]
+    fn add_declare_transaction(
+        &self,
+        declare_transaction: Transaction,
+        block_id: BlockId,
+    ) -> RpcResult<AddDeclareTransactionOutput>;
 }

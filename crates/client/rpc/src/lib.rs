@@ -14,12 +14,17 @@ use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_rpc_core::types::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
-    FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
+    AddDeclareTransactionOutput, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
+    BroadcastedDeclareTransactionV2, ContractAddress, ContractClassHash, FieldElement, FunctionCall,
+    MaybePendingBlockWithTxHashes, RPCContractClass, Syncing, Transaction,
 };
 use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::execution::types::{
+    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints, MaxEntryPointsType,
+};
+use mp_starknet::transaction::types::DeclareTransaction;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -28,6 +33,7 @@ use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use sp_runtime::{BoundedBTreeMap, BoundedVec};
 use starknet_api::hash::StarkFelt;
 
 /// A Starknet RPC server for Madara
@@ -420,6 +426,113 @@ where
             sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
+    }
+
+    /// Declare a new contract class
+    ///
+    /// # Arguments
+    ///
+    /// * `declare_transaction` - The declaration transaction
+    ///
+    /// # Returns
+    fn add_declare_transaction(
+        &self,
+        declare_transaction: Transaction,
+        block_id: StarknetBlockId,
+    ) -> RpcResult<AddDeclareTransactionOutput> {
+        let tx: BroadcastedDeclareTransactionV2 = match declare_transaction {
+            Transaction::Declare(declare) => Ok(declare),
+            _ => {
+                error!("Transaction type should be DECLARE.");
+                Err(StarknetRpcApiError::InternalServerError)
+            }
+        }?;
+
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let runtime_api = self.client.runtime_api();
+
+        // TODO: clean this code
+        // We can unwrap safely as we already checked the length of the vectors
+        let mut entry_points_by_type: BoundedBTreeMap<
+            EntryPointTypeWrapper,
+            BoundedVec<EntryPointWrapper, MaxEntryPoints>,
+            MaxEntryPointsType,
+        > = BoundedBTreeMap::new();
+        entry_points_by_type
+            .try_insert(
+                EntryPointTypeWrapper::Constructor,
+                BoundedVec::try_from(
+                    tx.contract_class
+                        .entry_points_by_type
+                        .constructor
+                        .iter()
+                        .map(|e| EntryPointWrapper::from(e.clone()))
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        entry_points_by_type
+            .try_insert(
+                EntryPointTypeWrapper::External,
+                BoundedVec::try_from(
+                    tx.contract_class
+                        .entry_points_by_type
+                        .external
+                        .iter()
+                        .map(|e| EntryPointWrapper::from(e.clone()))
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        entry_points_by_type
+            .try_insert(
+                EntryPointTypeWrapper::L1Handler,
+                BoundedVec::try_from(
+                    tx.contract_class
+                        .entry_points_by_type
+                        .l_1_handler
+                        .iter()
+                        .map(|e| EntryPointWrapper::from(e.clone()))
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+
+        // TODO: Add support for V2 Declare TXs
+        // TODO: remove unwraps
+        let output = runtime_api
+            .declare(
+                substrate_block_hash,
+                DeclareTransaction {
+                    version: 1_u8,
+                    max_fee: U256::from_str(&tx.common.max_fee).unwrap(),
+                    sender_address: <[u8; 32]>::from_hex(format_hex(&tx.sender_address)).unwrap(),
+                    compiled_class_hash: <[u8; 32]>::from_hex(format_hex(&tx.compiled_class_hash)).unwrap(),
+                    nonce: U256::from_str(&tx.common.nonce).unwrap(),
+                    signature: BoundedVec::try_from(
+                        tx.common.signature.iter().map(|e| H256::from_slice(e.as_bytes())).collect::<Vec<_>>(),
+                    )
+                    .unwrap(),
+                    contract_class: ContractClassWrapper {
+                        program: serde_json::from_str(&tx.contract_class.program).unwrap(),
+                        entry_points_by_type,
+                    },
+                },
+            )
+            .map_err(|e| {
+                error!("Failed to declare contract class: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        // TODO: use output
+        Ok(AddDeclareTransactionOutput { transaction_hash: "0x0".to_string(), class_hash: "0x0".to_string() })
     }
 }
 

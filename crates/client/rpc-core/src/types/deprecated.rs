@@ -1,4 +1,4 @@
-use hex::ToHex;
+use hex::{FromHex, ToHex};
 use mp_starknet::execution::types::EntryPointWrapper;
 use serde::{Deserialize, Serialize};
 
@@ -40,6 +40,14 @@ impl From<EntryPointWrapper> for DeprecatedCairoEntryPoint {
         let selector = add_prefix(&selector);
         let offset: String = value.offset.to_be_bytes().as_slice().encode_hex();
         let offset = add_prefix(remove_leading_zeros(&offset));
+        Self { selector, offset }
+    }
+}
+
+impl From<DeprecatedCairoEntryPoint> for EntryPointWrapper {
+    fn from(value: DeprecatedCairoEntryPoint) -> Self {
+        let selector = <[u8; 32]>::from_hex(&value.selector).unwrap();
+        let offset = value.offset.parse::<u128>().unwrap();
         Self { selector, offset }
     }
 }
