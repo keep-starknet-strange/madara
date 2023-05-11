@@ -129,7 +129,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let braavos_account_class =
         get_contract_class(include_bytes!("../../../../../resources/account/braavos/account.json"));
     let braavos_proxy_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/braavos/openzepellin_deps/proxy.json"));
+        get_contract_class(include_bytes!("../../../../../resources/account/braavos/openzeppelin_deps/proxy.json"));
     let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
     let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
     let blockifier_account_class =
