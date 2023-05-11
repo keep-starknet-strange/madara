@@ -288,7 +288,7 @@ fn testnet_genesis(
             ],
             fee_token_address,
             _phantom: Default::default(),
-			chain_id: CHAIN_ID_STARKNET_TESTNET,
+            chain_id: CHAIN_ID_STARKNET_TESTNET,
         },
     }
 }
