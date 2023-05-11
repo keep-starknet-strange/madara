@@ -425,13 +425,10 @@ where
 	/// Returns the chain id.
 	fn get_chain_id(&self) -> RpcResult<String> {
 		let hash = self.client.info().best_hash;
-		let res = self.client
-			.runtime_api()
-			.chain_id(hash)
-			.map_err(| e| {
-				error!("Request parameters error: {e}");
-				StarknetRpcApiError::InternalServerError
-			})?;
+		let res = self.client.runtime_api().chain_id(hash).map_err(|_| {
+			error!("fetch runtime chain id failed");
+			StarknetRpcApiError::InternalServerError
+		})?;
 		Ok(res.to_string())
 	}
 }
