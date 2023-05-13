@@ -4,7 +4,10 @@ use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine;
 use frame_support::storage::bounded_vec::BoundedVec;
-use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
+use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints, ContractAddressWrapper};
+use sp_core::{H256, U256};
+use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, ErrorCode};
+use mp_starknet::transaction::types::InvokeTransaction;
 
 use super::types::{DeprecatedEntryPointsByType, RPCContractClass};
 
@@ -60,4 +63,24 @@ pub(crate) fn _to_deprecated_entrypoint_by_type(
         }
     });
     DeprecatedEntryPointsByType { constructor, external, l_1_handler }
+}
+
+pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction> {
+    match tx {
+        BroadcastedInvokeTransaction::V0(_) => Err(ErrorCode::FailedToReceiveTransaction.into()),
+        BroadcastedInvokeTransaction::V1(invoke_tx_v1) => {
+            Ok(InvokeTransaction {
+                version: 1_u8,
+                signature: BoundedVec::try_from(
+                    invoke_tx_v1.signature.iter().map(|x| H256::from(x.to_bytes_be())).collect::<Vec<H256>>(),
+                ).unwrap(),
+                sender_address: ContractAddressWrapper::from(invoke_tx_v1.sender_address.to_bytes_be()),
+                nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
+                calldata: BoundedVec::try_from(
+                    invoke_tx_v1.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect::<Vec<U256>>(),
+                ).unwrap(),
+                max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
+            })
+        }
+    }
 }

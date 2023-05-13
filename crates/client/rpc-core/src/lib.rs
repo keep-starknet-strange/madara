@@ -9,6 +9,7 @@ mod tests;
 
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, InvokeTransactionResult};
 
 pub mod types;
 pub mod utils;
@@ -63,4 +64,8 @@ pub trait StarknetRpcApi {
     /// Get block information with transaction hashes given the block id
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
+
+    /// Add an Invoke Transaction to invoke a contract function
+    #[method(name = "addInvokeTransaction")]
+    fn add_invoke_transaction(&self, invoke_transaction: BroadcastedInvokeTransaction) -> RpcResult<InvokeTransactionResult>;
 }

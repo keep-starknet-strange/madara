@@ -24,6 +24,8 @@ mc-db = { workspace = true }
 mc-storage = { workspace = true }
 mp-starknet = { workspace = true }
 # Substate primitives
+frame-support = { workspace = true }
+frame-system = { workspace = true }
 sp-runtime = { workspace = true, default-features = true }
 sp-core = { workspace = true, default-features = true }
 sp-api = { workspace = true, default-features = true }
@@ -37,6 +39,8 @@ starknet_api = { workspace = true, default-features = false }
 blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
+starknet = { workspace = true }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", branch = "dev/jsonrpc_0_3_0", default-features = false }
 # Others
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [

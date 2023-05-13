@@ -48,6 +48,7 @@ use sp_std::prelude::*;
 use sp_version::RuntimeVersion;
 /// Import the types.
 pub use types::*;
+use mp_starknet::transaction::types::InvokeTransaction;
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -301,6 +302,14 @@ impl_runtime_apis! {
 
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper> {
             Starknet::contract_class_by_class_hash(class_hash)
+        }
+
+        fn add_invoke_transaction(transaction: InvokeTransaction) -> frame_support::dispatch::DispatchResult {
+            Starknet::invoke(frame_system::RawOrigin::None.into(), transaction)
+        }
+
+        fn pending_block() -> BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions> {
+            Starknet::pending()
         }
     }
 

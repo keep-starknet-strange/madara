@@ -11,13 +11,13 @@ use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use hex::FromHex;
-use jsonrpsee::core::{async_trait, RpcResult};
+use jsonrpsee::core::{async_trait, RpcResult, Error};
 use log::error;
 use mc_rpc_core::types::{
     BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
     FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
-use mc_rpc_core::utils::to_rpc_contract_class;
+use mc_rpc_core::utils::{to_rpc_contract_class, to_invoke_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -28,6 +28,7 @@ use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, InvokeTransactionResult, ErrorCode};
 use starknet_api::hash::StarkFelt;
 
 /// A Starknet RPC server for Madara
@@ -476,6 +477,38 @@ where
             sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
+    }
+
+    /// Add an Invoke Transaction to invoke a contract function
+    ///
+    /// # Arguments
+    ///
+    /// * `invoke tx` - https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction
+    ///
+    /// # Returns
+    ///
+    /// * `transaction_hash` - transaction hash corresponding to the invocation
+    fn add_invoke_transaction(&self, invoke_transaction: BroadcastedInvokeTransaction) -> RpcResult<InvokeTransactionResult> {
+        let invoke_tx = to_invoke_tx(invoke_transaction)?;
+        let runtime_api = self.client.runtime_api();
+        let res = runtime_api.add_invoke_transaction(self.client.info().best_hash, invoke_tx);
+
+        match res {
+            Ok(_) => {
+                let testy = runtime_api.pending_block();
+                println!("THIS: {:?}", testy);
+                // let block = self
+                //     .overrides
+                //     .for_block_hash(self.client.as_ref(), None)
+                //     .current_block(None)
+                //     .unwrap_or_default();
+        
+                // let transaction_hashes = block.transactions_hashes().into_iter().map(|hash| hash.to_string()).collect();
+                // println!("this: {:?}", transaction_hashes);
+                Ok(InvokeTransactionResult { transaction_hash: starknet_ff::FieldElement::from_dec_str("1234").unwrap() })
+            }
+            Err(_) => Err(Error::from(ErrorCode::FailedToReceiveTransaction.into())),
+        }
     }
 }
 
