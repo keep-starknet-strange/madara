@@ -8,9 +8,7 @@
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
-use mp_starknet::transaction::types::{InvokeTransaction, Transaction, TransactionReceiptWrapper};
-use mp_starknet::block::MaxTransactions;
-use frame_support::BoundedVec;
+use mp_starknet::transaction::types::InvokeTransaction;
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -34,8 +32,6 @@ sp_api::decl_runtime_apis! {
         /// Returns the contract class for the given class hash.
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
         /// Returns the transaction hash for the invocation.
-        fn add_invoke_transaction(transaction: InvokeTransaction) -> frame_support::dispatch::DispatchResult;
-        /// Returns the pending block.
-        fn pending_block() -> BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>;
+        fn add_invoke_transaction(transaction: InvokeTransaction) -> Result<(), DispatchError>;
     }
 }

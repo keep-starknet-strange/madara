@@ -67,5 +67,8 @@ pub trait StarknetRpcApi {
 
     /// Add an Invoke Transaction to invoke a contract function
     #[method(name = "addInvokeTransaction")]
-    fn add_invoke_transaction(&self, invoke_transaction: BroadcastedInvokeTransaction) -> RpcResult<InvokeTransactionResult>;
+    fn add_invoke_transaction(
+        &self,
+        invoke_transaction: BroadcastedInvokeTransaction,
+    ) -> RpcResult<InvokeTransactionResult>;
 }

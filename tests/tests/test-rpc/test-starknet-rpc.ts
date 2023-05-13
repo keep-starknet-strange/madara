@@ -1,7 +1,7 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { LibraryError, RPC, RpcProvider } from "starknet";
+import { LibraryError, RPC, RpcProvider, Signer, stark, ec } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import {
   TEST_CONTRACT,
@@ -12,7 +12,7 @@ import {
   ACCOUNT_CONTRACT_CLASS_HASH,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
-} from "./constants";
+} from "../constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
 
@@ -94,8 +94,6 @@ describeDevMadara("Starknet RPC", (context) => {
       ACCOUNT_CONTRACT,
       block_hash
     );
-
-    console.log(`Class Hash: ${account_contract_class_hash}`);
 
     expect(account_contract_class_hash).to.not.be.undefined;
     expect(account_contract_class_hash).to.be.equal(
@@ -308,4 +306,44 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(error.message).to.equal("20: Contract not found");
     }
   });
+  it("Adds an invocation transaction successfully",
+    async function () {
+      // await context.createBlock(
+      //   transfer(
+      //     context.polkadotApi,
+      //     CONTRACT_ADDRESS,
+      //     FEE_TOKEN_ADDRESS,
+      //     CONTRACT_ADDRESS,
+      //     MINT_AMOUNT
+      //   ),
+      //   { parentHash: undefined, finalize: true }
+      // );
+      const priKey = stark.randomAddress();
+      const keyPair = ec.getKeyPair(priKey);
+      let signer = new Signer(keyPair)
+      let data = {
+        invoke_transaction: {
+            type: "INVOKE",
+            max_fee:"0xDEAD",
+            version:"0x1",
+            nonce:"0x2",
+            sender_address:ACCOUNT_CONTRACT,
+            calldata: ["0x1", CONTRACT_ADDRESS,TEST_CONTRACT_CLASS_HASH,"0x0","0x3","0x3",ACCOUNT_CONTRACT + 1, "0x2b","0x0"]
+          }
+      };
+      const calldata = fromCallsToExecuteCalldataWithNonce(transactions, nonce);
+
+      const hashMsg = calculateTransactionHash(
+        account,
+        transactionVersion,
+        calldata,
+        maxFee,
+        StarknetChainId.SN_GOERLI,
+        nonce
+      );
+
+      console.log("ACCOUNT: ", account);
+      console.log("TX: ", transaction_hash);
+    }
+  );
 });
