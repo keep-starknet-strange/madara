@@ -1,3 +1,6 @@
+use core::str::FromStr;
+
+use blockifier::abi::abi_utils::selector_from_name;
 use frame_support::{bounded_vec, BoundedVec};
 use sp_core::{H256, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
@@ -9,10 +12,157 @@ use starknet_api::transaction::{
     TransactionReceipt,
 };
 
+use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCalldataSize};
 use crate::execution::types::ContractAddressWrapper;
+use crate::transaction::constants;
 use crate::transaction::types::{
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
 };
+
+#[test]
+fn test_validate_entry_point_selector_is_declare() {
+    // Given
+    let tx = Transaction::default();
+
+    // When
+    let actual_entrypoint = tx.validate_entry_point_selector(&TxType::Declare).unwrap();
+
+    // Then
+    let expected_entrypoint = selector_from_name(constants::VALIDATE_DECLARE_ENTRY_POINT_NAME);
+    assert_eq!(expected_entrypoint, actual_entrypoint);
+}
+
+#[test]
+fn test_validate_entry_point_selector_is_deploy_account() {
+    // Given
+    let tx = Transaction::default();
+
+    // When
+    let actual_entrypoint = tx.validate_entry_point_selector(&TxType::DeployAccount).unwrap();
+
+    // Then
+    let expected_entrypoint = selector_from_name(constants::VALIDATE_DEPLOY_ENTRY_POINT_NAME);
+    assert_eq!(expected_entrypoint, actual_entrypoint);
+}
+
+#[test]
+fn test_validate_entry_point_selector_is_invoke() {
+    // Given
+    let tx = Transaction::default();
+
+    // When
+    let actual_entrypoint = tx.validate_entry_point_selector(&TxType::Invoke).unwrap();
+
+    // Then
+    let expected_entrypoint = selector_from_name(constants::VALIDATE_ENTRY_POINT_NAME);
+    assert_eq!(expected_entrypoint, actual_entrypoint);
+}
+
+#[test]
+fn test_validate_entry_point_selector_fails_for_l1_handler() {
+    // Given
+    let tx = Transaction::default();
+
+    // When
+    let actual_entrypoint = tx.validate_entry_point_selector(&TxType::L1Handler);
+
+    // Then
+    assert!(actual_entrypoint.is_err());
+}
+
+fn get_test_class_hash() -> [u8; 32] {
+    [2; 32]
+}
+
+fn get_test_calldata() -> BoundedVec<U256, MaxCalldataSize> {
+    bounded_vec![U256::from_str("0x1").unwrap(), U256::from_str("0x2").unwrap()]
+}
+
+fn get_test_contract_address_salt() -> U256 {
+    U256::from_str("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap()
+}
+
+fn u256_to_byte_array(x: U256) -> [u8; 32] {
+    let mut bytes = [0; 32];
+    x.to_big_endian(&mut bytes);
+    bytes
+}
+
+#[test]
+fn test_validate_entrypoint_calldata_declare() {
+    // Given
+    let tx = Transaction {
+        call_entrypoint: CallEntryPointWrapper {
+            class_hash: Some(get_test_class_hash()),
+            ..CallEntryPointWrapper::default()
+        },
+        ..Transaction::default()
+    };
+
+    // When
+    let actual_calldata =
+        (*tx.validate_entrypoint_calldata(&TxType::Declare).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
+
+    // Then
+    let expected_calldata = vec![get_test_class_hash()];
+    assert_eq!(expected_calldata, actual_calldata);
+}
+
+#[test]
+fn test_validate_entrypoint_calldata_deploy_account() {
+    // Given
+    let tx = Transaction {
+        contract_address_salt: Some(get_test_contract_address_salt()),
+        call_entrypoint: CallEntryPointWrapper {
+            class_hash: Some(get_test_class_hash()),
+            calldata: get_test_calldata(),
+            ..CallEntryPointWrapper::default()
+        },
+        ..Transaction::default()
+    };
+
+    // When
+    let actual_calldata =
+        (*tx.validate_entrypoint_calldata(&TxType::DeployAccount).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
+
+    // Then
+    let mut salt_bytes = [0; 32];
+    get_test_contract_address_salt().to_big_endian(&mut salt_bytes);
+    let mut expected_calldata = vec![get_test_class_hash(), salt_bytes];
+    expected_calldata.extend(get_test_calldata().into_iter().map(u256_to_byte_array).collect::<Vec<_>>());
+
+    assert_eq!(expected_calldata, actual_calldata);
+}
+
+#[test]
+fn test_validate_entrypoint_calldata_invoke() {
+    // Given
+    let tx = Transaction {
+        call_entrypoint: CallEntryPointWrapper { calldata: get_test_calldata(), ..CallEntryPointWrapper::default() },
+        ..Transaction::default()
+    };
+
+    // When
+    let actual_calldata =
+        (*tx.validate_entrypoint_calldata(&TxType::Invoke).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
+
+    // Then
+    let expected_calldata = get_test_calldata().into_iter().map(u256_to_byte_array).collect::<Vec<_>>();
+
+    assert_eq!(expected_calldata, actual_calldata);
+}
+
+#[test]
+fn test_validate_entrypoint_calldata_fails_for_l1_handler() {
+    // Given
+    let tx = Transaction::default();
+
+    // When
+    let actual_calldata = tx.validate_entrypoint_calldata(&TxType::L1Handler);
+
+    // Then
+    assert!(actual_calldata.is_err());
+}
 
 #[test]
 fn verify_tx_version_passes_for_valid_version() {

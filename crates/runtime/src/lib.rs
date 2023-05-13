@@ -1,5 +1,3 @@
-//! Definition of the Starknet Appchain runtime.
-//! A Starknet Appchain runtime can be used to run a Starknet Appchain, either as a standalone
 //! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don't support yet validity proofs and state updates to
@@ -27,7 +25,9 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{
+    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
+};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
@@ -285,6 +285,10 @@ impl_runtime_apis! {
 
         fn current_block() -> mp_starknet::block::Block {
             Starknet::current_block()
+        }
+
+        fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<StarkFeltWrapper, DispatchError> {
+            Starknet::get_storage_at(address, key)
         }
 
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {

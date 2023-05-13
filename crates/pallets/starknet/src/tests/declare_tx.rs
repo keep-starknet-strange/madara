@@ -7,37 +7,15 @@ use mp_starknet::transaction::types::DeclareTransaction;
 use sp_core::{H256, U256};
 
 use super::mock::*;
-use crate::{Error, StorageView};
+use crate::Error;
 pub const ERC20_CONTRACT_PATH: &[u8] = include_bytes!("../../../../../resources/erc20/erc20.json");
 #[test]
 fn given_contract_declare_tx_works_once_not_twice() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
         run_to_block(2);
-        // pedersen(sn_keccak(b"ERC20_balances"),
-        // 0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9) which is the key in the
-        // starknet contract for
-        // ERC20_balances(0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9).low
-        StorageView::<Test>::insert(
-            (
-                Starknet::fee_token_address(),
-                H256::from_str("0x01c522d1063461697a1fdcc59490e7e99f6d6005d883768bae7ebf66c171a7e3").unwrap(),
-            ),
-            U256::from(u128::MAX),
-        );
-        // pedersen(sn_keccak(b"ERC20_balances"),
-        // 0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9) + 1 which is the key in the
-        // starknet contract for
-        // ERC20_balances(0x00b72536305f9a17ed8c0d9abe80e117164589331c3e9547942a830a99d3a5e9).high
-        StorageView::<Test>::insert(
-            (
-                Starknet::fee_token_address(),
-                H256::from_str("0x01c522d1063461697a1fdcc59490e7e99f6d6005d883768bae7ebf66c171a7e4").unwrap(),
-            ),
-            U256::from(u128::MAX),
-        );
         let none_origin = RuntimeOrigin::none();
-        let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
+        let account_addr = get_account_address(AccountType::NoValidate);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
         let erc20_class_hash =
@@ -56,7 +34,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::ClassHashAlreadyDeclared);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::ClassHashAlreadyDeclared);
     });
 }
 
@@ -86,7 +64,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             signature: bounded_vec!(),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::AccountNotDeployed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
     })
 }
 
@@ -97,7 +75,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
         run_to_block(2);
 
         let none_origin = RuntimeOrigin::none();
-        let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT);
+        let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT, AccountType::ArgentV0);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
         // TODO: Delete when the class hash can be derived from ContractClass
@@ -116,6 +94,183 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             signature: bounded_vec!(),
         };
 
-        assert_err!(Starknet::declare(none_origin, transaction), Error::<Test>::TransactionExecutionFailed);
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     })
+}
+
+#[test]
+fn given_contract_declare_on_openzeppelin_account_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(AccountType::Openzeppelin);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class_hash =
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let tx_hash = H256::from_str("0x04b6608f43263d19966c6cc30f3619c29e8ced2e07a4947b8c0c2fd56d44d4fb").unwrap();
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            contract_class: erc20_class,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            nonce: U256::zero(),
+            max_fee: U256::from(u128::MAX),
+            signature: sign_message_hash(tx_hash),
+        };
+
+        assert_ok!(Starknet::declare(none_origin, transaction));
+        assert_eq!(
+            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap()
+        );
+    });
+}
+
+#[test]
+fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(AccountType::Openzeppelin);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class_hash =
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            contract_class: erc20_class,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            nonce: U256::zero(),
+            max_fee: U256::from(u128::MAX),
+            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
+        };
+
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
+fn given_contract_declare_on_braavos_account_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(AccountType::Braavos);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class_hash =
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let tx_hash = H256::from_str("0x076975b47411feb8dab2633a7b8a2db3d8112a2492d1ccc2bdb832bbc5db0cff").unwrap();
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            contract_class: erc20_class,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            nonce: U256::zero(),
+            max_fee: U256::from(u128::MAX),
+            signature: sign_message_hash(tx_hash),
+        };
+
+        assert_ok!(Starknet::declare(none_origin, transaction));
+        assert_eq!(
+            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap()
+        );
+    });
+}
+
+#[test]
+fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(AccountType::Braavos);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class_hash =
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            contract_class: erc20_class,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            nonce: U256::zero(),
+            max_fee: U256::from(u128::MAX),
+            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
+        };
+
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
+}
+
+#[test]
+fn given_contract_declare_on_argent_account_then_it_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(AccountType::Argent);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class_hash =
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let tx_hash = H256::from_str("0x02fc479a47d17efd76b69a1eb7731f1ac592948ab19b1047a087a43378d5a61a").unwrap();
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            contract_class: erc20_class,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            nonce: U256::zero(),
+            max_fee: U256::from(u128::MAX),
+            signature: sign_message_hash(tx_hash),
+        };
+
+        assert_ok!(Starknet::declare(none_origin, transaction));
+        assert_eq!(
+            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap()
+        );
+    });
+}
+
+#[test]
+fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fails() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let none_origin = RuntimeOrigin::none();
+
+        let account_addr = get_account_address(AccountType::Argent);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class_hash =
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            contract_class: erc20_class,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            nonce: U256::zero(),
+            max_fee: U256::from(u128::MAX),
+            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
+        };
+
+        assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
+    });
 }

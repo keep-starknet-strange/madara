@@ -60,6 +60,33 @@ pub enum TransactionExecutionErrorWrapper {
     UnexpectedHoles(String),
 }
 
+impl From<TransactionValidationErrorWrapper> for TransactionExecutionErrorWrapper {
+    fn from(error: TransactionValidationErrorWrapper) -> Self {
+        match error {
+            TransactionValidationErrorWrapper::TransactionValidationError(e) => Self::TransactionExecution(e),
+            TransactionValidationErrorWrapper::CalldataError(e) => Self::StarknetApi(e),
+        }
+    }
+}
+
+/// Wrapper type for transaction validation result.
+pub type TransactionValidationResultWrapper<T> = Result<T, TransactionValidationErrorWrapper>;
+
+/// Wrapper type for transaction validation error.
+#[derive(Debug)]
+pub enum TransactionValidationErrorWrapper {
+    /// Transaction execution error
+    TransactionValidationError(TransactionExecutionError),
+    /// Calldata error
+    CalldataError(StarknetApiError),
+}
+
+impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
+    fn from(error: EntryPointExecutionError) -> Self {
+        Self::TransactionValidationError(TransactionExecutionError::from(error))
+    }
+}
+
 /// Different tx types.
 /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
 #[derive(
