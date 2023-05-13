@@ -22,6 +22,11 @@ use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Con
 /// TODO: add real value (#250)
 pub type MaxArraySize = ConstU32<10000>;
 
+/// chain id for the oerli network.
+pub const SN_GOERLI: &str = "SN_GOERLI";
+/// chain id for the mainnet network.
+pub const SN_MAINNET: &str = "SN_MAINNET";
+
 /// Wrapper type for transaction execution result.
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;
 
@@ -282,7 +287,7 @@ impl From<InvokeTransaction> for Transaction {
     fn from(value: InvokeTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()),
+            hash: calculate_invoke_tx_hash(value.clone(), SN_GOERLI),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -300,11 +305,12 @@ impl From<InvokeTransaction> for Transaction {
         }
     }
 }
+
 impl From<DeclareTransaction> for Transaction {
     fn from(value: DeclareTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()),
+            hash: calculate_declare_tx_hash(value.clone(), SN_GOERLI),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -327,7 +333,7 @@ impl From<DeployAccountTransaction> for Transaction {
     fn from(value: DeployAccountTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()),
+            hash: calculate_deploy_account_tx_hash(value.clone(), SN_GOERLI),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,

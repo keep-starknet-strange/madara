@@ -26,6 +26,8 @@ fn test_deploy_account_tx_hash() {
     let expected_tx_hash =
         H256::from_str("0x050a9c8ed9d8053fc3cf6704b95c1b368cf9a110ff72b87b760db832155b7022").unwrap();
 
+    let chain_id = "SN_GOERLI";
+
     let transaction = DeployAccountTransaction {
         version: 1,
         sender_address: U256::from(19911991_u32).into(),
@@ -36,7 +38,7 @@ fn test_deploy_account_tx_hash() {
         account_class_hash: U256::from(3).into(),
         max_fee: U256::one(),
     };
-    assert_eq!(calculate_deploy_account_tx_hash(transaction), expected_tx_hash);
+    assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id), expected_tx_hash);
 }
 
 #[test]
@@ -44,6 +46,8 @@ fn test_declare_tx_hash() {
     // Computed with `calculate_declare_transaction_hash` from the cairo lang package
     let expected_tx_hash =
         H256::from_str("0x077f205d4855199564663dc9810c1edfcf97573393033dedc3f12dac740aac13").unwrap();
+
+    let chain_id = "SN_GOERLI";
 
     let transaction = DeclareTransaction {
         version: 1,
@@ -54,7 +58,7 @@ fn test_declare_tx_hash() {
         compiled_class_hash: U256::from(3).into(),
         contract_class: ContractClassWrapper::default(),
     };
-    assert_eq!(calculate_declare_tx_hash(transaction), expected_tx_hash);
+    assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }
 
 #[test]
@@ -62,6 +66,8 @@ fn test_invoke_tx_hash() {
     // Computed with `calculate_transaction_hash_common` from the cairo lang package
     let expected_tx_hash =
         H256::from_str("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
+
+    let chain_id = "SN_GOERLI";
 
     let transaction = InvokeTransaction {
         version: 1,
@@ -71,7 +77,7 @@ fn test_invoke_tx_hash() {
         signature: bounded_vec!(),
         max_fee: U256::one(),
     };
-    assert_eq!(calculate_invoke_tx_hash(transaction), expected_tx_hash);
+    assert_eq!(calculate_invoke_tx_hash(transaction, chain_id), expected_tx_hash);
 }
 
 #[test]

@@ -138,7 +138,7 @@ where
 /// # Argument
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
-pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> H256 {
+pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: &str) -> H256 {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address,
         &transaction.calldata,
@@ -146,6 +146,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> H256 {
         transaction.nonce,
         transaction.version,
         b"invoke",
+        chain_id,
     )
 }
 
@@ -154,7 +155,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> H256 {
 /// # Argument
 ///
 /// * `transaction` - The declare transaction to get the hash of.
-pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> H256 {
+pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str) -> H256 {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address,
         &[U256::from_big_endian(&transaction.compiled_class_hash)],
@@ -162,6 +163,7 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> H256 {
         transaction.nonce,
         transaction.version,
         b"declare",
+        chain_id,
     )
 }
 
@@ -170,7 +172,7 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> H256 {
 /// # Argument
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
-pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -> H256 {
+pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, chain_id: &str) -> H256 {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address,
         &vec![
@@ -182,6 +184,7 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -
         transaction.nonce,
         transaction.version,
         b"deploy_account",
+        chain_id
     )
 }
 
@@ -192,6 +195,7 @@ fn calculate_transaction_hash_common<T>(
     nonce: U256,
     version: u8,
     tx_prefix: &[u8],
+    chain_id: &str,
 ) -> H256
 where
     T: CryptoHasher,
@@ -206,8 +210,8 @@ where
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
     // TODO: make it configurable
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/364
-    let chain_id = FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap();
+    // let chain_id = FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap();
+    let chain_id = get_chain_id(chain_id);
 
     let tx_hash = <T as CryptoHasher>::compute_hash_on_elements(&vec![
         tx_prefix,
@@ -220,6 +224,11 @@ where
         nonce,
     ]);
     H256::from_slice(&tx_hash.to_bytes_be())
+}
+
+/// Get the chain id as a field element.
+fn get_chain_id(chain_id: &str) -> FieldElement {
+    FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap()
 }
 
 /// Calculate the hash of an event.
