@@ -1,7 +1,8 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { LibraryError, RPC, RpcProvider, Account, stark, ec, hash, constants } from "starknet";
+import { LibraryError, RPC, RpcProvider, Account, stark, ec } from "starknet";
+import { declare } from "../../util/starknet";
 import { jumpBlocks } from "../../util/block";
 import {
   TEST_CONTRACT,
@@ -307,28 +308,48 @@ describeDevMadara("Starknet RPC", (context) => {
     }
   });
 
-  // it("Adds an invocation transaction successfully", async function() {
-  //   const priKey = stark.randomAddress();
-  //   const keyPair = ec.getKeyPair(priKey);
-  //   const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
+  it("Adds an invocation transaction successfully", async function() {
+    const {
+      result: { events },
+    } = await context.createBlock(
+      const argent_class_hash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
+      declare(context.polkadotApi, CONTRACT_ADDRESS, argent_class_hash)l
+    );
 
-  //   const res = await account.simulateTransaction({
-  //     contractAddress: CONTRACT_ADDRESS,
-  //     entrypoint: 'transfer',
-  //     calldata: [CONTRACT_ADDRESS, '10', '0'],
-  //   });
+    expect(
+      events.find(
+        ({ event: { section, method } }) =>
+          section == "system" && method == "ExtrinsicSuccess"
+      )
+    ).to.exist;
 
-  //   console.log("ACCOUNT: ", res);
+    const priKey = stark.randomAddress();
+    const keyPair = ec.getKeyPair(priKey);
+    const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
 
-  //   let data = {
-  //     invoke_transaction: {
-  //         type: "INVOKE",
-  //         max_fee:"0xDEAD",
-  //         version:"0x1",
-  //         nonce:"0x2",
-  //         sender_address: ACCOUNT_CONTRACT,
-  //         calldata: ["0x1", CONTRACT_ADDRESS, "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e","0x0","0x3","0x3", CONTRACT_ADDRESS, "0x10","0x0"]
-  //       }
-  //   };
-  // });
+    const call = await providerRPC.callContract(
+      {
+        contractAddress: ACCOUNT_CONTRACT,
+        entrypoint: "getSigner",
+        calldata: [],
+      },
+      "latest"
+    );
+
+    console.log("CALL: ", call);
+
+    // const res = await account.execute([{
+    //     contractAddress: TEST_CONTRACT,
+    //     entrypoint: 'with_arg',
+    //     calldata: ['25'],
+    //   }], 
+    //   undefined,
+    //   {
+    //     nonce: "5",
+    //     maxFee: "1234"
+    //   }
+    // );
+
+    // console.log("RES: ", res);
+  });
 });

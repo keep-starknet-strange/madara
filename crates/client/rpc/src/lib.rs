@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use hex::FromHex;
-use jsonrpsee::core::{async_trait, Error, RpcResult};
+use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_rpc_core::types::{
     BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
@@ -29,7 +29,7 @@ use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, ErrorCode, InvokeTransactionResult};
+use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, InvokeTransactionResult};
 use starknet_api::hash::StarkFelt;
 
 /// A Starknet RPC server for Madara
@@ -495,16 +495,26 @@ where
     ) -> RpcResult<InvokeTransactionResult> {
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
         let invoke_tx_hash = calculate_invoke_tx_hash(invoke_tx.clone());
-        let res = self.client.runtime_api()
+        println!("THIS: {:?}", invoke_tx_hash);
+        self.client.runtime_api()
             .add_invoke_transaction(self.client.info().best_hash, invoke_tx)
-            .map_err(|_| Error::Custom(ErrorCode::FailedToReceiveTransaction.to_string()))?;
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
 
-        match res {
-            Ok(_) => Ok(InvokeTransactionResult {
-                transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
-            }),
-            Err(_) => Err(Error::Custom(ErrorCode::FailedToReceiveTransaction.to_string())),
-        }
+        Ok(InvokeTransactionResult {
+            transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
+        })
+    }
+
+    /// Returns the chain id.
+    fn chain_id(&self) -> RpcResult<FieldElement> {
+        Ok(FieldElement::from("0x534e5f474f45524c49"))
     }
 }
 
