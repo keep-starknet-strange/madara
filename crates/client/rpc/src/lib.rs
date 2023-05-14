@@ -485,7 +485,7 @@ where
             error!("fetch runtime chain id failed");
             StarknetRpcApiError::InternalServerError
         })?;
-        Ok(res.to_string())
+        Ok(format!("0x{:x}", res))
     }
 }
 
