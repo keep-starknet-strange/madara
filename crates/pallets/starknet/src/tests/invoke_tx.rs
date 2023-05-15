@@ -13,6 +13,7 @@ use sp_core::{H256, U256};
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
+use super::utils::sign_message_hash;
 use crate::message::Message;
 use crate::{Error, Event, StorageView};
 
