@@ -32,6 +32,8 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
+use blockifier::block_context::{BlockContext};
+use mp_starknet::block::serialize::SerializeBlockContext;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -64,7 +66,7 @@ pub extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use blockifier::execution::entry_point::CallInfo;
+use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
@@ -711,33 +713,51 @@ pub mod pallet {
         /// here we make sure that some particular calls (in this case all calls)
         /// are being whitelisted and marked as valid.
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-            // TODO: Call `__validate__` entrypoint of the contract. #69
-
             match call {
-                Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
-                Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
-                Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
-                Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
+                Call::invoke { transaction } => {
+                    let invoke_transaction = Transaction::from(transaction.clone());
+                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
+
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(T::UnsignedPriority::get())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                },
+                Call::declare { transaction } => {
+                    let declare_transaction = Transaction::from(transaction.clone());
+                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
+
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(T::UnsignedPriority::get())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                },
+                Call::deploy_account { transaction } => {
+                    let deploy_transaction = Transaction::from(transaction.clone());
+                    Pallet::<T>::validate_tx(deploy_transaction, TxType::DeployAccount)?;
+
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(T::UnsignedPriority::get())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                },
+                Call::consume_l1_message { transaction } => {
+                    let l1_transaction = Transaction::from(transaction.clone());
+                    Pallet::<T>::validate_tx(l1_transaction, TxType::L1Handler)?;
+
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(T::UnsignedPriority::get())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                },
                 _ => InvalidTransaction::Call.into(),
             }
         }
@@ -938,5 +958,28 @@ impl<T: Config> Pallet<T> {
 
         PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
         Ok(sn_event)
+    }
+
+    /// Validates transaction and returns substrate error if any.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - The transaction to be validated.
+    /// * `tx_type` - The type of the transaction.
+    ///
+    /// # Error
+    ///
+    /// Returns an error if transaction validation fails.
+    fn validate_tx(transaction: Transaction, tx_type: TxType) -> Result<(), TransactionValidityError>{
+        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+        let mut execution_resources = ExecutionResources::default();
+        let block_context = BlockContext::try_serialize(
+            Self::current_block().header().clone(), Pallet::<T>::fee_token_address())
+            .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Call))?;
+
+        transaction.validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
+            .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
+
+        Ok(())
     }
 }
