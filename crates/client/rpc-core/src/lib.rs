@@ -64,6 +64,10 @@ pub trait StarknetRpcApi {
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 
+    /// Get block information with full transactions given the block id
+    #[method(name = "getBlockWithTxs")]
+    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs>;
+
     /// Get the chain id
     #[method(name = "chainId")]
     fn get_chain_id(&self) -> RpcResult<String>;
