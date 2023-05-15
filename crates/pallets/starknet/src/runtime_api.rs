@@ -22,6 +22,8 @@ sp_api::decl_runtime_apis! {
         fn current_block_hash() -> H256;
         /// Returns the current block.
         fn current_block() -> mp_starknet::block::Block;
+        /// Get the nonce associated with the given address in the given block
+        fn get_nonce(contract_address: ContractAddressWrapper) -> Result<U256, DispatchError>;
         /// Returns a storage slot value
         fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<U256, DispatchError>;
         /// Returns a `Call` response.

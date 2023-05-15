@@ -291,6 +291,10 @@ impl_runtime_apis! {
             Starknet::get_storage_at(address, key)
         }
 
+        fn get_nonce(address: ContractAddressWrapper) -> Result<StarkFeltWrapper, DispatchError> {
+            Starknet::get_nonce(address)
+        }
+
         fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError> {
             Starknet::call_contract(address, function_selector, calldata)
         }
