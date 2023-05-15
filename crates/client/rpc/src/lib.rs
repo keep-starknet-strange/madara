@@ -397,6 +397,38 @@ where
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 
+    fn get_block_with_txs(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxs> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let transactions = match block.transactions() {
+            BlockTransactions::Full(transactions) => transactions.to_vec(),
+            BlockTransactions::Hashes(_) => vec![],
+        };
+
+        let block_with_txs = BlockWithTxs {
+            // TODO: Get status from block
+            status: BlockStatus::AcceptedOnL2,
+            block_hash: block.header().hash().to_string(),
+            parent_hash: block.header().parent_block_hash.to_string(),
+            block_number: block.header().block_number.as_u64(),
+            new_root: block.header().global_state_root.to_string(),
+            timestamp: block.header().block_timestamp,
+            sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
+            transactions,
+        };
+
+        Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
+    }
+
     /// Get the nonce associated with the given address at the given block
     fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
