@@ -370,7 +370,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Ping the pallet to check if it is alive.
         #[pallet::call_index(0)]
-        #[pallet::weight({0})]
+        #[pallet::weight(100_000)]
         pub fn ping(origin: OriginFor<T>) -> DispatchResult {
             ensure_none(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
@@ -399,14 +399,12 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(1)]
-        #[pallet::weight({0})]
+        #[pallet::weight(100_000)]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
-
-            log!(error, "LOOK AT ME: {:?}", transaction);
 
             // Get current block
             let block = Self::current_block();
@@ -415,7 +413,7 @@ pub mod pallet {
             let transaction: Transaction = transaction.into();
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block,
+                block.clone(),
                 TxType::Invoke,
                 None,
                 fee_token_address,
@@ -428,7 +426,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(info, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
@@ -453,8 +451,6 @@ pub mod pallet {
                 }
             };
 
-            log!(error, "LOOK AT ME: {:?}", receipt);
-
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
@@ -476,7 +472,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(2)]
-        #[pallet::weight({0})]
+        #[pallet::weight(100_000)]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -566,7 +562,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(3)]
-        #[pallet::weight({0})]
+        #[pallet::weight(100_000)]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -647,7 +643,7 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(4)]
-        #[pallet::weight({0})]
+        #[pallet::weight(100_000)]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;

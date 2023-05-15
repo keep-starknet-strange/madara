@@ -14,6 +14,7 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
+  ACCOUNT_CONTRACT_2_ADDRESS,
 } from "../constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
@@ -310,57 +311,24 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Adds an invocation transaction successfully", async function() {
-    // const {
-    //   result: { events },
-    // } = await context.createBlock(
-    //   const argent_class_hash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
-    //   declare(context.polkadotApi, CONTRACT_ADDRESS, argent_class_hash)l
-    // );
+    const priKey = stark.randomAddress();
+    const keyPair = ec.getKeyPair(priKey);
+    const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
 
-    // expect(
-    //   events.find(
-    //     ({ event: { section, method } }) =>
-    //       section == "system" && method == "ExtrinsicSuccess"
-    //   )
-    // ).to.exist;
-    const call = await providerRPC.callContract(
-      {
+    const res = await account.execute({
         contractAddress: FEE_TOKEN_ADDRESS,
-        entrypoint: "balanceOf",
-        calldata: ["0x0000000000000000000000000000000000000000000000000000000000000001"],
-      },
-      "latest"
+        entrypoint: 'transfer',
+        calldata: ['2', '23', '0'],
+      }], 
+      undefined,
+      {
+        nonce: "0",
+        maxFee: "123456"
+      }
     );
-    console.log("CALL: ", call);
 
-    // const priKey = stark.randomAddress();
-    // const keyPair = ec.getKeyPair(priKey);
-    // const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
-
-    // const call = await providerRPC.callContract(
-    //   {
-    //     contractAddress: ACCOUNT_CONTRACT,
-    //     entrypoint: "getSigner",
-    //     calldata: [],
-    //   },
-    //   "latest"
-    // );
-
-    // console.log("CALL: ", call);
-
-    // const res = await account.execute([{
-    //     contractAddress: TEST_CONTRACT,
-    //     entrypoint: 'with_arg',
-    //     calldata: ['25'],
-    //   }], 
-    //   undefined,
-    //   {
-    //     nonce: "5",
-    //     maxFee: "1234"
-    //   }
-    // );
-
-    // console.log("RES: ", res);
+    console.log("RES: ", res);
+    
   });
 
   it("chainId", async function () {
