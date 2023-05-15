@@ -413,7 +413,7 @@ pub mod pallet {
             let transaction: Transaction = transaction.into();
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
+                block,
                 TxType::Invoke,
                 None,
                 fee_token_address,

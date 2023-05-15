@@ -14,7 +14,6 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
-  ACCOUNT_CONTRACT_2_ADDRESS,
 } from "../constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
