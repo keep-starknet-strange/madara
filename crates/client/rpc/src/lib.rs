@@ -14,12 +14,14 @@ use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use mc_rpc_core::types::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
-    FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, BlockWithTxs, ContractAddress,
+    ContractClassHash, FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    RPCContractClass, Syncing,
 };
 use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::block::{self, BlockTransactions};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -476,6 +478,38 @@ where
             sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
+    }
+
+    fn get_block_with_txs(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxs> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let transactions = match block.transactions() {
+            BlockTransactions::Full(transactions) => transactions.to_vec(),
+            BlockTransactions::Hashes(_) => vec![],
+        };
+
+        let block_with_txs = BlockWithTxs {
+            // TODO: Get status from block
+            status: BlockStatus::AcceptedOnL2,
+            block_hash: block.header().hash().to_string(),
+            parent_hash: block.header().parent_block_hash.to_string(),
+            block_number: block.header().block_number.as_u64(),
+            new_root: block.header().global_state_root.to_string(),
+            timestamp: block.header().block_timestamp,
+            sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
+            transactions,
+        };
+
+        Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
     }
 
     /// Returns the chain id.
