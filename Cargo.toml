@@ -136,7 +136,7 @@ safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
 clap = { version = "4.2.7", default-features = false }
 futures = { version = "0.3.28", default-features = false }
-serde = { version = "1.0.162", default-features = false }
+serde = { version = "1.0.163", default-features = false }
 serde_json = { version = "1.0.96", default-features = false }
 bitvec = { version = "0.17.4", default-features = false }
 thiserror = "1.0.40"

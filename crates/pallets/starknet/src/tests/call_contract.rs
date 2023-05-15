@@ -6,6 +6,7 @@ use mp_starknet::transaction::types::InvokeTransaction;
 use sp_core::{ConstU32, H256, U256};
 use sp_runtime::BoundedVec;
 
+use super::constants::TOKEN_CONTRACT_CLASS_HASH;
 use super::mock::*;
 
 #[test]

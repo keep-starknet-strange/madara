@@ -1,6 +1,5 @@
 use core::str::FromStr;
 
-use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
 use lazy_static::lazy_static;
@@ -9,17 +8,12 @@ use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 use sp_core::{H256, U256};
 
 use super::mock::*;
+use super::utils::get_contract_class_wrapper;
+use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
 use crate::Event;
 
-fn get_contract_class_wrapper(contract_content: &'static [u8]) -> ContractClassWrapper {
-    let contract_class: ContractClass =
-        serde_json::from_slice(contract_content).expect("File must contain the content of a compiled contract.");
-    ContractClassWrapper::try_from(contract_class).unwrap()
-}
-
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper =
-        get_contract_class_wrapper(include_bytes!("../../../../../resources/erc20/erc20.json"));
+    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("erc20/erc20.json");
 }
 
 #[test]
