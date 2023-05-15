@@ -1,52 +1,25 @@
 use core::str::FromStr;
 
-use blockifier::execution::contract_class::ContractClass;
+use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
-use frame_support::{bounded_vec, parameter_types};
-use hex::FromHex;
 use mp_starknet::execution::types::ContractClassWrapper;
-use mp_starknet::transaction::types::MaxArraySize;
 use sp_core::{H256, U256};
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
-use sp_runtime::BoundedVec;
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
 use starknet_core::types::FieldElement as CoreFieldElement;
 use starknet_core::utils::get_storage_var_address;
-use starknet_crypto::{sign, FieldElement};
 use {crate as pallet_starknet, frame_system as system};
 
+use super::constants::*;
+use super::utils::get_contract_class;
 use crate::types::ContractStorageKeyWrapper;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
-
-pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
-const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
-const K: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
-
-pub const ARGENT_PROXY_CLASS_HASH_V0: &str = "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
-pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d";
-pub const ARGENT_ACCOUNT_CLASS_HASH_V0: &str = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
-pub const OPENZEPPELIN_ACCOUNT_CLASS_HASH: &str = "006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd";
-pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52";
-pub const BRAAVOS_PROXY_CLASS_HASH: &str = "06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262";
-pub const BLOCKIFIER_ACCOUNT_CLASS: &str = "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32";
-pub const SIMPLE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
-pub const UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH: &str =
-    "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4";
-pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
-pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
-pub const TOKEN_CONTRACT_CLASS_HASH: &str = "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
-pub const BLOCKIFIER_ACCOUNT_ADDRESS: &str = "0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77";
-pub const FEE_TOKEN_ADDRESS: &str = "0x00000000000000000000000000000000000000000000000000000000000000AA";
-
-pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-    serde_json::from_slice(contract_content).unwrap()
-}
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -120,64 +93,53 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let blockifier_account_class_hash = H256::from_str(BLOCKIFIER_ACCOUNT_CLASS).unwrap().to_fixed_bytes();
 
     // TEST CLASSES
-    let argent_proxy_class = get_contract_class(include_bytes!("../../../../../resources/argent_proxy_v0.json"));
-    let argent_account_class_v0 = get_contract_class(include_bytes!("../../../../../resources/argent_account_v0.json"));
-    let openzeppelin_account_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/openzeppelin/account.json"));
-    let argent_account_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/argent/account.json"));
-    let braavos_account_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/braavos/account.json"));
-    let braavos_proxy_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/braavos/openzeppelin_deps/proxy.json"));
-    let test_class = get_contract_class(include_bytes!("../../../../../resources/test.json"));
-    let l1_handler_class = get_contract_class(include_bytes!("../../../../../resources/l1_handler.json"));
-    let blockifier_account_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
-    let simple_account_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
-    let inner_call_account_class =
-        get_contract_class(include_bytes!("../../../../../resources/account/unauthorized_inner_call/account.json"));
-    let erc20_class = get_contract_class(include_bytes!("../../../../../resources/erc20/erc20.json"));
+    let argent_proxy_class = get_contract_class("argent_proxy_v0.json");
+    let argent_account_class_v0 = get_contract_class("argent_account_v0.json");
+    let openzeppelin_account_class = get_contract_class("account/openzeppelin/account.json");
+    let argent_account_class = get_contract_class("account/argent/account.json");
+    let braavos_account_class = get_contract_class("account/braavos/account.json");
+    let braavos_proxy_class = get_contract_class("account/braavos/openzeppelin_deps/proxy.json");
+    let test_class = get_contract_class("test.json");
+    let l1_handler_class = get_contract_class("l1_handler.json");
+    let blockifier_account_class = get_contract_class("account/simple/account.json");
+    let simple_account_class = get_contract_class("account/simple/account.json");
+    let inner_call_account_class = get_contract_class("account/unauthorized_inner_call/account.json");
+    let erc20_class = get_contract_class("erc20/erc20.json");
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)
     let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT, AccountType::ArgentV0);
 
     // OPENZEPPELIN ACCOUNT CONTRACT
-    let openzeppelin_class_hash = <[u8; 32]>::from_hex(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
+    let openzeppelin_class_hash = H256::from_str(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap().to_fixed_bytes();
     let openzeppelin_account_address = get_account_address(AccountType::Openzeppelin);
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_class_hash = <[u8; 32]>::from_hex(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
+    let argent_class_hash = H256::from_str(ARGENT_ACCOUNT_CLASS_HASH).unwrap().to_fixed_bytes();
     let argent_account_address = get_account_address(AccountType::Argent);
 
     // BRAAVOS ACCOUNT CONTRACT
-    let braavos_class_hash = <[u8; 32]>::from_hex(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
+    let braavos_class_hash = H256::from_str(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap().to_fixed_bytes();
     let braavos_account_address = get_account_address(AccountType::Braavos);
-    let braavos_proxy_class_hash = <[u8; 32]>::from_hex(BRAAVOS_PROXY_CLASS_HASH).unwrap();
+    let braavos_proxy_class_hash = H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap().to_fixed_bytes();
     let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
 
     // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
     let inner_call_account_class_hash =
-        <[u8; 32]>::from_hex(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
+        H256::from_str(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap().to_fixed_bytes();
     let inner_call_account_address = get_account_address(AccountType::InnerCall);
 
     // SIMPLE ACCOUNT CONTRACT
-    let simple_account_class_hash =
-        <[u8; 32]>::from_hex(SIMPLE_ACCOUNT_CLASS_HASH.strip_prefix("0x").unwrap()).unwrap();
+    let simple_account_class_hash = H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap().to_fixed_bytes();
     let simple_account_address = get_account_address(AccountType::NoValidate);
 
     // TEST CONTRACT
-    let other_contract_address =
-        <[u8; 32]>::from_hex("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
+    let other_contract_address = H256::from_str(TEST_CONTRACT_ADDRESS).unwrap().to_fixed_bytes();
     let other_class_hash = H256::from_str(TEST_CLASS_HASH).unwrap().to_fixed_bytes();
 
     // L1 HANDLER CONTRACT
-    let l1_handler_contract_address =
-        <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
-    let l1_handler_class_hash =
-        <[u8; 32]>::from_hex("01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8").unwrap();
+    let l1_handler_contract_address = H256::from_str(L1_HANDLER_CONTRACT_ADDRESS).unwrap().to_fixed_bytes();
+    let l1_handler_class_hash = H256::from_str(L1_HANDLER_CLASS_HASH).unwrap().to_fixed_bytes();
 
     // FEE CONTRACT
     let token_class_hash = H256::from_str(TOKEN_CONTRACT_CLASS_HASH).unwrap().to_fixed_bytes();
@@ -333,7 +295,7 @@ pub fn account_helper(salt: &str, account_type: AccountType) -> ([u8; 32], [u8; 
         AccountType::BraavosProxy => (
             H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap(),
             vec![
-                "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52", // Braavos account class hash
+                BRAAVOS_ACCOUNT_CLASS_HASH, // Braavos account class hash
                 "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' selector
             ],
         ),
@@ -379,14 +341,4 @@ pub fn calculate_contract_address(
         ),
         ContractAddress::default(),
     )
-}
-
-pub fn sign_message_hash(hash: H256) -> BoundedVec<H256, MaxArraySize> {
-    let signature = sign(
-        &FieldElement::from_str(ACCOUNT_PRIVATE_KEY).unwrap(),
-        &FieldElement::from_bytes_be(&hash.0).unwrap(),
-        &FieldElement::from_str(K).unwrap(),
-    )
-    .unwrap();
-    bounded_vec!(H256::from(signature.r.to_bytes_be()), H256::from(signature.s.to_bytes_be()))
 }
