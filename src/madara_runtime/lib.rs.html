@@ -366,6 +366,9 @@
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
 </pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -669,6 +672,9 @@
 
         <span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt; {
             Starknet::contract_class_by_class_hash(class_hash)
+        }
+        <span class="kw">fn </span>chain_id() -&gt; u128 {
+            Starknet::chain_id()
         }
     }
 

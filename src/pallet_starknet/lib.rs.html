@@ -940,6 +940,16 @@
 <a href="#940" id="940">940</a>
 <a href="#941" id="941">941</a>
 <a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1192,6 +1202,11 @@
     #[pallet::getter(<span class="kw">fn </span>fee_token_address)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>FeeTokenAddress&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, ContractAddressWrapper, ValueQuery&gt;;
 
+    <span class="doccomment">/// The chain id.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>chain_id)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ChainId&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, u128, ValueQuery&gt;;
+
     <span class="doccomment">/// Starknet genesis configuration.
     </span><span class="attr">#[pallet::genesis_config]
     </span><span class="kw">pub struct </span>GenesisConfig&lt;T: Config&gt; {
@@ -1212,6 +1227,8 @@
         /// Must be set to the address of the fee token ERC20 contract.
         </span><span class="kw">pub </span>fee_token_address: ContractAddressWrapper,
         <span class="kw">pub </span>_phantom: PhantomData&lt;T&gt;,
+        <span class="doccomment">/// The chain id.
+        </span><span class="kw">pub </span>chain_id: u128,
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
@@ -1223,6 +1240,7 @@
                 storage: <span class="macro">vec!</span>[],
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
+                chain_id: Default::default(),
             }
         }
     }
@@ -1250,6 +1268,8 @@
             LastKnownEthBlock::&lt;T&gt;::set(<span class="prelude-val">None</span>);
             <span class="comment">// Set the fee token address from the genesis config.
             </span>FeeTokenAddress::&lt;T&gt;::set(<span class="self">self</span>.fee_token_address);
+            <span class="comment">// Set the chain id from the genesis config.
+            </span>ChainId::&lt;T&gt;::put(<span class="self">self</span>.chain_id);
         }
     }
 

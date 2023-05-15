@@ -484,6 +484,16 @@
 <a href="#484" id="484">484</a>
 <a href="#485" id="485">485</a>
 <a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -962,6 +972,16 @@
             sequencer_address: H256::from_slice(<span class="kw-2">&amp;</span>block.header().sequencer_address).to_string(),
         };
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
+    }
+
+    <span class="doccomment">/// Returns the chain id.
+    </span><span class="kw">fn </span>get_chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt; {
+        <span class="kw">let </span>hash = <span class="self">self</span>.client.info().best_hash;
+        <span class="kw">let </span>res = <span class="self">self</span>.client.runtime_api().chain_id(hash).map_err(|<span class="kw">_</span>| {
+            <span class="macro">error!</span>(<span class="string">&quot;fetch runtime chain id failed&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">&quot;0x{:x}&quot;</span>, res))
     }
 }
 

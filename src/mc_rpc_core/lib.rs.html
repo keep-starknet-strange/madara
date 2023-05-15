@@ -64,6 +64,10 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -129,6 +133,10 @@
     <span class="doccomment">/// Get block information with transaction hashes given the block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxHashes&quot;</span>)]
     </span><span class="kw">fn </span>get_block_with_tx_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxHashes&gt;;
+
+    <span class="doccomment">/// Get the chain id
+    </span><span class="attr">#[method(name = <span class="string">&quot;chainId&quot;</span>)]
+    </span><span class="kw">fn </span>get_chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt;;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mc_rpc_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

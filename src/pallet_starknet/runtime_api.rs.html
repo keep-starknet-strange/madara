@@ -32,6 +32,8 @@
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -64,6 +66,8 @@
         </span><span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;;
         <span class="doccomment">/// Returns the contract class for the given class hash.
         </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;;
+        <span class="doccomment">/// Returns the chain id.
+        </span><span class="kw">fn </span>chain_id() -&gt; u128;
     }
 }
 </code></pre></div>
