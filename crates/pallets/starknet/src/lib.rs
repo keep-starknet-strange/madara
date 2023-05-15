@@ -32,7 +32,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
-use blockifier::block_context::{BlockContext};
+use blockifier::block_context::BlockContext;
 use mp_starknet::block::serialize::SerializeBlockContext;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
@@ -724,7 +724,7 @@ pub mod pallet {
                         .longevity(64_u64)
                         .propagate(true)
                         .build()
-                },
+                }
                 Call::declare { transaction } => {
                     let declare_transaction = Transaction::from(transaction.clone());
                     Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
@@ -735,7 +735,7 @@ pub mod pallet {
                         .longevity(64_u64)
                         .propagate(true)
                         .build()
-                },
+                }
                 Call::deploy_account { transaction } => {
                     let deploy_transaction = Transaction::from(transaction.clone());
                     Pallet::<T>::validate_tx(deploy_transaction, TxType::DeployAccount)?;
@@ -746,7 +746,7 @@ pub mod pallet {
                         .longevity(64_u64)
                         .propagate(true)
                         .build()
-                },
+                }
                 Call::consume_l1_message { transaction } => {
                     let l1_transaction = Transaction::from(transaction.clone());
                     Pallet::<T>::validate_tx(l1_transaction, TxType::L1Handler)?;
@@ -757,7 +757,7 @@ pub mod pallet {
                         .longevity(64_u64)
                         .propagate(true)
                         .build()
-                },
+                }
                 _ => InvalidTransaction::Call.into(),
             }
         }
@@ -970,14 +970,15 @@ impl<T: Config> Pallet<T> {
     /// # Error
     ///
     /// Returns an error if transaction validation fails.
-    fn validate_tx(transaction: Transaction, tx_type: TxType) -> Result<(), TransactionValidityError>{
+    fn validate_tx(transaction: Transaction, tx_type: TxType) -> Result<(), TransactionValidityError> {
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
         let mut execution_resources = ExecutionResources::default();
-        let block_context = BlockContext::try_serialize(
-            Self::current_block().header().clone(), Pallet::<T>::fee_token_address())
-            .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Call))?;
+        let block_context =
+            BlockContext::try_serialize(Self::current_block().header().clone(), Pallet::<T>::fee_token_address())
+                .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::Call))?;
 
-        transaction.validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
+        transaction
+            .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
             .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
 
         Ok(())

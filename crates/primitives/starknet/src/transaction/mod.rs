@@ -356,9 +356,9 @@ impl Transaction {
     }
 
     /// Validates account transaction
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `self` - The transaction to validate.
     /// * `state` - The state to validate the transaction on.
     /// * `execution_resources` - The execution resources to validate the transaction on.
@@ -369,21 +369,21 @@ impl Transaction {
         state: &mut S,
         execution_resources: &mut ExecutionResources,
         block_context: &BlockContext,
-        tx_type: &TxType
+        tx_type: &TxType,
     ) -> TransactionValidationResultWrapper<Option<CallInfo>> {
         let account_context = match tx_type {
             TxType::Invoke => {
                 let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 self.get_invoke_transaction_context(&tx)
-            },
+            }
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 self.get_declare_transaction_context(&tx)
-            },
+            }
             TxType::L1Handler => {
                 let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 self.get_l1_handler_transaction_context(&tx)
-            },
+            }
             TxType::DeployAccount => {
                 let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 self.get_deploy_account_transaction_context(&tx)
