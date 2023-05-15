@@ -297,6 +297,10 @@ impl_runtime_apis! {
             Starknet::call_contract(address, function_selector, calldata)
         }
 
+        fn get_nonce(address: ContractAddressWrapper) -> Result<StarkFeltWrapper, DispatchError> {
+            Starknet::get_nonce(address)
+        }
+
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper> {
             Starknet::contract_class_hash_by_address(address)
         }

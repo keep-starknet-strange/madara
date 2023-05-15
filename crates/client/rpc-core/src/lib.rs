@@ -69,6 +69,10 @@ pub trait StarknetRpcApi {
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 
+    /// Get the nonce associated with the given address at the given block
+    #[method(name = "getNonce")]
+    fn get_nonce(&self, block_id: BlockId, contract_address: ContractAddress) -> RpcResult<String>;
+
     /// Get the chain id
     #[method(name = "chainId")]
     fn get_chain_id(&self) -> RpcResult<String>;

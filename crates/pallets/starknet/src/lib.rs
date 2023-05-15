@@ -857,6 +857,12 @@ impl<T: Config> Pallet<T> {
         Ok(Self::storage((contract_address, key)))
     }
 
+    // Get the nonce associated with the given address at the given block
+    pub fn get_nonce(contract_address: ContractAddressWrapper) -> Result<U256, DispatchError> {
+        // Get nonce
+        Ok(Self::nonce(contract_address))
+    }
+
     /// Store a Starknet block in the blockchain.
     ///
     /// # Arguments
