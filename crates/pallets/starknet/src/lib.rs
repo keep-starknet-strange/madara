@@ -403,9 +403,10 @@ pub mod pallet {
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+
+            log!(error, "LOOK AT ME: {:?}", transaction);
 
             // Get current block
             let block = Self::current_block();
@@ -427,7 +428,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(info, "Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
@@ -451,6 +452,8 @@ pub mod pallet {
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
+
+            log!(error, "LOOK AT ME: {:?}", receipt);
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;

@@ -4,8 +4,9 @@ Content-Type: application/json
     "jsonrpc": "2.0",
     "method": "starknet_getStorageAt",
     "params": [
-        "0x049D36570D4e46f48e99674bd3fcc84644DdD6b96F7C741B1562B82f9e004dC7",
-        "0x0206F38F7E4F15E87567361213C28F235CCCDAA1D7FD34C9DB1DFE9489C6A091"
+        "0x0000000000000000000000000000000000000000000000000000000000001111",
+        "0x391a88f3badec8650b4d8356e18655269ee975e58e0060aa076396ce0b1dccb",
+        "latest"
     ],
     "id":1
 }

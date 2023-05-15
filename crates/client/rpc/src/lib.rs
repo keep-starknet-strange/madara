@@ -495,7 +495,7 @@ where
     ) -> RpcResult<InvokeTransactionResult> {
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
         let invoke_tx_hash = calculate_invoke_tx_hash(invoke_tx.clone());
-        println!("THIS: {:?}", invoke_tx_hash);
+
         self.client.runtime_api()
             .add_invoke_transaction(self.client.info().best_hash, invoke_tx)
             .map_err(|e| {

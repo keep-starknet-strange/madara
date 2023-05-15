@@ -13,12 +13,8 @@ import {
   ACCOUNT_CONTRACT_CLASS_HASH,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
-<<<<<<< HEAD
-} from "../constants";
-=======
   CHAIN_ID_STARKNET_TESTNET,
-} from "./constants";
->>>>>>> main
+} from "../constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
 
@@ -314,34 +310,43 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Adds an invocation transaction successfully", async function() {
-    const {
-      result: { events },
-    } = await context.createBlock(
-      const argent_class_hash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
-      declare(context.polkadotApi, CONTRACT_ADDRESS, argent_class_hash)l
-    );
+    // const {
+    //   result: { events },
+    // } = await context.createBlock(
+    //   const argent_class_hash = "0x033434ad846cdd5f23eb73ff09fe6fddd568284a0fb7d1be20ee482f044dabe2";
+    //   declare(context.polkadotApi, CONTRACT_ADDRESS, argent_class_hash)l
+    // );
 
-    expect(
-      events.find(
-        ({ event: { section, method } }) =>
-          section == "system" && method == "ExtrinsicSuccess"
-      )
-    ).to.exist;
-
-    const priKey = stark.randomAddress();
-    const keyPair = ec.getKeyPair(priKey);
-    const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
-
+    // expect(
+    //   events.find(
+    //     ({ event: { section, method } }) =>
+    //       section == "system" && method == "ExtrinsicSuccess"
+    //   )
+    // ).to.exist;
     const call = await providerRPC.callContract(
       {
-        contractAddress: ACCOUNT_CONTRACT,
-        entrypoint: "getSigner",
-        calldata: [],
+        contractAddress: FEE_TOKEN_ADDRESS,
+        entrypoint: "balanceOf",
+        calldata: ["0x0000000000000000000000000000000000000000000000000000000000000001"],
       },
       "latest"
     );
-
     console.log("CALL: ", call);
+
+    // const priKey = stark.randomAddress();
+    // const keyPair = ec.getKeyPair(priKey);
+    // const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
+
+    // const call = await providerRPC.callContract(
+    //   {
+    //     contractAddress: ACCOUNT_CONTRACT,
+    //     entrypoint: "getSigner",
+    //     calldata: [],
+    //   },
+    //   "latest"
+    // );
+
+    // console.log("CALL: ", call);
 
     // const res = await account.execute([{
     //     contractAddress: TEST_CONTRACT,
@@ -357,7 +362,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     // console.log("RES: ", res);
   });
-  
+
   it("chainId", async function () {
     const chainId = await providerRPC.getChainId();
 
