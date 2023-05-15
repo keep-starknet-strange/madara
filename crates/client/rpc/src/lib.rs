@@ -21,7 +21,7 @@ use mc_rpc_core::types::{
 use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::block::{self, BlockTransactions};
+use mp_starknet::block::BlockTransactions;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -480,6 +480,7 @@ where
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 
+    /// Get block information with full transactions given the block id
     fn get_block_with_txs(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxs> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
