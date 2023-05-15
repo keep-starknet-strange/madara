@@ -748,7 +748,7 @@ pub mod pallet {
                         .build()
                 }
                 Call::consume_l1_message { transaction } => {
-                    let l1_transaction = Transaction::from(transaction.clone());
+                    let l1_transaction = transaction.clone();
                     Pallet::<T>::validate_tx(l1_transaction, TxType::L1Handler)?;
 
                     ValidTransaction::with_tag_prefix("starknet")
