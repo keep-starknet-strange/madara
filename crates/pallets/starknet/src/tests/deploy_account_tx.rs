@@ -6,6 +6,8 @@ use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_core::{H256, U256};
 
 use super::mock::*;
+use super::utils::sign_message_hash;
+use crate::tests::constants::ACCOUNT_PUBLIC_KEY;
 use crate::{Error, Event, StorageView};
 
 #[test]
