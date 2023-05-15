@@ -307,6 +307,10 @@ impl_runtime_apis! {
         fn add_invoke_transaction(transaction: InvokeTransaction) -> Result<(), DispatchError> {
             Starknet::invoke(frame_system::RawOrigin::None.into(), transaction)
         }
+        
+        fn chain_id() -> u128 {
+            Starknet::chain_id()
+        }
     }
 
     #[cfg(feature = "runtime-benchmarks")]

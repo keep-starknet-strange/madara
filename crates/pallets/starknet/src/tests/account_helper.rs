@@ -1,6 +1,7 @@
 use hex::FromHex;
 
-use crate::tests::mock::{account_helper, AccountType, TEST_ACCOUNT_SALT};
+use super::constants::TEST_ACCOUNT_SALT;
+use super::mock::{account_helper, AccountType};
 
 #[test]
 fn should_calculate_contract_addr_correct() {

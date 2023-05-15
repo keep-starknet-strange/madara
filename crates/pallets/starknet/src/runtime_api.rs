@@ -33,5 +33,7 @@ sp_api::decl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
         /// Returns the transaction hash for the invocation.
         fn add_invoke_transaction(transaction: InvokeTransaction) -> Result<(), DispatchError>;
+        /// Returns the chain id.
+        fn chain_id() -> u128;
     }
 }

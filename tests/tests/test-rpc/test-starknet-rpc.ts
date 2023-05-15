@@ -13,7 +13,12 @@ import {
   ACCOUNT_CONTRACT_CLASS_HASH,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
+<<<<<<< HEAD
 } from "../constants";
+=======
+  CHAIN_ID_STARKNET_TESTNET,
+} from "./constants";
+>>>>>>> main
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
 
@@ -351,5 +356,12 @@ describeDevMadara("Starknet RPC", (context) => {
     // );
 
     // console.log("RES: ", res);
+  });
+  
+  it("chainId", async function () {
+    const chainId = await providerRPC.getChainId();
+
+    expect(chainId).to.not.be.undefined;
+    expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
   });
 });

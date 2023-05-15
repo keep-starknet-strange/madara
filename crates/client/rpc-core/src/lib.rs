@@ -72,7 +72,7 @@ pub trait StarknetRpcApi {
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult>;
 
-    /// Get the chain identifier
+    /// Get the chain id
     #[method(name = "chainId")]
-    fn chain_id(&self) -> RpcResult<FieldElement>;
+    fn get_chain_id(&self) -> RpcResult<String>;
 }

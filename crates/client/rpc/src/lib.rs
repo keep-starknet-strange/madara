@@ -513,8 +513,13 @@ where
     }
 
     /// Returns the chain id.
-    fn chain_id(&self) -> RpcResult<FieldElement> {
-        Ok(FieldElement::from("0x534e5f474f45524c49"))
+    fn get_chain_id(&self) -> RpcResult<String> {
+        let hash = self.client.info().best_hash;
+        let res = self.client.runtime_api().chain_id(hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+        Ok(format!("0x{:x}", res))
     }
 }
 
