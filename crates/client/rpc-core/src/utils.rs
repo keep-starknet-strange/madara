@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
 use frame_support::storage::bounded_vec::BoundedVec;
