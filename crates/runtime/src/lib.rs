@@ -307,15 +307,6 @@ impl_runtime_apis! {
         fn chain_id() -> u128 {
             Starknet::chain_id()
         }
-
-        fn deploy_account(transaction: DeployAccountTransaction) -> Result<DeployAccountTransactionOutput, DispatchError> {
-            let tx: Transaction = transaction.clone().into();
-            Starknet::deploy_account(RuntimeOrigin::none(), transaction)?;
-            Ok(DeployAccountTransactionOutput {
-                transaction_hash: tx.hash,
-                contract_address: tx.sender_address,
-            })
-        }
     }
 
     #[cfg(feature = "runtime-benchmarks")]
