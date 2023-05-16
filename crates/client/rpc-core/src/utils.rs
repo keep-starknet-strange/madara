@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use base64::engine::general_purpose;
 use base64::Engine;
 use frame_support::storage::bounded_vec::BoundedVec;
@@ -73,13 +73,13 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
             signature: BoundedVec::try_from(
                 invoke_tx_v1.signature.iter().map(|x| H256::from(x.to_bytes_be())).collect::<Vec<H256>>(),
             )
-            .unwrap(),
+            .map_err(|e| anyhow!("failed to convert signature: {:?}", e))?,
             sender_address: invoke_tx_v1.sender_address.to_bytes_be(),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect::<Vec<U256>>(),
             )
-            .unwrap(),
+            .map_err(|e| anyhow!("failed to convert calldata: {:?}", e))?,
             max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
         }),
     }
