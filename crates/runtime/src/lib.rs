@@ -28,11 +28,12 @@ pub use frame_system::Call as SystemCall;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
+use mp_starknet::transaction::types::{DeployAccountTransaction, Transaction};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
-use pallet_starknet::types::StarkFeltWrapper;
+use pallet_starknet::types::{DeployAccountTransactionOutput, StarkFeltWrapper};
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -305,6 +306,15 @@ impl_runtime_apis! {
 
         fn chain_id() -> u128 {
             Starknet::chain_id()
+        }
+
+        fn deploy_account(transaction: DeployAccountTransaction) -> Result<DeployAccountTransactionOutput, DispatchError> {
+            let tx: Transaction = transaction.clone().into();
+            Starknet::deploy_account(RuntimeOrigin::none(), transaction)?;
+            Ok(DeployAccountTransactionOutput {
+                transaction_hash: tx.hash,
+                contract_address: tx.sender_address,
+            })
         }
     }
 

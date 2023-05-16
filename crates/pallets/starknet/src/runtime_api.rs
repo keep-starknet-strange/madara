@@ -8,13 +8,14 @@
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
+use mp_starknet::transaction::types::DeployAccountTransaction;
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
 
 use sp_runtime::DispatchError;
 
-use crate::types::StarkFeltWrapper;
+use crate::types::{DeployAccountTransactionOutput, StarkFeltWrapper};
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
@@ -32,5 +33,7 @@ sp_api::decl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
         /// Returns the chain id.
         fn chain_id() -> u128;
+        /// Deploys an account and returns the transaction hash and address of the new deployed account
+        fn deploy_account(transaction: DeployAccountTransaction) -> Result<DeployAccountTransactionOutput, DispatchError>;
     }
 }
