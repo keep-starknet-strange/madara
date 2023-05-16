@@ -80,7 +80,7 @@ pub trait StarknetRpcApi {
 
     /// Add a Deploy Account Transaction
     #[method(name = "addDeployAccountTransaction")]
-    fn add_deploy_account_transaction(
+    async fn add_deploy_account_transaction(
         &self,
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<AddDeployAccountTransactionOutput>;

@@ -14,18 +14,19 @@ use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
 use madara_runtime::UncheckedExtrinsic;
 use mc_rpc_core::types::{
-    AddDeployAccountTransactionOutput, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag,
-    BlockWithTxHashes, BroadcastedDeployAccountTransaction, ContractAddress, ContractClassHash, FieldElement,
-    FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
+    AddDeployAccountTransactionOutput, BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes,
+    BroadcastedDeployAccountTransaction, ContractAddress, ContractClassHash, FieldElement, FunctionCall,
+    MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
 use mc_rpc_core::utils::{to_invoke_tx, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::transaction::types::DeployAccountTransaction;
+use mp_starknet::transaction::types::{DeployAccountTransaction, Transaction};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
+use sc_network_sync::SyncingService;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
@@ -181,28 +182,10 @@ where
         key: FieldElement,
         block_id: StarknetBlockId,
     ) -> RpcResult<FieldElement> {
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_slice(&h.to_bytes_be()[..32]),
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::Number(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => None,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.to_bytes_be();
@@ -409,32 +392,11 @@ where
 
     /// Returns the specified block with transaction hashes.
     fn get_block_with_tx_hashes(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
-        let mut block_status = BlockStatus::AcceptedOnL2;
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_slice(&h.to_bytes_be()[..32]),
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::Number(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => {
-                    block_status = BlockStatus::Pending;
-                    None
-                }
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let block_status = BlockStatus::AcceptedOnL2;
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         let block = self
             .overrides
@@ -527,18 +489,13 @@ where
         &self,
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<AddDeployAccountTransactionOutput> {
-        let runtime_api = self.client.runtime_api();
-
-        let block_id = StarknetBlockId::BlockTag(BlockTag::Latest);
-        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            error!("'{e}'");
-            StarknetRpcApiError::ClassHashNotFound
-        })?;
-
-        info!("substrate_block_hash: {:#?}", substrate_block_hash);
+        let best_block_hash = self.client.info().best_hash;
 
         let version = &deploy_account_transaction.common.version;
-        let version = u8::from_str_radix(version.strip_prefix("0x").unwrap_or(version), 16).unwrap();
+        let version = u8::from_str_radix(version.strip_prefix("0x").unwrap_or(version), 16).map_err(|e| {
+            error!("Failed to convert version '{version}' to u8: {e}");
+            StarknetRpcApiError::ClassHashNotFound
+        })?;
 
         let contract_address_salt =
             <[u8; 32]>::from_hex(&deploy_account_transaction.contract_address_salt).map_err(|e| {
@@ -610,32 +567,37 @@ where
             StarknetRpcApiError::ClassHashNotFound
         })?;
 
-        let deploy_result = runtime_api
-            .deploy_account(
-                substrate_block_hash,
-                DeployAccountTransaction {
-                    version,
-                    sender_address,
-                    calldata,
-                    salt: U256::from(contract_address_salt),
-                    signature,
-                    account_class_hash,
-                    nonce,
-                    max_fee,
-                },
-            )
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to deploy account: {:#?}", e);
-                StarknetRpcApiError::ClassHashNotFound
-            })?;
+        let deploy_account_tx = DeployAccountTransaction {
+            version,
+            sender_address,
+            calldata,
+            salt: U256::from(contract_address_salt),
+            signature,
+            account_class_hash,
+            nonce,
+            max_fee,
+        };
 
+        let call = pallet_starknet::Call::deploy_account { transaction: deploy_account_tx.clone() };
+        let extrinsic = UncheckedExtrinsic::new_unsigned(call.into());
+        let encoded_entrinsic = Encode::encode(&extrinsic);
+        let extrinsic = match Decode::decode(&mut &encoded_entrinsic[..]) {
+            Ok(xt) => xt,
+            Err(err) => {
+                error!("Failed to decode extrinsic: {:?}", err);
+                return Err(StarknetRpcApiError::ClassHashNotFound.into());
+            }
+        };
+
+        self.pool.submit_one(&BlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
+            error!("Failed to submit extrinsic: {:?}", e);
+            StarknetRpcApiError::ClassHashNotFound
+        })?;
+
+        let transaction: Transaction = tx.into();
         Ok(AddDeployAccountTransactionOutput {
-            transaction_hash: deploy_result.transaction_hash.to_string(),
-            contract_address: H256::from(deploy_result.contract_address).to_string(),
+            transaction_hash: transaction.hash.to_string(),
+            contract_address: H256::from(transaction.sender_address).to_string(),
         })
     }
 }
