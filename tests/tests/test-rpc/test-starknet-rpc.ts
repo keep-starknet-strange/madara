@@ -290,6 +290,8 @@ describeDevMadara("Starknet RPC", (context) => {
       "0x0000000000000000000000000000000000000000000000000000000000000000",
       block_hash
     );
+
+    expect(value).to.equal("0x0");
   });
 
   it("Returns an error if the contract does not exist", async function () {
@@ -316,20 +318,21 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
   });
 
-  it("Adds an invocation transaction successfully", async function() {
+  it("Adds an invocation transaction successfully", async function () {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
-    const resp = await account.execute({
+    const resp = await account.execute(
+      {
         contractAddress: TEST_CONTRACT,
-        entrypoint: 'test_storage_var',
+        entrypoint: "test_storage_var",
         calldata: [],
-      }, 
+      },
       undefined,
       {
         nonce: "0",
-        maxFee: "123456"
+        maxFee: "123456",
       }
     );
 
@@ -337,21 +340,22 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(resp.transaction_hash).to.contain("0x");
   });
 
-  it("Returns error when invocation absent entrypoint", async function() {
+  it("Returns error when invocation absent entrypoint", async function () {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
     try {
-      await account.execute({
+      await account.execute(
+        {
           contractAddress: TEST_CONTRACT,
-          entrypoint: 'test_storage_var_WRONG',
+          entrypoint: "test_storage_var_WRONG",
           calldata: [],
-        }, 
+        },
         undefined,
         {
           nonce: "0",
-          maxFee: "123456"
+          maxFee: "123456",
         }
       );
     } catch (error) {
