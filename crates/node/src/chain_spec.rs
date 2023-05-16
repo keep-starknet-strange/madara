@@ -309,6 +309,17 @@ fn testnet_genesis(
                     ),
                     U256::from(u128::MAX),
                 ),
+                (
+                    (
+                        fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"),
+                        // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
+                        // starknet contract for
+                        // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
+                        H256::from_str("0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
             ],
             fee_token_address,
             _phantom: Default::default(),

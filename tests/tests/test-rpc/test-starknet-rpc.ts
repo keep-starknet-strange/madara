@@ -357,8 +357,8 @@ describeDevMadara("Starknet RPC", (context) => {
       invocationDetails.nonce
     );
 
-    let keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-    let signature = ec.sign(keyPair, txHash);
+    const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+    const signature = ec.sign(keyPair, txHash);
 
     // Deploy account contract
     const txDeployAccount = {
@@ -372,7 +372,7 @@ describeDevMadara("Starknet RPC", (context) => {
     await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
     await createAndFinalizeBlock(context.polkadotApi);
 
-    let accountContractClass = await providerRPC.getClassHashAt(
+    const accountContractClass = await providerRPC.getClassHashAt(
       deployedContractAddress
     );
 
