@@ -287,7 +287,7 @@ fn given_contract_declare_on_braavos_account_validate_with_incorrect_signature_s
 
         let account_addr = get_account_address(AccountType::Braavos);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class(ERC20_CONTRACT_PATH)).unwrap();
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
             <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
