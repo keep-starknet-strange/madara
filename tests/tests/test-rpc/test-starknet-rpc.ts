@@ -2,7 +2,6 @@ import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { LibraryError, RPC, RpcProvider, Account, stark, ec } from "starknet";
-import { declare } from "../../util/starknet";
 import { jumpBlocks } from "../../util/block";
 import {
   TEST_CONTRACT,
@@ -14,9 +13,11 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
+  ARGENT_CONTRACT_ADDRESS,
 } from "../constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
+import { extractInfo } from "../../util/substrate-rpc";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -309,16 +310,23 @@ describeDevMadara("Starknet RPC", (context) => {
     }
   });
 
+  it("chainId", async function () {
+    const chainId = await providerRPC.getChainId();
+
+    expect(chainId).to.not.be.undefined;
+    expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
+  });
+
   it("Adds an invocation transaction successfully", async function() {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
-    const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
+    const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
-    const res = await account.execute({
-        contractAddress: FEE_TOKEN_ADDRESS,
-        entrypoint: 'transfer',
-        calldata: ['2', '23', '0'],
-      }], 
+    const resp = await account.execute({
+        contractAddress: TEST_CONTRACT,
+        entrypoint: 'test_storage_var',
+        calldata: [],
+      }, 
       undefined,
       {
         nonce: "0",
@@ -326,14 +334,30 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     );
 
-    console.log("RES: ", res);
-    
+    expect(resp).to.not.be.undefined;
+    expect(resp.transaction_hash).to.contain("0x");
   });
 
-  it("chainId", async function () {
-    const chainId = await providerRPC.getChainId();
+  it("Returns error when invocation absent entrypoint", async function() {
+    const priKey = stark.randomAddress();
+    const keyPair = ec.getKeyPair(priKey);
+    const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
-    expect(chainId).to.not.be.undefined;
-    expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
+    try {
+      await account.execute({
+          contractAddress: TEST_CONTRACT,
+          entrypoint: 'test_storage_var_WRONG',
+          calldata: [],
+        }, 
+        undefined,
+        {
+          nonce: "0",
+          maxFee: "123456"
+        }
+      );
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("40: Contract error");
+    }
   });
 });

@@ -28,7 +28,6 @@ pub use frame_system::Call as SystemCall;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
-use mp_starknet::transaction::types::InvokeTransaction;
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
@@ -304,10 +303,6 @@ impl_runtime_apis! {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 
-        fn add_invoke_transaction(transaction: InvokeTransaction) -> Result<(), DispatchError> {
-            Starknet::invoke(frame_system::RawOrigin::None.into(), transaction)
-        }
-        
         fn chain_id() -> u128 {
             Starknet::chain_id()
         }

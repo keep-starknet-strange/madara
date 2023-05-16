@@ -22,11 +22,11 @@ use mc_rpc_core::types::{
 use mc_rpc_core::utils::{to_invoke_tx, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
+use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -504,7 +504,6 @@ where
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
-        let invoke_tx_hash = calculate_invoke_tx_hash(invoke_tx.clone());
 
         let call = pallet_starknet::Call::invoke { transaction: invoke_tx.clone() };
         let extrinsic = UncheckedExtrinsic::new_unsigned(call.into());
@@ -513,25 +512,18 @@ where
             Ok(xt) => xt,
             Err(err) => {
                 error!("Failed to decode extrinsic: {:?}", err);
-                return Err(StarknetRpcApiError::ContractError.into());
+                return Err(StarknetRpcApiError::InternalServerError.into());
             }
         };
 
-        self.pool.submit_one(&BlockId::hash(self.client.info().best_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
-            error!("Failed to submit extrinsic: {:?}", e);
-            StarknetRpcApiError::ContractError
-        })?;
-        // self.client.runtime_api()
-        //     .add_invoke_transaction(self.client.info().best_hash, invoke_tx)
-        //     .map_err(|e| {
-        //         error!("Request parameters error: {e}");
-        //         StarknetRpcApiError::InternalServerError
-        //     })?
-        //     .map_err(|e| {
-        //         error!("Failed to call function: {:#?}", e);
-        //         StarknetRpcApiError::ContractError
-        //     })?;
+        self.pool.submit_one(&BlockId::hash(self.client.info().best_hash), TX_SOURCE, extrinsic).await.map_err(
+            |e| {
+                error!("Failed to submit extrinsic: {:?}", e);
+                StarknetRpcApiError::ContractError
+            },
+        )?;
 
+        let invoke_tx_hash = calculate_invoke_tx_hash(invoke_tx);
         Ok(InvokeTransactionResult {
             transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
         })
