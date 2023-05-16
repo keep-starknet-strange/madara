@@ -17,7 +17,6 @@ import {
 } from "../constants";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { transfer } from "../../util/starknet";
-import { extractInfo } from "../../util/substrate-rpc";
 
 chai.use(deepEqualInAnyOrder);
 

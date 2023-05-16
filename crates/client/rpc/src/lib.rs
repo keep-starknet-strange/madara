@@ -490,6 +490,16 @@ where
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 
+    /// Returns the chain id.
+    fn get_chain_id(&self) -> RpcResult<String> {
+        let hash = self.client.info().best_hash;
+        let res = self.client.runtime_api().chain_id(hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+        Ok(format!("0x{:x}", res))
+    }
+
     /// Add an Invoke Transaction to invoke a contract function
     ///
     /// # Arguments
@@ -527,16 +537,6 @@ where
         Ok(InvokeTransactionResult {
             transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
         })
-    }
-
-    /// Returns the chain id.
-    fn get_chain_id(&self) -> RpcResult<String> {
-        let hash = self.client.info().best_hash;
-        let res = self.client.runtime_api().chain_id(hash).map_err(|_| {
-            error!("fetch runtime chain id failed");
-            StarknetRpcApiError::InternalServerError
-        })?;
-        Ok(format!("0x{:x}", res))
     }
 }
 
