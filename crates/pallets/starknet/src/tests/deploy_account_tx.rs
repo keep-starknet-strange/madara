@@ -8,6 +8,8 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 
 use super::mock::*;
+use super::utils::sign_message_hash;
+use crate::tests::constants::ACCOUNT_PUBLIC_KEY;
 use crate::{Error, Event, StorageView};
 
 #[test]

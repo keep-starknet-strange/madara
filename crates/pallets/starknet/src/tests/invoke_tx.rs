@@ -15,6 +15,7 @@ use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityErr
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
+use super::utils::sign_message_hash;
 use crate::message::Message;
 use crate::{Error, Event, StorageView};
 

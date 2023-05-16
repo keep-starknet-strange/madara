@@ -38,13 +38,13 @@
 | starknet_getTransactionReceipt           | :construction:     |
 | starknet_getClass                        | :white_check_mark: |
 | starknet_getClassHashAt                  | :white_check_mark: |
-| starknet_getClassAt                      | :construction:     |
+| starknet_getClassAt                      | :white_check_mark: |
 | starknet_getBlockTransactionCount        | :white_check_mark: |
 | starknet_call                            | :construction:     |
 | starknet_estimateFee                     | :construction:     |
 | starknet_blockNumber                     | :white_check_mark: |
 | starknet_blockHashAndNumber              | :white_check_mark: |
-| starknet_chainId                         | :construction:     |
+| starknet_chainId                         | :white_check_mark: |
 | starknet_pendingTransactions             | :construction:     |
 | starknet_syncing                         | :white_check_mark: |
 | starknet_getEvents                       | :construction:     |
