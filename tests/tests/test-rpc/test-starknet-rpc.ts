@@ -182,7 +182,7 @@ describeDevMadara("Starknet RPC", (context) => {
             FEE_TOKEN_ADDRESS,
             CONTRACT_ADDRESS,
             MINT_AMOUNT
-          ),
+            ),
           { parentHash: undefined, finalize: true }
         );
 
@@ -315,5 +315,66 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(chainId).to.not.be.undefined;
     expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
+  });
+
+  describe("Get transaction by blockId and index", () => {
+    it(
+      "giving a valid block with txs " +
+        "when call getTransactionByBlockIdAndIndex " +
+        "then returns a transaction",
+      async function () {
+        
+        // Send a transaction
+        await context.createBlock(
+          transfer(
+            context.polkadotApi,
+            CONTRACT_ADDRESS,
+            FEE_TOKEN_ADDRESS,
+            CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          ),
+          { parentHash: undefined, finalize: true }
+        );
+
+        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+        // get the transaction by a given block id (latestBlockCreated.block_hash) and index
+        // ERROR! cannot get retrieve the block when test in line 173 is not commented
+        const getTransactionByBlockIdAndIndexResponse: RPC.GetTransactionByBlockIdAndIndexResponse =
+          await providerRPC.getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 0);
+
+        expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
+        console.log(getTransactionByBlockIdAndIndexResponse);
+      }
+    )
+
+    it(
+      "giving an invalid block " +
+        "when call getTransactionByBlockIdAndIndex " +
+        "then throw 'Block not found error'",
+      async function () {
+        await providerRPC.getTransactionByBlockIdAndIndex("0x123", 2).catch((error) => {
+          expect(error).to.be.instanceOf(LibraryError);
+          expect(error.message).to.equal("24: Block not found");
+        });
+      }
+    );
+
+    it(
+      "giving a valid block without txs" +
+        "when call getTransactionByBlockIdAndIndex " +
+        "then throw 'Invalid transaction index in a block'",
+      async function () {
+        await context.createBlock(undefined, {
+          parentHash: undefined,
+          finalize: true,
+        });
+        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+        await providerRPC.getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 2).catch((error) => {
+          expect(error).to.be.instanceOf(LibraryError);
+          expect(error.message).to.equal("27: Invalid transaction index in a block");
+        });
+      }
+    );
   });
 });
