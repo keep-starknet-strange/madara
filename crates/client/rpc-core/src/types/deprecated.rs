@@ -1,6 +1,7 @@
 use hex::ToHex;
 use mp_starknet::execution::types::EntryPointWrapper;
 use serde::{Deserialize, Serialize};
+use starknet_core::types::FieldElement;
 
 use super::{ContractABI, Offset, Program, Selector};
 use crate::utils::{add_prefix, remove_leading_zeros};
@@ -36,8 +37,7 @@ pub struct DeprecatedCairoEntryPoint {
 
 impl From<EntryPointWrapper> for DeprecatedCairoEntryPoint {
     fn from(value: EntryPointWrapper) -> Self {
-        let selector: String = value.selector.encode_hex();
-        let selector = add_prefix(&selector);
+        let selector = FieldElement::from_bytes_be(&value.selector).unwrap();
         let offset: String = value.offset.to_be_bytes().as_slice().encode_hex();
         let offset = add_prefix(remove_leading_zeros(&offset));
         Self { selector, offset }

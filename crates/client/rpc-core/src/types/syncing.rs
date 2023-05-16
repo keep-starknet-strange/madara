@@ -1,15 +1,15 @@
 use serde::{Deserialize, Serialize};
 
-use super::{BlockNumber, FieldElement};
+use super::FieldElement;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncStatus {
     pub starting_block_hash: FieldElement,
-    pub starting_block_num: BlockNumber,
+    pub starting_block_num: u64,
     pub current_block_hash: FieldElement,
-    pub current_block_num: BlockNumber,
+    pub current_block_num: u64,
     pub highest_block_hash: FieldElement,
-    pub highest_block_num: BlockNumber,
+    pub highest_block_num: u64,
 }
 
 /// Boolean or SyncStatus

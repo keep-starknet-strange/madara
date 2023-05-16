@@ -10,6 +10,7 @@ use starknet_api::api_core::{calculate_contract_address as _calculate_contract_a
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
+use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
 use {crate as pallet_starknet, frame_system as system};
 

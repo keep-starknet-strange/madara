@@ -20,7 +20,7 @@ use types::*;
 pub trait StarknetRpcApi {
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]
-    fn block_number(&self) -> RpcResult<BlockNumber>;
+    fn block_number(&self) -> RpcResult<u64>;
 
     /// Get the most recent accepted block hash and number
     #[method(name = "blockHashAndNumber")]
@@ -35,7 +35,7 @@ pub trait StarknetRpcApi {
     fn get_storage_at(
         &self,
         contract_address: ContractAddress,
-        key: StorageKey,
+        key: FieldElement,
         block_id: BlockId,
     ) -> RpcResult<FieldElement>;
 
