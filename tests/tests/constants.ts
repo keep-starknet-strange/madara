@@ -6,7 +6,7 @@ export const ACCOUNT_CONTRACT =
 
 // https://github.com/keep-starknet-strange/madara/blob/main/crates/node/src/chain_spec.rs#L185-L186
 export const ACCOUNT_CONTRACT_CLASS_HASH =
-  "0x025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918";
+  "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 
 export const ARGENT_PROXY_CLASS_HASH =
   "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9";
@@ -16,6 +16,8 @@ export const SIGNER_PUBLIC =
   "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 export const SIGNER_PRIVATE =
   "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
+export const SALT =
+  "0x0000000000000000000000000000000000000000000000000000000000001111";
 
 // https://github.com/keep-starknet-strange/madara/blob/main/crates/node/src/chain_spec.rs#L191-L192
 export const TEST_CONTRACT_CLASS_HASH =

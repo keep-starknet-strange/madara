@@ -30,6 +30,7 @@ import {
   ARGENT_PROXY_CLASS_HASH,
   SIGNER_PRIVATE,
   SIGNER_PUBLIC,
+  SALT,
 } from "../constants";
 import { toHex } from "../../util/utils";
 
@@ -174,6 +175,8 @@ describeDevMadara("Starknet RPC", (context) => {
         "when call getBlockWithTxHashes " +
         "then returns an object with transactions",
       async function () {
+        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+
         await context.createBlock(
           transfer(
             context.polkadotApi,
@@ -316,26 +319,13 @@ describeDevMadara("Starknet RPC", (context) => {
   it("Deploys an account contract", async function () {
     // Compute contract address
     const selector = hash.getSelectorFromName("initialize");
-    const salt =
-      "0x0000000000000000000000000000000000000000000000000000000000001111";
     const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
 
     const deployedContractAddress = hash.calculateContractAddressFromHash(
-      salt,
+      SALT,
       ARGENT_PROXY_CLASS_HASH,
       calldata,
       0
-    );
-
-    await context.createBlock(
-      transfer(
-        context.polkadotApi,
-        CONTRACT_ADDRESS,
-        FEE_TOKEN_ADDRESS,
-        deployedContractAddress,
-        "0x1000000000"
-      ),
-      { parentHash: undefined, finalize: true }
     );
 
     const invocationDetails = {
@@ -344,13 +334,11 @@ describeDevMadara("Starknet RPC", (context) => {
       version: "0x1",
     };
 
-    console.log("deployedContractAddress", deployedContractAddress);
-
     const txHash = hash.calculateDeployAccountTransactionHash(
       deployedContractAddress,
       ARGENT_PROXY_CLASS_HASH,
       calldata,
-      salt,
+      SALT,
       invocationDetails.version,
       invocationDetails.maxFee,
       constants.StarknetChainId.TESTNET,
@@ -364,7 +352,7 @@ describeDevMadara("Starknet RPC", (context) => {
     const txDeployAccount = {
       signature: signature,
       contractAddress: deployedContractAddress, // address of the sender contract
-      addressSalt: salt, // contract address salt
+      addressSalt: SALT, // contract address salt
       classHash: ARGENT_PROXY_CLASS_HASH, // class hash of the contract
       constructorCalldata: calldata,
     };
