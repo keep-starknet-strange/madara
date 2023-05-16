@@ -594,7 +594,7 @@ where
             StarknetRpcApiError::ClassHashNotFound
         })?;
 
-        let transaction: Transaction = tx.into();
+        let transaction: Transaction = deploy_account_tx.into();
         Ok(AddDeployAccountTransactionOutput {
             transaction_hash: transaction.hash.to_string(),
             contract_address: H256::from(transaction.sender_address).to_string(),

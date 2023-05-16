@@ -28,12 +28,11 @@ pub use frame_system::Call as SystemCall;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
-use mp_starknet::transaction::types::{DeployAccountTransaction, Transaction};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
-use pallet_starknet::types::{DeployAccountTransactionOutput, StarkFeltWrapper};
+use pallet_starknet::types::StarkFeltWrapper;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;

@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    deserialize_field_element, deserialize_vec_field_element, ContractAddress, ContractClassHash, FieldElement, MaxFee,
-    Nonce, Signature, StarknetTransactionHash, Version,
+    deserialize_field_element, deserialize_vec_field_element, ContractAddress, FieldElement, MaxFee, Nonce, Signature,
+    StarknetTransactionHash, Version,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
@@ -13,13 +13,6 @@ pub struct CommonTxProperties {
     #[serde(deserialize_with = "deserialize_vec_field_element")]
     pub signature: Signature,
     pub nonce: Nonce,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[serde(tag = "type")]
-pub enum Transaction {
-    #[serde(rename = "DECLARE")]
-    Declare(BroadcastedDeclareTransactionV2),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
