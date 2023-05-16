@@ -4,9 +4,7 @@ use anyhow::Result;
 use base64::engine::general_purpose;
 use base64::Engine;
 use frame_support::storage::bounded_vec::BoundedVec;
-use mp_starknet::execution::types::{
-    ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints,
-};
+use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
 use mp_starknet::transaction::types::InvokeTransaction;
 use sp_core::{H256, U256};
 use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, ErrorCode};
@@ -76,7 +74,7 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
                 invoke_tx_v1.signature.iter().map(|x| H256::from(x.to_bytes_be())).collect::<Vec<H256>>(),
             )
             .unwrap(),
-            sender_address: ContractAddressWrapper::from(invoke_tx_v1.sender_address.to_bytes_be()),
+            sender_address: invoke_tx_v1.sender_address.to_bytes_be(),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect::<Vec<U256>>(),

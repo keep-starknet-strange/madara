@@ -182,7 +182,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     let account_class =
         get_contract_class(include_bytes!("../../../resources/account/simple/account.json")).try_into().unwrap();
-    let argent_account_class: ContractClassWrapper  =
+    let argent_account_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../resources/account/argent/account.json")).try_into().unwrap();
 
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
@@ -249,7 +249,7 @@ fn testnet_genesis(
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (fee_token_address, fee_token_class_hash_bytes),
-                (argent_account_address, argent_account_class_hash_bytes)
+                (argent_account_address, argent_account_class_hash_bytes),
             ],
             contract_classes: vec![
                 (class_hash_bytes, account_class),
