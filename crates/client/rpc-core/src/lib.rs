@@ -9,6 +9,8 @@ mod tests;
 
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use mp_starknet::transaction::types::Transaction;
+
 
 pub mod types;
 pub mod utils;
@@ -67,4 +69,8 @@ pub trait StarknetRpcApi {
     /// Get the chain id
     #[method(name = "chainId")]
     fn get_chain_id(&self) -> RpcResult<String>;
+
+    /// Get the details of a transaction by a given block id and index
+    #[method(name = "getTransactionByBlockIdAndIndex")]
+    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
 }

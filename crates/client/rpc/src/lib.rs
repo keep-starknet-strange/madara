@@ -20,6 +20,7 @@ use mc_rpc_core::types::{
 use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::block::BlockTransactions;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -29,6 +30,7 @@ use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_api::hash::StarkFelt;
+use mp_starknet::transaction::types::Transaction;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {
@@ -476,6 +478,35 @@ where
             sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
+    }
+
+
+    // Returns the details of a transaction by a given block id and index
+    fn get_transaction_by_block_id_and_index(&self, block_id: StarknetBlockId, index: usize) -> RpcResult<Transaction> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let block_transactions = block.transactions();
+        let transaction;
+        match block_transactions {
+            BlockTransactions::Full(transactions) => {
+                transaction = transactions
+                    .get(index)
+                    .ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                Ok(transaction.clone())
+            }
+            BlockTransactions::Hashes(_) => todo!()
+        }
+
+
     }
 
     /// Returns the chain id.
