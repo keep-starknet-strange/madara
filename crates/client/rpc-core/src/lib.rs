@@ -65,14 +65,14 @@ pub trait StarknetRpcApi {
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 
-    /// Add an Invoke Transaction to invoke a contract function
-    #[method(name = "addInvokeTransaction")]
-    fn add_invoke_transaction(
-        &self,
-        invoke_transaction: BroadcastedInvokeTransaction,
-    ) -> RpcResult<InvokeTransactionResult>;
-
     /// Get the chain id
     #[method(name = "chainId")]
     fn get_chain_id(&self) -> RpcResult<String>;
+
+    /// Add an Invoke Transaction to invoke a contract function
+    #[method(name = "addInvokeTransaction")]
+    async fn add_invoke_transaction(
+        &self,
+        invoke_transaction: BroadcastedInvokeTransaction,
+    ) -> RpcResult<InvokeTransactionResult>;
 }

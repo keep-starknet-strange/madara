@@ -542,7 +542,7 @@ impl Transaction {
         )?;
         let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &account_context, &tx_resources)?;
         Ok(TransactionExecutionInfoWrapper {
-            validate_call_info: None,
+            validate_call_info,
             execute_call_info,
             fee_transfer_call_info,
             actual_fee,
