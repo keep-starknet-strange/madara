@@ -182,9 +182,10 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     let account_class =
         get_contract_class(include_bytes!("../../../resources/account/simple/account.json")).try_into().unwrap();
-    let argent_account_class: ContractClassWrapper =
+    let argent_account_class =
         get_contract_class(include_bytes!("../../../resources/account/argent/account.json")).try_into().unwrap();
-
+    let argent_proxy_class =
+        get_contract_class(include_bytes!("../../../resources/account/argent/proxy/proxy.json")).try_into().unwrap();
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
     let erc20_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
@@ -193,7 +194,13 @@ fn testnet_genesis(
     let contract_address_bytes =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
     let class_hash_bytes =
-        <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918").unwrap();
+        <[u8; 32]>::from_hex("0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
+
+    // ARGENT ACCOUNT CONTRACT
+    let argent_account_class_hash_bytes =
+        <[u8; 32]>::from_hex("06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d").unwrap();
+    let argent_proxy_class_hash_bytes =
+        <[u8; 32]>::from_hex("0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9").unwrap();
 
     // ARGENT ACCOUNT CONTRACT
     let argent_account_address =
@@ -254,12 +261,10 @@ fn testnet_genesis(
             contract_classes: vec![
                 (class_hash_bytes, account_class),
                 (argent_account_class_hash_bytes, argent_account_class),
+                (argent_proxy_class_hash_bytes, argent_proxy_class),
                 (other_class_hash_bytes, test_class),
                 (token_class_hash_bytes, erc20_class.clone()),
-                (fee_token_class_hash_bytes, erc20_class),
-            ],
             storage: vec![
-                (
                     (
                         fee_token_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for

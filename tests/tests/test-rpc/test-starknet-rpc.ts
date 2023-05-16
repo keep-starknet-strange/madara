@@ -1,5 +1,6 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
+import { createAndFinalizeBlock } from "../../util/block";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import {
   LibraryError,
@@ -7,6 +8,8 @@ import {
   Account,
   stark,
   ec,
+  hash,
+  constants,
   validateAndParseAddress,
 } from "starknet";
 import { jumpBlocks } from "../../util/block";
@@ -23,6 +26,10 @@ import {
   TEST_CONTRACT,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
+  ARGENT_ACCOUNT_CLASS_HASH,
+  ARGENT_PROXY_CLASS_HASH,
+  SIGNER_PRIVATE,
+  SIGNER_PUBLIC,
 } from "../constants";
 import { toHex } from "../../util/utils";
 
@@ -304,5 +311,71 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(error).to.be.instanceOf(LibraryError);
       expect(error.message).to.equal("40: Contract error");
     }
+  });
+
+  it("Deploys an account contract", async function () {
+    // Compute contract address
+    const selector = hash.getSelectorFromName("initialize");
+    const salt =
+      "0x0000000000000000000000000000000000000000000000000000000000001111";
+    const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
+
+    const deployedContractAddress = hash.calculateContractAddressFromHash(
+      salt,
+      ARGENT_PROXY_CLASS_HASH,
+      calldata,
+      0
+    );
+
+    await context.createBlock(
+      transfer(
+        context.polkadotApi,
+        CONTRACT_ADDRESS,
+        FEE_TOKEN_ADDRESS,
+        deployedContractAddress,
+        "0x1000000000"
+      ),
+      { parentHash: undefined, finalize: true }
+    );
+
+    const invocationDetails = {
+      nonce: "0x0",
+      maxFee: "0x1111111111111111111111",
+      version: "0x1",
+    };
+
+    console.log("deployedContractAddress", deployedContractAddress);
+
+    const txHash = hash.calculateDeployAccountTransactionHash(
+      deployedContractAddress,
+      ARGENT_PROXY_CLASS_HASH,
+      calldata,
+      salt,
+      invocationDetails.version,
+      invocationDetails.maxFee,
+      constants.StarknetChainId.TESTNET,
+      invocationDetails.nonce
+    );
+
+    let keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+    let signature = ec.sign(keyPair, txHash);
+
+    // Deploy account contract
+    const txDeployAccount = {
+      signature: signature,
+      contractAddress: deployedContractAddress, // address of the sender contract
+      addressSalt: salt, // contract address salt
+      classHash: ARGENT_PROXY_CLASS_HASH, // class hash of the contract
+      constructorCalldata: calldata,
+    };
+
+    await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
+    await createAndFinalizeBlock(context.polkadotApi);
+
+    let accountContractClass = await providerRPC.getClassHashAt(
+      deployedContractAddress
+    );
+
+    expect(accountContractClass).to.be.equal(ARGENT_PROXY_CLASS_HASH);
   });
 });
