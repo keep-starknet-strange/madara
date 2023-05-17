@@ -6,7 +6,9 @@ use base64::Engine;
 use mp_starknet::execution::types::ContractClassWrapper;
 use sp_core::{H256, U256};
 use starknet_core::types::FieldElement;
-use starknet_providers::jsonrpc::models::{BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode, SierraContractClass};
+use starknet_providers::jsonrpc::models::{
+    BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode, SierraContractClass,
+};
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
 // TODO: see https://github.com/keep-starknet-strange/madara/issues/363

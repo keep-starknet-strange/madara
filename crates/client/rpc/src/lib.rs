@@ -28,8 +28,9 @@ use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes, BroadcastedInvokeTransaction, ContractClass,
-    FunctionCall, MaybePendingBlockWithTxHashes, InvokeTransactionResult, SyncStatus, SyncStatusType,
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes,
+    BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
+    SyncStatus, SyncStatusType,
 };
 
 /// A Starknet RPC server for Madara
