@@ -260,12 +260,7 @@ describeDevMadara("Starknet RPC", (context) => {
       "0x0000000000000000000000000000000000000000000000000000000000000000",
       "latest"
     );
-<<<<<<< HEAD
-
-    expect(value).to.equal("0x0");
-=======
     expect(value).to.be.equal("0");
->>>>>>> main
   });
 
   it("Returns an error if the contract does not exist", async function () {

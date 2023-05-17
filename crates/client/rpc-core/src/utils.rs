@@ -4,7 +4,9 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
 use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::transaction::types::InvokeTransaction;
 use sp_core::{H256, U256};
+use sp_runtime::BoundedVec;
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
     BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode, SierraContractClass,

@@ -9,13 +9,13 @@ mod tests;
 
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
-use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, InvokeTransactionResult};
 
 pub mod utils;
 
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, ContractClass, FunctionCall, MaybePendingBlockWithTxHashes, SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult,
+    MaybePendingBlockWithTxHashes, SyncStatusType,
 };
 
 /// Starknet rpc interface.
