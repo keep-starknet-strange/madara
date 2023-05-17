@@ -1,5 +1,6 @@
-use super::*;
+use starknet_providers::jsonrpc::models::BlockTag;
 
+use super::*;
 #[test]
 fn block_id_serialization() {
     assert_eq!(serde_json::to_value(BlockId::Number(42)).unwrap(), serde_json::json!({"block_number": 42}));

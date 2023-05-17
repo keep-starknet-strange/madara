@@ -11,10 +11,6 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::types::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClass,
-    ContractClassHash, FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, SyncStatusType,
-};
 use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
@@ -26,6 +22,11 @@ use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use starknet_core::types::FieldElement;
+use starknet_providers::jsonrpc::models::{
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes, ContractClass,
+    FunctionCall, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
+};
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C> {
@@ -103,8 +104,8 @@ where
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
             StarknetBlockId::Tag(t) => match t {
-                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::types::BlockTag::Pending => None,
+                BlockTag::Latest => Some(self.client.info().best_hash),
+                BlockTag::Pending => None,
             },
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
@@ -124,7 +125,7 @@ where
         self.current_block_number()
     }
 
-    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::types::BlockHashAndNumber> {
+    fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
         let block_hash = self.current_block_hash().map_err(|e| {
             error!("Failed to retrieve the current block hash: {}", e);
@@ -177,8 +178,8 @@ where
                 })?
             }
             StarknetBlockId::Tag(t) => match t {
-                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::types::BlockTag::Pending => None,
+                BlockTag::Latest => Some(self.client.info().best_hash),
+                BlockTag::Pending => None,
             },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
@@ -233,7 +234,7 @@ where
     }
 
     /// Get the contract class at a given contract address for a given block id
-    fn get_class_at(&self, contract_address: ContractAddress, block_id: StarknetBlockId) -> RpcResult<ContractClass> {
+    fn get_class_at(&self, contract_address: FieldElement, block_id: StarknetBlockId) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -300,7 +301,7 @@ where
                         FieldElement::from_bytes_be(&highest_block?.header().hash().to_fixed_bytes()).unwrap();
 
                     // Build the `SyncStatus` struct with the respective syn information
-                    Ok(SyncStatusType::Syncing(mc_rpc_core::types::SyncStatus {
+                    Ok(SyncStatusType::Syncing(SyncStatus {
                         starting_block_num,
                         starting_block_hash,
                         current_block_num,
@@ -325,7 +326,7 @@ where
     }
 
     /// Get the contract class definition in the given block associated with the given hash.
-    fn get_class(&self, block_id: StarknetBlockId, class_hash: ContractClassHash) -> RpcResult<ContractClass> {
+    fn get_class(&self, block_id: StarknetBlockId, class_hash: FieldElement) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -360,11 +361,7 @@ where
     /// # Returns
     ///
     /// * `class_hash` - The class hash of the given contract
-    fn get_class_hash_at(
-        &self,
-        contract_address: ContractAddress,
-        block_id: StarknetBlockId,
-    ) -> RpcResult<FieldElement> {
+    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: StarknetBlockId) -> RpcResult<FieldElement> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -404,8 +401,8 @@ where
                 })?
             }
             StarknetBlockId::Tag(t) => match t {
-                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::types::BlockTag::Pending => {
+                BlockTag::Latest => Some(self.client.info().best_hash),
+                BlockTag::Pending => {
                     block_status = BlockStatus::Pending;
                     None
                 }

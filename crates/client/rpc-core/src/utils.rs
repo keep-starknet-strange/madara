@@ -5,9 +5,7 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use mp_starknet::execution::types::ContractClassWrapper;
 use starknet_core::types::FieldElement;
-use starknet_providers::jsonrpc::models::{EntryPointsByType, SierraContractClass};
-
-use super::types::ContractClass;
+use starknet_providers::jsonrpc::models::{ContractClass, EntryPointsByType, SierraContractClass};
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
 // TODO: see https://github.com/keep-starknet-strange/madara/issues/363
