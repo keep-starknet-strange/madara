@@ -10,17 +10,19 @@ mod tests;
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 
-pub mod types;
 pub mod utils;
 
-use types::*;
+use starknet_core::types::FieldElement;
+use starknet_providers::jsonrpc::models::{
+    BlockHashAndNumber, BlockId, ContractClass, FunctionCall, MaybePendingBlockWithTxHashes, SyncStatusType,
+};
 
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
 pub trait StarknetRpcApi {
     /// Get the most recent accepted block number
     #[method(name = "blockNumber")]
-    fn block_number(&self) -> RpcResult<BlockNumber>;
+    fn block_number(&self) -> RpcResult<u64>;
 
     /// Get the most recent accepted block hash and number
     #[method(name = "blockHashAndNumber")]
@@ -34,8 +36,8 @@ pub trait StarknetRpcApi {
     #[method(name = "getStorageAt")]
     fn get_storage_at(
         &self,
-        contract_address: ContractAddress,
-        key: StorageKey,
+        contract_address: FieldElement,
+        key: FieldElement,
         block_id: BlockId,
     ) -> RpcResult<FieldElement>;
 
@@ -45,20 +47,20 @@ pub trait StarknetRpcApi {
 
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
-    fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
+    fn get_class_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<ContractClass>;
 
     /// Get the contract class hash in the given block for the contract deployed at the given
     /// address
     #[method(name = "getClassHashAt")]
-    fn get_class_hash_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<FieldElement>;
+    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement>;
 
     /// Get an object about the sync status, or false if the node is not syncing
     #[method(name = "syncing")]
-    async fn syncing(&self) -> RpcResult<Syncing>;
+    async fn syncing(&self) -> RpcResult<SyncStatusType>;
 
     /// Get the contract class definition in the given block associated with the given hash
     #[method(name = "getClass")]
-    fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
+    fn get_class(&self, block_id: BlockId, class_hash: FieldElement) -> RpcResult<ContractClass>;
 
     /// Get block information with transaction hashes given the block id
     #[method(name = "getBlockWithTxHashes")]

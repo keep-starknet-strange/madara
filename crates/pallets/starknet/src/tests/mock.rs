@@ -10,7 +10,7 @@ use starknet_api::api_core::{calculate_contract_address as _calculate_contract_a
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
-use starknet_core::types::FieldElement as CoreFieldElement;
+use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
 use {crate as pallet_starknet, frame_system as system};
 
@@ -258,12 +258,12 @@ pub fn get_storage_key(
     storage_key_offset: u64,
 ) -> ContractStorageKeyWrapper {
     let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
-    let mut storage_key = get_storage_var_address(
+    let storage_key = get_storage_var_address(
         storage_name,
-        keys.iter().filter_map(|x| CoreFieldElement::from_bytes_be(x).ok()).collect::<Vec<_>>().as_slice(),
+        keys.iter().filter_map(|x| FieldElement::from_bytes_be(x).ok()).collect::<Vec<_>>().as_slice(),
     )
     .unwrap();
-    storage_key = storage_key + CoreFieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
+    let storage_key = storage_key + FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
     (*address, H256::from(storage_key.to_bytes_be()))
 }
 
