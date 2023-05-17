@@ -6,20 +6,13 @@ mod errors;
 mod madara_backend_client;
 
 use std::marker::PhantomData;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use codec::{Decode, Encode};
 use errors::StarknetRpcApiError;
-use hex::FromHex;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use madara_runtime::UncheckedExtrinsic;
-use mc_rpc_core::types::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockWithTxHashes, ContractAddress, ContractClassHash,
-    FieldElement, FunctionCall, MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
-};
-use mc_rpc_core::utils::{to_invoke_tx, to_rpc_contract_class};
+use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
@@ -33,8 +26,11 @@ use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use starknet::providers::jsonrpc::models::{BroadcastedInvokeTransaction, InvokeTransactionResult};
-use starknet_api::hash::StarkFelt;
+use starknet_core::types::FieldElement;
+use starknet_providers::jsonrpc::models::{
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes, BroadcastedInvokeTransaction, ContractClass,
+    FunctionCall, MaybePendingBlockWithTxHashes, InvokeTransactionResult, SyncStatus, SyncStatusType,
+};
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C, P> {
@@ -103,19 +99,19 @@ where
     /// Returns the substrate block corresponding to the given Starknet block id
     fn substrate_block_hash_from_starknet_block(&self, block_id: StarknetBlockId) -> Result<B::Hash, String> {
         match block_id {
-            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
-                H256::from_str(&format_hex(&h)).map_err(|e| format!("Failed to convert '{h}' to H256: {e}"))?,
+                H256::from_slice(&h.to_bytes_be()[..32]),
             )
             .map_err(|e| format!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}"))?,
-            StarknetBlockId::BlockNumber(n) => self
+            StarknetBlockId::Number(n) => self
                 .client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
-            StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::types::BlockTag::Pending => None,
+            StarknetBlockId::Tag(t) => match t {
+                BlockTag::Latest => Some(self.client.info().best_hash),
+                BlockTag::Pending => None,
             },
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
@@ -135,18 +131,22 @@ where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
 {
-    fn block_number(&self) -> RpcResult<mc_rpc_core::types::BlockNumber> {
+    fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
     }
 
-    fn block_hash_and_number(&self) -> RpcResult<mc_rpc_core::types::BlockHashAndNumber> {
+    fn block_hash_and_number(&self) -> RpcResult<BlockHashAndNumber> {
         let block_number = self.current_block_number()?;
         let block_hash = self.current_block_hash().map_err(|e| {
             error!("Failed to retrieve the current block hash: {}", e);
             StarknetRpcApiError::NoBlocks
         })?;
 
-        Ok(BlockHashAndNumber { block_hash: format!("{:#x}", block_hash), block_number })
+        // TODO: fix block hash, see https://github.com/keep-starknet-strange/madara/issues/381
+        Ok(BlockHashAndNumber {
+            block_hash: FieldElement::from_byte_slice_be(&block_hash.as_bytes()[..31]).unwrap(),
+            block_number,
+        })
     }
 
     fn get_block_transaction_count(&self, block_id: StarknetBlockId) -> RpcResult<u128> {
@@ -170,43 +170,34 @@ where
         contract_address: FieldElement,
         key: FieldElement,
         block_id: StarknetBlockId,
-    ) -> RpcResult<String> {
+    ) -> RpcResult<FieldElement> {
         let substrate_block_hash = match block_id {
-            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
-                H256::from_str(&h).map_err(|e| {
-                    error!("Failed to convert '{h}' to H256: {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?,
+                H256::from_slice(&h.to_bytes_be()[..32]),
             )
             .map_err(|e| {
                 error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
                 StarknetRpcApiError::BlockNotFound
             })?,
-            StarknetBlockId::BlockNumber(n) => {
+            StarknetBlockId::Number(n) => {
                 self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
                     error!("Failed to retrieve the hash of block number '{n}': {e}");
                     StarknetRpcApiError::BlockNotFound
                 })?
             }
-            StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::types::BlockTag::Pending => None,
+            StarknetBlockId::Tag(t) => match t {
+                BlockTag::Latest => Some(self.client.info().best_hash),
+                BlockTag::Pending => None,
             },
         }
         .ok_or(StarknetRpcApiError::BlockNotFound)?;
 
         let runtime_api = self.client.runtime_api();
-        let hex_address = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
-            error!("Address: Failed to convert '{0}' to [u8; 32]: {e}", contract_address);
-            StarknetRpcApiError::ContractNotFound
-        })?;
+        let hex_address = contract_address.to_bytes_be();
+        let hex_key = H256::from_slice(&key.to_bytes_be()[..32]);
 
-        let hex_key = H256::from_str(&format_hex(&key)).map_err(|e| {
-            error!("StorageKey: Failed to convert '{0}' to H256: {e}", key);
-            StarknetRpcApiError::InternalServerError
-        })?;
         let value = runtime_api
             .get_storage_at(substrate_block_hash, hex_address, hex_key)
             .map_err(|e| {
@@ -217,7 +208,11 @@ where
                 error!("Failed to get storage from contract: {:#?}", e);
                 StarknetRpcApiError::ContractNotFound
             })?;
-        Ok(format!("{:#x}", value))
+        let value = FieldElement::from_byte_slice_be(&<[u8; 32]>::from(value)[..31]).map_err(|e| {
+            error!("Failed to get storage from contract: {:#?}", e);
+            StarknetRpcApiError::InternalServerError
+        })?;
+        Ok(value)
     }
 
     fn call(&self, request: FunctionCall, block_id: StarknetBlockId) -> RpcResult<Vec<String>> {
@@ -228,62 +223,34 @@ where
 
         let runtime_api = self.client.runtime_api();
 
-        let calldata: Result<Vec<U256>, StarknetRpcApiError> = request
-            .calldata
-            .iter()
-            .map(|x| {
-                U256::from_str(x).map_err(|e| {
-                    error!("Calldata: Failed to convert '{x}' to U256: {e}");
-                    StarknetRpcApiError::InvalidCallData
-                })
-            })
-            .collect();
+        let calldata = request.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect();
 
-        match calldata {
-            Ok(calldata) => {
-                let result = runtime_api
-                    .call(
-                        substrate_block_hash,
-                        <[u8; 32]>::from_hex(format_hex(&request.contract_address)).map_err(|e| {
-                            error!("Address: Failed to convert '{0}' to [u8; 32]: {e}", request.contract_address);
-                            StarknetRpcApiError::BlockNotFound
-                        })?,
-                        H256::from_str(&format_hex(&request.entry_point_selector)).map_err(|e| {
-                            error!("Entrypoint: Failed to convert '{0}' to H256: {e}", request.entry_point_selector);
-                            StarknetRpcApiError::BlockNotFound
-                        })?,
-                        calldata,
-                    )
-                    .map_err(|e| {
-                        error!("Request parameters error: {e}");
-                        StarknetRpcApiError::InternalServerError
-                    })?
-                    .map_err(|e| {
-                        error!("Failed to call function: {:#?}", e);
-                        StarknetRpcApiError::ContractError
-                    })?;
-                Ok(result.iter().map(|x| format!("{:#x}", x)).collect())
-            }
-            Err(e) => Err(e.into()),
-        }
+        let result = runtime_api
+            .call(
+                substrate_block_hash,
+                request.contract_address.to_bytes_be(),
+                H256::from_slice(&request.entry_point_selector.to_bytes_be()[..32]),
+                calldata,
+            )
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+        Ok(result.iter().map(|x| format!("{:#x}", x)).collect())
     }
 
     /// Get the contract class at a given contract address for a given block id
-    fn get_class_at(
-        &self,
-        contract_address: ContractAddress,
-        block_id: StarknetBlockId,
-    ) -> RpcResult<RPCContractClass> {
+    fn get_class_at(&self, contract_address: FieldElement, block_id: StarknetBlockId) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
-            error!("Failed to convert '{contract_address}' to array: {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?;
-
+        let contract_address_wrapped = contract_address.to_bytes_be();
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
@@ -303,7 +270,7 @@ where
     //
     // # Returns
     // * `Syncing` - An Enum that can be a `mc_rpc_core::SyncStatus` struct or a `Boolean`.
-    async fn syncing(&self) -> RpcResult<Syncing> {
+    async fn syncing(&self) -> RpcResult<SyncStatusType> {
         // obtain best seen (highest) block number
         match self.sync_service.best_seen_block().await {
             Ok(best_seen_block) => {
@@ -334,14 +301,20 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = format!("{:#x}", starting_block?.header().hash());
+                    let starting_block_hash =
+                        FieldElement::from_byte_slice_be(&starting_block?.header().hash().to_fixed_bytes()[..31])
+                            .unwrap();
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = format!("{:#x}", current_block?.header().hash());
+                    let current_block_hash =
+                        FieldElement::from_byte_slice_be(&current_block?.header().hash().to_fixed_bytes()[..31])
+                            .unwrap();
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = format!("{:#x}", highest_block?.header().hash());
+                    let highest_block_hash =
+                        FieldElement::from_byte_slice_be(&highest_block?.header().hash().to_fixed_bytes()[..31])
+                            .unwrap();
 
                     // Build the `SyncStatus` struct with the respective syn information
-                    Ok(Syncing::SyncStatus(mc_rpc_core::types::SyncStatus {
+                    Ok(SyncStatusType::Syncing(SyncStatus {
                         starting_block_num,
                         starting_block_hash,
                         current_block_num,
@@ -353,29 +326,26 @@ where
                     // If there was an error when getting a starknet block, then we return `false`,
                     // as per the endpoint specification
                     log::error!("Failed to load Starknet block");
-                    Ok(Syncing::False(false))
+                    Ok(SyncStatusType::NotSyncing)
                 }
             }
             Err(_) => {
                 // If there was an error when getting a starknet block, then we return `false`,
                 // as per the endpoint specification
                 log::error!("`SyncingEngine` shut down");
-                Ok(Syncing::False(false))
+                Ok(SyncStatusType::NotSyncing)
             }
         }
     }
 
     /// Get the contract class definition in the given block associated with the given hash.
-    fn get_class(&self, block_id: StarknetBlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass> {
+    fn get_class(&self, block_id: StarknetBlockId, class_hash: FieldElement) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_clash_hashed_wrapped = <[u8; 32]>::from_hex(format_hex(&class_hash)).map_err(|e| {
-            error!("Failed to convert '{class_hash}' to array: {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?;
+        let contract_clash_hashed_wrapped = class_hash.to_bytes_be();
 
         let contract_class = self
             .overrides
@@ -404,20 +374,13 @@ where
     /// # Returns
     ///
     /// * `class_hash` - The class hash of the given contract
-    fn get_class_hash_at(
-        &self,
-        contract_address: ContractAddress,
-        block_id: StarknetBlockId,
-    ) -> RpcResult<FieldElement> {
+    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: StarknetBlockId) -> RpcResult<FieldElement> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = <[u8; 32]>::from_hex(format_hex(&contract_address)).map_err(|e| {
-            error!("Failed to convert '{contract_address}' to array: {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?;
+        let contract_address_wrapped = contract_address.to_bytes_be();
 
         let class_hash = self
             .overrides
@@ -427,40 +390,32 @@ where
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-
-        Ok(StarkFelt::new(class_hash)
-            .map_err(|e| {
-                error!("Failed to convert contract class hash at '{contract_address}': {e}");
-                StarknetRpcApiError::ContractNotFound
-            })?
-            .to_string())
+        let class_hash = FieldElement::from_byte_slice_be(&class_hash[..31]).unwrap();
+        Ok(class_hash)
     }
 
     /// Returns the specified block with transaction hashes.
     fn get_block_with_tx_hashes(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
         let mut block_status = BlockStatus::AcceptedOnL2;
         let substrate_block_hash = match block_id {
-            StarknetBlockId::BlockHash(h) => madara_backend_client::load_hash(
+            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
                 self.client.as_ref(),
                 &self.backend,
-                H256::from_str(&format_hex(&h)).map_err(|e| {
-                    error!("Failed to convert '{h}' to H256: {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?,
+                H256::from_slice(&h.to_bytes_be()[..32]),
             )
             .map_err(|e| {
                 error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
                 StarknetRpcApiError::BlockNotFound
             })?,
-            StarknetBlockId::BlockNumber(n) => {
+            StarknetBlockId::Number(n) => {
                 self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
                     error!("Failed to retrieve the hash of block number '{n}': {e}");
                     StarknetRpcApiError::BlockNotFound
                 })?
             }
-            StarknetBlockId::BlockTag(t) => match t {
-                mc_rpc_core::types::BlockTag::Latest => Some(self.client.info().best_hash),
-                mc_rpc_core::types::BlockTag::Pending => {
+            StarknetBlockId::Tag(t) => match t {
+                BlockTag::Latest => Some(self.client.info().best_hash),
+                BlockTag::Pending => {
                     block_status = BlockStatus::Pending;
                     None
                 }
@@ -474,18 +429,23 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let transaction_hashes = block.transactions_hashes().into_iter().map(|hash| hash.to_string()).collect();
+        let transactions = block
+            .transactions_hashes()
+            .into_iter()
+            .map(|hash| FieldElement::from_byte_slice_be(&hash.to_fixed_bytes()[..31]).unwrap())
+            .collect();
         let block_with_tx_hashes = BlockWithTxHashes {
-            transactions: transaction_hashes,
+            transactions,
             // TODO: Status hardcoded, get status from block
             status: block_status,
-            block_hash: block.header().hash().to_string(),
-            parent_hash: block.header().parent_block_hash.to_string(),
+            block_hash: FieldElement::from_byte_slice_be(&block.header().hash().to_fixed_bytes()[..31]).unwrap(),
+            parent_hash: FieldElement::from_byte_slice_be(&block.header().parent_block_hash.to_fixed_bytes()[..31])
+                .unwrap(),
             block_number: block.header().block_number.as_u64(),
-            new_root: block.header().global_state_root.to_string(),
-            // new_root: FieldElement::from("0x0"),
+            new_root: FieldElement::from_byte_slice_be(&<[u8; 32]>::from(block.header().global_state_root)[..31])
+                .unwrap(),
             timestamp: block.header().block_timestamp,
-            sequencer_address: H256::from_slice(&block.header().sequencer_address).to_string(),
+            sequencer_address: FieldElement::from_byte_slice_be(&block.header().sequencer_address[..31]).unwrap(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
@@ -538,10 +498,4 @@ where
             transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
         })
     }
-}
-
-/// Removes the "0x" prefix from a given hexadecimal string and pads it with 0s
-#[inline(always)]
-fn format_hex(input: &str) -> String {
-    format!("{:0>64}", input.strip_prefix("0x").unwrap_or(input))
 }

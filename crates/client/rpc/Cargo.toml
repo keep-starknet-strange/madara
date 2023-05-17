@@ -38,17 +38,13 @@ sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
 # Starknet
 starknet_api = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
-starknet = { workspace = true }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", branch = "dev/jsonrpc_0_3_0", default-features = false }
+blockifier = { workspace = true, default-features = false, features = ["testing"] }
+starknet-providers = { workspace = true }
+starknet-core = { workspace = true }
+starknet-ff = { workspace = true }
 # Others
 hex = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, default-features = true, features = [
-	"server",
-	"macros",
-] }
+jsonrpsee = { workspace = true, default-features = true, features = ["server", "macros"] }
 log = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
