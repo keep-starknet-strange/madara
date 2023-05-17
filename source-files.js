@@ -4,7 +4,7 @@ var sourcesIndex = JSON.parse('{\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["lib.rs","mapping_db.rs","meta_db.rs"]],\
 "mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[],["errors.rs","lib.rs","madara_backend_client.rs"]],\
-"mc_rpc_core":["",[["types",[["abi",[],["contract_abi.rs","events_abi.rs","function_abi.rs","mod.rs","struct_abi.rs"]],["block",[],["block_hash_and_number.rs","block_id.rs","block_status.rs","block_tag.rs","block_with_tx.rs","mod.rs"]]],["deprecated.rs","function_call.rs","mod.rs","rpc_contract_class.rs","sierra_contract_class.rs","syncing.rs","typed_parameter.rs"]]],["lib.rs","utils.rs"]],\
+"mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
 "mc_storage":["",[["overrides",[],["mod.rs","schema_v1_override.rs"]]],["lib.rs"]],\
 "mp_digest_log":["",[],["error.rs","lib.rs"]],\
 "mp_starknet":["",[["block",[],["header.rs","mod.rs","serialize.rs"]],["crypto",[["commitment",[],["mod.rs"]],["hash",[],["mod.rs","pedersen.rs","poseidon.rs"]],["merkle_patricia_tree",[],["merkle_node.rs","merkle_tree.rs","mod.rs"]]],["mod.rs"]],["execution",[],["call_entrypoint_wrapper.rs","contract_class_wrapper.rs","entrypoint_wrapper.rs","mod.rs","program_wrapper.rs"]],["fees",[],["mod.rs"]],["starknet_serde",[],["mod.rs"]],["state",[],["mod.rs"]],["storage",[],["mod.rs"]],["traits",[],["hash.rs","mod.rs","transaction.rs"]],["transaction",[],["constants.rs","mod.rs","types.rs"]]],["lib.rs"]],\
