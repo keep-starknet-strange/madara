@@ -45,7 +45,7 @@ pub trait StarknetRpcApi {
 
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
-    fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<RPCContractClass>;
+    fn get_class_at(&self, contract_address: ContractAddress, block_id: BlockId) -> RpcResult<ContractClass>;
 
     /// Get the contract class hash in the given block for the contract deployed at the given
     /// address
@@ -54,11 +54,11 @@ pub trait StarknetRpcApi {
 
     /// Get an object about the sync status, or false if the node is not syncing
     #[method(name = "syncing")]
-    async fn syncing(&self) -> RpcResult<Syncing>;
+    async fn syncing(&self) -> RpcResult<SyncStatusType>;
 
     /// Get the contract class definition in the given block associated with the given hash
     #[method(name = "getClass")]
-    fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<RPCContractClass>;
+    fn get_class(&self, block_id: BlockId, class_hash: ContractClassHash) -> RpcResult<ContractClass>;
 
     /// Get block information with transaction hashes given the block id
     #[method(name = "getBlockWithTxHashes")]
