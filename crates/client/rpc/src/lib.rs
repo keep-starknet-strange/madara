@@ -8,32 +8,39 @@ mod madara_backend_client;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use codec::{Decode, Encode};
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::to_rpc_contract_class;
+use madara_runtime::UncheckedExtrinsic;
+use mc_rpc_core::utils::{to_invoke_tx, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
+use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
+use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes, ContractClass,
-    FunctionCall, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
+    BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes,
+    BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
+    SyncStatus, SyncStatusType,
 };
 
 /// A Starknet RPC server for Madara
-pub struct Starknet<B: BlockT, BE, C> {
+pub struct Starknet<B: BlockT, BE, C, P> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
+    pool: Arc<P>,
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
     _marker: PhantomData<(B, BE)>,
@@ -49,19 +56,20 @@ pub struct Starknet<B: BlockT, BE, C> {
 //
 // # Returns
 // * `Self` - The actual Starknet struct
-impl<B: BlockT, BE, C> Starknet<B, BE, C> {
+impl<B: BlockT, BE, C, P> Starknet<B, BE, C, P> {
     pub fn new(
         client: Arc<C>,
         backend: Arc<mc_db::Backend<B>>,
         overrides: Arc<OverrideHandle<B>>,
+        pool: Arc<P>,
         sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
     ) -> Self {
-        Self { client, backend, overrides, sync_service, starting_block, _marker: PhantomData }
+        Self { client, backend, overrides, pool, sync_service, starting_block, _marker: PhantomData }
     }
 }
 
-impl<B, BE, C> Starknet<B, BE, C>
+impl<B, BE, C, P> Starknet<B, BE, C, P>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -71,7 +79,7 @@ where
     }
 }
 
-impl<B, BE, C> Starknet<B, BE, C>
+impl<B, BE, C, P> Starknet<B, BE, C, P>
 where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
@@ -113,10 +121,14 @@ where
     }
 }
 
+/// Taken from https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L78
+const TX_SOURCE: TransactionSource = TransactionSource::External;
+
 #[async_trait]
-impl<B, BE, C> StarknetRpcApiServer for Starknet<B, BE, C>
+impl<B, BE, C, P> StarknetRpcApiServer for Starknet<B, BE, C, P>
 where
     B: BlockT,
+    P: TransactionPool<Block = B> + 'static,
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
@@ -452,5 +464,44 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
         Ok(format!("0x{:x}", res))
+    }
+
+    /// Add an Invoke Transaction to invoke a contract function
+    ///
+    /// # Arguments
+    ///
+    /// * `invoke tx` - https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction
+    ///
+    /// # Returns
+    ///
+    /// * `transaction_hash` - transaction hash corresponding to the invocation
+    async fn add_invoke_transaction(
+        &self,
+        invoke_transaction: BroadcastedInvokeTransaction,
+    ) -> RpcResult<InvokeTransactionResult> {
+        let invoke_tx = to_invoke_tx(invoke_transaction)?;
+
+        let call = pallet_starknet::Call::invoke { transaction: invoke_tx.clone() };
+        let extrinsic = UncheckedExtrinsic::new_unsigned(call.into());
+        let encoded_entrinsic = Encode::encode(&extrinsic);
+        let extrinsic = match Decode::decode(&mut &encoded_entrinsic[..]) {
+            Ok(xt) => xt,
+            Err(err) => {
+                error!("Failed to decode extrinsic: {:?}", err);
+                return Err(StarknetRpcApiError::InternalServerError.into());
+            }
+        };
+
+        self.pool.submit_one(&BlockId::hash(self.client.info().best_hash), TX_SOURCE, extrinsic).await.map_err(
+            |e| {
+                error!("Failed to submit extrinsic: {:?}", e);
+                StarknetRpcApiError::ContractError
+            },
+        )?;
+
+        let invoke_tx_hash = calculate_invoke_tx_hash(invoke_tx);
+        Ok(InvokeTransactionResult {
+            transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
+        })
     }
 }

@@ -10,6 +10,8 @@ use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
 use sp_core::{H256, U256};
+use sp_runtime::traits::ValidateUnsigned;
+use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
@@ -370,5 +372,23 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
             Starknet::invoke(none_origin, transaction.into()),
             Error::<MockRuntime>::TransactionExecutionFailed
         );
+    });
+}
+
+#[test]
+fn given_hardcoded_contract_validate_invoke_on_braavos_account_with_incorrect_signature_should_fail() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
+        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.into() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
     });
 }

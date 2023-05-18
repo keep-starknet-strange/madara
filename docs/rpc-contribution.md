@@ -71,7 +71,7 @@ First, revise the
 from madara project to check what are the parameters and return value that are
 assigned to the endpoint you will implement.
 
-In the `creates/client` we can find two RPC related packages.
+In the `crates/client` we can find two RPC related packages.
 
 1. `rpc-core`: exposes a trait that defines `StarknetRpcApi`. This is where we
    must define our endpoint "signature". We need a struct to be (de)serialized

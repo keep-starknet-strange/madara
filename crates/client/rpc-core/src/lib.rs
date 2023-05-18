@@ -14,7 +14,8 @@ pub mod utils;
 
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, ContractClass, FunctionCall, MaybePendingBlockWithTxHashes, SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult,
+    MaybePendingBlockWithTxHashes, SyncStatusType,
 };
 
 /// Starknet rpc interface.
@@ -69,4 +70,11 @@ pub trait StarknetRpcApi {
     /// Get the chain id
     #[method(name = "chainId")]
     fn get_chain_id(&self) -> RpcResult<String>;
+
+    /// Add an Invoke Transaction to invoke a contract function
+    #[method(name = "addInvokeTransaction")]
+    async fn add_invoke_transaction(
+        &self,
+        invoke_transaction: BroadcastedInvokeTransaction,
+    ) -> RpcResult<InvokeTransactionResult>;
 }
