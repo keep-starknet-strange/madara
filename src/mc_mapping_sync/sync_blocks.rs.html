@@ -170,10 +170,12 @@
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_digest_log::FindLogError;
+<span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
@@ -202,8 +204,8 @@
                 overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
             <span class="kw">match </span>opt_storage_starknet_block {
                 <span class="prelude-val">Some</span>(storage_starknet_block) =&gt; {
-                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash();
-                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash();
+                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash(PedersenHasher::default());
+                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash(PedersenHasher::default());
                     <span class="comment">// Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     </span><span class="kw">if </span>digest_starknet_block_hash != storage_starknet_block_hash {
                         <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
@@ -237,7 +239,7 @@
     <span class="kw">let </span>substrate_block_hash = header.hash();
 
     <span class="kw">let </span>block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>;
-    <span class="kw">let </span>block_hash = block.header().hash();
+    <span class="kw">let </span>block_hash = block.header().hash(PedersenHasher::default());
     <span class="kw">let </span>mapping_commitment =
         mc_db::MappingCommitment::&lt;B&gt; { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
     backend.mapping().write_hashes(mapping_commitment)<span class="question-mark">?</span>;

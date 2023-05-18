@@ -114,10 +114,12 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
 </pre><pre class="rust"><code><span class="kw">use </span>scale_codec::Encode;
 <span class="kw">use </span>sp_core::{H256, U256};
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::ContractAddressWrapper;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::Hasher;
 
 <span class="attr">#[derive(
     Clone,
@@ -190,11 +192,9 @@
     }
 
     <span class="doccomment">/// Compute the hash of the header.
-    /// # TODO
-    /// - Implement this function.
     </span><span class="attr">#[must_use]
-    </span><span class="kw">pub fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; H256 {
-        H256::from_slice(frame_support::Hashable::blake2_256(<span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode()).as_slice())
+    </span><span class="kw">pub fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; H256 {
+        H256::from_slice(&lt;H <span class="kw">as </span>Hasher&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode()).as_slice())
     }
 }
 
@@ -226,9 +226,11 @@
         extra_data,
     );
 
-    <span class="kw">let </span>expected_hash = H256::from_slice(frame_support::Hashable::blake2_256(<span class="kw-2">&amp;</span>block_number.encode()).as_slice());
+    <span class="kw">let </span>hasher = <span class="kw">crate</span>::crypto::hash::pedersen::PedersenHasher::default();
 
-    <span class="macro">assert_eq!</span>(header.hash(), expected_hash);
+    <span class="kw">let </span>expected_hash = H256::from_slice(hasher.hash(<span class="kw-2">&amp;</span>block_number.encode()).as_slice());
+
+    <span class="macro">assert_eq!</span>(header.hash(hasher), expected_hash);
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

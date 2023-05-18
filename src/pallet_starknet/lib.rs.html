@@ -1400,7 +1400,7 @@
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: U256::from(actual_fee.<span class="number">0</span>),
-                        block_hash: U256::from(block.header().hash().<span class="number">0</span>),
+                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).<span class="number">0</span>),
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -1488,7 +1488,7 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: U256::from(block.header().hash().<span class="number">0</span>),
+                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).<span class="number">0</span>),
                         block_number: block.header().block_number.as_u64(),
                         actual_fee: U256::from(actual_fee.<span class="number">0</span>),
                     }
@@ -1572,7 +1572,7 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: U256::from(block.header().hash().<span class="number">0</span>),
+                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).<span class="number">0</span>),
                         block_number: block.header().block_number.as_u64(),
                         actual_fee: U256::from(actual_fee.<span class="number">0</span>),
                     }
@@ -1725,7 +1725,7 @@
     /// The current block hash.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>current_block_hash() -&gt; H256 {
-        <span class="self">Self</span>::current_block().header().hash()
+        <span class="self">Self</span>::current_block().header().hash(T::SystemHash::hasher())
     }
 
     <span class="doccomment">/// Get the block hash of the previous block.
@@ -1853,7 +1853,7 @@
         <span class="comment">// Save the current block.
         </span>CurrentBlock::&lt;T&gt;::put(block.clone());
         <span class="comment">// Save the block number &lt;&gt; hash mapping.
-        </span>BlockHash::&lt;T&gt;::insert(block_number, block.header().hash());
+        </span>BlockHash::&lt;T&gt;::insert(block_number, block.header().hash(T::SystemHash::hasher()));
         Pending::&lt;T&gt;::kill();
         PendingEvents::&lt;T&gt;::kill();
 

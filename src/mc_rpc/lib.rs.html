@@ -501,6 +501,10 @@
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
 <a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -520,6 +524,7 @@
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
+<span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
@@ -598,7 +603,7 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="prelude-val">Ok</span>(block.header().hash())
+        <span class="prelude-val">Ok</span>(block.header().hash(PedersenHasher::default()))
     }
 
     <span class="doccomment">/// Returns the substrate block corresponding to the given Starknet block id
@@ -647,9 +652,8 @@
             StarknetRpcApiError::NoBlocks
         })<span class="question-mark">?</span>;
 
-        <span class="comment">// TODO: fix block hash, see https://github.com/keep-starknet-strange/madara/issues/381
-        </span><span class="prelude-val">Ok</span>(BlockHashAndNumber {
-            block_hash: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block_hash.as_bytes()[..<span class="number">31</span>]).unwrap(),
+        <span class="prelude-val">Ok</span>(BlockHashAndNumber {
+            block_hash: FieldElement::from_byte_slice_be(block_hash.as_bytes()).unwrap(),
             block_number,
         })
     }
@@ -713,7 +717,7 @@
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to get storage from contract: {:#?}&quot;</span>, e);
                 StarknetRpcApiError::ContractNotFound
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>value = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(value)[..<span class="number">31</span>]).map_err(|e| {
+        <span class="kw">let </span>value = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(value)).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to get storage from contract: {:#?}&quot;</span>, e);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
@@ -806,17 +810,20 @@
                 <span class="kw">if </span>starting_block.is_ok() &amp;&amp; current_block.is_ok() &amp;&amp; highest_block.is_ok() {
                     <span class="comment">// Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     </span><span class="kw">let </span>starting_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(<span class="self">self</span>.starting_block);
-                    <span class="kw">let </span>starting_block_hash =
-                        FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>starting_block<span class="question-mark">?</span>.header().hash().to_fixed_bytes()[..<span class="number">31</span>])
-                            .unwrap();
+                    <span class="kw">let </span>starting_block_hash = FieldElement::from_byte_slice_be(
+                        <span class="kw-2">&amp;</span>starting_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+                    )
+                    .unwrap();
                     <span class="kw">let </span>current_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(best_number);
-                    <span class="kw">let </span>current_block_hash =
-                        FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>current_block<span class="question-mark">?</span>.header().hash().to_fixed_bytes()[..<span class="number">31</span>])
-                            .unwrap();
+                    <span class="kw">let </span>current_block_hash = FieldElement::from_byte_slice_be(
+                        <span class="kw-2">&amp;</span>current_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+                    )
+                    .unwrap();
                     <span class="kw">let </span>highest_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(highest_number);
-                    <span class="kw">let </span>highest_block_hash =
-                        FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>highest_block<span class="question-mark">?</span>.header().hash().to_fixed_bytes()[..<span class="number">31</span>])
-                            .unwrap();
+                    <span class="kw">let </span>highest_block_hash = FieldElement::from_byte_slice_be(
+                        <span class="kw-2">&amp;</span>highest_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+                    )
+                    .unwrap();
 
                     <span class="comment">// Build the `SyncStatus` struct with the respective syn information
                     </span><span class="prelude-val">Ok</span>(SyncStatusType::Syncing(SyncStatus {
@@ -895,7 +902,7 @@
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class hash at &#39;{contract_address}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>class_hash = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>class_hash[..<span class="number">31</span>]).unwrap();
+        <span class="kw">let </span>class_hash = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>class_hash).unwrap();
         <span class="prelude-val">Ok</span>(class_hash)
     }
 
@@ -937,20 +944,21 @@
         <span class="kw">let </span>transactions = block
             .transactions_hashes()
             .into_iter()
-            .map(|hash| FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>hash.to_fixed_bytes()[..<span class="number">31</span>]).unwrap())
+            .map(|hash| FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>hash.to_fixed_bytes()).unwrap())
             .collect();
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             <span class="comment">// TODO: Status hardcoded, get status from block
             </span>status: block_status,
-            block_hash: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().hash().to_fixed_bytes()[..<span class="number">31</span>]).unwrap(),
-            parent_hash: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().parent_block_hash.to_fixed_bytes()[..<span class="number">31</span>])
-                .unwrap(),
+            block_hash: FieldElement::from_byte_slice_be(
+                <span class="kw-2">&amp;</span>block.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+            )
+            .unwrap(),
+            parent_hash: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().parent_block_hash.to_fixed_bytes()).unwrap(),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(block.header().global_state_root)[..<span class="number">31</span>])
-                .unwrap(),
+            new_root: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(block.header().global_state_root)).unwrap(),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().sequencer_address[..<span class="number">31</span>]).unwrap(),
+            sequencer_address: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().sequencer_address).unwrap(),
         };
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
