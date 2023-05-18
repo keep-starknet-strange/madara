@@ -182,9 +182,10 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     let account_class =
         get_contract_class(include_bytes!("../../../resources/account/simple/account.json")).try_into().unwrap();
-    let argent_account_class: ContractClassWrapper =
+    let argent_account_class =
         get_contract_class(include_bytes!("../../../resources/account/argent/account.json")).try_into().unwrap();
-
+    let argent_proxy_class =
+        get_contract_class(include_bytes!("../../../resources/account/argent/proxy/proxy.json")).try_into().unwrap();
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
     let erc20_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
@@ -193,13 +194,15 @@ fn testnet_genesis(
     let contract_address_bytes =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000001").unwrap();
     let class_hash_bytes =
-        <[u8; 32]>::from_hex("025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918").unwrap();
+        <[u8; 32]>::from_hex("0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
 
     // ARGENT ACCOUNT CONTRACT
     let argent_account_address =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000002").unwrap();
     let argent_account_class_hash_bytes =
         <[u8; 32]>::from_hex("06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d").unwrap();
+    let argent_proxy_class_hash_bytes =
+        <[u8; 32]>::from_hex("0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9").unwrap();
 
     // TEST CONTRACT
     let other_contract_address_bytes =
@@ -254,6 +257,7 @@ fn testnet_genesis(
             contract_classes: vec![
                 (class_hash_bytes, account_class),
                 (argent_account_class_hash_bytes, argent_account_class),
+                (argent_proxy_class_hash_bytes, argent_proxy_class),
                 (other_class_hash_bytes, test_class),
                 (token_class_hash_bytes, erc20_class.clone()),
                 (fee_token_class_hash_bytes, erc20_class),
@@ -301,6 +305,17 @@ fn testnet_genesis(
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        // pedersen(sn_keccak(b"ERC20_balances"),
+                        // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
+                        // starknet contract for
+                        // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
+                        H256::from_str("0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52").unwrap(),
                     ),
                     U256::from(u128::MAX),
                 ),

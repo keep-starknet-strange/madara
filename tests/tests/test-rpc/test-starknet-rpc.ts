@@ -1,5 +1,6 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
+import { createAndFinalizeBlock } from "../../util/block";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import {
   LibraryError,
@@ -7,6 +8,8 @@ import {
   Account,
   stark,
   ec,
+  hash,
+  constants,
   validateAndParseAddress,
 } from "starknet";
 import { jumpBlocks } from "../../util/block";
@@ -23,6 +26,11 @@ import {
   TEST_CONTRACT,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
+  ARGENT_ACCOUNT_CLASS_HASH,
+  ARGENT_PROXY_CLASS_HASH,
+  SIGNER_PRIVATE,
+  SIGNER_PUBLIC,
+  SALT,
 } from "../constants";
 import { toHex } from "../../util/utils";
 
@@ -180,11 +188,11 @@ describeDevMadara("Starknet RPC", (context) => {
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const block_with_tx_hashes: { status: string; transactions: string[] } =
+        const blockWithTxHashes: { status: string; transactions: string[] } =
           await providerRPC.getBlockWithTxHashes("latest");
-        expect(block_with_tx_hashes).to.not.be.undefined;
-        expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
-        expect(block_with_tx_hashes.transactions.length).to.be.equal(1);
+        expect(blockWithTxHashes).to.not.be.undefined;
+        expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
+        expect(blockWithTxHashes.transactions.length).to.be.equal(1);
       }
     );
 
@@ -304,5 +312,58 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(error).to.be.instanceOf(LibraryError);
       expect(error.message).to.equal("40: Contract error");
     }
+  });
+
+  xit("Deploys an account contract", async function () {
+    // Compute contract address
+    const selector = hash.getSelectorFromName("initialize");
+    const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
+
+    const deployedContractAddress = hash.calculateContractAddressFromHash(
+      SALT,
+      ARGENT_PROXY_CLASS_HASH,
+      calldata,
+      0
+    );
+
+    const invocationDetails = {
+      nonce: "0x0",
+      maxFee: "0x1111111111111111111111",
+      version: "0x1",
+    };
+
+    const txHash = hash.calculateDeployAccountTransactionHash(
+      deployedContractAddress,
+      ARGENT_PROXY_CLASS_HASH,
+      calldata,
+      SALT,
+      invocationDetails.version,
+      invocationDetails.maxFee,
+      constants.StarknetChainId.TESTNET,
+      invocationDetails.nonce
+    );
+
+    const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+    const signature = ec.sign(keyPair, txHash);
+
+    // Deploy account contract
+    const txDeployAccount = {
+      signature: signature,
+      contractAddress: deployedContractAddress, // address of the sender contract
+      addressSalt: SALT, // contract address salt
+      classHash: ARGENT_PROXY_CLASS_HASH, // class hash of the contract
+      constructorCalldata: calldata,
+    };
+
+    await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
+    await createAndFinalizeBlock(context.polkadotApi);
+
+    // TODO wait for https://github.com/keep-starknet-strange/madara/issues/381
+    // to be fixed
+    const accountContractClass = await providerRPC.getClassHashAt(
+      deployedContractAddress
+    );
+
+    expect(accountContractClass).to.be.equal(ARGENT_PROXY_CLASS_HASH);
   });
 });

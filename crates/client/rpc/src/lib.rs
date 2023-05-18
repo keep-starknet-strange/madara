@@ -8,17 +8,15 @@ mod madara_backend_client;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use codec::{Decode, Encode};
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use madara_runtime::UncheckedExtrinsic;
-use mc_rpc_core::utils::{to_invoke_tx, to_rpc_contract_class};
+use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use mp_starknet::transaction::types::{Transaction, TxType};
+use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
@@ -31,8 +29,8 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
     BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes,
-    BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    SyncStatus, SyncStatusType,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, DeployAccountTransactionResult,
+    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
 };
 
 /// A Starknet RPC server for Madara
@@ -84,7 +82,7 @@ where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
@@ -132,7 +130,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
 {
     fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
@@ -173,28 +171,10 @@ where
         key: FieldElement,
         block_id: StarknetBlockId,
     ) -> RpcResult<FieldElement> {
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_slice(&h.to_bytes_be()[..32]),
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::Number(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => None,
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.to_bytes_be();
@@ -401,32 +381,10 @@ where
 
     /// Returns the specified block with transaction hashes.
     fn get_block_with_tx_hashes(&self, block_id: StarknetBlockId) -> RpcResult<MaybePendingBlockWithTxHashes> {
-        let mut block_status = BlockStatus::AcceptedOnL2;
-        let substrate_block_hash = match block_id {
-            StarknetBlockId::Hash(h) => madara_backend_client::load_hash(
-                self.client.as_ref(),
-                &self.backend,
-                H256::from_slice(&h.to_bytes_be()[..32]),
-            )
-            .map_err(|e| {
-                error!("Failed to load Starknet block hash for Substrate block with hash '{h}': {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
-            StarknetBlockId::Number(n) => {
-                self.client.hash(UniqueSaturatedInto::unique_saturated_into(n)).map_err(|e| {
-                    error!("Failed to retrieve the hash of block number '{n}': {e}");
-                    StarknetRpcApiError::BlockNotFound
-                })?
-            }
-            StarknetBlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => {
-                    block_status = BlockStatus::Pending;
-                    None
-                }
-            },
-        }
-        .ok_or(StarknetRpcApiError::BlockNotFound)?;
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
 
         let block = self
             .overrides
@@ -442,7 +400,7 @@ where
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block
-            status: block_status,
+            status: BlockStatus::AcceptedOnL2,
             block_hash: FieldElement::from_byte_slice_be(
                 &block.header().hash(PedersenHasher::default()).to_fixed_bytes(),
             )
@@ -479,18 +437,22 @@ where
         &self,
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
+        let best_block_hash = self.client.info().best_hash;
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
 
-        let call = pallet_starknet::Call::invoke { transaction: invoke_tx.clone() };
-        let extrinsic = UncheckedExtrinsic::new_unsigned(call.into());
-        let encoded_entrinsic = Encode::encode(&extrinsic);
-        let extrinsic = match Decode::decode(&mut &encoded_entrinsic[..]) {
-            Ok(xt) => xt,
-            Err(err) => {
-                error!("Failed to decode extrinsic: {:?}", err);
-                return Err(StarknetRpcApiError::InternalServerError.into());
-            }
-        };
+        let transaction: Transaction = invoke_tx.into();
+        let extrinsic = self
+            .client
+            .runtime_api()
+            .convert_transaction(best_block_hash, transaction.clone(), TxType::Invoke)
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ClassHashNotFound
+            })?
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ClassHashNotFound
+            })?;
 
         self.pool.submit_one(&BlockId::hash(self.client.info().best_hash), TX_SOURCE, extrinsic).await.map_err(
             |e| {
@@ -499,9 +461,60 @@ where
             },
         )?;
 
-        let invoke_tx_hash = calculate_invoke_tx_hash(invoke_tx);
         Ok(InvokeTransactionResult {
-            transaction_hash: starknet_ff::FieldElement::from_bytes_be(invoke_tx_hash.as_fixed_bytes()).unwrap(),
+            transaction_hash: starknet_ff::FieldElement::from_bytes_be(&transaction.hash.0).unwrap(),
+        })
+    }
+
+    /// Add an Deploy Account Transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `deploy account transaction` - https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction
+    ///
+    /// # Returns
+    ///
+    /// * `transaction_hash` - transaction hash corresponding to the invocation
+    /// * `contract_address` - address of the deployed contract account
+    async fn add_deploy_account_transaction(
+        &self,
+        deploy_account_transaction: BroadcastedDeployAccountTransaction,
+    ) -> RpcResult<DeployAccountTransactionResult> {
+        let best_block_hash = self.client.info().best_hash;
+
+        let deploy_account_transaction = to_deploy_account_tx(deploy_account_transaction).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::ClassHashNotFound
+        })?;
+
+        let transaction: Transaction = deploy_account_transaction.into();
+        let extrinsic = self
+            .client
+            .runtime_api()
+            .convert_transaction(best_block_hash, transaction.clone(), TxType::DeployAccount)
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ClassHashNotFound
+            })?
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ClassHashNotFound
+            })?;
+
+        self.pool.submit_one(&BlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
+            error!("Failed to submit extrinsic: {:?}", e);
+            StarknetRpcApiError::ClassHashNotFound
+        })?;
+
+        Ok(DeployAccountTransactionResult {
+            transaction_hash: FieldElement::from_bytes_be(&transaction.hash.0).map_err(|e| {
+                error!("Failed to convert transaction hash to FieldElement: {e}");
+                StarknetRpcApiError::ClassHashNotFound
+            })?,
+            contract_address: FieldElement::from_bytes_be(&transaction.sender_address).map_err(|e| {
+                error!("Failed to convert contract address to FieldElement: {e}");
+                StarknetRpcApiError::ClassHashNotFound
+            })?,
         })
     }
 }

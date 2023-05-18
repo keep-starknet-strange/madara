@@ -28,6 +28,9 @@ pub use frame_system::Call as SystemCall;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
+use mp_starknet::transaction::types::{
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, TxType,
+};
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
@@ -305,6 +308,29 @@ impl_runtime_apis! {
 
         fn chain_id() -> u128 {
             Starknet::chain_id()
+        }
+    }
+
+    impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
+        fn convert_transaction(transaction: Transaction, tx_type: TxType) -> Result<UncheckedExtrinsic, DispatchError> {
+            let call = match tx_type {
+                TxType::DeployAccount => {
+                    let tx = DeployAccountTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to DeployAccountTransaction"))?;
+                    pallet_starknet::Call::deploy_account{transaction: tx}
+                },
+                TxType::Invoke => {
+                    let tx = InvokeTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to InvokeTransaction"))?;
+                    pallet_starknet::Call::invoke{transaction: tx}
+                },
+                TxType::Declare => {
+                    let tx = DeclareTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to DeclareTransaction"))?;
+                    pallet_starknet::Call::declare{transaction: tx}
+                },
+                TxType::L1Handler => {
+                    pallet_starknet::Call::consume_l1_message{transaction}
+                }
+            };
+            Ok(UncheckedExtrinsic::new_unsigned(call.into()))
         }
     }
 

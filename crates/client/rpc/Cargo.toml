@@ -48,4 +48,3 @@ jsonrpsee = { workspace = true, default-features = true, features = ["server", "
 log = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
-codec = { package = "parity-scale-codec", version = "3.2.2" }

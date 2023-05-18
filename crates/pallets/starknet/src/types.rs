@@ -18,3 +18,22 @@ pub type StarkFeltWrapper = U256;
 pub type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 
 pub type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+
+/// Declare Transaction Output
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct DeployAccountTransactionOutput {
+    /// Transaction hash
+    pub transaction_hash: H256,
+    /// Contract Address
+    pub contract_address: ContractAddressWrapper,
+}

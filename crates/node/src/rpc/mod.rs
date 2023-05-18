@@ -44,7 +44,8 @@ where
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BlockBuilder<Block>,
-    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>,
+    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>
+        + pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block>,
     P: TransactionPool<Block = Block> + 'static,
     BE: Backend<Block> + 'static,
 {

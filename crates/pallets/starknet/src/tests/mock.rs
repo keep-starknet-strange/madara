@@ -247,7 +247,7 @@ pub(crate) fn run_to_block(n: u64) {
     }
 }
 
-/// Returns the storage update to set infinite tokens for the provided address
+/// Returns the storage key for a given storage name, keys and offset.
 /// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
 /// starknet contract for storage_name(key_1, key_2, ..., key_n).
 /// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
@@ -258,12 +258,12 @@ pub fn get_storage_key(
     storage_key_offset: u64,
 ) -> ContractStorageKeyWrapper {
     let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
-    let storage_key = get_storage_var_address(
+    let mut storage_key = get_storage_var_address(
         storage_name,
         keys.iter().filter_map(|x| FieldElement::from_bytes_be(x).ok()).collect::<Vec<_>>().as_slice(),
     )
     .unwrap();
-    let storage_key = storage_key + FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
+    storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
     (*address, H256::from(storage_key.to_bytes_be()))
 }
 
