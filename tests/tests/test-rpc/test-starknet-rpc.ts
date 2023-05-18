@@ -175,8 +175,6 @@ describeDevMadara("Starknet RPC", (context) => {
         "when call getBlockWithTxHashes " +
         "then returns an object with transactions",
       async function () {
-        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
-
         await context.createBlock(
           transfer(
             context.polkadotApi,
@@ -190,11 +188,11 @@ describeDevMadara("Starknet RPC", (context) => {
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const block_with_tx_hashes: { status: string; transactions: string[] } =
+        const blockWithTxHashes: { status: string; transactions: string[] } =
           await providerRPC.getBlockWithTxHashes("latest");
-        expect(block_with_tx_hashes).to.not.be.undefined;
-        expect(block_with_tx_hashes.status).to.be.equal("ACCEPTED_ON_L2");
-        expect(block_with_tx_hashes.transactions.length).to.be.equal(1);
+        expect(blockWithTxHashes).to.not.be.undefined;
+        expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
+        expect(blockWithTxHashes.transactions.length).to.be.equal(1);
       }
     );
 

@@ -197,16 +197,12 @@ fn testnet_genesis(
         <[u8; 32]>::from_hex("0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_account_class_hash_bytes =
-        <[u8; 32]>::from_hex("06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d").unwrap();
-    let argent_proxy_class_hash_bytes =
-        <[u8; 32]>::from_hex("0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9").unwrap();
-
-    // ARGENT ACCOUNT CONTRACT
     let argent_account_address =
         <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000000002").unwrap();
     let argent_account_class_hash_bytes =
         <[u8; 32]>::from_hex("06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d").unwrap();
+    let argent_proxy_class_hash_bytes =
+        <[u8; 32]>::from_hex("0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9").unwrap();
 
     // TEST CONTRACT
     let other_contract_address_bytes =
@@ -264,7 +260,10 @@ fn testnet_genesis(
                 (argent_proxy_class_hash_bytes, argent_proxy_class),
                 (other_class_hash_bytes, test_class),
                 (token_class_hash_bytes, erc20_class.clone()),
+                (fee_token_class_hash_bytes, erc20_class),
+            ],
             storage: vec![
+                (
                     (
                         fee_token_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
