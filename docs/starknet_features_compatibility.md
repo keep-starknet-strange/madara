@@ -54,7 +54,7 @@
 | starknet_traceBlockTransactions          | :construction:     |
 | starknet_addInvokeTransaction            | :white_check_mark: |
 | starknet_addDeclareTransaction           | :construction:     |
-| starknet_addDeployAccountTransaction     | :construction:     |
+| starknet_addDeployAccountTransaction     | :white_check_mark: |
 
 ## Decentralisation
 
