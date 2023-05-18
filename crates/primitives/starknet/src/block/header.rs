@@ -2,6 +2,7 @@ use scale_codec::Encode;
 use sp_core::{H256, U256};
 
 use crate::execution::types::ContractAddressWrapper;
+use crate::traits::hash::Hasher;
 
 #[derive(
     Clone,
@@ -74,11 +75,9 @@ impl Header {
     }
 
     /// Compute the hash of the header.
-    /// # TODO
-    /// - Implement this function.
     #[must_use]
-    pub fn hash(&self) -> H256 {
-        H256::from_slice(frame_support::Hashable::blake2_256(&self.block_number.encode()).as_slice())
+    pub fn hash<H: Hasher>(&self, hasher: H) -> H256 {
+        H256::from_slice(<H as Hasher>::hash(&hasher, &self.block_number.encode()).as_slice())
     }
 }
 
@@ -110,7 +109,9 @@ fn test_header_hash() {
         extra_data,
     );
 
-    let expected_hash = H256::from_slice(frame_support::Hashable::blake2_256(&block_number.encode()).as_slice());
+    let hasher = crate::crypto::hash::pedersen::PedersenHasher::default();
 
-    assert_eq!(header.hash(), expected_hash);
+    let expected_hash = H256::from_slice(hasher.hash(&block_number.encode()).as_slice());
+
+    assert_eq!(header.hash(hasher), expected_hash);
 }

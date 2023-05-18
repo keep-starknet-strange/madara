@@ -10,7 +10,11 @@ pub trait Hasher {
     /// # Returns
     /// The hash of the data.
     fn hash(&self, data: &[u8]) -> [u8; 32];
+
+    /// Get Hasher default instance.
+    fn hasher() -> Self;
 }
+
 /// A trait for hashing with pedersen.
 pub trait CryptoHasher {
     /// Hashes the 2 felts sent.

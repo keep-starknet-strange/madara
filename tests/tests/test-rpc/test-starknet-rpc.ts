@@ -1,7 +1,7 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
-import { LibraryError, RpcProvider } from "starknet";
+import { LibraryError, RpcProvider, validateAndParseAddress } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { transfer } from "../../util/starknet";
@@ -16,6 +16,7 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
 } from "./constants";
+import { toHex } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -76,16 +77,14 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(contract_class).to.not.be.undefined;
   });
 
-  it.skip("getClassHashAt", async function () {
-    // TODO: unskip when class hash is fixed
-    // TODO: see https://github.com/keep-starknet-strange/madara/issues/381
+  it("getClassHashAt", async function () {
     const account_contract_class_hash = await providerRPC.getClassHashAt(
       ACCOUNT_CONTRACT,
       "latest"
     );
 
     expect(account_contract_class_hash).to.not.be.undefined;
-    expect(account_contract_class_hash).to.be.equal(
+    expect(validateAndParseAddress(account_contract_class_hash)).to.be.equal(
       ACCOUNT_CONTRACT_CLASS_HASH
     );
 
@@ -95,7 +94,9 @@ describeDevMadara("Starknet RPC", (context) => {
     );
 
     expect(test_contract_class_hash).to.not.be.undefined;
-    expect(test_contract_class_hash).to.be.equal(TEST_CONTRACT_CLASS_HASH);
+    expect(validateAndParseAddress(test_contract_class_hash)).to.be.equal(
+      TEST_CONTRACT_CLASS_HASH
+    );
 
     // Invalid block id
     try {
@@ -131,8 +132,8 @@ describeDevMadara("Starknet RPC", (context) => {
       current_block["block_number"]
     );
 
-    // the starknet block hash for number 0 starts with "0xaf" with this test setup
-    expect(status["starting_block_hash"]).to.contain("0xaf");
+    // the starknet block hash for number 0 starts with "0x49ee" with this test setup
+    expect(status["starting_block_hash"]).to.contain("0x49ee");
     // starknet current and highest block number should be equal to
     // the current block with this test setup
     expect(status["current_block_hash"]).to.be.equal(
@@ -211,45 +212,14 @@ describeDevMadara("Starknet RPC", (context) => {
     );
   });
 
-  it("syncing", async function () {
-    await jumpBlocks(context, 10);
-
-    const status = await providerRPC.getSyncingStats();
-    const current_block = await providerRPC.getBlockHashAndNumber();
-
-    // starknet starting block number should be 0 with this test setup
-    expect(status["starting_block_num"]).to.be.equal("0x0");
-    // starknet current and highest block number should be equal to
-    // the current block with this test setup
-    expect(parseInt(status["current_block_num"])).to.be.equal(
-      current_block["block_number"]
-    );
-    expect(parseInt(status["highest_block_num"])).to.be.equal(
-      current_block["block_number"]
-    );
-
-    // the starknet block hash for number 0 starts with "0xaf" with this test setup
-    expect(status["starting_block_hash"]).to.contain("0xaf");
-    // starknet current and highest block number should be equal to
-    // the current block with this test setup
-    expect(status["current_block_hash"]).to.be.equal(
-      current_block["block_hash"]
-    );
-    expect(status["highest_block_hash"]).to.be.equal(
-      current_block["block_hash"]
-    );
-  });
-
-  it.skip("Gets value from the fee contract storage", async function () {
-    // TODO: unskip when class hash is fixed
-    // TODO: see https://github.com/keep-starknet-strange/madara/issues/381
+  it("Gets value from the fee contract storage", async function () {
     const value = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
       // ERC20_balances(0x01).low
       "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
       "latest"
     );
-    expect(value).to.be.equal("0xffffffffffffffffffffffffffffffff");
+    expect(toHex(value)).to.be.equal("0xffffffffffffffffffffffffffffffff");
   });
 
   it("Returns 0 if the storage slot is not set", async function () {

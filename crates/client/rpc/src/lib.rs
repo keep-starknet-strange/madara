@@ -14,6 +14,7 @@ use log::error;
 use mc_rpc_core::utils::to_rpc_contract_class;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -87,7 +88,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().hash())
+        Ok(block.header().hash(PedersenHasher::default()))
     }
 
     /// Returns the substrate block corresponding to the given Starknet block id
@@ -132,9 +133,8 @@ where
             StarknetRpcApiError::NoBlocks
         })?;
 
-        // TODO: fix block hash, see https://github.com/keep-starknet-strange/madara/issues/381
         Ok(BlockHashAndNumber {
-            block_hash: FieldElement::from_byte_slice_be(&block_hash.as_bytes()[..31]).unwrap(),
+            block_hash: FieldElement::from_byte_slice_be(block_hash.as_bytes()).unwrap(),
             block_number,
         })
     }
@@ -198,7 +198,7 @@ where
                 error!("Failed to get storage from contract: {:#?}", e);
                 StarknetRpcApiError::ContractNotFound
             })?;
-        let value = FieldElement::from_byte_slice_be(&<[u8; 32]>::from(value)[..31]).map_err(|e| {
+        let value = FieldElement::from_byte_slice_be(&<[u8; 32]>::from(value)).map_err(|e| {
             error!("Failed to get storage from contract: {:#?}", e);
             StarknetRpcApiError::InternalServerError
         })?;
@@ -291,17 +291,20 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash =
-                        FieldElement::from_byte_slice_be(&starting_block?.header().hash().to_fixed_bytes()[..31])
-                            .unwrap();
+                    let starting_block_hash = FieldElement::from_byte_slice_be(
+                        &starting_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+                    )
+                    .unwrap();
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash =
-                        FieldElement::from_byte_slice_be(&current_block?.header().hash().to_fixed_bytes()[..31])
-                            .unwrap();
+                    let current_block_hash = FieldElement::from_byte_slice_be(
+                        &current_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+                    )
+                    .unwrap();
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash =
-                        FieldElement::from_byte_slice_be(&highest_block?.header().hash().to_fixed_bytes()[..31])
-                            .unwrap();
+                    let highest_block_hash = FieldElement::from_byte_slice_be(
+                        &highest_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+                    )
+                    .unwrap();
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(SyncStatusType::Syncing(SyncStatus {
@@ -380,7 +383,7 @@ where
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-        let class_hash = FieldElement::from_byte_slice_be(&class_hash[..31]).unwrap();
+        let class_hash = FieldElement::from_byte_slice_be(&class_hash).unwrap();
         Ok(class_hash)
     }
 
@@ -422,20 +425,21 @@ where
         let transactions = block
             .transactions_hashes()
             .into_iter()
-            .map(|hash| FieldElement::from_byte_slice_be(&hash.to_fixed_bytes()[..31]).unwrap())
+            .map(|hash| FieldElement::from_byte_slice_be(&hash.to_fixed_bytes()).unwrap())
             .collect();
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block
             status: block_status,
-            block_hash: FieldElement::from_byte_slice_be(&block.header().hash().to_fixed_bytes()[..31]).unwrap(),
-            parent_hash: FieldElement::from_byte_slice_be(&block.header().parent_block_hash.to_fixed_bytes()[..31])
-                .unwrap(),
+            block_hash: FieldElement::from_byte_slice_be(
+                &block.header().hash(PedersenHasher::default()).to_fixed_bytes(),
+            )
+            .unwrap(),
+            parent_hash: FieldElement::from_byte_slice_be(&block.header().parent_block_hash.to_fixed_bytes()).unwrap(),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from_byte_slice_be(&<[u8; 32]>::from(block.header().global_state_root)[..31])
-                .unwrap(),
+            new_root: FieldElement::from_byte_slice_be(&<[u8; 32]>::from(block.header().global_state_root)).unwrap(),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from_byte_slice_be(&block.header().sequencer_address[..31]).unwrap(),
+            sequencer_address: FieldElement::from_byte_slice_be(&block.header().sequencer_address).unwrap(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }

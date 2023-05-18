@@ -444,7 +444,7 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: U256::from(actual_fee.0),
-                        block_hash: U256::from(block.header().hash().0),
+                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).0),
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -532,7 +532,7 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: U256::from(block.header().hash().0),
+                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).0),
                         block_number: block.header().block_number.as_u64(),
                         actual_fee: U256::from(actual_fee.0),
                     }
@@ -616,7 +616,7 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: U256::from(block.header().hash().0),
+                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).0),
                         block_number: block.header().block_number.as_u64(),
                         actual_fee: U256::from(actual_fee.0),
                     }
@@ -769,7 +769,7 @@ impl<T: Config> Pallet<T> {
     /// The current block hash.
     #[inline(always)]
     pub fn current_block_hash() -> H256 {
-        Self::current_block().header().hash()
+        Self::current_block().header().hash(T::SystemHash::hasher())
     }
 
     /// Get the block hash of the previous block.
@@ -897,7 +897,7 @@ impl<T: Config> Pallet<T> {
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());
         // Save the block number <> hash mapping.
-        BlockHash::<T>::insert(block_number, block.header().hash());
+        BlockHash::<T>::insert(block_number, block.header().hash(T::SystemHash::hasher()));
         Pending::<T>::kill();
         PendingEvents::<T>::kill();
 
