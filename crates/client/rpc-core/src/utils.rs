@@ -67,12 +67,10 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
     }
 }
 
-pub fn to_deploy_account_transaction(
-    tx: BroadcastedDeployAccountTransaction,
-) -> Result<DeployAccountTransaction, String> {
+pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction> {
     let version = tx.version;
     let version: u8 =
-        version.try_into().map_err(|e| format!("Failed to convert version '{}' to u8: {e}", tx.version))?;
+        version.try_into().map_err(|e| anyhow!("failed to convert version '{}' to u8: {e}", tx.version))?;
 
     let contract_address_salt = tx.contract_address_salt.to_bytes_be();
 
@@ -87,7 +85,7 @@ pub fn to_deploy_account_transaction(
         .map(|f| H256::from(f.to_bytes_be()))
         .collect::<Vec<_>>()
         .try_into()
-        .map_err(|_| "Failed to bound signatures Vec<H256> by MaxArraySize".to_string())?;
+        .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
     let sender_address = calculate_contract_address(
         ContractAddressSalt(StarkFelt(contract_address_salt)),
@@ -95,7 +93,7 @@ pub fn to_deploy_account_transaction(
         &Calldata(calldata.into()),
         StarknetContractAddress::default(),
     )
-    .map_err(|e| format!("Failed to calculate contract address: {e}"))?
+    .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
     .0
     .0
     .0;
@@ -106,7 +104,7 @@ pub fn to_deploy_account_transaction(
         .map(|f| U256::from(f.to_bytes_be()))
         .collect::<Vec<_>>()
         .try_into()
-        .map_err(|_| ("Failed to bound calldata Vec<U256> by MaxArraySize").to_string())?;
+        .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxArraySize"))?;
 
     let nonce = U256::from(tx.nonce.to_bytes_be());
     let max_fee = U256::from(tx.max_fee.to_bytes_be());
