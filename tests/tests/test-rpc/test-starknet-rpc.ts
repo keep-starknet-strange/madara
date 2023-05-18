@@ -268,7 +268,7 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
   });
 
-  it.skip("Adds an invocation transaction successfully", async function () {
+  it("Adds an invocation transaction successfully", async function () {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
@@ -290,7 +290,7 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(resp.transaction_hash).to.contain("0x");
   });
 
-  it.skip("Returns error when invocation absent entrypoint", async function () {
+  it("Returns error when invocation absent entrypoint", async function () {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
@@ -314,7 +314,7 @@ describeDevMadara("Starknet RPC", (context) => {
     }
   });
 
-  xit("Deploys an account contract", async function () {
+  it("Adds an invocation transaction successfully", async function () {
     // Compute contract address
     const selector = hash.getSelectorFromName("initialize");
     const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
@@ -348,7 +348,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     // Deploy account contract
     const txDeployAccount = {
-      signature: signature,
+      signature: signature, // signature
       contractAddress: deployedContractAddress, // address of the sender contract
       addressSalt: SALT, // contract address salt
       classHash: ARGENT_PROXY_CLASS_HASH, // class hash of the contract
@@ -358,12 +358,12 @@ describeDevMadara("Starknet RPC", (context) => {
     await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
     await createAndFinalizeBlock(context.polkadotApi);
 
-    // TODO wait for https://github.com/keep-starknet-strange/madara/issues/381
-    // to be fixed
     const accountContractClass = await providerRPC.getClassHashAt(
       deployedContractAddress
     );
 
-    expect(accountContractClass).to.be.equal(ARGENT_PROXY_CLASS_HASH);
+    expect(validateAndParseAddress(accountContractClass)).to.be.equal(
+      ARGENT_PROXY_CLASS_HASH
+    );
   });
 });
