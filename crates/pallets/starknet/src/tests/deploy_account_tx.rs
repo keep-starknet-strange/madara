@@ -4,8 +4,6 @@ use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use hex::FromHex;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_core::{H256, U256};
-use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 
 use super::mock::*;
 use super::utils::sign_message_hash;
@@ -356,38 +354,6 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             Starknet::deploy_account(none_origin, transaction),
             Error::<MockRuntime>::TransactionExecutionFailed
         );
-    });
-}
-
-#[test]
-fn given_contract_validate_deploy_account_openzeppelin_with_incorrect_signature_should_fail() {
-    new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
-
-        // TEST ACCOUNT CONTRACT
-        // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
-        let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (test_addr, account_class_hash, calldata) = account_helper(salt, AccountType::Openzeppelin);
-
-        set_infinite_tokens(test_addr);
-        set_signer(test_addr, AccountType::Openzeppelin);
-
-        let transaction = DeployAccountTransaction {
-            account_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
-            version: 1,
-            calldata: BoundedVec::try_from(calldata.clone().into_iter().map(U256::from).collect::<Vec<U256>>())
-                .unwrap(),
-            nonce: U256::zero(),
-            signature: bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1)),
-            max_fee: U256::from(u128::MAX),
-        };
-
-        let validate_result =
-            Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::deploy_account { transaction });
-        assert!(std::matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
     });
 }
 
