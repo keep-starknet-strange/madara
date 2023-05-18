@@ -17,6 +17,8 @@ use mc_storage::OverrideHandle;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::transaction::types::{Transaction, TxType};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use sc_client_api::backend::{Backend, StorageProvider};
+use sc_network_sync::SyncingService;
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
@@ -404,6 +406,7 @@ where
             )
             .unwrap(),
             parent_hash: FieldElement::from_byte_slice_be(&block.header().parent_block_hash.to_fixed_bytes()).unwrap(),
+            block_number: block.header().block_number.as_u64(),
             new_root: FieldElement::from_byte_slice_be(&<[u8; 32]>::from(block.header().global_state_root)).unwrap(),
             timestamp: block.header().block_timestamp,
             sequencer_address: FieldElement::from_byte_slice_be(&block.header().sequencer_address).unwrap(),
