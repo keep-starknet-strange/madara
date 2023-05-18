@@ -955,7 +955,6 @@
 <a href="#955" id="955">955</a>
 <a href="#956" id="956">956</a>
 <a href="#957" id="957">957</a>
-<a href="#958" id="958">958</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1361,7 +1360,6 @@
         </span><span class="kw">pub fn </span>invoke(origin: OriginFor&lt;T&gt;, transaction: InvokeTransaction) -&gt; DispatchResult {
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
-
             <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 

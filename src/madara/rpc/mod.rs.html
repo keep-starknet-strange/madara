@@ -79,6 +79,7 @@
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
 <a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A collection of node-specific RPC methods.
 //! Substrate provides the `sc-rpc` crate, which defines the core RPC layer
 //! used by Substrate nodes. This file extends those RPC definitions with
@@ -126,7 +127,7 @@
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi&lt;Block, Balance&gt;,
     C::Api: BlockBuilder&lt;Block&gt;,
     C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi&lt;Block&gt;,
-    P: TransactionPool + <span class="lifetime">&#39;static</span>,
+    P: TransactionPool&lt;Block = Block&gt; + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;Block&gt; + <span class="lifetime">&#39;static</span>,
 {
     <span class="kw">use </span>mc_rpc::{Starknet, StarknetRpcApiServer};
@@ -137,13 +138,14 @@
     <span class="kw">let </span><span class="kw-2">mut </span>module = RpcModule::new(());
     <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink } = deps;
 
-    module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())<span class="question-mark">?</span>;
+    module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())<span class="question-mark">?</span>;
     module.merge(TransactionPayment::new(client.clone()).into_rpc())<span class="question-mark">?</span>;
     module.merge(
         Starknet::new(
             client,
             starknet_params.madara_backend,
             starknet_params.overrides,
+            pool,
             starknet_params.sync_service,
             starknet_params.starting_block,
         )

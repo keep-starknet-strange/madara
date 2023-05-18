@@ -70,6 +70,14 @@
 <a href="#70" id="70">70</a>
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -86,7 +94,8 @@
 
 <span class="kw">use </span>starknet_core::types::FieldElement;
 <span class="kw">use </span>starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, ContractClass, FunctionCall, MaybePendingBlockWithTxHashes, SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult,
+    MaybePendingBlockWithTxHashes, SyncStatusType,
 };
 
 <span class="doccomment">/// Starknet rpc interface.
@@ -141,6 +150,13 @@
     <span class="doccomment">/// Get the chain id
     </span><span class="attr">#[method(name = <span class="string">&quot;chainId&quot;</span>)]
     </span><span class="kw">fn </span>get_chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt;;
+
+    <span class="doccomment">/// Add an Invoke Transaction to invoke a contract function
+    </span><span class="attr">#[method(name = <span class="string">&quot;addInvokeTransaction&quot;</span>)]
+    </span><span class="kw">async fn </span>add_invoke_transaction(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        invoke_transaction: BroadcastedInvokeTransaction,
+    ) -&gt; RpcResult&lt;InvokeTransactionResult&gt;;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mc_rpc_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

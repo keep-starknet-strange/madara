@@ -292,6 +292,25 @@
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
 <a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
@@ -476,6 +495,8 @@
 ) -&gt; GenesisConfig {
     <span class="kw">let </span>account_class =
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/simple/account.json&quot;</span>)).try_into().unwrap();
+    <span class="kw">let </span>argent_account_class: ContractClassWrapper =
+        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/argent/account.json&quot;</span>)).try_into().unwrap();
 
     <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/test.json&quot;</span>)).try_into().unwrap();
     <span class="kw">let </span>erc20_class: ContractClassWrapper =
@@ -486,6 +507,12 @@
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap();
     <span class="kw">let </span>class_hash_bytes =
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918&quot;</span>).unwrap();
+
+    <span class="comment">// ARGENT ACCOUNT CONTRACT
+    </span><span class="kw">let </span>argent_account_address =
+        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000002&quot;</span>).unwrap();
+    <span class="kw">let </span>argent_account_class_hash_bytes =
+        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d&quot;</span>).unwrap();
 
     <span class="comment">// TEST CONTRACT
     </span><span class="kw">let </span>other_contract_address_bytes =
@@ -535,9 +562,11 @@
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (token_contract_address_bytes, token_class_hash_bytes),
                 (fee_token_address, fee_token_class_hash_bytes),
+                (argent_account_address, argent_account_class_hash_bytes),
             ],
             contract_classes: <span class="macro">vec!</span>[
                 (class_hash_bytes, account_class),
+                (argent_account_class_hash_bytes, argent_account_class),
                 (other_class_hash_bytes, test_class),
                 (token_class_hash_bytes, erc20_class.clone()),
                 (fee_token_class_hash_bytes, erc20_class),
@@ -558,6 +587,15 @@
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         </span>H256::from_str(<span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>).unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x02) which is the key in the starknet contract
+                        // for ERC20_balances(0x02).low
+                        </span>H256::from_str(<span class="string">&quot;0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f&quot;</span>).unwrap(),
                     ),
                     U256::from(u128::MAX),
                 ),

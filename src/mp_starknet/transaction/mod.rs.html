@@ -1257,7 +1257,7 @@
         )<span class="question-mark">?</span>;
         <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_resources)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
-            validate_call_info: <span class="prelude-val">None</span>,
+            validate_call_info,
             execute_call_info,
             fee_transfer_call_info,
             actual_fee,
