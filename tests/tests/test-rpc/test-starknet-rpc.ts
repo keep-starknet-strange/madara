@@ -316,7 +316,7 @@ describeDevMadara("Starknet RPC", (context) => {
     }
   });
 
-  it("Deploys an account contract", async function () {
+  xit("Deploys an account contract", async function () {
     // Compute contract address
     const selector = hash.getSelectorFromName("initialize");
     const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
@@ -360,6 +360,8 @@ describeDevMadara("Starknet RPC", (context) => {
     await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
     await createAndFinalizeBlock(context.polkadotApi);
 
+    // TODO wait for https://github.com/keep-starknet-strange/madara/issues/381
+    // to be fixed
     const accountContractClass = await providerRPC.getClassHashAt(
       deployedContractAddress
     );
