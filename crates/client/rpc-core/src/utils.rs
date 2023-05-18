@@ -4,12 +4,16 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
 use mp_starknet::execution::types::ContractClassWrapper;
-use mp_starknet::transaction::types::InvokeTransaction;
+use mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction};
 use sp_core::{H256, U256};
 use sp_runtime::BoundedVec;
+use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode, SierraContractClass,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode,
+    SierraContractClass,
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
@@ -61,4 +65,60 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
             max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
         }),
     }
+}
+
+pub fn to_deploy_account_transaction(
+    tx: BroadcastedDeployAccountTransaction,
+) -> Result<DeployAccountTransaction, String> {
+    let version = tx.version;
+    let version: u8 =
+        version.try_into().map_err(|e| format!("Failed to convert version '{}' to u8: {e}", tx.version))?;
+
+    let contract_address_salt = tx.contract_address_salt.to_bytes_be();
+
+    let account_class_hash = tx.class_hash.to_bytes_be();
+
+    let calldata =
+        tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::<Vec<_>>();
+
+    let signature = tx
+        .signature
+        .iter()
+        .map(|f| H256::from(f.to_bytes_be()))
+        .collect::<Vec<_>>()
+        .try_into()
+        .map_err(|_| "Failed to bound signatures Vec<H256> by MaxArraySize".to_string())?;
+
+    let sender_address = calculate_contract_address(
+        ContractAddressSalt(StarkFelt(contract_address_salt)),
+        ClassHash(StarkFelt(account_class_hash)),
+        &Calldata(calldata.into()),
+        StarknetContractAddress::default(),
+    )
+    .map_err(|e| format!("Failed to calculate contract address: {e}"))?
+    .0
+    .0
+    .0;
+
+    let calldata = tx
+        .constructor_calldata
+        .iter()
+        .map(|f| U256::from(f.to_bytes_be()))
+        .collect::<Vec<_>>()
+        .try_into()
+        .map_err(|_| ("Failed to bound calldata Vec<U256> by MaxArraySize").to_string())?;
+
+    let nonce = U256::from(tx.nonce.to_bytes_be());
+    let max_fee = U256::from(tx.max_fee.to_bytes_be());
+
+    Ok(DeployAccountTransaction {
+        version,
+        sender_address,
+        calldata,
+        salt: U256::from(contract_address_salt),
+        signature,
+        account_class_hash,
+        nonce,
+        max_fee,
+    })
 }

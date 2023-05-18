@@ -14,8 +14,9 @@ pub mod utils;
 
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult,
-    MaybePendingBlockWithTxHashes, SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass,
+    DeployAccountTransactionResult, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
+    SyncStatusType,
 };
 
 /// Starknet rpc interface.
@@ -83,5 +84,5 @@ pub trait StarknetRpcApi {
     async fn add_deploy_account_transaction(
         &self,
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
-    ) -> RpcResult<AddDeployAccountTransactionOutput>;
+    ) -> RpcResult<DeployAccountTransactionResult>;
 }

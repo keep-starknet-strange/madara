@@ -4506,7 +4506,6 @@ dependencies = [
  "mc-storage",
  "mp-starknet",
  "pallet-starknet",
- "parity-scale-codec",
  "sc-client-api",
  "sc-network-sync",
  "sc-transaction-pool-api",
