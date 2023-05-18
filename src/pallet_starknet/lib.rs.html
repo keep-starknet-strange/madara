@@ -950,6 +950,12 @@
 <a href="#950" id="950">950</a>
 <a href="#951" id="951">951</a>
 <a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1366,7 +1372,7 @@
             <span class="kw">let </span>transaction: Transaction = transaction.into();
             <span class="kw">let </span>call_info = transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block,
+                block.clone(),
                 TxType::Invoke,
                 <span class="prelude-val">None</span>,
                 fee_token_address,
@@ -1396,6 +1402,8 @@
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: U256::from(actual_fee.<span class="number">0</span>),
+                        block_hash: U256::from(block.header().hash().<span class="number">0</span>),
+                        block_number: block.header().block_number.as_u64(),
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
@@ -1453,7 +1461,7 @@
             <span class="comment">// Execute transaction
             </span><span class="kw">let </span>call_info = transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block,
+                block.clone(),
                 TxType::Declare,
                 <span class="prelude-val">Some</span>(contract_class),
                 fee_token_address,
@@ -1482,6 +1490,8 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
+                        block_hash: U256::from(block.header().hash().<span class="number">0</span>),
+                        block_number: block.header().block_number.as_u64(),
                         actual_fee: U256::from(actual_fee.<span class="number">0</span>),
                     }
                 }
@@ -1535,7 +1545,7 @@
             <span class="comment">// Execute transaction
             </span><span class="kw">let </span>call_info = transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block,
+                block.clone(),
                 TxType::DeployAccount,
                 <span class="prelude-val">None</span>,
                 fee_token_address,
@@ -1564,6 +1574,8 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
+                        block_hash: U256::from(block.header().hash().<span class="number">0</span>),
+                        block_number: block.header().block_number.as_u64(),
                         actual_fee: U256::from(actual_fee.<span class="number">0</span>),
                     }
                 }

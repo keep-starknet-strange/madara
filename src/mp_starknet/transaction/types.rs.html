@@ -475,6 +475,10 @@
 <a href="#475" id="475">475</a>
 <a href="#476" id="476">476</a>
 <a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 
@@ -868,6 +872,10 @@
     </span><span class="kw">pub </span>actual_fee: U256,
     <span class="doccomment">/// Transaction type
     </span><span class="kw">pub </span>tx_type: TxType,
+    <span class="doccomment">/// Block Number
+    </span><span class="kw">pub </span>block_number: u64,
+    <span class="doccomment">/// Block Hash
+    </span><span class="kw">pub </span>block_hash: U256,
     <span class="doccomment">/// Messages sent in the transaction.
     </span><span class="comment">// pub messages_sent: BoundedVec&lt;Message, MaxArraySize&gt;, // TODO: add messages
     </span><span class="doccomment">/// Events emitted in the transaction.
