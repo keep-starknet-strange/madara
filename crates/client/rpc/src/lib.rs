@@ -8,7 +8,6 @@ mod madara_backend_client;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use codec::{Decode, Encode};
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
@@ -18,15 +17,13 @@ use mc_rpc_core::types::{
     BroadcastedDeployAccountTransaction, ContractAddress, ContractClassHash, FieldElement, FunctionCall,
     MaybePendingBlockWithTxHashes, RPCContractClass, Syncing,
 };
-use mc_rpc_core::utils::{to_invoke_tx, to_rpc_contract_class};
+use mc_rpc_core::utils::{to_deploy_account_transaction, to_invoke_tx, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::transaction::types::{DeployAccountTransaction, Transaction};
-use pallet_starknet::runtime_api::StarknetRuntimeApi;
-use sc_client_api::backend::{Backend, StorageProvider};
-use sc_network_sync::SyncingService;
+use mp_starknet::transaction::types::{Transaction, TxType};
+use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
@@ -34,14 +31,11 @@ use sp_blockchain::HeaderBackend;
 use sp_core::{H256, U256};
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
     BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes,
-    BroadcastedInvokeTransaction, ContractClass, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    SyncStatus, SyncStatusType,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, DeployAccountTransactionResult,
+    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
 };
 
 /// A Starknet RPC server for Madara
@@ -93,7 +87,7 @@ where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
@@ -141,7 +135,7 @@ where
     BE: Backend<B> + 'static,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
 {
     fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
@@ -488,116 +482,42 @@ where
     fn add_deploy_account_transaction(
         &self,
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
-    ) -> RpcResult<AddDeployAccountTransactionOutput> {
+    ) -> RpcResult<DeployAccountTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
 
-        let version = &deploy_account_transaction.common.version;
-        let version = u8::from_str_radix(version.strip_prefix("0x").unwrap_or(version), 16).map_err(|e| {
-            error!("Failed to convert version '{version}' to u8: {e}");
+        let deploy_account_transaction = to_deploy_account_transaction(deploy_account_transaction).map_err(|e| {
+            error!("{e}");
             StarknetRpcApiError::ClassHashNotFound
         })?;
 
-        let contract_address_salt =
-            <[u8; 32]>::from_hex(&deploy_account_transaction.contract_address_salt).map_err(|e| {
-                error!(
-                    "Failed to convert contract address salt '{:#}' to [u8; 32]: {e}",
-                    deploy_account_transaction.contract_address_salt
-                );
+        let transaction: Transaction = deploy_account_transaction.into();
+        let extrinsic = self
+            .client
+            .runtime_api()
+            .convert_transaction(best_block_hash, transaction.clone(), TxType::DeployAccount)
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ClassHashNotFound
+            })?
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
                 StarknetRpcApiError::ClassHashNotFound
             })?;
-
-        let account_class_hash = <[u8; 32]>::from_hex(&deploy_account_transaction.class_hash).map_err(|e| {
-            error!(
-                "Failed to convert account class hash '{:#}' to [u8; 32]: {e}",
-                deploy_account_transaction.class_hash
-            );
-            StarknetRpcApiError::ClassHashNotFound
-        })?;
-
-        let calldata = deploy_account_transaction
-            .constructor_calldata
-            .iter()
-            .filter_map(|s| StarkFelt::try_from(s.as_str()).ok())
-            .collect::<Vec<_>>();
-
-        let signature = deploy_account_transaction
-            .common
-            .signature
-            .iter()
-            .filter_map(|f| H256::from_str(f).ok())
-            .collect::<Vec<_>>()
-            .try_into()
-            .map_err(|_| {
-                error!("Failed to bound signatures Vec<H256> by MaxArraySize");
-                StarknetRpcApiError::ClassHashNotFound
-            })?;
-
-        let sender_address = calculate_contract_address(
-            ContractAddressSalt(StarkFelt(contract_address_salt)),
-            ClassHash(StarkFelt(account_class_hash)),
-            &Calldata(calldata.into()),
-            StarknetContractAddress::default(),
-        )
-        .map_err(|e| {
-            error!("Failed to calculate contract address: {e}");
-            StarknetRpcApiError::ClassHashNotFound
-        })?
-        .0
-        .0
-        .0;
-
-        let calldata = deploy_account_transaction
-            .constructor_calldata
-            .iter()
-            .filter_map(|s| U256::from_str(s).ok())
-            .collect::<Vec<_>>()
-            .try_into()
-            .map_err(|_| {
-                error!("Failed to bound calldata Vec<U256> by MaxArraySize");
-                StarknetRpcApiError::ClassHashNotFound
-            })?;
-
-        let nonce = U256::from_str(&deploy_account_transaction.common.nonce).map_err(|e| {
-            error!("Failed to convert nonce '{:#}' to U256: {e}", deploy_account_transaction.common.nonce);
-            StarknetRpcApiError::ClassHashNotFound
-        })?;
-
-        let max_fee = U256::from_str(&deploy_account_transaction.common.max_fee).map_err(|e| {
-            error!("Failed to convert max fee '{:#}' to U256: {e}", deploy_account_transaction.common.max_fee);
-            StarknetRpcApiError::ClassHashNotFound
-        })?;
-
-        let deploy_account_tx = DeployAccountTransaction {
-            version,
-            sender_address,
-            calldata,
-            salt: U256::from(contract_address_salt),
-            signature,
-            account_class_hash,
-            nonce,
-            max_fee,
-        };
-
-        let call = pallet_starknet::Call::deploy_account { transaction: deploy_account_tx.clone() };
-        let extrinsic = UncheckedExtrinsic::new_unsigned(call.into());
-        let encoded_entrinsic = Encode::encode(&extrinsic);
-        let extrinsic = match Decode::decode(&mut &encoded_entrinsic[..]) {
-            Ok(xt) => xt,
-            Err(err) => {
-                error!("Failed to decode extrinsic: {:?}", err);
-                return Err(StarknetRpcApiError::ClassHashNotFound.into());
-            }
-        };
 
         self.pool.submit_one(&BlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
             error!("Failed to submit extrinsic: {:?}", e);
             StarknetRpcApiError::ClassHashNotFound
         })?;
 
-        let transaction: Transaction = deploy_account_tx.into();
-        Ok(AddDeployAccountTransactionOutput {
-            transaction_hash: transaction.hash.to_string(),
-            contract_address: H256::from(transaction.sender_address).to_string(),
+        Ok(DeployAccountTransactionResult {
+            transaction_hash: FieldElement::from_bytes_be(&transaction.hash.0).map_err(|e| {
+                error!("Failed to convert transaction hash to FieldElement: {e}");
+                StarknetRpcApiError::ClassHashNotFound
+            })?,
+            contract_address: FieldElement::from_bytes_be(&transaction.sender_address).map_err(|e| {
+                error!("Failed to convert contract address to FieldElement: {e}");
+                StarknetRpcApiError::ClassHashNotFound
+            })?,
         })
     }
 }
