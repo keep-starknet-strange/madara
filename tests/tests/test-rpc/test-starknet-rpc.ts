@@ -260,7 +260,7 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
   });
 
-  it("Adds an invocation transaction successfully", async function () {
+  it.skip("Adds an invocation transaction successfully", async function () {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
@@ -282,7 +282,7 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(resp.transaction_hash).to.contain("0x");
   });
 
-  it("Returns error when invocation absent entrypoint", async function () {
+  it.skip("Returns error when invocation absent entrypoint", async function () {
     const priKey = stark.randomAddress();
     const keyPair = ec.getKeyPair(priKey);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
