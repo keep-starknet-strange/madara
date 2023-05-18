@@ -311,6 +311,21 @@
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
 <a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
@@ -495,9 +510,10 @@
 ) -&gt; GenesisConfig {
     <span class="kw">let </span>account_class =
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/simple/account.json&quot;</span>)).try_into().unwrap();
-    <span class="kw">let </span>argent_account_class: ContractClassWrapper =
+    <span class="kw">let </span>argent_account_class =
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/argent/account.json&quot;</span>)).try_into().unwrap();
-
+    <span class="kw">let </span>argent_proxy_class =
+        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/account/argent/proxy/proxy.json&quot;</span>)).try_into().unwrap();
     <span class="kw">let </span>test_class = get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/test.json&quot;</span>)).try_into().unwrap();
     <span class="kw">let </span>erc20_class: ContractClassWrapper =
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/erc20/erc20.json&quot;</span>)).try_into().unwrap();
@@ -506,13 +522,15 @@
     </span><span class="kw">let </span>contract_address_bytes =
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap();
     <span class="kw">let </span>class_hash_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;025ec026985a3bf9d0cc1fe17326b245dfdc3ff89b8fde106542a3ea56c5a918&quot;</span>).unwrap();
+        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f&quot;</span>).unwrap();
 
     <span class="comment">// ARGENT ACCOUNT CONTRACT
     </span><span class="kw">let </span>argent_account_address =
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000002&quot;</span>).unwrap();
     <span class="kw">let </span>argent_account_class_hash_bytes =
         &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d&quot;</span>).unwrap();
+    <span class="kw">let </span>argent_proxy_class_hash_bytes =
+        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9&quot;</span>).unwrap();
 
     <span class="comment">// TEST CONTRACT
     </span><span class="kw">let </span>other_contract_address_bytes =
@@ -567,6 +585,7 @@
             contract_classes: <span class="macro">vec!</span>[
                 (class_hash_bytes, account_class),
                 (argent_account_class_hash_bytes, argent_account_class),
+                (argent_proxy_class_hash_bytes, argent_proxy_class),
                 (other_class_hash_bytes, test_class),
                 (token_class_hash_bytes, erc20_class.clone()),
                 (fee_token_class_hash_bytes, erc20_class),
@@ -614,6 +633,17 @@
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         </span>H256::from_str(<span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>).unwrap(),
+                    ),
+                    U256::from(u128::MAX),
+                ),
+                (
+                    (
+                        fee_token_address,
+                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;),
+                        // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
+                        // starknet contract for
+                        // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
+                        </span>H256::from_str(<span class="string">&quot;0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52&quot;</span>).unwrap(),
                     ),
                     U256::from(u128::MAX),
                 ),

@@ -370,6 +370,32 @@
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
 </pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -399,6 +425,9 @@
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">use </span>mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
+};
+<span class="kw">use </span>mp_starknet::transaction::types::{
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, TxType,
 };
 <span class="kw">pub use </span>pallet_balances::Call <span class="kw">as </span>BalancesCall;
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
@@ -677,6 +706,29 @@
 
         <span class="kw">fn </span>chain_id() -&gt; u128 {
             Starknet::chain_id()
+        }
+    }
+
+    <span class="kw">impl </span>pallet_starknet::runtime_api::ConvertTransactionRuntimeApi&lt;Block&gt; <span class="kw">for </span>Runtime {
+        <span class="kw">fn </span>convert_transaction(transaction: Transaction, tx_type: TxType) -&gt; <span class="prelude-ty">Result</span>&lt;UncheckedExtrinsic, DispatchError&gt; {
+            <span class="kw">let </span>call = <span class="kw">match </span>tx_type {
+                TxType::DeployAccount =&gt; {
+                    <span class="kw">let </span>tx = DeployAccountTransaction::try_from(transaction).map_err(|<span class="kw">_</span>| DispatchError::Other(<span class="string">&quot;failed to convert transaction to DeployAccountTransaction&quot;</span>))<span class="question-mark">?</span>;
+                    pallet_starknet::Call::deploy_account{transaction: tx}
+                },
+                TxType::Invoke =&gt; {
+                    <span class="kw">let </span>tx = InvokeTransaction::try_from(transaction).map_err(|<span class="kw">_</span>| DispatchError::Other(<span class="string">&quot;failed to convert transaction to InvokeTransaction&quot;</span>))<span class="question-mark">?</span>;
+                    pallet_starknet::Call::invoke{transaction: tx}
+                },
+                TxType::Declare =&gt; {
+                    <span class="kw">let </span>tx = DeclareTransaction::try_from(transaction).map_err(|<span class="kw">_</span>| DispatchError::Other(<span class="string">&quot;failed to convert transaction to DeclareTransaction&quot;</span>))<span class="question-mark">?</span>;
+                    pallet_starknet::Call::declare{transaction: tx}
+                },
+                TxType::L1Handler =&gt; {
+                    pallet_starknet::Call::consume_l1_message{transaction}
+                }
+            };
+            <span class="prelude-val">Ok</span>(UncheckedExtrinsic::new_unsigned(call.into()))
         }
     }
 

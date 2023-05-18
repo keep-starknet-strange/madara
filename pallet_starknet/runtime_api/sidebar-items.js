@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"externcrate":["alloc"],"trait":["StarknetRuntimeApi"]};
+window.SIDEBAR_ITEMS = {"externcrate":["alloc"],"trait":["ConvertTransactionRuntimeApi","StarknetRuntimeApi"]};
