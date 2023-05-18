@@ -403,7 +403,6 @@ pub mod pallet {
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 

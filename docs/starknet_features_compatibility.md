@@ -52,7 +52,7 @@
 | starknet_traceTransaction                | :construction:     |
 | starknet_simulateTransaction             | :construction:     |
 | starknet_traceBlockTransactions          | :construction:     |
-| starknet_addInvokeTransaction            | :construction:     |
+| starknet_addInvokeTransaction            | :white_check_mark: |
 | starknet_addDeclareTransaction           | :construction:     |
 | starknet_addDeployAccountTransaction     | :construction:     |
 

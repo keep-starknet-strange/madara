@@ -1,13 +1,14 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
-import { LibraryError, RpcProvider } from "starknet";
+import { LibraryError, RpcProvider, Account, stark, ec } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { transfer } from "../../util/starknet";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
+  ARGENT_CONTRACT_ADDRESS,
   CHAIN_ID_STARKNET_TESTNET,
   CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
@@ -15,7 +16,7 @@ import {
   TEST_CONTRACT,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
-} from "./constants";
+} from "../constants";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -280,5 +281,51 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(chainId).to.not.be.undefined;
     expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
+  });
+
+  it("Adds an invocation transaction successfully", async function () {
+    const priKey = stark.randomAddress();
+    const keyPair = ec.getKeyPair(priKey);
+    const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
+
+    const resp = await account.execute(
+      {
+        contractAddress: TEST_CONTRACT,
+        entrypoint: "test_storage_var",
+        calldata: [],
+      },
+      undefined,
+      {
+        nonce: "0",
+        maxFee: "123456",
+      }
+    );
+
+    expect(resp).to.not.be.undefined;
+    expect(resp.transaction_hash).to.contain("0x");
+  });
+
+  it("Returns error when invocation absent entrypoint", async function () {
+    const priKey = stark.randomAddress();
+    const keyPair = ec.getKeyPair(priKey);
+    const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
+
+    try {
+      await account.execute(
+        {
+          contractAddress: TEST_CONTRACT,
+          entrypoint: "test_storage_var_WRONG",
+          calldata: [],
+        },
+        undefined,
+        {
+          nonce: "0",
+          maxFee: "123456",
+        }
+      );
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("40: Contract error");
+    }
   });
 });
