@@ -309,6 +309,10 @@ impl_runtime_apis! {
         fn chain_id() -> u128 {
             Starknet::chain_id()
         }
+
+        fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
+            Starknet::estimate_fee(transaction)
+        }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {

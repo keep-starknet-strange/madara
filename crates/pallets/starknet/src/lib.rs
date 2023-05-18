@@ -954,4 +954,36 @@ impl<T: Config> Pallet<T> {
         PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
         Ok(sn_event)
     }
+
+    /// Estimate the fee associated with transaction
+    pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
+        // Check if contract is deployed
+        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+
+        // Get current block
+        let block = Self::current_block();
+        // Get fee token address
+        let fee_token_address = Self::fee_token_address();
+
+        match transaction.execute(
+            &mut BlockifierStateAdapter::<T>::default(),
+            block.clone(),
+            TxType::Invoke,
+            None,
+            fee_token_address,
+        ) {
+            Ok(v) => {
+                log!(error, "Transaction executed successfully: {:?}", v);
+                if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
+                    Ok((v.actual_fee.0 as u64, *gas_usage as u64))
+                } else {
+                    Err(Error::<T>::TransactionExecutionFailed.into())
+                }
+            }
+            Err(e) => {
+                log!(error, "Transaction execution failed: {:?}", e);
+                Err(Error::<T>::TransactionExecutionFailed.into())
+            }
+        }
+    }
 }

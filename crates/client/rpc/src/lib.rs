@@ -11,7 +11,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class};
+use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
@@ -29,8 +29,9 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
     BlockHashAndNumber, BlockId as StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes,
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, DeployAccountTransactionResult,
-    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
+    DeployAccountTransactionResult, FeeEstimate, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
+    SyncStatus, SyncStatusType,
 };
 
 /// A Starknet RPC server for Madara
@@ -515,6 +516,41 @@ where
                 error!("Failed to convert contract address to FieldElement: {e}");
                 StarknetRpcApiError::ClassHashNotFound
             })?,
+        })
+    }
+
+    /// Estimate the fee associated with transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `request` - starknet transaction request
+    /// * `block_id` - hash of the requested block, number (height), or tag
+    ///
+    /// # Returns
+    ///
+    /// * `fee_estimate` - fee estimate in gwei
+    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: StarknetBlockId) -> RpcResult<FeeEstimate> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let tx = to_tx(request)?;
+        let (actual_fee, gas_usage) = self.client.runtime_api()
+            .estimate_fee(substrate_block_hash, tx)
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ContractError
+            })?
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        Ok(FeeEstimate { 
+            gas_price: 0,
+            gas_consumed: gas_usage,
+            overall_fee: actual_fee,
         })
     }
 }

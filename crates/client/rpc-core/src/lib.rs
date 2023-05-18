@@ -14,9 +14,9 @@ pub mod utils;
 
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass,
-    DeployAccountTransactionResult, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
+    BroadcastedTransaction, ContractClass, DeployAccountTransactionResult, FeeEstimate, FunctionCall,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, SyncStatusType,
 };
 
 /// Starknet rpc interface.
@@ -85,4 +85,8 @@ pub trait StarknetRpcApi {
         &self,
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<DeployAccountTransactionResult>;
+
+    /// Estimate the fee associated with transaction
+    #[method(name = "estimateFee")]
+    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
 }

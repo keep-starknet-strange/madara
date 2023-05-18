@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
 use mp_starknet::execution::types::ContractClassWrapper;
-use mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction};
+use mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_core::{H256, U256};
 use sp_runtime::BoundedVec;
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
@@ -12,8 +12,8 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode,
-    SierraContractClass,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
+    EntryPointsByType, ErrorCode, SierraContractClass,
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
@@ -45,6 +45,16 @@ pub(crate) fn _compress(data: &[u8]) -> Result<Vec<u8>> {
 /// Returns a base64 encoded string of the input bytes
 pub(crate) fn _encode_base64(data: &[u8]) -> String {
     general_purpose::STANDARD.encode(data)
+}
+
+pub fn to_tx(request: BroadcastedTransaction) -> Result<Transaction> {
+    match request {
+        BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.into()),
+        BroadcastedTransaction::Declare(_) => Err(ErrorCode::FailedToReceiveTransaction.into()), /* TODO: add support once #341 is supported */
+        BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
+            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.into())
+        }
+    }
 }
 
 pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction> {

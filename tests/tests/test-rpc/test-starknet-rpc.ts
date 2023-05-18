@@ -366,4 +366,21 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(accountContractClass).to.be.equal(ARGENT_PROXY_CLASS_HASH);
   });
+
+  it("Estimates the fee of an invoke tx successfully", async function () {
+    const priKey = stark.randomAddress();
+    const keyPair = ec.getKeyPair(priKey);
+    const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
+
+    const resp = await account.estimateInvokeFee(
+      {
+        contractAddress: TEST_CONTRACT,
+        entrypoint: "test_storage_var",
+        calldata: [],
+      },
+      { nonce: "0" }
+    );
+
+    console.log("RESP: ", resp);
+  });
 });
