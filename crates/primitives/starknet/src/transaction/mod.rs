@@ -356,44 +356,6 @@ impl Transaction {
         }
     }
 
-    /// Validates account transaction
-    ///
-    /// # Arguments
-    ///
-    /// * `self` - The transaction to validate.
-    /// * `state` - The state to validate the transaction on.
-    /// * `execution_resources` - The execution resources to validate the transaction on.
-    /// * `block_context` - The block context to validate the transaction on.
-    /// * `tx_type` - The type of the transaction to execute.
-    pub fn validate_account_tx<S: State>(
-        &self,
-        state: &mut S,
-        execution_resources: &mut ExecutionResources,
-        block_context: &BlockContext,
-        tx_type: &TxType,
-    ) -> TransactionValidationResultWrapper<Option<CallInfo>> {
-        let account_context = match tx_type {
-            TxType::Invoke => {
-                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                self.get_invoke_transaction_context(&tx)
-            }
-            TxType::Declare => {
-                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                self.get_declare_transaction_context(&tx)
-            }
-            TxType::L1Handler => {
-                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                self.get_l1_handler_transaction_context(&tx)
-            }
-            TxType::DeployAccount => {
-                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                self.get_deploy_account_transaction_context(&tx)
-            }
-        };
-
-        self.validate_tx(state, execution_resources, block_context, &account_context, tx_type)
-    }
-
     /// Validates a transaction
     ///
     /// # Arguments

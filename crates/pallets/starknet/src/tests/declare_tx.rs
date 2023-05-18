@@ -5,8 +5,6 @@ use hex::FromHex;
 use mp_starknet::execution::types::ContractClassWrapper;
 use mp_starknet::transaction::types::DeclareTransaction;
 use sp_core::{H256, U256};
-use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
@@ -276,33 +274,5 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
-    });
-}
-
-#[test]
-fn given_contract_declare_on_braavos_account_validate_with_incorrect_signature_should_fail() {
-    new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
-
-        let account_addr = get_account_address(AccountType::Braavos);
-
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
-        let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
-
-        let transaction = DeclareTransaction {
-            sender_address: account_addr,
-            contract_class: erc20_class,
-            version: 1,
-            compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
-        };
-
-        let validate_result =
-            Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::declare { transaction });
-        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
     });
 }
