@@ -4,7 +4,7 @@ name: Check, Build & Tests
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: dev/self-hosted-runner
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -12,35 +12,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
+  check:
     runs-on: [self-hosted, linux]
+    env:
+      BINARY_PATH: ../target/debug/madara
     steps:
       - uses: actions/checkout@v3
+
       - name: Format and clippy
         run: |
+          cargo build --workspace
           cargo fmt --all -- --check
           cargo clippy --all -- -D warnings
           cargo clippy --tests -- -D warnings
-
-  coverage:
-    runs-on: [self-hosted, linux]
-    steps:
       - name: Coverage
-        run: cargo llvm-cov --codecov --output-path codecov.json
+        run: cargo llvm-cov --codecov --output-path codecov.json --no-clean
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: codecov.json
           fail_ci_if_error: true
-  
-  integration-tests:
-    runs-on: [self-hosted, linux]
-    env:
-      BINARY_PATH: ../target/debug/madara
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+
+      - name: Integration Test
+        uses: actions/setup-node@v3
         with:
           node-version: ">=20"
           cache: "npm"
@@ -49,7 +44,6 @@ jobs:
         run: |-
           cd tests
           npm install
-      - run: cargo build --workspace
       - name: Run test
         run: |-
           cd tests
