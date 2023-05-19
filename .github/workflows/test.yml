@@ -15,11 +15,9 @@ jobs:
   lint:
     runs-on: [self-hosted, linux]
     steps:
-      - run: echo $PATH
       - uses: actions/checkout@v3
       - name: Format and clippy
         run: |
-          echo $PATH
           cargo fmt --all -- --check
           cargo clippy --all -- -D warnings
           cargo clippy --tests -- -D warnings
@@ -52,13 +50,6 @@ jobs:
         run: |-
           cd tests
           npm install
-      - name: Setup rust toolchain
-        run: rustup show
-      - name: Set-Up
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - uses: Swatinem/rust-cache@v2
       - run: cargo build --workspace
       - name: Run test
         run: |-
