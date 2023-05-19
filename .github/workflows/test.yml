@@ -13,26 +13,15 @@ on:
 
 jobs:
   lint:
-    runs-on: [self-hosted, madara]
+    runs-on: [self-hosted]
     steps:
-      - run: . "$HOME/.cargo/env"
-      - run: echo $PATH
-      - run: echo $HOME
-      - run: whoami
-      - run: pwd
       - uses: actions/checkout@v3
-      - name: Setup rust toolchain
-        run: rustup show
-      - name: Set-Up
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
       - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
-          cargo fmt --all -- --check
-          cargo clippy --all -- -D warnings
-          cargo clippy --tests -- -D warnings
+          /home/ubuntu/.cargo/bin/cargo fmt --all -- --check
+          /home/ubuntu/.cargo/bin/cargo clippy --all -- -D warnings
+          /home/ubuntu/.cargo/bin/cargo clippy --tests -- -D warnings
 
   # coverage:
   #   runs-on: [self-hosted, madara]
