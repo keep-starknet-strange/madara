@@ -37,30 +37,30 @@ jobs:
           files: codecov.json
           fail_ci_if_error: true
 
-  # integration-tests:
-  #   runs-on: [self-hosted, madara]
-  #   env:
-  #     BINARY_PATH: ../target/debug/madara
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: ">=20"
-  #         cache: "npm"
-  #         cache-dependency-path: ./tests/package-lock.json
-  #     - name: Install
-  #       run: |-
-  #         cd tests
-  #         npm install
-  #     - name: Setup rust toolchain
-  #       run: rustup show
-  #     - name: Set-Up
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-  #     - uses: Swatinem/rust-cache@v2
-  #     - run: cargo build --workspace
-  #     - name: Run test
-  #       run: |-
-  #         cd tests
-  #         npm run test
+  integration-tests:
+    runs-on: [self-hosted, linux]
+    env:
+      BINARY_PATH: ../target/debug/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ">=20"
+          cache: "npm"
+          cache-dependency-path: ./tests/package-lock.json
+      - name: Install
+        run: |-
+          cd tests
+          npm install
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace
+      - name: Run test
+        run: |-
+          cd tests
+          npm run test
