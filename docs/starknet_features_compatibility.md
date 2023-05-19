@@ -32,7 +32,7 @@
 | starknet_getBlockWithTxHashes            | :white_check_mark: |
 | starknet_getBlockWithTxs                 | :construction:     |
 | starknet_getStateUpdate                  | :construction:     |
-| starknet_getStorageAt                    | :construction:     |
+| starknet_getStorageAt                    | :white_check_mark: |
 | starknet_getTransactionByHash            | :construction:     |
 | starknet_getTransactionByBlockIdAndIndex | :construction:     |
 | starknet_getTransactionReceipt           | :construction:     |
@@ -40,7 +40,7 @@
 | starknet_getClassHashAt                  | :white_check_mark: |
 | starknet_getClassAt                      | :white_check_mark: |
 | starknet_getBlockTransactionCount        | :white_check_mark: |
-| starknet_call                            | :construction:     |
+| starknet_call                            | :white_check_mark: |
 | starknet_estimateFee                     | :construction:     |
 | starknet_blockNumber                     | :white_check_mark: |
 | starknet_blockHashAndNumber              | :white_check_mark: |
@@ -52,9 +52,9 @@
 | starknet_traceTransaction                | :construction:     |
 | starknet_simulateTransaction             | :construction:     |
 | starknet_traceBlockTransactions          | :construction:     |
-| starknet_addInvokeTransaction            | :construction:     |
+| starknet_addInvokeTransaction            | :white_check_mark: |
 | starknet_addDeclareTransaction           | :construction:     |
-| starknet_addDeployAccountTransaction     | :construction:     |
+| starknet_addDeployAccountTransaction     | :white_check_mark: |
 
 ## Decentralisation
 

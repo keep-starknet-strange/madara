@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
 use mp_digest_log::FindLogError;
+use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
@@ -30,8 +31,8 @@ where
                 overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
             match opt_storage_starknet_block {
                 Some(storage_starknet_block) => {
-                    let digest_starknet_block_hash = digest_starknet_block.header().hash();
-                    let storage_starknet_block_hash = storage_starknet_block.header().hash();
+                    let digest_starknet_block_hash = digest_starknet_block.header().hash(PedersenHasher::default());
+                    let storage_starknet_block_hash = storage_starknet_block.header().hash(PedersenHasher::default());
                     // Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     if digest_starknet_block_hash != storage_starknet_block_hash {
                         Err(format!(
@@ -65,7 +66,7 @@ where
     let substrate_block_hash = header.hash();
 
     let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
-    let block_hash = block.header().hash();
+    let block_hash = block.header().hash(PedersenHasher::default());
     let mapping_commitment =
         mc_db::MappingCommitment::<B> { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
     backend.mapping().write_hashes(mapping_commitment)?;

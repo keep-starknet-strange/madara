@@ -28,6 +28,10 @@ impl Hasher for PedersenHasher {
     fn hash(&self, data: &[u8]) -> [u8; 32] {
         hash(data)
     }
+
+    fn hasher() -> Self {
+        Self::default()
+    }
 }
 
 /// The pedersen CryptoHasher implementation.

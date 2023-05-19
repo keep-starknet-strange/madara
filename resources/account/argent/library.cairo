@@ -12,7 +12,7 @@ from starkware.starknet.common.syscalls import (
 )
 from starkware.cairo.common.bool import TRUE, FALSE
 
-from resources.account.argent.Upgradable import _set_implementation
+from resources.account.argent.proxy.Upgradable import _set_implementation
 
 from resources.account.argent.calls import CallArray
 

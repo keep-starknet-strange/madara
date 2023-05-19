@@ -93,6 +93,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 .unwrap(),
             actual_fee: U256::from(52980),
             tx_type: TxType::Invoke,
+            block_number: 2_u64,
+            block_hash: U256::from_str("0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA").unwrap(),
             events: bounded_vec![EventWrapper {
                 keys: bounded_vec!(
                     H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
@@ -177,6 +179,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             transaction_hash: H256::from_str("0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52").unwrap(),
             actual_fee: U256::from(53490),
             tx_type: TxType::Invoke,
+            block_number: 2_u64,
+            block_hash: U256::from_str("0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA").unwrap(),
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),
         };
         let receipt = &pending.get(0).unwrap().1;

@@ -10,7 +10,7 @@ use starknet_api::api_core::{calculate_contract_address as _calculate_contract_a
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_api::StarknetApiError;
-use starknet_core::types::FieldElement as CoreFieldElement;
+use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
 use {crate as pallet_starknet, frame_system as system};
 
@@ -247,7 +247,7 @@ pub(crate) fn run_to_block(n: u64) {
     }
 }
 
-/// Returns the storage update to set infinite tokens for the provided address
+/// Returns the storage key for a given storage name, keys and offset.
 /// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
 /// starknet contract for storage_name(key_1, key_2, ..., key_n).
 /// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
@@ -260,10 +260,10 @@ pub fn get_storage_key(
     let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
     let mut storage_key = get_storage_var_address(
         storage_name,
-        keys.iter().filter_map(|x| CoreFieldElement::from_bytes_be(x).ok()).collect::<Vec<_>>().as_slice(),
+        keys.iter().filter_map(|x| FieldElement::from_bytes_be(x).ok()).collect::<Vec<_>>().as_slice(),
     )
     .unwrap();
-    storage_key = storage_key + CoreFieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
+    storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
     (*address, H256::from(storage_key.to_bytes_be()))
 }
 

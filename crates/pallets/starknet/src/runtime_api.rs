@@ -8,6 +8,8 @@
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
 };
+use mp_starknet::transaction::types::{Transaction, TxType};
+use sp_api::BlockT;
 use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -32,5 +34,10 @@ sp_api::decl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
         /// Returns the chain id.
         fn chain_id() -> u128;
+    }
+
+    pub trait ConvertTransactionRuntimeApi {
+        /// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
+        fn convert_transaction(transaction: Transaction, tx_type: TxType) -> Result<<Block as BlockT>::Extrinsic, DispatchError>;
     }
 }

@@ -154,7 +154,6 @@ impl Default for EventWrapper {
 impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
     type Error = EventError;
 
-    // TODO: add block hash and block number (#252)
     fn try_into(self) -> Result<TransactionReceiptWrapper, Self::Error> {
         let _events: Result<vec::Vec<EventWrapper>, EventError> = self
             .output
@@ -175,6 +174,8 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
                 TransactionOutput::L1Handler(_) => TxType::L1Handler,
                 _ => TxType::Invoke,
             },
+            block_hash: U256::from(self.block_hash.0.0),
+            block_number: self.block_number.0,
             events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
         })
     }
@@ -542,7 +543,7 @@ impl Transaction {
         )?;
         let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &account_context, &tx_resources)?;
         Ok(TransactionExecutionInfoWrapper {
-            validate_call_info: None,
+            validate_call_info,
             execute_call_info,
             fee_transfer_call_info,
             actual_fee,
@@ -705,6 +706,8 @@ impl Default for TransactionReceiptWrapper {
             transaction_hash: H256::default(),
             actual_fee: U256::default(),
             tx_type: TxType::Invoke,
+            block_hash: U256::default(),
+            block_number: 0_u64,
             events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
         }
     }
