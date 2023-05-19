@@ -19,25 +19,20 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
-          /home/ubuntu/.cargo/bin/cargo fmt --all -- --check
-          /home/ubuntu/.cargo/bin/cargo clippy --all -- -D warnings
-          /home/ubuntu/.cargo/bin/cargo clippy --tests -- -D warnings
+          echo $PATH
+          cargo fmt --all -- --check
+          cargo clippy --all -- -D warnings
+          cargo clippy --tests -- -D warnings
 
   # coverage:
-  #   runs-on: [self-hosted, madara]
+  #   runs-on: [self-hosted]
   #   steps:
   #     - uses: actions/checkout@v3
-  #     - name: Setup rust toolchain
-  #       run: rustup show
-  #     - name: Set-Up
-  #       run: |
-  #         sudo apt-get update
-  #         sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
   #     - name: Install cargo-llvm-cov
   #       uses: taiki-e/install-action@cargo-llvm-cov
   #     - uses: Swatinem/rust-cache@v2
   #     - name: Coverage
-  #       run: cargo llvm-cov --codecov --output-path codecov.json
+  #       run: /home/ubuntu/.cargo/bin/cargo llvm-cov --codecov --output-path codecov.json
   #     - name: Upload coverage to codecov.io
   #       uses: codecov/codecov-action@v3
   #       with:
