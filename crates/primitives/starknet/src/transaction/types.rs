@@ -391,6 +391,10 @@ pub struct TransactionReceiptWrapper {
     pub actual_fee: U256,
     /// Transaction type
     pub tx_type: TxType,
+    /// Block Number
+    pub block_number: u64,
+    /// Block Hash
+    pub block_hash: U256,
     /// Messages sent in the transaction.
     // pub messages_sent: BoundedVec<Message, MaxArraySize>, // TODO: add messages
     /// Events emitted in the transaction.

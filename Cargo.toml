@@ -113,12 +113,13 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 # Starknet dependencies
 # Cairo Virtual Machine
 cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-support", default-features = false }
-starknet-crypto = { version = "0.5.1", default-features = false }
-starknet-core = { version = "0.2.0", default-features = false }
-starknet-ff = { version = "0.3.2", default-features = false }
+starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", branch = "dev/jsonrpc_0_3_0", default-features = false }
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs", branch = "dev/jsonrpc_0_3_0", default-features = false }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", branch = "dev/jsonrpc_0_3_0", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
 	"alloc",
 ] }
+starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs", branch = "dev/jsonrpc_0_3_0", default-features = false }
 blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
 	"testing",

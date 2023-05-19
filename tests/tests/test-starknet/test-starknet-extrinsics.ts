@@ -5,15 +5,12 @@ import { expect } from "chai";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { declare, deploy, transfer } from "../../util/starknet";
-
-const mintAmount =
-  "0x0000000000000000000000000000000000000000000000000000000000000001";
-const contractAddress =
-  "0x0000000000000000000000000000000000000000000000000000000000000001";
-const feeTokenAddress =
-  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
-const tokenClassHash =
-  "0x0000000000000000000000000000000000000000000000000000000000001000";
+import {
+  CONTRACT_ADDRESS,
+  FEE_TOKEN_ADDRESS,
+  MINT_AMOUNT,
+  TOKEN_CLASS_HASH,
+} from "../constants";
 
 describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   it("should connect to local node", async function () {
@@ -32,7 +29,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     const {
       result: { events },
     } = await context.createBlock(
-      declare(context.polkadotApi, contractAddress, tokenClassHash)
+      declare(context.polkadotApi, CONTRACT_ADDRESS, TOKEN_CLASS_HASH)
     );
 
     expect(
@@ -47,7 +44,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     const {
       result: { events },
     } = await context.createBlock(
-      deploy(context.polkadotApi, contractAddress, tokenClassHash)
+      deploy(context.polkadotApi, CONTRACT_ADDRESS, TOKEN_CLASS_HASH)
     );
 
     expect(
@@ -65,10 +62,10 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     } = await context.createBlock(
       transfer(
         context.polkadotApi,
-        contractAddress,
-        feeTokenAddress,
-        contractAddress,
-        mintAmount,
+        CONTRACT_ADDRESS,
+        FEE_TOKEN_ADDRESS,
+        CONTRACT_ADDRESS,
+        MINT_AMOUNT,
         nonce
       )
     );

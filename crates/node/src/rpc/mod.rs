@@ -44,8 +44,9 @@ where
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
     C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BlockBuilder<Block>,
-    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>,
-    P: TransactionPool + 'static,
+    C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>
+        + pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block>,
+    P: TransactionPool<Block = Block> + 'static,
     BE: Backend<Block> + 'static,
 {
     use mc_rpc::{Starknet, StarknetRpcApiServer};
@@ -56,13 +57,14 @@ where
     let mut module = RpcModule::new(());
     let FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink } = deps;
 
-    module.merge(System::new(client.clone(), pool, deny_unsafe).into_rpc())?;
+    module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
     module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     module.merge(
         Starknet::new(
             client,
             starknet_params.madara_backend,
             starknet_params.overrides,
+            pool,
             starknet_params.sync_service,
             starknet_params.starting_block,
         )
