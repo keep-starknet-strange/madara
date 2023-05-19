@@ -31,7 +31,7 @@ jobs:
         with:
           clean: false
       - name: Coverage
-        run: cargo llvm-cov --codecov --output-path codecov.json
+        run: cargo llvm-cov --codecov --no-clean --output-path codecov.json 
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
