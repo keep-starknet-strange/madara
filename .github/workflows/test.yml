@@ -13,9 +13,11 @@ on:
 
 jobs:
   lint:
-    runs-on: [self-hosted, madara]
+    runs-on: [self-hosted]
     steps:
       - run: echo $PATH
+      - run: whoami
+      - run: pwd
       - uses: actions/checkout@v3
       - name: Setup rust toolchain
         run: rustup show
