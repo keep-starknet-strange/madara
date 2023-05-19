@@ -15,7 +15,7 @@ jobs:
   lint:
     runs-on: [self-hosted, madara]
     steps:
-      - run: export PATH="$PATH:$HOME/.cargo/bin"
+      - run: . "$HOME/.cargo/env"
       - run: echo $PATH
       - run: echo $HOME
       - run: whoami
