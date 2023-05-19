@@ -35,9 +35,10 @@ Together, we're pushing the boundaries of what's possible within the Starknet ec
 
 🚀 Discover the unparalleled flexibility and might of Madara,
 your gateway to launching your very own Starknet appchain or L3.
-Harness the prowess of Cairo, while maintaining complete control over your custom appchain, 
-tailored to your specific requirements. Madara is designed to empower a multitude of projects, 
-fueling growth within the Starknet ecosystem.
+Harness the prowess of Cairo, while maintaining complete control
+over your custom appchain, tailored to your specific requirements.
+Madara is designed to empower a multitude of projects, fueling
+growth within the Starknet ecosystem.
 
 ## 🌟 Features
 
