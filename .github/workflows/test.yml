@@ -19,6 +19,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
+          . "$HOME/.cargo/env"
           echo $PATH
           cargo fmt --all -- --check
           cargo clippy --all -- -D warnings
