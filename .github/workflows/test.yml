@@ -12,20 +12,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  check:
+  lint:
     runs-on: [self-hosted, linux]
-    env:
-      BINARY_PATH: ../target/debug/madara
     steps:
       - uses: actions/checkout@v3
-      
+      - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
-          cargo build --workspace
           cargo fmt --all -- --check
           cargo clippy --all -- -D warnings
           cargo clippy --tests -- -D warnings
 
+  coverage:
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: Swatinem/rust-cache@v2
       - name: Coverage
         run: cargo llvm-cov --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io
@@ -34,9 +35,14 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: codecov.json
           fail_ci_if_error: true
-
-      - name: Integration Test
-        uses: actions/setup-node@v3
+  
+  integration-tests:
+    runs-on: [self-hosted, linux]
+    env:
+      BINARY_PATH: ../target/debug/madara
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ">=20"
           cache: "npm"
@@ -45,6 +51,8 @@ jobs:
         run: |-
           cd tests
           npm install
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --workspace
       - name: Run test
         run: |-
           cd tests
