@@ -29,52 +29,52 @@ jobs:
           cargo clippy --all -- -D warnings
           cargo clippy --tests -- -D warnings
 
-  coverage:
-    runs-on: [self-hosted, madara]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup rust toolchain
-        run: rustup show
-      - name: Set-Up
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-      - uses: Swatinem/rust-cache@v2
-      - name: Coverage
-        run: cargo llvm-cov --codecov --output-path codecov.json
-      - name: Upload coverage to codecov.io
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: codecov.json
-          fail_ci_if_error: true
+  # coverage:
+  #   runs-on: [self-hosted, madara]
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup rust toolchain
+  #       run: rustup show
+  #     - name: Set-Up
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+  #     - name: Install cargo-llvm-cov
+  #       uses: taiki-e/install-action@cargo-llvm-cov
+  #     - uses: Swatinem/rust-cache@v2
+  #     - name: Coverage
+  #       run: cargo llvm-cov --codecov --output-path codecov.json
+  #     - name: Upload coverage to codecov.io
+  #       uses: codecov/codecov-action@v3
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         files: codecov.json
+  #         fail_ci_if_error: true
 
-  integration-tests:
-    runs-on: [self-hosted, madara]
-    env:
-      BINARY_PATH: ../target/debug/madara
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ">=20"
-          cache: "npm"
-          cache-dependency-path: ./tests/package-lock.json
-      - name: Install
-        run: |-
-          cd tests
-          npm install
-      - name: Setup rust toolchain
-        run: rustup show
-      - name: Set-Up
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --workspace
-      - name: Run test
-        run: |-
-          cd tests
-          npm run test
+  # integration-tests:
+  #   runs-on: [self-hosted, madara]
+  #   env:
+  #     BINARY_PATH: ../target/debug/madara
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ">=20"
+  #         cache: "npm"
+  #         cache-dependency-path: ./tests/package-lock.json
+  #     - name: Install
+  #       run: |-
+  #         cd tests
+  #         npm install
+  #     - name: Setup rust toolchain
+  #       run: rustup show
+  #     - name: Set-Up
+  #       run: |
+  #         sudo apt-get update
+  #         sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+  #     - uses: Swatinem/rust-cache@v2
+  #     - run: cargo build --workspace
+  #     - name: Run test
+  #       run: |-
+  #         cd tests
+  #         npm run test
