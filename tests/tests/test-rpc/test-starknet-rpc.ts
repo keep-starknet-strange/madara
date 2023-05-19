@@ -181,7 +181,8 @@ describeDevMadara("Starknet RPC", (context) => {
             CONTRACT_ADDRESS,
             FEE_TOKEN_ADDRESS,
             CONTRACT_ADDRESS,
-            MINT_AMOUNT
+            MINT_AMOUNT,
+            0
             ),
           { parentHash: undefined, finalize: true }
         );
@@ -282,7 +283,8 @@ describeDevMadara("Starknet RPC", (context) => {
             CONTRACT_ADDRESS,
             FEE_TOKEN_ADDRESS,
             CONTRACT_ADDRESS,
-            MINT_AMOUNT
+            MINT_AMOUNT,
+            1
           ),
           { parentHash: undefined, finalize: true }
         );
@@ -291,11 +293,29 @@ describeDevMadara("Starknet RPC", (context) => {
 
         // get the transaction by a given block id (latestBlockCreated.block_hash) and index
         // ERROR! cannot get retrieve the block when test in line 173 is not commented
-        const getTransactionByBlockIdAndIndexResponse: RPC.GetTransactionByBlockIdAndIndexResponse =
+        const getTransactionByBlockIdAndIndexResponse =
           await providerRPC.getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 0);
 
+
+        const calldata = [
+            '0x40e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01',
+            '0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e',
+            '0x3',
+            '0x1',
+            '0x1',
+            '0x0'
+          ];
+
+        const caller_address = [
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1
+          ]
+
         expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
-        console.log(getTransactionByBlockIdAndIndexResponse);
+        expect(getTransactionByBlockIdAndIndexResponse.call_entrypoint.calldata).to.deep.equal(calldata);
+        expect(getTransactionByBlockIdAndIndexResponse.call_entrypoint.caller_address).to.deep.equal(caller_address);
       }
     )
 

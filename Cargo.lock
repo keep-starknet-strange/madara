@@ -1654,7 +1654,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "strsim",
- "syn 2.0.15",
+ "syn 2.0.16",
 ]
 
 [[package]]
@@ -1676,7 +1676,7 @@ checksum = "29a358ff9f12ec09c3e61fef9b5a9902623a695a46a917b07f269bff1445611a"
 dependencies = [
  "darling_core 0.20.1",
  "quote",
- "syn 2.0.15",
+ "syn 2.0.16",
 ]
 
 [[package]]
@@ -7980,7 +7980,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with_macros",
- "time 0.3.20",
+ "time 0.3.21",
 ]
 
 [[package]]
@@ -7992,7 +7992,7 @@ dependencies = [
  "darling 0.20.1",
  "proc-macro2",
  "quote",
- "syn 2.0.15",
+ "syn 2.0.16",
 ]
 
 [[package]]
@@ -9126,7 +9126,7 @@ checksum = "e6dc88f1f470d9de1001ffbb90d2344c9dd1a615f5467daf0574e2975dfd9ebd"
 dependencies = [
  "starknet-curve 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "starknet-ff 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "syn 2.0.15",
+ "syn 2.0.16",
 ]
 
 [[package]]
@@ -9136,7 +9136,7 @@ source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3
 dependencies = [
  "starknet-curve 0.3.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
  "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
- "syn 2.0.15",
+ "syn 2.0.16",
 ]
 
 [[package]]
@@ -9172,7 +9172,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f5e4d14a7e5a93027baa42f514459acd1e07799f886604d8bf5d30a0d28111f"
 dependencies = [
  "ark-ff",
- "crypto-bigint 0.5.1",
+ "crypto-bigint 0.5.2",
  "getrandom 0.2.9",
  "hex",
 ]
@@ -9184,7 +9184,7 @@ source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3
 dependencies = [
  "ark-ff",
  "bigdecimal",
- "crypto-bigint 0.5.1",
+ "crypto-bigint 0.5.2",
  "getrandom 0.2.9",
  "hex",
  "num-bigint 0.4.3",

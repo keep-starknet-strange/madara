@@ -33,7 +33,6 @@ use starknet_providers::jsonrpc::models::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, DeployAccountTransactionResult,
     FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
 };
-use mp_starknet::transaction::types::Transaction;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C, P> {
@@ -439,7 +438,7 @@ where
                     .ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
                 Ok(transaction.clone())
             }
-            BlockTransactions::Hashes(_) => todo!()
+            BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into())
         }
 
 
