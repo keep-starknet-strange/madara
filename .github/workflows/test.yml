@@ -16,7 +16,6 @@ jobs:
     runs-on: [self-hosted]
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
       - name: Format and clippy
         run: |
           . "$HOME/.cargo/env"
@@ -25,21 +24,22 @@ jobs:
           cargo clippy --all -- -D warnings
           cargo clippy --tests -- -D warnings
 
-  # coverage:
-  #   runs-on: [self-hosted]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Install cargo-llvm-cov
-  #       uses: taiki-e/install-action@cargo-llvm-cov
-  #     - uses: Swatinem/rust-cache@v2
-  #     - name: Coverage
-  #       run: /home/ubuntu/.cargo/bin/cargo llvm-cov --codecov --output-path codecov.json
-  #     - name: Upload coverage to codecov.io
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         token: ${{ secrets.CODECOV_TOKEN }}
-  #         files: codecov.json
-  #         fail_ci_if_error: true
+  coverage:
+    runs-on: [self-hosted]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+      - name: Coverage
+        run: |
+          . "$HOME/.cargo/env"
+          cargo llvm-cov --codecov --output-path codecov.json
+      - name: Upload coverage to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: codecov.json
+          fail_ci_if_error: true
 
   # integration-tests:
   #   runs-on: [self-hosted, madara]
