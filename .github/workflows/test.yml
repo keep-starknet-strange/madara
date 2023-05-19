@@ -13,9 +13,10 @@ on:
 
 jobs:
   lint:
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, madara]
     steps:
       - run: echo $PATH
+      - run: echo $HOME
       - run: whoami
       - run: pwd
       - uses: actions/checkout@v3
