@@ -55,8 +55,8 @@ jobs:
       - name: Install
         run: |-
           cd tests
-          npm install
-      - run: cargo build --workspace
+          npm clean-install
+      - run: cargo build --workspace --release
       - name: Run test
         run: |-
           cd tests
