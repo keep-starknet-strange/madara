@@ -14,9 +14,9 @@ use log::error;
 use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::block::BlockTransactions;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::transaction::types::{Transaction, TxType};
-use mp_starknet::block::BlockTransactions;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -415,7 +415,6 @@ where
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 
-
     // Returns the details of a transaction by a given block id and index
     fn get_transaction_by_block_id_and_index(&self, block_id: StarknetBlockId, index: usize) -> RpcResult<Transaction> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
@@ -433,15 +432,11 @@ where
         let transaction;
         match block_transactions {
             BlockTransactions::Full(transactions) => {
-                transaction = transactions
-                    .get(index)
-                    .ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
                 Ok(transaction.clone())
             }
-            BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into())
+            BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
         }
-
-
     }
 
     /// Returns the chain id.

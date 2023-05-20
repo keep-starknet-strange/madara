@@ -11,7 +11,6 @@ use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 use mp_starknet::transaction::types::Transaction;
 
-
 pub mod utils;
 
 use starknet_core::types::FieldElement;
