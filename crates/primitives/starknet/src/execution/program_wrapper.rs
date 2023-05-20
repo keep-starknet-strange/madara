@@ -16,8 +16,9 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::{MaybeRelocatable, Relocatable};
 use derive_more::Constructor;
 use frame_support::{BoundedBTreeMap, BoundedVec};
-use sp_core::{ConstU32, Get, U256};
+use sp_core::{ConstU32, Get, H256, U256};
 use starknet_api::stdlib::collections::HashMap;
+use starknet_ff::FieldElement;
 
 #[cfg(feature = "std")]
 use super::{
@@ -276,6 +277,7 @@ impl TryFrom<ProgramWrapper> for Program {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
     Default,
+    Copy,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// Wrapper type from [Felt252] using [U256] (substrate compatible type).
@@ -293,6 +295,55 @@ impl From<Felt252Wrapper> for Felt252 {
         Felt252::from_bytes_be(&buff)
     }
 }
+impl Into<Felt252Wrapper> for H256 {
+    fn into(self) -> Felt252Wrapper {
+        Felt252Wrapper(U256::from_big_endian(self.as_bytes()))
+    }
+}
+impl Into<H256> for Felt252Wrapper {
+    fn into(self) -> H256 {
+        let mut buff: [u8; 32] = [0u8; 32];
+        self.0.to_big_endian(&mut buff);
+        H256::from_slice(&buff)
+    }
+}
+impl From<Felt252Wrapper> for FieldElement {
+    fn from(value: Felt252Wrapper) -> Self {
+        let mut buff: [u8; 32] = [0u8; 32];
+        value.0.to_big_endian(&mut buff);
+        FieldElement::from_byte_slice_be(&buff).unwrap()
+    }
+}
+impl Into<Felt252Wrapper> for FieldElement {
+    fn into(self) -> Felt252Wrapper {
+        self.to_bytes_be().into()
+    }
+}
+impl From<Felt252Wrapper> for [u8; 32] {
+    fn from(value: Felt252Wrapper) -> Self {
+        let mut buff: [u8; 32] = [0u8; 32];
+        value.0.to_big_endian(&mut buff);
+        buff
+    }
+}
+impl Into<Felt252Wrapper> for &[u8] {
+    fn into(self) -> Felt252Wrapper {
+        Felt252Wrapper(U256::from_big_endian(&self))
+    }
+}
+impl Into<Felt252Wrapper> for [u8; 32] {
+    fn into(self) -> Felt252Wrapper {
+        Felt252Wrapper(U256::from_big_endian(&self.as_slice()))
+    }
+}
+
+impl Felt252Wrapper {
+    /// Returns the zero value.
+    pub fn zero() -> Self {
+        Self(U256::zero())
+    }
+}
+
 #[derive(
     Clone,
     Debug,
