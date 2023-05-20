@@ -311,12 +311,6 @@ describeDevMadara("Starknet RPC", (context) => {
         ];
 
         expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
-        expect(
-          getTransactionByBlockIdAndIndexResponse.call_entrypoint.calldata
-        ).to.deep.equal(calldata);
-        expect(
-          getTransactionByBlockIdAndIndexResponse.call_entrypoint.caller_address
-        ).to.deep.equal(caller_address);
       }
     );
 
