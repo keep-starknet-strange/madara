@@ -4,7 +4,7 @@ name: Check, Build & Tests
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: dev/self-hosted-runner
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -31,7 +31,7 @@ jobs:
         with:
           clean: false
       - name: Coverage
-        run: cargo llvm-cov --codecov --no-clean --output-path codecov.json 
+        run: cargo llvm-cov --codecov --no-clean --output-path codecov.json
       - name: Upload coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
