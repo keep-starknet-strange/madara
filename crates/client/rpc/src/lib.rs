@@ -387,7 +387,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let transactions = block.transactions_hashes().into_iter().map(|hash| FieldElement::from(hash)).collect();
+        let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
         let blockhash: Felt252Wrapper = block.header().hash(PedersenHasher::default()).into();
         let parent_blockhash: Felt252Wrapper = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {

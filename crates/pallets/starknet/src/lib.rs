@@ -828,7 +828,7 @@ impl<T: Config> Pallet<T> {
         let entrypoint = CallEntryPointWrapper::new(
             Some(class_hash),
             EntryPointTypeWrapper::External,
-            Some(function_selector.into()),
+            Some(function_selector),
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
