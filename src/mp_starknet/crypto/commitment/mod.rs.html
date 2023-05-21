@@ -230,30 +230,16 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
-<span class="kw">use </span>sp_core::hexdisplay::AsBytesRef;
 <span class="kw">use </span>sp_core::{H256, U256};
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">super</span>::hash::pedersen::PedersenHasher;
 <span class="kw">use </span><span class="kw">super</span>::merkle_patricia_tree::merkle_tree::MerkleTree;
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasher;
 <span class="kw">use </span><span class="kw">crate</span>::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
@@ -372,12 +358,9 @@
     </span>T: CryptoHasher,
 {
     <span class="kw">let </span>signature_hash = &lt;T <span class="kw">as </span>CryptoHasher&gt;::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>tx.signature
-            .iter()
-            .map(|elt| FieldElement::from_byte_slice_be(elt.as_bytes()).unwrap())
-            .collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+        <span class="kw-2">&amp;</span>tx.signature.iter().map(|elt| FieldElement::from(<span class="kw-2">*</span>elt)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    &lt;T <span class="kw">as </span>CryptoHasher&gt;::hash(FieldElement::from_byte_slice_be(tx.hash.as_bytes()).unwrap(), signature_hash)
+    &lt;T <span class="kw">as </span>CryptoHasher&gt;::hash(FieldElement::from(tx.hash), signature_hash)
 }
 <span class="doccomment">/// Computes the transaction hash of an invoke transaction.
 ///
@@ -386,8 +369,8 @@
 /// * `transaction` - The invoke transaction to get the hash of.
 </span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction) -&gt; H256 {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address,
-        <span class="kw-2">&amp;</span>transaction.calldata,
+        transaction.sender_address.into(),
+        transaction.calldata.as_slice(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -402,8 +385,8 @@
 /// * `transaction` - The declare transaction to get the hash of.
 </span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction) -&gt; H256 {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address,
-        <span class="kw-2">&amp;</span>[U256::from_big_endian(<span class="kw-2">&amp;</span>transaction.compiled_class_hash)],
+        transaction.sender_address.into(),
+        <span class="kw-2">&amp;</span>[transaction.compiled_class_hash],
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -418,12 +401,9 @@
 /// * `transaction` - The deploy account transaction to get the hash of.
 </span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -&gt; H256 {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address,
-        <span class="kw-2">&amp;</span><span class="macro">vec!</span>[
-            <span class="macro">vec!</span>[U256::from_big_endian(<span class="kw-2">&amp;</span>transaction.account_class_hash), transaction.salt],
-            transaction.calldata.into_inner(),
-        ]
-        .concat(),
+        transaction.sender_address.into(),
+        <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="macro">vec!</span>[transaction.account_class_hash, Felt252Wrapper(transaction.salt)], transaction.calldata.to_vec()]
+            .concat(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -433,7 +413,7 @@
 
 <span class="kw">fn </span>calculate_transaction_hash_common&lt;T&gt;(
     sender_address: [u8; <span class="number">32</span>],
-    calldata: <span class="kw-2">&amp;</span>[U256],
+    calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
     max_fee: U256,
     nonce: U256,
     version: u8,
@@ -445,7 +425,7 @@
     <span class="comment">// All the values are validated before going through this function so it&#39;s safe to unwrap.
     </span><span class="kw">let </span>sender_address = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>sender_address).unwrap();
     <span class="kw">let </span>calldata_hash = &lt;T <span class="kw">as </span>CryptoHasher&gt;::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>val.into()).unwrap()).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+        <span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from(val)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
     <span class="kw">let </span>max_fee = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>max_fee.into()).unwrap();
     <span class="kw">let </span>nonce = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>nonce.into()).unwrap();
@@ -474,20 +454,12 @@
 /// for details.
 </span><span class="kw">pub fn </span>calculate_event_hash&lt;T: CryptoHasher&gt;(event: <span class="kw-2">&amp;</span>EventWrapper) -&gt; FieldElement {
     <span class="kw">let </span>keys_hash = T::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>event
-            .keys
-            .iter()
-            .map(|key| FieldElement::from_byte_slice_be(key.as_bytes()).unwrap())
-            .collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+        <span class="kw-2">&amp;</span>event.keys.iter().map(|key| FieldElement::from(<span class="kw-2">*</span>key)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
     <span class="kw">let </span>data_hash = T::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>event
-            .data
-            .iter()
-            .map(|data| FieldElement::from_byte_slice_be(data.as_bytes()).unwrap())
-            .collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
+        <span class="kw-2">&amp;</span>event.data.iter().map(|data| FieldElement::from(<span class="kw-2">*</span>data)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    <span class="kw">let </span>from_address = FieldElement::from_byte_slice_be(event.from_address.as_bytes_ref()).unwrap();
+    <span class="kw">let </span>from_address = FieldElement::from(event.from_address);
     T::compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
 }
 </code></pre></div>

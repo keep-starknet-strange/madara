@@ -120,14 +120,15 @@
 <a href="#120" id="120">120</a>
 <a href="#121" id="121">121</a>
 <a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::vec;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
 <span class="kw">use </span>base64::Engine;
-<span class="kw">use </span>mp_starknet::execution::types::ContractClassWrapper;
+<span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction};
-<span class="kw">use </span>sp_core::{H256, U256};
+<span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>sp_runtime::BoundedVec;
 <span class="kw">use </span>starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
@@ -175,13 +176,13 @@
         BroadcastedInvokeTransaction::V1(invoke_tx_v1) =&gt; <span class="prelude-val">Ok</span>(InvokeTransaction {
             version: <span class="number">1_u8</span>,
             signature: BoundedVec::try_from(
-                invoke_tx_v1.signature.iter().map(|x| H256::from(x.to_bytes_be())).collect::&lt;Vec&lt;H256&gt;&gt;(),
+                invoke_tx_v1.signature.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
             )
             .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to convert signature: {:?}&quot;</span>, e))<span class="question-mark">?</span>,
-            sender_address: invoke_tx_v1.sender_address.to_bytes_be(),
+            sender_address: invoke_tx_v1.sender_address.to_bytes_be().into(),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
-                invoke_tx_v1.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect::&lt;Vec&lt;U256&gt;&gt;(),
+                invoke_tx_v1.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
             )
             .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to convert calldata: {:?}&quot;</span>, e))<span class="question-mark">?</span>,
             max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
@@ -204,8 +205,8 @@
     <span class="kw">let </span>signature = tx
         .signature
         .iter()
-        .map(|f| H256::from(f.to_bytes_be()))
-        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+        .map(|f| (<span class="kw-2">*</span>f).into())
+        .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
         .try_into()
         .map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to bound signatures Vec&lt;H256&gt; by MaxArraySize&quot;</span>))<span class="question-mark">?</span>;
 
@@ -218,13 +219,14 @@
     .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;Failed to calculate contract address: {e}&quot;</span>))<span class="question-mark">?
     </span>.<span class="number">0
     </span>.<span class="number">0
-    </span>.<span class="number">0</span>;
+    </span>.<span class="number">0
+    </span>.into();
 
     <span class="kw">let </span>calldata = tx
         .constructor_calldata
         .iter()
-        .map(|f| U256::from(f.to_bytes_be()))
-        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+        .map(|f| (<span class="kw-2">*</span>f).into())
+        .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
         .try_into()
         .map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxArraySize&quot;</span>))<span class="question-mark">?</span>;
 
@@ -237,7 +239,7 @@
         calldata,
         salt: U256::from(contract_address_salt),
         signature,
-        account_class_hash,
+        account_class_hash: account_class_hash.into(),
         nonce,
         max_fee,
     })

@@ -18,24 +18,26 @@
 <a href="#18" id="18">18</a>
 <a href="#19" id="19">19</a>
 <a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet state root logic.
 
 </span><span class="kw">use </span>core::marker::PhantomData;
 
-<span class="kw">use </span>sp_core::{Get, U256};
+<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
+<span class="kw">use </span>sp_core::Get;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::Config;
 
 <span class="kw">pub struct </span>IntermediateStateRoot&lt;T&gt;(PhantomData&lt;T&gt;);
-<span class="kw">impl</span>&lt;T: Config&gt; Get&lt;U256&gt; <span class="kw">for </span>IntermediateStateRoot&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: Config&gt; Get&lt;Felt252Wrapper&gt; <span class="kw">for </span>IntermediateStateRoot&lt;T&gt; {
     <span class="doccomment">/// Compute the state root of Starknet and return it.
     /// For now, we just return a dummy state root.
     /// TODO: Implement this function.
     /// # Returns
     /// * `U256` - The intermediate state root.
-    </span><span class="kw">fn </span>get() -&gt; U256 {
-        U256::from_big_endian(FieldElement::ONE.to_bytes_be().as_slice())
+    </span><span class="kw">fn </span>get() -&gt; Felt252Wrapper {
+        FieldElement::ONE.into()
     }
 }
 </code></pre></div>

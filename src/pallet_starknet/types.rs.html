@@ -35,23 +35,19 @@
 <a href="#35" id="35">35</a>
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
-<a href="#38" id="38">38</a>
-<a href="#39" id="39">39</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet pallet custom types.
 </span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>mp_starknet::execution::types::ContractAddressWrapper;
-<span class="kw">use </span>sp_core::{ConstU32, H256, U256};
+<span class="kw">use </span>mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
+<span class="kw">use </span>sp_core::{ConstU32, U256};
 <span class="kw">use </span>starknet_api::api_core::ClassHash;
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
 <span class="doccomment">/// Nonce of a Starknet transaction.
 </span><span class="kw">pub type </span>NonceWrapper = U256;
 <span class="doccomment">/// Storage Key
-</span><span class="kw">pub type </span>StorageKeyWrapper = H256;
+</span><span class="kw">pub type </span>StorageKeyWrapper = Felt252Wrapper;
 <span class="doccomment">/// Contract Storage Key
 </span><span class="kw">pub type </span>ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKeyWrapper);
-<span class="doccomment">/// Felt
-</span><span class="kw">pub type </span>StarkFeltWrapper = U256;
 
 <span class="doccomment">/// Make this configurable. Max transaction/block
 </span><span class="kw">pub type </span>MaxTransactionsPendingBlock = ConstU32&lt;<span class="number">1073741824</span>&gt;;
@@ -72,7 +68,7 @@
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>DeployAccountTransactionOutput {
     <span class="doccomment">/// Transaction hash
-    </span><span class="kw">pub </span>transaction_hash: H256,
+    </span><span class="kw">pub </span>transaction_hash: Felt252Wrapper,
     <span class="doccomment">/// Contract Address
     </span><span class="kw">pub </span>contract_address: ContractAddressWrapper,
 }

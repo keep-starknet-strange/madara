@@ -192,13 +192,13 @@
 <span class="doccomment">/// All the types related to the execution of a transaction.
 </span><span class="kw">pub mod </span>types {
     <span class="doccomment">/// Type wrapper for a contract address.
-    </span><span class="kw">pub type </span>ContractAddressWrapper = [u8; <span class="number">32</span>];
+    </span><span class="kw">pub type </span>ContractAddressWrapper = Felt252Wrapper;
 
     <span class="doccomment">/// Type wrapper for a storage key;
-    </span><span class="kw">pub type </span>StorageKeyWrapper = sp_core::H256;
+    </span><span class="kw">pub type </span>StorageKeyWrapper = Felt252Wrapper;
 
     <span class="doccomment">/// Wrapper type for class hash field.
-    </span><span class="kw">pub type </span>ClassHashWrapper = [u8; <span class="number">32</span>];
+    </span><span class="kw">pub type </span>ClassHashWrapper = Felt252Wrapper;
     <span class="kw">pub use </span><span class="kw">super</span>::call_entrypoint_wrapper::<span class="kw-2">*</span>;
     <span class="kw">pub use </span><span class="kw">super</span>::contract_class_wrapper::<span class="kw-2">*</span>;
     <span class="kw">pub use </span><span class="kw">super</span>::entrypoint_wrapper::<span class="kw-2">*</span>;

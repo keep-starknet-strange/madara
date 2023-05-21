@@ -115,9 +115,11 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
 </pre><pre class="rust"><code><span class="kw">use </span>scale_codec::Encode;
 <span class="kw">use </span>sp_core::{H256, U256};
 
+<span class="kw">use </span><span class="kw">crate</span>::execution::program_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::ContractAddressWrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::Hasher;
 
@@ -136,11 +138,11 @@
 </span><span class="doccomment">/// Starknet header definition.
 </span><span class="kw">pub struct </span>Header {
     <span class="doccomment">/// The hash of this block’s parent.
-    </span><span class="kw">pub </span>parent_block_hash: H256,
+    </span><span class="kw">pub </span>parent_block_hash: Felt252Wrapper,
     <span class="doccomment">/// The number (height) of this block.
     </span><span class="kw">pub </span>block_number: U256,
     <span class="doccomment">/// The state commitment after this block.
-    </span><span class="kw">pub </span>global_state_root: U256,
+    </span><span class="kw">pub </span>global_state_root: Felt252Wrapper,
     <span class="doccomment">/// The Starknet address of the sequencer who created this block.
     </span><span class="kw">pub </span>sequencer_address: ContractAddressWrapper,
     <span class="doccomment">/// The time the sequencer created this block before executing transactions
@@ -148,11 +150,11 @@
     <span class="doccomment">/// The number of transactions in a block
     </span><span class="kw">pub </span>transaction_count: u128,
     <span class="doccomment">/// A commitment to the transactions included in the block
-    </span><span class="kw">pub </span>transaction_commitment: H256,
+    </span><span class="kw">pub </span>transaction_commitment: Felt252Wrapper,
     <span class="doccomment">/// The number of events
     </span><span class="kw">pub </span>event_count: u128,
     <span class="doccomment">/// A commitment to the events produced in this block
-    </span><span class="kw">pub </span>event_commitment: H256,
+    </span><span class="kw">pub </span>event_commitment: Felt252Wrapper,
     <span class="doccomment">/// The version of the Starknet protocol used when creating this block
     </span><span class="kw">pub </span>protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,
     <span class="doccomment">/// Extraneous data that might be useful for running transactions
@@ -164,15 +166,15 @@
     </span><span class="attr">#[allow(clippy::too_many_arguments)]
     #[must_use]
     </span><span class="kw">pub fn </span>new(
-        parent_block_hash: H256,
+        parent_block_hash: Felt252Wrapper,
         block_number: U256,
-        global_state_root: U256,
+        global_state_root: Felt252Wrapper,
         sequencer_address: ContractAddressWrapper,
         block_timestamp: u64,
         transaction_count: u128,
-        transaction_commitment: H256,
+        transaction_commitment: Felt252Wrapper,
         event_count: u128,
-        event_commitment: H256,
+        event_commitment: Felt252Wrapper,
         protocol_version: <span class="prelude-ty">Option</span>&lt;u8&gt;,
         extra_data: <span class="prelude-ty">Option</span>&lt;U256&gt;,
     ) -&gt; <span class="self">Self </span>{
@@ -200,15 +202,15 @@
 
 <span class="attr">#[test]
 </span><span class="kw">fn </span>test_header_hash() {
-    <span class="kw">let </span>parent_block_hash = H256::from([<span class="number">1</span>; <span class="number">32</span>]);
+    <span class="kw">let </span>parent_block_hash = H256::from([<span class="number">1</span>; <span class="number">32</span>]).into();
     <span class="kw">let </span>block_number = U256::from(<span class="number">42</span>);
-    <span class="kw">let </span>global_state_root = U256::from(<span class="number">12345</span>);
-    <span class="kw">let </span>sequencer_address = [<span class="number">2</span>; <span class="number">32</span>];
+    <span class="kw">let </span>global_state_root = Felt252Wrapper(U256::from(<span class="number">12345</span>));
+    <span class="kw">let </span>sequencer_address = [<span class="number">2</span>; <span class="number">32</span>].into();
     <span class="kw">let </span>block_timestamp = <span class="number">1620037184</span>;
     <span class="kw">let </span>transaction_count = <span class="number">2</span>;
-    <span class="kw">let </span>transaction_commitment = H256::from([<span class="number">3</span>; <span class="number">32</span>]);
+    <span class="kw">let </span>transaction_commitment = H256::from([<span class="number">3</span>; <span class="number">32</span>]).into();
     <span class="kw">let </span>event_count = <span class="number">1</span>;
-    <span class="kw">let </span>event_commitment = H256::from([<span class="number">4</span>; <span class="number">32</span>]);
+    <span class="kw">let </span>event_commitment = H256::from([<span class="number">4</span>; <span class="number">32</span>]).into();
     <span class="kw">let </span>protocol_version = <span class="prelude-val">Some</span>(<span class="number">1</span>);
     <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 

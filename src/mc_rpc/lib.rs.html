@@ -525,24 +525,6 @@
 <a href="#525" id="525">525</a>
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
-<a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -561,6 +543,7 @@
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_starknet::block::BlockTransactions;
 <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
+<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::transaction::types::{Transaction, TxType};
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
@@ -727,7 +710,7 @@
         <span class="kw">let </span>hex_key = H256::from_slice(<span class="kw-2">&amp;</span>key.to_bytes_be()[..<span class="number">32</span>]);
 
         <span class="kw">let </span>value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address, hex_key)
+            .get_storage_at(substrate_block_hash, hex_address.into(), hex_key.into())
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
@@ -751,15 +734,10 @@
 
         <span class="kw">let </span>runtime_api = <span class="self">self</span>.client.runtime_api();
 
-        <span class="kw">let </span>calldata = request.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect();
+        <span class="kw">let </span>calldata = request.calldata.iter().map(|x| Felt252Wrapper(U256::from(x.to_bytes_be()))).collect();
 
         <span class="kw">let </span>result = runtime_api
-            .call(
-                substrate_block_hash,
-                request.contract_address.to_bytes_be(),
-                H256::from_slice(<span class="kw-2">&amp;</span>request.entry_point_selector.to_bytes_be()[..<span class="number">32</span>]),
-                calldata,
-            )
+            .call(substrate_block_hash, request.contract_address.into(), request.entry_point_selector.into(), calldata)
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
@@ -768,7 +746,7 @@
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
                 StarknetRpcApiError::ContractError
             })<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(result.iter().map(|x| <span class="macro">format!</span>(<span class="string">&quot;{:#x}&quot;</span>, x)).collect())
+        <span class="prelude-val">Ok</span>(result.iter().map(|x| <span class="macro">format!</span>(<span class="string">&quot;{:#x}&quot;</span>, x.<span class="number">0</span>)).collect())
     }
 
     <span class="doccomment">/// Get the contract class at a given contract address for a given block id
@@ -782,7 +760,7 @@
         <span class="kw">let </span>contract_class = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
+            .contract_class_by_address(substrate_block_hash, contract_address_wrapped.into())
             .ok_or_else(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class at &#39;{contract_address}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
@@ -881,7 +859,7 @@
         <span class="kw">let </span>contract_class = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped)
+            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped.into())
             .ok_or_else(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class from hash &#39;{class_hash}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
@@ -916,13 +894,12 @@
         <span class="kw">let </span>class_hash = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped)
+            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped.into())
             .ok_or_else(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class hash at &#39;{contract_address}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>class_hash = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>class_hash).unwrap();
-        <span class="prelude-val">Ok</span>(class_hash)
+        <span class="prelude-val">Ok</span>(class_hash.into())
     }
 
     <span class="doccomment">/// Returns the specified block with transaction hashes.
@@ -938,24 +915,19 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="kw">let </span>transactions = block
-            .transactions_hashes()
-            .into_iter()
-            .map(|hash| FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>hash.to_fixed_bytes()).unwrap())
-            .collect();
+        <span class="kw">let </span>transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
+        <span class="kw">let </span>blockhash: Felt252Wrapper = block.header().hash(PedersenHasher::default()).into();
+        <span class="kw">let </span>parent_blockhash: Felt252Wrapper = block.header().parent_block_hash;
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             <span class="comment">// TODO: Status hardcoded, get status from block
             </span>status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_byte_slice_be(
-                <span class="kw-2">&amp;</span>block.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-            )
-            .unwrap(),
-            parent_hash: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().parent_block_hash.to_fixed_bytes()).unwrap(),
+            block_hash: FieldElement::from(blockhash),
+            parent_hash: FieldElement::from(parent_blockhash),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(block.header().global_state_root)).unwrap(),
+            new_root: FieldElement::from(block.header().global_state_root),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>block.header().sequencer_address).unwrap(),
+            sequencer_address: FieldElement::from(block.header().sequencer_address),
         };
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
@@ -1031,9 +1003,7 @@
             },
         )<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(InvokeTransactionResult {
-            transaction_hash: starknet_ff::FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>transaction.hash.<span class="number">0</span>).unwrap(),
-        })
+        <span class="prelude-val">Ok</span>(InvokeTransactionResult { transaction_hash: FieldElement::from(transaction.hash) })
     }
 
     <span class="doccomment">/// Add an Deploy Account Transaction
@@ -1077,14 +1047,8 @@
         })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(DeployAccountTransactionResult {
-            transaction_hash: FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>transaction.hash.<span class="number">0</span>).map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction hash to FieldElement: {e}&quot;</span>);
-                StarknetRpcApiError::ClassHashNotFound
-            })<span class="question-mark">?</span>,
-            contract_address: FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>transaction.sender_address).map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert contract address to FieldElement: {e}&quot;</span>);
-                StarknetRpcApiError::ClassHashNotFound
-            })<span class="question-mark">?</span>,
+            transaction_hash: FieldElement::from(transaction.hash),
+            contract_address: FieldElement::from(transaction.sender_address),
         })
     }
 }

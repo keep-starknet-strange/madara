@@ -136,6 +136,8 @@
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -185,13 +187,13 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;BlockContext, <span class="self">Self</span>::Error&gt; {
         <span class="comment">// Try to serialize the sequencer address.
         </span><span class="kw">let </span>sequencer_address = ContractAddress::try_from(
-            StarkFelt::new(block_header.sequencer_address)
+            StarkFelt::new(block_header.sequencer_address.into())
                 .map_err(|<span class="kw">_</span>| BlockSerializationError::SequencerAddressError)<span class="question-mark">?</span>,
         )
         .map_err(|<span class="kw">_</span>| BlockSerializationError::SequencerAddressError)<span class="question-mark">?</span>;
         <span class="comment">// Try to serialize the fee token address.
         </span><span class="kw">let </span>fee_token_address = ContractAddress::try_from(
-            StarkFelt::new(fee_token_address).map_err(|<span class="kw">_</span>| BlockSerializationError::FeeTokenAddressError)<span class="question-mark">?</span>,
+            StarkFelt::new(fee_token_address.into()).map_err(|<span class="kw">_</span>| BlockSerializationError::FeeTokenAddressError)<span class="question-mark">?</span>,
         )
         .map_err(|<span class="kw">_</span>| BlockSerializationError::FeeTokenAddressError)<span class="question-mark">?</span>;
 
@@ -220,17 +222,19 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_serialize() {
         <span class="kw">let </span>sequencer_address =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000FF&quot;</span>).unwrap();
+            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000FF&quot;</span>).unwrap().into();
         <span class="comment">// Create a block header.
         </span><span class="kw">let </span>block_header =
             Header { block_number: <span class="number">1</span>.into(), block_timestamp: <span class="number">1</span>, sequencer_address, ..Default::default() };
         <span class="comment">// Create a fee token address.
         </span><span class="kw">let </span>fee_token_address =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000AA&quot;</span>).unwrap();
+            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000AA&quot;</span>).unwrap().into();
         <span class="comment">// Try to serialize the block header.
         </span><span class="kw">let </span>block_context = BlockContext::try_serialize(block_header, fee_token_address).unwrap();
-        <span class="kw">let </span>expected_sequencer_address = ContractAddress::try_from(StarkFelt::new(sequencer_address).unwrap()).unwrap();
-        <span class="kw">let </span>expected_fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address).unwrap()).unwrap();
+        <span class="kw">let </span>expected_sequencer_address =
+            ContractAddress::try_from(StarkFelt::new(sequencer_address.into()).unwrap()).unwrap();
+        <span class="kw">let </span>expected_fee_token_address =
+            ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
         <span class="comment">// Check that the block context was serialized correctly.
         </span><span class="macro">assert_eq!</span>(block_context.block_number, BlockNumber(<span class="number">1</span>));
         <span class="macro">assert_eq!</span>(block_context.block_timestamp, BlockTimestamp(<span class="number">1</span>));
@@ -243,13 +247,13 @@
         <span class="comment">// Use a value greater than the PATRICIA_KEY_UPPER_BOUND
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         </span><span class="kw">let </span>sequencer_address =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0800000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap();
+            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0800000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap().into();
         <span class="comment">// Create a block header.
         </span><span class="kw">let </span>block_header =
             Header { block_number: <span class="number">1</span>.into(), block_timestamp: <span class="number">1</span>, sequencer_address, ..Default::default() };
         <span class="comment">// Create a fee token address.
         </span><span class="kw">let </span>fee_token_address =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000AA&quot;</span>).unwrap();
+            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000AA&quot;</span>).unwrap().into();
         <span class="comment">// Try to serialize the block header.
         </span><span class="kw">let </span>block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
         <span class="comment">// Check that the result is an error.
@@ -259,7 +263,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_serialize_invalid_fee_token_address() {
         <span class="kw">let </span>sequencer_address =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000FF&quot;</span>).unwrap();
+            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;00000000000000000000000000000000000000000000000000000000000000FF&quot;</span>).unwrap().into();
         <span class="comment">// Create a block header.
         </span><span class="kw">let </span>block_header =
             Header { block_number: <span class="number">1</span>.into(), block_timestamp: <span class="number">1</span>, sequencer_address, ..Default::default() };
@@ -267,7 +271,7 @@
         // Use a value greater than the PATRICIA_KEY_UPPER_BOUND
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         </span><span class="kw">let </span>fee_token_address =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0800000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap();
+            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0800000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap().into();
         <span class="comment">// Try to serialize the block header.
         </span><span class="kw">let </span>block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
         <span class="comment">// Check that the result is an error.

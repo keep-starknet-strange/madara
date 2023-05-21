@@ -91,6 +91,7 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
 </pre><pre class="rust"><code><span class="doccomment">//! StarkNet block primitives.
 
 </span><span class="kw">mod </span>header;
@@ -98,8 +99,9 @@
 
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">pub use </span>header::<span class="kw-2">*</span>;
-<span class="kw">use </span>sp_core::{ConstU32, H256};
+<span class="kw">use </span>sp_core::ConstU32;
 
+<span class="kw">use </span><span class="kw">crate</span>::execution::program_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::transaction::types::Transaction;
 
 <span class="doccomment">/// Serializer
@@ -123,7 +125,7 @@
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub enum </span>BlockTransactions {
     <span class="doccomment">/// Only hashes
-    </span>Hashes(BoundedVec&lt;H256, MaxTransactions&gt;),
+    </span>Hashes(BoundedVec&lt;Felt252Wrapper, MaxTransactions&gt;),
     <span class="doccomment">/// Full transactions
     </span>Full(BoundedVec&lt;Transaction, MaxTransactions&gt;),
 }
@@ -176,7 +178,7 @@
     }
 
     <span class="doccomment">/// Return a reference to all transaction hashes
-    </span><span class="kw">pub fn </span>transactions_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;H256&gt; {
+    </span><span class="kw">pub fn </span>transactions_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Felt252Wrapper&gt; {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.transactions {
             BlockTransactions::Full(transactions) =&gt; transactions.into_iter().map(|tx| tx.hash).collect(),
 
