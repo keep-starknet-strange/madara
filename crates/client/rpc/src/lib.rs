@@ -179,8 +179,8 @@ where
         })?;
 
         let runtime_api = self.client.runtime_api();
-        let hex_address = contract_address.to_bytes_be();
-        let hex_key = H256::from_slice(&key.to_bytes_be()[..32]);
+        let hex_address = Felt252Wrapper::from(contract_address);
+        let hex_key = Felt252Wrapper::from(key);
 
         let value = runtime_api
             .get_storage_at(substrate_block_hash, hex_address.into(), hex_key.into())
@@ -207,7 +207,7 @@ where
 
         let runtime_api = self.client.runtime_api();
 
-        let calldata = request.calldata.iter().map(|x| Felt252Wrapper(U256::from(x.to_bytes_be()))).collect();
+        let calldata = request.calldata.iter().map(|x| Felt252Wrapper::from(*x)).collect();
 
         let result = runtime_api
             .call(substrate_block_hash, request.contract_address.into(), request.entry_point_selector.into(), calldata)
@@ -229,11 +229,11 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = contract_address.to_bytes_be();
+        let contract_address_wrapped = Felt252Wrapper::from(contract_address);
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_address(substrate_block_hash, contract_address_wrapped.into())
+            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
@@ -327,12 +327,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_clash_hashed_wrapped = class_hash.to_bytes_be();
-
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped.into())
+            .contract_class_by_class_hash(substrate_block_hash, Felt252Wrapper::from(class_hash))
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class from hash '{class_hash}'");
                 StarknetRpcApiError::ContractNotFound
@@ -362,12 +360,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = contract_address.to_bytes_be();
-
         let class_hash = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped.into())
+            .contract_class_hash_by_address(substrate_block_hash, Felt252Wrapper::from(contract_address))
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
@@ -389,8 +385,8 @@ where
             .unwrap_or_default();
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
-        let blockhash: Felt252Wrapper = block.header().hash(PedersenHasher::default()).into();
-        let parent_blockhash: Felt252Wrapper = block.header().parent_block_hash;
+        let blockhash = Felt252Wrapper::try_from(block.header().hash(PedersenHasher::default())).unwrap();
+        let parent_blockhash = Felt252Wrapper::try_from(block.header().parent_block_hash).unwrap(); // unwrap from substrate H256, to check.
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block

@@ -12,7 +12,7 @@ use starknet_ff::{FieldElement, FromStrError};
 use cairo_vm::felt::Felt252;
 
 use sp_core::{H256, U256};
-use scale_codec::{Decode, Encode, Input, Output, Error, MaxEncodedLen};
+use scale_codec::{Decode, Encode, EncodeLike, Input, Output, Error, MaxEncodedLen};
 use scale_info::{TypeInfo, Type, Path};
 use scale_info::build::Fields;
 
@@ -22,6 +22,7 @@ use scale_info::build::Fields;
     Debug,
     PartialEq,
     Eq,
+    Copy
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Felt252Wrapper(pub FieldElement);
@@ -162,6 +163,8 @@ impl Encode for Felt252Wrapper {
         dest.write(&self.0.to_bytes_be());
     }
 }
+
+impl EncodeLike for Felt252Wrapper {}
 
 /// SCALE trait.
 impl MaxEncodedLen for Felt252Wrapper {

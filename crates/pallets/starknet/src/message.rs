@@ -51,15 +51,17 @@ impl Message {
             return Err(OffchainWorkerError::EmptyData);
         }
         // L2 contract to call.
-        let sender_address = <[u8; 32]>::from_hex(self.topics[2].trim_start_matches("0x"))
-            .map_err(|_| OffchainWorkerError::HexDecodeError)?
-            .into();
+        let sender_address = match Felt252Wrapper::from_hex_be(self.topics[2].as_str()) {
+            Ok(f) => f,
+            Err(e) => return Err(OffchainWorkerError::ToTransactionError)
+        };
+
         // Function of the contract to call.
-        let selector = H256::from_slice(
-            &<[u8; 32]>::from_hex(self.topics[3].trim_start_matches("0x"))
-                .map_err(|_| OffchainWorkerError::HexDecodeError)?,
-        )
-        .into();
+        let selector = match Felt252Wrapper::from_hex_be(self.topics[3].as_str()) {
+            Ok(f) => f,
+            Err(e) => return Err(OffchainWorkerError::ToTransactionError)
+        };
+
         // Add the from address here so it's directly in the calldata.
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
             .chars()
@@ -73,9 +75,10 @@ impl Message {
         let mut calldata: Vec<Felt252Wrapper> = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
             calldata.push(
-                <[u8; 32]>::from_hex(val.trim_start_matches("0x"))
-                    .map_err(|_| OffchainWorkerError::HexDecodeError)?
-                    .into(),
+                match Felt252Wrapper::from_hex_be(val.as_str()) {
+                    Ok(f) => f,
+                    Err(e) => return Err(OffchainWorkerError::ToTransactionError)
+                }
             )
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;

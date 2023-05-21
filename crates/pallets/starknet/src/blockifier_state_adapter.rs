@@ -45,10 +45,15 @@ impl<T: Config> Default for BlockifierStateAdapter<T> {
     }
 }
 
+// TODO: unwrap from Felt252Wrapper try_from is done all over the code here.
+// As inputs are mostly starknet-core parsed type, should be fine.
+// By the way, it is worth checking if starknet-rs provides all the starknet_api methods, to use felts
+// directly.
+
 impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {
-        let contract_address: ContractAddressWrapper = contract_address.0.0.0.into();
-        let key: StorageKeyWrapper = key.0.0.0.into();
+        let contract_address: ContractAddressWrapper = Felt252Wrapper::try_from(&contract_address.0.0.0).unwrap();
+        let key: StorageKeyWrapper = Felt252Wrapper::try_from(&key.0.0.0).unwrap();
 
         let contract_storage_key: ContractStorageKeyWrapper = (contract_address, key);
         let storage_content = StarkFelt::new(Pallet::<T>::storage(contract_storage_key).into())?;
@@ -57,7 +62,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     }
 
     fn get_nonce_at(&mut self, contract_address: ContractAddress) -> StateResult<Nonce> {
-        let contract_address: ContractAddressWrapper = contract_address.0.0.0.into();
+        let contract_address: ContractAddressWrapper = Felt252Wrapper::try_from(&contract_address.0.0.0).unwrap();
 
         let nonce = Nonce(StarkFelt::new(Pallet::<T>::nonce(contract_address).into())?);
 
@@ -65,7 +70,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     }
 
     fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {
-        let contract_address: ContractAddressWrapper = contract_address.0.0.0.into();
+        let contract_address: ContractAddressWrapper = Felt252Wrapper::try_from(&contract_address.0.0.0).unwrap();
 
         let class_hash = ClassHash(StarkFelt::new(
             Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default().into(),
@@ -75,7 +80,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     }
 
     fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
-        let wrapped_class_hash: ClassHashWrapper = class_hash.0.0.into();
+        let wrapped_class_hash: ClassHashWrapper = Felt252Wrapper::try_from(&class_hash.0.0).unwrap();
         let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
         match opt_contract_class {
             Some(contract_class) => Ok(Arc::new(
@@ -90,16 +95,16 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 impl<T: Config> State for BlockifierStateAdapter<T> {
     fn set_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
         self.storage_update.insert((contract_address, key), value);
-        let contract_address: ContractAddressWrapper = contract_address.0.0.0.into();
-        let key: StorageKeyWrapper = key.0.0.0.into();
+        let contract_address: ContractAddressWrapper = Felt252Wrapper::try_from(&contract_address.0.0.0).unwrap();
+        let key: StorageKeyWrapper = Felt252Wrapper::try_from(&key.0.0.0).unwrap();
 
         let contract_storage_key: ContractStorageKeyWrapper = (contract_address, key);
 
-        crate::StorageView::<T>::insert(contract_storage_key, Felt252Wrapper(U256::from(value.0)));
+        crate::StorageView::<T>::insert(contract_storage_key, Felt252Wrapper::try_from(U256::from(value.0)).unwrap());
     }
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
-        let contract_address: ContractAddressWrapper = contract_address.0.0.0.into();
+        let contract_address: ContractAddressWrapper = Felt252Wrapper::try_from(&contract_address.0.0.0).unwrap();
         let current_nonce = Pallet::<T>::nonce(contract_address);
 
         crate::Nonces::<T>::insert(contract_address, current_nonce + 1);
@@ -109,8 +114,8 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_class_hash_at(&mut self, contract_address: ContractAddress, class_hash: ClassHash) -> StateResult<()> {
         self.class_hash_update += 1;
-        let contract_address: ContractAddressWrapper = contract_address.0.0.0.into();
-        let class_hash: ClassHashWrapper = class_hash.0.0.into();
+        let contract_address: ContractAddressWrapper = Felt252Wrapper::try_from(&contract_address.0.0.0).unwrap();
+        let class_hash: ClassHashWrapper = Felt252Wrapper::try_from(&class_hash.0.0).unwrap();
 
         crate::ContractClassHashes::<T>::insert(contract_address, class_hash);
 
@@ -118,7 +123,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     }
 
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
-        let class_hash: ClassHashWrapper = class_hash.0.0.into();
+        let class_hash: ClassHashWrapper = Felt252Wrapper::try_from(&class_hash.0.0).unwrap();
         let contract_class: ContractClassWrapper = ContractClassWrapper::try_from(contract_class).unwrap();
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
