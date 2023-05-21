@@ -5,7 +5,6 @@ use alloc::{fmt, format};
 
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::BoundedVec;
-use hex::{FromHex, FromHexError};
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
 

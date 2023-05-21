@@ -25,7 +25,7 @@ use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
-use sp_core::{H256, U256};
+use sp_core::{H256};
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;

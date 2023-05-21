@@ -17,7 +17,7 @@ use blockifier::transaction::objects::AccountTransactionContext;
 use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contracts;
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
-use sp_core::{H256, U256};
+use sp_core::{U256};
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
