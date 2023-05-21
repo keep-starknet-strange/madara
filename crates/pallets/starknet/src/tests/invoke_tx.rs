@@ -5,6 +5,7 @@ use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
@@ -27,7 +28,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 
         // Wrong address (not deployed)
         let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap().into();
 
         let transaction = InvokeTransaction {
             version: 1_u8,
@@ -90,20 +91,31 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let receipt = &pending.get(0).unwrap().1;
         let expected_receipt = TransactionReceiptWrapper {
             transaction_hash: H256::from_str("0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8")
-                .unwrap(),
-            actual_fee: U256::from(52980),
+                .unwrap()
+                .into(),
+            actual_fee: Felt252Wrapper(U256::from(52980)),
             tx_type: TxType::Invoke,
             block_number: 2_u64,
-            block_hash: U256::from_str("0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA").unwrap(),
+            block_hash: Felt252Wrapper(
+                U256::from_str("0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA").unwrap(),
+            ),
             events: bounded_vec![EventWrapper {
                 keys: bounded_vec!(
-                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap(),
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
+                        .unwrap()
+                        .into(),
                 ),
                 data: bounded_vec![
-                    H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77").unwrap(),
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000cef4").unwrap(),
-                    H256::zero(),
+                    H256::from_str("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77")
+                        .unwrap()
+                        .into(),
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002")
+                        .unwrap()
+                        .into(),
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000cef4")
+                        .unwrap()
+                        .into(),
+                    Felt252Wrapper::zero(),
                 ],
                 from_address: Starknet::fee_token_address(),
             },],
@@ -129,24 +141,23 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let emitted_event = EventWrapper {
             keys: bounded_vec![
-                H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap()
+                H256::from_str("0x02d4fbe4956fedf49b5892807e00e7e9eea4680becba55f9187684a69e9424fa").unwrap().into()
             ],
             data: bounded_vec!(
-                H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap()
+                H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap().into()
             ),
             from_address: H256::from_str("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7")
-                .unwrap()
-                .to_fixed_bytes(),
+                .unwrap().into(),
         };
         let expected_fee_transfer_event = EventWrapper {
                 keys: bounded_vec![
-                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap()
+                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9").unwrap().into()
                 ],
                 data: bounded_vec!(
-                    H256::from_str("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap(), // From
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(), // To
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d0f2").unwrap(), // Amount low
-                    H256::zero(), // Amount high
+                    H256::from_str("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0").unwrap().into(), // From
+                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap().into(), // To
+                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d0f2").unwrap().into(), // Amount low
+                    Felt252Wrapper::zero(), // Amount high
                 ),
                 from_address: Starknet::fee_token_address(),
             };
@@ -176,11 +187,11 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         assert_eq!(pending.len(), 1);
 
         let expected_receipt = TransactionReceiptWrapper {
-            transaction_hash: H256::from_str("0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52").unwrap(),
-            actual_fee: U256::from(53490),
+            transaction_hash: H256::from_str("0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52").unwrap().into(),
+            actual_fee: Felt252Wrapper(U256::from(53490)),
             tx_type: TxType::Invoke,
             block_number: 2_u64,
-            block_hash: U256::from_str("0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA").unwrap(),
+            block_hash: Felt252Wrapper(U256::from_str("0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA").unwrap()),
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),
         };
         let receipt = &pending.get(0).unwrap().1;
@@ -213,8 +224,11 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
         assert_eq!(
-            Starknet::storage((contract_address_bytes, H256::from_slice(&storage_var_selector_bytes))),
-            U256::one()
+            Starknet::storage((
+                Into::<Felt252Wrapper>::into(contract_address_bytes),
+                Into::<Felt252Wrapper>::into(storage_var_selector_bytes)
+            )),
+            Felt252Wrapper::one()
         );
     });
 }
@@ -264,7 +278,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -297,7 +311,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -330,7 +344,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -348,22 +362,22 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(H256::from_low_u64_be(1), H256::from_low_u64_be(1));
+        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
         transaction.sender_address = get_account_address(AccountType::InnerCall);
 
         let storage_key = get_storage_var_address("destination", &[]).unwrap();
         let destination =
             <[u8; 32]>::from_hex("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(); // Test contract address
         StorageView::<MockRuntime>::insert(
-            (transaction.sender_address, H256::from(storage_key.0.0.0)),
-            U256::from(destination),
+            (transaction.sender_address, Into::<Felt252Wrapper>::into(storage_key.0.0.0)),
+            Into::<Felt252Wrapper>::into(destination),
         );
 
         let storage_key = get_storage_var_address("function_selector", &[]).unwrap();
         let selector = get_selector_from_name("without_arg").unwrap();
         StorageView::<MockRuntime>::insert(
-            (transaction.sender_address, H256::from(storage_key.0.0.0)),
-            U256::from(selector.to_bytes_be()),
+            (transaction.sender_address, Into::<Felt252Wrapper>::into(storage_key.0.0.0)),
+            Felt252Wrapper(U256::from(selector.to_bytes_be())),
         );
 
         assert_err!(

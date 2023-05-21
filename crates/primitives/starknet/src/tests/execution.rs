@@ -19,7 +19,7 @@ use crate::block::Block;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
-use crate::execution::program_wrapper::ProgramWrapper;
+use crate::execution::program_wrapper::{Felt252Wrapper, ProgramWrapper};
 use crate::execution::types::ContractAddressWrapper;
 use crate::tests::utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 
@@ -30,20 +30,20 @@ fn test_call_entry_point_execute_works() {
     let class_hash = bytes_from_hex_str::<32, true>(TEST_CLASS_HASH).unwrap();
     let address = bytes_from_hex_str::<32, true>(TEST_CONTRACT_ADDRESS).unwrap();
     let selector = H256::from_slice(selector_from_name("return_result").0.bytes());
-    let calldata = bounded_vec![U256::from(42)];
+    let calldata = bounded_vec![Felt252Wrapper(U256::from(42))];
 
     let entrypoint = CallEntryPointWrapper::new(
-        Some(class_hash),
+        Some(class_hash.into()),
         EntryPointTypeWrapper::External,
-        Some(selector),
+        Some(selector.into()),
         calldata,
-        address,
+        address.into(),
         ContractAddressWrapper::default(),
     );
 
     let block = Block::create_for_testing();
 
-    assert_ok!(entrypoint.execute(&mut test_state, block, [0; 32]));
+    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::zero()));
 }
 
 #[test]
@@ -52,20 +52,20 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
 
     let address = bytes_from_hex_str::<32, true>(TEST_CONTRACT_ADDRESS).unwrap();
     let selector = H256::from_slice(selector_from_name("return_result").0.bytes());
-    let calldata = bounded_vec![U256::from(42)];
+    let calldata = bounded_vec![Felt252Wrapper(U256::from(42))];
 
     let entrypoint = CallEntryPointWrapper::new(
-        Some([0; 32]),
+        Some(Felt252Wrapper::zero()),
         EntryPointTypeWrapper::External,
-        Some(selector),
+        Some(selector.into()),
         calldata,
-        address,
+        address.into(),
         ContractAddressWrapper::default(),
     );
 
     let block = Block::create_for_testing();
 
-    assert!(entrypoint.execute(&mut test_state, block, [0; 32]).is_err());
+    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::zero()).is_err());
 }
 
 #[test]
@@ -82,7 +82,7 @@ fn test_try_into_entrypoint_fails() {
         entrypoint_type: EntryPointTypeWrapper::External,
         entrypoint_selector: None,
         calldata: bounded_vec![],
-        storage_address: [u8::MAX; 32], // Bigger than felt
+        storage_address: [u8::MAX; 32].into(), // Bigger than felt
         caller_address: ContractAddressWrapper::default(),
     };
     let entrypoint: Result<CallEntryPoint, _> = entrypoint_wrapper.try_into();
@@ -94,7 +94,7 @@ fn test_try_into_entrypoint_fails() {
         entrypoint_selector: None,
         calldata: bounded_vec![],
         storage_address: ContractAddressWrapper::default(),
-        caller_address: [u8::MAX; 32], // Bigger than felt
+        caller_address: [u8::MAX; 32].into(), // Bigger than felt
     };
     let entrypoint: Result<CallEntryPoint, _> = entrypoint_wrapper.try_into();
     assert!(entrypoint.is_err());
@@ -102,7 +102,7 @@ fn test_try_into_entrypoint_fails() {
     let entrypoint_wrapper = CallEntryPointWrapper {
         class_hash: None,
         entrypoint_type: EntryPointTypeWrapper::External,
-        entrypoint_selector: Some(H256::from([u8::MAX; 32])), // Bigger than felt
+        entrypoint_selector: Some(H256::from([u8::MAX; 32]).into()), // Bigger than felt
         calldata: bounded_vec![],
         storage_address: ContractAddressWrapper::default(),
         caller_address: ContractAddressWrapper::default(),
@@ -119,7 +119,11 @@ fn test_try_into_entrypoint_works() {
         ),
         entrypoint_type: EntryPointTypeWrapper::External,
         entrypoint_selector: None,
-        calldata: bounded_vec![U256::from(1), U256::from(2), U256::from(3)],
+        calldata: bounded_vec![
+            Felt252Wrapper(U256::from(1)),
+            Felt252Wrapper(U256::from(2)),
+            Felt252Wrapper(U256::from(3))
+        ],
         storage_address: H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001")
             .unwrap()
             .into(),

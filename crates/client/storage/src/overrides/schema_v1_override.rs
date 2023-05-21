@@ -63,15 +63,18 @@ where
         address: ContractAddressWrapper,
     ) -> Option<ContractClassWrapper> {
         let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS_HASH);
-        let contract_class_hash: [u8; 32] = self.query_storage::<ClassHashWrapper>(
+        let contract_class_hash = self.query_storage::<ClassHashWrapper>(
             block_hash,
-            &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &address[..])),
+            &StorageKey(storage_key_build(storage_contract_class_hash_prefix, <[u8; 32]>::from(address).as_slice())),
         )?;
 
         let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
         self.query_storage::<ContractClassWrapper>(
             block_hash,
-            &StorageKey(storage_key_build(storage_contract_class_prefix, &contract_class_hash[..])),
+            &StorageKey(storage_key_build(
+                storage_contract_class_prefix,
+                <[u8; 32]>::from(contract_class_hash).as_slice(),
+            )),
         )
     }
 
@@ -83,7 +86,7 @@ where
         let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS_HASH);
         self.query_storage::<ClassHashWrapper>(
             block_hash,
-            &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &address[..])),
+            &StorageKey(storage_key_build(storage_contract_class_hash_prefix, <[u8; 32]>::from(address).as_slice())),
         )
     }
 
@@ -95,7 +98,10 @@ where
         let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
         self.query_storage::<ContractClassWrapper>(
             block_hash,
-            &StorageKey(storage_key_build(storage_contract_class_prefix, &contract_class_hash[..])),
+            &StorageKey(storage_key_build(
+                storage_contract_class_prefix,
+                <[u8; 32]>::from(contract_class_hash).as_slice(),
+            )),
         )
     }
 }

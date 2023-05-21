@@ -15,6 +15,7 @@ use crate::crypto::hash::{hash, HashType};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
+use crate::execution::program_wrapper::Felt252Wrapper;
 use crate::traits::hash::{CryptoHasher, Hasher};
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
@@ -28,12 +29,16 @@ fn test_deploy_account_tx_hash() {
 
     let transaction = DeployAccountTransaction {
         version: 1,
-        sender_address: U256::from(19911991_u32).into(),
-        calldata: bounded_vec!(U256::one(), U256::from(2), U256::from(3)),
+        sender_address: Felt252Wrapper(U256::from(19911991_u32)),
+        calldata: bounded_vec!(
+            Felt252Wrapper(U256::one()),
+            Felt252Wrapper(U256::from(2)),
+            Felt252Wrapper(U256::from(3))
+        ),
         nonce: U256::zero(),
         salt: U256::zero(),
         signature: bounded_vec!(),
-        account_class_hash: U256::from(3).into(),
+        account_class_hash: Felt252Wrapper(U256::from(3)),
         max_fee: U256::one(),
     };
     assert_eq!(calculate_deploy_account_tx_hash(transaction), expected_tx_hash);
@@ -47,11 +52,11 @@ fn test_declare_tx_hash() {
 
     let transaction = DeclareTransaction {
         version: 1,
-        sender_address: U256::from(19911991_u32).into(),
+        sender_address: Felt252Wrapper(U256::from(19911991_u32)),
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
-        compiled_class_hash: U256::from(3).into(),
+        compiled_class_hash: Felt252Wrapper(U256::from(3)),
         contract_class: ContractClassWrapper::default(),
     };
     assert_eq!(calculate_declare_tx_hash(transaction), expected_tx_hash);
@@ -65,8 +70,12 @@ fn test_invoke_tx_hash() {
 
     let transaction = InvokeTransaction {
         version: 1,
-        sender_address: U256::from(19911991_u32).into(),
-        calldata: bounded_vec!(U256::one(), U256::from(2), U256::from(3)),
+        sender_address: Felt252Wrapper(U256::from(19911991_u32)),
+        calldata: bounded_vec!(
+            Felt252Wrapper(U256::one()),
+            Felt252Wrapper(U256::from(2)),
+            Felt252Wrapper(U256::from(3))
+        ),
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
@@ -79,9 +88,13 @@ fn test_merkle_tree() {
     let txs = vec![
         Transaction {
             version: 0_u8,
-            hash: H256::from_low_u64_be(6),
-            signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-            sender_address: [0; 32],
+            hash: H256::from_low_u64_be(6).into(),
+            signature: bounded_vec![
+                H256::from_low_u64_be(10).into(),
+                H256::from_low_u64_be(20).into(),
+                H256::from_low_u64_be(30).into()
+            ],
+            sender_address: Felt252Wrapper::zero(),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
@@ -90,9 +103,9 @@ fn test_merkle_tree() {
         },
         Transaction {
             version: 0_u8,
-            hash: H256::from_low_u64_be(28),
-            signature: bounded_vec![H256::from_low_u64_be(40)],
-            sender_address: [1; 32],
+            hash: H256::from_low_u64_be(28).into(),
+            signature: bounded_vec![H256::from_low_u64_be(40).into()],
+            sender_address: [1; 32].into(),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
@@ -113,9 +126,10 @@ fn test_merkle_tree() {
 
 #[test]
 fn test_event_hash() {
-    let keys = bounded_vec![H256::from_low_u64_be(2), H256::from_low_u64_be(3),];
-    let data = bounded_vec![H256::from_low_u64_be(4), H256::from_low_u64_be(5), H256::from_low_u64_be(6)];
-    let from_address = H256::from_low_u64_be(10).to_fixed_bytes();
+    let keys = bounded_vec![H256::from_low_u64_be(2).into(), H256::from_low_u64_be(3).into(),];
+    let data =
+        bounded_vec![H256::from_low_u64_be(4).into(), H256::from_low_u64_be(5).into(), H256::from_low_u64_be(6).into()];
+    let from_address = H256::from_low_u64_be(10).to_fixed_bytes().into();
     let event = EventWrapper::new(keys, data, from_address);
     assert_eq!(
         calculate_event_hash::<PedersenHasher>(&event),
