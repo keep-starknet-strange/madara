@@ -92,6 +92,13 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     }
 }
 
+/// u128 converter. Might be supported natively?
+impl From<u128> for Felt252Wrapper {
+    fn from(value: u128) -> Self {
+        Felt252Wrapper::try_from(U256::from(value)).unwrap()
+    }
+}
+
 /// U256 converter.
 impl From<Felt252Wrapper> for U256 {
     fn from(felt: Felt252Wrapper) -> Self {
