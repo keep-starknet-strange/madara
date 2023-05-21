@@ -35,8 +35,7 @@ use self::types::{
 };
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
-use crate::execution::program_wrapper::Felt252Wrapper;
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
 
@@ -116,16 +115,17 @@ impl EventBuilder {
     ///
     /// * `event_content` - Event content retrieved from the `CallInfo`.
     pub fn with_event_content(mut self, event_content: EventContent) -> Self {
+        // TOOD: what's the proper why to handle errors in a map? We should return Return<Self, Felt252WrapperError> instead?
         self.keys = event_content
             .keys
             .iter()
-            .map(|k| H256::from_slice(k.0.bytes()).into())
+            .map(|k| Felt252Wrapper::try_from(k.0.bytes()).expect("Felt252Wrapper from EventContent key bytes failed"))
             .collect::<vec::Vec<Felt252Wrapper>>();
         self.data = event_content
             .data
             .0
             .iter()
-            .map(|d| H256::from_slice(d.bytes()).into())
+            .map(|d| Felt252Wrapper::try_from(d.bytes()).expect("Felt252Wrapper from EventContent data bytes failed"))
             .collect::<vec::Vec<Felt252Wrapper>>();
         self
     }
@@ -149,10 +149,7 @@ impl EventBuilder {
 
 impl Default for EventWrapper {
     fn default() -> Self {
-        let one = H256::from_slice(&[
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-        ])
-        .into();
+        let one = Felt252Wrapper::one();
         Self {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
@@ -176,8 +173,8 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
             .collect();
 
         Ok(TransactionReceiptWrapper {
-            transaction_hash: H256::from_slice(self.transaction_hash.0.bytes()).into(),
-            actual_fee: Felt252Wrapper(U256::from(self.output.actual_fee().0)),
+            transaction_hash: Felt252Wrapper::try_from(self.transaction_hash.0.bytes()).unwrap(), // comes from StarkHash, should be safe.
+            actual_fee: Felt252Wrapper::try_from(U256::from(self.output.actual_fee().0)).expect("Actual fee too large for felt252."),
             tx_type: match self.output {
                 TransactionOutput::Declare(_) => TxType::Declare,
                 TransactionOutput::DeployAccount(_) => TxType::DeployAccount,
@@ -185,7 +182,7 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
                 TransactionOutput::L1Handler(_) => TxType::L1Handler,
                 _ => TxType::Invoke,
             },
-            block_hash: Felt252Wrapper(U256::from(self.block_hash.0.0)),
+            block_hash: Felt252Wrapper::try_from(U256::from(self.block_hash.0.0)).unwrap(), // comes from StarkHash, should be safe.
             block_number: self.block_number.0,
             events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
         })
@@ -313,8 +310,8 @@ impl Transaction {
     }
 
     /// Creates a new instance of a transaction without signature.
-    pub fn from_tx_hash(hash: H256) -> Self {
-        Self { hash: hash.into(), ..Self::default() }
+    pub fn from_tx_hash(hash: Felt252Wrapper) -> Self {
+        Self { hash: hash, ..Self::default() }
     }
 
     /// Returns the validate entry point selector.
@@ -694,10 +691,7 @@ impl Transaction {
 
 impl Default for Transaction {
     fn default() -> Self {
-        let one: Felt252Wrapper = H256::from_slice(&[
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-        ])
-        .into();
+        let one = Felt252Wrapper::one();
         Self {
             version: 1_u8,
             hash: one,

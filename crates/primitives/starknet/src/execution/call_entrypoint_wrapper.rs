@@ -15,8 +15,7 @@ use starknet_api::StarknetApiError;
 use super::entrypoint_wrapper::{
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
-use super::program_wrapper::Felt252Wrapper;
-use super::types::{ClassHashWrapper, ContractAddressWrapper};
+use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
 
@@ -127,7 +126,7 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             class_hash,
             entry_point_type: self.entrypoint_type.clone().into(),
             entry_point_selector: EntryPointSelector(StarkFelt::new(
-                self.entrypoint_selector.unwrap_or_default().0.into(),
+                self.entrypoint_selector.unwrap_or_default().into(),
             )?),
             calldata: Calldata(Arc::new(
                 self.calldata

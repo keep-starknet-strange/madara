@@ -1,8 +1,7 @@
 use scale_codec::Encode;
 use sp_core::{H256, U256};
 
-use crate::execution::program_wrapper::Felt252Wrapper;
-use crate::execution::types::ContractAddressWrapper;
+use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::Hasher;
 
 #[derive(

@@ -135,7 +135,7 @@ where
 /// # Argument
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
-pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> H256 {
+pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address.into(),
         transaction.calldata.as_slice(),
@@ -151,7 +151,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction) -> H256 {
 /// # Argument
 ///
 /// * `transaction` - The declare transaction to get the hash of.
-pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> H256 {
+pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address.into(),
         &[transaction.compiled_class_hash],
@@ -167,11 +167,16 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction) -> H256 {
 /// # Argument
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
-pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -> H256 {
+pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address.into(),
-        &vec![vec![transaction.account_class_hash, Felt252Wrapper(transaction.salt)], transaction.calldata.to_vec()]
-            .concat(),
+        &vec![
+            vec![
+            transaction.account_class_hash,
+                Felt252Wrapper::try_from(transaction.salt).unwrap() // should be safe comes from StarkHash.
+            ],
+            transaction.calldata.to_vec()
+        ].concat(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -186,7 +191,7 @@ fn calculate_transaction_hash_common<T>(
     nonce: U256,
     version: u8,
     tx_prefix: &[u8],
-) -> H256
+) -> Felt252Wrapper
 where
     T: CryptoHasher,
 {
@@ -213,7 +218,9 @@ where
         chain_id,
         nonce,
     ]);
-    H256::from_slice(&tx_hash.to_bytes_be())
+
+    tx_hash.into()
+//    H256::from_slice(&tx_hash.to_bytes_be())
 }
 
 /// Calculate the hash of an event.

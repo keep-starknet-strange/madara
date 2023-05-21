@@ -16,8 +16,7 @@ use crate::crypto::commitment::{
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-use crate::execution::program_wrapper::Felt252Wrapper;
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -310,7 +309,7 @@ impl From<InvokeTransaction> for Transaction {
     fn from(value: InvokeTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()).into(),
+            hash: calculate_invoke_tx_hash(value.clone()).try_into().unwrap(),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,

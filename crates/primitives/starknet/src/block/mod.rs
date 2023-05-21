@@ -7,7 +7,7 @@ use frame_support::BoundedVec;
 pub use header::*;
 use sp_core::ConstU32;
 
-use crate::execution::program_wrapper::Felt252Wrapper;
+use crate::execution::types::Felt252Wrapper;
 use crate::transaction::types::Transaction;
 
 /// Serializer
