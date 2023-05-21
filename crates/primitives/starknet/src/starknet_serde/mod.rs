@@ -219,15 +219,7 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .map_err(DeserializeTransactionError::InvalidCallEntryPoint)?;
 
         // Create Transaction with validated and converted fields
-        Ok(Self {
-            version,
-            hash: hash.into(),
-            signature,
-            sender_address,
-            nonce,
-            call_entrypoint,
-            ..Transaction::default()
-        })
+        Ok(Self { version, hash, signature, sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
 

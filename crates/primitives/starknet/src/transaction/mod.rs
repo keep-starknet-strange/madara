@@ -156,7 +156,7 @@ impl Default for EventWrapper {
         Self {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
-            from_address: one.into(),
+            from_address: one,
         }
     }
 }
@@ -700,8 +700,8 @@ impl Default for Transaction {
         .into();
         Self {
             version: 1_u8,
-            hash: one.clone(),
-            signature: BoundedVec::try_from(vec![one.clone(), one]).unwrap(),
+            hash: one,
+            signature: BoundedVec::try_from(vec![one, one]).unwrap(),
             nonce: U256::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),

@@ -295,15 +295,15 @@ impl From<Felt252Wrapper> for Felt252 {
         Felt252::from_bytes_be(&buff)
     }
 }
-impl Into<Felt252Wrapper> for H256 {
-    fn into(self) -> Felt252Wrapper {
-        Felt252Wrapper(U256::from_big_endian(self.as_bytes()))
+impl From<H256> for Felt252Wrapper {
+    fn from(value: H256) -> Self {
+        Felt252Wrapper(U256::from_big_endian(value.as_bytes()))
     }
 }
-impl Into<H256> for Felt252Wrapper {
-    fn into(self) -> H256 {
+impl From<Felt252Wrapper> for H256 {
+    fn from(value: Felt252Wrapper) -> Self {
         let mut buff: [u8; 32] = [0u8; 32];
-        self.0.to_big_endian(&mut buff);
+        value.0.to_big_endian(&mut buff);
         H256::from_slice(&buff)
     }
 }
@@ -314,9 +314,9 @@ impl From<Felt252Wrapper> for FieldElement {
         FieldElement::from_byte_slice_be(&buff).unwrap()
     }
 }
-impl Into<Felt252Wrapper> for FieldElement {
-    fn into(self) -> Felt252Wrapper {
-        self.to_bytes_be().into()
+impl From<FieldElement> for Felt252Wrapper {
+    fn from(value: FieldElement) -> Self {
+        value.to_bytes_be().into()
     }
 }
 impl From<Felt252Wrapper> for [u8; 32] {
@@ -326,14 +326,14 @@ impl From<Felt252Wrapper> for [u8; 32] {
         buff
     }
 }
-impl Into<Felt252Wrapper> for &[u8] {
-    fn into(self) -> Felt252Wrapper {
-        Felt252Wrapper(U256::from_big_endian(&self))
+impl From<&[u8]> for Felt252Wrapper {
+    fn from(value: &[u8]) -> Self {
+        Felt252Wrapper(U256::from_big_endian(value))
     }
 }
-impl Into<Felt252Wrapper> for [u8; 32] {
-    fn into(self) -> Felt252Wrapper {
-        Felt252Wrapper(U256::from_big_endian(&self.as_slice()))
+impl From<[u8; 32]> for Felt252Wrapper {
+    fn from(value: [u8; 32]) -> Self {
+        Felt252Wrapper(U256::from_big_endian(&value))
     }
 }
 
