@@ -296,20 +296,6 @@ describeDevMadara("Starknet RPC", (context) => {
             0
           );
 
-        const calldata = [
-          "0x40e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01",
-          "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
-          "0x3",
-          "0x1",
-          "0x1",
-          "0x0",
-        ];
-
-        const caller_address = [
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0, 1,
-        ];
-
         expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
       }
     );
