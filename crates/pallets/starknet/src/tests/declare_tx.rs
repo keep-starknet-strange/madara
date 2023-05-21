@@ -17,7 +17,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         System::set_block_number(0);
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
-        let account_addr = get_account_address(AccountType::NoValidate).into();
+        let account_addr = get_account_address(AccountType::NoValidate);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
@@ -87,7 +87,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
         let wrong_tx_version = 50_u8;
 
         let transaction = DeclareTransaction {
-            sender_address: account_addr.into(),
+            sender_address: account_addr,
             contract_class: erc20_class,
             version: wrong_tx_version,
             compiled_class_hash: erc20_class_hash,
@@ -107,7 +107,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Openzeppelin).into();
+        let account_addr = get_account_address(AccountType::Openzeppelin);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
@@ -140,7 +140,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Openzeppelin).into();
+        let account_addr = get_account_address(AccountType::Openzeppelin);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
@@ -167,7 +167,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Braavos).into();
+        let account_addr = get_account_address(AccountType::Braavos);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
@@ -200,7 +200,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Braavos).into();
+        let account_addr = get_account_address(AccountType::Braavos);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
@@ -227,7 +227,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Argent).into();
+        let account_addr = get_account_address(AccountType::Argent);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
@@ -260,7 +260,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Argent).into();
+        let account_addr = get_account_address(AccountType::Argent);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =

@@ -54,7 +54,7 @@ fn given_call_contract_call_works() {
 
         let deploy_transaction = InvokeTransaction {
             version: 1,
-            sender_address: sender_account.into(),
+            sender_address: sender_account,
             signature: bounded_vec!(),
             nonce: U256::zero(),
             calldata: constructor_calldata,
@@ -70,7 +70,7 @@ fn given_call_contract_call_works() {
         let balance_of_selector =
             H256::from_str("0x02e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e").unwrap().into();
         let calldata = bounded_vec![
-            sender_account.into() // owner address
+            sender_account // owner address
         ];
         let res = Starknet::call_contract(expected_erc20_address, balance_of_selector, calldata);
         assert_ok!(res.clone());

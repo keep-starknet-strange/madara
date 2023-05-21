@@ -48,7 +48,7 @@ fn given_contract_run_deploy_account_tx_works() {
                         .into()
                 ],
                 data: bounded_vec!(
-                    test_addr.into(), // From
+                    test_addr, // From
                     H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002")
                         .unwrap()
                         .into(), // To

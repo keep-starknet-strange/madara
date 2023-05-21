@@ -112,25 +112,25 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     // OPENZEPPELIN ACCOUNT CONTRACT
     let openzeppelin_class_hash = H256::from_str(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap().into();
-    let openzeppelin_account_address = get_account_address(AccountType::Openzeppelin).into();
+    let openzeppelin_account_address = get_account_address(AccountType::Openzeppelin);
 
     // ARGENT ACCOUNT CONTRACT
     let argent_class_hash = H256::from_str(ARGENT_ACCOUNT_CLASS_HASH).unwrap().into();
-    let argent_account_address = get_account_address(AccountType::Argent).into();
+    let argent_account_address = get_account_address(AccountType::Argent);
 
     // BRAAVOS ACCOUNT CONTRACT
     let braavos_class_hash = H256::from_str(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap().into();
-    let braavos_account_address = get_account_address(AccountType::Braavos).into();
+    let braavos_account_address = get_account_address(AccountType::Braavos);
     let braavos_proxy_class_hash = H256::from_str(BRAAVOS_PROXY_CLASS_HASH).unwrap().into();
-    let braavos_proxy_address = get_account_address(AccountType::BraavosProxy).into();
+    let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
 
     // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
     let inner_call_account_class_hash = H256::from_str(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap().into();
-    let inner_call_account_address = get_account_address(AccountType::InnerCall).into();
+    let inner_call_account_address = get_account_address(AccountType::InnerCall);
 
     // SIMPLE ACCOUNT CONTRACT
     let simple_account_class_hash = H256::from_str(SIMPLE_ACCOUNT_CLASS_HASH).unwrap().into();
-    let simple_account_address = get_account_address(AccountType::NoValidate).into();
+    let simple_account_address = get_account_address(AccountType::NoValidate);
 
     // TEST CONTRACT
     let other_contract_address = H256::from_str(TEST_CONTRACT_ADDRESS).unwrap().into();
@@ -146,7 +146,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
     pallet_starknet::GenesisConfig::<MockRuntime> {
         contracts: vec![
-            (account_addr.into(), proxy_class_hash),
+            (account_addr, proxy_class_hash),
             (other_contract_address, other_class_hash),
             (l1_handler_contract_address, l1_handler_class_hash),
             (blockifier_account_address, blockifier_account_class_hash),
@@ -262,7 +262,7 @@ pub fn get_storage_key(
     let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
     let mut storage_key = get_storage_var_address(
         storage_name,
-        keys.iter().filter_map(|x| Some(FieldElement::from(*x))).collect::<Vec<_>>().as_slice(),
+        keys.iter().map(|x| FieldElement::from(*x)).collect::<Vec<_>>().as_slice(),
     )
     .unwrap();
     storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();

@@ -88,7 +88,7 @@ fn test_validate_entrypoint_calldata_declare() {
     // Given
     let tx = Transaction {
         call_entrypoint: CallEntryPointWrapper {
-            class_hash: Some(get_test_class_hash().into()),
+            class_hash: Some(get_test_class_hash()),
             ..CallEntryPointWrapper::default()
         },
         ..Transaction::default()
