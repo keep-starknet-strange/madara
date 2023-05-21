@@ -13,6 +13,7 @@ use starknet_api::transaction::{
 };
 
 use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCalldataSize};
+use crate::execution::program_wrapper::Felt252Wrapper;
 use crate::execution::types::ContractAddressWrapper;
 use crate::transaction::constants;
 use crate::transaction::types::{
@@ -70,22 +71,16 @@ fn test_validate_entry_point_selector_fails_for_l1_handler() {
     assert!(actual_entrypoint.is_err());
 }
 
-fn get_test_class_hash() -> [u8; 32] {
-    [2; 32]
+fn get_test_class_hash() -> Felt252Wrapper {
+    [2; 32].into()
 }
 
-fn get_test_calldata() -> BoundedVec<U256, MaxCalldataSize> {
-    bounded_vec![U256::from_str("0x1").unwrap(), U256::from_str("0x2").unwrap()]
+fn get_test_calldata() -> BoundedVec<Felt252Wrapper, MaxCalldataSize> {
+    bounded_vec![Felt252Wrapper(U256::from_str("0x1").unwrap()), Felt252Wrapper(U256::from_str("0x2").unwrap())]
 }
 
 fn get_test_contract_address_salt() -> U256 {
     U256::from_str("0x000000000000000000000000000000000000000000000000000000000000dead").unwrap()
-}
-
-fn u256_to_byte_array(x: U256) -> [u8; 32] {
-    let mut bytes = [0; 32];
-    x.to_big_endian(&mut bytes);
-    bytes
 }
 
 #[test]
@@ -93,7 +88,7 @@ fn test_validate_entrypoint_calldata_declare() {
     // Given
     let tx = Transaction {
         call_entrypoint: CallEntryPointWrapper {
-            class_hash: Some(get_test_class_hash()),
+            class_hash: Some(get_test_class_hash().into()),
             ..CallEntryPointWrapper::default()
         },
         ..Transaction::default()
@@ -101,7 +96,7 @@ fn test_validate_entrypoint_calldata_declare() {
 
     // When
     let actual_calldata =
-        (*tx.validate_entrypoint_calldata(&TxType::Declare).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
+        (*tx.validate_entrypoint_calldata(&TxType::Declare).unwrap().0).iter().map(|x| x.0.into()).collect::<Vec<_>>();
 
     // Then
     let expected_calldata = vec![get_test_class_hash()];
@@ -122,14 +117,16 @@ fn test_validate_entrypoint_calldata_deploy_account() {
     };
 
     // When
-    let actual_calldata =
-        (*tx.validate_entrypoint_calldata(&TxType::DeployAccount).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
+    let actual_calldata = (*tx.validate_entrypoint_calldata(&TxType::DeployAccount).unwrap().0)
+        .iter()
+        .map(|x| x.0.into())
+        .collect::<Vec<_>>();
 
     // Then
     let mut salt_bytes = [0; 32];
     get_test_contract_address_salt().to_big_endian(&mut salt_bytes);
-    let mut expected_calldata = vec![get_test_class_hash(), salt_bytes];
-    expected_calldata.extend(get_test_calldata().into_iter().map(u256_to_byte_array).collect::<Vec<_>>());
+    let mut expected_calldata = vec![get_test_class_hash(), salt_bytes.into()];
+    expected_calldata.extend(get_test_calldata().to_vec());
 
     assert_eq!(expected_calldata, actual_calldata);
 }
@@ -144,10 +141,10 @@ fn test_validate_entrypoint_calldata_invoke() {
 
     // When
     let actual_calldata =
-        (*tx.validate_entrypoint_calldata(&TxType::Invoke).unwrap().0).iter().map(|x| x.0).collect::<Vec<_>>();
+        (*tx.validate_entrypoint_calldata(&TxType::Invoke).unwrap().0).iter().map(|x| x.0.into()).collect::<Vec<_>>();
 
     // Then
-    let expected_calldata = get_test_calldata().into_iter().map(u256_to_byte_array).collect::<Vec<_>>();
+    let expected_calldata = get_test_calldata().to_vec();
 
     assert_eq!(expected_calldata, actual_calldata);
 }
@@ -168,9 +165,13 @@ fn test_validate_entrypoint_calldata_fails_for_l1_handler() {
 fn verify_tx_version_passes_for_valid_version() {
     let tx = Transaction {
         version: 1_u8,
-        hash: H256::from_low_u64_be(6),
-        signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-        sender_address: [0; 32],
+        hash: H256::from_low_u64_be(6).into(),
+        signature: bounded_vec![
+            H256::from_low_u64_be(10).into(),
+            H256::from_low_u64_be(20).into(),
+            H256::from_low_u64_be(30).into()
+        ],
+        sender_address: Felt252Wrapper::zero(),
         nonce: U256::zero(),
         ..Transaction::default()
     };
@@ -182,9 +183,13 @@ fn verify_tx_version_passes_for_valid_version() {
 fn verify_tx_version_fails_for_invalid_version() {
     let tx = Transaction {
         version: 0_u8,
-        hash: H256::from_low_u64_be(6),
-        signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-        sender_address: [0; 32],
+        hash: H256::from_low_u64_be(6).into(),
+        signature: bounded_vec![
+            H256::from_low_u64_be(10).into(),
+            H256::from_low_u64_be(20).into(),
+            H256::from_low_u64_be(30).into()
+        ],
+        sender_address: Felt252Wrapper::zero(),
         nonce: U256::zero(),
         ..Transaction::default()
     };
@@ -232,8 +237,8 @@ fn test_try_into_transaction_receipt_wrapper() {
     let events = transaction_receipt_wrapper.events;
 
     // Check if the transaction hash, actual fee, and tx type are correctly converted
-    assert_eq!(transaction_receipt_wrapper.transaction_hash, H256::from_slice(&[1; 32]));
-    assert_eq!(transaction_receipt_wrapper.actual_fee, U256::from(0));
+    assert_eq!(transaction_receipt_wrapper.transaction_hash, H256::from_slice(&[1; 32]).into());
+    assert_eq!(transaction_receipt_wrapper.actual_fee, Felt252Wrapper::zero());
     assert_eq!(transaction_receipt_wrapper.tx_type, TxType::Invoke);
 
     // Check if the events are correctly converted
@@ -291,9 +296,11 @@ fn test_try_into_transaction_receipt_wrapper_with_too_many_events() {
 
 #[test]
 fn test_event_wrapper_new() {
-    let keys: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::zero(), H256::from([1; 32])];
-    let data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
-    let from_address = ContractAddressWrapper::from(H256::from([3; 32]));
+    let keys: BoundedVec<Felt252Wrapper, MaxArraySize> =
+        bounded_vec![Felt252Wrapper::zero(), H256::from([1; 32]).into()];
+    let data: BoundedVec<Felt252Wrapper, MaxArraySize> =
+        bounded_vec![H256::from([1; 32]).into(), H256::from([2; 32]).into()];
+    let from_address = H256::from([3; 32]).into();
 
     let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address);
     let expected_event = EventWrapper { keys, data, from_address };
@@ -313,9 +320,9 @@ fn test_event_wrapper_empty() {
 
 #[test]
 fn test_event_wrapper_builder() {
-    let keys = vec![H256::zero(), H256::from([1; 32])];
-    let data = vec![H256::from([1; 32]), H256::from([2; 32])];
-    let from_address = ContractAddressWrapper::from(H256::from([3; 32]));
+    let keys = vec![Felt252Wrapper::zero(), H256::from([1; 32]).into()];
+    let data = vec![H256::from([1; 32]).into(), H256::from([2; 32]).into()];
+    let from_address = [3; 32];
 
     let event_wrapper = EventWrapper::builder()
         .with_keys(keys.clone())
@@ -325,9 +332,9 @@ fn test_event_wrapper_builder() {
         .unwrap();
 
     let expected_event = EventWrapper {
-        keys: BoundedVec::<H256, MaxArraySize>::try_from(keys).unwrap(),
-        data: BoundedVec::<H256, MaxArraySize>::try_from(data).unwrap(),
-        from_address,
+        keys: BoundedVec::<Felt252Wrapper, MaxArraySize>::try_from(keys).unwrap(),
+        data: BoundedVec::<Felt252Wrapper, MaxArraySize>::try_from(data).unwrap(),
+        from_address: from_address.into(),
     };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);
@@ -342,8 +349,9 @@ fn test_event_wrapper_builder_with_event_content() {
 
     let event_wrapper = EventWrapper::builder().with_event_content(event_content).build().unwrap();
 
-    let bounded_keys: BoundedVec<H256, MaxArraySize> = bounded_vec!(H256::zero());
-    let bounded_data: BoundedVec<H256, MaxArraySize> = bounded_vec![H256::from([1; 32]), H256::from([2; 32])];
+    let bounded_keys: BoundedVec<Felt252Wrapper, MaxArraySize> = bounded_vec!(Felt252Wrapper::zero());
+    let bounded_data: BoundedVec<Felt252Wrapper, MaxArraySize> =
+        bounded_vec![H256::from([1; 32]).into(), H256::from([2; 32]).into()];
 
     let expected_event =
         EventWrapper { keys: bounded_keys, data: bounded_data, from_address: ContractAddressWrapper::default() };

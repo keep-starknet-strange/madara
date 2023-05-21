@@ -342,6 +342,16 @@ impl Felt252Wrapper {
     pub fn zero() -> Self {
         Self(U256::zero())
     }
+
+    /// Returns the one value.
+    pub fn one() -> Self {
+        Self(U256::one())
+    }
+
+    /// Return the max 128 bits value.
+    pub fn max_u128() -> Self {
+        Self(U256::from(u128::MAX))
+    }
 }
 
 #[derive(

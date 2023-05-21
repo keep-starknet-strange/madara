@@ -2,7 +2,7 @@ use core::str::FromStr;
 
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use hex::FromHex;
-use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::DeclareTransaction;
 use sp_core::{H256, U256};
 
@@ -17,11 +17,11 @@ fn given_contract_declare_tx_works_once_not_twice() {
         System::set_block_number(0);
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
-        let account_addr = get_account_address(AccountType::NoValidate);
+        let account_addr = get_account_address(AccountType::NoValidate).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
         let transaction = DeclareTransaction {
             sender_address: account_addr,
@@ -50,11 +50,11 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
 
         // Wrong address (not deployed)
         let contract_address_str = "03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f";
-        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap();
+        let contract_address_bytes = <[u8; 32]>::from_hex(contract_address_str).unwrap().into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
         let transaction = DeclareTransaction {
             sender_address: contract_address_bytes,
@@ -82,12 +82,12 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         // TODO: Delete when the class hash can be derived from ContractClass
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
         let wrong_tx_version = 50_u8;
 
         let transaction = DeclareTransaction {
-            sender_address: account_addr,
+            sender_address: account_addr.into(),
             contract_class: erc20_class,
             version: wrong_tx_version,
             compiled_class_hash: erc20_class_hash,
@@ -107,13 +107,14 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Openzeppelin);
+        let account_addr = get_account_address(AccountType::Openzeppelin).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
-        let tx_hash = H256::from_str("0x04b6608f43263d19966c6cc30f3619c29e8ced2e07a4947b8c0c2fd56d44d4fb").unwrap();
+        let tx_hash =
+            H256::from_str("0x04b6608f43263d19966c6cc30f3619c29e8ced2e07a4947b8c0c2fd56d44d4fb").unwrap().into();
         let transaction = DeclareTransaction {
             sender_address: account_addr,
             contract_class: erc20_class,
@@ -139,11 +140,11 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Openzeppelin);
+        let account_addr = get_account_address(AccountType::Openzeppelin).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
         let transaction = DeclareTransaction {
             sender_address: account_addr,
@@ -152,7 +153,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
+            signature: bounded_vec!(Felt252Wrapper::zero(), Felt252Wrapper::one()),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -166,13 +167,14 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Braavos);
+        let account_addr = get_account_address(AccountType::Braavos).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
-        let tx_hash = H256::from_str("0x076975b47411feb8dab2633a7b8a2db3d8112a2492d1ccc2bdb832bbc5db0cff").unwrap();
+        let tx_hash =
+            H256::from_str("0x076975b47411feb8dab2633a7b8a2db3d8112a2492d1ccc2bdb832bbc5db0cff").unwrap().into();
         let transaction = DeclareTransaction {
             sender_address: account_addr,
             contract_class: erc20_class,
@@ -198,11 +200,11 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Braavos);
+        let account_addr = get_account_address(AccountType::Braavos).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
         let transaction = DeclareTransaction {
             sender_address: account_addr,
@@ -211,7 +213,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
+            signature: bounded_vec!(Felt252Wrapper::zero(), Felt252Wrapper::one()),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -225,13 +227,14 @@ fn given_contract_declare_on_argent_account_then_it_works() {
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Argent);
+        let account_addr = get_account_address(AccountType::Argent).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
-        let tx_hash = H256::from_str("0x02fc479a47d17efd76b69a1eb7731f1ac592948ab19b1047a087a43378d5a61a").unwrap();
+        let tx_hash =
+            H256::from_str("0x02fc479a47d17efd76b69a1eb7731f1ac592948ab19b1047a087a43378d5a61a").unwrap().into();
         let transaction = DeclareTransaction {
             sender_address: account_addr,
             contract_class: erc20_class,
@@ -257,11 +260,11 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Argent);
+        let account_addr = get_account_address(AccountType::Argent).into();
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
         let erc20_class_hash =
-            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+            <[u8; 32]>::from_hex("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap().into();
 
         let transaction = DeclareTransaction {
             sender_address: account_addr,
@@ -270,7 +273,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(H256::from_low_u64_be(0), H256::from_low_u64_be(1)),
+            signature: bounded_vec!(Felt252Wrapper::zero(), Felt252Wrapper::one()),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
