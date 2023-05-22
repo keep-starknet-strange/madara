@@ -769,8 +769,7 @@ impl<T: Config> Pallet<T> {
     /// The current block hash.
     #[inline(always)]
     pub fn current_block_hash() -> Felt252Wrapper {
-        // TODO: check unwrap. It's from substrate hash, this may overflow in a veeeeery long time.
-        Felt252Wrapper::try_from(Self::current_block().header().hash(T::SystemHash::hasher())).unwrap()
+        Self::current_block().header().hash(T::SystemHash::hasher())
     }
 
     /// Get the block hash of the previous block.

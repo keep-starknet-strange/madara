@@ -1,5 +1,5 @@
 use scale_codec::Encode;
-use sp_core::{H256, U256};
+use sp_core::U256;
 
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::Hasher;
@@ -76,8 +76,8 @@ impl Header {
 
     /// Compute the hash of the header.
     #[must_use]
-    pub fn hash<H: Hasher>(&self, hasher: H) -> H256 {
-        H256::from_slice(<H as Hasher>::hash(&hasher, &self.block_number.encode()).as_slice())
+    pub fn hash<H: Hasher>(&self, hasher: H) -> Felt252Wrapper {
+        <H as Hasher>::hash(&hasher, &self.block_number.encode())
     }
 }
 
@@ -111,7 +111,7 @@ fn test_header_hash() {
 
     let hasher = crate::crypto::hash::pedersen::PedersenHasher::default();
 
-    let expected_hash = H256::from_slice(hasher.hash(&block_number.encode()).as_slice());
+    let expected_hash = hasher.hash(&block_number.encode());
 
     assert_eq!(header.hash(hasher), expected_hash);
 }

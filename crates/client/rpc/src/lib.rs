@@ -96,7 +96,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().hash(PedersenHasher::default()))
+        Ok(block.header().hash(PedersenHasher::default()).into())
     }
 
     /// Returns the substrate block corresponding to the given Starknet block id
@@ -280,20 +280,13 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = FieldElement::from_byte_slice_be(
-                        &starting_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    let starting_block_hash = starting_block?.header().hash(PedersenHasher::default()).0;
+
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = FieldElement::from_byte_slice_be(
-                        &current_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    let current_block_hash = current_block?.header().hash(PedersenHasher::default()).0;
+
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = FieldElement::from_byte_slice_be(
-                        &highest_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    let highest_block_hash = highest_block?.header().hash(PedersenHasher::default()).0;
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(SyncStatusType::Syncing(SyncStatus {
