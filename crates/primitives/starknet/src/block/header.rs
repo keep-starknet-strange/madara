@@ -83,15 +83,15 @@ impl Header {
 
 #[test]
 fn test_header_hash() {
-    let parent_block_hash = H256::from([1; 32]).into();
+    let parent_block_hash = Felt252Wrapper::try_from(&[1; 32]).unwrap();
     let block_number = U256::from(42);
-    let global_state_root = Felt252Wrapper(U256::from(12345));
-    let sequencer_address = [2; 32].into();
+    let global_state_root = Felt252Wrapper::from(12345_u128);
+    let sequencer_address = Felt252Wrapper::try_from(&[2; 32]).unwrap();
     let block_timestamp = 1620037184;
     let transaction_count = 2;
-    let transaction_commitment = H256::from([3; 32]).into();
+    let transaction_commitment = Felt252Wrapper::try_from(&[3; 32]).unwrap();
     let event_count = 1;
-    let event_commitment = H256::from([4; 32]).into();
+    let event_commitment = Felt252Wrapper::try_from(&[4; 32]).unwrap();
     let protocol_version = Some(1);
     let extra_data = None;
 
