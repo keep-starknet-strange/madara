@@ -112,7 +112,7 @@ https://blockgeeks.com/guides/what-is-blockchain-technology/)
 [Introduction to Blockchain Concepts]( https://www.ibm.com/topics/blockchain)  
 [How Does Blockchain Work?](
 https://www.investopedia.com/terms/b/blockchain.asp)  
-[Topcis on Dev.to](https://dev.to/t/blockchain)
+[Topics on Dev.to](https://dev.to/t/blockchain)
 
 The following two are a bit more technical, but very fundamental:  
 [Ethereum white paper](https://ethereum.org/en/whitepaper/)  
@@ -127,7 +127,7 @@ by enabling fast and cost-effective execution of decentralized applications
 aggregates multiple transactions on Starknet chain and submits a single proof to
 Ethereum for verification. This approach significantly reduces transaction costs
 and increases scalability while maintaining the security and decentralization of
-the Ethereum.
+the Ethereum network.
 
 [Starknet getting started](https://www.starknet.io/en/what-is-starknet)  
 [Using Starknet with the Starknet book](https://book.starknet.io/)  
@@ -139,9 +139,14 @@ https://medium.com/starkware/exploring-the-use-cases-of-cheap-computation-1ab625
 
 <a name="understanding-substrate"/>
 
-Substrate is a blockchain development framework that facilitates the creation of
-custom, scalable,and efficient blockchain networks. Some key features of
-Substrate are:
+Substrate is a Software Development Kit (SDK) that allows you to build
+application-specific blockchains that can run as standalone services or in
+parallel with other chains with the shared security provided by the Polkadot
+ecosystem. The SDK is designed to be fully modular and flexible, giving
+developers a high degree of control and creativity over the applications they
+build.
+
+Some key features of Substrate are:
 
 - _Modular Framework_  
   Substrate provides a modular framework that allows developers to easily
@@ -165,9 +170,10 @@ _you must understand_ to navigate easily in the Madara code base.
 ### Client <a name="substrate-client"/>
 
 The client in Substrate refers to the software that interacts with the
-blockchain network. It handles tasks such as local storage, syncing with the
-network, and interacting with other nodes. The client provides the user
-interface and functionality for interacting with the blockchain.
+blockchain network. It handles network activity such as peer discovery, managing
+transaction requests, reaching consensus with peers, and responding to RPC
+calls. The client provides the user interface and functionality for interacting
+with the blockchain.
 
 As a naming convention, every rust library used for the client implementation is
 prefixed with **sc\_** (for Substrate Client, in the Substrate crates). Madara
@@ -178,11 +184,17 @@ https://github.com/keep-starknet-strange/madara/blob/main/crates/client/storage/
 
 ### Runtime <a name="substrate-runtime"/>
 
-The runtime is the heart of a Substrate-based blockchain. It defines the core
-logic, rules, and functionalities of the blockchain. As an example, it's in the
-runtime where we define how transactions are processed and how blocks are built.
-Substrate proposes a framework called FRAME to provide a modular structure for
-the runtime, where the modules are called **pallets**.
+The runtime determines whether transactions are valid or invalid and is
+responsible for handling changes to the blockchain state, it serves as the core
+of any blockchain built using Substrate.
+
+It encapsulates the fundamental logic, rules, and functions of the blockchain.
+For instance, the processing of transactions and the construction of blocks are
+all defined within the runtime. Substrate offers a framework known as FRAME to
+supply a modular structure for the runtime, with the modules referred to as
+**pallets**. Some common use cases of customizable business logic Pallets can
+provide are managing account balances, voting on proposals, staking, and
+consensus​​.
 
 As a naming convention, every rust library used for the runtime implementation
 is prefixed with **frame\_** or **pallet\_** (in the Substrate crates). Madara
@@ -210,10 +222,10 @@ https://github.com/keep-starknet-strange/madara/blob/main/crates/primitives/star
 
 While Substrate may have a learning curve for newcomers to blockchain
 development, it provides a powerful and flexible framework for building
-blockchain networks and its understanding is required to contribute to Madara.
+blockchain networks. Its understanding is required to contribute to Madara.
 
-Navigating into Madara codebase, you can appreciate the previous architecture in
-how the folders are organized in the `crates` folder.
+When you explore the Madara codebase, the structure of the previously mentioned
+architecture becomes apparent in the organization of the `crates` folder.
 
 ```bash
 ├── client
@@ -246,9 +258,9 @@ how the folders are organized in the `crates` folder.
 ```
 
 Even if Substrate was first designed for Polkadot chain and parachain
-development, it still is a very useful framework for creating a state-of-the-art
+development, it's still a very useful framework for creating a state-of-the-art
 blockchain, even without connecting it to Polkadot. This is referred to as
-"Solo-Chain" in the Polkadot terminology.
+"Solo-Chain" in Polkadot terminology.
 
 [Substrate docs](https://docs.substrate.io/)  
 [Substrate architecture](https://docs.substrate.io/learn/architecture/)  
@@ -257,22 +269,22 @@ https://medium.com/polkadot-network/a-brief-summary-of-everything-substrate-and-
 
 ## Diving into Madara <a name="madara-dive"/>
 
-Now that you have a better understanding of the context, what Madara is?
+Now that you have a better understanding of the context, what is Madara?
 
-Madara is a powerful sequencer for StarkNet, an innovative Layer 2 scaling
+Madara is a powerful sequencer for Starknet, an innovative Layer 2 scaling
 solution for Ethereum. Madara plays a crucial role in enabling efficient and
-scalable transaction processing on the StarkNet network. Developed in Rust and
+scalable transaction processing on the Starknet network. Developed in Rust and
 built upon the robust Substrate framework, Madara leverages the potential of
 decentralized technologies to enhance the scalability of Ethereum.
 
 A sequencer is a vital component within blockchain layer 2 solutions that plays
-a critical role in processing and ordering transactions on the StarkNet network.
+a critical role in processing and ordering transactions on the Starknet network.
 As the backbone of transaction sequencing, Madara ensures that transactions are
 organized and executed in a secure and deterministic manner.
 
 You can find Madara documentation (work in progress)
 [here](https://docs.madara.wtf/).  
-You can contribute to this documentation to go
+You can contribute to this documentation
 [here](https://github.com/keep-starknet-strange/madara-docs).
 
 How to contribute?
@@ -289,15 +301,15 @@ How to contribute?
 Exciting stuff, right? Join the community of Starknet builders!
 
 Joining the community is crucial for engaging with fellow contributors, seeking
-help, and staying up-to-date with Madara developments. Join us to build the
+help, and staying up-to-date with Madara developments. Join us in building the
 future of Ethereum scaling!
 
 [GitHub contributor guide](
 https://docs.github.com/en/get-started/quickstart/hello-world)  
 [Madara GitHub repository](https://github.com/keep-starknet-strange/madara)  
 [Madara Telegram](https://t.me/MadaraStarknet)  
-[Starknet Discord](https://discord.gg/qypnmzkhbc) (Or search for Starknet into
-discord servers browser)
+[Starknet Discord](https://discord.gg/qypnmzkhbc) (Or search for Starknet in
+discord's servers browser)
 
 ## Contribution rewards on OnlyDust <a name="onlydust"/>
 

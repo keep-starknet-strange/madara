@@ -1,6 +1,8 @@
 use frame_support::BoundedVec;
 use hex::FromHex;
-use mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
+use mp_starknet::execution::types::{
+    CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
+};
 use mp_starknet::transaction::types::Transaction;
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
@@ -50,12 +52,14 @@ impl Message {
         }
         // L2 contract to call.
         let sender_address = <[u8; 32]>::from_hex(self.topics[2].trim_start_matches("0x"))
-            .map_err(|_| OffchainWorkerError::HexDecodeError)?;
+            .map_err(|_| OffchainWorkerError::HexDecodeError)?
+            .into();
         // Function of the contract to call.
         let selector = H256::from_slice(
             &<[u8; 32]>::from_hex(self.topics[3].trim_start_matches("0x"))
                 .map_err(|_| OffchainWorkerError::HexDecodeError)?,
-        );
+        )
+        .into();
         // Add the from address here so it's directly in the calldata.
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
             .chars()
@@ -66,11 +70,13 @@ impl Message {
         // L1 message nonce.
         let nonce = U256::from_str_radix(&data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)?, 16)
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
-        let mut calldata = Vec::new();
+        let mut calldata: Vec<Felt252Wrapper> = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
-            calldata.push(U256::from_big_endian(
-                &<[u8; 32]>::from_hex(val.trim_start_matches("0x")).map_err(|_| OffchainWorkerError::HexDecodeError)?,
-            ))
+            calldata.push(
+                <[u8; 32]>::from_hex(val.trim_start_matches("0x"))
+                    .map_err(|_| OffchainWorkerError::HexDecodeError)?
+                    .into(),
+            )
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let call_entrypoint = CallEntryPointWrapper {
@@ -91,14 +97,15 @@ mod test {
     use mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     use mp_starknet::transaction::types::Transaction;
     use pretty_assertions;
-    use sp_core::{H256, U256};
+    use sp_core::U256;
 
     use super::*;
     use crate::offchain_worker::OffchainWorkerError;
 
     #[test]
     fn test_try_into_transaction_correct_message_should_work() {
-        let sender_address = H256::from_low_u64_be(1).to_fixed_bytes();
+        let felt_one = Felt252Wrapper(U256::from(1));
+        let sender_address = felt_one;
         let hex = "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned();
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
@@ -108,9 +115,9 @@ mod test {
             call_entrypoint: CallEntryPointWrapper {
                 class_hash: None,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
-                entrypoint_selector: Some(H256::from_low_u64_be(1)),
-                calldata: bounded_vec![U256::from(1), U256::from(1)],
-                storage_address: H256::from_low_u64_be(1).to_fixed_bytes(),
+                entrypoint_selector: Some(felt_one),
+                calldata: bounded_vec![Felt252Wrapper(U256::from(1)), Felt252Wrapper(U256::from(1))],
+                storage_address: felt_one,
                 caller_address: ContractAddressWrapper::default(),
             },
             ..Transaction::default()

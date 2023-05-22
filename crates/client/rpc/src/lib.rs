@@ -14,7 +14,9 @@ use log::error;
 use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::block::BlockTransactions;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{Transaction, TxType};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -182,7 +184,7 @@ where
         let hex_key = H256::from_slice(&key.to_bytes_be()[..32]);
 
         let value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address, hex_key)
+            .get_storage_at(substrate_block_hash, hex_address.into(), hex_key.into())
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -206,15 +208,10 @@ where
 
         let runtime_api = self.client.runtime_api();
 
-        let calldata = request.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect();
+        let calldata = request.calldata.iter().map(|x| Felt252Wrapper(U256::from(x.to_bytes_be()))).collect();
 
         let result = runtime_api
-            .call(
-                substrate_block_hash,
-                request.contract_address.to_bytes_be(),
-                H256::from_slice(&request.entry_point_selector.to_bytes_be()[..32]),
-                calldata,
-            )
+            .call(substrate_block_hash, request.contract_address.into(), request.entry_point_selector.into(), calldata)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -223,7 +220,7 @@ where
                 error!("Failed to call function: {:#?}", e);
                 StarknetRpcApiError::ContractError
             })?;
-        Ok(result.iter().map(|x| format!("{:#x}", x)).collect())
+        Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
 
     /// Get the contract class at a given contract address for a given block id
@@ -237,7 +234,7 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
+            .contract_class_by_address(substrate_block_hash, contract_address_wrapped.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
@@ -336,7 +333,7 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped)
+            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class from hash '{class_hash}'");
                 StarknetRpcApiError::ContractNotFound
@@ -371,13 +368,12 @@ where
         let class_hash = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped)
+            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-        let class_hash = FieldElement::from_byte_slice_be(&class_hash).unwrap();
-        Ok(class_hash)
+        Ok(class_hash.into())
     }
 
     /// Returns the specified block with transaction hashes.
@@ -393,26 +389,45 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let transactions = block
-            .transactions_hashes()
-            .into_iter()
-            .map(|hash| FieldElement::from_byte_slice_be(&hash.to_fixed_bytes()).unwrap())
-            .collect();
+        let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
+        let blockhash: Felt252Wrapper = block.header().hash(PedersenHasher::default()).into();
+        let parent_blockhash: Felt252Wrapper = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from_byte_slice_be(
-                &block.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-            )
-            .unwrap(),
-            parent_hash: FieldElement::from_byte_slice_be(&block.header().parent_block_hash.to_fixed_bytes()).unwrap(),
+            block_hash: FieldElement::from(blockhash),
+            parent_hash: FieldElement::from(parent_blockhash),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from_byte_slice_be(&<[u8; 32]>::from(block.header().global_state_root)).unwrap(),
+            new_root: FieldElement::from(block.header().global_state_root),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from_byte_slice_be(&block.header().sequencer_address).unwrap(),
+            sequencer_address: FieldElement::from(block.header().sequencer_address),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
+    }
+
+    // Returns the details of a transaction by a given block id and index
+    fn get_transaction_by_block_id_and_index(&self, block_id: StarknetBlockId, index: usize) -> RpcResult<Transaction> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let block_transactions = block.transactions();
+        let transaction;
+        match block_transactions {
+            BlockTransactions::Full(transactions) => {
+                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                Ok(transaction.clone())
+            }
+            BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
+        }
     }
 
     /// Returns the chain id.
@@ -462,9 +477,7 @@ where
             },
         )?;
 
-        Ok(InvokeTransactionResult {
-            transaction_hash: starknet_ff::FieldElement::from_bytes_be(&transaction.hash.0).unwrap(),
-        })
+        Ok(InvokeTransactionResult { transaction_hash: FieldElement::from(transaction.hash) })
     }
 
     /// Add an Deploy Account Transaction
@@ -508,14 +521,8 @@ where
         })?;
 
         Ok(DeployAccountTransactionResult {
-            transaction_hash: FieldElement::from_bytes_be(&transaction.hash.0).map_err(|e| {
-                error!("Failed to convert transaction hash to FieldElement: {e}");
-                StarknetRpcApiError::ClassHashNotFound
-            })?,
-            contract_address: FieldElement::from_bytes_be(&transaction.sender_address).map_err(|e| {
-                error!("Failed to convert contract address to FieldElement: {e}");
-                StarknetRpcApiError::ClassHashNotFound
-            })?,
+            transaction_hash: FieldElement::from(transaction.hash),
+            contract_address: FieldElement::from(transaction.sender_address),
         })
     }
 

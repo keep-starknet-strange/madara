@@ -34,7 +34,7 @@
 | starknet_getStateUpdate                  | :construction:     |
 | starknet_getStorageAt                    | :white_check_mark: |
 | starknet_getTransactionByHash            | :construction:     |
-| starknet_getTransactionByBlockIdAndIndex | :construction:     |
+| starknet_getTransactionByBlockIdAndIndex | :white_check_mark: |
 | starknet_getTransactionReceipt           | :construction:     |
 | starknet_getClass                        | :white_check_mark: |
 | starknet_getClassHashAt                  | :white_check_mark: |

@@ -2,12 +2,6 @@
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="256">
-  <br />
-  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
-  -
-  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
-  -
-  <a href="https://github.com/keep-starknet-strange/madara/discussions">Ask a Question</a>
 </div>
 
 <div align="center">
@@ -23,6 +17,21 @@
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
+<a href="https://docs.madara.wtf/">
+<img src="https://img.shields.io/badge/Documentation-Website-yellow"
+ height="50" />
+</a>
+
+<a href="https://www.youtube.com/playlist?list=PL1yL2_t7cTuJtzmMQWk4UZkmMpdNF-quN">
+<img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"
+ height="50" />
+</a>
+
+<a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/contributor-starter-pack.md">
+<img src="https://img.shields.io/badge/Contributor%20starter%20pack-Doc-green?logo=github"
+ height="50" />
+</a>
+
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
 
@@ -35,13 +44,9 @@ Together, we're pushing the boundaries of what's possible within the Starknet ec
 
 🚀 Discover the unparalleled flexibility and might of Madara,
 your gateway to launching your very own Starknet appchain or L3.
-Harness the prowess of Cairo, while maintaining complete control over your
- tailor-made appchain, designed to meet your project's unique demands.
-
-Experience the flexibility and power of Madara, enabling you to launch your very
-own Starknet appchain or L3. Harness the capabilities of Cairo while maintaining
-complete control over your custom appchain, tailored to your specific
-requirements. Madara is designed to empower a multitude of projects, fueling
+Harness the prowess of Cairo, while maintaining complete control
+over your custom appchain, tailored to your specific requirements.
+Madara is designed to empower a multitude of projects, fueling
 growth within the Starknet ecosystem.
 
 ## 🌟 Features
@@ -74,11 +79,6 @@ build and run Madara on your local machine.
 Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
 front-end to interact with your chain.
 [Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
-
-You can also connect to our customized fork of the Polkadot-JS Apps front-end,
-deployed on
-
-[Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
 
 You can also connect to our customized fork of the Polkadot-JS Apps front-end,
  deployed on [Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
@@ -141,6 +141,10 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/amanusk"><img src="https://avatars.githubusercontent.com/u/7280933?v=4?s=100" width="100px;" alt="amanusk"/><br /><sub><b>amanusk</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=amanusk" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dpinones"><img src="https://avatars.githubusercontent.com/u/30808181?v=4?s=100" width="100px;" alt="Damián Piñones"/><br /><sub><b>Damián Piñones</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=dpinones" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/marioiordanov"><img src="https://avatars.githubusercontent.com/u/102791638?v=4?s=100" width="100px;" alt="marioiordanov"/><br /><sub><b>marioiordanov</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=marioiordanov" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dbejarano820"><img src="https://avatars.githubusercontent.com/u/58019353?v=4?s=100" width="100px;" alt="Daniel Bejarano"/><br /><sub><b>Daniel Bejarano</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=dbejarano820" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sparqet"><img src="https://avatars.githubusercontent.com/u/37338401?v=4?s=100" width="100px;" alt="sparqet"/><br /><sub><b>sparqet</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=sparqet" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
