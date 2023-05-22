@@ -57,9 +57,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                         .unwrap()
                 ],
                 data: bounded_vec!(
-                    expected_erc20_address,                                          // Contract address
-                    Felt252Wrapper::zero(),                                          /* Deployer (always 0 with this
-                                                                                      * account contract) */
+                    expected_erc20_address, // Contract address
+                    Felt252Wrapper::zero(), /* Deployer (always 0 with this
+                                             * account contract) */
                     Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
                     Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000006")
                         .unwrap(), // Constructor calldata len
