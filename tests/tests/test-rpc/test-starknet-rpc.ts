@@ -14,7 +14,6 @@ import {
 } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { transfer } from "../../util/starknet";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
@@ -32,7 +31,7 @@ import {
   SIGNER_PUBLIC,
   SALT,
 } from "../constants";
-import { toHex } from "../../util/utils";
+import { rpcTransfer, toHex } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -175,17 +174,8 @@ describeDevMadara("Starknet RPC", (context) => {
         "when call getBlockWithTxHashes " +
         "then returns an object with transactions",
       async function () {
-        await context.createBlock(
-          transfer(
-            context.polkadotApi,
-            CONTRACT_ADDRESS,
-            FEE_TOKEN_ADDRESS,
-            CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-            0
-          ),
-          { parentHash: undefined, finalize: true }
-        );
+        await rpcTransfer(providerRPC, 0, CONTRACT_ADDRESS, MINT_AMOUNT);
+        await createAndFinalizeBlock(context.polkadotApi);
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -214,10 +204,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "when call getBlockWithTxHashes " +
         "then returns an object with empty transactions",
       async function () {
-        await context.createBlock(undefined, {
-          parentHash: undefined,
-          finalize: true,
-        });
+        await createAndFinalizeBlock(context.polkadotApi);
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const latestBlock: { status: string; transactions: string[] } =
@@ -275,18 +262,8 @@ describeDevMadara("Starknet RPC", (context) => {
         "when call getTransactionByBlockIdAndIndex " +
         "then returns a transaction",
       async function () {
-        // Send a transaction
-        await context.createBlock(
-          transfer(
-            context.polkadotApi,
-            CONTRACT_ADDRESS,
-            FEE_TOKEN_ADDRESS,
-            CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-            1
-          ),
-          { parentHash: undefined, finalize: true }
-        );
+        await rpcTransfer(providerRPC, 1, CONTRACT_ADDRESS, MINT_AMOUNT);
+        await createAndFinalizeBlock(context.polkadotApi);
 
         const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
 
@@ -319,10 +296,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "when call getTransactionByBlockIdAndIndex " +
         "then throw 'Invalid transaction index in a block'",
       async function () {
-        await context.createBlock(undefined, {
-          parentHash: undefined,
-          finalize: true,
-        });
+        await createAndFinalizeBlock(context.polkadotApi);
         const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
         await providerRPC
           .getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 2)
@@ -382,7 +356,7 @@ describeDevMadara("Starknet RPC", (context) => {
     }
   });
 
-  it("Adds an invocation transaction successfully", async function () {
+  it("Adds a deploy account transaction successfully", async function () {
     // Compute contract address
     const selector = hash.getSelectorFromName("initialize");
     const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
