@@ -28,7 +28,7 @@ fn given_contract_run_deploy_account_tx_works() {
             sender_address: test_addr,
             salt: U256::from_str(salt).unwrap(),
             version: 1,
-            // TODO: check if calldata is hex or decimal.
+            // Calldata is hex so this works fine
             calldata: BoundedVec::try_from(
                 calldata
                     .clone()
