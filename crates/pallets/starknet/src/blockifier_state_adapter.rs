@@ -47,8 +47,8 @@ impl<T: Config> Default for BlockifierStateAdapter<T> {
 
 // TODO: unwrap from Felt252Wrapper try_from is done all over the code here.
 // As inputs are mostly starknet-core parsed type, should be fine.
-// By the way, it is worth checking if starknet-rs provides all the starknet_api methods, to use felts
-// directly.
+// By the way, it is worth checking if starknet-rs provides all the starknet_api methods, to use
+// felts directly.
 
 impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     fn get_storage_at(&mut self, contract_address: ContractAddress, key: StorageKey) -> StateResult<StarkFelt> {

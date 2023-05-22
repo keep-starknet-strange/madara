@@ -15,11 +15,10 @@ pub mod call_entrypoint_wrapper;
 pub mod contract_class_wrapper;
 /// Entrypoint Wrapper related types
 pub mod entrypoint_wrapper;
-/// Program Wrapper related types
-pub mod program_wrapper;
 /// Felt252Wrapper type
 pub mod felt252_wrapper;
-
+/// Program Wrapper related types
+pub mod program_wrapper;
 
 /// Serialization of [BoundedBTreeMap].
 /// This is needed for the genesis config.
@@ -102,6 +101,6 @@ pub mod types {
     pub use super::call_entrypoint_wrapper::*;
     pub use super::contract_class_wrapper::*;
     pub use super::entrypoint_wrapper::*;
-    pub use super::program_wrapper::*;
     pub use super::felt252_wrapper::*;
+    pub use super::program_wrapper::*;
 }

@@ -17,7 +17,7 @@ use blockifier::transaction::objects::AccountTransactionContext;
 use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contracts;
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
-use sp_core::{U256};
+use sp_core::U256;
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -115,7 +115,8 @@ impl EventBuilder {
     ///
     /// * `event_content` - Event content retrieved from the `CallInfo`.
     pub fn with_event_content(mut self, event_content: EventContent) -> Self {
-        // TOOD: what's the proper why to handle errors in a map? We should return Return<Self, Felt252WrapperError> instead?
+        // TOOD: what's the proper why to handle errors in a map? We should return Return<Self,
+        // Felt252WrapperError> instead?
         self.keys = event_content
             .keys
             .iter()
@@ -173,8 +174,9 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
             .collect();
 
         Ok(TransactionReceiptWrapper {
-            transaction_hash: Felt252Wrapper::try_from(self.transaction_hash.0.bytes()).unwrap(), // comes from StarkHash, should be safe.
-            actual_fee: Felt252Wrapper::try_from(U256::from(self.output.actual_fee().0)).expect("Actual fee too large for felt252."),
+            transaction_hash: Felt252Wrapper::try_from(self.transaction_hash.0.bytes()).unwrap(), /* comes from StarkHash, should be safe. */
+            actual_fee: Felt252Wrapper::try_from(U256::from(self.output.actual_fee().0))
+                .expect("Actual fee too large for felt252."),
             tx_type: match self.output {
                 TransactionOutput::Declare(_) => TxType::Declare,
                 TransactionOutput::DeployAccount(_) => TxType::DeployAccount,
@@ -182,7 +184,8 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
                 TransactionOutput::L1Handler(_) => TxType::L1Handler,
                 _ => TxType::Invoke,
             },
-            block_hash: Felt252Wrapper::try_from(U256::from(self.block_hash.0.0)).unwrap(), // comes from StarkHash, should be safe.
+            block_hash: Felt252Wrapper::try_from(U256::from(self.block_hash.0.0)).unwrap(), /* comes from StarkHash,
+                                                                                             * should be safe. */
             block_number: self.block_number.0,
             events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
         })
@@ -311,7 +314,7 @@ impl Transaction {
 
     /// Creates a new instance of a transaction without signature.
     pub fn from_tx_hash(hash: Felt252Wrapper) -> Self {
-        Self { hash: hash, ..Self::default() }
+        Self { hash, ..Self::default() }
     }
 
     /// Returns the validate entry point selector.

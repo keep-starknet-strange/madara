@@ -6,24 +6,16 @@
 //!
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
-//!
 
-use starknet_ff::{FieldElement, FromStrError, FromByteSliceError};
 use cairo_vm::felt::Felt252;
-
-use sp_core::{H256, U256};
-use scale_codec::{Decode, Encode, EncodeLike, Input, Output, Error, MaxEncodedLen};
-use scale_info::{TypeInfo, Type, Path};
+use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
 use scale_info::build::Fields;
+use scale_info::{Path, Type, TypeInfo};
+use sp_core::{H256, U256};
+use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 
 ///
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    Copy
-)]
+#[derive(Clone, Debug, PartialEq, Eq, Copy)]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Felt252Wrapper(pub FieldElement);
 
@@ -75,7 +67,7 @@ impl TryFrom<&[u8; 32]> for Felt252Wrapper {
     fn try_from(bytes: &[u8; 32]) -> Result<Self, Felt252WrapperError> {
         match FieldElement::from_bytes_be(bytes) {
             Ok(ff) => Ok(Self(ff)),
-            Err(_) => Err(Felt252WrapperError::FromArrayError)
+            Err(_) => Err(Felt252WrapperError::FromArrayError),
         }
     }
 }
@@ -182,28 +174,27 @@ impl EncodeLike for Felt252Wrapper {}
 /// SCALE trait.
 impl MaxEncodedLen for Felt252Wrapper {
     fn max_encoded_len() -> usize {
-	32
+        32
     }
 }
 
 /// SCALE trait.
 impl Decode for Felt252Wrapper {
-	fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
-            let mut buf: [u8; 32] = [0; 32];
-            input.read(&mut buf)?;
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        let mut buf: [u8; 32] = [0; 32];
+        input.read(&mut buf)?;
 
-            match Felt252Wrapper::try_from(&buf) {
-                Ok(felt) => Ok(felt),
-                Err(e) => {
-                    return Err(Error::from("Can't get FieldElement from input buffer.").chain(hex::encode(&buf)).chain(e));
-                }
+        match Felt252Wrapper::try_from(&buf) {
+            Ok(felt) => Ok(felt),
+            Err(e) => {
+                return Err(Error::from("Can't get FieldElement from input buffer.").chain(hex::encode(&buf)).chain(e));
             }
-	}
+        }
+    }
 }
 
 /// SCALE trait.
-impl TypeInfo for Felt252Wrapper
-{
+impl TypeInfo for Felt252Wrapper {
     type Identity = Self;
 
     // The type info is saying that the field element must be seen as an
@@ -211,9 +202,7 @@ impl TypeInfo for Felt252Wrapper
     fn type_info() -> Type {
         Type::builder()
             .path(Path::new("Felt252Wrapper", module_path!()))
-            .composite(Fields::unnamed()
-                       .field(|f| f.ty::<[u8]>().type_name("FieldElement"))
-            )
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("FieldElement")))
     }
 }
 
@@ -278,7 +267,6 @@ impl From<FromStrError> for Felt252WrapperError {
     }
 }
 
-
 #[cfg(test)]
 mod felt252_wrapper_tests {
 
@@ -301,11 +289,11 @@ mod felt252_wrapper_tests {
     fn from_hex_be() {
         Felt252Wrapper::from_hex_be("0x0").unwrap();
         Felt252Wrapper::from_hex_be("0x123456").unwrap();
-        Felt252Wrapper::from_hex_be(
-            "0x01dbc98a49405a81587a9608c9c0b9fd51d65b55b0bf428bad499ab76c7b46d1").unwrap();
+        Felt252Wrapper::from_hex_be("0x01dbc98a49405a81587a9608c9c0b9fd51d65b55b0bf428bad499ab76c7b46d1").unwrap();
 
         let mut felt = Felt252Wrapper::from_hex_be(
-            "0x01dbc98a49405a81587a9608c9c0b9fd51d65b55b0bf428bad499ab76c7b46d19722957295752795927529759275927572");
+            "0x01dbc98a49405a81587a9608c9c0b9fd51d65b55b0bf428bad499ab76c7b46d19722957295752795927529759275927572",
+        );
         assert_eq!(felt, Err(Felt252WrapperError::OutOfRange));
 
         felt = Felt252Wrapper::from_hex_be("0xföífg¤gí’¤");
@@ -362,6 +350,4 @@ mod felt252_wrapper_tests {
         decoded = Felt252Wrapper::decode(&mut &encoded[..]);
         assert_eq!(felt, decoded.unwrap());
     }
-
 }
-

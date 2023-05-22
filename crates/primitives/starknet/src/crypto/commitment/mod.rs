@@ -172,11 +172,12 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -
         transaction.sender_address.into(),
         &vec![
             vec![
-            transaction.account_class_hash,
-                Felt252Wrapper::try_from(transaction.salt).unwrap() // should be safe comes from StarkHash.
+                transaction.account_class_hash,
+                Felt252Wrapper::try_from(transaction.salt).unwrap(), // should be safe comes from StarkHash.
             ],
-            transaction.calldata.to_vec()
-        ].concat(),
+            transaction.calldata.to_vec(),
+        ]
+        .concat(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -220,7 +221,7 @@ where
     ]);
 
     tx_hash.into()
-//    H256::from_slice(&tx_hash.to_bytes_be())
+    //    H256::from_slice(&tx_hash.to_bytes_be())
 }
 
 /// Calculate the hash of an event.

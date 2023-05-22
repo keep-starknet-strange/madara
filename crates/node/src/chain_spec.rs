@@ -264,8 +264,10 @@ fn testnet_genesis(
                         fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
-                        Felt252Wrapper::from_hex_be("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09")
-                            .unwrap()
+                        Felt252Wrapper::from_hex_be(
+                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
+                        )
+                        .unwrap(),
                     ),
                     Felt252Wrapper::from(u128::MAX),
                 ),
@@ -274,8 +276,10 @@ fn testnet_genesis(
                         fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
-                        Felt252Wrapper::from_hex_be("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A")
-                            .unwrap(),
+                        Felt252Wrapper::from_hex_be(
+                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A",
+                        )
+                        .unwrap(),
                     ),
                     Felt252Wrapper::from(u128::MAX),
                 ),
@@ -284,8 +288,10 @@ fn testnet_genesis(
                         fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x02) which is the key in the starknet contract
                         // for ERC20_balances(0x02).low
-                        Felt252Wrapper::from_hex_be("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f")
-                            .unwrap(),
+                        Felt252Wrapper::from_hex_be(
+                            "0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
+                        )
+                        .unwrap(),
                     ),
                     Felt252Wrapper::from(u128::MAX),
                 ),
@@ -294,8 +300,10 @@ fn testnet_genesis(
                         token_contract_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
-                        Felt252Wrapper::from_hex_be("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09")
-                            .unwrap(),
+                        Felt252Wrapper::from_hex_be(
+                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
+                        )
+                        .unwrap(),
                     ),
                     Felt252Wrapper::from(u128::MAX),
                 ),
@@ -304,8 +312,10 @@ fn testnet_genesis(
                         token_contract_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
-                        Felt252Wrapper::from_hex_be("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A")
-                            .unwrap(),
+                        Felt252Wrapper::from_hex_be(
+                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A",
+                        )
+                        .unwrap(),
                     ),
                     Felt252Wrapper::from(u128::MAX),
                 ),
@@ -316,13 +326,15 @@ fn testnet_genesis(
                         // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
                         // starknet contract for
                         // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
-                        Felt252Wrapper::from_hex_be("0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52")
-                            .unwrap(),
+                        Felt252Wrapper::from_hex_be(
+                            "0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52",
+                        )
+                        .unwrap(),
                     ),
                     Felt252Wrapper::from(u128::MAX),
                 ),
             ],
-            fee_token_address: fee_token_address,
+            fee_token_address,
             _phantom: Default::default(),
             chain_id: CHAIN_ID_STARKNET_TESTNET,
         },

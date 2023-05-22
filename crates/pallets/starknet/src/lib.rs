@@ -444,7 +444,7 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(), // unwrap to check.
-                        block_hash: Felt252Wrapper::try_from(block.header().hash(T::SystemHash::hasher())).unwrap(), // unwrap to check.
+                        block_hash: Felt252Wrapper::try_from(block.header().hash(T::SystemHash::hasher())).unwrap(), /* unwrap to check. */
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -838,7 +838,8 @@ impl<T: Config> Pallet<T> {
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
-                let result = v.execution.retdata.0.iter().map(|x| Felt252Wrapper::try_from(U256::from(x.0)).unwrap()).collect();
+                let result =
+                    v.execution.retdata.0.iter().map(|x| Felt252Wrapper::try_from(U256::from(x.0)).unwrap()).collect();
                 Ok(result)
             }
             Err(e) => {

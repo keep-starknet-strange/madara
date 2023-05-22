@@ -20,7 +20,6 @@ use sp_core::{ConstU32, Get};
 use starknet_api::stdlib::collections::HashMap;
 
 use super::types::Felt252Wrapper;
-
 #[cfg(feature = "std")]
 use super::{
     deserialize_bounded_btreemap, deserialize_option_bounded_btreemap, serialize_bounded_btreemap,

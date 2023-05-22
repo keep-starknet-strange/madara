@@ -8,7 +8,10 @@ use frame_support::BoundedVec;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
 
-use crate::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, MaxCalldataSize, Felt252Wrapper, Felt252WrapperError};
+use crate::execution::types::{
+    CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
+    MaxCalldataSize,
+};
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
 /// Removes the "0x" prefix from a given hexadecimal string
@@ -20,7 +23,7 @@ fn remove_prefix(input: &str) -> &str {
 fn string_to_felt(hex_str: &str) -> Result<Felt252Wrapper, String> {
     match Felt252Wrapper::from_hex_be(hex_str) {
         Ok(f) => Ok(f),
-        Err(e) => Err(e.to_string())
+        Err(e) => Err(e.to_string()),
     }
 }
 
@@ -236,11 +239,9 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
     fn try_from(d: DeserializeCallEntrypoint) -> Result<Self, Self::Error> {
         // Convert class_hash to Option<Felt252Wrapper> if present
         let class_hash = match d.class_hash {
-            Some(hash_str) => {
-                match Felt252Wrapper::from_hex_be(hash_str.as_str()) {
-                    Ok(felt) => Some(felt),
-                    Err(e) => return Err(DeserializeCallEntrypointError::InvalidClassHash(e))
-                }
+            Some(hash_str) => match Felt252Wrapper::from_hex_be(hash_str.as_str()) {
+                Ok(felt) => Some(felt),
+                Err(e) => return Err(DeserializeCallEntrypointError::InvalidClassHash(e)),
             },
             None => None,
         };
@@ -273,13 +274,13 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
         // Convert storage_address to Felt252Wrapper
         let storage_address = match Felt252Wrapper::from_hex_be(d.storage_address.as_str()) {
             Ok(felt) => felt,
-            Err(e) => return Err(DeserializeCallEntrypointError::InvalidStorageAddress(e))
+            Err(e) => return Err(DeserializeCallEntrypointError::InvalidStorageAddress(e)),
         };
 
         // Convert caller_address to Felt252Wrapper
         let caller_address = match Felt252Wrapper::from_hex_be(d.caller_address.as_str()) {
             Ok(felt) => felt,
-            Err(e) => return Err(DeserializeCallEntrypointError::InvalidCallerAddress(e))
+            Err(e) => return Err(DeserializeCallEntrypointError::InvalidCallerAddress(e)),
         };
 
         // Create CallEntryPointWrapper with validated and converted fields
@@ -319,7 +320,7 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
         // Convert from_address to [u8; 32]
         let from_address = match Felt252Wrapper::from_hex_be(d.from_address.as_str()) {
             Ok(felt) => felt,
-            Err(e) => return Err(DeserializeEventError::InvalidFromAddress(e))
+            Err(e) => return Err(DeserializeEventError::InvalidFromAddress(e)),
         };
 
         // Create EventWrapper with validated and converted fields

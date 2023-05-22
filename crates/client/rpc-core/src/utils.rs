@@ -96,10 +96,12 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
             &Calldata(calldata.into()),
             StarknetContractAddress::default(),
         )
-            .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
-            .0
-            .0
-            .0).unwrap(); // Ok to unwrap, starknet-core parsed type.
+        .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
+        .0
+        .0
+        .0,
+    )
+    .unwrap(); // Ok to unwrap, starknet-core parsed type.
 
     let calldata = tx
         .constructor_calldata
@@ -118,7 +120,8 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         calldata,
         salt: U256::from(contract_address_salt),
         signature,
-        account_class_hash: Felt252Wrapper::try_from(&account_class_hash).unwrap(), // Ok to unwrap, starknet-core parsed type.
+        account_class_hash: Felt252Wrapper::try_from(&account_class_hash).unwrap(), /* Ok to unwrap, starknet-core
+                                                                                     * parsed type. */
         nonce,
         max_fee,
     })

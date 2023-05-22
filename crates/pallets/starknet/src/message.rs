@@ -5,7 +5,7 @@ use mp_starknet::execution::types::{
 use mp_starknet::transaction::types::Transaction;
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
-use sp_core::{U256};
+use sp_core::U256;
 
 use crate::alloc::format;
 use crate::alloc::string::String;
@@ -52,13 +52,13 @@ impl Message {
         // L2 contract to call.
         let sender_address = match Felt252Wrapper::from_hex_be(self.topics[2].as_str()) {
             Ok(f) => f,
-            Err(_) => return Err(OffchainWorkerError::ToTransactionError)
+            Err(_) => return Err(OffchainWorkerError::ToTransactionError),
         };
 
         // Function of the contract to call.
         let selector = match Felt252Wrapper::from_hex_be(self.topics[3].as_str()) {
             Ok(f) => f,
-            Err(_) => return Err(OffchainWorkerError::ToTransactionError)
+            Err(_) => return Err(OffchainWorkerError::ToTransactionError),
         };
 
         // Add the from address here so it's directly in the calldata.
@@ -73,12 +73,10 @@ impl Message {
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata: Vec<Felt252Wrapper> = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
-            calldata.push(
-                match Felt252Wrapper::from_hex_be(val.as_str()) {
-                    Ok(f) => f,
-                    Err(_) => return Err(OffchainWorkerError::ToTransactionError)
-                }
-            )
+            calldata.push(match Felt252Wrapper::from_hex_be(val.as_str()) {
+                Ok(f) => f,
+                Err(_) => return Err(OffchainWorkerError::ToTransactionError),
+            })
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let call_entrypoint = CallEntryPointWrapper {
