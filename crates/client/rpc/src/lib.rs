@@ -183,7 +183,7 @@ where
         let hex_key = Felt252Wrapper::from(key);
 
         let value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address.into(), hex_key.into())
+            .get_storage_at(substrate_block_hash, hex_address, hex_key)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -386,7 +386,7 @@ where
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
         let blockhash = Felt252Wrapper::try_from(block.header().hash(PedersenHasher::default())).unwrap();
-        let parent_blockhash = Felt252Wrapper::try_from(block.header().parent_block_hash).unwrap(); // unwrap from substrate H256, to check.
+        let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block

@@ -309,7 +309,7 @@ impl From<InvokeTransaction> for Transaction {
     fn from(value: InvokeTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()).try_into().unwrap(),
+            hash: calculate_invoke_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -331,7 +331,7 @@ impl From<DeclareTransaction> for Transaction {
     fn from(value: DeclareTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()).into(),
+            hash: calculate_declare_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -354,7 +354,7 @@ impl From<DeployAccountTransaction> for Transaction {
     fn from(value: DeployAccountTransaction) -> Self {
         Self {
             version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()).into(),
+            hash: calculate_deploy_account_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,

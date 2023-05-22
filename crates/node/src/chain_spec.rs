@@ -256,12 +256,12 @@ fn testnet_genesis(
                 (argent_proxy_class_hash, argent_proxy_class),
                 (other_class_hash, test_class),
                 (token_class_hash, erc20_class.clone()),
-                (fee_token_class_hash, erc20_class.clone()),
+                (fee_token_class_hash, erc20_class),
             ],
             storage: vec![
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
                         Felt252Wrapper::from_hex_be(
@@ -273,7 +273,7 @@ fn testnet_genesis(
                 ),
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         Felt252Wrapper::from_hex_be(
@@ -285,7 +285,7 @@ fn testnet_genesis(
                 ),
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x02) which is the key in the starknet contract
                         // for ERC20_balances(0x02).low
                         Felt252Wrapper::from_hex_be(
@@ -297,7 +297,7 @@ fn testnet_genesis(
                 ),
                 (
                     (
-                        token_contract_address.into(),
+                        token_contract_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
                         Felt252Wrapper::from_hex_be(
@@ -309,7 +309,7 @@ fn testnet_genesis(
                 ),
                 (
                     (
-                        token_contract_address.into(),
+                        token_contract_address,
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
                         Felt252Wrapper::from_hex_be(
@@ -321,7 +321,7 @@ fn testnet_genesis(
                 ),
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         // pedersen(sn_keccak(b"ERC20_balances"),
                         // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
                         // starknet contract for
