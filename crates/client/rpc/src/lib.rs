@@ -543,7 +543,9 @@ where
         })?;
 
         let tx = to_tx(request)?;
-        let (actual_fee, gas_usage) = self.client.runtime_api()
+        let (actual_fee, gas_usage) = self
+            .client
+            .runtime_api()
             .estimate_fee(substrate_block_hash, tx)
             .map_err(|e| {
                 error!("Failed to convert transaction: {:?}", e);
@@ -554,10 +556,6 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        Ok(FeeEstimate { 
-            gas_price: 0,
-            gas_consumed: gas_usage,
-            overall_fee: actual_fee,
-        })
+        Ok(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee })
     }
 }

@@ -90,7 +90,7 @@ pub trait StarknetRpcApi {
     /// Estimate the fee associated with transaction
     #[method(name = "estimateFee")]
     async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
-    
+
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]
     fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
