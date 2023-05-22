@@ -444,7 +444,7 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(), // unwrap to check.
-                        block_hash: Felt252Wrapper::try_from(block.header().hash(T::SystemHash::hasher())).unwrap(), /* unwrap to check. */
+                        block_hash: block.header().hash(T::SystemHash::hasher()),                // unwrap to check.
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -532,7 +532,7 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: Felt252Wrapper::try_from(block.header().hash(T::SystemHash::hasher())).unwrap(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
                         actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(),
                     }
@@ -616,7 +616,7 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: Felt252Wrapper::try_from(block.header().hash(T::SystemHash::hasher())).unwrap(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
                         actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(),
                     }
@@ -902,7 +902,7 @@ impl<T: Config> Pallet<T> {
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());
         // Save the block number <> hash mapping.
-        let blockhash = Felt252Wrapper::try_from(block.header().hash(T::SystemHash::hasher())).unwrap();
+        let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);
         Pending::<T>::kill();
         PendingEvents::<T>::kill();
