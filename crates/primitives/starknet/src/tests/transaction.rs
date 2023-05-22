@@ -94,8 +94,10 @@ fn test_validate_entrypoint_calldata_declare() {
     };
 
     // When
-    let actual_calldata =
-        (*tx.validate_entrypoint_calldata(&TxType::Declare).unwrap().0).iter().map(|x| Felt252Wrapper::try_from(&x.0).unwrap()).collect::<Vec<_>>();
+    let actual_calldata = (*tx.validate_entrypoint_calldata(&TxType::Declare).unwrap().0)
+        .iter()
+        .map(|x| Felt252Wrapper::try_from(&x.0).unwrap())
+        .collect::<Vec<_>>();
 
     // Then
     let expected_calldata = vec![get_test_class_hash()];
@@ -139,8 +141,7 @@ fn test_validate_entrypoint_calldata_invoke() {
     };
 
     // When
-    let actual_calldata =
-        (*tx.validate_entrypoint_calldata(&TxType::Invoke).unwrap().0)
+    let actual_calldata = (*tx.validate_entrypoint_calldata(&TxType::Invoke).unwrap().0)
         .iter()
         .map(|x| Felt252Wrapper::try_from(&x.0).unwrap())
         .collect::<Vec<_>>();

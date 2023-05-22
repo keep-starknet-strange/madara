@@ -125,7 +125,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
 
     // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
-    let inner_call_account_class_hash = Felt252Wrapper::from_hex_be(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap();
+    let inner_call_account_class_hash =
+        Felt252Wrapper::from_hex_be(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap();
     let inner_call_account_address = get_account_address(AccountType::InnerCall);
 
     // SIMPLE ACCOUNT CONTRACT

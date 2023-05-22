@@ -81,14 +81,12 @@ mod tests {
 
     #[test]
     fn test_try_serialize() {
-        let sequencer_address =
-            Felt252Wrapper::from_hex_be("0xFF").unwrap();
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
         // Create a fee token address.
-        let fee_token_address =
-            Felt252Wrapper::from_hex_be("AA").unwrap();
+        let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
         // Try to serialize the block header.
         let block_context = BlockContext::try_serialize(block_header, fee_token_address).unwrap();
         let expected_sequencer_address =
@@ -112,8 +110,7 @@ mod tests {
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
         // Create a fee token address.
-        let fee_token_address =
-            Felt252Wrapper::from_hex_be("0xAA").unwrap();
+        let fee_token_address = Felt252Wrapper::from_hex_be("0xAA").unwrap();
         // Try to serialize the block header.
         let block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
         // Check that the result is an error.
@@ -122,8 +119,7 @@ mod tests {
 
     #[test]
     fn test_try_serialize_invalid_fee_token_address() {
-        let sequencer_address =
-            Felt252Wrapper::from_hex_be("0xFF").unwrap();
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };

@@ -30,11 +30,7 @@ fn test_deploy_account_tx_hash() {
     let transaction = DeployAccountTransaction {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
-        calldata: bounded_vec!(
-            Felt252Wrapper::one(),
-            Felt252Wrapper::two(),
-            Felt252Wrapper::three()
-        ),
+        calldata: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()),
         nonce: U256::zero(),
         salt: U256::zero(),
         signature: bounded_vec!(),
@@ -71,11 +67,7 @@ fn test_invoke_tx_hash() {
     let transaction = InvokeTransaction {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
-        calldata: bounded_vec!(
-            Felt252Wrapper::one(),
-            Felt252Wrapper::two(),
-            Felt252Wrapper::three()
-        ),
+        calldata: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()),
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
@@ -127,8 +119,7 @@ fn test_merkle_tree() {
 #[test]
 fn test_event_hash() {
     let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
-    let data =
-        bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
+    let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
     let from_address = Felt252Wrapper::from(10_u128);
     let event = EventWrapper::new(keys, data, from_address);
     assert_eq!(

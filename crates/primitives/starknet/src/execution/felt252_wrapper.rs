@@ -85,12 +85,10 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     fn try_from(bytes: &[u8]) -> Result<Self, Felt252WrapperError> {
         match FieldElement::from_byte_slice_be(bytes) {
             Ok(ff) => Ok(Self(ff)),
-            Err(e) => {
-                match e {
-                    FromByteSliceError::InvalidLength => Err(Felt252WrapperError::InvalidLength),
-                    FromByteSliceError::OutOfRange => Err(Felt252WrapperError::OutOfRange),
-                }
-            }
+            Err(e) => match e {
+                FromByteSliceError::InvalidLength => Err(Felt252WrapperError::InvalidLength),
+                FromByteSliceError::OutOfRange => Err(Felt252WrapperError::OutOfRange),
+            },
         }
     }
 }
@@ -192,9 +190,7 @@ impl Decode for Felt252Wrapper {
 
         match Felt252Wrapper::try_from(&buf) {
             Ok(felt) => Ok(felt),
-            Err(e) => {
-                Err(Error::from("Can't get FieldElement from input buffer.").chain(hex::encode(buf)).chain(e))
-            }
+            Err(e) => Err(Error::from("Can't get FieldElement from input buffer.").chain(hex::encode(buf)).chain(e)),
         }
     }
 }

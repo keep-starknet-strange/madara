@@ -114,16 +114,10 @@ fn test_try_into_entrypoint_fails() {
 #[test]
 fn test_try_into_entrypoint_works() {
     let entrypoint_wrapper = CallEntryPointWrapper {
-        class_hash: Some(
-            Felt252Wrapper::from_hex_be("0x1").unwrap(),
-        ),
+        class_hash: Some(Felt252Wrapper::from_hex_be("0x1").unwrap()),
         entrypoint_type: EntryPointTypeWrapper::External,
         entrypoint_selector: None,
-        calldata: bounded_vec![
-            Felt252Wrapper::one(),
-            Felt252Wrapper::two(),
-            Felt252Wrapper::three()
-        ],
+        calldata: bounded_vec![Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()],
         storage_address: Felt252Wrapper::from_hex_be("0x1").unwrap(),
         caller_address: Felt252Wrapper::from_hex_be("0x2").unwrap(),
     };
@@ -185,16 +179,22 @@ fn test_contract_class_wrapper_try_from_contract_class() {
             EntryPointTypeWrapper::Constructor,
             bounded_vec![EntryPointWrapper {
                 offset: 0x147,
-                selector: Felt252Wrapper::from_hex_be("0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194")
-                    .unwrap().into(),
+                selector: Felt252Wrapper::from_hex_be(
+                    "0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194"
+                )
+                .unwrap()
+                .into(),
             }],
         ),
         (
             EntryPointTypeWrapper::External,
             bounded_vec![EntryPointWrapper {
                 offset: 0x16e,
-                selector: Felt252Wrapper::from_hex_be("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588")
-                    .unwrap().into(),
+                selector: Felt252Wrapper::from_hex_be(
+                    "0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588"
+                )
+                .unwrap()
+                .into(),
             }],
         ),
         (EntryPointTypeWrapper::L1Handler, bounded_vec![]),
