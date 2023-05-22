@@ -1,17 +1,14 @@
 use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
-use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
-use sp_core::{H256, U256};
 use sp_runtime::BoundedBTreeMap;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::serde_utils::bytes_from_hex_str;
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 

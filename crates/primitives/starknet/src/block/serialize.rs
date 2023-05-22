@@ -6,7 +6,7 @@ use starknet_api::stdlib::collections::HashMap;
 
 use crate::alloc::string::ToString;
 use crate::block::header::Header;
-use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
+use crate::execution::types::ContractAddressWrapper;
 
 /// Trait for serializing objects into a `BlockContext`.
 pub trait SerializeBlockContext {
@@ -75,9 +75,9 @@ impl SerializeBlockContext for BlockContext {
 // Tests for the `SerializeBlockContext` trait.
 #[cfg(test)]
 mod tests {
-    use hex::FromHex;
 
     use super::*;
+    use crate::execution::types::Felt252Wrapper;
 
     #[test]
     fn test_try_serialize() {

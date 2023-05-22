@@ -324,20 +324,20 @@ mod felt252_wrapper_tests {
         assert_eq!(felt2, Felt252Wrapper(FieldElement::TWO));
 
         let felt3 = Felt252Wrapper(FieldElement::THREE);
-        let ff3: FieldElement = felt3.clone().into();
+        let ff3: FieldElement = felt3.into();
         assert_eq!(ff3, FieldElement::THREE);
         assert_eq!(FieldElement::from(felt3), FieldElement::THREE);
     }
 
     #[test]
     fn felt252_from_u256_twoway() {
-        let u = U256::from_little_endian(&vec![1]);
+        let u = U256::from_little_endian(&[1]);
         let felt = Felt252Wrapper::try_from(u);
         assert_eq!(felt, Ok(Felt252Wrapper::one()));
 
         let felt2 = Felt252Wrapper::two();
         let u2: U256 = felt2.into();
-        assert_eq!(U256::from_little_endian(&vec![2]), u2);
+        assert_eq!(U256::from_little_endian(&[2]), u2);
     }
 
     #[test]

@@ -2,7 +2,7 @@ use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use frame_support::{bounded_vec, BoundedVec};
-use sp_core::{H256, U256};
+use sp_core::U256;
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockHash, BlockNumber};
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -336,7 +336,7 @@ fn test_event_wrapper_builder() {
     let expected_event = EventWrapper {
         keys: BoundedVec::<Felt252Wrapper, MaxArraySize>::try_from(keys).unwrap(),
         data: BoundedVec::<Felt252Wrapper, MaxArraySize>::try_from(data).unwrap(),
-        from_address: from_address.into(),
+        from_address,
     };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);

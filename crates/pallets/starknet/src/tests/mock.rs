@@ -3,7 +3,7 @@ use core::str::FromStr;
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
-use sp_core::{H256, U256};
+use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};

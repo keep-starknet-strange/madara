@@ -2,7 +2,6 @@ use core::str::FromStr;
 
 use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
-use hex::FromHex;
 use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::Felt252Wrapper;
