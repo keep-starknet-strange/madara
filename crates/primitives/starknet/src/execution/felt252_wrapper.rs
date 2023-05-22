@@ -7,6 +7,8 @@
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
 
+use core::ops::Deref;
+
 use cairo_vm::felt::Felt252;
 use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
 use scale_info::build::Fields;
@@ -56,6 +58,14 @@ impl Felt252Wrapper {
 impl Default for Felt252Wrapper {
     fn default() -> Self {
         Self(FieldElement::ZERO)
+    }
+}
+
+impl Deref for Felt252Wrapper {
+    type Target = FieldElement;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

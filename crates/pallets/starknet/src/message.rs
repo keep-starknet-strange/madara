@@ -130,7 +130,7 @@ mod test {
         let hex = "0x1".to_owned();
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), "foo".to_owned(), hex.clone()], data: hex };
-        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::ToTransactionError);
     }
 
     #[test]
@@ -138,7 +138,7 @@ mod test {
         let hex = "0x1".to_owned();
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), "foo".to_owned()], data: hex };
-        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::ToTransactionError);
     }
     #[test]
     fn test_try_into_transaction_empty_data_should_fail() {
