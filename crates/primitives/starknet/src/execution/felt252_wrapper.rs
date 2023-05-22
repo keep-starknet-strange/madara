@@ -1,4 +1,4 @@
-//! # Felt252 - FieldElement wrapper. 
+//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
 //! Substrate primitives are passed back and forth between client
@@ -8,7 +8,7 @@
 //! the [`FieldElement`] type from starknet-ff.
 //!
 
-use starknet_ff::{FieldElement, FromStrError};
+use starknet_ff::{FieldElement, FromStrError, FromByteSliceError};
 use cairo_vm::felt::Felt252;
 
 use sp_core::{H256, U256};
@@ -57,7 +57,7 @@ impl Felt252Wrapper {
 
 impl Default for Felt252Wrapper {
     fn default() -> Self {
-        Self(FieldElement::ZERO)        
+        Self(FieldElement::ZERO)
     }
 }
 
@@ -87,7 +87,12 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     fn try_from(bytes: &[u8]) -> Result<Self, Felt252WrapperError> {
         match FieldElement::from_byte_slice_be(bytes) {
             Ok(ff) => Ok(Self(ff)),
-            Err(_) => Err(Felt252WrapperError::FromArrayError)
+            Err(e) => {
+                return match e {
+                    FromByteSliceError::InvalidLength => Err(Felt252WrapperError::InvalidLength),
+                    FromByteSliceError::OutOfRange => Err(Felt252WrapperError::OutOfRange),
+                };
+            }
         }
     }
 }
@@ -171,6 +176,7 @@ impl Encode for Felt252Wrapper {
     }
 }
 
+/// SCALE trait.
 impl EncodeLike for Felt252Wrapper {}
 
 /// SCALE trait.
@@ -188,7 +194,9 @@ impl Decode for Felt252Wrapper {
 
             match Felt252Wrapper::try_from(&buf) {
                 Ok(felt) => Ok(felt),
-                Err(_) => Err(Error::from("Can't get FieldElement from input buffer."))
+                Err(e) => {
+                    return Err(Error::from("Can't get FieldElement from input buffer.").chain(hex::encode(&buf)).chain(e));
+                }
             }
 	}
 }
@@ -224,6 +232,19 @@ pub enum Felt252WrapperError {
 
 #[cfg(feature = "std")]
 impl std::error::Error for Felt252WrapperError {}
+
+use alloc::borrow::Cow;
+
+impl From<Felt252WrapperError> for Cow<'static, str> {
+    fn from(err: Felt252WrapperError) -> Self {
+        match err {
+            Felt252WrapperError::FromArrayError => Cow::Borrowed("input array invalid"),
+            Felt252WrapperError::InvalidCharacter => Cow::Borrowed("invalid character"),
+            Felt252WrapperError::OutOfRange => Cow::Borrowed("number out of range"),
+            Felt252WrapperError::InvalidLength => Cow::Borrowed("invalid length"),
+        }
+    }
+}
 
 #[cfg(feature = "std")]
 impl From<Felt252WrapperError> for std::string::String {
@@ -341,6 +362,6 @@ mod felt252_wrapper_tests {
         decoded = Felt252Wrapper::decode(&mut &encoded[..]);
         assert_eq!(felt, decoded.unwrap());
     }
-    
+
 }
 
