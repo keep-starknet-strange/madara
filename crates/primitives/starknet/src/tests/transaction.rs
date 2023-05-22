@@ -13,8 +13,7 @@ use starknet_api::transaction::{
 };
 
 use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCalldataSize};
-use crate::execution::program_wrapper::Felt252Wrapper;
-use crate::execution::types::ContractAddressWrapper;
+use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
     EventError, EventWrapper, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
@@ -76,7 +75,7 @@ fn get_test_class_hash() -> Felt252Wrapper {
 }
 
 fn get_test_calldata() -> BoundedVec<Felt252Wrapper, MaxCalldataSize> {
-    bounded_vec![Felt252Wrapper(U256::from_str("0x1").unwrap()), Felt252Wrapper(U256::from_str("0x2").unwrap())]
+    bounded_vec![Felt252Wrapper::from_dec_str("0x1").unwrap(), Felt252Wrapper::from_dec_str("0x2").unwrap()]
 }
 
 fn get_test_contract_address_salt() -> U256 {

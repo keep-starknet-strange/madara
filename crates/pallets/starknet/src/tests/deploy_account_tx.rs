@@ -1,10 +1,9 @@
-use core::str::FromStr;
+use std::str::FromStr;
 
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
-use hex::FromHex;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
-use sp_core::{H256, U256};
+use sp_core::U256;
 
 use super::mock::*;
 use super::utils::sign_message_hash;
@@ -29,8 +28,9 @@ fn given_contract_run_deploy_account_tx_works() {
             sender_address: test_addr,
             salt: U256::from_str(salt).unwrap(),
             version: 1,
+            // TODO: check if calldata is hex or decimal.
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -43,18 +43,15 @@ fn given_contract_run_deploy_account_tx_works() {
         let expected_fee_transfer_event =
             Event::StarknetEvent(EventWrapper {
                 keys: bounded_vec![
-                    H256::from_str("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
+                    Felt252Wrapper::from_hex_be("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
                         .unwrap()
-                        .into()
                 ],
                 data: bounded_vec!(
                     test_addr, // From
-                    H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002")
-                        .unwrap()
-                        .into(), // To
-                    H256::from_str("0x000000000000000000000000000000000000000000000000000000000000d3b8")
-                        .unwrap()
-                        .into(), // Amount low
+                    Felt252Wrapper::from_hex_be("0x2")
+                        .unwrap(), // To
+                    Felt252Wrapper::from_hex_be("0xd3b8")
+                        .unwrap(), // Amount low
                     Felt252Wrapper::zero(), // Amount high
                 ),
                 from_address: Starknet::fee_token_address(),
@@ -81,10 +78,9 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             account_class_hash,
             sender_address: test_addr,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             nonce: U256::zero(),
@@ -107,7 +103,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
         let none_origin = RuntimeOrigin::none();
         let rand_address =
-            <[u8; 32]>::from_hex("0000000000000000000000000000000000000000000000000000000000001234").unwrap().into();
+            Felt252Wrapper::from_hex_be("0x1234").unwrap();
         let (_, account_class_hash, _) = account_helper(salt, AccountType::ArgentV0);
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -146,7 +142,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
             sender_address: test_addr,
             version: wrong_tx_version,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -177,7 +173,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
         set_infinite_tokens(test_addr);
         set_signer(test_addr, AccountType::Openzeppelin);
         let tx_hash =
-            H256::from_str("0x06ff0e0245daed20c0b4f21ae5c9286ba3a03e0c62b2bec2d0dcec2a4d6b9889").unwrap().into();
+            Felt252Wrapper::from_hex_be("0x06ff0e0245daed20c0b4f21ae5c9286ba3a03e0c62b2bec2d0dcec2a4d6b9889").unwrap();
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -185,7 +181,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -219,7 +215,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -249,7 +245,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
         set_infinite_tokens(test_addr);
         set_signer(test_addr, AccountType::Argent);
         let tx_hash =
-            H256::from_str("0x0781152a4f3fc0dada10f24a40f7499ce3c17c3867acae82024f5507475f89da").unwrap().into();
+            Felt252Wrapper::from_hex_be("0x0781152a4f3fc0dada10f24a40f7499ce3c17c3867acae82024f5507475f89da").unwrap();
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -257,7 +253,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -291,7 +287,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -324,7 +320,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
         set_signer(test_addr, AccountType::Braavos);
 
         let tx_hash =
-            H256::from_str("0x06ae3d81978d498def89e1121b2d84a873d63c30d80f7ed81e2dc9be6a961770").unwrap().into();
+            Felt252Wrapper::from_hex_be("0x06ae3d81978d498def89e1121b2d84a873d63c30d80f7ed81e2dc9be6a961770").unwrap();
 
         let mut signatures: Vec<Felt252Wrapper> = sign_message_hash(tx_hash).into();
         let empty_signatures = [Felt252Wrapper::zero(); 8];
@@ -336,7 +332,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -372,7 +368,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             salt: U256::from_str(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
-                calldata.clone().into_iter().map(|e| Felt252Wrapper(U256::from(e))).collect::<Vec<Felt252Wrapper>>(),
+                calldata.clone().into_iter().map(|e| Felt252Wrapper::from_hex_be(e).unwrap()).collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
             nonce: U256::zero(),
@@ -390,11 +386,11 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 fn set_infinite_tokens(address: Felt252Wrapper) {
     StorageView::<MockRuntime>::insert(
         get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 0),
-        Felt252Wrapper::max_u128(),
+        Felt252Wrapper::from(u128::MAX),
     );
     StorageView::<MockRuntime>::insert(
         get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 1),
-        Felt252Wrapper::max_u128(),
+        Felt252Wrapper::from(u128::MAX),
     );
 }
 
@@ -407,6 +403,6 @@ fn set_signer(address: Felt252Wrapper, account_type: AccountType) {
     };
     StorageView::<MockRuntime>::insert(
         get_storage_key(&address, var_name, &args, 0),
-        Felt252Wrapper(U256::from_str(ACCOUNT_PUBLIC_KEY).unwrap()),
+        Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
     );
 }

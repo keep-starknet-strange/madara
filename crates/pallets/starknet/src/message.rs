@@ -104,7 +104,7 @@ mod test {
 
     #[test]
     fn test_try_into_transaction_correct_message_should_work() {
-        let felt_one = Felt252Wrapper(U256::from(1));
+        let felt_one = Felt252Wrapper::one();
         let sender_address = felt_one;
         let hex = "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned();
         let test_message: Message =
@@ -116,7 +116,7 @@ mod test {
                 class_hash: None,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
                 entrypoint_selector: Some(felt_one),
-                calldata: bounded_vec![Felt252Wrapper(U256::from(1)), Felt252Wrapper(U256::from(1))],
+                calldata: bounded_vec![Felt252Wrapper::one(), Felt252Wrapper::one()],
                 storage_address: felt_one,
                 caller_address: ContractAddressWrapper::default(),
             },

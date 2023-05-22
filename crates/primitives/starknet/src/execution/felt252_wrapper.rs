@@ -26,6 +26,12 @@ impl Felt252Wrapper {
         Ok(Self(ff))
     }
 
+    /// Inits from decimal string.
+    pub fn from_dec_str(value: &str) -> Result<Self, Felt252WrapperError> {
+        let ff = FieldElement::from_dec_str(value)?;
+        Ok(Self(ff))
+    }
+
     /// Inits from zero constant value.
     pub fn zero() -> Felt252Wrapper {
         Self(FieldElement::ZERO)
@@ -298,6 +304,14 @@ mod felt252_wrapper_tests {
 
         felt = Felt252Wrapper::from_hex_be("0xföífg¤gí’¤");
         assert_eq!(felt, Err(Felt252WrapperError::InvalidCharacter));
+    }
+
+    #[test]
+    fn from_dec_str() {
+        let f = Felt252Wrapper::from_dec_str("1").unwrap();
+        assert_eq!(f, Felt252Wrapper::one());
+
+        Felt252Wrapper::from_dec_str("1991991").unwrap();
     }
 
     #[test]
