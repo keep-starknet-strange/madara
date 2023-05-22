@@ -134,6 +134,9 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/marioiordanov"><img src="https://avatars.githubusercontent.com/u/102791638?v=4?s=100" width="100px;" alt="marioiordanov"/><br /><sub><b>marioiordanov</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=marioiordanov" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dbejarano820"><img src="https://avatars.githubusercontent.com/u/58019353?v=4?s=100" width="100px;" alt="Daniel Bejarano"/><br /><sub><b>Daniel Bejarano</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=dbejarano820" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sparqet"><img src="https://avatars.githubusercontent.com/u/37338401?v=4?s=100" width="100px;" alt="sparqet"/><br /><sub><b>sparqet</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=sparqet" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
