@@ -2,12 +2,6 @@
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="256">
-  <br />
-  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
-  -
-  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
-  -
-  <a href="https://github.com/keep-starknet-strange/madara/discussions">Ask a Question</a>
 </div>
 
 <div align="center">
@@ -22,6 +16,21 @@
 </div>
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
+
+<a href="https://docs.madara.wtf/">
+<img src="https://img.shields.io/badge/Documentation-Website-yellow"
+ height="50" />
+</a>
+
+<a href="https://www.youtube.com/playlist?list=PL1yL2_t7cTuJtzmMQWk4UZkmMpdNF-quN">
+<img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"
+ height="50" />
+</a>
+
+<a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/contributor-starter-pack.md">
+<img src="https://img.shields.io/badge/Contributor%20starter%20pack-Doc-green?logo=github"
+ height="50" />
+</a>
 
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
