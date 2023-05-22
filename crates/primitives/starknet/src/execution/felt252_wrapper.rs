@@ -209,7 +209,7 @@ impl TypeInfo for Felt252Wrapper {
 #[derive(Debug, PartialEq)]
 /// Error related to Felt252Wrapper.
 pub enum Felt252WrapperError {
-    /// Convertion from byte array has failed.
+    /// Conversion from byte array has failed.
     FromArrayError,
     /// Provided byte array has incorrect lengths.
     InvalidLength,

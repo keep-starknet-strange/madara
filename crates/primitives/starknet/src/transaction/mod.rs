@@ -115,7 +115,7 @@ impl EventBuilder {
     ///
     /// * `event_content` - Event content retrieved from the `CallInfo`.
     pub fn with_event_content(mut self, event_content: EventContent) -> Self {
-        // TOOD: what's the proper why to handle errors in a map? We should return Return<Self,
+        // TODO: what's the proper why to handle errors in a map? We should return Return<Self,
         // Felt252WrapperError> instead?
         self.keys = event_content
             .keys
