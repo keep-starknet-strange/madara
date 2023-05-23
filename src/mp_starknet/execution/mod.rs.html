@@ -136,7 +136,7 @@
     v.clone().into_inner().serialize(serializer)
 }
 
-<span class="doccomment">/// Serialization of [Option&lt;BoundedBTreeMap&gt;].
+<span class="doccomment">/// Serialization of [`Option&lt;BoundedBTreeMap&gt;`].
 /// This is needed for the genesis config.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">pub fn </span>serialize_option_bounded_btreemap&lt;SE: Serializer, K, V, S&gt;(
@@ -167,7 +167,7 @@
         .map_err(|<span class="kw">_</span>| DeserializationError::custom(<span class="string">&quot;Couldn&#39;t convert BTreeMap to BoundedBTreeMap&quot;</span>.to_string()))
 }
 
-<span class="doccomment">/// Deserialization of an [Option&lt;BoundedBTreeMap&gt;] object.
+<span class="doccomment">/// Deserialization of an [`Option&lt;BoundedBTreeMap&gt;`] object.
 /// This is needed for the genesis config.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">pub fn </span>deserialize_option_bounded_btreemap&lt;<span class="lifetime">&#39;de</span>, D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;, K, V, S&gt;(
