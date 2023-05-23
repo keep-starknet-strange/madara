@@ -370,21 +370,15 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         let destination =
             Felt252Wrapper::from_hex_be("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(); // Test contract address
         StorageView::<MockRuntime>::insert(
-            (
-                transaction.sender_address,
-                Felt252Wrapper::from(storage_key.0.0)
-            ),
+            (transaction.sender_address, Felt252Wrapper::from(storage_key.0.0)),
             Into::<Felt252Wrapper>::into(destination),
         );
 
         let storage_key = get_storage_var_address("function_selector", &[]).unwrap();
         let selector = get_selector_from_name("without_arg").unwrap();
         StorageView::<MockRuntime>::insert(
-            (
-                transaction.sender_address,
-                Felt252Wrapper::from(storage_key.0.0)
-            ),
-            Felt252Wrapper::from(selector)
+            (transaction.sender_address, Felt252Wrapper::from(storage_key.0.0)),
+            Felt252Wrapper::from(selector),
         );
 
         assert_err!(

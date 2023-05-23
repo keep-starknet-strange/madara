@@ -117,17 +117,8 @@ impl EventBuilder {
     pub fn with_event_content(mut self, event_content: EventContent) -> Self {
         // TODO: what's the proper why to handle errors in a map? We should return Return<Self,
         // Felt252WrapperError> instead?
-        self.keys = event_content
-            .keys
-            .iter()
-            .map(|k| k.0.into())
-            .collect::<vec::Vec<Felt252Wrapper>>();
-        self.data = event_content
-            .data
-            .0
-            .iter()
-            .map(|d| Felt252Wrapper::from(*d))
-            .collect::<vec::Vec<Felt252Wrapper>>();
+        self.keys = event_content.keys.iter().map(|k| k.0.into()).collect::<vec::Vec<Felt252Wrapper>>();
+        self.data = event_content.data.0.iter().map(|d| Felt252Wrapper::from(*d)).collect::<vec::Vec<Felt252Wrapper>>();
         self
     }
 
@@ -175,9 +166,7 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
 
         Ok(TransactionReceiptWrapper {
             transaction_hash: self.transaction_hash.0.into(),
-            actual_fee: U256::from(self.output.actual_fee().0)
-                .try_into()
-                .expect("Actual fee too large for felt252."),
+            actual_fee: U256::from(self.output.actual_fee().0).try_into().expect("Actual fee too large for felt252."),
             tx_type: match self.output {
                 TransactionOutput::Declare(_) => TxType::Declare,
                 TransactionOutput::DeployAccount(_) => TxType::DeployAccount,

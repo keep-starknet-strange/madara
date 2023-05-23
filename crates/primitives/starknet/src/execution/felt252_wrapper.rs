@@ -14,8 +14,8 @@ use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Outpu
 use scale_info::build::Fields;
 use scale_info::{Path, Type, TypeInfo};
 use sp_core::{H256, U256};
-use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use starknet_api::hash::StarkFelt;
+use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Copy)]
@@ -23,13 +23,11 @@ use starknet_api::hash::StarkFelt;
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {
-
     /// Initializes from a hex string.
     ///
     /// # Arguments
     ///
-    /// * `value` - A valid hex string prefixed with '0x`, with or
-    ///             without padding zeros.
+    /// * `value` - A valid hex string prefixed with '0x`, with or without padding zeros.
     ///
     /// # Errors
     ///

@@ -95,10 +95,10 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         &Calldata(calldata.into()),
         StarknetContractAddress::default(),
     )
-        .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
-        .0
-        .0
-        .into();
+    .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
+    .0
+    .0
+    .into();
 
     let calldata = tx
         .constructor_calldata

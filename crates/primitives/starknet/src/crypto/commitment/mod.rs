@@ -171,10 +171,7 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address.into(),
         &vec![
-            vec![
-                transaction.account_class_hash,
-                transaction.salt.try_into().expect("overflow from U256 to Felt252")
-            ],
+            vec![transaction.account_class_hash, transaction.salt.try_into().expect("overflow from U256 to Felt252")],
             transaction.calldata.to_vec(),
         ]
         .concat(),

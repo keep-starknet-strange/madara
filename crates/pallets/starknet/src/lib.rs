@@ -444,7 +444,7 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.0.into(),
-                        block_hash: block.header().hash(T::SystemHash::hasher()),                // unwrap to check.
+                        block_hash: block.header().hash(T::SystemHash::hasher()), // unwrap to check.
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -837,8 +837,7 @@ impl<T: Config> Pallet<T> {
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
-                let result =
-                    v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
+                let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
                 Ok(result)
             }
             Err(e) => {
