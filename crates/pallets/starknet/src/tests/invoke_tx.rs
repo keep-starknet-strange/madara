@@ -372,7 +372,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         StorageView::<MockRuntime>::insert(
             (
                 transaction.sender_address,
-                Into::<Felt252Wrapper>::into(Felt252Wrapper::try_from(&storage_key.0.0.0).unwrap()),
+                Felt252Wrapper::from(storage_key.0.0)
             ),
             Into::<Felt252Wrapper>::into(destination),
         );
@@ -382,9 +382,9 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         StorageView::<MockRuntime>::insert(
             (
                 transaction.sender_address,
-                Into::<Felt252Wrapper>::into(Felt252Wrapper::try_from(&storage_key.0.0.0).unwrap()),
+                Felt252Wrapper::from(storage_key.0.0)
             ),
-            Felt252Wrapper::try_from(&selector.to_bytes_be()).unwrap(),
+            Felt252Wrapper::from(selector)
         );
 
         assert_err!(

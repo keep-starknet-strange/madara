@@ -120,13 +120,13 @@ impl EventBuilder {
         self.keys = event_content
             .keys
             .iter()
-            .map(|k| Felt252Wrapper::try_from(k.0.bytes()).expect("Felt252Wrapper from EventContent key bytes failed"))
+            .map(|k| k.0.into())
             .collect::<vec::Vec<Felt252Wrapper>>();
         self.data = event_content
             .data
             .0
             .iter()
-            .map(|d| Felt252Wrapper::try_from(d.bytes()).expect("Felt252Wrapper from EventContent data bytes failed"))
+            .map(|d| Felt252Wrapper::from(*d))
             .collect::<vec::Vec<Felt252Wrapper>>();
         self
     }
@@ -174,8 +174,9 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
             .collect();
 
         Ok(TransactionReceiptWrapper {
-            transaction_hash: Felt252Wrapper::try_from(self.transaction_hash.0.bytes()).unwrap(), /* comes from StarkHash, should be safe. */
-            actual_fee: Felt252Wrapper::try_from(U256::from(self.output.actual_fee().0))
+            transaction_hash: self.transaction_hash.0.into(),
+            actual_fee: U256::from(self.output.actual_fee().0)
+                .try_into()
                 .expect("Actual fee too large for felt252."),
             tx_type: match self.output {
                 TransactionOutput::Declare(_) => TxType::Declare,
@@ -184,8 +185,7 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
                 TransactionOutput::L1Handler(_) => TxType::L1Handler,
                 _ => TxType::Invoke,
             },
-            block_hash: Felt252Wrapper::try_from(U256::from(self.block_hash.0.0)).unwrap(), /* comes from StarkHash,
-                                                                                             * should be safe. */
+            block_hash: self.block_hash.0.into(),
             block_number: self.block_number.0,
             events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
         })

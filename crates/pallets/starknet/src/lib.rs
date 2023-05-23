@@ -443,7 +443,7 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
-                        actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(), // unwrap to check.
+                        actual_fee: actual_fee.0.into(),
                         block_hash: block.header().hash(T::SystemHash::hasher()),                // unwrap to check.
                         block_number: block.header().block_number.as_u64(),
                     }
@@ -534,7 +534,7 @@ pub mod pallet {
                         tx_type: TxType::Declare,
                         block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(),
+                        actual_fee: actual_fee.0.into(),
                     }
                 }
                 Err(e) => {
@@ -618,7 +618,7 @@ pub mod pallet {
                         tx_type: TxType::DeployAccount,
                         block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: Felt252Wrapper::try_from(U256::from(actual_fee.0)).unwrap(),
+                        actual_fee: actual_fee.0.into(),
                     }
                 }
                 Err(e) => {
@@ -838,7 +838,7 @@ impl<T: Config> Pallet<T> {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result =
-                    v.execution.retdata.0.iter().map(|x| Felt252Wrapper::try_from(U256::from(x.0)).unwrap()).collect();
+                    v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
                 Ok(result)
             }
             Err(e) => {
@@ -889,9 +889,9 @@ impl<T: Config> Pallet<T> {
                 Felt252Wrapper::try_from(&sequencer_address).unwrap(),
                 block_timestamp,
                 transaction_count,
-                Felt252Wrapper::try_from(transaction_commitment).unwrap(),
+                transaction_commitment.try_into().unwrap(),
                 events.len() as u128,
-                Felt252Wrapper::try_from(event_commitment).unwrap(),
+                event_commitment.try_into().unwrap(),
                 protocol_version,
                 extra_data,
             ),

@@ -26,8 +26,8 @@ fn test_call_entry_point_execute_works() {
 
     let class_hash = Felt252Wrapper::from_hex_be(TEST_CLASS_HASH).unwrap();
     let address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
-    let selector = Felt252Wrapper::try_from(selector_from_name("return_result").0.bytes()).unwrap();
-    let calldata = bounded_vec![Felt252Wrapper::from_dec_str("42").unwrap()];
+    let selector = selector_from_name("return_result").0.into();
+    let calldata = bounded_vec![42_u128.into()];
 
     let entrypoint = CallEntryPointWrapper::new(
         Some(class_hash),
@@ -48,8 +48,8 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
     let mut test_state = create_test_state();
 
     let address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
-    let selector = Felt252Wrapper::try_from(selector_from_name("return_result").0.bytes()).unwrap();
-    let calldata = bounded_vec![Felt252Wrapper::from_dec_str("42").unwrap()];
+    let selector = selector_from_name("return_result").0.into();
+    let calldata = bounded_vec![42_u128.into()];
 
     let entrypoint = CallEntryPointWrapper::new(
         Some(Felt252Wrapper::zero()),

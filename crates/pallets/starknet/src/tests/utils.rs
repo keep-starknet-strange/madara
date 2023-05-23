@@ -34,7 +34,7 @@ pub fn sign_message_hash(hash: Felt252Wrapper) -> BoundedVec<Felt252Wrapper, Max
     )
     .unwrap();
     bounded_vec!(
-        Felt252Wrapper::try_from(&signature.r.to_bytes_be()).unwrap(),
-        Felt252Wrapper::try_from(&signature.s.to_bytes_be()).unwrap()
+        signature.r.into(),
+        signature.s.into()
     )
 }

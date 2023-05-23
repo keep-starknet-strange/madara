@@ -173,7 +173,7 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -
         &vec![
             vec![
                 transaction.account_class_hash,
-                Felt252Wrapper::try_from(transaction.salt).unwrap(), // should be safe comes from StarkHash.
+                transaction.salt.try_into().expect("overflow from U256 to Felt252")
             ],
             transaction.calldata.to_vec(),
         ]

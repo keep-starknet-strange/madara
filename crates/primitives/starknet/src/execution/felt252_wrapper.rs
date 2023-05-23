@@ -15,6 +15,7 @@ use scale_info::build::Fields;
 use scale_info::{Path, Type, TypeInfo};
 use sp_core::{H256, U256};
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
+use starknet_api::hash::StarkFelt;
 
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Copy)]
@@ -22,13 +23,48 @@ use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {
-    /// Inits from '0x...' hex string.
+
+    /// Initializes from a hex string.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - A valid hex string prefixed with '0x`, with or
+    ///             without padding zeros.
+    ///
+    /// # Errors
+    ///
+    /// Hex string may contain a value that overflows felt252.
+    /// If there if an overflow or invalid hex string,
+    /// returns [`Felt252WrapperError`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let felt = Felt252::from_hex_be("0x1");
+    /// let felt2 = Felt252::from_hex_be("0x000009242583951");
+    /// ```
     pub fn from_hex_be(value: &str) -> Result<Self, Felt252WrapperError> {
         let ff = FieldElement::from_hex_be(value)?;
         Ok(Self(ff))
     }
 
-    /// Inits from decimal string.
+    /// Initializes from a decimal string.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - A valid decimal string.
+    ///
+    /// # Errors
+    ///
+    /// Decimal string may contain a value that overflows felt252.
+    /// If there if an overflow or invalid character in the string,
+    /// returns [`Felt252WrapperError`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let felt = Felt252::from_dec_str("1");
+    /// ```
     pub fn from_dec_str(value: &str) -> Result<Self, Felt252WrapperError> {
         let ff = FieldElement::from_dec_str(value)?;
         Ok(Self(ff))
@@ -69,14 +105,15 @@ impl Deref for Felt252Wrapper {
     }
 }
 
-/// Bytes converter.
+/// Array of bytes from [`Felt252Wrapper`].
 impl From<Felt252Wrapper> for [u8; 32] {
     fn from(felt: Felt252Wrapper) -> Self {
         felt.0.to_bytes_be()
     }
 }
 
-/// Bytes converter.
+/// [`Felt252Wrapper`] from bytes.
+/// Overflow may occur and return [`Felt252WrapperError::OutOfRange`].
 impl TryFrom<&[u8; 32]> for Felt252Wrapper {
     type Error = Felt252WrapperError;
 
@@ -88,7 +125,8 @@ impl TryFrom<&[u8; 32]> for Felt252Wrapper {
     }
 }
 
-/// Bytes converter.
+/// [`Felt252Wrapper`] from bytes.
+/// Overflow may occur and return [`Felt252WrapperError::OutOfRange`].
 impl TryFrom<&[u8]> for Felt252Wrapper {
     type Error = Felt252WrapperError;
 
@@ -103,21 +141,22 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     }
 }
 
-/// u128 converter. Might be supported natively?
+/// [`Felt252Wrapper`] from u128.
 impl From<u128> for Felt252Wrapper {
     fn from(value: u128) -> Self {
         Felt252Wrapper::try_from(U256::from(value)).unwrap()
     }
 }
 
-/// U256 converter.
+/// [`Felt252Wrapper`] to [`U256`].
 impl From<Felt252Wrapper> for U256 {
     fn from(felt: Felt252Wrapper) -> Self {
         U256::from_big_endian(&felt.0.to_bytes_be())
     }
 }
 
-/// U256 converter.
+/// [`Felt252Wrapper`] from [`U256`].
+/// Overflow may occur and return [`Felt252WrapperError::OutOfRange`].
 impl TryFrom<U256> for Felt252Wrapper {
     type Error = Felt252WrapperError;
 
@@ -129,7 +168,8 @@ impl TryFrom<U256> for Felt252Wrapper {
     }
 }
 
-/// H256 converter.
+/// [`Felt252Wrapper`] from [`H256`].
+/// Overflow may occur and return [`Felt252WrapperError::OutOfRange`].
 impl TryFrom<H256> for Felt252Wrapper {
     type Error = Felt252WrapperError;
 
@@ -138,7 +178,7 @@ impl TryFrom<H256> for Felt252Wrapper {
     }
 }
 
-/// H256 converter.
+/// [`Felt252Wrapper`] to [`H256`].
 impl From<Felt252Wrapper> for H256 {
     fn from(felt: Felt252Wrapper) -> Self {
         let buf: [u8; 32] = felt.into();
@@ -146,32 +186,47 @@ impl From<Felt252Wrapper> for H256 {
     }
 }
 
-/// FieldElement converter.
+/// [`Felt252Wrapper`] from [`FieldElement`].
 impl From<FieldElement> for Felt252Wrapper {
     fn from(ff: FieldElement) -> Self {
         Self(ff)
     }
 }
 
-/// FieldElement converter.
+/// [`Felt252Wrapper`] to [`FieldElement`].
 impl From<Felt252Wrapper> for FieldElement {
     fn from(ff: Felt252Wrapper) -> Self {
         ff.0
     }
 }
 
-/// Felt252 converter.
+/// [`Felt252Wrapper`] from [`Felt252`].
 impl From<Felt252> for Felt252Wrapper {
     fn from(value: Felt252) -> Self {
         Felt252Wrapper::try_from(&value.to_be_bytes()).unwrap()
     }
 }
 
-/// Felt252 converter.
+/// [`Felt252Wrapper`] to [`Felt252`].
 impl From<Felt252Wrapper> for Felt252 {
     fn from(felt: Felt252Wrapper) -> Self {
         let buf: [u8; 32] = felt.into();
         Felt252::from_bytes_be(&buf)
+    }
+}
+
+/// [`Felt252Wrapper`] from [`StarkFelt`].
+impl From<StarkFelt> for Felt252Wrapper {
+    fn from(value: StarkFelt) -> Self {
+        Felt252Wrapper::try_from(value.bytes()).unwrap()
+    }
+}
+
+/// [`Felt252Wrapper`] to [`StarkFelt`].
+impl From<Felt252Wrapper> for StarkFelt {
+    fn from(felt: Felt252Wrapper) -> Self {
+        let buf: [u8; 32] = felt.into();
+        StarkFelt::new(buf).unwrap()
     }
 }
 

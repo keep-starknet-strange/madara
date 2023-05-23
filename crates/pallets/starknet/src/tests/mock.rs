@@ -267,7 +267,7 @@ pub fn get_storage_key(
     )
     .unwrap();
     storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
-    (*address, Felt252Wrapper::try_from(&storage_key.to_bytes_be()).unwrap())
+    (*address, storage_key.into())
 }
 
 pub enum AccountType {
@@ -309,7 +309,7 @@ pub fn account_helper(salt: &str, account_type: AccountType) -> (Felt252Wrapper,
     let account_salt = H256::from_str(salt).unwrap();
 
     let addr = calculate_contract_address(account_salt, account_class_hash, cd_raw.clone()).unwrap();
-    (Felt252Wrapper::try_from(&addr.0.0.0).unwrap(), Felt252Wrapper::try_from(account_class_hash).unwrap(), cd_raw)
+    (addr.0.0.into(), account_class_hash.try_into().unwrap(), cd_raw)
 }
 
 /// Returns the account address for an account type

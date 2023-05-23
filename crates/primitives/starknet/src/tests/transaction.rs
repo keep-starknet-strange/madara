@@ -96,7 +96,7 @@ fn test_validate_entrypoint_calldata_declare() {
     // When
     let actual_calldata = (*tx.validate_entrypoint_calldata(&TxType::Declare).unwrap().0)
         .iter()
-        .map(|x| Felt252Wrapper::try_from(&x.0).unwrap())
+        .map(|x| Felt252Wrapper::from(*x))
         .collect::<Vec<_>>();
 
     // Then
@@ -120,7 +120,7 @@ fn test_validate_entrypoint_calldata_deploy_account() {
     // When
     let actual_calldata = (*tx.validate_entrypoint_calldata(&TxType::DeployAccount).unwrap().0)
         .iter()
-        .map(|x| Felt252Wrapper::try_from(&x.0).unwrap())
+        .map(|x| Felt252Wrapper::from(*x))
         .collect::<Vec<_>>();
 
     // Then
@@ -143,7 +143,7 @@ fn test_validate_entrypoint_calldata_invoke() {
     // When
     let actual_calldata = (*tx.validate_entrypoint_calldata(&TxType::Invoke).unwrap().0)
         .iter()
-        .map(|x| Felt252Wrapper::try_from(&x.0).unwrap())
+        .map(|x| Felt252Wrapper::from(*x))
         .collect::<Vec<_>>();
 
     // Then

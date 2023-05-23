@@ -58,7 +58,7 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
             .map_err(|e| anyhow!("failed to convert signature: {:?}", e))?,
 
             // Safe to unwrap, starknet-core already parsed the FieldElement with jsonrpsee.
-            sender_address: Felt252Wrapper::try_from(&invoke_tx_v1.sender_address.to_bytes_be()).unwrap(),
+            sender_address: Felt252Wrapper::from(invoke_tx_v1.sender_address),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
@@ -76,7 +76,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 
     let contract_address_salt = tx.contract_address_salt.to_bytes_be();
 
-    let account_class_hash = tx.class_hash.to_bytes_be();
+    let account_class_hash = tx.class_hash;
 
     let calldata =
         tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::<Vec<_>>();
@@ -89,19 +89,16 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         .try_into()
         .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
-    let sender_address = Felt252Wrapper::try_from(
-        &calculate_contract_address(
-            ContractAddressSalt(StarkFelt(contract_address_salt)),
-            ClassHash(StarkFelt(account_class_hash)),
-            &Calldata(calldata.into()),
-            StarknetContractAddress::default(),
-        )
+    let sender_address = calculate_contract_address(
+        ContractAddressSalt(StarkFelt(contract_address_salt)),
+        ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
+        &Calldata(calldata.into()),
+        StarknetContractAddress::default(),
+    )
         .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
         .0
         .0
-        .0,
-    )
-    .unwrap(); // Ok to unwrap, starknet-core parsed type.
+        .into();
 
     let calldata = tx
         .constructor_calldata
@@ -120,8 +117,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         calldata,
         salt: U256::from(contract_address_salt),
         signature,
-        account_class_hash: Felt252Wrapper::try_from(&account_class_hash).unwrap(), /* Ok to unwrap, starknet-core
-                                                                                     * parsed type. */
+        account_class_hash: account_class_hash.into(),
         nonce,
         max_fee,
     })
