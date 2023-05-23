@@ -89,7 +89,7 @@ pub fn calculate_transaction_commitment<T: CryptoHasher>(transactions: &[Transac
 ///
 /// The event commitment is the root of the Patricia Merkle tree with height 64
 /// constructed by adding the event hash
-/// (see https://docs.starknet.io/documentation/architecture_and_concepts/Events/starknet-events/#event_hash)
+/// (see <https://docs.starknet.io/documentation/architecture_and_concepts/Events/starknet-events/#event_hash)>
 /// to the tree and computing the root hash.
 ///
 /// # Arguments

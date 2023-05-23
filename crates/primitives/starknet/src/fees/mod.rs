@@ -91,7 +91,7 @@ pub fn get_transaction_resources<S: State + StateChanges>(
 /// # Returns
 ///
 /// * [Fee] - Amount charged for the transaction.
-/// * [Option<CallInfo>] - Call info of the fee transfer tx.
+/// * [`Option<CallInfo>`] - Call info of the fee transfer tx.
 ///
 /// # Errors
 ///
