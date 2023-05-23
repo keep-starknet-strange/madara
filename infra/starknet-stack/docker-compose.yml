@@ -9,7 +9,11 @@ services:
       - "9944:9944"
       - "30333:30333"
     platform: linux/x86_64
-    command: ["--prometheus-external", "--rpc-cors=all", "--rpc-external", "--ws-external"]
+    command:
+      - "--prometheus-external"
+      - "--rpc-cors=all"
+      - "--rpc-external"
+      - "--ws-external"
 
   madara-app:
     image: ghcr.io/keep-starknet-strange/madara-app:latest
