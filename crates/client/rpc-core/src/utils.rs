@@ -3,9 +3,9 @@ use std::vec;
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
-use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction};
-use sp_core::{H256, U256};
+use sp_core::U256;
 use sp_runtime::BoundedVec;
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
 use starknet_api::hash::StarkFelt;
@@ -53,13 +53,13 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
         BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
             version: 1_u8,
             signature: BoundedVec::try_from(
-                invoke_tx_v1.signature.iter().map(|x| H256::from(x.to_bytes_be())).collect::<Vec<H256>>(),
+                invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
             )
             .map_err(|e| anyhow!("failed to convert signature: {:?}", e))?,
-            sender_address: invoke_tx_v1.sender_address.to_bytes_be(),
+            sender_address: invoke_tx_v1.sender_address.to_bytes_be().into(),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
-                invoke_tx_v1.calldata.iter().map(|x| U256::from(x.to_bytes_be())).collect::<Vec<U256>>(),
+                invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
             )
             .map_err(|e| anyhow!("failed to convert calldata: {:?}", e))?,
             max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
@@ -82,8 +82,8 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
     let signature = tx
         .signature
         .iter()
-        .map(|f| H256::from(f.to_bytes_be()))
-        .collect::<Vec<_>>()
+        .map(|f| (*f).into())
+        .collect::<Vec<Felt252Wrapper>>()
         .try_into()
         .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
@@ -96,13 +96,14 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
     .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
     .0
     .0
-    .0;
+    .0
+    .into();
 
     let calldata = tx
         .constructor_calldata
         .iter()
-        .map(|f| U256::from(f.to_bytes_be()))
-        .collect::<Vec<_>>()
+        .map(|f| (*f).into())
+        .collect::<Vec<Felt252Wrapper>>()
         .try_into()
         .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxArraySize"))?;
 
@@ -115,7 +116,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         calldata,
         salt: U256::from(contract_address_salt),
         signature,
-        account_class_hash,
+        account_class_hash: account_class_hash.into(),
         nonce,
         max_fee,
     })

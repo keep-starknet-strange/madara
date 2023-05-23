@@ -2,12 +2,6 @@
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="256">
-  <br />
-  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
-  -
-  <a href="https://github.com/keep-starknet-strange/madara/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
-  -
-  <a href="https://github.com/keep-starknet-strange/madara/discussions">Ask a Question</a>
 </div>
 
 <div align="center">
@@ -18,10 +12,35 @@
 [![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
-
+<a href="https://twitter.com/MadaraStarknet">
+<img src="https://img.shields.io/twitter/follow/MadaraStarknet?style=social"/>
+</a>
+<a href="https://github.com/keep-starknet-strange/madara">
+<img src="https://img.shields.io/github/stars/keep-starknet-strange/madara?style=social"/>
+</a>
 </div>
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
+
+<a href="https://docs.madara.wtf/">
+<img src="https://img.shields.io/badge/Documentation-Website-yellow"
+ height="50" />
+</a>
+
+<a href="https://www.youtube.com/playlist?list=PL1yL2_t7cTuJtzmMQWk4UZkmMpdNF-quN">
+<img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"
+ height="50" />
+</a>
+
+<a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/contributor-starter-pack.md">
+<img src="https://img.shields.io/badge/Contributor%20starter%20pack-Doc-green?logo=github"
+ height="50" />
+</a>
+
+<a href="https://keep-starknet-strange.github.io/madara/pallet_starknet/index.html">
+<img src="https://img.shields.io/badge/Rust%20doc-%F0%9F%A6%80-pink?logo=rust"
+ height="50" />
+</a>
 
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
@@ -133,6 +152,10 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dpinones"><img src="https://avatars.githubusercontent.com/u/30808181?v=4?s=100" width="100px;" alt="Damián Piñones"/><br /><sub><b>Damián Piñones</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=dpinones" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/marioiordanov"><img src="https://avatars.githubusercontent.com/u/102791638?v=4?s=100" width="100px;" alt="marioiordanov"/><br /><sub><b>marioiordanov</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=marioiordanov" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dbejarano820"><img src="https://avatars.githubusercontent.com/u/58019353?v=4?s=100" width="100px;" alt="Daniel Bejarano"/><br /><sub><b>Daniel Bejarano</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=dbejarano820" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sparqet"><img src="https://avatars.githubusercontent.com/u/37338401?v=4?s=100" width="100px;" alt="sparqet"/><br /><sub><b>sparqet</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=sparqet" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/robinstraub"><img src="https://avatars.githubusercontent.com/u/17799181?v=4?s=100" width="100px;" alt="Robin Straub"/><br /><sub><b>Robin Straub</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=robinstraub" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

@@ -1,4 +1,4 @@
-//! This is a gigantic copy pasta from https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree Thanks to the equilibrium team and whoever else contributed for the code.
+//! This is a gigantic copy pasta from <https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree> Thanks to the equilibrium team and whoever else contributed for the code.
 use alloc::rc::Rc;
 use alloc::vec::Vec;
 use core::cell::RefCell;

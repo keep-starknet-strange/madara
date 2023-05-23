@@ -6,28 +6,25 @@
 #![allow(clippy::extra_unused_type_parameters)]
 
 use mp_starknet::execution::types::{
-    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, StorageKeyWrapper,
+    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
 use mp_starknet::transaction::types::{Transaction, TxType};
 use sp_api::BlockT;
-use sp_core::{H256, U256};
 pub extern crate alloc;
 use alloc::vec::Vec;
 
 use sp_runtime::DispatchError;
 
-use crate::types::StarkFeltWrapper;
-
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
         /// Returns the current block hash.
-        fn current_block_hash() -> H256;
+        fn current_block_hash() -> Felt252Wrapper;
         /// Returns the current block.
         fn current_block() -> mp_starknet::block::Block;
         /// Returns a storage slot value
-        fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<U256, DispatchError>;
+        fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<Felt252Wrapper, DispatchError>;
         /// Returns a `Call` response.
-        fn call(address: ContractAddressWrapper, function_selector: H256, calldata: Vec<U256>) -> Result<Vec<StarkFeltWrapper>, DispatchError>;
+        fn call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec<Felt252Wrapper>) -> Result<Vec<Felt252Wrapper>, DispatchError>;
         /// Returns the contract class hash at the given address.
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper>;
         /// Returns the contract class for the given class hash.

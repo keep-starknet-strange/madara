@@ -6,7 +6,7 @@ use madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
 };
-use mp_starknet::execution::types::ContractClassWrapper;
+use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -247,80 +247,92 @@ fn testnet_genesis(
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
-                (contract_address_bytes, class_hash_bytes),
-                (other_contract_address_bytes, other_class_hash_bytes),
-                (token_contract_address_bytes, token_class_hash_bytes),
-                (token_contract_address_bytes, token_class_hash_bytes),
-                (fee_token_address, fee_token_class_hash_bytes),
-                (argent_account_address, argent_account_class_hash_bytes),
+                (contract_address_bytes.into(), class_hash_bytes.into()),
+                (other_contract_address_bytes.into(), other_class_hash_bytes.into()),
+                (token_contract_address_bytes.into(), token_class_hash_bytes.into()),
+                (token_contract_address_bytes.into(), token_class_hash_bytes.into()),
+                (fee_token_address.into(), fee_token_class_hash_bytes.into()),
+                (argent_account_address.into(), argent_account_class_hash_bytes.into()),
             ],
             contract_classes: vec![
-                (class_hash_bytes, account_class),
-                (argent_account_class_hash_bytes, argent_account_class),
-                (argent_proxy_class_hash_bytes, argent_proxy_class),
-                (other_class_hash_bytes, test_class),
-                (token_class_hash_bytes, erc20_class.clone()),
-                (fee_token_class_hash_bytes, erc20_class),
+                (class_hash_bytes.into(), account_class),
+                (argent_account_class_hash_bytes.into(), argent_account_class),
+                (argent_proxy_class_hash_bytes.into(), argent_proxy_class),
+                (other_class_hash_bytes.into(), test_class),
+                (token_class_hash_bytes.into(), erc20_class.clone()),
+                (fee_token_class_hash_bytes.into(), erc20_class),
             ],
             storage: vec![
                 (
                     (
-                        fee_token_address,
+                        fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
-                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09")
+                            .unwrap()
+                            .into(),
                     ),
-                    U256::from(u128::MAX),
+                    Felt252Wrapper(U256::from(u128::MAX)),
                 ),
                 (
                     (
-                        fee_token_address,
+                        fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
-                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A")
+                            .unwrap()
+                            .into(),
                     ),
-                    U256::from(u128::MAX),
+                    Felt252Wrapper(U256::from(u128::MAX)),
                 ),
                 (
                     (
-                        fee_token_address,
+                        fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x02) which is the key in the starknet contract
                         // for ERC20_balances(0x02).low
-                        H256::from_str("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f").unwrap(),
+                        H256::from_str("0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f")
+                            .unwrap()
+                            .into(),
                     ),
-                    U256::from(u128::MAX),
+                    Felt252Wrapper(U256::from(u128::MAX)),
                 ),
                 (
                     (
-                        token_contract_address_bytes,
+                        token_contract_address_bytes.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
-                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09").unwrap(),
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09")
+                            .unwrap()
+                            .into(),
                     ),
-                    U256::from(u128::MAX),
+                    Felt252Wrapper(U256::from(u128::MAX)),
                 ),
                 (
                     (
-                        token_contract_address_bytes,
+                        token_contract_address_bytes.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
-                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A").unwrap(),
+                        H256::from_str("0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A")
+                            .unwrap()
+                            .into(),
                     ),
-                    U256::from(u128::MAX),
+                    Felt252Wrapper(U256::from(u128::MAX)),
                 ),
                 (
                     (
-                        fee_token_address,
+                        fee_token_address.into(),
                         // pedersen(sn_keccak(b"ERC20_balances"),
                         // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
                         // starknet contract for
                         // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
-                        H256::from_str("0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52").unwrap(),
+                        H256::from_str("0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52")
+                            .unwrap()
+                            .into(),
                     ),
-                    U256::from(u128::MAX),
+                    Felt252Wrapper(U256::from(u128::MAX)),
                 ),
             ],
-            fee_token_address,
+            fee_token_address: fee_token_address.into(),
             _phantom: Default::default(),
             chain_id: CHAIN_ID_STARKNET_TESTNET,
         },

@@ -261,6 +261,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "sparqet",
+      "name": "sparqet",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37338401?v=4",
+      "profile": "https://github.com/sparqet",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "robinstraub",
+      "name": "Robin Straub",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17799181?v=4",
+      "profile": "https://github.com/robinstraub",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

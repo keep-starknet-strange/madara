@@ -1,12 +1,12 @@
-/// Error that may occur while searching a Madara [Log] in the [Digest]
+/// Error that may occur while searching a Madara \[Log\] in the \[Digest\]
 ///
-/// As for now only one single Madara [Log] is expected per [Digest].
+/// As for now only one single Madara \[Log\] is expected per \[Digest\].
 /// No more, no less.
 #[derive(Clone, Debug)]
 pub enum FindLogError {
-    /// There was no Madara [Log] in the [Digest]
+    /// There was no Madara \[Log\] in the \[Digest\]
     NotLog,
-    /// There was multiple Madara [Log] in the [Digest]
+    /// There was multiple Madara \[Log\] in the \[Digest\]
     MultipleLogs,
 }
 
