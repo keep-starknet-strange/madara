@@ -179,8 +179,8 @@ where
         })?;
 
         let runtime_api = self.client.runtime_api();
-        let hex_address = Felt252Wrapper::from(contract_address);
-        let hex_key = Felt252Wrapper::from(key);
+        let hex_address = contract_address.into();
+        let hex_key = key.into();
 
         let value = runtime_api
             .get_storage_at(substrate_block_hash, hex_address, hex_key)
@@ -229,7 +229,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = Felt252Wrapper::from(contract_address);
+        let contract_address_wrapped = contract_address.into();
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
@@ -323,7 +323,7 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, Felt252Wrapper::from(class_hash))
+            .contract_class_by_class_hash(substrate_block_hash, class_hash.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class from hash '{class_hash}'");
                 StarknetRpcApiError::ContractNotFound
@@ -356,7 +356,7 @@ where
         let class_hash = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, Felt252Wrapper::from(contract_address))
+            .contract_class_hash_by_address(substrate_block_hash, contract_address.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
@@ -384,12 +384,12 @@ where
             transactions,
             // TODO: Status hardcoded, get status from block
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from(blockhash),
-            parent_hash: FieldElement::from(parent_blockhash),
+            block_hash: blockhash.into(),
+            parent_hash: parent_blockhash.into(),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from(block.header().global_state_root),
+            new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from(block.header().sequencer_address),
+            sequencer_address: block.header().sequencer_address.into(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
@@ -465,7 +465,7 @@ where
             },
         )?;
 
-        Ok(InvokeTransactionResult { transaction_hash: FieldElement::from(transaction.hash) })
+        Ok(InvokeTransactionResult { transaction_hash: transaction.hash.into() })
     }
 
     /// Add an Deploy Account Transaction
@@ -509,8 +509,8 @@ where
         })?;
 
         Ok(DeployAccountTransactionResult {
-            transaction_hash: FieldElement::from(transaction.hash),
-            contract_address: FieldElement::from(transaction.sender_address),
+            transaction_hash: transaction.hash.into(),
+            contract_address: transaction.sender_address.into(),
         })
     }
 }

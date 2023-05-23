@@ -7,7 +7,7 @@
 //! The [`Felt252Wrapper`] implements the traits for SCALE encoding, and wrap
 //! the [`FieldElement`] type from starknet-ff.
 
-use core::ops::Deref;
+use alloc::string::String;
 
 use cairo_vm::felt::Felt252;
 use scale_codec::{Decode, Encode, EncodeLike, Error, Input, MaxEncodedLen, Output};
@@ -34,13 +34,6 @@ impl Felt252Wrapper {
     /// Hex string may contain a value that overflows felt252.
     /// If there if an overflow or invalid hex string,
     /// returns [`Felt252WrapperError`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let felt = Felt252::from_hex_be("0x1");
-    /// let felt2 = Felt252::from_hex_be("0x000009242583951");
-    /// ```
     pub fn from_hex_be(value: &str) -> Result<Self, Felt252WrapperError> {
         let ff = FieldElement::from_hex_be(value)?;
         Ok(Self(ff))
@@ -57,12 +50,6 @@ impl Felt252Wrapper {
     /// Decimal string may contain a value that overflows felt252.
     /// If there if an overflow or invalid character in the string,
     /// returns [`Felt252WrapperError`].
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let felt = Felt252::from_dec_str("1");
-    /// ```
     pub fn from_dec_str(value: &str) -> Result<Self, Felt252WrapperError> {
         let ff = FieldElement::from_dec_str(value)?;
         Ok(Self(ff))
@@ -92,14 +79,6 @@ impl Felt252Wrapper {
 impl Default for Felt252Wrapper {
     fn default() -> Self {
         Self(FieldElement::ZERO)
-    }
-}
-
-impl Deref for Felt252Wrapper {
-    type Target = FieldElement;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }
 
@@ -300,8 +279,7 @@ impl From<Felt252WrapperError> for Cow<'static, str> {
     }
 }
 
-#[cfg(feature = "std")]
-impl From<Felt252WrapperError> for std::string::String {
+impl From<Felt252WrapperError> for String {
     fn from(felt_error: Felt252WrapperError) -> Self {
         match felt_error {
             Felt252WrapperError::FromArrayError => String::from("input array invalid"),
