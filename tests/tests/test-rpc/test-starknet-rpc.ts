@@ -33,7 +33,7 @@ import {
   SIGNER_PUBLIC,
   SALT,
 } from "../constants";
-import { toHex } from "../../util/utils";
+import { toHex, toBN } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -396,20 +396,49 @@ describeDevMadara("Starknet RPC", (context) => {
     );
   });
 
+  // TODO:
+  //    - once starknet-rs supports query tx version
+  //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estiamteAccountDeployFee
   it("Estimates the fee of an invoke tx successfully", async function () {
-    const priKey = stark.randomAddress();
-    const keyPair = ec.getKeyPair(priKey);
-    const account = new Account(providerRPC, ACCOUNT_CONTRACT, keyPair);
+    const tx = {
+      contractAddress: "0x0000000000000000000000000000000000000000000000000000000000000001",
+      calldata: [
+          "0x0000000000000000000000000000000000000000000000000000000000001111",
+          "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+          "0x0"
+      ]
+    }
 
-    const resp = await account.estimateInvokeFee(
-      {
-        contractAddress: TEST_CONTRACT,
-        entrypoint: "test_storage_var",
-        calldata: [],
-      },
-      { nonce: "0" }
-    );
+    const txDetails = {
+      nonce: "0x2", // TODO: this will make tests flaky, need to support getNonce once #390 is merged
+      version: "0x1",
+    }
+    
+    const fee_estimate = await providerRPC.getEstimateFee(tx, txDetails, "latest");
 
-    console.log("RESP: ", resp);
+    expect(fee_estimate.overall_fee.cmp(toBN(0))).to.be.equal(1)
+    expect(fee_estimate.gas_consumed.cmp(toBN(0))).to.be.equal(1)
+  });
+
+  it("getEstimateFee throws error if contract does not exist", async function () {
+    const tx = {
+      contractAddress: "0x0000000000000000000000000000000000000000000000000000000000000001",
+      calldata: [
+          "0x000000000000000000000000000000000000000000000000000000000000DEAD",
+          "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+          "0x0"
+      ]
+    }
+
+    const txDetails = {
+      nonce: "0x2", // TODO: this will make tests flaky, need to support getNonce once #390 is merged
+      version: "0x1",
+    }
+    try {
+      const fee_estimate = await providerRPC.getEstimateFee(tx, txDetails, "latest");
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("40: Contract error");
+    }
   });
 });

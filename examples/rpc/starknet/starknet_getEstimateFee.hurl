@@ -6,13 +6,10 @@ Content-Type: application/json
     "params": {
         "request": {
             "type": "INVOKE",
-            "max_fee":"0xDEADB",
+            "max_fee":"0x0",
             "version":"0x1",
             "nonce":"0x0",
-            "signature":[
-                "0x0",
-                "0x0"
-            ],
+            "signature":[],
             "sender_address":"0x0000000000000000000000000000000000000000000000000000000000000001",
             "calldata": [
                 "0x0000000000000000000000000000000000000000000000000000000000001111",

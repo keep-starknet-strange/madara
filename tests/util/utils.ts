@@ -7,3 +7,8 @@ export type BigNumberish = string | number | BN__default;
 export function toHex(value: BigNumberish) {
   return number.toHex(number.toBN(value));
 }
+
+// Convert a string or number to a BN
+export function toBN(value: BigNumberish) {
+  return number.toBN(value);
+}
