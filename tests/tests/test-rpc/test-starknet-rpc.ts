@@ -382,7 +382,7 @@ describeDevMadara("Starknet RPC", (context) => {
     }
   });
 
-  it("Adds an invocation transaction successfully", async function () {
+  it("Adds an deploy account transaction successfully", async function () {
     // Compute contract address
     const selector = hash.getSelectorFromName("initialize");
     const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
