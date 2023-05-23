@@ -32,6 +32,11 @@
  height="50" />
 </a>
 
+<a href="https://keep-starknet-strange.github.io/madara/pallet_starknet/index.html">
+<img src="https://img.shields.io/badge/Rust%20doc-%F0%9F%A6%80-pink?logo=rust"
+ height="50" />
+</a>
+
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
 
