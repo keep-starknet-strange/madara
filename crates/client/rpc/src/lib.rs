@@ -444,7 +444,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `invoke tx` - https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction
+    /// * `invoke tx` - <https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction>
     ///
     /// # Returns
     ///
@@ -484,7 +484,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `deploy account transaction` - https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction
+    /// * `deploy account transaction` - <https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#deploy_account_transaction>
     ///
     /// # Returns
     ///
