@@ -423,7 +423,7 @@ pub struct EventWrapper {
     pub from_address: ContractAddressWrapper,
 }
 
-/// This struct wraps the [TransactionExecutionInfo] type from the blockifier.
+/// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
 #[derive(Debug)]
 pub struct TransactionExecutionInfoWrapper {
     /// Transaction validation call info; [None] for `L1Handler`.
