@@ -5,6 +5,7 @@ The Madara project consists of the following directories:
 - `benchmarking`: Contains the code for benchmarking the custom FRAME pallets.
 - `crates`: Holds all the crates used by the project, organized into the
   following subdirectories:
+  - `client`: Contains elements related with the RPC layers.
   - `node`: Implements services for the blockchain node (e.g., chain
     specification, RPC, etc.).
   - `pallets`: Contains custom FRAME pallets, including:
