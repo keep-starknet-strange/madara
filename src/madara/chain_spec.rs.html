@@ -338,6 +338,18 @@
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
@@ -355,6 +367,8 @@
 <span class="kw">use </span>sp_core::{sr25519, Pair, Public, H256, U256};
 <span class="kw">use </span>sp_runtime::traits::{IdentifyAccount, Verify};
 <span class="kw">use </span>sp_state_machine::BasicExternalities;
+
+<span class="kw">pub const </span>ACCOUNT_PUBLIC_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2&quot;</span>;
 
 <span class="comment">// The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &amp;str = &quot;wss://telemetry.polkadot.io/submit/&quot;;
@@ -670,6 +684,16 @@
                             .into(),
                     ),
                     Felt252Wrapper(U256::from(u128::MAX)),
+                ),
+                (
+                    (
+                        argent_account_address.into(),
+                        <span class="comment">// pedersen(sn_keccak(b&quot;_signer&quot;))
+                        </span>H256::from_str(<span class="string">&quot;0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05&quot;</span>)
+                            .unwrap()
+                            .into(),
+                    ),
+                    Felt252Wrapper(U256::from_str_radix(ACCOUNT_PUBLIC_KEY, <span class="number">16</span>).unwrap()),
                 ),
             ],
             fee_token_address: fee_token_address.into(),
