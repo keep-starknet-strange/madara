@@ -33,7 +33,7 @@ where
     v.clone().into_inner().serialize(serializer)
 }
 
-/// Serialization of [Option<BoundedBTreeMap>].
+/// Serialization of [`Option<BoundedBTreeMap>`].
 /// This is needed for the genesis config.
 #[cfg(feature = "std")]
 pub fn serialize_option_bounded_btreemap<SE: Serializer, K, V, S>(
@@ -64,7 +64,7 @@ where
         .map_err(|_| DeserializationError::custom("Couldn't convert BTreeMap to BoundedBTreeMap".to_string()))
 }
 
-/// Deserialization of an [Option<BoundedBTreeMap>] object.
+/// Deserialization of an [`Option<BoundedBTreeMap>`] object.
 /// This is needed for the genesis config.
 #[cfg(feature = "std")]
 pub fn deserialize_option_bounded_btreemap<'de, D: Deserializer<'de>, K, V, S>(
