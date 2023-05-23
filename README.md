@@ -12,9 +12,12 @@
 [![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
-![Twitter Follow](https://img.shields.io/twitter/follow/MadaraStarknet?style=social)
-![GitHub Repo stars](https://img.shields.io/github/stars/keep-starknet-strange/madara?style=social)
-
+<a href="https://twitter.com/MadaraStarknet">
+<img src="https://img.shields.io/twitter/follow/MadaraStarknet?style=social"/>
+</a>
+<a href="https://github.com/keep-starknet-strange/madara">
+<img src="https://img.shields.io/github/stars/keep-starknet-strange/madara?style=social"/>
+</a>
 </div>
 
 # ⚡ Madara: Starknet Sequencer on Substrate 🦀
