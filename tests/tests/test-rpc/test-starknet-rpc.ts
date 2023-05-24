@@ -321,6 +321,11 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Adds an invocation transaction successfully", async function () {
+    let nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
     const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
@@ -332,7 +337,7 @@ describeDevMadara("Starknet RPC", (context) => {
       },
       undefined,
       {
-        nonce: "0",
+        nonce: nonce,
         maxFee: "123456",
       }
     );
@@ -422,16 +427,21 @@ describeDevMadara("Starknet RPC", (context) => {
   //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estiamteAccountDeployFee
   it("Estimates the fee of an invoke tx successfully", async function () {
     const tx = {
-      contractAddress: "0x0000000000000000000000000000000000000000000000000000000000000001",
+      contractAddress: ACCOUNT_CONTRACT,
       calldata: [
-          "0x0000000000000000000000000000000000000000000000000000000000001111",
-          "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
-          "0x0"
+        TEST_CONTRACT,
+        "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+        "0x0"
       ]
     }
 
+    let nonce = await providerRPC.getNonceForAddress(
+      ACCOUNT_CONTRACT,
+      "latest"
+    );
+    
     const txDetails = {
-      nonce: "0x2", // TODO: this will make tests flaky, need to support getNonce once #390 is merged
+      nonce: nonce,
       version: "0x1",
     }
     
@@ -443,16 +453,21 @@ describeDevMadara("Starknet RPC", (context) => {
 
   it("getEstimateFee throws error if contract does not exist", async function () {
     const tx = {
-      contractAddress: "0x0000000000000000000000000000000000000000000000000000000000000001",
+      contractAddress: ACCOUNT_CONTRACT,
       calldata: [
-          "0x000000000000000000000000000000000000000000000000000000000000DEAD",
-          "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
-          "0x0"
+        "0x000000000000000000000000000000000000000000000000000000000000DEAD",
+        "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+        "0x0"
       ]
     }
 
+    let nonce = await providerRPC.getNonceForAddress(
+      ACCOUNT_CONTRACT,
+      "latest"
+    );
+
     const txDetails = {
-      nonce: "0x2", // TODO: this will make tests flaky, need to support getNonce once #390 is merged
+      nonce: nonce,
       version: "0x1",
     }
     try {
