@@ -33,6 +33,9 @@ import { toHex, rpcTransfer } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
+// keep "let" over "const" as the nonce is passed by reference
+// to abstract the incrementation
+// eslint-disable-next-line prefer-const
 let ARGENT_CONTRACT_NONCE = { value: 0 };
 
 describeDevMadara("Starknet RPC", (context) => {
