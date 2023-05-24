@@ -16,6 +16,8 @@ use sp_core::{sr25519, Pair, Public, H256, U256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_state_machine::BasicExternalities;
 
+pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
+
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
@@ -330,6 +332,16 @@ fn testnet_genesis(
                             .into(),
                     ),
                     Felt252Wrapper(U256::from(u128::MAX)),
+                ),
+                (
+                    (
+                        argent_account_address.into(),
+                        // pedersen(sn_keccak(b"_signer"))
+                        H256::from_str("0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05")
+                            .unwrap()
+                            .into(),
+                    ),
+                    Felt252Wrapper(U256::from_str_radix(ACCOUNT_PUBLIC_KEY, 16).unwrap()),
                 ),
             ],
             fee_token_address: fee_token_address.into(),
