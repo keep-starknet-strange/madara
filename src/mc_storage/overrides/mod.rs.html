@@ -160,6 +160,22 @@
 <a href="#160" id="160">160</a>
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
@@ -169,6 +185,7 @@
 <span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 <span class="kw">use </span>mp_starknet::storage::StarknetStorageSchemaVersion;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
+<span class="kw">use </span>pallet_starknet::types::NonceWrapper;
 <span class="kw">use </span>sc_client_api::{Backend, HeaderBackend, StorageProvider};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_io::hashing::twox_128;
@@ -235,6 +252,8 @@
         block_hash: B::Hash,
         contract_class_hash: ClassHashWrapper,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;;
+    <span class="doccomment">/// Returns the nonce for a provided contract address and block hash.
+    </span><span class="kw">fn </span>nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: B::Hash, address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;NonceWrapper&gt;;
 }
 
 <span class="doccomment">/// Returns the storage prefix given the pallet module name and the storage name
@@ -321,6 +340,19 @@
     ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt; {
         <span class="self">self</span>.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()<span class="question-mark">?
     </span>}
+
+    <span class="doccomment">/// Return the nonce for a provided contract address and block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    /// * `contract_address` - The contract address to fetch the nonce for
+    ///
+    /// # Returns
+    /// * `Some(nonce)` - The nonce for the provided contract address and block hash
+    </span><span class="kw">fn </span>nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash, contract_address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;NonceWrapper&gt; {
+        <span class="self">self</span>.client.runtime_api().nonce(block_hash, contract_address).ok()
+    }
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mc_storage" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

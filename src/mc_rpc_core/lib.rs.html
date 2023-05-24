@@ -91,6 +91,10 @@
 <a href="#91" id="91">91</a>
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -161,6 +165,10 @@
     <span class="doccomment">/// Get block information with transaction hashes given the block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxHashes&quot;</span>)]
     </span><span class="kw">fn </span>get_block_with_tx_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxHashes&gt;;
+
+    <span class="doccomment">/// Get the nonce associated with the given address at the given block
+    </span><span class="attr">#[method(name = <span class="string">&quot;getNonce&quot;</span>)]
+    </span><span class="kw">fn </span>get_nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;FieldElement&gt;;
 
     <span class="doccomment">/// Get the chain id
     </span><span class="attr">#[method(name = <span class="string">&quot;chainId&quot;</span>)]
