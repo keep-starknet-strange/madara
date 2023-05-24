@@ -339,11 +339,12 @@ fn testnet_genesis(
                     (
                         argent_account_address.into(),
                         // pedersen(sn_keccak(b"_signer"))
-                        H256::from_str("0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05")
-                            .unwrap()
-                            .into(),
+                        Felt252Wrapper::from_hex_be(
+                            "0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05",
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from_str_radix(ACCOUNT_PUBLIC_KEY, 16).unwrap()),
+                    Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
                 ),
             ],
             fee_token_address,
