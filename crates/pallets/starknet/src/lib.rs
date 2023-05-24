@@ -728,28 +728,31 @@ pub mod pallet {
         /// are being whitelisted and marked as valid.
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
             // TODO: Call `__validate__` entrypoint of the contract. #69
-
+            // The priority right now is the max u64 - nonce because for unsigned transactions we need to
+            // determine an absolute priority. For now we use that for the benchmark (lowest nonce goes first)
+            // otherwise we have a nonce error and everything fails.
+            // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
                 Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
