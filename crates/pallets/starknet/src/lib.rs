@@ -969,17 +969,12 @@ impl<T: Config> Pallet<T> {
         // Check if contract is deployed
         ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-        // Get current block
-        let block = Self::current_block();
-        // Get fee token address
-        let fee_token_address = Self::fee_token_address();
-
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
-            block.clone(),
+            Self::current_block(),
             TxType::Invoke,
             None,
-            fee_token_address,
+            Self::fee_token_address(),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
