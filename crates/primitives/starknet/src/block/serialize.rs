@@ -48,13 +48,13 @@ impl SerializeBlockContext for BlockContext {
     ) -> Result<BlockContext, Self::Error> {
         // Try to serialize the sequencer address.
         let sequencer_address = ContractAddress::try_from(
-            StarkFelt::new(block_header.sequencer_address)
+            StarkFelt::new(block_header.sequencer_address.into())
                 .map_err(|_| BlockSerializationError::SequencerAddressError)?,
         )
         .map_err(|_| BlockSerializationError::SequencerAddressError)?;
         // Try to serialize the fee token address.
         let fee_token_address = ContractAddress::try_from(
-            StarkFelt::new(fee_token_address).map_err(|_| BlockSerializationError::FeeTokenAddressError)?,
+            StarkFelt::new(fee_token_address.into()).map_err(|_| BlockSerializationError::FeeTokenAddressError)?,
         )
         .map_err(|_| BlockSerializationError::FeeTokenAddressError)?;
 
@@ -76,26 +76,26 @@ impl SerializeBlockContext for BlockContext {
 // Tests for the `SerializeBlockContext` trait.
 #[cfg(test)]
 mod tests {
-    use hex::FromHex;
 
     use super::*;
+    use crate::execution::types::Felt252Wrapper;
 
     #[test]
     fn test_try_serialize() {
-        let sequencer_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000FF").unwrap();
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
         // Create a fee token address.
-        let fee_token_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+        let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
         // Chain ID
         let chain_id = ChainId("0x1".to_string());
         // Try to serialize the block header.
         let block_context = BlockContext::try_serialize(block_header, fee_token_address, chain_id).unwrap();
-        let expected_sequencer_address = ContractAddress::try_from(StarkFelt::new(sequencer_address).unwrap()).unwrap();
-        let expected_fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address).unwrap()).unwrap();
+        let expected_sequencer_address =
+            ContractAddress::try_from(StarkFelt::new(sequencer_address.into()).unwrap()).unwrap();
+        let expected_fee_token_address =
+            ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
         // Check that the block context was serialized correctly.
         assert_eq!(block_context.block_number, BlockNumber(1));
         assert_eq!(block_context.block_timestamp, BlockTimestamp(1));
@@ -108,13 +108,12 @@ mod tests {
         // Use a value greater than the PATRICIA_KEY_UPPER_BOUND
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         let sequencer_address =
-            <[u8; 32]>::from_hex("0800000000000000000000000000000000000000000000000000000000000001").unwrap();
+            Felt252Wrapper::from_hex_be("0x0800000000000000000000000000000000000000000000000000000000000001").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
         // Create a fee token address.
-        let fee_token_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+        let fee_token_address = Felt252Wrapper::from_hex_be("0xAA").unwrap();
         // Chain ID
         let chain_id = ChainId("0x1".to_string());
         // Try to serialize the block header.
@@ -125,8 +124,7 @@ mod tests {
 
     #[test]
     fn test_try_serialize_invalid_fee_token_address() {
-        let sequencer_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000FF").unwrap();
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
@@ -134,7 +132,7 @@ mod tests {
         // Use a value greater than the PATRICIA_KEY_UPPER_BOUND
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         let fee_token_address =
-            <[u8; 32]>::from_hex("0800000000000000000000000000000000000000000000000000000000000001").unwrap();
+            Felt252Wrapper::from_hex_be("0800000000000000000000000000000000000000000000000000000000000001").unwrap();
         // Chain ID
         let chain_id = ChainId("0x1".to_string());
         // Try to serialize the block header.

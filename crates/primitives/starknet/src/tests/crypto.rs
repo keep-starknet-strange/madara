@@ -15,6 +15,7 @@ use crate::crypto::hash::{hash, HashType};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
+use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::{CryptoHasher, Hasher};
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
@@ -24,18 +25,18 @@ use crate::transaction::types::{
 fn test_deploy_account_tx_hash() {
     // Computed with `calculate_deploy_account_transaction_hash` from the cairo lang package
     let expected_tx_hash =
-        H256::from_str("0x050a9c8ed9d8053fc3cf6704b95c1b368cf9a110ff72b87b760db832155b7022").unwrap();
+        Felt252Wrapper::from_hex_be("0x050a9c8ed9d8053fc3cf6704b95c1b368cf9a110ff72b87b760db832155b7022").unwrap();
 
     let chain_id = "SN_GOERLI";
 
     let transaction = DeployAccountTransaction {
         version: 1,
-        sender_address: U256::from(19911991_u32).into(),
-        calldata: bounded_vec!(U256::one(), U256::from(2), U256::from(3)),
+        sender_address: Felt252Wrapper::from(19911991_u128),
+        calldata: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()),
         nonce: U256::zero(),
         salt: U256::zero(),
         signature: bounded_vec!(),
-        account_class_hash: U256::from(3).into(),
+        account_class_hash: Felt252Wrapper::three(),
         max_fee: U256::one(),
     };
     assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id), expected_tx_hash);
@@ -45,17 +46,17 @@ fn test_deploy_account_tx_hash() {
 fn test_declare_tx_hash() {
     // Computed with `calculate_declare_transaction_hash` from the cairo lang package
     let expected_tx_hash =
-        H256::from_str("0x077f205d4855199564663dc9810c1edfcf97573393033dedc3f12dac740aac13").unwrap();
+        Felt252Wrapper::from_hex_be("0x077f205d4855199564663dc9810c1edfcf97573393033dedc3f12dac740aac13").unwrap();
 
     let chain_id = "SN_GOERLI";
 
     let transaction = DeclareTransaction {
         version: 1,
-        sender_address: U256::from(19911991_u32).into(),
+        sender_address: Felt252Wrapper::from(19911991_u128),
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
-        compiled_class_hash: U256::from(3).into(),
+        compiled_class_hash: Felt252Wrapper::three(),
         contract_class: ContractClassWrapper::default(),
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
@@ -65,14 +66,14 @@ fn test_declare_tx_hash() {
 fn test_invoke_tx_hash() {
     // Computed with `calculate_transaction_hash_common` from the cairo lang package
     let expected_tx_hash =
-        H256::from_str("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
+        Felt252Wrapper::from_hex_be("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
 
     let chain_id = "SN_GOERLI";
 
     let transaction = InvokeTransaction {
         version: 1,
-        sender_address: U256::from(19911991_u32).into(),
-        calldata: bounded_vec!(U256::one(), U256::from(2), U256::from(3)),
+        sender_address: Felt252Wrapper::from(19911991_u128),
+        calldata: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()),
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
@@ -85,9 +86,13 @@ fn test_merkle_tree() {
     let txs = vec![
         Transaction {
             version: 0_u8,
-            hash: H256::from_low_u64_be(6),
-            signature: bounded_vec![H256::from_low_u64_be(10), H256::from_low_u64_be(20), H256::from_low_u64_be(30)],
-            sender_address: [0; 32],
+            hash: Felt252Wrapper::from(6_u128),
+            signature: bounded_vec![
+                Felt252Wrapper::from(10_u128),
+                Felt252Wrapper::from(20_u128),
+                Felt252Wrapper::from(30_u128),
+            ],
+            sender_address: Felt252Wrapper::zero(),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
@@ -96,9 +101,9 @@ fn test_merkle_tree() {
         },
         Transaction {
             version: 0_u8,
-            hash: H256::from_low_u64_be(28),
-            signature: bounded_vec![H256::from_low_u64_be(40)],
-            sender_address: [1; 32],
+            hash: Felt252Wrapper::from(28_u128),
+            signature: bounded_vec![Felt252Wrapper::from(40_u128)],
+            sender_address: Felt252Wrapper::try_from(&[1; 32]).unwrap(),
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
@@ -119,9 +124,9 @@ fn test_merkle_tree() {
 
 #[test]
 fn test_event_hash() {
-    let keys = bounded_vec![H256::from_low_u64_be(2), H256::from_low_u64_be(3),];
-    let data = bounded_vec![H256::from_low_u64_be(4), H256::from_low_u64_be(5), H256::from_low_u64_be(6)];
-    let from_address = H256::from_low_u64_be(10).to_fixed_bytes();
+    let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
+    let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
+    let from_address = Felt252Wrapper::from(10_u128);
     let event = EventWrapper::new(keys, data, from_address);
     assert_eq!(
         calculate_event_hash::<PedersenHasher>(&event),

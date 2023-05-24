@@ -75,6 +75,7 @@ use mp_starknet::crypto::commitment;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
+    Felt252Wrapper,
 };
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::Hasher;
@@ -82,7 +83,7 @@ use mp_starknet::transaction::types::{
     DeclareTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction, Transaction,
     TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-use sp_core::{H256, U256};
+use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ContractAddress};
@@ -130,7 +131,7 @@ pub mod pallet {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// How Starknet state root is calculated.
-        type StateRoot: Get<U256>;
+        type StateRoot: Get<Felt252Wrapper>;
         /// The hashing function to use.
         type SystemHash: Hasher;
         /// The time idk what.
@@ -209,7 +210,7 @@ pub mod pallet {
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn block_hash)]
-    pub(super) type BlockHash<T: Config> = StorageMap<_, Identity, U256, H256, ValueQuery>;
+    pub(super) type BlockHash<T: Config> = StorageMap<_, Identity, U256, Felt252Wrapper, ValueQuery>;
 
     /// Mapping from Starknet contract address to the contract's class hash.
     /// Safe to use `Identity` as the key is already a hash.
@@ -236,7 +237,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn storage)]
     pub(super) type StorageView<T: Config> =
-        StorageMap<_, Identity, ContractStorageKeyWrapper, StarkFeltWrapper, ValueQuery>;
+        StorageMap<_, Identity, ContractStorageKeyWrapper, Felt252Wrapper, ValueQuery>;
 
     /// The last processed Ethereum block number for L1 messages consumption.
     /// This is used to avoid re-processing the same Ethereum block multiple times.
@@ -272,7 +273,7 @@ pub mod pallet {
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
         pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
-        pub storage: Vec<(ContractStorageKeyWrapper, StarkFeltWrapper)>,
+        pub storage: Vec<(ContractStorageKeyWrapper, Felt252Wrapper)>,
         /// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddressWrapper,
@@ -448,8 +449,8 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
-                        actual_fee: U256::from(actual_fee.0),
-                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).0),
+                        actual_fee: actual_fee.0.into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()), // unwrap to check.
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -540,9 +541,9 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).0),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: U256::from(actual_fee.0),
+                        actual_fee: actual_fee.0.into(),
                     }
                 }
                 Err(e) => {
@@ -627,9 +628,9 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: U256::from(block.header().hash(T::SystemHash::hasher()).0),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: U256::from(actual_fee.0),
+                        actual_fee: actual_fee.0.into(),
                     }
                 }
                 Err(e) => {
@@ -741,28 +742,31 @@ pub mod pallet {
         /// are being whitelisted and marked as valid.
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
             // TODO: Call `__validate__` entrypoint of the contract. #69
-
+            // The priority right now is the max u64 - nonce because for unsigned transactions we need to
+            // determine an absolute priority. For now we use that for the benchmark (lowest nonce goes first)
+            // otherwise we have a nonce error and everything fails.
+            // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
                 Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
@@ -781,7 +785,7 @@ impl<T: Config> Pallet<T> {
     ///
     /// The current block hash.
     #[inline(always)]
-    pub fn current_block_hash() -> H256 {
+    pub fn current_block_hash() -> Felt252Wrapper {
         Self::current_block().header().hash(T::SystemHash::hasher())
     }
 
@@ -795,8 +799,12 @@ impl<T: Config> Pallet<T> {
     ///
     /// The block hash of the parent (previous) block or 0 if the current block is 0.
     #[inline(always)]
-    pub fn parent_block_hash(current_block_number: &U256) -> H256 {
-        if current_block_number == &U256::zero() { H256::zero() } else { Self::block_hash(current_block_number - 1) }
+    pub fn parent_block_hash(current_block_number: &U256) -> Felt252Wrapper {
+        if current_block_number == &U256::zero() {
+            Felt252Wrapper::zero()
+        } else {
+            Self::block_hash(current_block_number - 1)
+        }
     }
 
     /// Get the current block timestamp.
@@ -824,9 +832,9 @@ impl<T: Config> Pallet<T> {
     /// Call a smart contract function.
     pub fn call_contract(
         address: ContractAddressWrapper,
-        function_selector: H256,
-        calldata: Vec<U256>,
-    ) -> Result<Vec<U256>, DispatchError> {
+        function_selector: Felt252Wrapper,
+        calldata: Vec<Felt252Wrapper>,
+    ) -> Result<Vec<Felt252Wrapper>, DispatchError> {
         // Get current block
         let block = Self::current_block();
         // Get fee token address
@@ -854,7 +862,7 @@ impl<T: Config> Pallet<T> {
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
-                let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();
+                let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
                 Ok(result)
             }
             Err(e) => {
@@ -868,7 +876,7 @@ impl<T: Config> Pallet<T> {
     pub fn get_storage_at(
         contract_address: ContractAddressWrapper,
         key: StorageKeyWrapper,
-    ) -> Result<U256, DispatchError> {
+    ) -> Result<Felt252Wrapper, DispatchError> {
         // Get state
         ensure!(ContractClassHashes::<T>::contains_key(contract_address), Error::<T>::ContractNotFound);
         Ok(Self::storage((contract_address, key)))
@@ -884,7 +892,7 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root = U256::zero();
+        let global_state_root = Felt252Wrapper::zero();
         // TODO: use the real sequencer address (our own address)
         // FIXME #243
         let sequencer_address = SEQUENCER_ADDRESS;
@@ -902,12 +910,12 @@ impl<T: Config> Pallet<T> {
                 parent_block_hash,
                 block_number,
                 global_state_root,
-                sequencer_address,
+                Felt252Wrapper::try_from(&sequencer_address).unwrap(),
                 block_timestamp,
                 transaction_count,
-                transaction_commitment,
+                transaction_commitment.try_into().unwrap(),
                 events.len() as u128,
-                event_commitment,
+                event_commitment.try_into().unwrap(),
                 protocol_version,
                 extra_data,
             ),
@@ -918,7 +926,8 @@ impl<T: Config> Pallet<T> {
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());
         // Save the block number <> hash mapping.
-        BlockHash::<T>::insert(block_number, block.header().hash(T::SystemHash::hasher()));
+        let blockhash = block.header().hash(T::SystemHash::hasher());
+        BlockHash::<T>::insert(block_number, blockhash);
         Pending::<T>::kill();
         PendingEvents::<T>::kill();
 

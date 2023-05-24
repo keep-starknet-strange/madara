@@ -1,0 +1,23 @@
+version: "3.2"
+
+services:
+  madara:
+    image: ghcr.io/keep-starknet-strange/madara:latest
+    ports:
+      - "9933:9933"
+      - "9615:9615"
+      - "9944:9944"
+      - "30333:30333"
+    platform: linux/x86_64
+    command:
+      - "--prometheus-external"
+      - "--rpc-cors=all"
+      - "--rpc-external"
+      - "--ws-external"
+
+  madara-app:
+    image: ghcr.io/keep-starknet-strange/madara-app:latest
+    ports:
+      - "8080:80"
+    environment:
+      WS_URL: "ws://0.0.0.0:9944"

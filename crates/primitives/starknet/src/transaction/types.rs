@@ -7,7 +7,7 @@ use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
-use sp_core::{ConstU32, H256, U256};
+use sp_core::{ConstU32, U256};
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 
@@ -16,7 +16,7 @@ use crate::crypto::commitment::{
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -150,13 +150,13 @@ pub struct DeclareTransaction {
     /// Transaction sender address.
     pub sender_address: ContractAddressWrapper,
     /// Class hash to declare.
-    pub compiled_class_hash: [u8; 32],
+    pub compiled_class_hash: Felt252Wrapper,
     /// Contract to declare.
     pub contract_class: ContractClassWrapper,
     /// Account contract nonce.
     pub nonce: U256,
     /// Transaction signature.
-    pub signature: BoundedVec<H256, MaxArraySize>,
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: U256,
 }
@@ -180,15 +180,15 @@ pub struct DeployAccountTransaction {
     /// Transaction sender address.
     pub sender_address: ContractAddressWrapper,
     /// Transaction calldata.
-    pub calldata: BoundedVec<U256, MaxCalldataSize>,
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// Account contract nonce.
     pub nonce: U256,
     /// Transaction salt.
     pub salt: U256,
     /// Transaction signature.
-    pub signature: BoundedVec<H256, MaxArraySize>,
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Account class hash.
-    pub account_class_hash: [u8; 32],
+    pub account_class_hash: Felt252Wrapper,
     /// Max fee.
     pub max_fee: U256,
 }
@@ -239,11 +239,11 @@ pub struct InvokeTransaction {
     /// Transaction sender address.
     pub sender_address: ContractAddressWrapper,
     /// Transaction calldata.
-    pub calldata: BoundedVec<U256, MaxCalldataSize>,
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// Account contract nonce.
     pub nonce: U256,
     /// Transaction signature.
-    pub signature: BoundedVec<H256, MaxArraySize>,
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: U256,
 }
@@ -277,9 +277,9 @@ pub struct Transaction {
     /// The version of the transaction.
     pub version: u8,
     /// Transaction hash.
-    pub hash: H256,
+    pub hash: Felt252Wrapper,
     /// Signature.
-    pub signature: BoundedVec<H256, MaxArraySize>,
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Sender Address
     pub sender_address: ContractAddressWrapper,
     /// Nonce
@@ -392,15 +392,15 @@ impl From<DeployAccountTransaction> for Transaction {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct TransactionReceiptWrapper {
     /// Transaction hash.
-    pub transaction_hash: H256,
+    pub transaction_hash: Felt252Wrapper,
     /// Fee paid for the transaction.
-    pub actual_fee: U256,
+    pub actual_fee: Felt252Wrapper,
     /// Transaction type
     pub tx_type: TxType,
     /// Block Number
     pub block_number: u64,
     /// Block Hash
-    pub block_hash: U256,
+    pub block_hash: Felt252Wrapper,
     /// Messages sent in the transaction.
     // pub messages_sent: BoundedVec<Message, MaxArraySize>, // TODO: add messages
     /// Events emitted in the transaction.
@@ -421,14 +421,14 @@ pub struct TransactionReceiptWrapper {
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct EventWrapper {
     /// The keys (topics) of the event.
-    pub keys: BoundedVec<H256, MaxArraySize>,
+    pub keys: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// The data of the event.
-    pub data: BoundedVec<H256, MaxArraySize>,
+    pub data: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
 }
 
-/// This struct wraps the [TransactionExecutionInfo] type from the blockifier.
+/// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
 #[derive(Debug)]
 pub struct TransactionExecutionInfoWrapper {
     /// Transaction validation call info; [None] for `L1Handler`.

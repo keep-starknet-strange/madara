@@ -16,9 +16,10 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::{MaybeRelocatable, Relocatable};
 use derive_more::Constructor;
 use frame_support::{BoundedBTreeMap, BoundedVec};
-use sp_core::{ConstU32, Get, U256};
+use sp_core::{ConstU32, Get};
 use starknet_api::stdlib::collections::HashMap;
 
+use super::types::Felt252Wrapper;
 #[cfg(feature = "std")]
 use super::{
     deserialize_bounded_btreemap, deserialize_option_bounded_btreemap, serialize_bounded_btreemap,
@@ -266,33 +267,6 @@ impl TryFrom<ProgramWrapper> for Program {
     }
 }
 
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-    Default,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-/// Wrapper type from [Felt252] using [U256] (substrate compatible type).
-pub struct Felt252Wrapper(pub U256);
-
-impl From<Felt252> for Felt252Wrapper {
-    fn from(value: Felt252) -> Self {
-        Self(U256::from_big_endian(&value.to_be_bytes()))
-    }
-}
-impl From<Felt252Wrapper> for Felt252 {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        Felt252::from_bytes_be(&buff)
-    }
-}
 #[derive(
     Clone,
     Debug,

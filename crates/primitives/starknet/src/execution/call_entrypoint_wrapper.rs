@@ -6,7 +6,7 @@ use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, Exe
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::BoundedVec;
-use sp_core::{ConstU32, H256, U256};
+use sp_core::ConstU32;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
@@ -15,7 +15,7 @@ use starknet_api::StarknetApiError;
 use super::entrypoint_wrapper::{
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
-use super::types::{ClassHashWrapper, ContractAddressWrapper};
+use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
 
@@ -41,9 +41,9 @@ pub struct CallEntryPointWrapper {
     pub entrypoint_type: EntryPointTypeWrapper,
     /// The entrypoint selector
     /// An invoke transaction without an entry point selector invokes the 'execute' function.
-    pub entrypoint_selector: Option<H256>,
+    pub entrypoint_selector: Option<Felt252Wrapper>,
     /// The Calldata
-    pub calldata: BoundedVec<U256, MaxCalldataSize>,
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// The storage address
     pub storage_address: ContractAddressWrapper,
     /// The caller address
@@ -55,8 +55,8 @@ impl CallEntryPointWrapper {
     pub fn new(
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,
-        entrypoint_selector: Option<H256>,
-        calldata: BoundedVec<U256, MaxCalldataSize>,
+        entrypoint_selector: Option<Felt252Wrapper>,
+        calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
     ) -> Self {
@@ -105,7 +105,7 @@ impl Default for CallEntryPointWrapper {
         Self {
             class_hash: None,
             entrypoint_type: EntryPointTypeWrapper::External,
-            entrypoint_selector: Some(H256::default()),
+            entrypoint_selector: Some(Felt252Wrapper::default()),
             calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
@@ -117,23 +117,28 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
     type Error = StarknetApiError;
 
     fn try_into(self) -> Result<CallEntryPoint, Self::Error> {
-        let class_hash =
-            if let Some(class_hash) = self.class_hash { Some(ClassHash(StarkFelt::new(class_hash)?)) } else { None };
+        let class_hash = if let Some(class_hash) = self.class_hash {
+            Some(ClassHash(StarkFelt::new(class_hash.into())?))
+        } else {
+            None
+        };
 
         let entrypoint = CallEntryPoint {
             class_hash,
             entry_point_type: self.entrypoint_type.clone().into(),
-            entry_point_selector: EntryPointSelector(StarkFelt::new(self.entrypoint_selector.unwrap_or_default().0)?),
+            entry_point_selector: EntryPointSelector(StarkFelt::new(
+                self.entrypoint_selector.unwrap_or_default().into(),
+            )?),
             calldata: Calldata(Arc::new(
                 self.calldata
                     .clone()
                     .into_inner()
                     .iter()
-                    .map(|x| StarkFelt::try_from(format!("0x{x:X}").as_str()).unwrap())
+                    .map(|x| StarkFelt::try_from(format!("0x{:X}", x.0).as_str()).unwrap())
                     .collect(),
             )),
-            storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address)?)?,
-            caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address)?)?,
+            storage_address: ContractAddress::try_from(StarkFelt::new(self.storage_address.into())?)?,
+            caller_address: ContractAddress::try_from(StarkFelt::new(self.caller_address.into())?)?,
             call_type: CallType::Call,
             // I have no idea what I'm doing
             // starknet-lib is constantly breaking it's api

@@ -15,6 +15,8 @@ pub mod call_entrypoint_wrapper;
 pub mod contract_class_wrapper;
 /// Entrypoint Wrapper related types
 pub mod entrypoint_wrapper;
+/// Felt252Wrapper type
+pub mod felt252_wrapper;
 /// Program Wrapper related types
 pub mod program_wrapper;
 
@@ -33,7 +35,7 @@ where
     v.clone().into_inner().serialize(serializer)
 }
 
-/// Serialization of [Option<BoundedBTreeMap>].
+/// Serialization of [`Option<BoundedBTreeMap>`].
 /// This is needed for the genesis config.
 #[cfg(feature = "std")]
 pub fn serialize_option_bounded_btreemap<SE: Serializer, K, V, S>(
@@ -64,7 +66,7 @@ where
         .map_err(|_| DeserializationError::custom("Couldn't convert BTreeMap to BoundedBTreeMap".to_string()))
 }
 
-/// Deserialization of an [Option<BoundedBTreeMap>] object.
+/// Deserialization of an [`Option<BoundedBTreeMap>`] object.
 /// This is needed for the genesis config.
 #[cfg(feature = "std")]
 pub fn deserialize_option_bounded_btreemap<'de, D: Deserializer<'de>, K, V, S>(
@@ -89,15 +91,16 @@ where
 /// All the types related to the execution of a transaction.
 pub mod types {
     /// Type wrapper for a contract address.
-    pub type ContractAddressWrapper = [u8; 32];
+    pub type ContractAddressWrapper = Felt252Wrapper;
 
     /// Type wrapper for a storage key;
-    pub type StorageKeyWrapper = sp_core::H256;
+    pub type StorageKeyWrapper = Felt252Wrapper;
 
     /// Wrapper type for class hash field.
-    pub type ClassHashWrapper = [u8; 32];
+    pub type ClassHashWrapper = Felt252Wrapper;
     pub use super::call_entrypoint_wrapper::*;
     pub use super::contract_class_wrapper::*;
     pub use super::entrypoint_wrapper::*;
+    pub use super::felt252_wrapper::*;
     pub use super::program_wrapper::*;
 }
