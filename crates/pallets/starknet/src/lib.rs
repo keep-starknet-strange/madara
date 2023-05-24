@@ -979,7 +979,7 @@ impl<T: Config> Pallet<T> {
             fee_token_address,
         ) {
             Ok(v) => {
-                log!(error, "Transaction executed successfully: {:?}", v);
+                log!(debug, "Transaction executed successfully: {:?}", v);
                 if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
                     Ok((v.actual_fee.0 as u64, *gas_usage as u64))
                 } else {
