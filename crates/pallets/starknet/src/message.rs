@@ -1,12 +1,11 @@
 use frame_support::BoundedVec;
-use hex::FromHex;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
 use mp_starknet::transaction::types::Transaction;
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
-use sp_core::{H256, U256};
+use sp_core::U256;
 
 use crate::alloc::format;
 use crate::alloc::string::String;
@@ -51,15 +50,17 @@ impl Message {
             return Err(OffchainWorkerError::EmptyData);
         }
         // L2 contract to call.
-        let sender_address = <[u8; 32]>::from_hex(self.topics[2].trim_start_matches("0x"))
-            .map_err(|_| OffchainWorkerError::HexDecodeError)?
-            .into();
+        let sender_address = match Felt252Wrapper::from_hex_be(self.topics[2].as_str()) {
+            Ok(f) => f,
+            Err(_) => return Err(OffchainWorkerError::ToTransactionError),
+        };
+
         // Function of the contract to call.
-        let selector = H256::from_slice(
-            &<[u8; 32]>::from_hex(self.topics[3].trim_start_matches("0x"))
-                .map_err(|_| OffchainWorkerError::HexDecodeError)?,
-        )
-        .into();
+        let selector = match Felt252Wrapper::from_hex_be(self.topics[3].as_str()) {
+            Ok(f) => f,
+            Err(_) => return Err(OffchainWorkerError::ToTransactionError),
+        };
+
         // Add the from address here so it's directly in the calldata.
         let char_vec = format!("{:}{:}", self.topics[1].trim_start_matches("0x"), self.data.trim_start_matches("0x"))
             .chars()
@@ -72,11 +73,10 @@ impl Message {
             .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata: Vec<Felt252Wrapper> = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
-            calldata.push(
-                <[u8; 32]>::from_hex(val.trim_start_matches("0x"))
-                    .map_err(|_| OffchainWorkerError::HexDecodeError)?
-                    .into(),
-            )
+            calldata.push(match Felt252Wrapper::from_hex_be(val.as_str()) {
+                Ok(f) => f,
+                Err(_) => return Err(OffchainWorkerError::ToTransactionError),
+            })
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let call_entrypoint = CallEntryPointWrapper {
@@ -104,7 +104,7 @@ mod test {
 
     #[test]
     fn test_try_into_transaction_correct_message_should_work() {
-        let felt_one = Felt252Wrapper(U256::from(1));
+        let felt_one = Felt252Wrapper::one();
         let sender_address = felt_one;
         let hex = "0x0000000000000000000000000000000000000000000000000000000000000001".to_owned();
         let test_message: Message =
@@ -116,7 +116,7 @@ mod test {
                 class_hash: None,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
                 entrypoint_selector: Some(felt_one),
-                calldata: bounded_vec![Felt252Wrapper(U256::from(1)), Felt252Wrapper(U256::from(1))],
+                calldata: bounded_vec![Felt252Wrapper::one(), Felt252Wrapper::one()],
                 storage_address: felt_one,
                 caller_address: ContractAddressWrapper::default(),
             },
@@ -130,7 +130,7 @@ mod test {
         let hex = "0x1".to_owned();
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), "foo".to_owned(), hex.clone()], data: hex };
-        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::ToTransactionError);
     }
 
     #[test]
@@ -138,7 +138,7 @@ mod test {
         let hex = "0x1".to_owned();
         let test_message: Message =
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), "foo".to_owned()], data: hex };
-        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+        assert_eq!(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::ToTransactionError);
     }
     #[test]
     fn test_try_into_transaction_empty_data_should_fail() {
