@@ -59,7 +59,7 @@ impl SerializeBlockContext for BlockContext {
         .map_err(|_| BlockSerializationError::FeeTokenAddressError)?;
 
         Ok(BlockContext {
-            chain_id: chain_id,
+            chain_id,
             block_number: BlockNumber(block_header.block_number.as_u64()),
             block_timestamp: BlockTimestamp(block_header.block_timestamp),
             sequencer_address,

@@ -231,7 +231,6 @@ fn get_chain_id(chain_id: &str) -> FieldElement {
     FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap()
 }
 
-
 /// Calculate the hash of an event.
 ///
 /// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
