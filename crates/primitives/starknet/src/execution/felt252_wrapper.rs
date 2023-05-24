@@ -35,8 +35,8 @@ impl Felt252Wrapper {
     /// If there if an overflow or invalid hex string,
     /// returns [`Felt252WrapperError`].
     pub fn from_hex_be(value: &str) -> Result<Self, Felt252WrapperError> {
-        let ff = FieldElement::from_hex_be(value)?;
-        Ok(Self(ff))
+        let fe = FieldElement::from_hex_be(value)?;
+        Ok(Self(fe))
     }
 
     /// Initializes from a decimal string.
@@ -51,8 +51,8 @@ impl Felt252Wrapper {
     /// If there if an overflow or invalid character in the string,
     /// returns [`Felt252WrapperError`].
     pub fn from_dec_str(value: &str) -> Result<Self, Felt252WrapperError> {
-        let ff = FieldElement::from_dec_str(value)?;
-        Ok(Self(ff))
+        let fe = FieldElement::from_dec_str(value)?;
+        Ok(Self(fe))
     }
 
     /// Inits from zero constant value.
@@ -353,16 +353,16 @@ mod felt252_wrapper_tests {
 
     #[test]
     fn felt252_from_fieldelement_twoway() {
-        let ff = FieldElement::TWO;
-        let felt: Felt252Wrapper = ff.into();
+        let fe = FieldElement::TWO;
+        let felt: Felt252Wrapper = fe.into();
         assert_eq!(felt, Felt252Wrapper(FieldElement::TWO));
 
-        let felt2 = Felt252Wrapper::from(ff);
+        let felt2 = Felt252Wrapper::from(fe);
         assert_eq!(felt2, Felt252Wrapper(FieldElement::TWO));
 
         let felt3 = Felt252Wrapper(FieldElement::THREE);
-        let ff3: FieldElement = felt3.into();
-        assert_eq!(ff3, FieldElement::THREE);
+        let fe3: FieldElement = felt3.into();
+        assert_eq!(fe3, FieldElement::THREE);
         assert_eq!(FieldElement::from(felt3), FieldElement::THREE);
     }
 
