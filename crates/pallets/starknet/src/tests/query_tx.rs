@@ -10,7 +10,7 @@ fn estimates_tx_fee_successfully() {
         run_to_block(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         let (actual, overall) = Starknet::estimate_fee(tx).unwrap();
         assert!(actual > 0, "actual fee is missing");
@@ -25,7 +25,7 @@ fn estimate_does_not_add_to_pending() {
         run_to_block(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
 
         let pre_storage = Starknet::pending().len();
 
