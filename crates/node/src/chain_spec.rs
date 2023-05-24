@@ -337,7 +337,7 @@ fn testnet_genesis(
                 ),
                 (
                     (
-                        argent_account_address.into(),
+                        argent_account_address,
                         // pedersen(sn_keccak(b"_signer"))
                         Felt252Wrapper::from_hex_be(
                             "0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05",
