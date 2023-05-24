@@ -4,10 +4,13 @@ import {
   RpcProvider,
   ec,
   number,
-  stark,
 } from "starknet";
 import BN__default from "bn.js";
-import { ARGENT_CONTRACT_ADDRESS, FEE_TOKEN_ADDRESS } from "../tests/constants";
+import {
+  ARGENT_CONTRACT_ADDRESS,
+  FEE_TOKEN_ADDRESS,
+  SIGNER_PRIVATE,
+} from "../tests/constants";
 
 export type BigNumberish = string | number | BN__default;
 
@@ -23,22 +26,14 @@ export async function rpcTransfer(
   transferAmount: string,
   maxFee?: number
 ): Promise<InvokeFunctionResponse> {
-  const priKey = stark.randomAddress();
-  const keyPair = ec.getKeyPair(priKey);
+  const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
   const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
-  const resp = await account.execute(
+  return account.execute(
     {
-      contractAddress: ARGENT_CONTRACT_ADDRESS,
+      contractAddress: FEE_TOKEN_ADDRESS,
       entrypoint: "transfer",
-      calldata: [
-        FEE_TOKEN_ADDRESS, // CONTRACT ADDRESS
-        "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
-        "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
-        recipient,
-        transferAmount,
-        "0x0000000000000000000000000000000000000000000000000000000000000000",
-      ],
+      calldata: [recipient, transferAmount, "0x0"],
     },
     undefined,
     {
@@ -46,6 +41,4 @@ export async function rpcTransfer(
       maxFee: maxFee ?? "123456",
     }
   );
-
-  return resp;
 }

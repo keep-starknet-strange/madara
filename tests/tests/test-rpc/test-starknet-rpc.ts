@@ -6,22 +6,18 @@ import {
   LibraryError,
   RpcProvider,
   Account,
-  stark,
   ec,
   hash,
   constants,
-  number,
   validateAndParseAddress,
 } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { transfer } from "../../util/starknet";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
   ARGENT_CONTRACT_ADDRESS,
   CHAIN_ID_STARKNET_TESTNET,
-  CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   TEST_CONTRACT,
@@ -33,9 +29,11 @@ import {
   SIGNER_PUBLIC,
   SALT,
 } from "../constants";
-import { toHex } from "../../util/utils";
+import { toHex, rpcTransfer } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
+
+let ARGENT_CONTRACT_NONCE = 0;
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -172,16 +170,14 @@ describeDevMadara("Starknet RPC", (context) => {
 
   it("getBlockWithTxHashes returns transactions", async function () {
     await context.createBlock(
-      transfer(
-        context.polkadotApi,
-        CONTRACT_ADDRESS,
-        FEE_TOKEN_ADDRESS,
-        CONTRACT_ADDRESS,
-        MINT_AMOUNT,
-        0
-      ),
-      { parentHash: undefined, finalize: true }
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
     );
+    ARGENT_CONTRACT_NONCE++;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -216,18 +212,17 @@ describeDevMadara("Starknet RPC", (context) => {
   it("Gets value from the fee contract storage", async function () {
     const value = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
-      // ERC20_balances(0x01).low
-      "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
+      // ERC20_balances(0x02).low
+      "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
       "latest"
     );
-    // fees were paid du to the transfer in the previous test so the value is not u128::MAX
-    expect(toHex(value)).to.be.equal("0xfffffffffffffffffffffffffffe795f");
+    // fees were paid du to the transfer in the previous test so the value is still u128::MAX
+    expect(toHex(value)).to.be.equal("0xffffffffffffffffffffffffffffffff");
   });
 
   it("Returns 0 if the storage slot is not set", async function () {
     const value = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
-      // ERC20_balances(0x01).low
       "0x0000000000000000000000000000000000000000000000000000000000000000",
       "latest"
     );
@@ -257,16 +252,14 @@ describeDevMadara("Starknet RPC", (context) => {
   it("getTransactionByBlockIdAndIndex returns transactions", async function () {
     // Send a transaction
     await context.createBlock(
-      transfer(
-        context.polkadotApi,
-        CONTRACT_ADDRESS,
-        FEE_TOKEN_ADDRESS,
-        CONTRACT_ADDRESS,
-        MINT_AMOUNT,
-        1
-      ),
-      { parentHash: undefined, finalize: true }
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
     );
+    ARGENT_CONTRACT_NONCE++;
 
     const getTransactionByBlockIdAndIndexResponse =
       await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);

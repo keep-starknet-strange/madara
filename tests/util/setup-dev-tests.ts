@@ -16,6 +16,7 @@ import { type ExtrinsicCreation, extractError } from "./substrate-rpc";
 
 import { type KeyringPair } from "@polkadot/keyring/types";
 import debugFactory from "debug";
+import { InvokeFunctionResponse } from "starknet";
 const debug = debugFactory("test:setup");
 
 export interface BlockCreation {
@@ -49,7 +50,8 @@ export interface DevTestContext {
       | SubmittableExtrinsic<ApiType>
       | Promise<SubmittableExtrinsic<ApiType>>
       | string
-      | Promise<string>,
+      | Promise<string>
+      | Promise<InvokeFunctionResponse>,
     Calls extends Call | Call[]
   >(
     transactions?: Calls,
@@ -57,7 +59,9 @@ export interface DevTestContext {
   ) => Promise<
     BlockCreationResponse<
       ApiType,
-      Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
+      Calls extends Call[]
+        ? Array<Awaited<SubmittableExtrinsic<ApiType>>>
+        : Awaited<SubmittableExtrinsic<ApiType>>
     >
   >;
 
@@ -135,7 +139,8 @@ export function describeDevMadara(
           | SubmittableExtrinsic<ApiType>
           | Promise<SubmittableExtrinsic<ApiType>>
           | string
-          | Promise<string>,
+          | Promise<string>
+          | Promise<InvokeFunctionResponse>,
         Calls extends Call | Call[]
       >(
         transactions?: Calls,
@@ -151,7 +156,8 @@ export function describeDevMadara(
             ? transactions
             : [transactions];
         for await (const call of txs) {
-          if (typeof call === "string") {
+          console.log(typeof call, call);
+          if (typeof call === "object") {
             // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
