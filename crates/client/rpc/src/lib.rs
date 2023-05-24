@@ -551,7 +551,7 @@ where
     /// * `fee_estimate` - fee estimate in gwei
     async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: StarknetBlockId) -> RpcResult<FeeEstimate> {
         // TODO:
-        //      - modify BroadcastedTransaction to assert verions == "0x100000000000000000000000000000001"
+        //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
         //      - to ensure broadcasted query signatures aren't valid on mainnet
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");

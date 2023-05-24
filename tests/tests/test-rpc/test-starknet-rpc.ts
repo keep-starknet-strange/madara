@@ -321,7 +321,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Adds an invocation transaction successfully", async function () {
-    let nonce = await providerRPC.getNonceForAddress(
+    const nonce = await providerRPC.getNonceForAddress(
       ARGENT_CONTRACT_ADDRESS,
       "latest"
     );
@@ -431,24 +431,28 @@ describeDevMadara("Starknet RPC", (context) => {
       calldata: [
         TEST_CONTRACT,
         "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
-        "0x0"
-      ]
-    }
+        "0x0",
+      ],
+    };
 
-    let nonce = await providerRPC.getNonceForAddress(
+    const nonce = await providerRPC.getNonceForAddress(
       ACCOUNT_CONTRACT,
       "latest"
     );
-    
+
     const txDetails = {
       nonce: nonce,
       version: "0x1",
-    }
-    
-    const fee_estimate = await providerRPC.getEstimateFee(tx, txDetails, "latest");
+    };
 
-    expect(fee_estimate.overall_fee.cmp(toBN(0))).to.be.equal(1)
-    expect(fee_estimate.gas_consumed.cmp(toBN(0))).to.be.equal(1)
+    const fee_estimate = await providerRPC.getEstimateFee(
+      tx,
+      txDetails,
+      "latest"
+    );
+
+    expect(fee_estimate.overall_fee.cmp(toBN(0))).to.be.equal(1);
+    expect(fee_estimate.gas_consumed.cmp(toBN(0))).to.be.equal(1);
   });
 
   it("getEstimateFee throws error if contract does not exist", async function () {
@@ -457,11 +461,11 @@ describeDevMadara("Starknet RPC", (context) => {
       calldata: [
         "0x000000000000000000000000000000000000000000000000000000000000DEAD",
         "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
-        "0x0"
-      ]
-    }
+        "0x0",
+      ],
+    };
 
-    let nonce = await providerRPC.getNonceForAddress(
+    const nonce = await providerRPC.getNonceForAddress(
       ACCOUNT_CONTRACT,
       "latest"
     );
@@ -469,9 +473,9 @@ describeDevMadara("Starknet RPC", (context) => {
     const txDetails = {
       nonce: nonce,
       version: "0x1",
-    }
+    };
     try {
-      const fee_estimate = await providerRPC.getEstimateFee(tx, txDetails, "latest");
+      await providerRPC.getEstimateFee(tx, txDetails, "latest");
     } catch (error) {
       expect(error).to.be.instanceOf(LibraryError);
       expect(error.message).to.equal("40: Contract error");
