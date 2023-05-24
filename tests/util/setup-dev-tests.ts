@@ -147,7 +147,7 @@ export function describeDevMadara(
         options: BlockCreation = {}
       ) => {
         const results: Array<
-          { type: "eth"; hash: string } | { type: "sub"; hash: string }
+          { type: "starknet"; hash: string } | { type: "sub"; hash: string }
         > = [];
         const txs =
           transactions == undefined
@@ -156,7 +156,6 @@ export function describeDevMadara(
             ? transactions
             : [transactions];
         for await (const call of txs) {
-          console.log(typeof call, call);
           if (typeof call === "object") {
             // TODO: update this when we have the rpc endpoint
             // results.push({
@@ -221,12 +220,12 @@ export function describeDevMadara(
 
         const result: ExtrinsicCreation[] = results.map((result) => {
           const extrinsicIndex =
-            result.type == "eth"
+            result.type == "starknet"
               ? allRecords
                   .find(
                     ({ phase, event: { section, method, data } }) =>
                       phase.isApplyExtrinsic &&
-                      section == "ethereum" &&
+                      section == "starknet" &&
                       method == "Executed" &&
                       data[2].toString() == result.hash
                   )
@@ -258,7 +257,7 @@ export function describeDevMadara(
         });
 
         // Adds extra time to avoid empty transaction when querying it
-        if (results.find((r) => r.type == "eth")) {
+        if (results.find((r) => r.type == "starknet")) {
           await new Promise((resolve) => setTimeout(resolve, 2));
         }
         return {
