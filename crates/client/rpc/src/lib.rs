@@ -229,11 +229,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = contract_address.to_bytes_be().into();
         let nonce = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .nonce(substrate_block_hash, contract_address_wrapped)
+            .nonce(substrate_block_hash, contract_address.into())
             .ok_or_else(|| {
                 error!("Failed to get nonce at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
