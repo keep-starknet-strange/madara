@@ -48,7 +48,7 @@
 | starknet_pendingTransactions             | :construction:     |
 | starknet_syncing                         | :white_check_mark: |
 | starknet_getEvents                       | :construction:     |
-| starknet_getNonce                        | :construction:     |
+| starknet_getNonce                        | :white_check_mark: |
 | starknet_traceTransaction                | :construction:     |
 | starknet_simulateTransaction             | :construction:     |
 | starknet_traceBlockTransactions          | :construction:     |
