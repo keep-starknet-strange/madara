@@ -42,11 +42,12 @@ jobs:
         with:
           name: benchmark
       - name: Check performance changes
-        run: bash ./scripts/bench.sh metrics.json ./benchmarking/reports/metrics.json
+        run:
+          bash ./scripts/check-regression.sh metrics.json
+          ./benchmarking/reports/metrics.json
       - name: Upload new benchmark if on main
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
           name: benchmark
           path: benchmarking/reports/metrics.json
-      
