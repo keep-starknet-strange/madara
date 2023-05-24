@@ -35,6 +35,7 @@ pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
+use pallet_starknet::types::NonceWrapper;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -297,8 +298,8 @@ impl_runtime_apis! {
             Starknet::call_contract(address, function_selector, calldata)
         }
 
-        fn get_nonce(address: ContractAddressWrapper) -> Result<StarkFeltWrapper, DispatchError> {
-            Starknet::get_nonce(address)
+        fn nonce(address: ContractAddressWrapper) -> NonceWrapper {
+            Starknet::nonce(address)
         }
 
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper> {
