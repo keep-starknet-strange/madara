@@ -25,7 +25,7 @@ pub type MaxArraySize = ConstU32<10000>;
 /// chain id for the oerli network.
 pub const SN_GOERLI: &str = "SN_GOERLI";
 /// chain id for the mainnet network.
-pub const SN_MAINNET: &str = "SN_MAINNET";
+pub const SN_MAIN: &str = "SN_MAIN";
 
 /// Wrapper type for transaction execution result.
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;

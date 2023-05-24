@@ -18,7 +18,7 @@ use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contrac
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::{H256, U256};
-use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ChainId, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
@@ -452,11 +452,12 @@ impl Transaction {
         tx_type: TxType,
         contract_class: Option<ContractClass>,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Create the block context.
         // TODO: don't do that.
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
+        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address, chain_id)
             .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
 
         // Initialize the execution resources.

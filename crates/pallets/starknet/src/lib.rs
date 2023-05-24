@@ -85,9 +85,10 @@ use mp_starknet::transaction::types::{
 use sp_core::{H256, U256};
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::ContractAddress;
+use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::transaction::EventContent;
 
+use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
@@ -114,6 +115,7 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
     use mp_starknet::transaction::types::DeployAccountTransaction;
+    use starknet_api::api_core::ChainId as StarknetChainId;
 
     use super::*;
 
@@ -408,6 +410,9 @@ pub mod pallet {
 
             // Get current block
             let block = Self::current_block();
+            // get chain_id
+            let chain_id = Self::chain_id();
+
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             let transaction: Transaction = transaction.into();
@@ -417,6 +422,7 @@ pub mod pallet {
                 TxType::Invoke,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -496,6 +502,8 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
 
+            let chain_id = Self::chain_id();
+
             // Parse contract class
             let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
 
@@ -506,6 +514,7 @@ pub mod pallet {
                 TxType::Declare,
                 Some(contract_class),
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -581,6 +590,8 @@ pub mod pallet {
 
             // Get current block
             let block = Self::current_block();
+            // get chain id
+            let chain_id = Self::chain_id();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             // Execute transaction
@@ -590,6 +601,7 @@ pub mod pallet {
                 TxType::DeployAccount,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -656,7 +668,8 @@ pub mod pallet {
 
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
-
+            // get chain_id
+            let chain_id = Self::chain_id();
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
             match transaction.execute(
@@ -665,6 +678,7 @@ pub mod pallet {
                 TxType::L1Handler,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v);
@@ -829,7 +843,15 @@ impl<T: Config> Pallet<T> {
             ContractAddressWrapper::default(),
         );
 
-        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
+        // get chain_id
+        let chain_id = Self::chain_id();
+
+        match entrypoint.execute(
+            &mut BlockifierStateAdapter::<T>::default(),
+            block,
+            fee_token_address,
+            ChainId(chain_id.to_string()),
+        ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| U256::from(x.0)).collect();

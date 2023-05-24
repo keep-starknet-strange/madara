@@ -4,7 +4,6 @@ use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 
-use crate::alloc::string::ToString;
 use crate::block::header::Header;
 use crate::execution::types::ContractAddressWrapper;
 
@@ -16,6 +15,7 @@ pub trait SerializeBlockContext {
     fn try_serialize(
         block_header: Header,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -> Result<BlockContext, Self::Error>;
 }
 
@@ -44,6 +44,7 @@ impl SerializeBlockContext for BlockContext {
     fn try_serialize(
         block_header: Header,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -> Result<BlockContext, Self::Error> {
         // Try to serialize the sequencer address.
         let sequencer_address = ContractAddress::try_from(
@@ -58,7 +59,7 @@ impl SerializeBlockContext for BlockContext {
         .map_err(|_| BlockSerializationError::FeeTokenAddressError)?;
 
         Ok(BlockContext {
-            chain_id: ChainId("SN_GOERLI".to_string()),
+            chain_id: chain_id,
             block_number: BlockNumber(block_header.block_number.as_u64()),
             block_timestamp: BlockTimestamp(block_header.block_timestamp),
             sequencer_address,
@@ -89,8 +90,10 @@ mod tests {
         // Create a fee token address.
         let fee_token_address =
             <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+        // Chain ID
+        let chain_id = ChainId("0x1".to_string());
         // Try to serialize the block header.
-        let block_context = BlockContext::try_serialize(block_header, fee_token_address).unwrap();
+        let block_context = BlockContext::try_serialize(block_header, fee_token_address, chain_id).unwrap();
         let expected_sequencer_address = ContractAddress::try_from(StarkFelt::new(sequencer_address).unwrap()).unwrap();
         let expected_fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address).unwrap()).unwrap();
         // Check that the block context was serialized correctly.
@@ -112,8 +115,10 @@ mod tests {
         // Create a fee token address.
         let fee_token_address =
             <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap();
+        // Chain ID
+        let chain_id = ChainId("0x1".to_string());
         // Try to serialize the block header.
-        let block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
+        let block_context_result = BlockContext::try_serialize(block_header, fee_token_address, chain_id);
         // Check that the result is an error.
         assert!(block_context_result.is_err());
     }
@@ -130,8 +135,10 @@ mod tests {
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         let fee_token_address =
             <[u8; 32]>::from_hex("0800000000000000000000000000000000000000000000000000000000000001").unwrap();
+        // Chain ID
+        let chain_id = ChainId("0x1".to_string());
         // Try to serialize the block header.
-        let block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
+        let block_context_result = BlockContext::try_serialize(block_header, fee_token_address, chain_id);
         // Check that the result is an error.
         assert!(block_context_result.is_err());
     }

@@ -184,7 +184,7 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, c
         transaction.nonce,
         transaction.version,
         b"deploy_account",
-        chain_id
+        chain_id,
     )
 }
 
@@ -210,7 +210,8 @@ where
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
     // TODO: make it configurable
-    // let chain_id = FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap();
+    // get the currently configured runtime
+
     let chain_id = get_chain_id(chain_id);
 
     let tx_hash = <T as CryptoHasher>::compute_hash_on_elements(&vec![

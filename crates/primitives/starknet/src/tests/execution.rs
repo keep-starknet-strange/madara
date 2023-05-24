@@ -8,7 +8,7 @@ use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
 use sp_core::{H256, U256};
 use sp_runtime::BoundedBTreeMap;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::serde_utils::bytes_from_hex_str;
@@ -40,10 +40,11 @@ fn test_call_entry_point_execute_works() {
         address,
         ContractAddressWrapper::default(),
     );
+    let chain_id = ChainId("0x1".to_string());
 
     let block = Block::create_for_testing();
 
-    assert_ok!(entrypoint.execute(&mut test_state, block, [0; 32]));
+    assert_ok!(entrypoint.execute(&mut test_state, block, [0; 32], chain_id));
 }
 
 #[test]
@@ -64,8 +65,9 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
     );
 
     let block = Block::create_for_testing();
+    let chain_id = ChainId("0x1".to_string());
 
-    assert!(entrypoint.execute(&mut test_state, block, [0; 32]).is_err());
+    assert!(entrypoint.execute(&mut test_state, block, [0; 32], chain_id).is_err());
 }
 
 #[test]
