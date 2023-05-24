@@ -90,7 +90,7 @@ use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::transaction::EventContent;
 
 use crate::alloc::string::ToString;
-use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StarkFeltWrapper, StorageKeyWrapper};
+use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 

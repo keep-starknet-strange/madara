@@ -231,10 +231,6 @@ fn get_chain_id(chain_id: &str) -> FieldElement {
     FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap()
 }
 
-/// Get the chain id as a field element.
-fn get_chain_id(chain_id: &str) -> FieldElement {
-    FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap()
-}
 
 /// Calculate the hash of an event.
 ///
