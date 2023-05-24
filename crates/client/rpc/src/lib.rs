@@ -222,6 +222,30 @@ where
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
 
+    /// Get the nonce associated with the given address at the given block
+    fn get_nonce(&self, contract_address: FieldElement, block_id: StarknetBlockId) -> RpcResult<FieldElement> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let nonce = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .nonce(substrate_block_hash, contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to get nonce at '{contract_address}'");
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        let nonce = FieldElement::from_byte_slice_be(&<[u8; 32]>::from(nonce)).map_err(|e| {
+            error!("Failed to retrieve nonce at '{contract_address}': {e}");
+            StarknetRpcApiError::ContractNotFound
+        })?;
+
+        Ok(nonce)
+    }
+
     /// Get the contract class at a given contract address for a given block id
     fn get_class_at(&self, contract_address: FieldElement, block_id: StarknetBlockId) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
