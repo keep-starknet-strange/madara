@@ -75,20 +75,18 @@ impl SerializeBlockContext for BlockContext {
 // Tests for the `SerializeBlockContext` trait.
 #[cfg(test)]
 mod tests {
-    use hex::FromHex;
 
     use super::*;
+    use crate::execution::types::Felt252Wrapper;
 
     #[test]
     fn test_try_serialize() {
-        let sequencer_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000FF").unwrap().into();
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
         // Create a fee token address.
-        let fee_token_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap().into();
+        let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
         // Try to serialize the block header.
         let block_context = BlockContext::try_serialize(block_header, fee_token_address).unwrap();
         let expected_sequencer_address =
@@ -107,13 +105,12 @@ mod tests {
         // Use a value greater than the PATRICIA_KEY_UPPER_BOUND
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         let sequencer_address =
-            <[u8; 32]>::from_hex("0800000000000000000000000000000000000000000000000000000000000001").unwrap().into();
+            Felt252Wrapper::from_hex_be("0x0800000000000000000000000000000000000000000000000000000000000001").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
         // Create a fee token address.
-        let fee_token_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000AA").unwrap().into();
+        let fee_token_address = Felt252Wrapper::from_hex_be("0xAA").unwrap();
         // Try to serialize the block header.
         let block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
         // Check that the result is an error.
@@ -122,8 +119,7 @@ mod tests {
 
     #[test]
     fn test_try_serialize_invalid_fee_token_address() {
-        let sequencer_address =
-            <[u8; 32]>::from_hex("00000000000000000000000000000000000000000000000000000000000000FF").unwrap().into();
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
         // Create a block header.
         let block_header =
             Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
@@ -131,7 +127,7 @@ mod tests {
         // Use a value greater than the PATRICIA_KEY_UPPER_BOUND
         // (0x0800000000000000000000000000000000000000000000000000000000000000)
         let fee_token_address =
-            <[u8; 32]>::from_hex("0800000000000000000000000000000000000000000000000000000000000001").unwrap().into();
+            Felt252Wrapper::from_hex_be("0800000000000000000000000000000000000000000000000000000000000001").unwrap();
         // Try to serialize the block header.
         let block_context_result = BlockContext::try_serialize(block_header, fee_token_address);
         // Check that the result is an error.

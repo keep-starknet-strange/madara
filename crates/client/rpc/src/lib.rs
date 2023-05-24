@@ -25,7 +25,7 @@ use sc_transaction_pool_api::{TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
-use sp_core::{H256, U256};
+use sp_core::H256;
 use sp_runtime::generic::BlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;
@@ -96,7 +96,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().hash(PedersenHasher::default()))
+        Ok(block.header().hash(PedersenHasher::default()).into())
     }
 
     /// Returns the substrate block corresponding to the given Starknet block id
@@ -179,11 +179,11 @@ where
         })?;
 
         let runtime_api = self.client.runtime_api();
-        let hex_address = contract_address.to_bytes_be();
-        let hex_key = H256::from_slice(&key.to_bytes_be()[..32]);
+        let hex_address = contract_address.into();
+        let hex_key = key.into();
 
         let value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address.into(), hex_key.into())
+            .get_storage_at(substrate_block_hash, hex_address, hex_key)
             .map_err(|e| {
                 error!("Request parameters error: {e}");
                 StarknetRpcApiError::InternalServerError
@@ -207,7 +207,7 @@ where
 
         let runtime_api = self.client.runtime_api();
 
-        let calldata = request.calldata.iter().map(|x| Felt252Wrapper(U256::from(x.to_bytes_be()))).collect();
+        let calldata = request.calldata.iter().map(|x| Felt252Wrapper::from(*x)).collect();
 
         let result = runtime_api
             .call(substrate_block_hash, request.contract_address.into(), request.entry_point_selector.into(), calldata)
@@ -229,11 +229,11 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = contract_address.to_bytes_be();
+        let contract_address_wrapped = contract_address.into();
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_address(substrate_block_hash, contract_address_wrapped.into())
+            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
@@ -280,20 +280,13 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = FieldElement::from_byte_slice_be(
-                        &starting_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    let starting_block_hash = starting_block?.header().hash(PedersenHasher::default()).0;
+
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = FieldElement::from_byte_slice_be(
-                        &current_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    let current_block_hash = current_block?.header().hash(PedersenHasher::default()).0;
+
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = FieldElement::from_byte_slice_be(
-                        &highest_block?.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    let highest_block_hash = highest_block?.header().hash(PedersenHasher::default()).0;
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(SyncStatusType::Syncing(SyncStatus {
@@ -327,12 +320,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_clash_hashed_wrapped = class_hash.to_bytes_be();
-
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped.into())
+            .contract_class_by_class_hash(substrate_block_hash, class_hash.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class from hash '{class_hash}'");
                 StarknetRpcApiError::ContractNotFound
@@ -362,12 +353,10 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let contract_address_wrapped = contract_address.to_bytes_be();
-
         let class_hash = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped.into())
+            .contract_class_hash_by_address(substrate_block_hash, contract_address.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
@@ -389,18 +378,18 @@ where
             .unwrap_or_default();
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
-        let blockhash: Felt252Wrapper = block.header().hash(PedersenHasher::default()).into();
-        let parent_blockhash: Felt252Wrapper = block.header().parent_block_hash;
+        let blockhash = block.header().hash(PedersenHasher::default());
+        let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             // TODO: Status hardcoded, get status from block
             status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from(blockhash),
-            parent_hash: FieldElement::from(parent_blockhash),
+            block_hash: blockhash.into(),
+            parent_hash: parent_blockhash.into(),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from(block.header().global_state_root),
+            new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from(block.header().sequencer_address),
+            sequencer_address: block.header().sequencer_address.into(),
         };
         Ok(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
@@ -476,7 +465,7 @@ where
             },
         )?;
 
-        Ok(InvokeTransactionResult { transaction_hash: FieldElement::from(transaction.hash) })
+        Ok(InvokeTransactionResult { transaction_hash: transaction.hash.into() })
     }
 
     /// Add an Deploy Account Transaction
@@ -520,8 +509,8 @@ where
         })?;
 
         Ok(DeployAccountTransactionResult {
-            transaction_hash: FieldElement::from(transaction.hash),
-            contract_address: FieldElement::from(transaction.sender_address),
+            transaction_hash: transaction.hash.into(),
+            contract_address: transaction.sender_address.into(),
         })
     }
 }

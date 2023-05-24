@@ -42,7 +42,7 @@ jobs:
   integration-tests:
     runs-on: [self-hosted, linux]
     env:
-      BINARY_PATH: ../target/debug/madara
+      BINARY_PATH: ../target/release/madara
     steps:
       - uses: actions/checkout@v3
         with:

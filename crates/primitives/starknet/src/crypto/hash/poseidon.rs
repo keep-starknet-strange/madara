@@ -4,6 +4,7 @@ use poseidon_hash::hash_sw8;
 use poseidon_hash::parameters::sw8::GF;
 use starknet_crypto::FieldElement;
 
+use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::CryptoHasher;
 
 /// The poseidon hasher.
@@ -11,9 +12,10 @@ use crate::traits::hash::CryptoHasher;
 pub struct PoseidonHasher;
 
 /// The Poseidon hash function.
-pub fn hash(_data: &[u8]) -> [u8; 32] {
+pub fn hash(_data: &[u8]) -> Felt252Wrapper {
     let input = felts_from_u8s::<GF>(_data);
-    let result = u8s_from_felts(&hash_sw8(&input));
+    let binding = u8s_from_felts(&hash_sw8(&input));
+    let result = binding.as_slice();
     result.try_into().unwrap()
 }
 

@@ -443,8 +443,8 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
-                        actual_fee: Felt252Wrapper(U256::from(actual_fee.0)),
-                        block_hash: block.header().hash(T::SystemHash::hasher()).into(),
+                        actual_fee: actual_fee.0.into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()), // unwrap to check.
                         block_number: block.header().block_number.as_u64(),
                     }
                 }
@@ -532,9 +532,9 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: block.header().hash(T::SystemHash::hasher()).into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: Felt252Wrapper(U256::from(actual_fee.0)),
+                        actual_fee: actual_fee.0.into(),
                     }
                 }
                 Err(e) => {
@@ -616,9 +616,9 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: block.header().hash(T::SystemHash::hasher()).into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: Felt252Wrapper(U256::from(actual_fee.0)),
+                        actual_fee: actual_fee.0.into(),
                     }
                 }
                 Err(e) => {
@@ -769,7 +769,7 @@ impl<T: Config> Pallet<T> {
     /// The current block hash.
     #[inline(always)]
     pub fn current_block_hash() -> Felt252Wrapper {
-        Self::current_block().header().hash(T::SystemHash::hasher()).into()
+        Self::current_block().header().hash(T::SystemHash::hasher())
     }
 
     /// Get the block hash of the previous block.
@@ -837,7 +837,7 @@ impl<T: Config> Pallet<T> {
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
-                let result = v.execution.retdata.0.iter().map(|x| Felt252Wrapper(U256::from(x.0))).collect();
+                let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
                 Ok(result)
             }
             Err(e) => {
@@ -885,12 +885,12 @@ impl<T: Config> Pallet<T> {
                 parent_block_hash,
                 block_number,
                 global_state_root,
-                sequencer_address.into(),
+                Felt252Wrapper::try_from(&sequencer_address).unwrap(),
                 block_timestamp,
                 transaction_count,
-                transaction_commitment.into(),
+                transaction_commitment.try_into().unwrap(),
                 events.len() as u128,
-                event_commitment.into(),
+                event_commitment.try_into().unwrap(),
                 protocol_version,
                 extra_data,
             ),
@@ -901,7 +901,7 @@ impl<T: Config> Pallet<T> {
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());
         // Save the block number <> hash mapping.
-        let blockhash: Felt252Wrapper = block.header().hash(T::SystemHash::hasher()).into();
+        let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);
         Pending::<T>::kill();
         PendingEvents::<T>::kill();
