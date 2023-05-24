@@ -34,7 +34,7 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
-    fn query_storage<T: Decode + std::fmt::Debug>(&self, block_hash: B::Hash, key: &StorageKey) -> Option<T> {
+    fn query_storage<T: Decode>(&self, block_hash: B::Hash, key: &StorageKey) -> Option<T> {
         if let Ok(Some(data)) = self.client.storage(block_hash, key) {
             if let Ok(result) = Decode::decode(&mut &data.0[..]) {
                 return Some(result);
@@ -103,6 +103,7 @@ where
             block_hash,
             &StorageKey(storage_key_build(storage_nonce_prefix, &self.encode_storage_key(&address))),
         );
+
         match nonce {
             Some(nonce) => Some(nonce),
             None => Some(NonceWrapper::default()),
