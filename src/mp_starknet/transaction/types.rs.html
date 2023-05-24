@@ -479,7 +479,6 @@
 <a href="#479" id="479">479</a>
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
-<a href="#482" id="482">482</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 
@@ -498,8 +497,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::execution::call_entrypoint_wrapper::MaxCalldataSize;
 <span class="kw">use </span><span class="kw">crate</span>::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-<span class="kw">use </span><span class="kw">crate</span>::execution::program_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 
 <span class="doccomment">/// Max size of arrays.
 /// TODO: add real value (#250)
@@ -792,7 +790,7 @@
     <span class="kw">fn </span>from(value: InvokeTransaction) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()).into(),
+            hash: calculate_invoke_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -814,7 +812,7 @@
     <span class="kw">fn </span>from(value: DeclareTransaction) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()).into(),
+            hash: calculate_declare_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -837,7 +835,7 @@
     <span class="kw">fn </span>from(value: DeployAccountTransaction) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()).into(),
+            hash: calculate_deploy_account_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,

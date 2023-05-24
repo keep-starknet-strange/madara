@@ -179,7 +179,8 @@
                 invoke_tx_v1.signature.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
             )
             .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to convert signature: {:?}&quot;</span>, e))<span class="question-mark">?</span>,
-            sender_address: invoke_tx_v1.sender_address.to_bytes_be().into(),
+
+            sender_address: invoke_tx_v1.sender_address.into(),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
@@ -197,7 +198,7 @@
 
     <span class="kw">let </span>contract_address_salt = tx.contract_address_salt.to_bytes_be();
 
-    <span class="kw">let </span>account_class_hash = tx.class_hash.to_bytes_be();
+    <span class="kw">let </span>account_class_hash = tx.class_hash;
 
     <span class="kw">let </span>calldata =
         tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -212,12 +213,11 @@
 
     <span class="kw">let </span>sender_address = calculate_contract_address(
         ContractAddressSalt(StarkFelt(contract_address_salt)),
-        ClassHash(StarkFelt(account_class_hash)),
+        ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
         <span class="kw-2">&amp;</span>Calldata(calldata.into()),
         StarknetContractAddress::default(),
     )
     .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;Failed to calculate contract address: {e}&quot;</span>))<span class="question-mark">?
-    </span>.<span class="number">0
     </span>.<span class="number">0
     </span>.<span class="number">0
     </span>.into();

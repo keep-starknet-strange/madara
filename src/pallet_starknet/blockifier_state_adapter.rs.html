@@ -132,7 +132,6 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -142,7 +141,6 @@
 <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
 <span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::state::StateChanges;
-<span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>sp_std::sync::Arc;
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
@@ -182,8 +180,8 @@
 
 <span class="kw">impl</span>&lt;T: Config&gt; StateReader <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
     <span class="kw">fn </span>get_storage_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, key: StorageKey) -&gt; StateResult&lt;StarkFelt&gt; {
-        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>.into();
-        <span class="kw">let </span>key: StorageKeyWrapper = key.<span class="number">0.0</span>.<span class="number">0</span>.into();
+        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
+        <span class="kw">let </span>key: StorageKeyWrapper = key.<span class="number">0.0</span>.into();
 
         <span class="kw">let </span>contract_storage_key: ContractStorageKeyWrapper = (contract_address, key);
         <span class="kw">let </span>storage_content = StarkFelt::new(Pallet::&lt;T&gt;::storage(contract_storage_key).into())<span class="question-mark">?</span>;
@@ -192,7 +190,7 @@
     }
 
     <span class="kw">fn </span>get_nonce_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;Nonce&gt; {
-        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>.into();
+        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
 
         <span class="kw">let </span>nonce = Nonce(StarkFelt::new(Pallet::&lt;T&gt;::nonce(contract_address).into())<span class="question-mark">?</span>);
 
@@ -200,7 +198,7 @@
     }
 
     <span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;ClassHash&gt; {
-        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>.into();
+        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
 
         <span class="kw">let </span>class_hash = ClassHash(StarkFelt::new(
             Pallet::&lt;T&gt;::contract_class_hash_by_address(contract_address).unwrap_or_default().into(),
@@ -210,7 +208,7 @@
     }
 
     <span class="kw">fn </span>get_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;Arc&lt;ContractClass&gt;&gt; {
-        <span class="kw">let </span>wrapped_class_hash: ClassHashWrapper = class_hash.<span class="number">0.0</span>.into();
+        <span class="kw">let </span>wrapped_class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
         <span class="kw">let </span>opt_contract_class = Pallet::&lt;T&gt;::contract_class_by_class_hash(wrapped_class_hash);
         <span class="kw">match </span>opt_contract_class {
             <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(Arc::new(
@@ -225,16 +223,16 @@
 <span class="kw">impl</span>&lt;T: Config&gt; State <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
     <span class="kw">fn </span>set_storage_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, key: StorageKey, value: StarkFelt) {
         <span class="self">self</span>.storage_update.insert((contract_address, key), value);
-        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>.into();
-        <span class="kw">let </span>key: StorageKeyWrapper = key.<span class="number">0.0</span>.<span class="number">0</span>.into();
+        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
+        <span class="kw">let </span>key: StorageKeyWrapper = key.<span class="number">0.0</span>.into();
 
         <span class="kw">let </span>contract_storage_key: ContractStorageKeyWrapper = (contract_address, key);
 
-        <span class="kw">crate</span>::StorageView::&lt;T&gt;::insert(contract_storage_key, Felt252Wrapper(U256::from(value.<span class="number">0</span>)));
+        <span class="kw">crate</span>::StorageView::&lt;T&gt;::insert(contract_storage_key, Felt252Wrapper::from(value));
     }
 
     <span class="kw">fn </span>increment_nonce(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;()&gt; {
-        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>.into();
+        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
         <span class="kw">let </span>current_nonce = Pallet::&lt;T&gt;::nonce(contract_address);
 
         <span class="kw">crate</span>::Nonces::&lt;T&gt;::insert(contract_address, current_nonce + <span class="number">1</span>);
@@ -244,8 +242,8 @@
 
     <span class="kw">fn </span>set_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress, class_hash: ClassHash) -&gt; StateResult&lt;()&gt; {
         <span class="self">self</span>.class_hash_update += <span class="number">1</span>;
-        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.<span class="number">0</span>.into();
-        <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0.0</span>.into();
+        <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
+        <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
 
         <span class="kw">crate</span>::ContractClassHashes::&lt;T&gt;::insert(contract_address, class_hash);
 
@@ -253,7 +251,7 @@
     }
 
     <span class="kw">fn </span>set_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash, contract_class: ContractClass) -&gt; StateResult&lt;()&gt; {
-        <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0.0</span>.into();
+        <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
         <span class="kw">let </span>contract_class: ContractClassWrapper = ContractClassWrapper::try_from(contract_class).unwrap();
 
         <span class="kw">crate</span>::ContractClasses::&lt;T&gt;::insert(class_hash, contract_class);

@@ -514,17 +514,6 @@
 <a href="#514" id="514">514</a>
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
-<a href="#517" id="517">517</a>
-<a href="#518" id="518">518</a>
-<a href="#519" id="519">519</a>
-<a href="#520" id="520">520</a>
-<a href="#521" id="521">521</a>
-<a href="#522" id="522">522</a>
-<a href="#523" id="523">523</a>
-<a href="#524" id="524">524</a>
-<a href="#525" id="525">525</a>
-<a href="#526" id="526">526</a>
-<a href="#527" id="527">527</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -552,7 +541,7 @@
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
-<span class="kw">use </span>sp_core::{H256, U256};
+<span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>sp_runtime::generic::BlockId;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 <span class="kw">use </span>starknet_core::types::FieldElement;
@@ -623,7 +612,7 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="prelude-val">Ok</span>(block.header().hash(PedersenHasher::default()))
+        <span class="prelude-val">Ok</span>(block.header().hash(PedersenHasher::default()).into())
     }
 
     <span class="doccomment">/// Returns the substrate block corresponding to the given Starknet block id
@@ -706,11 +695,11 @@
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>runtime_api = <span class="self">self</span>.client.runtime_api();
-        <span class="kw">let </span>hex_address = contract_address.to_bytes_be();
-        <span class="kw">let </span>hex_key = H256::from_slice(<span class="kw-2">&amp;</span>key.to_bytes_be()[..<span class="number">32</span>]);
+        <span class="kw">let </span>hex_address = contract_address.into();
+        <span class="kw">let </span>hex_key = key.into();
 
         <span class="kw">let </span>value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address.into(), hex_key.into())
+            .get_storage_at(substrate_block_hash, hex_address, hex_key)
             .map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
@@ -734,7 +723,7 @@
 
         <span class="kw">let </span>runtime_api = <span class="self">self</span>.client.runtime_api();
 
-        <span class="kw">let </span>calldata = request.calldata.iter().map(|x| Felt252Wrapper(U256::from(x.to_bytes_be()))).collect();
+        <span class="kw">let </span>calldata = request.calldata.iter().map(|x| Felt252Wrapper::from(<span class="kw-2">*</span>x)).collect();
 
         <span class="kw">let </span>result = runtime_api
             .call(substrate_block_hash, request.contract_address.into(), request.entry_point_selector.into(), calldata)
@@ -756,11 +745,11 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>contract_address_wrapped = contract_address.to_bytes_be();
+        <span class="kw">let </span>contract_address_wrapped = contract_address.into();
         <span class="kw">let </span>contract_class = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_by_address(substrate_block_hash, contract_address_wrapped.into())
+            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
             .ok_or_else(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class at &#39;{contract_address}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
@@ -807,20 +796,13 @@
                 <span class="kw">if </span>starting_block.is_ok() &amp;&amp; current_block.is_ok() &amp;&amp; highest_block.is_ok() {
                     <span class="comment">// Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     </span><span class="kw">let </span>starting_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(<span class="self">self</span>.starting_block);
-                    <span class="kw">let </span>starting_block_hash = FieldElement::from_byte_slice_be(
-                        <span class="kw-2">&amp;</span>starting_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    <span class="kw">let </span>starting_block_hash = starting_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).<span class="number">0</span>;
+
                     <span class="kw">let </span>current_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(best_number);
-                    <span class="kw">let </span>current_block_hash = FieldElement::from_byte_slice_be(
-                        <span class="kw-2">&amp;</span>current_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    <span class="kw">let </span>current_block_hash = current_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).<span class="number">0</span>;
+
                     <span class="kw">let </span>highest_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(highest_number);
-                    <span class="kw">let </span>highest_block_hash = FieldElement::from_byte_slice_be(
-                        <span class="kw-2">&amp;</span>highest_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).to_fixed_bytes(),
-                    )
-                    .unwrap();
+                    <span class="kw">let </span>highest_block_hash = highest_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).<span class="number">0</span>;
 
                     <span class="comment">// Build the `SyncStatus` struct with the respective syn information
                     </span><span class="prelude-val">Ok</span>(SyncStatusType::Syncing(SyncStatus {
@@ -854,12 +836,10 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>contract_clash_hashed_wrapped = class_hash.to_bytes_be();
-
         <span class="kw">let </span>contract_class = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, contract_clash_hashed_wrapped.into())
+            .contract_class_by_class_hash(substrate_block_hash, class_hash.into())
             .ok_or_else(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class from hash &#39;{class_hash}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
@@ -889,12 +869,10 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>contract_address_wrapped = contract_address.to_bytes_be();
-
         <span class="kw">let </span>class_hash = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, contract_address_wrapped.into())
+            .contract_class_hash_by_address(substrate_block_hash, contract_address.into())
             .ok_or_else(|| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class hash at &#39;{contract_address}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
@@ -916,18 +894,18 @@
             .unwrap_or_default();
 
         <span class="kw">let </span>transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
-        <span class="kw">let </span>blockhash: Felt252Wrapper = block.header().hash(PedersenHasher::default()).into();
-        <span class="kw">let </span>parent_blockhash: Felt252Wrapper = block.header().parent_block_hash;
+        <span class="kw">let </span>blockhash = block.header().hash(PedersenHasher::default());
+        <span class="kw">let </span>parent_blockhash = block.header().parent_block_hash;
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
             transactions,
             <span class="comment">// TODO: Status hardcoded, get status from block
             </span>status: BlockStatus::AcceptedOnL2,
-            block_hash: FieldElement::from(blockhash),
-            parent_hash: FieldElement::from(parent_blockhash),
+            block_hash: blockhash.into(),
+            parent_hash: parent_blockhash.into(),
             block_number: block.header().block_number.as_u64(),
-            new_root: FieldElement::from(block.header().global_state_root),
+            new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
-            sequencer_address: FieldElement::from(block.header().sequencer_address),
+            sequencer_address: block.header().sequencer_address.into(),
         };
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
@@ -1003,7 +981,7 @@
             },
         )<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(InvokeTransactionResult { transaction_hash: FieldElement::from(transaction.hash) })
+        <span class="prelude-val">Ok</span>(InvokeTransactionResult { transaction_hash: transaction.hash.into() })
     }
 
     <span class="doccomment">/// Add an Deploy Account Transaction
@@ -1047,8 +1025,8 @@
         })<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(DeployAccountTransactionResult {
-            transaction_hash: FieldElement::from(transaction.hash),
-            contract_address: FieldElement::from(transaction.sender_address),
+            transaction_hash: transaction.hash.into(),
+            contract_address: transaction.sender_address.into(),
         })
     }
 }

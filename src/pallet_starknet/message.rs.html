@@ -149,14 +149,13 @@
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
-<span class="kw">use </span>hex::FromHex;
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
 <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
 <span class="kw">use </span>scale_codec::{Decode, Encode};
 <span class="kw">use </span>serde::Deserialize;
-<span class="kw">use </span>sp_core::{H256, U256};
+<span class="kw">use </span>sp_core::U256;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::format;
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::String;
@@ -201,15 +200,17 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::EmptyData);
         }
         <span class="comment">// L2 contract to call.
-        </span><span class="kw">let </span>sender_address = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="self">self</span>.topics[<span class="number">2</span>].trim_start_matches(<span class="string">&quot;0x&quot;</span>))
-            .map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?
-            </span>.into();
+        </span><span class="kw">let </span>sender_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(<span class="self">self</span>.topics[<span class="number">2</span>].as_str()) {
+            <span class="prelude-val">Ok</span>(f) =&gt; f,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::ToTransactionError),
+        };
+
         <span class="comment">// Function of the contract to call.
-        </span><span class="kw">let </span>selector = H256::from_slice(
-            <span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="self">self</span>.topics[<span class="number">3</span>].trim_start_matches(<span class="string">&quot;0x&quot;</span>))
-                .map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?</span>,
-        )
-        .into();
+        </span><span class="kw">let </span>selector = <span class="kw">match </span>Felt252Wrapper::from_hex_be(<span class="self">self</span>.topics[<span class="number">3</span>].as_str()) {
+            <span class="prelude-val">Ok</span>(f) =&gt; f,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::ToTransactionError),
+        };
+
         <span class="comment">// Add the from address here so it&#39;s directly in the calldata.
         </span><span class="kw">let </span>char_vec = <span class="macro">format!</span>(<span class="string">&quot;{:}{:}&quot;</span>, <span class="self">self</span>.topics[<span class="number">1</span>].trim_start_matches(<span class="string">&quot;0x&quot;</span>), <span class="self">self</span>.data.trim_start_matches(<span class="string">&quot;0x&quot;</span>))
             .chars()
@@ -222,11 +223,10 @@
             .map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;Felt252Wrapper&gt; = Vec::new();
         <span class="kw">for </span>val <span class="kw">in </span>data_map.take(<span class="self">self</span>.data.len() - <span class="number">2</span>) {
-            calldata.push(
-                &lt;[u8; <span class="number">32</span>]&gt;::from_hex(val.trim_start_matches(<span class="string">&quot;0x&quot;</span>))
-                    .map_err(|<span class="kw">_</span>| OffchainWorkerError::HexDecodeError)<span class="question-mark">?
-                    </span>.into(),
-            )
+            calldata.push(<span class="kw">match </span>Felt252Wrapper::from_hex_be(val.as_str()) {
+                <span class="prelude-val">Ok</span>(f) =&gt; f,
+                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(OffchainWorkerError::ToTransactionError),
+            })
         }
         <span class="kw">let </span>calldata = BoundedVec::try_from(calldata).map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
         <span class="kw">let </span>call_entrypoint = CallEntryPointWrapper {
@@ -254,7 +254,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_into_transaction_correct_message_should_work() {
-        <span class="kw">let </span>felt_one = Felt252Wrapper(U256::from(<span class="number">1</span>));
+        <span class="kw">let </span>felt_one = Felt252Wrapper::one();
         <span class="kw">let </span>sender_address = felt_one;
         <span class="kw">let </span>hex = <span class="string">&quot;0x0000000000000000000000000000000000000000000000000000000000000001&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
@@ -266,7 +266,7 @@
                 class_hash: <span class="prelude-val">None</span>,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
                 entrypoint_selector: <span class="prelude-val">Some</span>(felt_one),
-                calldata: <span class="macro">bounded_vec!</span>[Felt252Wrapper(U256::from(<span class="number">1</span>)), Felt252Wrapper(U256::from(<span class="number">1</span>))],
+                calldata: <span class="macro">bounded_vec!</span>[Felt252Wrapper::one(), Felt252Wrapper::one()],
                 storage_address: felt_one,
                 caller_address: ContractAddressWrapper::default(),
             },
@@ -280,7 +280,7 @@
         <span class="kw">let </span>hex = <span class="string">&quot;0x1&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
             Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), <span class="string">&quot;foo&quot;</span>.to_owned(), hex.clone()], data: hex };
-        <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+        <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::ToTransactionError);
     }
 
     <span class="attr">#[test]
@@ -288,7 +288,7 @@
         <span class="kw">let </span>hex = <span class="string">&quot;0x1&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
             Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), <span class="string">&quot;foo&quot;</span>.to_owned()], data: hex };
-        <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::HexDecodeError);
+        <span class="macro">assert_eq!</span>(test_message.try_into_transaction().unwrap_err(), OffchainWorkerError::ToTransactionError);
     }
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_into_transaction_empty_data_should_fail() {

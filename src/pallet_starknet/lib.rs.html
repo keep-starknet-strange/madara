@@ -1406,9 +1406,9 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
-                        actual_fee: Felt252Wrapper(U256::from(actual_fee.<span class="number">0</span>)),
-                        block_hash: block.header().hash(T::SystemHash::hasher()).into(),
-                        block_number: block.header().block_number.as_u64(),
+                        actual_fee: actual_fee.<span class="number">0</span>.into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()), <span class="comment">// unwrap to check.
+                        </span>block_number: block.header().block_number.as_u64(),
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
@@ -1495,9 +1495,9 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: block.header().hash(T::SystemHash::hasher()).into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: Felt252Wrapper(U256::from(actual_fee.<span class="number">0</span>)),
+                        actual_fee: actual_fee.<span class="number">0</span>.into(),
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
@@ -1579,9 +1579,9 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: block.header().hash(T::SystemHash::hasher()).into(),
+                        block_hash: block.header().hash(T::SystemHash::hasher()),
                         block_number: block.header().block_number.as_u64(),
-                        actual_fee: Felt252Wrapper(U256::from(actual_fee.<span class="number">0</span>)),
+                        actual_fee: actual_fee.<span class="number">0</span>.into(),
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
@@ -1732,7 +1732,7 @@
     /// The current block hash.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>current_block_hash() -&gt; Felt252Wrapper {
-        <span class="self">Self</span>::current_block().header().hash(T::SystemHash::hasher()).into()
+        <span class="self">Self</span>::current_block().header().hash(T::SystemHash::hasher())
     }
 
     <span class="doccomment">/// Get the block hash of the previous block.
@@ -1800,7 +1800,7 @@
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block, fee_token_address) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
                 <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
-                <span class="kw">let </span>result = v.execution.retdata.<span class="number">0</span>.iter().map(|x| Felt252Wrapper(U256::from(x.<span class="number">0</span>))).collect();
+                <span class="kw">let </span>result = v.execution.retdata.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect();
                 <span class="prelude-val">Ok</span>(result)
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
@@ -1848,12 +1848,12 @@
                 parent_block_hash,
                 block_number,
                 global_state_root,
-                sequencer_address.into(),
+                Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>sequencer_address).unwrap(),
                 block_timestamp,
                 transaction_count,
-                transaction_commitment.into(),
+                transaction_commitment.try_into().unwrap(),
                 events.len() <span class="kw">as </span>u128,
-                event_commitment.into(),
+                event_commitment.try_into().unwrap(),
                 protocol_version,
                 extra_data,
             ),
@@ -1864,7 +1864,7 @@
         <span class="comment">// Save the current block.
         </span>CurrentBlock::&lt;T&gt;::put(block.clone());
         <span class="comment">// Save the block number &lt;&gt; hash mapping.
-        </span><span class="kw">let </span>blockhash: Felt252Wrapper = block.header().hash(T::SystemHash::hasher()).into();
+        </span><span class="kw">let </span>blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::&lt;T&gt;::insert(block_number, blockhash);
         Pending::&lt;T&gt;::kill();
         PendingEvents::&lt;T&gt;::kill();

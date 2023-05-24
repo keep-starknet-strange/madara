@@ -115,12 +115,10 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
 </pre><pre class="rust"><code><span class="kw">use </span>scale_codec::Encode;
-<span class="kw">use </span>sp_core::{H256, U256};
+<span class="kw">use </span>sp_core::U256;
 
-<span class="kw">use </span><span class="kw">crate</span>::execution::program_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::execution::types::ContractAddressWrapper;
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::Hasher;
 
 <span class="attr">#[derive(
@@ -195,22 +193,22 @@
 
     <span class="doccomment">/// Compute the hash of the header.
     </span><span class="attr">#[must_use]
-    </span><span class="kw">pub fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; H256 {
-        H256::from_slice(&lt;H <span class="kw">as </span>Hasher&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode()).as_slice())
+    </span><span class="kw">pub fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; Felt252Wrapper {
+        &lt;H <span class="kw">as </span>Hasher&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode())
     }
 }
 
 <span class="attr">#[test]
 </span><span class="kw">fn </span>test_header_hash() {
-    <span class="kw">let </span>parent_block_hash = H256::from([<span class="number">1</span>; <span class="number">32</span>]).into();
+    <span class="kw">let </span>parent_block_hash = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>[<span class="number">1</span>; <span class="number">32</span>]).unwrap();
     <span class="kw">let </span>block_number = U256::from(<span class="number">42</span>);
-    <span class="kw">let </span>global_state_root = Felt252Wrapper(U256::from(<span class="number">12345</span>));
-    <span class="kw">let </span>sequencer_address = [<span class="number">2</span>; <span class="number">32</span>].into();
+    <span class="kw">let </span>global_state_root = Felt252Wrapper::from(<span class="number">12345_u128</span>);
+    <span class="kw">let </span>sequencer_address = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>[<span class="number">2</span>; <span class="number">32</span>]).unwrap();
     <span class="kw">let </span>block_timestamp = <span class="number">1620037184</span>;
     <span class="kw">let </span>transaction_count = <span class="number">2</span>;
-    <span class="kw">let </span>transaction_commitment = H256::from([<span class="number">3</span>; <span class="number">32</span>]).into();
+    <span class="kw">let </span>transaction_commitment = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>[<span class="number">3</span>; <span class="number">32</span>]).unwrap();
     <span class="kw">let </span>event_count = <span class="number">1</span>;
-    <span class="kw">let </span>event_commitment = H256::from([<span class="number">4</span>; <span class="number">32</span>]).into();
+    <span class="kw">let </span>event_commitment = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>[<span class="number">4</span>; <span class="number">32</span>]).unwrap();
     <span class="kw">let </span>protocol_version = <span class="prelude-val">Some</span>(<span class="number">1</span>);
     <span class="kw">let </span>extra_data = <span class="prelude-val">None</span>;
 
@@ -230,7 +228,7 @@
 
     <span class="kw">let </span>hasher = <span class="kw">crate</span>::crypto::hash::pedersen::PedersenHasher::default();
 
-    <span class="kw">let </span>expected_hash = H256::from_slice(hasher.hash(<span class="kw-2">&amp;</span>block_number.encode()).as_slice());
+    <span class="kw">let </span>expected_hash = hasher.hash(<span class="kw-2">&amp;</span>block_number.encode());
 
     <span class="macro">assert_eq!</span>(header.hash(hasher), expected_hash);
 }

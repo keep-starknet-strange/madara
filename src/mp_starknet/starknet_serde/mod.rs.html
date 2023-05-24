@@ -357,19 +357,25 @@
 <a href="#357" id="357">357</a>
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
-</span><span class="kw">use </span>alloc::string::String;
+</span><span class="kw">use </span>alloc::string::{String, ToString};
 <span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>alloc::{fmt, format};
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>frame_support::BoundedVec;
-<span class="kw">use </span>hex::{FromHex, FromHexError};
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_core::U256;
 
-<span class="kw">use </span><span class="kw">crate</span>::execution::program_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, MaxCalldataSize};
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::{
+    CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
+    MaxCalldataSize,
+};
 <span class="kw">use </span><span class="kw">crate</span>::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
 <span class="doccomment">/// Removes the &quot;0x&quot; prefix from a given hexadecimal string
@@ -379,9 +385,10 @@
 
 <span class="doccomment">/// Converts a hexadecimal string to an Felt252Wrapper value
 </span><span class="kw">fn </span>string_to_felt(hex_str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Felt252Wrapper, String&gt; {
-    <span class="kw">let </span>bytes =
-        Vec::from_hex(remove_prefix(hex_str)).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to convert hex string to bytes: {:?}&quot;</span>, e))<span class="question-mark">?</span>;
-    <span class="kw">if </span>bytes.len() == <span class="number">32 </span>{ <span class="prelude-val">Ok</span>(bytes.as_slice().into()) } <span class="kw">else </span>{ <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Invalid input length: {}&quot;</span>, bytes.len())) }
+    <span class="kw">match </span>Felt252Wrapper::from_hex_be(hex_str) {
+        <span class="prelude-val">Ok</span>(f) =&gt; <span class="prelude-val">Ok</span>(f),
+        <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.to_string()),
+    }
 }
 
 <span class="comment">// Deserialization and Conversion for JSON Transactions, Events, and CallEntryPoints
@@ -407,7 +414,7 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>DeserializeCallEntrypointError {
     <span class="doccomment">/// InvalidClassHash error
-    </span>InvalidClassHash(FromHexError),
+    </span>InvalidClassHash(Felt252WrapperError),
     <span class="doccomment">/// InvalidCalldata error
     </span>InvalidCalldata(String),
     <span class="doccomment">/// InvalidEntrypointSelector error
@@ -417,9 +424,9 @@
     <span class="doccomment">/// CalldataExceedsMaxSize error
     </span>CalldataExceedsMaxSize,
     <span class="doccomment">/// InvalidStorageAddress error
-    </span>InvalidStorageAddress(FromHexError),
+    </span>InvalidStorageAddress(Felt252WrapperError),
     <span class="doccomment">/// InvalidCallerAddress error
-    </span>InvalidCallerAddress(FromHexError),
+    </span>InvalidCallerAddress(Felt252WrapperError),
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>DeserializeCallEntrypointError {
@@ -466,7 +473,7 @@
     <span class="doccomment">/// DataExceedMaxSize error
     </span>DataExceedMaxSize,
     <span class="doccomment">/// InvalidFromAddress error
-    </span>InvalidFromAddress(FromHexError),
+    </span>InvalidFromAddress(Felt252WrapperError),
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>DeserializeEventError {
@@ -596,11 +603,10 @@
     </span><span class="kw">fn </span>try_from(d: DeserializeCallEntrypoint) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="comment">// Convert class_hash to Option&lt;Felt252Wrapper&gt; if present
         </span><span class="kw">let </span>class_hash = <span class="kw">match </span>d.class_hash {
-            <span class="prelude-val">Some</span>(hash) =&gt; <span class="prelude-val">Some</span>(
-                &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>hash))
-                    .map_err(DeserializeCallEntrypointError::InvalidClassHash)<span class="question-mark">?
-                    </span>.into(),
-            ),
+            <span class="prelude-val">Some</span>(hash_str) =&gt; <span class="kw">match </span>Felt252Wrapper::from_hex_be(hash_str.as_str()) {
+                <span class="prelude-val">Ok</span>(felt) =&gt; <span class="prelude-val">Some</span>(felt),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeCallEntrypointError::InvalidClassHash(e)),
+            },
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         };
 
@@ -630,14 +636,16 @@
             .map_err(|<span class="kw">_</span>| DeserializeCallEntrypointError::CalldataExceedsMaxSize)<span class="question-mark">?</span>;
 
         <span class="comment">// Convert storage_address to Felt252Wrapper
-        </span><span class="kw">let </span>storage_address = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>d.storage_address))
-            .map_err(DeserializeCallEntrypointError::InvalidStorageAddress)<span class="question-mark">?
-            </span>.into();
+        </span><span class="kw">let </span>storage_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(d.storage_address.as_str()) {
+            <span class="prelude-val">Ok</span>(felt) =&gt; felt,
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeCallEntrypointError::InvalidStorageAddress(e)),
+        };
 
         <span class="comment">// Convert caller_address to Felt252Wrapper
-        </span><span class="kw">let </span>caller_address = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>d.caller_address))
-            .map_err(DeserializeCallEntrypointError::InvalidCallerAddress)<span class="question-mark">?
-            </span>.into();
+        </span><span class="kw">let </span>caller_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(d.caller_address.as_str()) {
+            <span class="prelude-val">Ok</span>(felt) =&gt; felt,
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeCallEntrypointError::InvalidCallerAddress(e)),
+        };
 
         <span class="comment">// Create CallEntryPointWrapper with validated and converted fields
         </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address })
@@ -674,11 +682,13 @@
             .map_err(|<span class="kw">_</span>| DeserializeEventError::DataExceedMaxSize)<span class="question-mark">?</span>;
 
         <span class="comment">// Convert from_address to [u8; 32]
-        </span><span class="kw">let </span>from_address: [u8; <span class="number">32</span>] =
-            &lt;[u8; <span class="number">32</span>]&gt;::from_hex(remove_prefix(<span class="kw-2">&amp;</span>d.from_address)).map_err(DeserializeEventError::InvalidFromAddress)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>from_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(d.from_address.as_str()) {
+            <span class="prelude-val">Ok</span>(felt) =&gt; felt,
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeEventError::InvalidFromAddress(e)),
+        };
 
         <span class="comment">// Create EventWrapper with validated and converted fields
-        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ keys, data, from_address: from_address.into() })
+        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ keys, data, from_address })
     }
 }
 

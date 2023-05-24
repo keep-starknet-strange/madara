@@ -350,10 +350,10 @@
 <a href="#350" id="350">350</a>
 <a href="#351" id="351">351</a>
 <a href="#352" id="352">352</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::str::FromStr;
-
-<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>hex::FromHex;
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+</pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
@@ -364,7 +364,7 @@
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_consensus_grandpa::AuthorityId <span class="kw">as </span>GrandpaId;
 <span class="kw">use </span>sp_core::storage::Storage;
-<span class="kw">use </span>sp_core::{sr25519, Pair, Public, H256, U256};
+<span class="kw">use </span>sp_core::{sr25519, Pair, Public};
 <span class="kw">use </span>sp_runtime::traits::{IdentifyAccount, Verify};
 <span class="kw">use </span>sp_state_machine::BasicExternalities;
 
@@ -545,37 +545,36 @@
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/erc20/erc20.json&quot;</span>)).try_into().unwrap();
 
     <span class="comment">// ACCOUNT CONTRACT
-    </span><span class="kw">let </span>contract_address_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000001&quot;</span>).unwrap();
-    <span class="kw">let </span>class_hash_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f&quot;</span>).unwrap();
+    </span><span class="kw">let </span>contract_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1&quot;</span>).unwrap();
+
+    <span class="kw">let </span>class_hash =
+        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f&quot;</span>).unwrap();
 
     <span class="comment">// ARGENT ACCOUNT CONTRACT
-    </span><span class="kw">let </span>argent_account_address =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000000002&quot;</span>).unwrap();
-    <span class="kw">let </span>argent_account_class_hash_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d&quot;</span>).unwrap();
-    <span class="kw">let </span>argent_proxy_class_hash_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9&quot;</span>).unwrap();
+    </span><span class="kw">let </span>argent_account_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x2&quot;</span>).unwrap();
+
+    <span class="kw">let </span>argent_account_class_hash =
+        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d&quot;</span>).unwrap();
+
+    <span class="kw">let </span>argent_proxy_class_hash =
+        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9&quot;</span>).unwrap();
 
     <span class="comment">// TEST CONTRACT
-    </span><span class="kw">let </span>other_contract_address_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000001111&quot;</span>).unwrap();
-    <span class="kw">let </span>other_class_hash_bytes =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;0000000000000000000000000000000000000000000000000000000000001000&quot;</span>).unwrap();
+    </span><span class="kw">let </span>other_contract_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1111&quot;</span>).unwrap();
+
+    <span class="kw">let </span>other_class_hash = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1000&quot;</span>).unwrap();
 
     <span class="comment">// Fee token
     </span><span class="kw">let </span>fee_token_address =
-        &lt;[u8; <span class="number">32</span>]&gt;::from_hex(<span class="string">&quot;040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01&quot;</span>).unwrap();
-    <span class="kw">let </span>fee_token_class_hash_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000020000&quot;</span>;
-    <span class="kw">let </span>fee_token_class_hash_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(fee_token_class_hash_str).unwrap();
+        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01&quot;</span>).unwrap();
+
+    <span class="kw">let </span>fee_token_class_hash = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x20000&quot;</span>).unwrap();
 
     <span class="comment">// ERC20 CONTRACT
-    </span><span class="kw">let </span>token_contract_address_str = <span class="string">&quot;040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00&quot;</span>;
-    <span class="kw">let </span>token_contract_address_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(token_contract_address_str).unwrap();
+    </span><span class="kw">let </span>token_contract_address =
+        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00&quot;</span>).unwrap();
 
-    <span class="kw">let </span>token_class_hash_str = <span class="string">&quot;0000000000000000000000000000000000000000000000000000000000010000&quot;</span>;
-    <span class="kw">let </span>token_class_hash_bytes = &lt;[u8; <span class="number">32</span>]&gt;::from_hex(token_class_hash_str).unwrap();
+    <span class="kw">let </span>token_class_hash = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x10000&quot;</span>).unwrap();
 
     GenesisConfig {
         system: SystemConfig {
@@ -601,102 +600,109 @@
         <span class="doccomment">/// Starknet Genesis configuration.
         </span>starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: <span class="macro">vec!</span>[
-                (contract_address_bytes.into(), class_hash_bytes.into()),
-                (other_contract_address_bytes.into(), other_class_hash_bytes.into()),
-                (token_contract_address_bytes.into(), token_class_hash_bytes.into()),
-                (token_contract_address_bytes.into(), token_class_hash_bytes.into()),
-                (fee_token_address.into(), fee_token_class_hash_bytes.into()),
-                (argent_account_address.into(), argent_account_class_hash_bytes.into()),
+                (contract_address, class_hash),
+                (other_contract_address, other_class_hash),
+                (token_contract_address, token_class_hash),
+                (token_contract_address, token_class_hash),
+                (fee_token_address, fee_token_class_hash),
+                (argent_account_address, argent_account_class_hash),
             ],
             contract_classes: <span class="macro">vec!</span>[
-                (class_hash_bytes.into(), account_class),
-                (argent_account_class_hash_bytes.into(), argent_account_class),
-                (argent_proxy_class_hash_bytes.into(), argent_proxy_class),
-                (other_class_hash_bytes.into(), test_class),
-                (token_class_hash_bytes.into(), erc20_class.clone()),
-                (fee_token_class_hash_bytes.into(), erc20_class),
+                (class_hash, account_class),
+                (argent_account_class_hash, argent_account_class),
+                (argent_proxy_class_hash, argent_proxy_class),
+                (other_class_hash, test_class),
+                (token_class_hash, erc20_class.clone()),
+                (fee_token_class_hash, erc20_class),
             ],
             storage: <span class="macro">vec!</span>[
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
-                        </span>H256::from_str(<span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from(u128::MAX)),
+                    Felt252Wrapper::from(u128::MAX),
                 ),
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
-                        </span>H256::from_str(<span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from(u128::MAX)),
+                    Felt252Wrapper::from(u128::MAX),
                 ),
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x02) which is the key in the starknet contract
                         // for ERC20_balances(0x02).low
-                        </span>H256::from_str(<span class="string">&quot;0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from(u128::MAX)),
+                    Felt252Wrapper::from(u128::MAX),
                 ),
                 (
                     (
-                        token_contract_address_bytes.into(),
+                        token_contract_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) which is the key in the starknet contract for
                         // ERC20_balances(0x01).low
-                        </span>H256::from_str(<span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from(u128::MAX)),
+                    Felt252Wrapper::from(u128::MAX),
                 ),
                 (
                     (
-                        token_contract_address_bytes.into(),
+                        token_contract_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) + 1 which is the key in the starknet contract
                         // for ERC20_balances(0x01).high
-                        </span>H256::from_str(<span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from(u128::MAX)),
+                    Felt252Wrapper::from(u128::MAX),
                 ),
                 (
                     (
-                        fee_token_address.into(),
+                        fee_token_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;),
                         // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
                         // starknet contract for
                         // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
-                        </span>H256::from_str(<span class="string">&quot;0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from(u128::MAX)),
+                    Felt252Wrapper::from(u128::MAX),
                 ),
                 (
                     (
-                        argent_account_address.into(),
+                        argent_account_address,
                         <span class="comment">// pedersen(sn_keccak(b&quot;_signer&quot;))
-                        </span>H256::from_str(<span class="string">&quot;0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05&quot;</span>)
-                            .unwrap()
-                            .into(),
+                        </span>Felt252Wrapper::from_hex_be(
+                            <span class="string">&quot;0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05&quot;</span>,
+                        )
+                        .unwrap(),
                     ),
-                    Felt252Wrapper(U256::from_str_radix(ACCOUNT_PUBLIC_KEY, <span class="number">16</span>).unwrap()),
+                    Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
                 ),
             ],
-            fee_token_address: fee_token_address.into(),
+            fee_token_address,
             _phantom: Default::default(),
             chain_id: CHAIN_ID_STARKNET_TESTNET,
         },

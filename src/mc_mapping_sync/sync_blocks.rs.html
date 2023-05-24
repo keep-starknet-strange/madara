@@ -216,7 +216,7 @@
                         <span class="comment">// Success, we write the Starknet to Substate hashes mapping to db
                         </span><span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
-                            starknet_block_hash: digest_starknet_block_hash,
+                            starknet_block_hash: digest_starknet_block_hash.into(),
                         };
                         backend.mapping().write_hashes(mapping_commitment)
                     }
@@ -241,7 +241,7 @@
     <span class="kw">let </span>block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>;
     <span class="kw">let </span>block_hash = block.header().hash(PedersenHasher::default());
     <span class="kw">let </span>mapping_commitment =
-        mc_db::MappingCommitment::&lt;B&gt; { block_hash: substrate_block_hash, starknet_block_hash: block_hash };
+        mc_db::MappingCommitment::&lt;B&gt; { block_hash: substrate_block_hash, starknet_block_hash: block_hash.into() };
     backend.mapping().write_hashes(mapping_commitment)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())

@@ -27,12 +27,15 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
 </span><span class="kw">use </span>poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
 <span class="kw">use </span>poseidon_hash::hash_sw8;
 <span class="kw">use </span>poseidon_hash::parameters::sw8::GF;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
+<span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasher;
 
 <span class="doccomment">/// The poseidon hasher.
@@ -40,9 +43,10 @@
 </span><span class="kw">pub struct </span>PoseidonHasher;
 
 <span class="doccomment">/// The Poseidon hash function.
-</span><span class="kw">pub fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>] {
+</span><span class="kw">pub fn </span>hash(_data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
     <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(_data);
-    <span class="kw">let </span>result = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
+    <span class="kw">let </span>binding = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
+    <span class="kw">let </span>result = binding.as_slice();
     result.try_into().unwrap()
 }
 

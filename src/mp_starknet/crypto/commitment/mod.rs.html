@@ -230,6 +230,11 @@
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
 <a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
@@ -367,7 +372,7 @@
 /// # Argument
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction) -&gt; H256 {
+</span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address.into(),
         transaction.calldata.as_slice(),
@@ -383,7 +388,7 @@
 /// # Argument
 ///
 /// * `transaction` - The declare transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction) -&gt; H256 {
+</span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address.into(),
         <span class="kw-2">&amp;</span>[transaction.compiled_class_hash],
@@ -399,11 +404,14 @@
 /// # Argument
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -&gt; H256 {
+</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address.into(),
-        <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="macro">vec!</span>[transaction.account_class_hash, Felt252Wrapper(transaction.salt)], transaction.calldata.to_vec()]
-            .concat(),
+        <span class="kw-2">&amp;</span><span class="macro">vec!</span>[
+            <span class="macro">vec!</span>[transaction.account_class_hash, transaction.salt.try_into().expect(<span class="string">&quot;overflow from U256 to Felt252&quot;</span>)],
+            transaction.calldata.to_vec(),
+        ]
+        .concat(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -418,7 +426,7 @@
     nonce: U256,
     version: u8,
     tx_prefix: <span class="kw-2">&amp;</span>[u8],
-) -&gt; H256
+) -&gt; Felt252Wrapper
 <span class="kw">where
     </span>T: CryptoHasher,
 {
@@ -445,8 +453,10 @@
         chain_id,
         nonce,
     ]);
-    H256::from_slice(<span class="kw-2">&amp;</span>tx_hash.to_bytes_be())
-}
+
+    tx_hash.into()
+    <span class="comment">//    H256::from_slice(&amp;tx_hash.to_bytes_be())
+</span>}
 
 <span class="doccomment">/// Calculate the hash of an event.
 ///

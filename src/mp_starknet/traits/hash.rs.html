@@ -44,9 +44,13 @@
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
 <a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
+<a href="#48" id="48">48</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Traits for hashing.
 
 </span><span class="kw">use </span>starknet_crypto::FieldElement;
+
+<span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
 
 <span class="doccomment">/// A trait for hashing.
 </span><span class="kw">pub trait </span>Hasher {
@@ -55,7 +59,7 @@
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    </span><span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; [u8; <span class="number">32</span>];
+    </span><span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper;
 
     <span class="doccomment">/// Get Hasher default instance.
     </span><span class="kw">fn </span>hasher() -&gt; <span class="self">Self</span>;
