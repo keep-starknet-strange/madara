@@ -50,7 +50,7 @@ impl CryptoHasher for PedersenHasher {
     ///
     /// # Returns
     ///
-    /// h(h(h(h(0, data[0]), data[1]), ...), data[n-1]), n).
+    /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
     #[inline]
     fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
         if elements.is_empty() {
