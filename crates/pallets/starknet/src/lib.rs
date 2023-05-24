@@ -731,25 +731,25 @@ pub mod pallet {
 
             match call {
                 Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(T::UnsignedPriority::get())
+                    .priority(u64::MAX - transaction.nonce.as_u64())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
