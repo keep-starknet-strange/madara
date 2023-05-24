@@ -7,6 +7,7 @@ use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use pallet_starknet::types::NonceWrapper;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
@@ -73,6 +74,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
         block_hash: B::Hash,
         contract_class_hash: ClassHashWrapper,
     ) -> Option<ContractClassWrapper>;
+    /// Returns the nonce for a provided contract address and block hash.
+    fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -158,5 +161,18 @@ where
         contract_class_hash: ClassHashWrapper,
     ) -> Option<ContractClassWrapper> {
         self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
+    }
+
+    /// Return the nonce for a provided contract address and block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    /// * `contract_address` - The contract address to fetch the nonce for
+    ///
+    /// # Returns
+    /// * `Some(nonce)` - The nonce for the provided contract address and block hash
+    fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddressWrapper) -> Option<NonceWrapper> {
+        self.client.runtime_api().nonce(block_hash, contract_address).ok()
     }
 }
