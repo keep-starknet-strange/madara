@@ -5,10 +5,10 @@ use poseidon_hash::parameters::sw8::GF;
 use starknet_crypto::FieldElement;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::CryptoHasher;
-
+use crate::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 /// The poseidon hasher.
-#[derive(Default)]
+#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct PoseidonHasher;
 
 /// The Poseidon hash function.
@@ -19,8 +19,20 @@ pub fn hash(_data: &[u8]) -> Felt252Wrapper {
     result.try_into().unwrap()
 }
 
+impl HasherT for PoseidonHasher {
+    fn hash(&self, data: &[u8]) -> [u8; 32] {
+        hash(data)
+    }
+}
+
+impl DefaultHasher for PoseidonHasher {
+    fn hasher() -> Self {
+        Self::default()
+    }
+}
+
 /// The poseidon CryptoHasher implementation.
-impl CryptoHasher for PoseidonHasher {
+impl CryptoHasherT for PoseidonHasher {
     fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
         let input = felts_from_u8s::<GF>(&[a.to_bytes_be(), b.to_bytes_be()].concat());
         FieldElement::from_byte_slice_be(&u8s_from_felts(&poseidon_hash::hash_sw8(&input))).unwrap()

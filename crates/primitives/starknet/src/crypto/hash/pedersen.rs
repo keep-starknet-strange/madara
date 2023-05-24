@@ -1,8 +1,7 @@
 //! Pedersen hash module.
 use starknet_crypto::{pedersen_hash, FieldElement};
 
-use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::{CryptoHasher, Hasher};
+use crate::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 
 /// The Pedersen hash function.
 /// ### Arguments
@@ -16,11 +15,12 @@ pub fn hash(data: &[u8]) -> Felt252Wrapper {
 }
 
 /// The Pedersen hasher.
-#[derive(Default)]
+#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct PedersenHasher;
 
 /// The Pedersen hasher implementation.
-impl Hasher for PedersenHasher {
+impl HasherT for PedersenHasher {
     /// Hashes the given data.
     /// # Arguments
     /// * `data` - The data to hash.
@@ -29,14 +29,16 @@ impl Hasher for PedersenHasher {
     fn hash(&self, data: &[u8]) -> Felt252Wrapper {
         hash(data)
     }
+}
 
+impl DefaultHasher for PedersenHasher {
     fn hasher() -> Self {
         Self::default()
     }
 }
 
 /// The pedersen CryptoHasher implementation.
-impl CryptoHasher for PedersenHasher {
+impl CryptoHasherT for PedersenHasher {
     #[inline(always)]
     fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
         pedersen_hash(&a, &b)
@@ -54,10 +56,10 @@ impl CryptoHasher for PedersenHasher {
     #[inline]
     fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
         if elements.is_empty() {
-            <PedersenHasher as CryptoHasher>::hash(FieldElement::ZERO, FieldElement::ZERO)
+            <PedersenHasher as CryptoHasherT>::hash(FieldElement::ZERO, FieldElement::ZERO)
         } else {
-            let hash = elements.iter().fold(FieldElement::ZERO, |a, b| <PedersenHasher as CryptoHasher>::hash(a, *b));
-            <PedersenHasher as CryptoHasher>::hash(
+            let hash = elements.iter().fold(FieldElement::ZERO, |a, b| <PedersenHasher as CryptoHasherT>::hash(a, *b));
+            <PedersenHasher as CryptoHasherT>::hash(
                 hash,
                 FieldElement::from_byte_slice_be(&elements.len().to_be_bytes()).unwrap(),
             )
