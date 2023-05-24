@@ -71,7 +71,7 @@ pub trait StarknetRpcApi {
 
     /// Get the nonce associated with the given address at the given block
     #[method(name = "getNonce")]
-    fn get_nonce(&self, block_id: BlockId, contract_address: ContractAddress) -> RpcResult<String>;
+    fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement>;
 
     /// Get the chain id
     #[method(name = "chainId")]
