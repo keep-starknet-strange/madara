@@ -9,16 +9,19 @@ async function main() {
 
   const blockHash = await api.rpc.chain.getBlock();
   const blockNumber = blockHash.block.header.number;
-
+  // We spam madara with ERC20 transactions
   let totalExtrinsics = 0;
-
-  for (let i = blockNumber.toNumber() - 9; i <= blockNumber.toNumber(); i++) {
+  // Wait for some more transactions to be processed.
+  setTimeout(() => {}, 10000);
+  // Count the processed transactions of the last 4 blocks.
+  for (let i = blockNumber.toNumber() - 3; i <= blockNumber.toNumber(); i++) {
     const hash = await api.rpc.chain.getBlockHash(i);
     const block = await api.rpc.chain.getBlock(hash);
     totalExtrinsics += block.block.extrinsics.length;
   }
-
-  const avgExtrinsicsPerBlock = totalExtrinsics / 10;
+  // Compute the average number of tx / block
+  const avgExtrinsicsPerBlock = totalExtrinsics / 4;
+  // Compute the average TPS.
   const avgTps = avgExtrinsicsPerBlock / BLOCK_TIME;
 
   // Save avgExtrinsicsPerBlock to file reports/metrics.json
