@@ -15,26 +15,29 @@ jobs:
   benchmark:
     runs-on: [self-hosted, linux]
     steps:
-    - uses: actions/checkout@v3
-      with:
-        clean: false
-    - uses: actions/setup-node@v3
-      with:
-        node-version: ">=20"
-        cache: "npm"
-        cache-dependency-path: ./tests/package-lock.json
-    - name: Install
-      run: |-
-        cd tests
-        npm clean-install
-        npm run build
-        npm i -g yarn
-        cd ../benchmarking
-        npm i
-    - run: cargo build --workspace --release
-    - name: Run benchmark
-      run: |
-        cd benchmarking
-        cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
-        yarn test
-
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ">=20"
+          cache: "npm"
+          cache-dependency-path: ./tests/package-lock.json
+      - name: Install
+        run: |-
+          cd tests
+          npm clean-install
+          npm run build
+          npm i -g yarn
+          cd ../benchmarking
+          npm i
+      - run: cargo build --workspace --release
+      - name: Run benchmark
+        run: |
+          cd benchmarking
+          cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
+          yarn test
+      - uses: actions/upload-artifact@v3
+        with:
+          name: benchmark
+          path: benchmarking/reports/metrics.json
