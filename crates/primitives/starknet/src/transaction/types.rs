@@ -269,6 +269,8 @@ impl From<Transaction> for InvokeTransaction {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
+    /// The type of the transaction.
+    pub _type: TxType,
     /// The version of the transaction.
     pub version: u8,
     /// Transaction hash.
@@ -308,6 +310,7 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
 impl From<InvokeTransaction> for Transaction {
     fn from(value: InvokeTransaction) -> Self {
         Self {
+            _type: TxType::Invoke,
             version: value.version,
             hash: calculate_invoke_tx_hash(value.clone()),
             signature: value.signature,
@@ -330,6 +333,7 @@ impl From<InvokeTransaction> for Transaction {
 impl From<DeclareTransaction> for Transaction {
     fn from(value: DeclareTransaction) -> Self {
         Self {
+            _type: TxType::Declare,
             version: value.version,
             hash: calculate_declare_tx_hash(value.clone()),
             signature: value.signature,
@@ -353,6 +357,7 @@ impl From<DeclareTransaction> for Transaction {
 impl From<DeployAccountTransaction> for Transaction {
     fn from(value: DeployAccountTransaction) -> Self {
         Self {
+            _type: TxType::DeployAccount,
             version: value.version,
             hash: calculate_deploy_account_tx_hash(value.clone()),
             signature: value.signature,
