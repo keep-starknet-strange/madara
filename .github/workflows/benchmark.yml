@@ -37,10 +37,10 @@ jobs:
           cd benchmarking
           cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
           yarn test
-      - name: Download old benchmark
-        uses: actions/download-artifact@v3
-        with:
-          name: benchmark
+      # - name: Download old benchmark
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: benchmark
       - name: Upload new benchmark if on main
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
