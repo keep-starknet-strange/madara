@@ -15,29 +15,32 @@ use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
 use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contracts;
-use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::U256;
 use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::hash::{StarkFelt, StarkHash};
+use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent,
-    Fee, InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt,
-    TransactionSignature, TransactionVersion,
+    Calldata, DeployAccountTransaction as StarknetDeployAccountTransaction, EventContent, Fee,
+    InvokeTransactionV1 as StarknetInvokeTransactionV1, L1HandlerTransaction as StarknetL1HandlerTransaction,
+    TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature, TransactionVersion,
 };
-use starknet_api::{calldata, StarknetApiError};
+use starknet_api::StarknetApiError;
 
 use self::types::{
-    EventError, EventWrapper, MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
-    TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
-    TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
+    DeclareTransaction, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction, EventError, EventWrapper,
+    InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, L1HandlerTransaction, MaxArraySize, Transaction,
+    TransactionError, TransactionExecutionErrorWrapper, TransactionExecutionInfoWrapper,
+    TransactionExecutionResultWrapper, TransactionReceiptWrapper, TransactionValidationErrorWrapper,
+    TransactionValidationResultWrapper, TxType,
 };
 use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
+use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
+use crate::tests::transaction;
 
 impl EventWrapper {
     /// Creates a new instance of an event.
@@ -182,14 +185,17 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
 }
 
 /// Try to convert a `&Transaction` into a `DeployAccountTransaction`.
-impl TryInto<DeployAccountTransaction> for &Transaction {
+impl TryInto<StarknetDeployAccountTransaction> for &Transaction {
     type Error = StarknetApiError;
 
-    fn try_into(self) -> Result<DeployAccountTransaction, Self::Error> {
-        let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
+    fn try_into(self) -> Result<StarknetDeployAccountTransaction, Self::Error> {
+        match self {
+            Transaction::DeployAccount(tx) => {}
+            _ => Err(StarknetApiError::InvalidTransactionType)?,
+        }
 
-        Ok(DeployAccountTransaction {
-            transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
+        Ok(StarknetDeployAccountTransaction {
+            transaction_hash: TransactionHash(StarkFelt::new(self..into())?),
             max_fee: Fee(2),
             version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             signature: TransactionSignature(
@@ -246,76 +252,95 @@ impl TryInto<InvokeTransactionV1> for &Transaction {
     }
 }
 
-/// Try to convert a `&Transaction` into a `DeclareTransaction`.
-impl TryInto<DeclareTransaction> for &Transaction {
-    type Error = StarknetApiError;
-
-    fn try_into(self) -> Result<DeclareTransaction, Self::Error> {
-        let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
-
-        let tx = DeclareTransactionV0V1 {
-            transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
-            signature: TransactionSignature(
-                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(self.nonce.into())?),
-            sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-            class_hash: entrypoint.class_hash.unwrap_or_default(),
-        };
-
-        Ok(if self.version == 0_u8 {
-            DeclareTransaction::V0(tx)
-        } else if self.version == 1_u8 {
-            DeclareTransaction::V1(tx)
-        } else {
-            unimplemented!("DeclareTransactionV2 required the compiled class hash. I don't know how to get it");
-        })
-    }
-}
-
 impl Transaction {
     /// Creates a new instance of a transaction.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        version: u8,
+        tx_type: TxType,
+        version: u64,
         hash: Felt252Wrapper,
         signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
         sender_address: ContractAddressWrapper,
-        nonce: U256,
-        call_entrypoint: CallEntryPointWrapper,
+        nonce: Felt252Wrapper,
+        entrypoint: Option<Felt252Wrapper>,
+        calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
         contract_class: Option<ContractClassWrapper>,
-        contract_address_salt: Option<U256>,
-        max_fee: U256,
-    ) -> Self {
-        Self {
-            version,
-            hash,
-            signature,
-            sender_address,
-            nonce,
-            call_entrypoint,
-            contract_class,
-            contract_address_salt,
-            max_fee,
+        contract_class_hash: Option<Felt252Wrapper>,
+        compiled_contract_class_hash: Option<Felt252Wrapper>,
+        contract_address_salt: Option<Felt252Wrapper>,
+        max_fee: Felt252Wrapper,
+    ) -> Result<Self, TransactionError> {
+        match tx_type {
+            TxType::Invoke => match version {
+                _ if version == 0 => Ok(Transaction::Invoke(types::InvokeTransaction::V0(InvokeTransactionV0 {
+                    transaction_hash: hash,
+                    max_fee,
+                    signature,
+                    contract_address: sender_address,
+                    nonce,
+                    entry_point_selector: entrypoint.ok_or_else(|| TransactionError::MissingInput)?,
+                    calldata,
+                }))),
+                _ if version == 1 => Ok(Transaction::Invoke(types::InvokeTransaction::V1(InvokeTransactionV1 {
+                    transaction_hash: hash,
+                    max_fee,
+                    signature,
+                    sender_address,
+                    nonce,
+                    calldata,
+                }))),
+                _ => Err(TransactionError::InvalidVersion),
+            },
+            TxType::L1Handler => Ok(Transaction::L1Handler(types::L1HandlerTransaction {
+                transaction_hash: hash,
+                version,
+                nonce: u64::try_from(nonce.0).map_err(|_| TransactionError::InvalidData)?,
+                contract_address: sender_address,
+                entry_point_selector: entrypoint.ok_or_else(|| TransactionError::MissingInput)?,
+                calldata,
+            })),
+            TxType::Declare => match version {
+                _ if version == 1 => Ok(Transaction::Declare(types::DeclareTransaction::V1(DeclareTransactionV1 {
+                    transaction_hash: hash,
+                    max_fee,
+                    signature,
+                    sender_address,
+                    nonce,
+                    contract_class: contract_class.ok_or_else(|| TransactionError::MissingInput)?,
+                    class_hash: contract_class_hash.ok_or_else(|| TransactionError::MissingInput)?,
+                }))),
+                _ if version == 2 => Ok(Transaction::Declare(types::DeclareTransaction::V2(DeclareTransactionV2 {
+                    transaction_hash: hash,
+                    max_fee,
+                    signature,
+                    nonce,
+                    sender_address,
+                    class_hash: contract_class_hash.ok_or_else(|| TransactionError::MissingInput)?,
+                    compiled_class_hash: compiled_contract_class_hash.ok_or_else(|| TransactionError::MissingInput)?,
+                    contract_class: contract_class.ok_or_else(|| TransactionError::MissingInput)?,
+                }))),
+                _ => Err(TransactionError::InvalidVersion),
+            },
+            TxType::DeployAccount => Ok(Transaction::DeployAccount(types::DeployAccountTransaction {
+                transaction_hash: hash,
+                max_fee,
+                signature,
+                nonce,
+                sender_address,
+                contract_address_salt: contract_address_salt.ok_or_else(|| TransactionError::MissingInput)?,
+                class_hash: contract_class_hash.ok_or_else(|| TransactionError::MissingInput)?,
+                constructor_calldata: calldata,
+            })),
         }
     }
 
-    /// Creates a new instance of a transaction without signature.
-    pub fn from_tx_hash(hash: Felt252Wrapper) -> Self {
-        Self { hash, ..Self::default() }
-    }
-
     /// Returns the validate entry point selector.
-    pub fn validate_entry_point_selector(
-        &self,
-        tx_type: &TxType,
-    ) -> TransactionValidationResultWrapper<EntryPointSelector> {
-        match tx_type {
-            TxType::Declare => Ok(*constants::VALIDATE_DECLARE_ENTRY_POINT_SELECTOR),
-            TxType::DeployAccount => Ok(*constants::VALIDATE_DEPLOY_ENTRY_POINT_SELECTOR),
-            TxType::Invoke => Ok(*constants::VALIDATE_ENTRY_POINT_SELECTOR),
-            TxType::L1Handler => Err(EntryPointExecutionError::InvalidExecutionInput {
+    pub fn validate_entry_point_selector(&self) -> TransactionValidationResultWrapper<EntryPointSelector> {
+        match self {
+            Transaction::Declare(_) => Ok(*constants::VALIDATE_DECLARE_ENTRY_POINT_SELECTOR),
+            Transaction::DeployAccount(_) => Ok(*constants::VALIDATE_DEPLOY_ENTRY_POINT_SELECTOR),
+            Transaction::Invoke(_) => Ok(*constants::VALIDATE_ENTRY_POINT_SELECTOR),
+            Transaction::L1Handler(_) => Err(EntryPointExecutionError::InvalidExecutionInput {
                 input_descriptor: "tx_type".to_string(),
                 info: "l1 handler transaction should not be validated".to_string(),
             })
@@ -325,30 +350,26 @@ impl Transaction {
 
     /// Calldata for validation contains transaction fields that cannot be obtained by calling
     /// `get_tx_info()`.
-    pub fn validate_entrypoint_calldata(&self, tx_type: &TxType) -> TransactionValidationResultWrapper<Calldata> {
-        match tx_type {
-            TxType::Declare => {
-                let declare_tx: DeclareTransaction =
-                    self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                Ok(calldata![declare_tx.class_hash().0])
+    pub fn validate_entrypoint_calldata(&self) -> TransactionValidationResultWrapper<Calldata> {
+        match self {
+            Transaction::Declare(tx) => {
+                let declare_calldata = vec![tx.class_hash()];
+                Ok(Calldata(
+                    declare_calldata.into_iter().map(Into::<StarkFelt>::into).collect::<Vec<StarkFelt>>().into(),
+                ))
             }
-            TxType::DeployAccount => {
-                let deploy_account_tx: DeployAccountTransaction =
-                    self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                let validate_calldata = vec![
-                    vec![deploy_account_tx.class_hash.0, deploy_account_tx.contract_address_salt.0],
-                    (*deploy_account_tx.constructor_calldata.0).clone(),
-                ]
-                .concat();
-                Ok(Calldata(validate_calldata.into()))
+            Transaction::DeployAccount(tx) => {
+                let validate_calldata =
+                    vec![vec![tx.class_hash, tx.contract_address_salt], (tx.constructor_calldata).into()].concat();
+                Ok(Calldata(
+                    validate_calldata.into_iter().map(Into::<StarkFelt>::into).collect::<Vec<StarkFelt>>().into(),
+                ))
             }
             // Calldata for validation is the same calldata as for the execution itself.
-            TxType::Invoke => {
-                let invoke_tx: InvokeTransactionV1 =
-                    self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                Ok(Calldata(invoke_tx.calldata.0))
-            }
-            TxType::L1Handler => Err(EntryPointExecutionError::InvalidExecutionInput {
+            Transaction::Invoke(tx) => Ok(Calldata(
+                tx.calldata().to_vec().into_iter().map(Into::<StarkFelt>::into).collect::<Vec<StarkFelt>>().into(),
+            )),
+            Transaction::L1Handler(_) => Err(EntryPointExecutionError::InvalidExecutionInput {
                 input_descriptor: "tx_type".to_string(),
                 info: "l1 handler transaction should not be validated".to_string(),
             })
@@ -372,12 +393,11 @@ impl Transaction {
         execution_resources: &mut ExecutionResources,
         block_context: &BlockContext,
         account_tx_context: &AccountTransactionContext,
-        tx_type: &TxType,
     ) -> TransactionValidationResultWrapper<Option<CallInfo>> {
         let validate_call = CallEntryPoint {
             entry_point_type: EntryPointType::External,
-            entry_point_selector: self.validate_entry_point_selector(tx_type)?,
-            calldata: self.validate_entrypoint_calldata(tx_type)?,
+            entry_point_selector: self.validate_entry_point_selector()?,
+            calldata: self.validate_entrypoint_calldata()?,
             class_hash: None,
             code_address: None,
             storage_address: account_tx_context.sender_address,
@@ -405,16 +425,16 @@ impl Transaction {
     /// # Returns
     ///
     /// * `TransactionExecutionResultWrapper<()>` - The result of the transaction version validation
-    pub fn verify_tx_version(&self, tx_type: &TxType) -> TransactionExecutionResultWrapper<()> {
-        let version = match StarkFelt::new(U256::from(self.version).into()) {
+    pub fn verify_tx_version(&self) -> TransactionExecutionResultWrapper<()> {
+        let version = match StarkFelt::new(U256::from(self.get_transaction_version()).into()) {
             Ok(felt) => TransactionVersion(felt),
             Err(err) => {
                 return Err(TransactionExecutionErrorWrapper::StarknetApi(err));
             }
         };
 
-        let allowed_versions: vec::Vec<TransactionVersion> = match tx_type {
-            TxType::Declare => {
+        let allowed_versions: vec::Vec<TransactionVersion> = match self {
+            Transaction::Declare(_) => {
                 // Support old versions in order to allow bootstrapping of a new system.
                 vec![TransactionVersion(StarkFelt::from(0)), TransactionVersion(StarkFelt::from(1))]
             }
@@ -449,7 +469,6 @@ impl Transaction {
         &self,
         state: &mut S,
         block: StarknetBlock,
-        tx_type: TxType,
         contract_class: Option<ContractClass>,
         fee_token_address: ContractAddressWrapper,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
@@ -463,21 +482,21 @@ impl Transaction {
         let execution_resources = &mut ExecutionResources::default();
 
         // Verify the transaction version.
-        self.verify_tx_version(&tx_type)?;
+        self.verify_tx_version()?;
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
-        let (execute_call_info, validate_call_info, account_context) = match tx_type {
-            TxType::Invoke => {
+        let account_context = self.get_transaction_context()?;
+        let (execute_call_info, validate_call_info, account_context) = match self {
+            Transaction::Invoke(_) => {
                 let tx: InvokeTransactionV1 = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
-                let account_context = self.get_invoke_transaction_context(&tx);
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
 
                 // Validate.
                 let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                    self.validate_tx(state, execution_resources, &block_context, &account_context)?;
 
                 // Execute.
                 (
@@ -489,7 +508,6 @@ impl Transaction {
             }
             TxType::L1Handler => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
-                let account_context = self.get_l1_handler_transaction_context(&tx);
                 (
                     tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
@@ -499,7 +517,6 @@ impl Transaction {
             }
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
-                let account_context = self.get_declare_transaction_context(&tx);
 
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
@@ -518,7 +535,6 @@ impl Transaction {
             }
             TxType::DeployAccount => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
-                let account_context = self.get_deploy_account_transaction_context(&tx);
                 // Update nonce
                 self.handle_nonce(state, &account_context)?;
 
@@ -589,112 +605,124 @@ impl Transaction {
         Ok(())
     }
 
+    /// Get the transaction version
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to get the context for
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The context of the transaction
+    fn get_transaction_version(&self) -> Felt252Wrapper {
+        match self {
+            Transaction::Invoke(tx) => tx.version(),
+            Transaction::L1Handler(tx) => Felt252Wrapper::from(tx.version),
+            Transaction::Declare(tx) => tx.version(),
+            Transaction::DeployAccount(tx) => Felt252Wrapper::one(),
+        }
+    }
+
+    /// Get the transaction context
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to get the context for
+    ///
+    /// # Returns
+    ///
+    /// * `AccountTransactionContext` - The context of the transaction
+    fn get_transaction_context(&self) -> Result<AccountTransactionContext, StarknetApiError> {
+        match self {
+            Transaction::Invoke(tx) => Transaction::get_invoke_transaction_context(tx),
+            Transaction::L1Handler(tx) => Transaction::get_l1_handler_transaction_context(tx),
+            Transaction::Declare(tx) => Transaction::get_declare_transaction_context(tx),
+            Transaction::DeployAccount(tx) => Transaction::get_deploy_account_transaction_context(tx),
+        }
+    }
+
     /// Get the transaction context for a l1 handler transaction
     ///
     /// # Arguments
     ///
     /// * `self` - The transaction to get the context for
-    /// * `tx` - The l1 handler transaction to get the context for
     ///
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_l1_handler_transaction_context(&self, tx: &L1HandlerTransaction) -> AccountTransactionContext {
-        AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
+    fn get_l1_handler_transaction_context(
+        tx: &L1HandlerTransaction,
+    ) -> Result<AccountTransactionContext, StarknetApiError> {
+        Ok(AccountTransactionContext {
+            transaction_hash: TransactionHash(tx.transaction_hash.into()),
             max_fee: Fee::default(),
-            version: tx.version,
+            version: TransactionVersion(tx.version.into()),
             signature: TransactionSignature::default(),
-            nonce: tx.nonce,
-            sender_address: tx.contract_address,
-        }
+            nonce: Nonce(Into::<StarkFelt>::into(tx.nonce)),
+            sender_address: StarknetContractAddress(Into::<StarkFelt>::into(tx.contract_address).try_into()?),
+        })
     }
 
     /// Get the transaction context for an invoke transaction
     ///
     /// # Arguments
     ///
-    /// * `self` - The transaction to get the context for
     /// * `tx` - The invoke transaction to get the context for
     ///
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_invoke_transaction_context(&self, tx: &InvokeTransactionV1) -> AccountTransactionContext {
-        AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
-            max_fee: tx.max_fee,
-            version: TransactionVersion(StarkFelt::from(1)),
-            signature: tx.signature.clone(),
-            nonce: tx.nonce,
-            sender_address: tx.sender_address,
-        }
+    fn get_invoke_transaction_context(tx: &InvokeTransaction) -> Result<AccountTransactionContext, StarknetApiError> {
+        Ok(AccountTransactionContext {
+            transaction_hash: TransactionHash(tx.transaction_hash().into()),
+            max_fee: Fee(tx.max_fee().try_into()?),
+            version: TransactionVersion(StarkFelt::from(tx.version())),
+            signature: TransactionSignature(tx.signature().to_vec().into_iter().map(Into::<StarkFelt>::into).collect()),
+            nonce: Nonce(tx.nonce().into()),
+            sender_address: StarknetContractAddress(Into::<StarkFelt>::into(tx.sender_address()).try_into()?),
+        })
     }
 
     /// Get the transaction context for a deploy account transaction
     ///
     /// # Arguments
     ///
-    /// * `self` - The transaction to get the context for
     /// * `tx` - The deploy transaction to get the context for
     ///
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_deploy_account_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
-        AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
-            max_fee: tx.max_fee,
-            version: tx.version,
-            signature: tx.signature.clone(),
-            nonce: tx.nonce,
-            sender_address: tx.contract_address,
-        }
+    fn get_deploy_account_transaction_context(
+        tx: &DeployAccountTransaction,
+    ) -> Result<AccountTransactionContext, StarknetApiError> {
+        Ok(AccountTransactionContext {
+            transaction_hash: TransactionHash(tx.transaction_hash.into()),
+            max_fee: Fee(tx.max_fee.try_into()?),
+            version: TransactionVersion(tx.version().into()),
+            signature: TransactionSignature(tx.signature.to_vec().into_iter().map(Into::<StarkFelt>::into).collect()),
+            nonce: Nonce(tx.nonce.into()),
+            sender_address: StarknetContractAddress(Into::<StarkFelt>::into(tx.sender_address).try_into()?),
+        })
     }
 
     /// Get the transaction context for a declare transaction
     ///
     /// # Arguments
     ///
-    /// * `self` - The transaction to get the context for
     /// * `tx` - The declare transaction to get the context for
     ///
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
-        // TODO: use lib implem once this PR is merged: https://github.com/starkware-libs/starknet-api/pull/49
-        let version = match tx {
-            DeclareTransaction::V0(_) => TransactionVersion(StarkFelt::from(0)),
-            DeclareTransaction::V1(_) => TransactionVersion(StarkFelt::from(1)),
-            DeclareTransaction::V2(_) => TransactionVersion(StarkFelt::from(2)),
-        };
-
-        AccountTransactionContext {
-            transaction_hash: tx.transaction_hash(),
-            max_fee: tx.max_fee(),
-            version,
-            signature: tx.signature(),
-            nonce: tx.nonce(),
-            sender_address: tx.sender_address(),
-        }
-    }
-}
-
-impl Default for Transaction {
-    fn default() -> Self {
-        let one = Felt252Wrapper::one();
-        Self {
-            version: 1_u8,
-            hash: one,
-            signature: BoundedVec::try_from(vec![one, one]).unwrap(),
-            nonce: U256::default(),
-            sender_address: ContractAddressWrapper::default(),
-            call_entrypoint: CallEntryPointWrapper::default(),
-            contract_class: None,
-            contract_address_salt: None,
-            max_fee: U256::from(u128::MAX),
-        }
+    fn get_declare_transaction_context(tx: &DeclareTransaction) -> Result<AccountTransactionContext, StarknetApiError> {
+        Ok(AccountTransactionContext {
+            transaction_hash: TransactionHash(tx.transaction_hash().into()),
+            max_fee: Fee(tx.max_fee().try_into()?),
+            version: TransactionVersion(tx.version().into()),
+            signature: TransactionSignature(tx.signature().to_vec().into_iter().map(Into::<StarkFelt>::into).collect()),
+            nonce: Nonce(tx.nonce().into()),
+            sender_address: StarknetContractAddress(Into::<StarkFelt>::into(tx.sender_address()).try_into()?),
+        })
     }
 }
 

@@ -15,6 +15,7 @@ use scale_info::build::Fields;
 use scale_info::{Path, Type, TypeInfo};
 use sp_core::{H256, U256};
 use starknet_api::hash::StarkFelt;
+use starknet_api::StarknetApiError;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 
 ///
@@ -118,12 +119,36 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     }
 }
 
-/// [`Felt252Wrapper`] from u128.
-impl From<u128> for Felt252Wrapper {
-    fn from(value: u128) -> Self {
-        Felt252Wrapper::try_from(U256::from(value)).unwrap()
-    }
+macro_rules! impl_from_primitive {
+    ($($t:ty),*) => {
+        $(
+            impl From<$t> for Felt252Wrapper {
+                fn from(value: $t) -> Self {
+                    Felt252Wrapper::try_from(U256::from(value)).unwrap()
+                }
+            }
+        )*
+    };
 }
+
+impl_from_primitive!(u8, u16, u32, u64, u128);
+
+macro_rules! impl_try_from_primitive {
+    ($($t:ty),*) => {
+        $(
+            impl TryFrom<Felt252Wrapper> for $t {
+                type Error = StarknetApiError;
+                fn try_from(value: Felt252Wrapper) -> Result<Self, Self::Error> {
+                    <$t>::try_from(value).map_err(|_| StarknetApiError::OutOfRange {
+                        string: format!("Felt252Wrapper::try_from overflow: {}", value.0),
+                    })
+                }
+            }
+        )*
+    };
+}
+
+impl_try_from_primitive!(u8, u16, u32, u64, u128);
 
 /// [`Felt252Wrapper`] to [`U256`].
 impl From<Felt252Wrapper> for U256 {

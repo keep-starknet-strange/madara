@@ -11,7 +11,8 @@ use sp_core::ConstU32;
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 
-use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
+use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCalldataSize};
+use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 
 /// Max size of arrays.
@@ -122,32 +123,6 @@ impl From<TxType> for TransactionType {
     }
 }
 
-/// Deploy transaction.
-#[derive(
-    Clone,
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct DeployTransaction {
-    /// The hash identifying the transaction
-    pub transaction_hash: Felt252Wrapper,
-    /// The hash of the deployed contract's class
-    pub class_hash: Felt252Wrapper,
-    /// Version of the transaction scheme
-    pub version: u64,
-    /// The salt for the address of the deployed contract
-    pub contract_address_salt: Felt252Wrapper,
-    /// The parameters passed to the constructor
-    pub constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
-}
-
 /// Error of conversion between [DeclareTransaction], [InvokeTransaction],
 /// [DeployAccountTransaction] and [Transaction].
 #[derive(Debug)]
@@ -175,6 +150,42 @@ pub enum InvokeTransaction {
     V1(InvokeTransactionV1),
 }
 
+// From https://github.com/tdelabro/starknet-api/blob/main/src/transaction.rs
+macro_rules! implement_invoke_tx_getters {
+    ($(($field:ident, $field_type:ty)),*) => {
+        $(pub fn $field(&self) -> $field_type {
+            match self {
+                Self::V0(tx) => tx.$field.clone(),
+                Self::V1(tx) => tx.$field.clone(),
+            }
+        })*
+    };
+}
+
+impl InvokeTransaction {
+    implement_invoke_tx_getters!(
+        (transaction_hash, Felt252Wrapper),
+        (nonce, Felt252Wrapper),
+        (max_fee, Felt252Wrapper),
+        (signature, BoundedVec<Felt252Wrapper, MaxArraySize>),
+        (calldata, BoundedVec<Felt252Wrapper, MaxCalldataSize>)
+    );
+
+    pub fn version(&self) -> Felt252Wrapper {
+        match self {
+            InvokeTransaction::V0(_) => Felt252Wrapper::from(0u8),
+            InvokeTransaction::V1(_) => Felt252Wrapper::from(1u8),
+        }
+    }
+
+    pub fn sender_address(&self) -> Felt252Wrapper {
+        match self {
+            InvokeTransaction::V0(tx) => tx.contract_address,
+            InvokeTransaction::V1(tx) => tx.sender_address,
+        }
+    }
+}
+
 /// Invoke transaction v0.
 #[derive(
     Clone,
@@ -192,13 +203,9 @@ pub struct InvokeTransactionV0 {
     pub transaction_hash: Felt252Wrapper,
     /// The maximal fee that can be charged for including the transaction
     pub max_fee: Felt252Wrapper,
-    /// Signature
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Nonce
     pub nonce: Felt252Wrapper,
-    /// Contract address
     pub contract_address: Felt252Wrapper,
-    /// Entry point selector
     pub entry_point_selector: Felt252Wrapper,
     /// The parameters passed to the function
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
@@ -252,9 +259,7 @@ pub struct L1HandlerTransaction {
     /// The L1->L2 message nonce field of the sn core L1 contract at the time the transaction was
     /// sent
     pub nonce: u64,
-    /// Contract address
     pub contract_address: Felt252Wrapper,
-    /// Entry point selector
     pub entry_point_selector: Felt252Wrapper,
     /// The parameters passed to the function
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
@@ -277,6 +282,36 @@ pub enum DeclareTransaction {
     V2(DeclareTransactionV2),
 }
 
+// From https://github.com/tdelabro/starknet-api/blob/main/src/transaction.rs
+macro_rules! implement_declare_tx_getters {
+    ($(($field:ident, $field_type:ty)),*) => {
+        $(pub fn $field(&self) -> $field_type {
+            match self {
+                Self::V1(tx) => tx.$field.clone(),
+                Self::V2(tx) => tx.$field.clone(),
+            }
+        })*
+    };
+}
+
+impl DeclareTransaction {
+    implement_declare_tx_getters!(
+        (transaction_hash, Felt252Wrapper),
+        (class_hash, Felt252Wrapper),
+        (nonce, Felt252Wrapper),
+        (sender_address, Felt252Wrapper),
+        (max_fee, Felt252Wrapper),
+        (signature, BoundedVec<Felt252Wrapper, MaxArraySize>)
+    );
+
+    pub fn version(&self) -> Felt252Wrapper {
+        match self {
+            DeclareTransaction::V1(_) => Felt252Wrapper::from(1u8),
+            DeclareTransaction::V2(_) => Felt252Wrapper::from(2u8),
+        }
+    }
+}
+
 /// Declare contract transaction v1.
 #[derive(
     Clone,
@@ -294,15 +329,13 @@ pub struct DeclareTransactionV1 {
     pub transaction_hash: Felt252Wrapper,
     /// The maximal fee that can be charged for including the transaction
     pub max_fee: Felt252Wrapper,
-    /// Signature
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Nonce
     pub nonce: Felt252Wrapper,
-    /// Contract to declare.
+    /// The contract class
     pub contract_class: ContractClassWrapper,
     /// The hash of the declared class
     pub class_hash: Felt252Wrapper,
-    /// The address of the account contract sending the declaration transaction
+    /// The address of the  contract sending the declaration transaction
     pub sender_address: Felt252Wrapper,
 }
 
@@ -319,10 +352,20 @@ pub struct DeclareTransactionV1 {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct DeclareTransactionV2 {
-    #[serde(flatten)]
-    pub declare_txn_v1: DeclareTransactionV1,
-    /// The hash of the cairo assembly resulting from the sierra compilation
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: Felt252Wrapper,
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    pub nonce: Felt252Wrapper,
+    /// The contract class
+    pub contract_class: ContractClassWrapper,
+    /// The hash of the declared sierra class
+    pub class_hash: Felt252Wrapper,
+    /// The hash of the compiled
     pub compiled_class_hash: Felt252Wrapper,
+    /// The address of the account contract sending the declaration transaction
+    pub sender_address: Felt252Wrapper,
 }
 
 /// Deploy account transaction.
@@ -342,18 +385,33 @@ pub struct DeployAccountTransaction {
     pub transaction_hash: Felt252Wrapper,
     /// The maximal fee that can be charged for including the transaction
     pub max_fee: Felt252Wrapper,
-    /// Version of the transaction scheme
-    pub version: u64,
-    /// Signature
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Nonce
     pub nonce: Felt252Wrapper,
+    /// The address of the account contract being deployed
+    pub sender_address: Felt252Wrapper,
     /// The salt for the address of the deployed contract
     pub contract_address_salt: Felt252Wrapper,
     /// The parameters passed to the constructor
     pub constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// The hash of the deployed contract's class
     pub class_hash: Felt252Wrapper,
+}
+
+impl DeployAccountTransaction {
+    pub fn version(&self) -> Felt252Wrapper {
+        Felt252Wrapper::from(1u8)
+    }
+
+    pub fn call_entrypoint(&self) -> CallEntryPointWrapper {
+        CallEntryPointWrapper::new(
+            Some(self.class_hash),
+            EntryPointTypeWrapper::External,
+            None,
+            self.constructor_calldata,
+            self.sender_address,
+            self.sender_address,
+        )
+    }
 }
 
 /// Representation of a Starknet transaction.
@@ -375,11 +433,45 @@ pub enum Transaction {
     L1Handler(L1HandlerTransaction),
     #[serde(rename = "DECLARE")]
     Declare(DeclareTransaction),
-    #[serde(rename = "DEPLOY")]
-    Deploy(DeployTransaction),
     #[serde(rename = "DEPLOY_ACCOUNT")]
     DeployAccount(DeployAccountTransaction),
 }
+
+/// Returns the information for a Transaction. Missing fields are set to Default
+pub struct TransactionInfo {
+    pub transaction_hash: Felt252Wrapper,
+    pub max_fee: Felt252Wrapper,
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    pub nonce: Felt252Wrapper,
+    pub version: u64,
+    pub contract_address: Felt252Wrapper,
+    pub entry_point_selector: Felt252Wrapper,
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+    pub class_hash: Felt252Wrapper,
+}
+
+/// Error enum for transactions.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum TransactionError {
+    /// Missing input for transaction.
+    MissingInput,
+    /// Invalid data
+    InvalidData,
+    /// Invalid transaction version
+    InvalidVersion,
+}
+
+impl Transaction {}
 
 /// Representation of a Starknet transaction receipt.
 #[derive(
