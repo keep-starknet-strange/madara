@@ -31,7 +31,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     .unwrap(), // deploy_contract selector
                 Felt252Wrapper::from_hex_be("0x9").unwrap(), // Calldata len
                 Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-                Felt252Wrapper::one(), // Contract address salt
+                Felt252Wrapper::ONE, // Contract address salt
                 Felt252Wrapper::from_hex_be("0x6").unwrap(), // Constructor_calldata_len
                 Felt252Wrapper::from_hex_be("0xA").unwrap(), // Name
                 Felt252Wrapper::from_hex_be("0x1").unwrap(), // Symbol
@@ -58,7 +58,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ],
                 data: bounded_vec!(
                     expected_erc20_address, // Contract address
-                    Felt252Wrapper::zero(), /* Deployer (always 0 with this
+                    Felt252Wrapper::ZERO,   /* Deployer (always 0 with this
                                              * account contract) */
                     Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
                     Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000006")
@@ -93,7 +93,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     .unwrap(), // Sequencer address
                 Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b660")
                     .unwrap(), // Amount low
-                Felt252Wrapper::zero(), // Amount high
+                Felt252Wrapper::ZERO, // Amount high
             ),
             from_address: Starknet::fee_token_address(),
         });
@@ -111,10 +111,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 expected_erc20_address, // Token address
                 Felt252Wrapper::from_hex_be("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e")
                     .unwrap(), // transfer selector
-                Felt252Wrapper::three(), // Calldata len
+                Felt252Wrapper::THREE,  // Calldata len
                 Felt252Wrapper::from(16u128), // recipient
                 Felt252Wrapper::from(15u128), // initial supply low
-                Felt252Wrapper::zero(), // initial supply high
+                Felt252Wrapper::ZERO,   // initial supply high
             ],
             signature: bounded_vec!(),
             nonce: U256::one(),
@@ -161,7 +161,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                         .unwrap()
                 )
             )),
-            Felt252Wrapper::zero()
+            Felt252Wrapper::ZERO
         );
 
         let events = System::events();
@@ -176,7 +176,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                     .unwrap(), // From
                 Felt252Wrapper::from_hex_be("0x10").unwrap(), // To
                 Felt252Wrapper::from_hex_be("0xF").unwrap(),  // Amount low
-                Felt252Wrapper::zero(),                       // Amount high
+                Felt252Wrapper::ZERO,                         // Amount high
             ),
             from_address: Felt252Wrapper::from_hex_be(
                 "0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff",
@@ -195,7 +195,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 sender_account,                                  // From
                 Felt252Wrapper::from_hex_be("0x2").unwrap(),     // Sequencer address
                 Felt252Wrapper::from_hex_be("0x1e618").unwrap(), // Amount low
-                Felt252Wrapper::zero(),                          // Amount high
+                Felt252Wrapper::ZERO,                            // Amount high
             ),
             from_address: Starknet::fee_token_address(),
         });

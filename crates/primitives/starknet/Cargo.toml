@@ -25,7 +25,9 @@ starknet-ff = { workspace = true, default-features = false, features = [
 	"alloc",
 ] }
 poseidon_hash = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = ["testing"]}
+blockifier = { workspace = true, default-features = false, features = [
+	"testing",
+] }
 starknet_api = { workspace = true, default-features = false }
 cairo-vm = { workspace = true }
 
@@ -58,6 +60,7 @@ std = [
 	# Starknet
 	"starknet-crypto/std",
 	"starknet-ff/std",
+	"starknet-ff/serde",
 	"blockifier/std",
 	"starknet_api/std",
 	"poseidon_hash/std",

@@ -53,7 +53,7 @@ fn given_contract_run_deploy_account_tx_works() {
                 test_addr,                                      // From
                 Felt252Wrapper::from_hex_be("0x2").unwrap(),    // To
                 Felt252Wrapper::from_hex_be("0xd3b8").unwrap(), // Amount low
-                Felt252Wrapper::zero(),                         // Amount high
+                Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
         })
@@ -235,7 +235,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             )
             .unwrap(),
             nonce: U256::zero(),
-            signature: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one()),
+            signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
             max_fee: U256::from(u128::MAX),
         };
 
@@ -315,7 +315,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             )
             .unwrap(),
             nonce: U256::zero(),
-            signature: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one()),
+            signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
             max_fee: U256::from(u128::MAX),
         };
 
@@ -347,7 +347,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             Felt252Wrapper::from_hex_be("0x06ae3d81978d498def89e1121b2d84a873d63c30d80f7ed81e2dc9be6a961770").unwrap();
 
         let mut signatures: Vec<Felt252Wrapper> = sign_message_hash(tx_hash).into();
-        let empty_signatures = [Felt252Wrapper::zero(); 8];
+        let empty_signatures = [Felt252Wrapper::ZERO; 8];
         signatures.append(&mut empty_signatures.to_vec());
 
         let transaction = DeployAccountTransaction {
@@ -404,7 +404,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             )
             .unwrap(),
             nonce: U256::zero(),
-            signature: [Felt252Wrapper::zero(); 10].to_vec().try_into().unwrap(),
+            signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
             max_fee: U256::from(u128::MAX),
         };
 
@@ -429,7 +429,7 @@ fn set_infinite_tokens(address: Felt252Wrapper) {
 fn set_signer(address: Felt252Wrapper, account_type: AccountType) {
     let (var_name, args) = match account_type {
         AccountType::Argent => ("_signer", vec![]),
-        AccountType::Braavos => ("Account_signers", vec![Felt252Wrapper::zero()]),
+        AccountType::Braavos => ("Account_signers", vec![Felt252Wrapper::ZERO]),
         AccountType::Openzeppelin => ("Account_public_key", vec![]),
         _ => return,
     };
