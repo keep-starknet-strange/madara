@@ -278,7 +278,7 @@ impl Transaction {
     /// Creates a new instance of a transaction.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        _type: TxType,
+        tx_type: TxType,
         version: u8,
         hash: Felt252Wrapper,
         signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
@@ -290,7 +290,7 @@ impl Transaction {
         max_fee: U256,
     ) -> Self {
         Self {
-            _type,
+            tx_type,
             version,
             hash,
             signature,
@@ -687,7 +687,7 @@ impl Default for Transaction {
     fn default() -> Self {
         let one = Felt252Wrapper::ONE;
         Self {
-            _type: TxType::Invoke,
+            tx_type: TxType::Invoke,
             version: 1_u8,
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
