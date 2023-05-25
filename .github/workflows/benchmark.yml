@@ -22,28 +22,24 @@ jobs:
         with:
           node-version: ">=20"
           cache: "npm"
-          cache-dependency-path: ./tests/package-lock.json
+          cache-dependency-path: ./benchmarking/package-lock.json
       - name: Install
         run: |-
-          cd tests
-          npm clean-install
-          npm run build
-          npm i -g yarn
-          cd ../benchmarking
+          cd benchmarking
           npm i
       - run: cargo build --workspace --release
       - name: Run benchmark
         run: |
           cd benchmarking
           cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
-          yarn test
-      - name: Download old benchmark
-        uses: actions/download-artifact@v3
-        with:
-          name: benchmark
+          node benchmark.js
+      # - name: Download old benchmark
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: benchmark
       - name: Upload new benchmark if on main
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
           name: benchmark
-          path: benchmarking/reports/metrics.json
+          path: benchmarking/report.json
