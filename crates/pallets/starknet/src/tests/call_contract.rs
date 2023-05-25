@@ -25,7 +25,7 @@ fn given_call_contract_call_works() {
             Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000009")
                 .unwrap(), // Calldata len
             Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-            Felt252Wrapper::one(), // Contract address salt
+            Felt252Wrapper::ONE, // Contract address salt
             Felt252Wrapper::from_hex_be("0x6").unwrap(), // Constructor_calldata_len
             Felt252Wrapper::from_hex_be("0xA").unwrap(), // Name
             Felt252Wrapper::from_hex_be("0x1").unwrap(), // Symbol

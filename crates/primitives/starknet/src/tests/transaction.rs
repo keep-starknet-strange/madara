@@ -174,7 +174,7 @@ fn verify_tx_version_passes_for_valid_version() {
             Felt252Wrapper::from(20_u128),
             Felt252Wrapper::from(30_u128)
         ],
-        sender_address: Felt252Wrapper::zero(),
+        sender_address: Felt252Wrapper::ZERO,
         nonce: U256::zero(),
         ..Transaction::default()
     };
@@ -192,7 +192,7 @@ fn verify_tx_version_fails_for_invalid_version() {
             Felt252Wrapper::from(20_u128),
             Felt252Wrapper::from(30_u128)
         ],
-        sender_address: Felt252Wrapper::zero(),
+        sender_address: Felt252Wrapper::ZERO,
         nonce: U256::zero(),
         ..Transaction::default()
     };
@@ -241,7 +241,7 @@ fn test_try_into_transaction_receipt_wrapper() {
 
     // Check if the transaction hash, actual fee, and tx type are correctly converted
     assert_eq!(transaction_receipt_wrapper.transaction_hash, Felt252Wrapper::try_from(&[1; 32]).unwrap());
-    assert_eq!(transaction_receipt_wrapper.actual_fee, Felt252Wrapper::zero());
+    assert_eq!(transaction_receipt_wrapper.actual_fee, Felt252Wrapper::ZERO);
     assert_eq!(transaction_receipt_wrapper.tx_type, TxType::Invoke);
 
     // Check if the events are correctly converted
@@ -300,7 +300,7 @@ fn test_try_into_transaction_receipt_wrapper_with_too_many_events() {
 #[test]
 fn test_event_wrapper_new() {
     let keys: BoundedVec<Felt252Wrapper, MaxArraySize> =
-        bounded_vec![Felt252Wrapper::zero(), Felt252Wrapper::try_from(&[1; 32]).unwrap()];
+        bounded_vec![Felt252Wrapper::ZERO, Felt252Wrapper::try_from(&[1; 32]).unwrap()];
     let data: BoundedVec<Felt252Wrapper, MaxArraySize> =
         bounded_vec![Felt252Wrapper::try_from(&[1; 32]).unwrap(), Felt252Wrapper::try_from(&[2; 32]).unwrap()];
     let from_address = Felt252Wrapper::try_from(&[3; 32]).unwrap();
@@ -323,7 +323,7 @@ fn test_event_wrapper_empty() {
 
 #[test]
 fn test_event_wrapper_builder() {
-    let keys = vec![Felt252Wrapper::zero(), Felt252Wrapper::try_from(&[1; 32]).unwrap()];
+    let keys = vec![Felt252Wrapper::ZERO, Felt252Wrapper::try_from(&[1; 32]).unwrap()];
     let data = vec![Felt252Wrapper::try_from(&[1; 32]).unwrap(), Felt252Wrapper::try_from(&[2; 32]).unwrap()];
     let from_address = Felt252Wrapper::try_from(&[3; 32]).unwrap();
 
@@ -352,7 +352,7 @@ fn test_event_wrapper_builder_with_event_content() {
 
     let event_wrapper = EventWrapper::builder().with_event_content(event_content).build().unwrap();
 
-    let bounded_keys: BoundedVec<Felt252Wrapper, MaxArraySize> = bounded_vec!(Felt252Wrapper::zero());
+    let bounded_keys: BoundedVec<Felt252Wrapper, MaxArraySize> = bounded_vec!(Felt252Wrapper::ZERO);
     let bounded_data: BoundedVec<Felt252Wrapper, MaxArraySize> =
         bounded_vec![Felt252Wrapper::try_from(&[1; 32]).unwrap(), Felt252Wrapper::try_from(&[2; 32]).unwrap()];
 
