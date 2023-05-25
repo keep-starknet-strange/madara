@@ -7,16 +7,12 @@ use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
-use sp_core::{ConstU32, U256};
+use sp_core::ConstU32;
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 
-use crate::crypto::commitment::{
-    calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
-};
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
-use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use crate::execution::types::{ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -126,7 +122,7 @@ impl From<TxType> for TransactionType {
     }
 }
 
-/// Declare transaction.
+/// Deploy transaction.
 #[derive(
     Clone,
     Debug,
@@ -139,53 +135,17 @@ impl From<TxType> for TransactionType {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct DeclareTransaction {
-    /// Transaction version.
-    pub version: u8,
-    /// Transaction sender address.
-    pub sender_address: ContractAddressWrapper,
-    /// Class hash to declare.
-    pub compiled_class_hash: Felt252Wrapper,
-    /// Contract to declare.
-    pub contract_class: ContractClassWrapper,
-    /// Account contract nonce.
-    pub nonce: U256,
-    /// Transaction signature.
-    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Max fee.
-    pub max_fee: U256,
-}
-
-/// Deploy account transaction.
-#[derive(
-    Clone,
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct DeployAccountTransaction {
-    /// Transaction version.
-    pub version: u8,
-    /// Transaction sender address.
-    pub sender_address: ContractAddressWrapper,
-    /// Transaction calldata.
-    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
-    /// Account contract nonce.
-    pub nonce: U256,
-    /// Transaction salt.
-    pub salt: U256,
-    /// Transaction signature.
-    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Account class hash.
-    pub account_class_hash: Felt252Wrapper,
-    /// Max fee.
-    pub max_fee: U256,
+pub struct DeployTransaction {
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The hash of the deployed contract's class
+    pub class_hash: Felt252Wrapper,
+    /// Version of the transaction scheme
+    pub version: u64,
+    /// The salt for the address of the deployed contract
+    pub contract_address_salt: Felt252Wrapper,
+    /// The parameters passed to the constructor
+    pub constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
 }
 
 /// Error of conversion between [DeclareTransaction], [InvokeTransaction],
@@ -197,29 +157,11 @@ pub enum TransactionConversionError {
     /// Class is missing from the object of type [Transaction]
     MissingClass,
 }
-impl TryFrom<Transaction> for DeclareTransaction {
-    type Error = TransactionConversionError;
-    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
-        Ok(Self {
-            version: value.version,
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            contract_class: value.contract_class.ok_or(TransactionConversionError::MissingClass)?,
-            compiled_class_hash: value
-                .call_entrypoint
-                .class_hash
-                .ok_or(TransactionConversionError::MissingClassHash)?,
-            max_fee: value.max_fee,
-        })
-    }
-}
 
 /// Invoke transaction.
 #[derive(
     Clone,
     Debug,
-    Default,
     PartialEq,
     Eq,
     scale_codec::Encode,
@@ -228,32 +170,190 @@ impl TryFrom<Transaction> for DeclareTransaction {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct InvokeTransaction {
-    /// Transaction version.
-    pub version: u8,
-    /// Transaction sender address.
-    pub sender_address: ContractAddressWrapper,
-    /// Transaction calldata.
-    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
-    /// Account contract nonce.
-    pub nonce: U256,
-    /// Transaction signature.
-    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Max fee.
-    pub max_fee: U256,
+pub enum InvokeTransaction {
+    V0(InvokeTransactionV0),
+    V1(InvokeTransactionV1),
 }
 
-impl From<Transaction> for InvokeTransaction {
-    fn from(value: Transaction) -> Self {
-        Self {
-            version: value.version,
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            calldata: value.call_entrypoint.calldata,
-            max_fee: value.max_fee,
-        }
-    }
+/// Invoke transaction v0.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct InvokeTransactionV0 {
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: Felt252Wrapper,
+    /// Signature
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    /// Nonce
+    pub nonce: Felt252Wrapper,
+    /// Contract address
+    pub contract_address: Felt252Wrapper,
+    /// Entry point selector
+    pub entry_point_selector: Felt252Wrapper,
+    /// The parameters passed to the function
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+}
+
+/// Invoke transaction v1.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct InvokeTransactionV1 {
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: Felt252Wrapper,
+    /// Signature
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    /// Nonce
+    pub nonce: Felt252Wrapper,
+    /// Sender address
+    pub sender_address: Felt252Wrapper,
+    /// The data expected by the account's `execute` function (in most usecases, this includes the
+    /// called contract address and a function selector)
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+}
+
+/// L1 handler transaction.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct L1HandlerTransaction {
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// Version of the transaction scheme
+    pub version: u64,
+    /// The L1->L2 message nonce field of the sn core L1 contract at the time the transaction was
+    /// sent
+    pub nonce: u64,
+    /// Contract address
+    pub contract_address: Felt252Wrapper,
+    /// Entry point selector
+    pub entry_point_selector: Felt252Wrapper,
+    /// The parameters passed to the function
+    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+}
+
+/// Declare transaction.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub enum DeclareTransaction {
+    V1(DeclareTransactionV1),
+    V2(DeclareTransactionV2),
+}
+
+/// Declare contract transaction v1.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct DeclareTransactionV1 {
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: Felt252Wrapper,
+    /// Signature
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    /// Nonce
+    pub nonce: Felt252Wrapper,
+    /// Contract to declare.
+    pub contract_class: ContractClassWrapper,
+    /// The hash of the declared class
+    pub class_hash: Felt252Wrapper,
+    /// The address of the account contract sending the declaration transaction
+    pub sender_address: Felt252Wrapper,
+}
+
+/// Declare transaction v2.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct DeclareTransactionV2 {
+    #[serde(flatten)]
+    pub declare_txn_v1: DeclareTransactionV1,
+    /// The hash of the cairo assembly resulting from the sierra compilation
+    pub compiled_class_hash: Felt252Wrapper,
+}
+
+/// Deploy account transaction.
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    scale_codec::Encode,
+    scale_codec::Decode,
+    scale_info::TypeInfo,
+    scale_codec::MaxEncodedLen,
+)]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+pub struct DeployAccountTransaction {
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: Felt252Wrapper,
+    /// Version of the transaction scheme
+    pub version: u64,
+    /// Signature
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    /// Nonce
+    pub nonce: Felt252Wrapper,
+    /// The salt for the address of the deployed contract
+    pub contract_address_salt: Felt252Wrapper,
+    /// The parameters passed to the constructor
+    pub constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+    /// The hash of the deployed contract's class
+    pub class_hash: Felt252Wrapper,
 }
 
 /// Representation of a Starknet transaction.
@@ -268,110 +368,19 @@ impl From<Transaction> for InvokeTransaction {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct Transaction {
-    /// The version of the transaction.
-    pub version: u8,
-    /// Transaction hash.
-    pub hash: Felt252Wrapper,
-    /// Signature.
-    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
-    /// Sender Address
-    pub sender_address: ContractAddressWrapper,
-    /// Nonce
-    pub nonce: U256,
-    /// Call entrypoint
-    pub call_entrypoint: CallEntryPointWrapper,
-    /// Contract Class
-    pub contract_class: Option<ContractClassWrapper>,
-    /// Contract Address Salt
-    pub contract_address_salt: Option<U256>,
-    /// Max fee.
-    pub max_fee: U256,
+pub enum Transaction {
+    #[serde(rename = "INVOKE")]
+    Invoke(InvokeTransaction),
+    #[serde(rename = "L1_HANDLER")]
+    L1Handler(L1HandlerTransaction),
+    #[serde(rename = "DECLARE")]
+    Declare(DeclareTransaction),
+    #[serde(rename = "DEPLOY")]
+    Deploy(DeployTransaction),
+    #[serde(rename = "DEPLOY_ACCOUNT")]
+    DeployAccount(DeployAccountTransaction),
 }
 
-impl TryFrom<Transaction> for DeployAccountTransaction {
-    type Error = TransactionConversionError;
-    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
-        Ok(Self {
-            version: value.version,
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            calldata: value.call_entrypoint.calldata,
-            salt: value.contract_address_salt.unwrap_or_default(),
-            account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
-            max_fee: value.max_fee,
-        })
-    }
-}
-
-impl From<InvokeTransaction> for Transaction {
-    fn from(value: InvokeTransaction) -> Self {
-        Self {
-            version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                None,
-                EntryPointTypeWrapper::External,
-                None,
-                value.calldata,
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: None,
-            contract_address_salt: None,
-            max_fee: value.max_fee,
-        }
-    }
-}
-impl From<DeclareTransaction> for Transaction {
-    fn from(value: DeclareTransaction) -> Self {
-        Self {
-            version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(value.compiled_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                BoundedVec::default(),
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: Some(value.contract_class),
-            contract_address_salt: None,
-            max_fee: value.max_fee,
-        }
-    }
-}
-
-impl From<DeployAccountTransaction> for Transaction {
-    fn from(value: DeployAccountTransaction) -> Self {
-        Self {
-            version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(value.account_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                value.calldata,
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: None,
-            contract_address_salt: Some(value.salt),
-            max_fee: value.max_fee,
-        }
-    }
-}
 /// Representation of a Starknet transaction receipt.
 #[derive(
     Clone,
