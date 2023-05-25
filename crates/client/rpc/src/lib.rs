@@ -539,6 +539,7 @@ where
 
         let tx = to_tx(request)?;
         let (actual_fee, gas_usage) = self
+            .client
             .runtime_api()
             .estimate_fee(substrate_block_hash, tx)
             .map_err(|e| {
@@ -552,11 +553,17 @@ where
 
         Ok(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee })
     }
-    
+
     // Returns the details of a transaction by a given block id and index
     fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<MPTransaction> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
         let block = self
             .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
@@ -578,11 +585,6 @@ where
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        todo!("Not implemented")
-    }
-
-    /// Estimate the fee for a given Starknet transaction
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate> {
         todo!("Not implemented")
     }
 

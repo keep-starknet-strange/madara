@@ -108,10 +108,6 @@ pub trait StarknetRpcApi {
     #[method(name = "getStateUpdate")]
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
 
-    /// Estimate the fee for a given Starknet transaction
-    #[method(name = "estimateFee")]
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
-
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     #[method(name = "pendingTransactions")]
     async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>>;
