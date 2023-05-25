@@ -41,7 +41,7 @@ jobs:
         with:
           workflow: benchmark.yml
           branch: main
-          path: metrics.json
+          path: report
       - name: Upload new benchmark if on main
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
@@ -49,6 +49,4 @@ jobs:
           name: benchmark
           path: benchmarking/reports/metrics.json
       - name: Check performance regression
-        run:
-          bash scripts/check-regression.sh metrics.json
-          benchmarking/reports/metrics.json
+        run: python3 scripts/check-regression.py
