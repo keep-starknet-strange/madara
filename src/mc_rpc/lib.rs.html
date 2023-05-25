@@ -538,6 +538,47 @@
 <a href="#538" id="538">538</a>
 <a href="#539" id="539">539</a>
 <a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -557,7 +598,7 @@
 <span class="kw">use </span>mp_starknet::block::BlockTransactions;
 <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
-<span class="kw">use </span>mp_starknet::transaction::types::{Transaction, TxType};
+<span class="kw">use </span>mp_starknet::transaction::types::{Transaction <span class="kw">as </span>MPTransaction, TxType};
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
@@ -566,13 +607,15 @@
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_core::H256;
-<span class="kw">use </span>sp_runtime::generic::BlockId;
+<span class="kw">use </span>sp_runtime::generic::BlockId <span class="kw">as </span>SPBlockId;
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 <span class="kw">use </span>starknet_core::types::FieldElement;
 <span class="kw">use </span>starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId <span class="kw">as </span>StarknetBlockId, BlockStatus, BlockTag, BlockWithTxHashes,
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, DeployAccountTransactionResult,
-    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, SyncStatus, SyncStatusType,
+    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BroadcastedDeclareTransaction,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
+    DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatus,
+    SyncStatusType, Transaction,
 };
 
 <span class="doccomment">/// A Starknet RPC server for Madara
@@ -640,19 +683,19 @@
     }
 
     <span class="doccomment">/// Returns the substrate block corresponding to the given Starknet block id
-    </span><span class="kw">fn </span>substrate_block_hash_from_starknet_block(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId) -&gt; <span class="prelude-ty">Result</span>&lt;B::Hash, String&gt; {
+    </span><span class="kw">fn </span>substrate_block_hash_from_starknet_block(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; <span class="prelude-ty">Result</span>&lt;B::Hash, String&gt; {
         <span class="kw">match </span>block_id {
-            StarknetBlockId::Hash(h) =&gt; madara_backend_client::load_hash(
+            BlockId::Hash(h) =&gt; madara_backend_client::load_hash(
                 <span class="self">self</span>.client.as_ref(),
                 <span class="kw-2">&amp;</span><span class="self">self</span>.backend,
                 H256::from_slice(<span class="kw-2">&amp;</span>h.to_bytes_be()[..<span class="number">32</span>]),
             )
             .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to load Starknet block hash for Substrate block with hash &#39;{h}&#39;: {e}&quot;</span>))<span class="question-mark">?</span>,
-            StarknetBlockId::Number(n) =&gt; <span class="self">self
+            BlockId::Number(n) =&gt; <span class="self">self
                 </span>.client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to retrieve the hash of block number &#39;{n}&#39;: {e}&quot;</span>))<span class="question-mark">?</span>,
-            StarknetBlockId::Tag(t) =&gt; <span class="kw">match </span>t {
+            BlockId::Tag(t) =&gt; <span class="kw">match </span>t {
                 BlockTag::Latest =&gt; <span class="prelude-val">Some</span>(<span class="self">self</span>.client.info().best_hash),
                 BlockTag::Pending =&gt; <span class="prelude-val">None</span>,
             },
@@ -665,6 +708,7 @@
 </span><span class="kw">const </span>TX_SOURCE: TransactionSource = TransactionSource::External;
 
 <span class="attr">#[async_trait]
+#[allow(unused_variables)]
 </span><span class="kw">impl</span>&lt;B, BE, C, P&gt; StarknetRpcApiServer <span class="kw">for </span>Starknet&lt;B, BE, C, P&gt;
 <span class="kw">where
     </span>B: BlockT,
@@ -691,7 +735,7 @@
         })
     }
 
-    <span class="kw">fn </span>get_block_transaction_count(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId) -&gt; RpcResult&lt;u128&gt; {
+    <span class="kw">fn </span>get_block_transaction_count(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;u128&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -711,7 +755,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         contract_address: FieldElement,
         key: FieldElement,
-        block_id: StarknetBlockId,
+        block_id: BlockId,
     ) -&gt; RpcResult&lt;FieldElement&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
@@ -739,7 +783,7 @@
         <span class="prelude-val">Ok</span>(value)
     }
 
-    <span class="kw">fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>, request: FunctionCall, block_id: StarknetBlockId) -&gt; RpcResult&lt;Vec&lt;String&gt;&gt; {
+    <span class="kw">fn </span>call(<span class="kw-2">&amp;</span><span class="self">self</span>, request: FunctionCall, block_id: BlockId) -&gt; RpcResult&lt;Vec&lt;String&gt;&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -762,32 +806,8 @@
         <span class="prelude-val">Ok</span>(result.iter().map(|x| <span class="macro">format!</span>(<span class="string">&quot;{:#x}&quot;</span>, x.<span class="number">0</span>)).collect())
     }
 
-    <span class="doccomment">/// Get the nonce associated with the given address at the given block
-    </span><span class="kw">fn </span>get_nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: StarknetBlockId) -&gt; RpcResult&lt;FieldElement&gt; {
-        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
-            StarknetRpcApiError::BlockNotFound
-        })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>nonce = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .nonce(substrate_block_hash, contract_address.into())
-            .ok_or_else(|| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to get nonce at &#39;{contract_address}&#39;&quot;</span>);
-                StarknetRpcApiError::ContractNotFound
-            })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>nonce = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(nonce)).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve nonce at &#39;{contract_address}&#39;: {e}&quot;</span>);
-            StarknetRpcApiError::ContractNotFound
-        })<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(nonce)
-    }
-
     <span class="doccomment">/// Get the contract class at a given contract address for a given block id
-    </span><span class="kw">fn </span>get_class_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: StarknetBlockId) -&gt; RpcResult&lt;ContractClass&gt; {
+    </span><span class="kw">fn </span>get_class_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;ContractClass&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -806,6 +826,35 @@
             <span class="macro">error!</span>(<span class="string">&quot;Failed to convert contract class at &#39;{contract_address}&#39; to RPC contract class: {e}&quot;</span>);
             StarknetRpcApiError::ContractNotFound
         })<span class="question-mark">?</span>)
+    }
+
+    <span class="doccomment">/// Get the contract class hash in the given block for the contract deployed at the given
+    /// address
+    ///
+    /// # Arguments
+    ///
+    /// * `block_id` - The hash of the requested block, or number (height) of the requested block,
+    ///   or a block tag
+    /// * `contract_address` - The address of the contract whose class hash will be returned
+    ///
+    /// # Returns
+    ///
+    /// * `class_hash` - The class hash of the given contract
+    </span><span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;FieldElement&gt; {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>class_hash = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .contract_class_hash_by_address(substrate_block_hash, contract_address.into())
+            .ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class hash at &#39;{contract_address}&#39;&quot;</span>);
+                StarknetRpcApiError::ContractNotFound
+            })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(class_hash.into())
     }
 
     <span class="comment">// Implementation of the `syncing` RPC Endpoint.
@@ -878,7 +927,7 @@
     }
 
     <span class="doccomment">/// Get the contract class definition in the given block associated with the given hash.
-    </span><span class="kw">fn </span>get_class(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId, class_hash: FieldElement) -&gt; RpcResult&lt;ContractClass&gt; {
+    </span><span class="kw">fn </span>get_class(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, class_hash: FieldElement) -&gt; RpcResult&lt;ContractClass&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -899,37 +948,8 @@
         })<span class="question-mark">?</span>)
     }
 
-    <span class="doccomment">/// Get the contract class hash in the given block for the contract deployed at the given
-    /// address
-    ///
-    /// # Arguments
-    ///
-    /// * `block_id` - The hash of the requested block, or number (height) of the requested block,
-    ///   or a block tag
-    /// * `contract_address` - The address of the contract whose class hash will be returned
-    ///
-    /// # Returns
-    ///
-    /// * `class_hash` - The class hash of the given contract
-    </span><span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: StarknetBlockId) -&gt; RpcResult&lt;FieldElement&gt; {
-        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
-            StarknetRpcApiError::BlockNotFound
-        })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>class_hash = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, contract_address.into())
-            .ok_or_else(|| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve contract class hash at &#39;{contract_address}&#39;&quot;</span>);
-                StarknetRpcApiError::ContractNotFound
-            })<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(class_hash.into())
-    }
-
     <span class="doccomment">/// Returns the specified block with transaction hashes.
-    </span><span class="kw">fn </span>get_block_with_tx_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxHashes&gt; {
+    </span><span class="kw">fn </span>get_block_with_tx_hashes(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxHashes&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -958,32 +978,32 @@
         <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxHashes::Block(block_with_tx_hashes))
     }
 
-    <span class="comment">// Returns the details of a transaction by a given block id and index
-    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: StarknetBlockId, index: usize) -&gt; RpcResult&lt;Transaction&gt; {
+    <span class="doccomment">/// Get the nonce associated with the given address at the given block
+    </span><span class="kw">fn </span>get_nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;FieldElement&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = <span class="self">self
+        <span class="kw">let </span>nonce = <span class="self">self
             </span>.overrides
             .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+            .nonce(substrate_block_hash, contract_address.into())
+            .ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to get nonce at &#39;{contract_address}&#39;&quot;</span>);
+                StarknetRpcApiError::ContractNotFound
+            })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block_transactions = block.transactions();
-        <span class="kw">let </span>transaction;
-        <span class="kw">match </span>block_transactions {
-            BlockTransactions::Full(transactions) =&gt; {
-                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(transaction.clone())
-            }
-            BlockTransactions::Hashes(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidTxnIndex.into()),
-        }
+        <span class="kw">let </span>nonce = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(nonce)).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve nonce at &#39;{contract_address}&#39;: {e}&quot;</span>);
+            StarknetRpcApiError::ContractNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(nonce)
     }
 
     <span class="doccomment">/// Returns the chain id.
-    </span><span class="kw">fn </span>get_chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt; {
+    </span><span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt; {
         <span class="kw">let </span>hash = <span class="self">self</span>.client.info().best_hash;
         <span class="kw">let </span>res = <span class="self">self</span>.client.runtime_api().chain_id(hash).map_err(|<span class="kw">_</span>| {
             <span class="macro">error!</span>(<span class="string">&quot;fetch runtime chain id failed&quot;</span>);
@@ -1008,7 +1028,7 @@
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
         <span class="kw">let </span>invoke_tx = to_invoke_tx(invoke_transaction)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>transaction: Transaction = invoke_tx.into();
+        <span class="kw">let </span>transaction: MPTransaction = invoke_tx.into();
         <span class="kw">let </span>extrinsic = <span class="self">self
             </span>.client
             .runtime_api()
@@ -1022,7 +1042,7 @@
                 StarknetRpcApiError::ClassHashNotFound
             })<span class="question-mark">?</span>;
 
-        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>BlockId::hash(<span class="self">self</span>.client.info().best_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(
+        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(<span class="self">self</span>.client.info().best_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(
             |e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
                 StarknetRpcApiError::ContractError
@@ -1053,7 +1073,7 @@
             StarknetRpcApiError::ClassHashNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>transaction: Transaction = deploy_account_transaction.into();
+        <span class="kw">let </span>transaction: MPTransaction = deploy_account_transaction.into();
         <span class="kw">let </span>extrinsic = <span class="self">self
             </span>.client
             .runtime_api()
@@ -1067,7 +1087,7 @@
                 StarknetRpcApiError::ClassHashNotFound
             })<span class="question-mark">?</span>;
 
-        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>BlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
+        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
             StarknetRpcApiError::ClassHashNotFound
         })<span class="question-mark">?</span>;
@@ -1076,6 +1096,68 @@
             transaction_hash: transaction.hash.into(),
             contract_address: transaction.sender_address.into(),
         })
+    }
+
+    <span class="comment">// Returns the details of a transaction by a given block id and index
+    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;MPTransaction&gt; {
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>block = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        <span class="kw">let </span>block_transactions = block.transactions();
+        <span class="kw">let </span>transaction;
+        <span class="kw">match </span>block_transactions {
+            BlockTransactions::Full(transactions) =&gt; {
+                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(transaction.clone())
+            }
+            BlockTransactions::Hashes(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidTxnIndex.into()),
+        }
+    }
+
+    <span class="doccomment">/// Get block information with full transactions given the block id
+    </span><span class="kw">fn </span>get_block_with_txs(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
+    }
+
+    <span class="doccomment">/// Get the information about the result of executing the requested block
+    </span><span class="kw">fn </span>get_state_update(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
+    }
+
+    <span class="doccomment">/// Estimate the fee for a given Starknet transaction
+    </span><span class="kw">async fn </span>estimate_fee(<span class="kw-2">&amp;</span><span class="self">self</span>, request: BroadcastedTransaction, block_id: BlockId) -&gt; RpcResult&lt;FeeEstimate&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
+    }
+
+    <span class="doccomment">/// Returns the transactions in the transaction pool, recognized by this sequencer
+    </span><span class="kw">async fn </span>pending_transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Vec&lt;Transaction&gt;&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
+    }
+
+    <span class="doccomment">/// Returns all events matching the given filter
+    </span><span class="kw">async fn </span>get_events(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        filter: EventFilter,
+        continuation_token: <span class="prelude-ty">Option</span>&lt;String&gt;,
+        chunk_size: u64,
+    ) -&gt; RpcResult&lt;EventsPage&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
+    }
+
+    <span class="doccomment">/// Submit a new transaction to be added to the chain
+    </span><span class="kw">async fn </span>add_declare_transaction(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        declare_transaction: BroadcastedDeclareTransaction,
+    ) -&gt; RpcResult&lt;DeclareTransactionResult&gt; {
+        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
     }
 }
 </code></pre></div>

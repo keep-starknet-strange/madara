@@ -95,6 +95,39 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -106,15 +139,16 @@
 
 <span class="kw">use </span>jsonrpsee::core::RpcResult;
 <span class="kw">use </span>jsonrpsee::proc_macros::rpc;
-<span class="kw">use </span>mp_starknet::transaction::types::Transaction;
+<span class="kw">use </span>mp_starknet::transaction::types::Transaction <span class="kw">as </span>MPTransaction;
 
 <span class="kw">pub mod </span>utils;
 
 <span class="kw">use </span>starknet_core::types::FieldElement;
 <span class="kw">use </span>starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass,
-    DeployAccountTransactionResult, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
+    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall, InvokeTransactionResult,
+    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType, Transaction,
 };
 
 <span class="doccomment">/// Starknet rpc interface.
@@ -172,7 +206,7 @@
 
     <span class="doccomment">/// Get the chain id
     </span><span class="attr">#[method(name = <span class="string">&quot;chainId&quot;</span>)]
-    </span><span class="kw">fn </span>get_chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt;;
+    </span><span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt;;
 
     <span class="doccomment">/// Add an Invoke Transaction to invoke a contract function
     </span><span class="attr">#[method(name = <span class="string">&quot;addInvokeTransaction&quot;</span>)]
@@ -190,7 +224,39 @@
 
     <span class="doccomment">/// Get the details of a transaction by a given block id and index
     </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionByBlockIdAndIndex&quot;</span>)]
-    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;Transaction&gt;;
+    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;MPTransaction&gt;;
+
+    <span class="doccomment">/// Get block information with full transactions given the block id
+    </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxs&quot;</span>)]
+    </span><span class="kw">fn </span>get_block_with_txs(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;;
+
+    <span class="doccomment">/// Get the information about the result of executing the requested block
+    </span><span class="attr">#[method(name = <span class="string">&quot;getStateUpdate&quot;</span>)]
+    </span><span class="kw">fn </span>get_state_update(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;;
+
+    <span class="doccomment">/// Estimate the fee for a given Starknet transaction
+    </span><span class="attr">#[method(name = <span class="string">&quot;estimateFee&quot;</span>)]
+    </span><span class="kw">async fn </span>estimate_fee(<span class="kw-2">&amp;</span><span class="self">self</span>, request: BroadcastedTransaction, block_id: BlockId) -&gt; RpcResult&lt;FeeEstimate&gt;;
+
+    <span class="doccomment">/// Returns the transactions in the transaction pool, recognized by this sequencer
+    </span><span class="attr">#[method(name = <span class="string">&quot;pendingTransactions&quot;</span>)]
+    </span><span class="kw">async fn </span>pending_transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Vec&lt;Transaction&gt;&gt;;
+
+    <span class="doccomment">/// Returns all events matching the given filter
+    </span><span class="attr">#[method(name = <span class="string">&quot;getEvents&quot;</span>)]
+    </span><span class="kw">async fn </span>get_events(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        filter: EventFilter,
+        continuation_token: <span class="prelude-ty">Option</span>&lt;String&gt;,
+        chunk_size: u64,
+    ) -&gt; RpcResult&lt;EventsPage&gt;;
+
+    <span class="doccomment">/// Submit a new transaction to be added to the chain
+    </span><span class="attr">#[method(name = <span class="string">&quot;addDeclareTransaction&quot;</span>)]
+    </span><span class="kw">async fn </span>add_declare_transaction(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        declare_transaction: BroadcastedDeclareTransaction,
+    ) -&gt; RpcResult&lt;DeclareTransactionResult&gt;;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mc_rpc_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
