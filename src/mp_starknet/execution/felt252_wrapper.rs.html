@@ -637,7 +637,7 @@
     </span><span class="kw">fn </span>type_info() -&gt; Type {
         Type::builder()
             .path(Path::new(<span class="string">&quot;Felt252Wrapper&quot;</span>, <span class="macro">module_path!</span>()))
-            .composite(Fields::unnamed().field(|f| f.ty::&lt;[u8]&gt;().type_name(<span class="string">&quot;FieldElement&quot;</span>)))
+            .composite(Fields::unnamed().field(|f| f.ty::&lt;[u8; <span class="number">32</span>]&gt;().type_name(<span class="string">&quot;FieldElement&quot;</span>)))
     }
 }
 
