@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-yarn test:wait
+npm run test:wait
 
 if [ $? -eq 0 ]
 then

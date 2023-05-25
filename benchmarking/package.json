@@ -11,10 +11,10 @@
     "test:transfer": "artillery run -e local ./scripts/starknet-erc20.yml --output reports/report-transfer.json",
     "report": "artillery report --output reports/report reports/report-transfer.json",
     "metrics": "node scripts/metrics.js",
-    "test": "yarn test:transfer && yarn metrics",
+    "test": "npm run test:transfer && npm run metrics",
     "chain:dev": "../scripts/run_node.sh",
-    "test:wait": "wait-on tcp:9944 && yarn test",
-    "test:ci": "concurrently 'yarn chain:dev' '../scripts/test.sh'"
+    "test:wait": "wait-on tcp:9944 && npm run test",
+    "test:ci": "concurrently 'npm run chain:dev' '../scripts/test.sh'"
   },
   "keywords": [
     "madara",
