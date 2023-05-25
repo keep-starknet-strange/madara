@@ -853,7 +853,7 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>EventWrapper {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>one = Felt252Wrapper::one();
+        <span class="kw">let </span>one = Felt252Wrapper::ONE;
         <span class="self">Self </span>{
             keys: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
             data: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
@@ -1395,7 +1395,7 @@
 
 <span class="kw">impl </span>Default <span class="kw">for </span>Transaction {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>one = Felt252Wrapper::one();
+        <span class="kw">let </span>one = Felt252Wrapper::ONE;
         <span class="self">Self </span>{
             version: <span class="number">1_u8</span>,
             hash: one,

@@ -398,10 +398,6 @@
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
 <a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
 </pre><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -427,6 +423,17 @@
 </span><span class="kw">pub struct </span>Felt252Wrapper(<span class="kw">pub </span>FieldElement);
 
 <span class="kw">impl </span>Felt252Wrapper {
+    <span class="doccomment">/// Field252 constant that&#39;s equal to 0
+    </span><span class="kw">pub const </span>ZERO: <span class="self">Self </span>= <span class="self">Self</span>(FieldElement::ZERO);
+    <span class="doccomment">/// Field252 constant that&#39;s equal to 1
+    </span><span class="kw">pub const </span>ONE: <span class="self">Self </span>= <span class="self">Self</span>(FieldElement::ONE);
+    <span class="doccomment">/// Field252 constant that&#39;s equal to 2
+    </span><span class="kw">pub const </span>TWO: <span class="self">Self </span>= <span class="self">Self</span>(FieldElement::TWO);
+    <span class="doccomment">/// Field252 constant that&#39;s equal to 3
+    </span><span class="kw">pub const </span>THREE: <span class="self">Self </span>= <span class="self">Self</span>(FieldElement::THREE);
+    <span class="doccomment">/// Field252 constant that&#39;s equal to 2^251 + 17 * 2^192
+    </span><span class="kw">pub const </span>MAX: <span class="self">Self </span>= <span class="self">Self</span>(FieldElement::MAX);
+
     <span class="doccomment">/// Initializes from a hex string.
     ///
     /// # Arguments
@@ -457,26 +464,6 @@
     </span><span class="kw">pub fn </span>from_dec_str(value: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Felt252WrapperError&gt; {
         <span class="kw">let </span>fe = FieldElement::from_dec_str(value)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(fe))
-    }
-
-    <span class="doccomment">/// Inits from zero constant value.
-    </span><span class="kw">pub fn </span>zero() -&gt; Felt252Wrapper {
-        <span class="self">Self</span>(FieldElement::ZERO)
-    }
-
-    <span class="doccomment">/// Inits from one constant value.
-    </span><span class="kw">pub fn </span>one() -&gt; Felt252Wrapper {
-        <span class="self">Self</span>(FieldElement::ONE)
-    }
-
-    <span class="doccomment">/// Inits from two constant value.
-    </span><span class="kw">pub fn </span>two() -&gt; Felt252Wrapper {
-        <span class="self">Self</span>(FieldElement::TWO)
-    }
-
-    <span class="doccomment">/// Inits from three constant value.
-    </span><span class="kw">pub fn </span>three() -&gt; Felt252Wrapper {
-        <span class="self">Self</span>(FieldElement::THREE)
     }
 }
 
@@ -725,14 +712,6 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>constant_values() {
-        <span class="macro">assert_eq!</span>(Felt252Wrapper::zero(), Felt252Wrapper(FieldElement::ZERO));
-        <span class="macro">assert_eq!</span>(Felt252Wrapper::one(), Felt252Wrapper(FieldElement::ONE));
-        <span class="macro">assert_eq!</span>(Felt252Wrapper::two(), Felt252Wrapper(FieldElement::TWO));
-        <span class="macro">assert_eq!</span>(Felt252Wrapper::three(), Felt252Wrapper(FieldElement::THREE));
-    }
-
-    <span class="attr">#[test]
     </span><span class="kw">fn </span>from_hex_be() {
         Felt252Wrapper::from_hex_be(<span class="string">&quot;0x0&quot;</span>).unwrap();
         Felt252Wrapper::from_hex_be(<span class="string">&quot;0x123456&quot;</span>).unwrap();
@@ -750,7 +729,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>from_dec_str() {
         <span class="kw">let </span>f = Felt252Wrapper::from_dec_str(<span class="string">&quot;1&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(f, Felt252Wrapper::one());
+        <span class="macro">assert_eq!</span>(f, Felt252Wrapper::ONE);
 
         Felt252Wrapper::from_dec_str(<span class="string">&quot;1991991&quot;</span>).unwrap();
     }
@@ -774,9 +753,9 @@
     </span><span class="kw">fn </span>felt252_from_u256_twoway() {
         <span class="kw">let </span>u = U256::from_little_endian(<span class="kw-2">&amp;</span>[<span class="number">1</span>]);
         <span class="kw">let </span>felt = Felt252Wrapper::try_from(u);
-        <span class="macro">assert_eq!</span>(felt, <span class="prelude-val">Ok</span>(Felt252Wrapper::one()));
+        <span class="macro">assert_eq!</span>(felt, <span class="prelude-val">Ok</span>(Felt252Wrapper::ONE));
 
-        <span class="kw">let </span>felt2 = Felt252Wrapper::two();
+        <span class="kw">let </span>felt2 = Felt252Wrapper::TWO;
         <span class="kw">let </span>u2: U256 = felt2.into();
         <span class="macro">assert_eq!</span>(U256::from_little_endian(<span class="kw-2">&amp;</span>[<span class="number">2</span>]), u2);
     }
@@ -785,9 +764,9 @@
     </span><span class="kw">fn </span>felt252_from_h256_twoway() {
         <span class="kw">let </span>h = H256::from_low_u64_be(<span class="number">1</span>);
         <span class="kw">let </span>felt: Felt252Wrapper = h.try_into().unwrap();
-        <span class="macro">assert_eq!</span>(felt, Felt252Wrapper::one());
+        <span class="macro">assert_eq!</span>(felt, Felt252Wrapper::ONE);
 
-        <span class="kw">let </span>felt2 = Felt252Wrapper::two();
+        <span class="kw">let </span>felt2 = Felt252Wrapper::TWO;
         <span class="kw">let </span>h2: H256 = felt2.into();
         <span class="kw">let </span>h2_expected = H256::from_low_u64_be(<span class="number">2</span>);
         <span class="macro">assert_eq!</span>(h2, h2_expected);
@@ -795,15 +774,28 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>encode_decode_scale() {
-        <span class="kw">let </span><span class="kw-2">mut </span>felt = Felt252Wrapper::one();
-        <span class="kw">let </span><span class="kw-2">mut </span>encoded = felt.encode();
-        <span class="kw">let </span><span class="kw-2">mut </span>decoded = Felt252Wrapper::decode(<span class="kw-2">&amp;mut &amp;</span>encoded[..]);
+        <span class="kw">let </span>felt = Felt252Wrapper::ONE;
+        <span class="kw">let </span>encoded = felt.encode();
+        <span class="kw">let </span>decoded = Felt252Wrapper::decode(<span class="kw-2">&amp;mut &amp;</span>encoded[..]);
         <span class="macro">assert_eq!</span>(decoded, <span class="prelude-val">Ok</span>(Felt252Wrapper(FieldElement::ONE)));
 
-        felt = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1234&quot;</span>).unwrap();
-        encoded = felt.encode();
-        decoded = Felt252Wrapper::decode(<span class="kw-2">&amp;mut &amp;</span>encoded[..]);
+        <span class="kw">let </span>felt = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1234&quot;</span>).unwrap();
+        <span class="kw">let </span>encoded = felt.encode();
+        <span class="kw">let </span>decoded = Felt252Wrapper::decode(<span class="kw-2">&amp;mut &amp;</span>encoded[..]);
         <span class="macro">assert_eq!</span>(felt, decoded.unwrap());
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>vec_encode_decode_scale() {
+        <span class="kw">let </span>input = <span class="macro">vec!</span>[
+            Felt252Wrapper::ONE,
+            Felt252Wrapper::TWO,
+            Felt252Wrapper::from_dec_str(<span class="string">&quot;1000000000&quot;</span>).unwrap(),
+            Felt252Wrapper::MAX,
+        ];
+        <span class="kw">let </span>encoded = input.encode();
+        <span class="kw">let </span>decoded = Vec::&lt;Felt252Wrapper&gt;::decode(<span class="kw-2">&amp;mut &amp;</span>encoded[..]);
+        <span class="macro">assert_eq!</span>(decoded, <span class="prelude-val">Ok</span>(input));
     }
 }
 </code></pre></div>

@@ -254,7 +254,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_try_into_transaction_correct_message_should_work() {
-        <span class="kw">let </span>felt_one = Felt252Wrapper::one();
+        <span class="kw">let </span>felt_one = Felt252Wrapper::ONE;
         <span class="kw">let </span>sender_address = felt_one;
         <span class="kw">let </span>hex = <span class="string">&quot;0x0000000000000000000000000000000000000000000000000000000000000001&quot;</span>.to_owned();
         <span class="kw">let </span>test_message: Message =
@@ -266,7 +266,7 @@
                 class_hash: <span class="prelude-val">None</span>,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,
                 entrypoint_selector: <span class="prelude-val">Some</span>(felt_one),
-                calldata: <span class="macro">bounded_vec!</span>[Felt252Wrapper::one(), Felt252Wrapper::one()],
+                calldata: <span class="macro">bounded_vec!</span>[Felt252Wrapper::ONE, Felt252Wrapper::ONE],
                 storage_address: felt_one,
                 caller_address: ContractAddressWrapper::default(),
             },
