@@ -518,7 +518,7 @@ where
     }
 
     // Returns the details of a transaction by a given block id and index
-    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<MPTransaction> {
+    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -531,11 +531,10 @@ where
             .unwrap_or_default();
 
         let block_transactions = block.transactions();
-        let transaction;
         match block_transactions {
             BlockTransactions::Full(transactions) => {
-                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
-                Ok(transaction.clone())
+                let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                Ok(Transaction::try_from(transaction.clone()).map_err(|e| StarknetRpcApiError::InternalServerError)?)
             }
             BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
         }
