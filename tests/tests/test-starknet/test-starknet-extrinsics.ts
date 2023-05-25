@@ -40,7 +40,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     ).to.exist;
   });
 
-  it.skip("should deploy a new contract", async function () {
+  it("should deploy a new contract", async function () {
     const {
       result: { events },
     } = await context.createBlock(
@@ -55,7 +55,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     ).to.exist;
   });
 
-  it.skip("should execute a transfer", async function () {
+  it("should execute a transfer", async function () {
     const nonce = 1;
     const {
       result: { events },
