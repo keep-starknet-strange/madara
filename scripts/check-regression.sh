@@ -1,7 +1,7 @@
 #!/bin/bash
 # A bash script to calculate the difference in percentage 
 # between the avgTps of two JSON files
-
+set -e
 # Command line arguments
 OLD_BENCHMARK=$1
 NEW_BENCHMARK=$2
