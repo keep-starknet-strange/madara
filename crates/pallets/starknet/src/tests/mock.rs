@@ -224,7 +224,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
             (
-                get_storage_key(&braavos_account_address, "Account_signers", &[Felt252Wrapper::zero()], 0),
+                get_storage_key(&braavos_account_address, "Account_signers", &[Felt252Wrapper::ZERO], 0),
                 Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
         ],

@@ -23,6 +23,17 @@ use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {
+    /// Field252 constant that's equal to 0
+    pub const ZERO: Self = Self(FieldElement::ZERO);
+    /// Field252 constant that's equal to 1
+    pub const ONE: Self = Self(FieldElement::ONE);
+    /// Field252 constant that's equal to 2
+    pub const TWO: Self = Self(FieldElement::TWO);
+    /// Field252 constant that's equal to 3
+    pub const THREE: Self = Self(FieldElement::THREE);
+    /// Field252 constant that's equal to 2^251 + 17 * 2^192
+    pub const MAX: Self = Self(FieldElement::MAX);
+
     /// Initializes from a hex string.
     ///
     /// # Arguments
@@ -53,26 +64,6 @@ impl Felt252Wrapper {
     pub fn from_dec_str(value: &str) -> Result<Self, Felt252WrapperError> {
         let fe = FieldElement::from_dec_str(value)?;
         Ok(Self(fe))
-    }
-
-    /// Inits from zero constant value.
-    pub fn zero() -> Felt252Wrapper {
-        Self(FieldElement::ZERO)
-    }
-
-    /// Inits from one constant value.
-    pub fn one() -> Felt252Wrapper {
-        Self(FieldElement::ONE)
-    }
-
-    /// Inits from two constant value.
-    pub fn two() -> Felt252Wrapper {
-        Self(FieldElement::TWO)
-    }
-
-    /// Inits from three constant value.
-    pub fn three() -> Felt252Wrapper {
-        Self(FieldElement::THREE)
     }
 }
 
@@ -321,14 +312,6 @@ mod felt252_wrapper_tests {
     }
 
     #[test]
-    fn constant_values() {
-        assert_eq!(Felt252Wrapper::zero(), Felt252Wrapper(FieldElement::ZERO));
-        assert_eq!(Felt252Wrapper::one(), Felt252Wrapper(FieldElement::ONE));
-        assert_eq!(Felt252Wrapper::two(), Felt252Wrapper(FieldElement::TWO));
-        assert_eq!(Felt252Wrapper::three(), Felt252Wrapper(FieldElement::THREE));
-    }
-
-    #[test]
     fn from_hex_be() {
         Felt252Wrapper::from_hex_be("0x0").unwrap();
         Felt252Wrapper::from_hex_be("0x123456").unwrap();
@@ -346,7 +329,7 @@ mod felt252_wrapper_tests {
     #[test]
     fn from_dec_str() {
         let f = Felt252Wrapper::from_dec_str("1").unwrap();
-        assert_eq!(f, Felt252Wrapper::one());
+        assert_eq!(f, Felt252Wrapper::ONE);
 
         Felt252Wrapper::from_dec_str("1991991").unwrap();
     }
@@ -370,9 +353,9 @@ mod felt252_wrapper_tests {
     fn felt252_from_u256_twoway() {
         let u = U256::from_little_endian(&[1]);
         let felt = Felt252Wrapper::try_from(u);
-        assert_eq!(felt, Ok(Felt252Wrapper::one()));
+        assert_eq!(felt, Ok(Felt252Wrapper::ONE));
 
-        let felt2 = Felt252Wrapper::two();
+        let felt2 = Felt252Wrapper::TWO;
         let u2: U256 = felt2.into();
         assert_eq!(U256::from_little_endian(&[2]), u2);
     }
@@ -381,9 +364,9 @@ mod felt252_wrapper_tests {
     fn felt252_from_h256_twoway() {
         let h = H256::from_low_u64_be(1);
         let felt: Felt252Wrapper = h.try_into().unwrap();
-        assert_eq!(felt, Felt252Wrapper::one());
+        assert_eq!(felt, Felt252Wrapper::ONE);
 
-        let felt2 = Felt252Wrapper::two();
+        let felt2 = Felt252Wrapper::TWO;
         let h2: H256 = felt2.into();
         let h2_expected = H256::from_low_u64_be(2);
         assert_eq!(h2, h2_expected);
@@ -391,14 +374,27 @@ mod felt252_wrapper_tests {
 
     #[test]
     fn encode_decode_scale() {
-        let mut felt = Felt252Wrapper::one();
-        let mut encoded = felt.encode();
-        let mut decoded = Felt252Wrapper::decode(&mut &encoded[..]);
+        let felt = Felt252Wrapper::ONE;
+        let encoded = felt.encode();
+        let decoded = Felt252Wrapper::decode(&mut &encoded[..]);
         assert_eq!(decoded, Ok(Felt252Wrapper(FieldElement::ONE)));
 
-        felt = Felt252Wrapper::from_hex_be("0x1234").unwrap();
-        encoded = felt.encode();
-        decoded = Felt252Wrapper::decode(&mut &encoded[..]);
+        let felt = Felt252Wrapper::from_hex_be("0x1234").unwrap();
+        let encoded = felt.encode();
+        let decoded = Felt252Wrapper::decode(&mut &encoded[..]);
         assert_eq!(felt, decoded.unwrap());
+    }
+
+    #[test]
+    fn vec_encode_decode_scale() {
+        let input = vec![
+            Felt252Wrapper::ONE,
+            Felt252Wrapper::TWO,
+            Felt252Wrapper::from_dec_str("1000000000").unwrap(),
+            Felt252Wrapper::MAX,
+        ];
+        let encoded = input.encode();
+        let decoded = Vec::<Felt252Wrapper>::decode(&mut &encoded[..]);
+        assert_eq!(decoded, Ok(input));
     }
 }
