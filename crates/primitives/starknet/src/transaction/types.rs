@@ -550,18 +550,26 @@ pub struct TransactionReceiptWrapper {
 }
 
 #[cfg(feature = "std")]
-impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
-    type Error = RPCTransactionConversionError;
+impl TransactionReceiptWrapper {
 
-    fn try_from(value: TransactionReceiptWrapper) -> Result<Self, Self::Error> {
-        let transaction_hash = value.transaction_hash.into();
-        let actual_fee = value.actual_fee.into();
-
-        let status = RPCTransactionStatus::Pending;
-
-        let block_hash = value.block_hash.into();
-        let block_number = value.block_number;
-        let events = value.events
+    /// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
+    ///
+    /// This conversion is done in a function and not `From` trait due to the need
+    /// to pass some arguments like the [`RPCTransactionStatus`] which is unknown
+    /// in the [`TransactionReceiptWrapper`].
+    ///
+    /// Maybe extended later for other missing fields like messages sent to L1
+    /// and the contract class for the deploy.
+    pub fn into_maybe_pending_transaction_receipt(
+        self,
+        status: RPCTransactionStatus,
+    ) -> RPCMaybePendingTransactionReceipt {
+        let transaction_hash = self.transaction_hash.into();
+        let actual_fee = self.actual_fee.into();
+        let status = status;
+        let block_hash = self.block_hash.into();
+        let block_number = self.block_number;
+        let events = self.events
             .iter()
             .map(|e| (*e).clone().into())
             .collect();
@@ -569,9 +577,9 @@ impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
         // TODO: from where those message must be taken?
         let messages_sent = vec![];
 
-        match value.tx_type {
+        match self.tx_type {
             TxType::DeployAccount => {
-                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                RPCMaybePendingTransactionReceipt::Receipt(
                     RPCTransactionReceipt::DeployAccount(RPCDeployAccountTransactionReceipt {
                         transaction_hash,
                         actual_fee,
@@ -582,10 +590,10 @@ impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
                         events,
                         // TODO: from where can I get this one?
                         contract_address: FieldElement::ZERO
-                    })))
+                    }))
             },
             TxType::Declare => {
-                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                RPCMaybePendingTransactionReceipt::Receipt(
                     RPCTransactionReceipt::Declare(RPCDeclareTransactionReceipt {
                         transaction_hash,
                         actual_fee,
@@ -594,10 +602,10 @@ impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
                         block_number,
                         messages_sent,
                         events,
-                    })))
+                    }))
             },
             TxType::Invoke => {
-                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                RPCMaybePendingTransactionReceipt::Receipt(
                     RPCTransactionReceipt::Invoke(RPCInvokeTransactionReceipt {
                         transaction_hash,
                         actual_fee,
@@ -606,10 +614,10 @@ impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
                         block_number,
                         messages_sent,
                         events,
-                    })))
+                    }))
             },
             TxType::L1Handler => {
-                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                RPCMaybePendingTransactionReceipt::Receipt(
                     RPCTransactionReceipt::L1Handler(RPCL1HandlerTransactionReceipt {
                         transaction_hash,
                         actual_fee,
@@ -618,7 +626,7 @@ impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
                         block_number,
                         messages_sent,
                         events,
-                    })))
+                    }))
             },
         }
     }

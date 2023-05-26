@@ -34,7 +34,7 @@ use starknet_core::types::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, MaybePendingTransactionReceipt
+    SyncStatus, SyncStatusType, Transaction, MaybePendingTransactionReceipt, TransactionStatus
 };
 
 /// A Starknet RPC server for Madara
@@ -753,11 +753,33 @@ where
                         continue;
                     }
 
-                    return Ok(MaybePendingTransactionReceipt::try_from(receipt.clone())
-                              .map_err(|e| {
-                                  error!("{:?}", e);
-                                  StarknetRpcApiError::InternalServerError
-                              })?);
+                    return Ok(receipt
+                              .clone()
+                              .into_maybe_pending_transaction_receipt(
+                                  TransactionStatus::AcceptedOnL2));
+
+                    // match MaybePendingTransactionReceipt::try_from(receipt.clone()) {
+                    //     Ok(r) => {
+                    //         r.status = TransactionStatus::AcceptedOnL2;
+                    //         return Ok(r);
+                    //     },
+                    //     Err(e) => {
+                    //         error!("{:?}", e);
+                    //         return Err(StarknetRpcApiError::InternalServerError.into());
+                    //     }
+                    // };
+                    // // .map_err(|e| {
+                    // //     error!("{:?}", e);
+                    // //     StarknetRpcApiError::InternalServerError
+                    // // })?;
+
+                    // // TODO: how to know if it's accepted on L1?
+                    // //       perhaps having a local db mapping of blocks
+                    // //       accepting on L1 can help as we know the block hash/number
+                    // //       at this point.
+                    // receipt.status = TransactionStatus::AcceptedOnL2;
+
+                    // return Ok(receipt);
                 }
 
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
