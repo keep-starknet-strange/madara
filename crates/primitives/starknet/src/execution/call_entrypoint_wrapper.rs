@@ -1,7 +1,6 @@
 use alloc::format;
 use alloc::sync::Arc;
 
-use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
