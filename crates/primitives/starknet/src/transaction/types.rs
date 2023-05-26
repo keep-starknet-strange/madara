@@ -11,7 +11,7 @@ use sp_core::{ConstU32, U256};
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
-use starknet_providers::jsonrpc::models::{
+use starknet_core::types::{
     DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
     DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
     InvokeTransaction as RPCInvokeTransaction, InvokeTransactionV0 as RPCInvokeTransactionV0,
@@ -439,12 +439,22 @@ impl TryFrom<Transaction> for RPCTransaction {
         match value.tx_type {
             TxType::Declare => {
                 let class_hash = class_hash?.0;
-                let declare_txn_v1 =
-                    RPCDeclareTransactionV1 { transaction_hash, max_fee, signature, nonce, class_hash, sender_address };
                 match value.version {
-                    1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(declare_txn_v1))),
+                    1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        class_hash,
+                        sender_address,
+                    }))),
                     2 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
-                        declare_txn_v1,
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        class_hash,
+                        sender_address,
                         compiled_class_hash: class_hash,
                     }))),
                     _ => Err(RPCTransactionConversionError::UnknownVersion),
@@ -473,7 +483,6 @@ impl TryFrom<Transaction> for RPCTransaction {
             TxType::DeployAccount => Ok(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
                 transaction_hash,
                 max_fee,
-                version: value.version.into(),
                 signature,
                 nonce,
                 contract_address_salt: Felt252Wrapper::try_from(
