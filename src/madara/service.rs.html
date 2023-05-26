@@ -551,6 +551,11 @@
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
 <a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -564,6 +569,7 @@
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi};
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
+<span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>prometheus_endpoint::Registry;
 <span class="kw">use </span>sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
 <span class="kw">use </span>sc_consensus::BasicQueue;
@@ -574,7 +580,7 @@
 <span class="kw">use </span>sc_service::{Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 <span class="kw">use </span>sc_transaction_pool::FullPool;
-<span class="kw">use </span>sp_api::{ConstructRuntimeApi, TransactionFor};
+<span class="kw">use </span>sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
 <span class="kw">use </span>sp_runtime::traits::BlakeTwo256;
 <span class="kw">use </span>sp_trie::PrefixedMemoryDB;
@@ -873,6 +879,9 @@
         telemetry: telemetry.as_mut(),
     })<span class="question-mark">?</span>;
 
+    <span class="kw">let </span>hasher =
+        client.runtime_api().get_hasher(client.info().best_hash).map_err(|e| ServiceError::Client(e.into()))<span class="question-mark">?</span>.into();
+
     task_manager.spawn_essential_handle().spawn(
         <span class="string">&quot;mc-mapping-sync-worker&quot;</span>,
         <span class="prelude-val">Some</span>(<span class="string">&quot;madara&quot;</span>),
@@ -885,6 +894,7 @@
             madara_backend,
             <span class="number">3</span>,
             <span class="number">0</span>,
+            hasher,
         )
         .for_each(|()| future::ready(())),
     );

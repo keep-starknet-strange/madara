@@ -491,7 +491,7 @@
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node};
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasher;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasherT;
 
 <span class="doccomment">/// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
 </span><span class="attr">#[derive(Debug, PartialEq, Eq)]
@@ -547,12 +547,12 @@
 ///
 /// For more information on how this functions internally, see [here](super::merkle_tree).
 </span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>MerkleTree&lt;H: CryptoHasher&gt; {
+</span><span class="kw">pub struct </span>MerkleTree&lt;H: CryptoHasherT&gt; {
     root: Rc&lt;RefCell&lt;Node&gt;&gt;,
     _hasher: PhantomData&lt;H&gt;,
 }
 
-<span class="kw">impl</span>&lt;H: CryptoHasher&gt; MerkleTree&lt;H&gt; {
+<span class="kw">impl</span>&lt;H: CryptoHasherT&gt; MerkleTree&lt;H&gt; {
     <span class="doccomment">/// Less visible initialization for `MerkleTree&lt;T&gt;` as the main entry points should be
     /// [`MerkleTree::&lt;RcNodeStorage&gt;::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.

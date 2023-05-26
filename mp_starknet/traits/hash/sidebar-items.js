@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["CryptoHasher","Hasher"]};
+window.SIDEBAR_ITEMS = {"trait":["CryptoHasherT","DefaultHasher","HasherT"]};

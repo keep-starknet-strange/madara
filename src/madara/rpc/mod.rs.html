@@ -81,6 +81,10 @@
 <a href="#81" id="81">81</a>
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A collection of node-specific RPC methods.
 //! Substrate provides the `sc-rpc` crate, which defines the core RPC layer
 //! used by Substrate nodes. This file extends those RPC definitions with
@@ -95,6 +99,7 @@
 <span class="kw">use </span>jsonrpsee::RpcModule;
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{AccountId, Balance, Hash, Index};
+<span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::{Backend, StorageProvider};
 <span class="kw">use </span>sc_consensus_manual_seal::rpc::EngineCommand;
 <span class="kw">pub use </span>sc_rpc_api::DenyUnsafe;
@@ -140,6 +145,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>module = RpcModule::new(());
     <span class="kw">let </span>FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink } = deps;
 
+    <span class="kw">let </span>hasher = client.runtime_api().get_hasher(client.info().best_hash)<span class="question-mark">?</span>.into();
+
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())<span class="question-mark">?</span>;
     module.merge(TransactionPayment::new(client.clone()).into_rpc())<span class="question-mark">?</span>;
     module.merge(
@@ -150,6 +157,7 @@
             pool,
             starknet_params.sync_service,
             starknet_params.starting_block,
+            hasher,
         )
         .into_rpc(),
     )<span class="question-mark">?</span>;

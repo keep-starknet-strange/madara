@@ -119,7 +119,7 @@
 <span class="kw">use </span>sp_core::U256;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::Hasher;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
 <span class="attr">#[derive(
     Clone,
@@ -193,8 +193,8 @@
 
     <span class="doccomment">/// Compute the hash of the header.
     </span><span class="attr">#[must_use]
-    </span><span class="kw">pub fn </span>hash&lt;H: Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; Felt252Wrapper {
-        &lt;H <span class="kw">as </span>Hasher&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode())
+    </span><span class="kw">pub fn </span>hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; Felt252Wrapper {
+        &lt;H <span class="kw">as </span>HasherT&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode())
     }
 }
 

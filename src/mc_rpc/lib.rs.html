@@ -648,6 +648,12 @@
 <a href="#648" id="648">648</a>
 <a href="#649" id="649">649</a>
 <a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -665,8 +671,9 @@
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_starknet::block::BlockTransactions;
-<span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
+<span class="kw">use </span>mp_starknet::traits::hash::HasherT;
+<span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
 <span class="kw">use </span>mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction <span class="kw">as </span>MPTransaction, TxType};
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
@@ -688,13 +695,14 @@
 };
 
 <span class="doccomment">/// A Starknet RPC server for Madara
-</span><span class="kw">pub struct </span>Starknet&lt;B: BlockT, BE, C, P&gt; {
+</span><span class="kw">pub struct </span>Starknet&lt;B: BlockT, BE, C, P, H&gt; {
     client: Arc&lt;C&gt;,
     backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     pool: Arc&lt;P&gt;,
     sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
     starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
+    hasher: Arc&lt;H&gt;,
     _marker: PhantomData&lt;(B, BE)&gt;,
 }
 
@@ -705,10 +713,11 @@
 // * `overrides` - The OverrideHandle
 // * `sync_service` - The Substrate client sync service
 // * `starting_block` - The starting block for the syncing
+// * `hasher` - The hasher used by the runtime
 //
 // # Returns
 // * `Self` - The actual Starknet struct
-</span><span class="kw">impl</span>&lt;B: BlockT, BE, C, P&gt; Starknet&lt;B, BE, C, P&gt; {
+</span><span class="kw">impl</span>&lt;B: BlockT, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt; {
     <span class="kw">pub fn </span>new(
         client: Arc&lt;C&gt;,
         backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
@@ -716,12 +725,13 @@
         pool: Arc&lt;P&gt;,
         sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
         starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
+        hasher: Arc&lt;H&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ client, backend, overrides, pool, sync_service, starting_block, _marker: PhantomData }
+        <span class="self">Self </span>{ client, backend, overrides, pool, sync_service, starting_block, hasher, _marker: PhantomData }
     }
 }
 
-<span class="kw">impl</span>&lt;B, BE, C, P&gt; Starknet&lt;B, BE, C, P&gt;
+<span class="kw">impl</span>&lt;B, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
@@ -731,13 +741,14 @@
     }
 }
 
-<span class="kw">impl</span>&lt;B, BE, C, P&gt; Starknet&lt;B, BE, C, P&gt;
+<span class="kw">impl</span>&lt;B, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
     C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
     BE: Backend&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="kw">pub fn </span>current_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;H256, ApiError&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.client.info().best_hash;
@@ -748,7 +759,7 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="prelude-val">Ok</span>(block.header().hash(PedersenHasher::default()).into())
+        <span class="prelude-val">Ok</span>(block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into())
     }
 
     <span class="doccomment">/// Returns the substrate block corresponding to the given Starknet block id
@@ -778,7 +789,7 @@
 
 <span class="attr">#[async_trait]
 #[allow(unused_variables)]
-</span><span class="kw">impl</span>&lt;B, BE, C, P&gt; StarknetRpcApiServer <span class="kw">for </span>Starknet&lt;B, BE, C, P&gt;
+</span><span class="kw">impl</span>&lt;B, BE, C, P, H&gt; StarknetRpcApiServer <span class="kw">for </span>Starknet&lt;B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     P: TransactionPool&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
@@ -786,6 +797,7 @@
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
     C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="kw">fn </span>block_number(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;u64&gt; {
         <span class="self">self</span>.current_block_number()
@@ -962,13 +974,13 @@
                 <span class="kw">if </span>starting_block.is_ok() &amp;&amp; current_block.is_ok() &amp;&amp; highest_block.is_ok() {
                     <span class="comment">// Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     </span><span class="kw">let </span>starting_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(<span class="self">self</span>.starting_block);
-                    <span class="kw">let </span>starting_block_hash = starting_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).<span class="number">0</span>;
+                    <span class="kw">let </span>starting_block_hash = starting_block<span class="question-mark">?</span>.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).<span class="number">0</span>;
 
                     <span class="kw">let </span>current_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(best_number);
-                    <span class="kw">let </span>current_block_hash = current_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).<span class="number">0</span>;
+                    <span class="kw">let </span>current_block_hash = current_block<span class="question-mark">?</span>.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).<span class="number">0</span>;
 
                     <span class="kw">let </span>highest_block_num = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(highest_number);
-                    <span class="kw">let </span>highest_block_hash = highest_block<span class="question-mark">?</span>.header().hash(PedersenHasher::default()).<span class="number">0</span>;
+                    <span class="kw">let </span>highest_block_hash = highest_block<span class="question-mark">?</span>.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).<span class="number">0</span>;
 
                     <span class="comment">// Build the `SyncStatus` struct with the respective syn information
                     </span><span class="prelude-val">Ok</span>(SyncStatusType::Syncing(SyncStatus {
@@ -1031,7 +1043,7 @@
             .unwrap_or_default();
 
         <span class="kw">let </span>transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
-        <span class="kw">let </span>blockhash = block.header().hash(PedersenHasher::default());
+        <span class="kw">let </span>blockhash = block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher);
         <span class="kw">let </span>parent_blockhash = block.header().parent_block_hash;
         <span class="kw">let </span>block_with_tx_hashes = BlockWithTxHashes {
             transactions,
@@ -1251,7 +1263,7 @@
         <span class="kw">let </span>block_with_txs = BlockWithTxs {
             <span class="comment">// TODO: Get status from block
             </span>status: BlockStatus::AcceptedOnL2,
-            block_hash: block.header().hash(PedersenHasher::default()).into(),
+            block_hash: block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
             block_number: block.header().block_number.as_u64(),
             new_root: block.header().global_state_root.into(),

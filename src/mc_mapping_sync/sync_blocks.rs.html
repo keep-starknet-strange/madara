@@ -171,26 +171,42 @@
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_digest_log::FindLogError;
-<span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
+<span class="kw">use </span>mp_starknet::traits::hash::HasherT;
+<span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::{Backend <span class="kw">as _</span>, HeaderBackend};
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT, Zero};
 
-<span class="kw">fn </span>sync_block&lt;B: BlockT, C, BE&gt;(
+<span class="kw">fn </span>sync_block&lt;B: BlockT, C, BE, H&gt;(
     client: <span class="kw-2">&amp;</span>C,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     header: <span class="kw-2">&amp;</span>B::Header,
+    hasher: <span class="kw-2">&amp;</span>H,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
 <span class="kw">where
     </span>C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="comment">// Before storing the new block in the Madara backend database, we want to make sure that the
     // wrapped Starknet block it contains is the same that we can find in the storage at this height.
@@ -204,8 +220,8 @@
                 overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
             <span class="kw">match </span>opt_storage_starknet_block {
                 <span class="prelude-val">Some</span>(storage_starknet_block) =&gt; {
-                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash(PedersenHasher::default());
-                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash(PedersenHasher::default());
+                    <span class="kw">let </span>digest_starknet_block_hash = digest_starknet_block.header().hash(<span class="kw-2">*</span>hasher);
+                    <span class="kw">let </span>storage_starknet_block_hash = storage_starknet_block.header().hash(<span class="kw-2">*</span>hasher);
                     <span class="comment">// Ensure the two blocks sources (chain storage and block digest) agree on the block content
                     </span><span class="kw">if </span>digest_starknet_block_hash != storage_starknet_block_hash {
                         <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
@@ -231,15 +247,21 @@
     }
 }
 
-<span class="kw">fn </span>sync_genesis_block&lt;B: BlockT, C&gt;(client: <span class="kw-2">&amp;</span>C, backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;, header: <span class="kw-2">&amp;</span>B::Header) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
+<span class="kw">fn </span>sync_genesis_block&lt;B: BlockT, C, H&gt;(
+    client: <span class="kw-2">&amp;</span>C,
+    backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
+    header: <span class="kw-2">&amp;</span>B::Header,
+    hasher: <span class="kw-2">&amp;</span>H,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="kw">let </span>substrate_block_hash = header.hash();
 
     <span class="kw">let </span>block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, e))<span class="question-mark">?</span>;
-    <span class="kw">let </span>block_hash = block.header().hash(PedersenHasher::default());
+    <span class="kw">let </span>block_hash = block.header().hash(<span class="kw-2">*</span>hasher);
     <span class="kw">let </span>mapping_commitment =
         mc_db::MappingCommitment::&lt;B&gt; { block_hash: substrate_block_hash, starknet_block_hash: block_hash.into() };
     backend.mapping().write_hashes(mapping_commitment)<span class="question-mark">?</span>;
@@ -247,18 +269,20 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>sync_one_block&lt;B: BlockT, C, BE&gt;(
+<span class="kw">fn </span>sync_one_block&lt;B: BlockT, C, BE, H&gt;(
     client: <span class="kw-2">&amp;</span>C,
     substrate_backend: <span class="kw-2">&amp;</span>BE,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
+    hasher: <span class="kw-2">&amp;</span>H,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="kw">let </span><span class="kw-2">mut </span>current_syncing_tips = madara_backend.meta().current_syncing_tips()<span class="question-mark">?</span>;
 
@@ -288,12 +312,12 @@
     };
 
     <span class="kw">if </span>operating_header.number() == <span class="kw-2">&amp;</span>Zero::zero() {
-        sync_genesis_block(client, madara_backend, <span class="kw-2">&amp;</span>operating_header)<span class="question-mark">?</span>;
+        sync_genesis_block(client, madara_backend, <span class="kw-2">&amp;</span>operating_header, hasher)<span class="question-mark">?</span>;
 
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     } <span class="kw">else </span>{
-        sync_block(client, overrides, madara_backend, <span class="kw-2">&amp;</span>operating_header)<span class="question-mark">?</span>;
+        sync_block(client, overrides, madara_backend, <span class="kw-2">&amp;</span>operating_header, hasher)<span class="question-mark">?</span>;
 
         current_syncing_tips.push(<span class="kw-2">*</span>operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)<span class="question-mark">?</span>;
@@ -301,25 +325,27 @@
     }
 }
 
-<span class="kw">pub fn </span>sync_blocks&lt;B: BlockT, C, BE&gt;(
+<span class="kw">pub fn </span>sync_blocks&lt;B: BlockT, C, BE, H&gt;(
     client: <span class="kw-2">&amp;</span>C,
     substrate_backend: <span class="kw-2">&amp;</span>BE,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     madara_backend: <span class="kw-2">&amp;</span>mc_db::Backend&lt;B&gt;,
     limit: usize,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
+    hasher: <span class="kw-2">&amp;</span>H,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="kw">let </span><span class="kw-2">mut </span>synced_any = <span class="bool-val">false</span>;
 
     <span class="kw">for _ in </span><span class="number">0</span>..limit {
-        synced_any =
-            synced_any || sync_one_block(client, substrate_backend, overrides.clone(), madara_backend, sync_from)<span class="question-mark">?</span>;
+        synced_any = synced_any
+            || sync_one_block(client, substrate_backend, overrides.clone(), madara_backend, sync_from, hasher)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(synced_any)

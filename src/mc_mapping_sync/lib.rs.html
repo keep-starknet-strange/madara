@@ -135,6 +135,13 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A worker syncing the Madara db
 //!
 //! # Role
@@ -156,6 +163,8 @@
 <span class="kw">use </span>futures_timer::Delay;
 <span class="kw">use </span>log::debug;
 <span class="kw">use </span>mc_storage::OverrideHandle;
+<span class="kw">use </span>mp_starknet::traits::hash::HasherT;
+<span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_client_api::client::ImportNotifications;
@@ -164,7 +173,7 @@
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 
 <span class="doccomment">/// The worker in charge of syncing the Madara db when it receive a new Substrate block
-</span><span class="kw">pub struct </span>MappingSyncWorker&lt;B: BlockT, C, BE&gt; {
+</span><span class="kw">pub struct </span>MappingSyncWorker&lt;B: BlockT, C, BE, H&gt; {
     import_notifications: ImportNotifications&lt;B&gt;,
     timeout: Duration,
     inner_delay: <span class="prelude-ty">Option</span>&lt;Delay&gt;,
@@ -173,16 +182,17 @@
     substrate_backend: Arc&lt;BE&gt;,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     madara_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
+    hasher: Arc&lt;H&gt;,
 
     have_next: bool,
     retry_times: usize,
     sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
 }
 
-<span class="kw">impl</span>&lt;B: BlockT, C, BE&gt; Unpin <span class="kw">for </span>MappingSyncWorker&lt;B, C, BE&gt; {}
+<span class="kw">impl</span>&lt;B: BlockT, C, BE, H&gt; Unpin <span class="kw">for </span>MappingSyncWorker&lt;B, C, BE, H&gt; {}
 
 <span class="attr">#[allow(clippy::too_many_arguments)]
-</span><span class="kw">impl</span>&lt;B: BlockT, C, BE&gt; MappingSyncWorker&lt;B, C, BE&gt; {
+</span><span class="kw">impl</span>&lt;B: BlockT, C, BE, H&gt; MappingSyncWorker&lt;B, C, BE, H&gt; {
     <span class="kw">pub fn </span>new(
         import_notifications: ImportNotifications&lt;B&gt;,
         timeout: Duration,
@@ -192,6 +202,7 @@
         frontier_backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
         retry_times: usize,
         sync_from: &lt;B::Header <span class="kw">as </span>HeaderT&gt;::Number,
+        hasher: Arc&lt;H&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             import_notifications,
@@ -202,6 +213,7 @@
             substrate_backend,
             overrides,
             madara_backend: frontier_backend,
+            hasher,
 
             have_next: <span class="bool-val">true</span>,
             retry_times,
@@ -210,12 +222,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;B: BlockT, C, BE&gt; Stream <span class="kw">for </span>MappingSyncWorker&lt;B, C, BE&gt;
+<span class="kw">impl</span>&lt;B: BlockT, C, BE, H&gt; Stream <span class="kw">for </span>MappingSyncWorker&lt;B, C, BE, H&gt;
 <span class="kw">where
     </span>C: ProvideRuntimeApi&lt;B&gt;,
     C::Api: StarknetRuntimeApi&lt;B&gt;,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt;,
     BE: Backend&lt;B&gt;,
+    H: HasherT + ThreadSafeCopy,
 {
     <span class="kw">type </span>Item = ();
 
@@ -256,6 +269,7 @@
                 <span class="self">self</span>.madara_backend.as_ref(),
                 <span class="self">self</span>.retry_times,
                 <span class="self">self</span>.sync_from,
+                <span class="self">self</span>.hasher.as_ref(),
             ) {
                 <span class="prelude-val">Ok</span>(have_next) =&gt; {
                     <span class="self">self</span>.have_next = have_next;

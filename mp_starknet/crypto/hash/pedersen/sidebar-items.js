@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["hash"],"struct":["PedersenHasher"]};
+window.SIDEBAR_ITEMS = {"struct":["PedersenHasher"]};

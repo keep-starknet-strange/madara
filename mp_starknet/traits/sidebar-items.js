@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["hash"]};
+window.SIDEBAR_ITEMS = {"mod":["hash"],"trait":["ThreadSafeCopy"]};
