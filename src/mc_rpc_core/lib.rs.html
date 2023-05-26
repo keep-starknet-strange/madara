@@ -141,12 +141,12 @@
 
 <span class="kw">pub mod </span>utils;
 
-<span class="kw">use </span>starknet_core::types::FieldElement;
-<span class="kw">use </span>starknet_providers::jsonrpc::models::{
+<span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall, InvokeTransactionResult,
-    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType, Transaction,
+    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType,
+    Transaction,
 };
 
 <span class="doccomment">/// Starknet rpc interface.

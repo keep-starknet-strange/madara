@@ -605,6 +605,15 @@
 <a href="#605" id="605">605</a>
 <a href="#606" id="606">606</a>
 <a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 
@@ -618,7 +627,7 @@
 <span class="kw">use </span>starknet_api::transaction::Fee;
 <span class="kw">use </span>starknet_api::StarknetApiError;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>starknet_providers::jsonrpc::models::{
+</span><span class="kw">use </span>starknet_core::types::{
     DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction, DeclareTransactionV1 <span class="kw">as </span>RPCDeclareTransactionV1,
     DeclareTransactionV2 <span class="kw">as </span>RPCDeclareTransactionV2, DeployAccountTransaction <span class="kw">as </span>RPCDeployAccountTransaction,
     InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction, InvokeTransactionV0 <span class="kw">as </span>RPCInvokeTransactionV0,
@@ -1046,12 +1055,22 @@
         <span class="kw">match </span>value.tx_type {
             TxType::Declare =&gt; {
                 <span class="kw">let </span>class_hash = class_hash<span class="question-mark">?</span>.<span class="number">0</span>;
-                <span class="kw">let </span>declare_txn_v1 =
-                    RPCDeclareTransactionV1 { transaction_hash, max_fee, signature, nonce, class_hash, sender_address };
                 <span class="kw">match </span>value.version {
-                    <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V1(declare_txn_v1))),
+                    <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        class_hash,
+                        sender_address,
+                    }))),
                     <span class="number">2 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
-                        declare_txn_v1,
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        class_hash,
+                        sender_address,
                         compiled_class_hash: class_hash,
                     }))),
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RPCTransactionConversionError::UnknownVersion),
@@ -1080,7 +1099,6 @@
             TxType::DeployAccount =&gt; <span class="prelude-val">Ok</span>(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
                 transaction_hash,
                 max_fee,
-                version: value.version.into(),
                 signature,
                 nonce,
                 contract_address_salt: Felt252Wrapper::try_from(
