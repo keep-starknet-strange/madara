@@ -28,7 +28,6 @@ jobs:
           cd tests
           npm clean-install
           npm run build
-          npm i -g yarn
           cd ../benchmarking
           npm i
       - run: cargo build --workspace --release
@@ -36,14 +35,18 @@ jobs:
         run: |
           cd benchmarking
           cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
-          yarn test
+          npm run test
       - name: Download old benchmark
-        uses: actions/download-artifact@v3
+        uses: dawidd6/action-download-artifact@v2
         with:
-          name: benchmark
+          workflow: benchmark.yml
+          branch: main
+          path: report
       - name: Upload new benchmark if on main
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
           name: benchmark
           path: benchmarking/reports/metrics.json
+      - name: Check performance regression
+        run: python3 scripts/check-regression.py

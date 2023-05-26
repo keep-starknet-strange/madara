@@ -32,11 +32,11 @@ fn test_deploy_account_tx_hash() {
     let transaction = DeployAccountTransaction {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
-        calldata: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()),
+        calldata: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE),
         nonce: U256::zero(),
         salt: U256::zero(),
         signature: bounded_vec!(),
-        account_class_hash: Felt252Wrapper::three(),
+        account_class_hash: Felt252Wrapper::THREE,
         max_fee: U256::one(),
     };
     assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id), expected_tx_hash);
@@ -56,7 +56,7 @@ fn test_declare_tx_hash() {
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
-        compiled_class_hash: Felt252Wrapper::three(),
+        compiled_class_hash: Felt252Wrapper::THREE,
         contract_class: ContractClassWrapper::default(),
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
@@ -73,7 +73,7 @@ fn test_invoke_tx_hash() {
     let transaction = InvokeTransaction {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
-        calldata: bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()),
+        calldata: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE),
         nonce: U256::zero(),
         signature: bounded_vec!(),
         max_fee: U256::one(),
@@ -92,7 +92,7 @@ fn test_merkle_tree() {
                 Felt252Wrapper::from(20_u128),
                 Felt252Wrapper::from(30_u128),
             ],
-            sender_address: Felt252Wrapper::zero(),
+            sender_address: Felt252Wrapper::ZERO,
             nonce: U256::zero(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,

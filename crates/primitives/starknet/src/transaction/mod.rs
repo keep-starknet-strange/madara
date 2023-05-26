@@ -141,7 +141,7 @@ impl EventBuilder {
 
 impl Default for EventWrapper {
     fn default() -> Self {
-        let one = Felt252Wrapper::one();
+        let one = Felt252Wrapper::ONE;
         Self {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
@@ -684,7 +684,7 @@ impl Transaction {
 
 impl Default for Transaction {
     fn default() -> Self {
-        let one = Felt252Wrapper::one();
+        let one = Felt252Wrapper::ONE;
         Self {
             version: 1_u8,
             hash: one,

@@ -21,7 +21,7 @@ export function toHex(value: BigNumberish) {
 
 export async function rpcTransfer(
   providerRPC: RpcProvider,
-  nonce: number,
+  nonce: { value: number },
   recipient: string,
   transferAmount: string,
   maxFee?: number
@@ -29,7 +29,7 @@ export async function rpcTransfer(
   const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
   const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
-  return account.execute(
+  const invokeResponse = account.execute(
     {
       contractAddress: FEE_TOKEN_ADDRESS,
       entrypoint: "transfer",
@@ -37,8 +37,12 @@ export async function rpcTransfer(
     },
     undefined,
     {
-      nonce,
+      nonce: nonce.value,
       maxFee: maxFee ?? "123456",
     }
   );
+
+  nonce.value++;
+
+  return invokeResponse;
 }

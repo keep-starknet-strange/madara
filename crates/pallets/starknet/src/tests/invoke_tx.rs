@@ -112,7 +112,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                         .unwrap(),
                     Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000cef4")
                         .unwrap(),
-                    Felt252Wrapper::zero(),
+                    Felt252Wrapper::ZERO,
                 ],
                 from_address: Starknet::fee_token_address(),
             },],
@@ -157,7 +157,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                     .unwrap(), // From
                 Felt252Wrapper::from_hex_be("0x2").unwrap(),    // To
                 Felt252Wrapper::from_hex_be("0xd0f2").unwrap(), // Amount low
-                Felt252Wrapper::zero(),                         // Amount high
+                Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
         };
@@ -229,7 +229,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
                 Into::<Felt252Wrapper>::into(target_contract_address),
                 Into::<Felt252Wrapper>::into(storage_var_selector)
             )),
-            Felt252Wrapper::one()
+            Felt252Wrapper::ONE
         );
     });
 }
@@ -279,7 +279,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
+        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -312,7 +312,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
+        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -345,7 +345,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
+        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -363,7 +363,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = bounded_vec!(Felt252Wrapper::one(), Felt252Wrapper::one());
+        transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
         transaction.sender_address = get_account_address(AccountType::InnerCall);
 
         let storage_key = get_storage_var_address("destination", &[]).unwrap();

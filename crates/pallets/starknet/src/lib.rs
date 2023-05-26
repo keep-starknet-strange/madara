@@ -801,7 +801,7 @@ impl<T: Config> Pallet<T> {
     #[inline(always)]
     pub fn parent_block_hash(current_block_number: &U256) -> Felt252Wrapper {
         if current_block_number == &U256::zero() {
-            Felt252Wrapper::zero()
+            Felt252Wrapper::ZERO
         } else {
             Self::block_hash(current_block_number - 1)
         }
@@ -892,7 +892,7 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root = Felt252Wrapper::zero();
+        let global_state_root = Felt252Wrapper::ZERO;
         // TODO: use the real sequencer address (our own address)
         // FIXME #243
         let sequencer_address = SEQUENCER_ADDRESS;

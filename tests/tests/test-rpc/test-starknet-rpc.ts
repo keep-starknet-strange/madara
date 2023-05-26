@@ -33,7 +33,10 @@ import { toHex, rpcTransfer } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
-let ARGENT_CONTRACT_NONCE = 0;
+// keep "let" over "const" as the nonce is passed by reference
+// to abstract the incrementation
+// eslint-disable-next-line prefer-const
+let ARGENT_CONTRACT_NONCE = { value: 0 };
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -68,6 +71,33 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(transactionCount).to.not.be.undefined;
     expect(transactionCount).to.be.equal(0);
+  });
+
+  it("getNonce", async function () {
+    let nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
+    expect(nonce).to.not.be.undefined;
+    expect(toHex(nonce)).to.be.equal(toHex(ARGENT_CONTRACT_NONCE.value));
+
+    await context.createBlock(
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
+    );
+
+    nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
+    expect(nonce).to.not.be.undefined;
+    expect(toHex(nonce)).to.be.equal(toHex(ARGENT_CONTRACT_NONCE.value));
   });
 
   it("call", async function () {
@@ -177,7 +207,6 @@ describeDevMadara("Starknet RPC", (context) => {
         MINT_AMOUNT
       )
     );
-    ARGENT_CONTRACT_NONCE++;
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -259,7 +288,6 @@ describeDevMadara("Starknet RPC", (context) => {
         MINT_AMOUNT
       )
     );
-    ARGENT_CONTRACT_NONCE++;
 
     const getTransactionByBlockIdAndIndexResponse =
       await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);

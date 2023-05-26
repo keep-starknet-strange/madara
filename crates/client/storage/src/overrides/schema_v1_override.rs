@@ -4,8 +4,9 @@ use std::sync::Arc;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK,
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK, STARKNET_NONCE,
 };
+use pallet_starknet::types::NonceWrapper;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
@@ -94,5 +95,18 @@ where
                 &self.encode_storage_key(&contract_class_hash),
             )),
         )
+    }
+
+    fn nonce(&self, block_hash: <B as BlockT>::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper> {
+        let storage_nonce_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_NONCE);
+        let nonce = self.query_storage::<NonceWrapper>(
+            block_hash,
+            &StorageKey(storage_key_build(storage_nonce_prefix, &self.encode_storage_key(&address))),
+        );
+
+        match nonce {
+            Some(nonce) => Some(nonce),
+            None => Some(NonceWrapper::default()),
+        }
     }
 }

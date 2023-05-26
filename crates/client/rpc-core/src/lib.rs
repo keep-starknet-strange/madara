@@ -9,15 +9,16 @@ mod tests;
 
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
-use mp_starknet::transaction::types::Transaction;
+use mp_starknet::transaction::types::Transaction as MPTransaction;
 
 pub mod utils;
 
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass,
-    DeployAccountTransactionResult, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    SyncStatusType,
+    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
+    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
+    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall, InvokeTransactionResult,
+    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType, Transaction,
 };
 
 /// Starknet rpc interface.
@@ -69,9 +70,13 @@ pub trait StarknetRpcApi {
     #[method(name = "getBlockWithTxHashes")]
     fn get_block_with_tx_hashes(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxHashes>;
 
+    /// Get the nonce associated with the given address at the given block
+    #[method(name = "getNonce")]
+    fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement>;
+
     /// Get the chain id
     #[method(name = "chainId")]
-    fn get_chain_id(&self) -> RpcResult<String>;
+    fn chain_id(&self) -> RpcResult<String>;
 
     /// Add an Invoke Transaction to invoke a contract function
     #[method(name = "addInvokeTransaction")]
@@ -89,5 +94,37 @@ pub trait StarknetRpcApi {
 
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]
-    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
+    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<MPTransaction>;
+
+    /// Get block information with full transactions given the block id
+    #[method(name = "getBlockWithTxs")]
+    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs>;
+
+    /// Get the information about the result of executing the requested block
+    #[method(name = "getStateUpdate")]
+    fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
+
+    /// Estimate the fee for a given Starknet transaction
+    #[method(name = "estimateFee")]
+    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
+
+    /// Returns the transactions in the transaction pool, recognized by this sequencer
+    #[method(name = "pendingTransactions")]
+    async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>>;
+
+    /// Returns all events matching the given filter
+    #[method(name = "getEvents")]
+    async fn get_events(
+        &self,
+        filter: EventFilter,
+        continuation_token: Option<String>,
+        chunk_size: u64,
+    ) -> RpcResult<EventsPage>;
+
+    /// Submit a new transaction to be added to the chain
+    #[method(name = "addDeclareTransaction")]
+    async fn add_declare_transaction(
+        &self,
+        declare_transaction: BroadcastedDeclareTransaction,
+    ) -> RpcResult<DeclareTransactionResult>;
 }

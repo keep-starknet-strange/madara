@@ -150,7 +150,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(Felt252Wrapper::zero(), Felt252Wrapper::one()),
+            signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -210,7 +210,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(Felt252Wrapper::zero(), Felt252Wrapper::one()),
+            signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -270,7 +270,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             compiled_class_hash: erc20_class_hash,
             nonce: U256::zero(),
             max_fee: U256::from(u128::MAX),
-            signature: bounded_vec!(Felt252Wrapper::zero(), Felt252Wrapper::one()),
+            signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);

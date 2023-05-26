@@ -41,7 +41,7 @@ fn test_call_entry_point_execute_works() {
 
     let block = Block::create_for_testing();
 
-    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::zero(), chain_id));
+    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO, chain_id));
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
     let calldata = bounded_vec![42_u128.into()];
 
     let entrypoint = CallEntryPointWrapper::new(
-        Some(Felt252Wrapper::zero()),
+        Some(Felt252Wrapper::ZERO),
         EntryPointTypeWrapper::External,
         Some(selector),
         calldata,
@@ -64,7 +64,7 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
     let block = Block::create_for_testing();
     let chain_id = ChainId("0x1".to_string());
 
-    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::zero(), chain_id).is_err());
+    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO, chain_id).is_err());
 }
 
 #[test]
@@ -80,7 +80,7 @@ fn test_try_into_entrypoint_works() {
         class_hash: Some(Felt252Wrapper::from_hex_be("0x1").unwrap()),
         entrypoint_type: EntryPointTypeWrapper::External,
         entrypoint_selector: None,
-        calldata: bounded_vec![Felt252Wrapper::one(), Felt252Wrapper::two(), Felt252Wrapper::three()],
+        calldata: bounded_vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
         storage_address: Felt252Wrapper::from_hex_be("0x1").unwrap(),
         caller_address: Felt252Wrapper::from_hex_be("0x2").unwrap(),
     };
