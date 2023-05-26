@@ -88,4 +88,54 @@ impl<B: BlockT> MappingDb<B> {
 
         Ok(())
     }
+
+    /// Registers a mapping of a transaction's hash and the
+    /// substrate block hash it was inserted into.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash`: the transaction hash to be mapped.
+    ///   H256 is used here because it's a native type of substrate,
+    ///   and we are sure it's SCALE encoding is optimized and will
+    ///   not change.
+    ///
+    /// * `block_hash`: substrate block hash.
+    pub fn transaction_block_hashes_map(
+        &self,
+        transaction_hash: &H256,
+        block_hash: &B::Hash,
+    ) -> Result<(), String> {
+        let _lock = self.write_lock.lock();
+
+        let mut transaction = sp_database::Transaction::new();
+
+        transaction.set(
+            crate::columns::TRANSACTION_MAPPING,
+            &transaction_hash.encode(),
+            &block_hash.encode(),
+        );
+
+        self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
+
+        Ok(())
+    }
+
+    /// Retrieves the substrate block hash
+    /// associated with the given transaction hash, if any.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash`: the transaction hash to search for.
+    ///   H256 is used here because it's a native type of substrate,
+    ///   and we are sure it's SCALE encoding is optimized and will
+    ///   not change.
+    pub fn block_hash_from_transaction_hash(
+        &self,
+        transaction_hash: H256
+    ) -> Result<Option<B::Hash>, String> {
+        match self.db.get(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode()) {
+            Some(raw) => Ok(Some(<B::Hash>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?)),
+            None => Ok(None),
+        }
+    }
 }

@@ -2,12 +2,14 @@ use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
 use mp_digest_log::FindLogError;
+use mp_starknet::block::{Block as StarknetBlock, BlockTransactions};
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Backend as _, HeaderBackend};
+use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
 fn sync_block<B: BlockT, C, BE, H>(
@@ -48,7 +50,12 @@ where
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
                         };
-                        backend.mapping().write_hashes(mapping_commitment)
+                        backend.mapping().write_hashes(mapping_commitment)?;
+
+                        commit_transactions_block_hashes_mapping(
+                            &substrate_block_hash,
+                            &digest_starknet_block,
+                            backend)
                     }
                 }
                 // If there is not Starknet block in this Substrate block, we write it in the db
@@ -182,5 +189,36 @@ where
         Ok(Some(checking_header)) if checking_header.number() >= &sync_from => Ok(Some(checking_header)),
         Ok(Some(_)) => Ok(None),
         Ok(None) | Err(_) => Err("Header not found".to_string()),
+    }
+}
+
+
+/// Commits to the database the mapping between
+/// each transaction hash in the block and the block hash.
+fn commit_transactions_block_hashes_mapping<B: BlockT>(
+    substrate_block_hash: &B::Hash,
+    digest_starknet_block: &StarknetBlock,
+    backend: &mc_db::Backend<B>,
+) -> Result<(), String> {
+    let block_transactions = digest_starknet_block.transactions();
+    match block_transactions {
+        BlockTransactions::Full(transactions) => {
+            for (txn, _) in transactions {
+                backend.mapping().transaction_block_hashes_map(
+                    &H256::from(txn.hash),
+                    substrate_block_hash)?;
+            }
+
+            Ok(())
+        }
+        BlockTransactions::Hashes(hashes) => {
+            for hash in hashes {
+                backend.mapping().transaction_block_hashes_map(
+                    &H256::from(*hash),
+                    substrate_block_hash)?;
+            }
+
+            Ok(())
+        }
     }
 }

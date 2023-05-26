@@ -874,7 +874,20 @@ impl<T: Config> Pallet<T> {
         let sequencer_address = SEQUENCER_ADDRESS;
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
-        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+
+        // TODO: need more experienced rust dev here to understand
+        // what is the correct way of doing the next two clones.
+        let transactions: Vec<Transaction> = pending
+            .clone()
+            .into_iter()
+            .map(|(tx, _)| tx.clone())
+            .collect();
+
+        let transactions_receipts: Vec<(Transaction, TransactionReceiptWrapper)> = pending
+            .clone()
+            .into_iter()
+            .collect();
+
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
@@ -897,7 +910,7 @@ impl<T: Config> Pallet<T> {
             ),
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BlockTransactions::Full(BoundedVec::try_from(transactions_receipts).unwrap()),
         );
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());

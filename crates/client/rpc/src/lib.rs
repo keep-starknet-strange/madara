@@ -575,7 +575,7 @@ where
         let block_transactions = block.transactions();
         match block_transactions {
             BlockTransactions::Full(transactions) => {
-                let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                let (transaction, _) = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
                 Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
                     error!("{:?}", e);
                     StarknetRpcApiError::InternalServerError
@@ -614,7 +614,7 @@ where
             sequencer_address: block.header().sequencer_address.into(),
             transactions: transactions
                 .into_iter()
-                .map(Transaction::try_from)
+                .map(|(tx, _)| Transaction::try_from(tx))
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
                 .map_err(|e| {
                     error!("{:#?}", e);
@@ -651,5 +651,118 @@ where
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
         todo!("Not implemented")
+    }
+
+    /// Returns a transaction details from it's hash.
+    ///
+    /// It first verifies if the transaction was included
+    /// in an older block, verifying db mapping in the client database.
+    /// If not found, it also verifies if the transaction is pending
+    /// in the runtime.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Hex string of the transaction hash.
+    fn get_transaction_by_hash(
+        &self,
+        transaction_hash: FieldElement
+    ) -> RpcResult<Transaction> {
+        let block_hash_from_db = self.backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+
+        let substrate_block_hash = match block_hash_from_db {
+            Some(block_hash) => block_hash,
+            None => {
+                // TODO: verify if the tx is in the tx pool (self.pool.ready()).
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+        };
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        match block.transactions() {
+            BlockTransactions::Full(transactions) => {
+                for (txn, _) in transactions {
+                    if txn.hash != transaction_hash.into() {
+                        continue;
+                    }
+
+                    return Ok(Transaction::try_from(txn.clone()).map_err(|e| {
+                        error!("{:?}", e);
+                        StarknetRpcApiError::InternalServerError
+                    })?);
+                    // TODO: new mapping to RPC type.
+                    //return Ok(String::from("0x123 found in the local mapping"));
+                }
+
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+            BlockTransactions::Hashes(_hashes) => {
+                // TODO: Here what can I do? I don't have all the info,
+                // so what's the expected result, TxnNotFount? Error?
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+        }
+
+    }
+
+    /// Returns the receipt of a transaction by transaction hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Hex string of the transaction hash.
+    fn get_transaction_receipt(
+        &self,
+        transaction_hash: FieldElement
+    ) -> RpcResult<String> {
+        let block_hash_from_db = self.backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+
+        let substrate_block_hash = match block_hash_from_db {
+            Some(block_hash) => block_hash,
+            None => {
+                // TODO: verify if the tx is in the tx pool (self.pool.ready()).
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+        };
+
+        let block = self.overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        match block.transactions() {
+            BlockTransactions::Full(transactions) => {
+                for (txn, _) in transactions {
+                    if txn.hash != transaction_hash.into() {
+                        continue;
+                    }
+
+                    // TODO: convert from new tx_type.
+                    return Ok(String::from("0x123 found in the local mapping"));
+                }
+
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+            BlockTransactions::Hashes(_hashes) => {
+                // TODO: Here what can I do? I don't have all the info,
+                // so what's the expected result, TxnNotFount? Error?
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+        }
     }
 }

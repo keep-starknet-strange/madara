@@ -8,7 +8,7 @@ pub use header::*;
 use sp_core::ConstU32;
 
 use crate::execution::types::Felt252Wrapper;
-use crate::transaction::types::Transaction;
+use crate::transaction::types::{Transaction, TransactionReceiptWrapper};
 
 /// Block transactions max size
 // TODO: add real value (#250)
@@ -30,7 +30,7 @@ pub enum BlockTransactions {
     /// Only hashes
     Hashes(BoundedVec<Felt252Wrapper, MaxTransactions>),
     /// Full transactions
-    Full(BoundedVec<Transaction, MaxTransactions>),
+    Full(BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>),
 }
 
 impl Default for BlockTransactions {
@@ -83,7 +83,10 @@ impl Block {
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
         match &self.transactions {
-            BlockTransactions::Full(transactions) => transactions.into_iter().map(|tx| tx.hash).collect(),
+            BlockTransactions::Full(transactions) => transactions
+                .into_iter()
+                .map(|(tx, _)| tx.hash)
+                .collect(),
 
             BlockTransactions::Hashes(hashes) => hashes.to_vec(),
         }
