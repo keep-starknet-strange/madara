@@ -34,7 +34,7 @@ use starknet_core::types::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
     FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction,
+    SyncStatus, SyncStatusType, Transaction, MaybePendingTransactionReceipt
 };
 
 /// A Starknet RPC server for Madara
@@ -700,8 +700,6 @@ where
                         error!("{:?}", e);
                         StarknetRpcApiError::InternalServerError
                     })?);
-                    // TODO: new mapping to RPC type.
-                    //return Ok(String::from("0x123 found in the local mapping"));
                 }
 
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
@@ -723,7 +721,7 @@ where
     fn get_transaction_receipt(
         &self,
         transaction_hash: FieldElement
-    ) -> RpcResult<String> {
+    ) -> RpcResult<MaybePendingTransactionReceipt> {
         let block_hash_from_db = self.backend
             .mapping()
             .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
@@ -736,6 +734,9 @@ where
             Some(block_hash) => block_hash,
             None => {
                 // TODO: verify if the tx is in the tx pool (self.pool.ready()).
+                //       Question: If the transaction is in the mempool, it's not actually
+                //       Pending status. Because we don't have any receipt at this point.
+                //       What is the expected behavior? TxnHashNotFound?
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
         };
@@ -747,13 +748,16 @@ where
 
         match block.transactions() {
             BlockTransactions::Full(transactions) => {
-                for (txn, _) in transactions {
-                    if txn.hash != transaction_hash.into() {
+                for (_, receipt) in transactions {
+                    if receipt.transaction_hash != transaction_hash.into() {
                         continue;
                     }
 
-                    // TODO: convert from new tx_type.
-                    return Ok(String::from("0x123 found in the local mapping"));
+                    return Ok(MaybePendingTransactionReceipt::try_from(receipt.clone())
+                              .map_err(|e| {
+                                  error!("{:?}", e);
+                                  StarknetRpcApiError::InternalServerError
+                              })?);
                 }
 
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());

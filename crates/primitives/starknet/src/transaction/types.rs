@@ -12,11 +12,24 @@ use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
 use starknet_core::types::{
-    DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
-    DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
-    InvokeTransaction as RPCInvokeTransaction, InvokeTransactionV0 as RPCInvokeTransactionV0,
-    InvokeTransactionV1 as RPCInvokeTransactionV1, L1HandlerTransaction as RPCL1HandlerTransaction,
+    FieldElement,
+    DeclareTransaction as RPCDeclareTransaction,
+    DeclareTransactionV1 as RPCDeclareTransactionV1,
+    DeclareTransactionV2 as RPCDeclareTransactionV2,
+    DeployAccountTransaction as RPCDeployAccountTransaction,
+    InvokeTransaction as RPCInvokeTransaction,
+    InvokeTransactionV0 as RPCInvokeTransactionV0,
+    InvokeTransactionV1 as RPCInvokeTransactionV1,
+    L1HandlerTransaction as RPCL1HandlerTransaction,
     Transaction as RPCTransaction,
+    Event as RPCEvent,
+    TransactionStatus as RPCTransactionStatus,
+    MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt,
+    TransactionReceipt as RPCTransactionReceipt,
+    DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
+    DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt,
+    InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
+    L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
 };
 
 use crate::crypto::commitment::{
@@ -536,6 +549,81 @@ pub struct TransactionReceiptWrapper {
     pub events: BoundedVec<EventWrapper, MaxArraySize>,
 }
 
+#[cfg(feature = "std")]
+impl TryFrom<TransactionReceiptWrapper> for RPCMaybePendingTransactionReceipt {
+    type Error = RPCTransactionConversionError;
+
+    fn try_from(value: TransactionReceiptWrapper) -> Result<Self, Self::Error> {
+        let transaction_hash = value.transaction_hash.into();
+        let actual_fee = value.actual_fee.into();
+
+        let status = RPCTransactionStatus::Pending;
+
+        let block_hash = value.block_hash.into();
+        let block_number = value.block_number;
+        let events = value.events
+            .iter()
+            .map(|e| (*e).clone().into())
+            .collect();
+
+        // TODO: from where those message must be taken?
+        let messages_sent = vec![];
+
+        match value.tx_type {
+            TxType::DeployAccount => {
+                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                    RPCTransactionReceipt::DeployAccount(RPCDeployAccountTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                        // TODO: from where can I get this one?
+                        contract_address: FieldElement::ZERO
+                    })))
+            },
+            TxType::Declare => {
+                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                    RPCTransactionReceipt::Declare(RPCDeclareTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    })))
+            },
+            TxType::Invoke => {
+                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                    RPCTransactionReceipt::Invoke(RPCInvokeTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    })))
+            },
+            TxType::L1Handler => {
+                Ok(RPCMaybePendingTransactionReceipt::Receipt(
+                    RPCTransactionReceipt::L1Handler(RPCL1HandlerTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    })))
+            },
+        }
+    }
+}
+
 /// Representation of a Starknet event.
 #[derive(
     Clone,
@@ -555,6 +643,17 @@ pub struct EventWrapper {
     pub data: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
+}
+
+#[cfg(feature = "std")]
+impl From<EventWrapper> for RPCEvent {
+    fn from(value: EventWrapper) -> Self {
+        Self {
+            from_address: value.from_address.into(),
+            keys: value.keys.iter().map(|k| (*k).into()).collect(),
+            data: value.data.iter().map(|d| (*d).into()).collect(),
+        }
+    }
 }
 
 /// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.

@@ -18,7 +18,7 @@ use starknet_core::types::{
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType,
-    Transaction, TransactionReceipt
+    Transaction, MaybePendingTransactionReceipt
 };
 
 /// Starknet rpc interface.
@@ -140,5 +140,5 @@ pub trait StarknetRpcApi {
     fn get_transaction_receipt(
         &self,
         transaction_hash: FieldElement
-    ) -> RpcResult<String>;
+    ) -> RpcResult<MaybePendingTransactionReceipt>;
 }
