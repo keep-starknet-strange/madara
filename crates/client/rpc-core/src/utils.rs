@@ -56,7 +56,8 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
                 invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
             )
             .map_err(|e| anyhow!("failed to convert signature: {:?}", e))?,
-            sender_address: invoke_tx_v1.sender_address.to_bytes_be().into(),
+
+            sender_address: invoke_tx_v1.sender_address.into(),
             nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
@@ -74,7 +75,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 
     let contract_address_salt = tx.contract_address_salt.to_bytes_be();
 
-    let account_class_hash = tx.class_hash.to_bytes_be();
+    let account_class_hash = tx.class_hash;
 
     let calldata =
         tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::<Vec<_>>();
@@ -89,12 +90,11 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 
     let sender_address = calculate_contract_address(
         ContractAddressSalt(StarkFelt(contract_address_salt)),
-        ClassHash(StarkFelt(account_class_hash)),
+        ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
         &Calldata(calldata.into()),
         StarknetContractAddress::default(),
     )
     .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
-    .0
     .0
     .0
     .into();

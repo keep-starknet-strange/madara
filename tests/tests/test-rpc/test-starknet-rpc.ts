@@ -6,7 +6,6 @@ import {
   LibraryError,
   RpcProvider,
   Account,
-  stark,
   ec,
   hash,
   constants,
@@ -14,13 +13,11 @@ import {
 } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { transfer } from "../../util/starknet";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
   ARGENT_CONTRACT_ADDRESS,
   CHAIN_ID_STARKNET_TESTNET,
-  CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   TEST_CONTRACT,
@@ -32,9 +29,14 @@ import {
   SIGNER_PUBLIC,
   SALT,
 } from "../constants";
-import { toHex } from "../../util/utils";
+import { toHex, rpcTransfer } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
+
+// keep "let" over "const" as the nonce is passed by reference
+// to abstract the incrementation
+// eslint-disable-next-line prefer-const
+let ARGENT_CONTRACT_NONCE = { value: 0 };
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -69,6 +71,33 @@ describeDevMadara("Starknet RPC", (context) => {
 
     expect(transactionCount).to.not.be.undefined;
     expect(transactionCount).to.be.equal(0);
+  });
+
+  it("getNonce", async function () {
+    let nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
+    expect(nonce).to.not.be.undefined;
+    expect(toHex(nonce)).to.be.equal(toHex(ARGENT_CONTRACT_NONCE.value));
+
+    await context.createBlock(
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
+    );
+
+    nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
+    expect(nonce).to.not.be.undefined;
+    expect(toHex(nonce)).to.be.equal(toHex(ARGENT_CONTRACT_NONCE.value));
   });
 
   it("call", async function () {
@@ -169,80 +198,60 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(contract_class).to.not.be.undefined;
   });
 
-  describe("Get block with transaction hashes", () => {
-    it(
-      "giving a valid block with txs " +
-        "when call getBlockWithTxHashes " +
-        "then returns an object with transactions",
-      async function () {
-        await context.createBlock(
-          transfer(
-            context.polkadotApi,
-            CONTRACT_ADDRESS,
-            FEE_TOKEN_ADDRESS,
-            CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-            0
-          ),
-          { parentHash: undefined, finalize: true }
-        );
-
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const blockWithTxHashes: { status: string; transactions: string[] } =
-          await providerRPC.getBlockWithTxHashes("latest");
-        expect(blockWithTxHashes).to.not.be.undefined;
-        expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
-        expect(blockWithTxHashes.transactions.length).to.be.equal(1);
-      }
+  it("getBlockWithTxHashes returns transactions", async function () {
+    await context.createBlock(
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
     );
 
-    it(
-      "giving an invalid block " +
-        "when call getBlockWithTxHashes " +
-        "then throw 'Block not found error'",
-      async function () {
-        await providerRPC.getBlockWithTxHashes("0x123").catch((error) => {
-          expect(error).to.be.instanceOf(LibraryError);
-          expect(error.message).to.equal("24: Block not found");
-        });
-      }
-    );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const blockWithTxHashes: { status: string; transactions: string[] } =
+      await providerRPC.getBlockWithTxHashes("latest");
+    expect(blockWithTxHashes).to.not.be.undefined;
+    expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
+    expect(blockWithTxHashes.transactions.length).to.be.equal(1);
+  });
 
-    it(
-      "giving a valid block without txs " +
-        "when call getBlockWithTxHashes " +
-        "then returns an object with empty transactions",
-      async function () {
-        await context.createBlock(undefined, {
-          parentHash: undefined,
-          finalize: true,
-        });
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const latestBlock: { status: string; transactions: string[] } =
-          await providerRPC.getBlockWithTxHashes("latest");
-        expect(latestBlock).to.not.be.undefined;
-        expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
-        expect(latestBlock.transactions.length).to.be.equal(0);
-      }
-    );
+  it("getBlockWithTxHashes throws block not found error", async function () {
+    await providerRPC.getBlockWithTxHashes("0x123").catch((error) => {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("24: Block not found");
+    });
+  });
+
+  it("getBlockWithTxHashes returns empty block", async function () {
+    await context.createBlock(undefined, {
+      parentHash: undefined,
+      finalize: true,
+    });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const latestBlock: { status: string; transactions: string[] } =
+      await providerRPC.getBlockWithTxHashes("latest");
+    expect(latestBlock).to.not.be.undefined;
+    expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
+    expect(latestBlock.transactions.length).to.be.equal(0);
   });
 
   it("Gets value from the fee contract storage", async function () {
     const value = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
-      // ERC20_balances(0x01).low
-      "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
+      // ERC20_balances(0x02).low
+      "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
       "latest"
     );
+    // fees were paid du to the transfer in the previous test so the value is still u128::MAX
     expect(toHex(value)).to.be.equal("0xffffffffffffffffffffffffffffffff");
   });
 
   it("Returns 0 if the storage slot is not set", async function () {
     const value = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
-      // ERC20_balances(0x01).low
       "0x0000000000000000000000000000000000000000000000000000000000000000",
       "latest"
     );
@@ -269,76 +278,50 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
   });
 
-  describe("Get transaction by blockId and index", () => {
-    it(
-      "giving a valid block with txs " +
-        "when call getTransactionByBlockIdAndIndex " +
-        "then returns a transaction",
-      async function () {
-        // Send a transaction
-        await context.createBlock(
-          transfer(
-            context.polkadotApi,
-            CONTRACT_ADDRESS,
-            FEE_TOKEN_ADDRESS,
-            CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-            1
-          ),
-          { parentHash: undefined, finalize: true }
+  it("getTransactionByBlockIdAndIndex returns transactions", async function () {
+    // Send a transaction
+    await context.createBlock(
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
+    );
+
+    const getTransactionByBlockIdAndIndexResponse =
+      await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
+
+    expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
+  });
+
+  it("getTransactionByBlockIdAndIndex throws block not found error", async function () {
+    await providerRPC
+      .getTransactionByBlockIdAndIndex("0x123", 2)
+      .catch((error) => {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("24: Block not found");
+      });
+  });
+
+  it("getTransactionByBlockIdAndIndex throws invalid transaction index error", async function () {
+    await context.createBlock(undefined, {
+      parentHash: undefined,
+      finalize: true,
+    });
+    const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
+    await providerRPC
+      .getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 2)
+      .catch((error) => {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal(
+          "27: Invalid transaction index in a block"
         );
-
-        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
-
-        const getTransactionByBlockIdAndIndexResponse =
-          await providerRPC.getTransactionByBlockIdAndIndex(
-            latestBlockCreated.block_hash,
-            0
-          );
-
-        expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
-      }
-    );
-
-    it(
-      "giving an invalid block " +
-        "when call getTransactionByBlockIdAndIndex " +
-        "then throw 'Block not found error'",
-      async function () {
-        await providerRPC
-          .getTransactionByBlockIdAndIndex("0x123", 2)
-          .catch((error) => {
-            expect(error).to.be.instanceOf(LibraryError);
-            expect(error.message).to.equal("24: Block not found");
-          });
-      }
-    );
-
-    it(
-      "giving a valid block without txs" +
-        "when call getTransactionByBlockIdAndIndex " +
-        "then throw 'Invalid transaction index in a block'",
-      async function () {
-        await context.createBlock(undefined, {
-          parentHash: undefined,
-          finalize: true,
-        });
-        const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
-        await providerRPC
-          .getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 2)
-          .catch((error) => {
-            expect(error).to.be.instanceOf(LibraryError);
-            expect(error.message).to.equal(
-              "27: Invalid transaction index in a block"
-            );
-          });
-      }
-    );
+      });
   });
 
   it("Adds an invocation transaction successfully", async function () {
-    const priKey = stark.randomAddress();
-    const keyPair = ec.getKeyPair(priKey);
+    const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
     const resp = await account.execute(
@@ -359,8 +342,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Returns error when invocation absent entrypoint", async function () {
-    const priKey = stark.randomAddress();
-    const keyPair = ec.getKeyPair(priKey);
+    const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
     try {

@@ -18,14 +18,11 @@ sp-std = { workspace = true }
 sp-runtime = { workspace = true }
 
 # Starknet
-starknet-crypto = { workspace = true, default-features = false, features = [
-	"alloc",
-] }
-starknet-ff = { workspace = true, default-features = false, features = [
-	"alloc",
-] }
+starknet-crypto = { workspace = true, default-features = false, features = ["alloc"] }
+starknet-ff = { workspace = true, default-features = false, features = ["alloc"] }
+starknet-providers = { workspace = true, optional = true }
 poseidon_hash = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = ["testing"]}
+blockifier = { workspace = true, default-features = false, features = ["testing"] }
 starknet_api = { workspace = true, default-features = false }
 cairo-vm = { workspace = true }
 
@@ -58,6 +55,8 @@ std = [
 	# Starknet
 	"starknet-crypto/std",
 	"starknet-ff/std",
+	"starknet-ff/serde",
+	"starknet-providers",
 	"blockifier/std",
 	"starknet_api/std",
 	"poseidon_hash/std",

@@ -10,14 +10,23 @@ use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
+#[cfg(feature = "std")]
+use starknet_providers::jsonrpc::models::{
+    DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
+    DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
+    InvokeTransaction as RPCInvokeTransaction, InvokeTransactionV0 as RPCInvokeTransactionV0,
+    InvokeTransactionV1 as RPCInvokeTransactionV1, L1HandlerTransaction as RPCL1HandlerTransaction,
+    Transaction as RPCTransaction,
+};
 
 use crate::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-use crate::execution::program_wrapper::Felt252Wrapper;
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper};
+use crate::execution::types::{
+    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, Felt252WrapperError,
+};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -270,6 +279,8 @@ impl From<Transaction> for InvokeTransaction {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transaction {
+    /// The type of the transaction.
+    pub tx_type: TxType,
     /// The version of the transaction.
     pub version: u8,
     /// Transaction hash.
@@ -309,8 +320,9 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
 impl From<InvokeTransaction> for Transaction {
     fn from(value: InvokeTransaction) -> Self {
         Self {
+            tx_type: TxType::Invoke,
             version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()).into(),
+            hash: calculate_invoke_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -331,8 +343,9 @@ impl From<InvokeTransaction> for Transaction {
 impl From<DeclareTransaction> for Transaction {
     fn from(value: DeclareTransaction) -> Self {
         Self {
+            tx_type: TxType::Declare,
             version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()).into(),
+            hash: calculate_declare_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -354,8 +367,9 @@ impl From<DeclareTransaction> for Transaction {
 impl From<DeployAccountTransaction> for Transaction {
     fn from(value: DeployAccountTransaction) -> Self {
         Self {
+            tx_type: TxType::DeployAccount,
             version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()).into(),
+            hash: calculate_deploy_account_tx_hash(value.clone()),
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
@@ -373,6 +387,114 @@ impl From<DeployAccountTransaction> for Transaction {
         }
     }
 }
+
+/// Error of conversion between the Madara Primitive Transaction and the RPC Transaction
+#[cfg(feature = "std")]
+#[derive(Debug)]
+pub enum RPCTransactionConversionError {
+    /// The u8 stored version doesn't match any of the existing version at the RPC level
+    UnknownVersion,
+    /// Missing information
+    MissingInformation,
+    /// Conversion from byte array has failed.
+    FromArrayError,
+    /// Provided byte array has incorrect lengths.
+    InvalidLength,
+    /// Invalid character in hex string.
+    InvalidCharacter,
+    /// Value is too large for FieldElement (felt252).
+    OutOfRange,
+}
+
+#[cfg(feature = "std")]
+impl From<Felt252WrapperError> for RPCTransactionConversionError {
+    fn from(value: Felt252WrapperError) -> Self {
+        match value {
+            Felt252WrapperError::FromArrayError => Self::FromArrayError,
+            Felt252WrapperError::InvalidLength => Self::InvalidLength,
+            Felt252WrapperError::InvalidCharacter => Self::InvalidCharacter,
+            Felt252WrapperError::OutOfRange => Self::OutOfRange,
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl TryFrom<Transaction> for RPCTransaction {
+    type Error = RPCTransactionConversionError;
+    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+        let transaction_hash = value.hash.0;
+        let max_fee = Felt252Wrapper::try_from(value.max_fee)?.0;
+        let signature = value.signature.iter().map(|&f| f.0).collect();
+        let nonce = Felt252Wrapper::try_from(value.nonce)?.0;
+        let sender_address = value.sender_address.0;
+        let class_hash = value.call_entrypoint.class_hash.ok_or(RPCTransactionConversionError::MissingInformation);
+        let contract_address = value.call_entrypoint.storage_address.0;
+        let entry_point_selector =
+            value.call_entrypoint.entrypoint_selector.ok_or(RPCTransactionConversionError::MissingInformation);
+        let calldata = value.call_entrypoint.calldata.iter().map(|&f| f.0).collect();
+
+        match value.tx_type {
+            TxType::Declare => {
+                let class_hash = class_hash?.0;
+                let declare_txn_v1 =
+                    RPCDeclareTransactionV1 { transaction_hash, max_fee, signature, nonce, class_hash, sender_address };
+                match value.version {
+                    1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(declare_txn_v1))),
+                    2 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
+                        declare_txn_v1,
+                        compiled_class_hash: class_hash,
+                    }))),
+                    _ => Err(RPCTransactionConversionError::UnknownVersion),
+                }
+            }
+            TxType::Invoke => match value.version {
+                0 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
+                    transaction_hash,
+                    max_fee,
+                    signature,
+                    nonce,
+                    contract_address,
+                    entry_point_selector: entry_point_selector?.0,
+                    calldata,
+                }))),
+                1 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
+                    transaction_hash,
+                    max_fee,
+                    signature,
+                    nonce,
+                    sender_address,
+                    calldata,
+                }))),
+                _ => Err(RPCTransactionConversionError::UnknownVersion),
+            },
+            TxType::DeployAccount => Ok(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
+                transaction_hash,
+                max_fee,
+                version: value.version.into(),
+                signature,
+                nonce,
+                contract_address_salt: Felt252Wrapper::try_from(
+                    value.contract_address_salt.ok_or(RPCTransactionConversionError::MissingInformation)?,
+                )?
+                .0,
+                constructor_calldata: calldata,
+                class_hash: class_hash?.0,
+            })),
+            TxType::L1Handler => {
+                let nonce = value.nonce.as_u64(); // this panics in case of overflow
+                Ok(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
+                    transaction_hash,
+                    version: value.version.into(),
+                    nonce,
+                    contract_address,
+                    entry_point_selector: entry_point_selector?.0,
+                    calldata,
+                }))
+            }
+        }
+    }
+}
+
 /// Representation of a Starknet transaction receipt.
 #[derive(
     Clone,

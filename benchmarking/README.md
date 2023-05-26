@@ -6,21 +6,21 @@ artillery.
 Steps to follow :
 
 - Install the dependencies using
-  `yarn install && cd ../tests && npm install && npm run build && cd ../benchmarking`
+  `npm install && cd ../tests && npm install && npm run build && cd ../benchmarking`
 - Make sure you've built the project using `cd .. && cargo build --release`
-- Run the benchmark using `yarn test:ci`. If it does not work, just run
-  `cd .. && sh ./scripts/run_node.sh` and in another terminal run `yarn test:x`
-  where x is the benchmark you want to run.
+- Run the benchmark using `npm run test:ci`. If it does not work, just run
+  `cd .. && sh ./scripts/run_node.sh` and in another terminal run
+  `npm run test:x` where x is the benchmark you want to run.
 
 The following benchmarks are available :
 
-- `yarn test:chain` : Simple stress test of the chain
-- `yarn test:storage` : Deploys and execute cairo programs to benchmark the
+- `npm run test:chain` : Simple stress test of the chain
+- `npm run test:storage` : Deploys and execute cairo programs to benchmark the
   storage overhead
-- `yarn test:execution` : Executes fib500 cairo programs
-- `yarn test:transfer` : Executes ERC20 transfers
+- `npm run test:execution` : Executes fib500 cairo programs
+- `npm run test:transfer` : Executes ERC20 transfers
 
-Or simply run `yarn test` to run default benchmark and display metrics at the
+Or simply run `npm run test` to run default benchmark and display metrics at the
 end.
 
 ## References

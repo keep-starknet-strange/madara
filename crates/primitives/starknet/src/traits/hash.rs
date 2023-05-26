@@ -2,6 +2,8 @@
 
 use starknet_crypto::FieldElement;
 
+use crate::execution::felt252_wrapper::Felt252Wrapper;
+
 /// A trait for hashing.
 pub trait Hasher {
     /// Hashes the given data.
@@ -9,7 +11,7 @@ pub trait Hasher {
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    fn hash(&self, data: &[u8]) -> [u8; 32];
+    fn hash(&self, data: &[u8]) -> Felt252Wrapper;
 
     /// Get Hasher default instance.
     fn hasher() -> Self;

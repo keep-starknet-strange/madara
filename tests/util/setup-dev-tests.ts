@@ -16,6 +16,7 @@ import { type ExtrinsicCreation, extractError } from "./substrate-rpc";
 
 import { type KeyringPair } from "@polkadot/keyring/types";
 import debugFactory from "debug";
+import { InvokeFunctionResponse } from "starknet";
 const debug = debugFactory("test:setup");
 
 export interface BlockCreation {
@@ -49,7 +50,8 @@ export interface DevTestContext {
       | SubmittableExtrinsic<ApiType>
       | Promise<SubmittableExtrinsic<ApiType>>
       | string
-      | Promise<string>,
+      | Promise<string>
+      | Promise<InvokeFunctionResponse>,
     Calls extends Call | Call[]
   >(
     transactions?: Calls,
@@ -57,7 +59,9 @@ export interface DevTestContext {
   ) => Promise<
     BlockCreationResponse<
       ApiType,
-      Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
+      Calls extends Call[]
+        ? Array<Awaited<SubmittableExtrinsic<ApiType>>>
+        : Awaited<SubmittableExtrinsic<ApiType>>
     >
   >;
 
@@ -135,14 +139,15 @@ export function describeDevMadara(
           | SubmittableExtrinsic<ApiType>
           | Promise<SubmittableExtrinsic<ApiType>>
           | string
-          | Promise<string>,
+          | Promise<string>
+          | Promise<InvokeFunctionResponse>,
         Calls extends Call | Call[]
       >(
         transactions?: Calls,
         options: BlockCreation = {}
       ) => {
         const results: Array<
-          { type: "eth"; hash: string } | { type: "sub"; hash: string }
+          { type: "starknet"; hash: string } | { type: "sub"; hash: string }
         > = [];
         const txs =
           transactions == undefined
@@ -151,7 +156,7 @@ export function describeDevMadara(
             ? transactions
             : [transactions];
         for await (const call of txs) {
-          if (typeof call === "string") {
+          if (call.transaction_hash) {
             // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
@@ -215,12 +220,12 @@ export function describeDevMadara(
 
         const result: ExtrinsicCreation[] = results.map((result) => {
           const extrinsicIndex =
-            result.type == "eth"
+            result.type == "starknet"
               ? allRecords
                   .find(
                     ({ phase, event: { section, method, data } }) =>
                       phase.isApplyExtrinsic &&
-                      section == "ethereum" &&
+                      section == "starknet" &&
                       method == "Executed" &&
                       data[2].toString() == result.hash
                   )
@@ -252,7 +257,7 @@ export function describeDevMadara(
         });
 
         // Adds extra time to avoid empty transaction when querying it
-        if (results.find((r) => r.type == "eth")) {
+        if (results.find((r) => r.type == "starknet")) {
           await new Promise((resolve) => setTimeout(resolve, 2));
         }
         return {

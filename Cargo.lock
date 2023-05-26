@@ -605,9 +605,9 @@ checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
-version = "0.21.0"
+version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
+checksum = "3f1e31e207a6b8fb791a38ea3105e6cb541f55e4d029902d3039a4ad07cc4105"
 
 [[package]]
 name = "base64ct"
@@ -1139,9 +1139,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.2.7"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34d21f9bf1b425d2968943631ec91202fe5e837264063503708b83013f8fc938"
+checksum = "93aae7a4192245f70fe75dd9157fc7b4a5bf53e88d30bd4396f7d8f9284d5acc"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1150,9 +1150,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.2.7"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "914c8c79fb560f238ef6429439a30023c862f7a28e688c58f7203f12b29970bd"
+checksum = "4f423e341edefb78c9caba2d9c7f7687d0e72e89df3ce3394554754393ac3990"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1163,9 +1163,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.2.0"
+version = "4.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f9644cd56d6b87dbe899ef8b053e331c0637664e9e21a33dfcdc36093f5c5c4"
+checksum = "191d9573962933b4027f932c600cd252ce27a8ad5979418fe78e43c07996f27b"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -1175,9 +1175,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.4.1"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a2dd5a6fe8c6e3502f568a6353e5273bbb15193ad9a89e457b9970798efbea1"
+checksum = "2da6da31387c7e4ef160ffab6d5e7f00c42626fe39aea70a7b0f1773f7dd6c1b"
 
 [[package]]
 name = "codespan-reporting"
@@ -4493,7 +4493,7 @@ dependencies = [
  "sp-core 7.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42)",
  "sp-runtime",
  "starknet-core",
- "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
+ "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
  "starknet-providers",
  "starknet_api",
  "thiserror",
@@ -4504,7 +4504,7 @@ name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64 0.21.0",
+ "base64 0.21.1",
  "flate2",
  "frame-support",
  "hex",
@@ -4716,7 +4716,8 @@ dependencies = [
  "sp-runtime",
  "sp-std 5.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42)",
  "starknet-crypto 0.5.1",
- "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
+ "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
+ "starknet-providers",
  "starknet_api",
  "thiserror-no-std",
  "zstd 0.12.3+zstd.1.5.2",
@@ -6355,7 +6356,7 @@ version = "0.11.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13293b639a097af28fc8a90f22add145a9c954e49d77da06263d58cf44d5fb91"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.21.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -6622,7 +6623,7 @@ version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d194b56d58803a43635bdc398cd17e383d6f71f9182b9a192c127ca42494a59b"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.21.1",
 ]
 
 [[package]]
@@ -9064,9 +9065,9 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "starknet-core"
 version = "0.2.0"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
+source = "git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
 dependencies = [
- "base64 0.21.0",
+ "base64 0.21.1",
  "ethereum-types",
  "flate2",
  "hex",
@@ -9075,7 +9076,7 @@ dependencies = [
  "serde_with",
  "sha3",
  "starknet-crypto 0.5.1",
- "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
+ "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
  "thiserror",
 ]
 
@@ -9102,7 +9103,7 @@ dependencies = [
 [[package]]
 name = "starknet-crypto"
 version = "0.5.1"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
+source = "git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
 dependencies = [
  "crypto-bigint 0.5.2",
  "hex",
@@ -9112,9 +9113,9 @@ dependencies = [
  "num-traits",
  "rfc6979 0.4.0",
  "sha2 0.10.6",
- "starknet-crypto-codegen 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
- "starknet-curve 0.3.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
- "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
+ "starknet-crypto-codegen 0.3.1 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
+ "starknet-curve 0.3.0 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
+ "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
  "zeroize",
 ]
 
@@ -9132,10 +9133,10 @@ dependencies = [
 [[package]]
 name = "starknet-crypto-codegen"
 version = "0.3.1"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
+source = "git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
 dependencies = [
- "starknet-curve 0.3.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
- "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
+ "starknet-curve 0.3.0 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
+ "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
  "syn 2.0.16",
 ]
 
@@ -9160,9 +9161,9 @@ dependencies = [
 [[package]]
 name = "starknet-curve"
 version = "0.3.0"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
+source = "git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
 dependencies = [
- "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0)",
+ "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
 ]
 
 [[package]]
@@ -9180,7 +9181,7 @@ dependencies = [
 [[package]]
 name = "starknet-ff"
 version = "0.3.2"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
+source = "git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
 dependencies = [
  "ark-ff",
  "bigdecimal",
@@ -9194,7 +9195,7 @@ dependencies = [
 [[package]]
 name = "starknet-providers"
 version = "0.2.0"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/jsonrpc_0_3_0#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
+source = "git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef#403f02e83fb3fd9f87654aae1f34c94ad480e9ef"
 dependencies = [
  "async-trait",
  "auto_impl",
@@ -10093,7 +10094,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.6",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 

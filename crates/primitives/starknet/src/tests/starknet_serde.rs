@@ -86,7 +86,7 @@ fn test_invalid_format_for_h256() {
 
 #[test]
 fn test_invalid_format_for_address() {
-    // Not 32 bytes length
+    // Not 32 bytes length, will still work because it's a valid hexa
     let json_content: &str = r#"{
       "version": 1,
       "hash": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -103,7 +103,7 @@ fn test_invalid_format_for_address() {
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
-    assert!(matches!(transaction, Err(DeserializeTransactionError::InvalidSenderAddress(_))));
+    assert!(transaction.is_ok(), "Expected no error because sender_address is a valid hex value.");
 
     // No valid hexa
     let json_content: &str = r#"{

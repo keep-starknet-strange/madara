@@ -1,8 +1,7 @@
 use scale_codec::Encode;
-use sp_core::{H256, U256};
+use sp_core::U256;
 
-use crate::execution::program_wrapper::Felt252Wrapper;
-use crate::execution::types::ContractAddressWrapper;
+use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::Hasher;
 
 #[derive(
@@ -77,22 +76,22 @@ impl Header {
 
     /// Compute the hash of the header.
     #[must_use]
-    pub fn hash<H: Hasher>(&self, hasher: H) -> H256 {
-        H256::from_slice(<H as Hasher>::hash(&hasher, &self.block_number.encode()).as_slice())
+    pub fn hash<H: Hasher>(&self, hasher: H) -> Felt252Wrapper {
+        <H as Hasher>::hash(&hasher, &self.block_number.encode())
     }
 }
 
 #[test]
 fn test_header_hash() {
-    let parent_block_hash = H256::from([1; 32]).into();
+    let parent_block_hash = Felt252Wrapper::try_from(&[1; 32]).unwrap();
     let block_number = U256::from(42);
-    let global_state_root = Felt252Wrapper(U256::from(12345));
-    let sequencer_address = [2; 32].into();
+    let global_state_root = Felt252Wrapper::from(12345_u128);
+    let sequencer_address = Felt252Wrapper::try_from(&[2; 32]).unwrap();
     let block_timestamp = 1620037184;
     let transaction_count = 2;
-    let transaction_commitment = H256::from([3; 32]).into();
+    let transaction_commitment = Felt252Wrapper::try_from(&[3; 32]).unwrap();
     let event_count = 1;
-    let event_commitment = H256::from([4; 32]).into();
+    let event_commitment = Felt252Wrapper::try_from(&[4; 32]).unwrap();
     let protocol_version = Some(1);
     let extra_data = None;
 
@@ -112,7 +111,7 @@ fn test_header_hash() {
 
     let hasher = crate::crypto::hash::pedersen::PedersenHasher::default();
 
-    let expected_hash = H256::from_slice(hasher.hash(&block_number.encode()).as_slice());
+    let expected_hash = hasher.hash(&block_number.encode());
 
     assert_eq!(header.hash(hasher), expected_hash);
 }

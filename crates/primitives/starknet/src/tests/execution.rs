@@ -1,17 +1,14 @@
 use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
-use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
-use sp_core::{H256, U256};
 use sp_runtime::BoundedBTreeMap;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
-use starknet_api::serde_utils::bytes_from_hex_str;
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 
@@ -19,53 +16,53 @@ use crate::block::Block;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
-use crate::execution::program_wrapper::{Felt252Wrapper, ProgramWrapper};
-use crate::execution::types::ContractAddressWrapper;
+use crate::execution::program_wrapper::ProgramWrapper;
+use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::tests::utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 
 #[test]
 fn test_call_entry_point_execute_works() {
     let mut test_state = create_test_state();
 
-    let class_hash = bytes_from_hex_str::<32, true>(TEST_CLASS_HASH).unwrap();
-    let address = bytes_from_hex_str::<32, true>(TEST_CONTRACT_ADDRESS).unwrap();
-    let selector = H256::from_slice(selector_from_name("return_result").0.bytes());
-    let calldata = bounded_vec![Felt252Wrapper(U256::from(42))];
+    let class_hash = Felt252Wrapper::from_hex_be(TEST_CLASS_HASH).unwrap();
+    let address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
+    let selector = selector_from_name("return_result").0.into();
+    let calldata = bounded_vec![42_u128.into()];
 
     let entrypoint = CallEntryPointWrapper::new(
-        Some(class_hash.into()),
+        Some(class_hash),
         EntryPointTypeWrapper::External,
-        Some(selector.into()),
+        Some(selector),
         calldata,
-        address.into(),
+        address,
         ContractAddressWrapper::default(),
     );
 
     let block = Block::create_for_testing();
 
-    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::zero()));
+    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO));
 }
 
 #[test]
 fn test_call_entry_point_execute_fails_undeclared_class_hash() {
     let mut test_state = create_test_state();
 
-    let address = bytes_from_hex_str::<32, true>(TEST_CONTRACT_ADDRESS).unwrap();
-    let selector = H256::from_slice(selector_from_name("return_result").0.bytes());
-    let calldata = bounded_vec![Felt252Wrapper(U256::from(42))];
+    let address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
+    let selector = selector_from_name("return_result").0.into();
+    let calldata = bounded_vec![42_u128.into()];
 
     let entrypoint = CallEntryPointWrapper::new(
-        Some(Felt252Wrapper::zero()),
+        Some(Felt252Wrapper::ZERO),
         EntryPointTypeWrapper::External,
-        Some(selector.into()),
+        Some(selector),
         calldata,
-        address.into(),
+        address,
         ContractAddressWrapper::default(),
     );
 
     let block = Block::create_for_testing();
 
-    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::zero()).is_err());
+    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO).is_err());
 }
 
 #[test]
@@ -76,60 +73,14 @@ fn test_try_into_entrypoint_default() {
 }
 
 #[test]
-fn test_try_into_entrypoint_fails() {
-    let entrypoint_wrapper = CallEntryPointWrapper {
-        class_hash: None,
-        entrypoint_type: EntryPointTypeWrapper::External,
-        entrypoint_selector: None,
-        calldata: bounded_vec![],
-        storage_address: [u8::MAX; 32].into(), // Bigger than felt
-        caller_address: ContractAddressWrapper::default(),
-    };
-    let entrypoint: Result<CallEntryPoint, _> = entrypoint_wrapper.try_into();
-    assert!(entrypoint.is_err());
-
-    let entrypoint_wrapper = CallEntryPointWrapper {
-        class_hash: None,
-        entrypoint_type: EntryPointTypeWrapper::External,
-        entrypoint_selector: None,
-        calldata: bounded_vec![],
-        storage_address: ContractAddressWrapper::default(),
-        caller_address: [u8::MAX; 32].into(), // Bigger than felt
-    };
-    let entrypoint: Result<CallEntryPoint, _> = entrypoint_wrapper.try_into();
-    assert!(entrypoint.is_err());
-
-    let entrypoint_wrapper = CallEntryPointWrapper {
-        class_hash: None,
-        entrypoint_type: EntryPointTypeWrapper::External,
-        entrypoint_selector: Some(H256::from([u8::MAX; 32]).into()), // Bigger than felt
-        calldata: bounded_vec![],
-        storage_address: ContractAddressWrapper::default(),
-        caller_address: ContractAddressWrapper::default(),
-    };
-    let entrypoint: Result<CallEntryPoint, _> = entrypoint_wrapper.try_into();
-    assert!(entrypoint.is_err());
-}
-
-#[test]
 fn test_try_into_entrypoint_works() {
     let entrypoint_wrapper = CallEntryPointWrapper {
-        class_hash: Some(
-            H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap().into(),
-        ),
+        class_hash: Some(Felt252Wrapper::from_hex_be("0x1").unwrap()),
         entrypoint_type: EntryPointTypeWrapper::External,
         entrypoint_selector: None,
-        calldata: bounded_vec![
-            Felt252Wrapper(U256::from(1)),
-            Felt252Wrapper(U256::from(2)),
-            Felt252Wrapper(U256::from(3))
-        ],
-        storage_address: H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000001")
-            .unwrap()
-            .into(),
-        caller_address: H256::from_str("0x0000000000000000000000000000000000000000000000000000000000000002")
-            .unwrap()
-            .into(),
+        calldata: bounded_vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
+        storage_address: Felt252Wrapper::from_hex_be("0x1").unwrap(),
+        caller_address: Felt252Wrapper::from_hex_be("0x2").unwrap(),
     };
     let entrypoint: CallEntryPoint = entrypoint_wrapper.try_into().unwrap();
     let expected_entrypoint = CallEntryPoint {
@@ -189,18 +140,22 @@ fn test_contract_class_wrapper_try_from_contract_class() {
             EntryPointTypeWrapper::Constructor,
             bounded_vec![EntryPointWrapper {
                 offset: 0x147,
-                selector: H256::from_str("0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194")
-                    .unwrap()
-                    .into(),
+                selector: Felt252Wrapper::from_hex_be(
+                    "0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194"
+                )
+                .unwrap()
+                .into(),
             }],
         ),
         (
             EntryPointTypeWrapper::External,
             bounded_vec![EntryPointWrapper {
                 offset: 0x16e,
-                selector: H256::from_str("0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588")
-                    .unwrap()
-                    .into(),
+                selector: Felt252Wrapper::from_hex_be(
+                    "0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588"
+                )
+                .unwrap()
+                .into(),
             }],
         ),
         (EntryPointTypeWrapper::L1Handler, bounded_vec![]),

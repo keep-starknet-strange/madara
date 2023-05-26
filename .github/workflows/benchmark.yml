@@ -1,0 +1,52 @@
+name: Benchmark
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: [self-hosted, linux]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ">=20"
+          cache: "npm"
+          cache-dependency-path: ./tests/package-lock.json
+      - name: Install
+        run: |-
+          cd tests
+          npm clean-install
+          npm run build
+          cd ../benchmarking
+          npm i
+      - run: cargo build --workspace --release
+      - name: Run benchmark
+        run: |
+          cd benchmarking
+          cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
+          npm run test
+      - name: Download old benchmark
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: benchmark.yml
+          branch: main
+          path: report
+      - name: Upload new benchmark if on main
+        uses: actions/upload-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: benchmark
+          path: benchmarking/reports/metrics.json
+      - name: Check performance regression
+        run: python3 scripts/check-regression.py

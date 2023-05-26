@@ -16,10 +16,10 @@ use cairo_vm::types::program::Program;
 use cairo_vm::types::relocatable::{MaybeRelocatable, Relocatable};
 use derive_more::Constructor;
 use frame_support::{BoundedBTreeMap, BoundedVec};
-use sp_core::{ConstU32, Get, H256, U256};
+use sp_core::{ConstU32, Get};
 use starknet_api::stdlib::collections::HashMap;
-use starknet_ff::FieldElement;
 
+use super::types::Felt252Wrapper;
 #[cfg(feature = "std")]
 use super::{
     deserialize_bounded_btreemap, deserialize_option_bounded_btreemap, serialize_bounded_btreemap,
@@ -264,93 +264,6 @@ impl TryFrom<ProgramWrapper> for Program {
             },
         )
         .map_err(|_| ProgramConversionError::PogramCreationError)
-    }
-}
-
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-    Default,
-    Copy,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-/// Wrapper type from [Felt252] using [U256] (substrate compatible type).
-pub struct Felt252Wrapper(pub U256);
-
-impl From<Felt252> for Felt252Wrapper {
-    fn from(value: Felt252) -> Self {
-        Self(U256::from_big_endian(&value.to_be_bytes()))
-    }
-}
-impl From<Felt252Wrapper> for Felt252 {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        Felt252::from_bytes_be(&buff)
-    }
-}
-impl From<H256> for Felt252Wrapper {
-    fn from(value: H256) -> Self {
-        Felt252Wrapper(U256::from_big_endian(value.as_bytes()))
-    }
-}
-impl From<Felt252Wrapper> for H256 {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        H256::from_slice(&buff)
-    }
-}
-impl From<Felt252Wrapper> for FieldElement {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        FieldElement::from_byte_slice_be(&buff).unwrap()
-    }
-}
-impl From<FieldElement> for Felt252Wrapper {
-    fn from(value: FieldElement) -> Self {
-        value.to_bytes_be().into()
-    }
-}
-impl From<Felt252Wrapper> for [u8; 32] {
-    fn from(value: Felt252Wrapper) -> Self {
-        let mut buff: [u8; 32] = [0u8; 32];
-        value.0.to_big_endian(&mut buff);
-        buff
-    }
-}
-impl From<&[u8]> for Felt252Wrapper {
-    fn from(value: &[u8]) -> Self {
-        Felt252Wrapper(U256::from_big_endian(value))
-    }
-}
-impl From<[u8; 32]> for Felt252Wrapper {
-    fn from(value: [u8; 32]) -> Self {
-        Felt252Wrapper(U256::from_big_endian(&value))
-    }
-}
-
-impl Felt252Wrapper {
-    /// Returns the zero value.
-    pub fn zero() -> Self {
-        Self(U256::zero())
-    }
-
-    /// Returns the one value.
-    pub fn one() -> Self {
-        Self(U256::one())
-    }
-
-    /// Return the max 128 bits value.
-    pub fn max_u128() -> Self {
-        Self(U256::from(u128::MAX))
     }
 }
 
