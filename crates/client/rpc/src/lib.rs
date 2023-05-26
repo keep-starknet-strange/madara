@@ -33,8 +33,8 @@ use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
-    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction, MaybePendingTransactionReceipt, TransactionStatus
+    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionStatus,
 };
 
 /// A Starknet RPC server for Madara
@@ -663,11 +663,9 @@ where
     /// # Arguments
     ///
     /// * `transaction_hash` - Hex string of the transaction hash.
-    fn get_transaction_by_hash(
-        &self,
-        transaction_hash: FieldElement
-    ) -> RpcResult<Transaction> {
-        let block_hash_from_db = self.backend
+    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
+        let block_hash_from_db = self
+            .backend
             .mapping()
             .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
             .map_err(|e| {
@@ -710,7 +708,6 @@ where
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
         }
-
     }
 
     /// Returns the receipt of a transaction by transaction hash.
@@ -718,11 +715,9 @@ where
     /// # Arguments
     ///
     /// * `transaction_hash` - Hex string of the transaction hash.
-    fn get_transaction_receipt(
-        &self,
-        transaction_hash: FieldElement
-    ) -> RpcResult<MaybePendingTransactionReceipt> {
-        let block_hash_from_db = self.backend
+    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt> {
+        let block_hash_from_db = self
+            .backend
             .mapping()
             .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
             .map_err(|e| {
@@ -741,7 +736,8 @@ where
             }
         };
 
-        let block = self.overrides
+        let block = self
+            .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
             .current_block(substrate_block_hash)
             .unwrap_or_default();
@@ -753,10 +749,7 @@ where
                         continue;
                     }
 
-                    return Ok(receipt
-                              .clone()
-                              .into_maybe_pending_transaction_receipt(
-                                  TransactionStatus::AcceptedOnL2));
+                    return Ok(receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
 
                     // match MaybePendingTransactionReceipt::try_from(receipt.clone()) {
                     //     Ok(r) => {

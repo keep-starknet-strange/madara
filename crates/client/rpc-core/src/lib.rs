@@ -7,7 +7,6 @@
 #[cfg(test)]
 mod tests;
 
-
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
 
@@ -17,8 +16,8 @@ use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType,
-    Transaction, MaybePendingTransactionReceipt
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
+    StateUpdate, SyncStatusType, Transaction,
 };
 
 /// Starknet rpc interface.
@@ -130,15 +129,9 @@ pub trait StarknetRpcApi {
 
     /// Returns the information about a transaction by transaction hash.
     #[method(name = "getTransactionByHash")]
-    fn get_transaction_by_hash(
-        &self,
-        transaction_hash: FieldElement
-    ) -> RpcResult<Transaction>;
+    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction>;
 
     /// Returns the receipt of a transaction by transaction hash.
     #[method(name = "getTransactionReceipt")]
-    fn get_transaction_receipt(
-        &self,
-        transaction_hash: FieldElement
-    ) -> RpcResult<MaybePendingTransactionReceipt>;
+    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt>;
 }

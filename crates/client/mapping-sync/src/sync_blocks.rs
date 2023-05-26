@@ -52,10 +52,7 @@ where
                         };
                         backend.mapping().write_hashes(mapping_commitment)?;
 
-                        commit_transactions_block_hashes_mapping(
-                            &substrate_block_hash,
-                            &digest_starknet_block,
-                            backend)
+                        commit_transactions_block_hashes_mapping(&substrate_block_hash, &digest_starknet_block, backend)
                     }
                 }
                 // If there is not Starknet block in this Substrate block, we write it in the db
@@ -192,7 +189,6 @@ where
     }
 }
 
-
 /// Commits to the database the mapping between
 /// each transaction hash in the block and the block hash.
 fn commit_transactions_block_hashes_mapping<B: BlockT>(
@@ -204,18 +200,14 @@ fn commit_transactions_block_hashes_mapping<B: BlockT>(
     match block_transactions {
         BlockTransactions::Full(transactions) => {
             for (txn, _) in transactions {
-                backend.mapping().transaction_block_hashes_map(
-                    &H256::from(txn.hash),
-                    substrate_block_hash)?;
+                backend.mapping().transaction_block_hashes_map(&H256::from(txn.hash), substrate_block_hash)?;
             }
 
             Ok(())
         }
         BlockTransactions::Hashes(hashes) => {
             for hash in hashes {
-                backend.mapping().transaction_block_hashes_map(
-                    &H256::from(*hash),
-                    substrate_block_hash)?;
+                backend.mapping().transaction_block_hashes_map(&H256::from(*hash), substrate_block_hash)?;
             }
 
             Ok(())
