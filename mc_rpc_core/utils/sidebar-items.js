@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["to_deploy_account_tx","to_invoke_tx","to_rpc_contract_class"]};
+window.SIDEBAR_ITEMS = {"fn":["to_deploy_account_tx","to_invoke_tx","to_rpc_contract_class","to_tx"]};

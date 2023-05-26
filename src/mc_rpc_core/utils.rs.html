@@ -121,13 +121,23 @@
 <a href="#121" id="121">121</a>
 <a href="#122" id="122">122</a>
 <a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::vec;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
 <span class="kw">use </span>base64::Engine;
 <span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
-<span class="kw">use </span>mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction};
+<span class="kw">use </span>mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction, Transaction};
 <span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>sp_runtime::BoundedVec;
 <span class="kw">use </span>starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress};
@@ -135,8 +145,8 @@
 <span class="kw">use </span>starknet_api::transaction::{Calldata, ContractAddressSalt};
 <span class="kw">use </span>starknet_core::types::FieldElement;
 <span class="kw">use </span>starknet_providers::jsonrpc::models::{
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, ContractClass, EntryPointsByType, ErrorCode,
-    SierraContractClass,
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
+    EntryPointsByType, ErrorCode, SierraContractClass,
 };
 
 <span class="doccomment">/// Returns a `ContractClass` from a `ContractClassWrapper`
@@ -168,6 +178,16 @@
 <span class="doccomment">/// Returns a base64 encoded string of the input bytes
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
     general_purpose::STANDARD.encode(data)
+}
+
+<span class="kw">pub fn </span>to_tx(request: BroadcastedTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction&gt; {
+    <span class="kw">match </span>request {
+        BroadcastedTransaction::Invoke(invoke_tx) =&gt; to_invoke_tx(invoke_tx).map(|inner| inner.into()),
+        BroadcastedTransaction::Declare(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(ErrorCode::FailedToReceiveTransaction.into()), <span class="comment">/* TODO: add support once #341 is supported */
+        </span>BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; {
+            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.into())
+        }
+    }
 }
 
 <span class="kw">pub fn </span>to_invoke_tx(tx: BroadcastedInvokeTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction&gt; {

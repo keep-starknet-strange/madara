@@ -224,6 +224,10 @@
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -&gt; RpcResult&lt;DeployAccountTransactionResult&gt;;
 
+    <span class="doccomment">/// Estimate the fee associated with transaction
+    </span><span class="attr">#[method(name = <span class="string">&quot;estimateFee&quot;</span>)]
+    </span><span class="kw">async fn </span>estimate_fee(<span class="kw-2">&amp;</span><span class="self">self</span>, request: BroadcastedTransaction, block_id: BlockId) -&gt; RpcResult&lt;FeeEstimate&gt;;
+
     <span class="doccomment">/// Get the details of a transaction by a given block id and index
     </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionByBlockIdAndIndex&quot;</span>)]
     </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;Transaction&gt;;
@@ -231,10 +235,6 @@
     <span class="doccomment">/// Get the information about the result of executing the requested block
     </span><span class="attr">#[method(name = <span class="string">&quot;getStateUpdate&quot;</span>)]
     </span><span class="kw">fn </span>get_state_update(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;;
-
-    <span class="doccomment">/// Estimate the fee for a given Starknet transaction
-    </span><span class="attr">#[method(name = <span class="string">&quot;estimateFee&quot;</span>)]
-    </span><span class="kw">async fn </span>estimate_fee(<span class="kw-2">&amp;</span><span class="self">self</span>, request: BroadcastedTransaction, block_id: BlockId) -&gt; RpcResult&lt;FeeEstimate&gt;;
 
     <span class="doccomment">/// Returns the transactions in the transaction pool, recognized by this sequencer
     </span><span class="attr">#[method(name = <span class="string">&quot;pendingTransactions&quot;</span>)]
