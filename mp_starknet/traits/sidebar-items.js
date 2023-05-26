@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["hash","transaction"]};
+window.SIDEBAR_ITEMS = {"mod":["hash"]};

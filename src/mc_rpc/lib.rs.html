@@ -579,6 +579,8 @@
 <a href="#579" id="579">579</a>
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1099,7 +1101,7 @@
     }
 
     <span class="comment">// Returns the details of a transaction by a given block id and index
-    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;MPTransaction&gt; {
+    </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;Transaction&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
             StarknetRpcApiError::BlockNotFound
@@ -1112,11 +1114,13 @@
             .unwrap_or_default();
 
         <span class="kw">let </span>block_transactions = block.transactions();
-        <span class="kw">let </span>transaction;
         <span class="kw">match </span>block_transactions {
             BlockTransactions::Full(transactions) =&gt; {
-                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(transaction.clone())
+                <span class="kw">let </span>transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
+                <span class="prelude-val">Ok</span>(Transaction::try_from(transaction.clone()).map_err(|e| {
+                    <span class="macro">error!</span>(<span class="string">&quot;{:?}&quot;</span>, e);
+                    StarknetRpcApiError::InternalServerError
+                })<span class="question-mark">?</span>)
             }
             BlockTransactions::Hashes(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidTxnIndex.into()),
         }
