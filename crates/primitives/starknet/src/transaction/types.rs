@@ -404,6 +404,8 @@ pub enum RPCTransactionConversionError {
     InvalidCharacter,
     /// Value is too large for FieldElement (felt252).
     OutOfRange,
+    /// Value is too large to fit into target type.
+    ValueTooLarge,
 }
 
 #[cfg(feature = "std")]
@@ -414,6 +416,7 @@ impl From<Felt252WrapperError> for RPCTransactionConversionError {
             Felt252WrapperError::InvalidLength => Self::InvalidLength,
             Felt252WrapperError::InvalidCharacter => Self::InvalidCharacter,
             Felt252WrapperError::OutOfRange => Self::OutOfRange,
+            Felt252WrapperError::ValueTooLarge => Self::ValueTooLarge,
         }
     }
 }
