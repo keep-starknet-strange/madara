@@ -534,7 +534,10 @@ where
         match block_transactions {
             BlockTransactions::Full(transactions) => {
                 let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
-                Ok(Transaction::try_from(transaction.clone()).map_err(|e| StarknetRpcApiError::InternalServerError)?)
+                Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
+                    error!("{:?}", e);
+                    StarknetRpcApiError::InternalServerError
+                })?)
             }
             BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
         }
