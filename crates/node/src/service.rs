@@ -11,6 +11,7 @@ use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
+use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
@@ -21,7 +22,7 @@ use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool::FullPool;
-use sp_api::{ConstructRuntimeApi, TransactionFor};
+use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
@@ -320,6 +321,9 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
         telemetry: telemetry.as_mut(),
     })?;
 
+    let hasher =
+        client.runtime_api().get_hasher(client.info().best_hash).map_err(|e| ServiceError::Client(e.into()))?.into();
+
     task_manager.spawn_essential_handle().spawn(
         "mc-mapping-sync-worker",
         Some("madara"),
@@ -332,6 +336,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
             madara_backend,
             3,
             0,
+            hasher,
         )
         .for_each(|()| future::ready(())),
     );

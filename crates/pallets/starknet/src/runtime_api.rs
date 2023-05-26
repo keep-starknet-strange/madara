@@ -5,6 +5,7 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 #![allow(clippy::extra_unused_type_parameters)]
 
+use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
@@ -37,6 +38,8 @@ sp_api::decl_runtime_apis! {
         fn chain_id() -> u128;
         /// Returns fee estimate
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
+        /// Returns the hasher used by the runtime.
+        fn get_hasher() -> Hasher;
     }
 
     pub trait ConvertTransactionRuntimeApi {

@@ -72,16 +72,15 @@ use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment;
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
 };
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_starknet::traits::hash::Hasher;
+use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
-    DeclareTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction, Transaction,
-    TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
+    Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -114,7 +113,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    use mp_starknet::transaction::types::DeployAccountTransaction;
 
     use super::*;
 
@@ -131,7 +129,7 @@ pub mod pallet {
         /// How Starknet state root is calculated.
         type StateRoot: Get<Felt252Wrapper>;
         /// The hashing function to use.
-        type SystemHash: Hasher;
+        type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         /// The time idk what.
         type TimestampProvider: Time;
         /// A configuration for base priority of unsigned transactions.
@@ -879,7 +877,7 @@ impl<T: Config> Pallet<T> {
         let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
-            commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
+            commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
         let protocol_version = None;
         let extra_data = None;
 
@@ -897,7 +895,7 @@ impl<T: Config> Pallet<T> {
                 protocol_version,
                 extra_data,
             ),
-            // Safe because `transactions` is build form the `pending` bounded vec,
+            // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
             BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
         );
@@ -989,5 +987,10 @@ impl<T: Config> Pallet<T> {
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
+    }
+
+    /// Returns the hasher used by the runtime.
+    pub fn get_system_hash() -> T::SystemHash {
+        T::SystemHash::hasher()
     }
 }
