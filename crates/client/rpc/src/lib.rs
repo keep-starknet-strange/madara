@@ -11,7 +11,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class};
+use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::block::BlockTransactions;
@@ -517,6 +517,43 @@ where
         })
     }
 
+    /// Estimate the fee associated with transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `request` - starknet transaction request
+    /// * `block_id` - hash of the requested block, number (height), or tag
+    ///
+    /// # Returns
+    ///
+    /// * `fee_estimate` - fee estimate in gwei
+    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate> {
+        // TODO:
+        //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
+        //      - to ensure broadcasted query signatures aren't valid on mainnet
+
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let tx = to_tx(request)?;
+        let (actual_fee, gas_usage) = self
+            .client
+            .runtime_api()
+            .estimate_fee(substrate_block_hash, tx)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        Ok(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee })
+    }
+
     // Returns the details of a transaction by a given block id and index
     fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
@@ -585,11 +622,6 @@ where
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        todo!("Not implemented")
-    }
-
-    /// Estimate the fee for a given Starknet transaction
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate> {
         todo!("Not implemented")
     }
 

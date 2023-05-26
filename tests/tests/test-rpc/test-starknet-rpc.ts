@@ -29,7 +29,7 @@ import {
   SIGNER_PUBLIC,
   SALT,
 } from "../constants";
-import { toHex, rpcTransfer } from "../../util/utils";
+import { toHex, toBN, rpcTransfer } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -381,6 +381,11 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Adds an invocation transaction successfully", async function () {
+    const nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
     const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
@@ -392,7 +397,7 @@ describeDevMadara("Starknet RPC", (context) => {
       },
       undefined,
       {
-        nonce: "0",
+        nonce: nonce,
         maxFee: "123456",
       }
     );
@@ -475,5 +480,65 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(validateAndParseAddress(accountContractClass)).to.be.equal(
       ARGENT_PROXY_CLASS_HASH
     );
+  });
+
+  // TODO:
+  //    - once starknet-rs supports query tx version
+  //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estiamteAccountDeployFee
+  it("Estimates the fee of an invoke tx successfully", async function () {
+    const tx = {
+      contractAddress: ACCOUNT_CONTRACT,
+      calldata: [
+        TEST_CONTRACT,
+        "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+        "0x0",
+      ],
+    };
+
+    const nonce = await providerRPC.getNonceForAddress(
+      ACCOUNT_CONTRACT,
+      "latest"
+    );
+
+    const txDetails = {
+      nonce: nonce,
+      version: "0x1",
+    };
+
+    const fee_estimate = await providerRPC.getEstimateFee(
+      tx,
+      txDetails,
+      "latest"
+    );
+
+    expect(fee_estimate.overall_fee.cmp(toBN(0))).to.be.equal(1);
+    expect(fee_estimate.gas_consumed.cmp(toBN(0))).to.be.equal(1);
+  });
+
+  it("getEstimateFee throws error if contract does not exist", async function () {
+    const tx = {
+      contractAddress: ACCOUNT_CONTRACT,
+      calldata: [
+        "0x000000000000000000000000000000000000000000000000000000000000DEAD",
+        "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+        "0x0",
+      ],
+    };
+
+    const nonce = await providerRPC.getNonceForAddress(
+      ACCOUNT_CONTRACT,
+      "latest"
+    );
+
+    const txDetails = {
+      nonce: nonce,
+      version: "0x1",
+    };
+    try {
+      await providerRPC.getEstimateFee(tx, txDetails, "latest");
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("40: Contract error");
+    }
   });
 });

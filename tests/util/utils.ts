@@ -19,6 +19,11 @@ export function toHex(value: BigNumberish) {
   return number.toHex(number.toBN(value));
 }
 
+// Convert a string or number to a BN
+export function toBN(value: BigNumberish) {
+  return number.toBN(value);
+}
+
 export async function rpcTransfer(
   providerRPC: RpcProvider,
   nonce: { value: number },

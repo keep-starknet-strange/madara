@@ -41,14 +41,14 @@
 | starknet_getClassAt                      | :white_check_mark: |
 | starknet_getBlockTransactionCount        | :white_check_mark: |
 | starknet_call                            | :white_check_mark: |
-| starknet_estimateFee                     | :construction:     |
+| starknet_estimateFee                     | :white_check_mark: |
 | starknet_blockNumber                     | :white_check_mark: |
 | starknet_blockHashAndNumber              | :white_check_mark: |
 | starknet_chainId                         | :white_check_mark: |
 | starknet_pendingTransactions             | :construction:     |
 | starknet_syncing                         | :white_check_mark: |
 | starknet_getEvents                       | :construction:     |
-| starknet_getNonce                        | :construction:     |
+| starknet_getNonce                        | :white_check_mark: |
 | starknet_traceTransaction                | :construction:     |
 | starknet_simulateTransaction             | :construction:     |
 | starknet_traceBlockTransactions          | :construction:     |
