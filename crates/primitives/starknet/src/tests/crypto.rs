@@ -11,12 +11,12 @@ use crate::crypto::commitment::{
     calculate_invoke_tx_hash, calculate_transaction_commitment,
 };
 use crate::crypto::hash::pedersen::PedersenHasher;
-use crate::crypto::hash::{hash, HashType};
+use crate::crypto::hash::{hash, Hasher};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
-use crate::traits::hash::{CryptoHasher, Hasher};
+use crate::traits::hash::{CryptoHasherT, HasherT};
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
@@ -139,7 +139,7 @@ fn test_event_hash() {
 fn test_pedersen_hash() {
     let pedersen_hasher = PedersenHasher::default();
     let hash_result = pedersen_hasher.hash(&test_data());
-    let expected_hash = hash(HashType::Pedersen, &test_data());
+    let expected_hash = hash(Hasher::Pedersen(PedersenHasher::default()), &test_data());
 
     assert_eq!(hash_result, expected_hash);
 }
@@ -154,7 +154,7 @@ fn test_data() -> Vec<u8> {
 
 struct TestCryptoHasher;
 
-impl CryptoHasher for TestCryptoHasher {
+impl CryptoHasherT for TestCryptoHasher {
     fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
         a + b
     }

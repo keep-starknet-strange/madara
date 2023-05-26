@@ -5,20 +5,23 @@ use starknet_crypto::FieldElement;
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 
 /// A trait for hashing.
-pub trait Hasher {
+pub trait HasherT {
     /// Hashes the given data.
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
     fn hash(&self, data: &[u8]) -> Felt252Wrapper;
+}
 
+/// A trait for default hashing instance.
+pub trait DefaultHasher {
     /// Get Hasher default instance.
     fn hasher() -> Self;
 }
 
 /// A trait for hashing with pedersen.
-pub trait CryptoHasher {
+pub trait CryptoHasherT {
     /// Hashes the 2 felts sent.
     ///
     /// # Arguments

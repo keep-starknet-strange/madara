@@ -2,7 +2,7 @@ use scale_codec::Encode;
 use sp_core::U256;
 
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-use crate::traits::hash::Hasher;
+use crate::traits::hash::HasherT;
 
 #[derive(
     Clone,
@@ -76,8 +76,8 @@ impl Header {
 
     /// Compute the hash of the header.
     #[must_use]
-    pub fn hash<H: Hasher>(&self, hasher: H) -> Felt252Wrapper {
-        <H as Hasher>::hash(&hasher, &self.block_number.encode())
+    pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
+        <H as HasherT>::hash(&hasher, &self.block_number.encode())
     }
 }
 

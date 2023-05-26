@@ -25,6 +25,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
@@ -316,6 +317,10 @@ impl_runtime_apis! {
 
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
             Starknet::estimate_fee(transaction)
+        }
+
+        fn get_hasher() -> Hasher {
+            Starknet::get_system_hash().into()
         }
     }
 

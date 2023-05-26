@@ -15,8 +15,9 @@ use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_cla
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::block::BlockTransactions;
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::traits::hash::HasherT;
+use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -37,13 +38,14 @@ use starknet_core::types::{
 };
 
 /// A Starknet RPC server for Madara
-pub struct Starknet<B: BlockT, BE, C, P> {
+pub struct Starknet<B: BlockT, BE, C, P, H> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
     pool: Arc<P>,
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
+    hasher: Arc<H>,
     _marker: PhantomData<(B, BE)>,
 }
 
@@ -54,10 +56,11 @@ pub struct Starknet<B: BlockT, BE, C, P> {
 // * `overrides` - The OverrideHandle
 // * `sync_service` - The Substrate client sync service
 // * `starting_block` - The starting block for the syncing
+// * `hasher` - The hasher used by the runtime
 //
 // # Returns
 // * `Self` - The actual Starknet struct
-impl<B: BlockT, BE, C, P> Starknet<B, BE, C, P> {
+impl<B: BlockT, BE, C, P, H> Starknet<B, BE, C, P, H> {
     pub fn new(
         client: Arc<C>,
         backend: Arc<mc_db::Backend<B>>,
@@ -65,12 +68,13 @@ impl<B: BlockT, BE, C, P> Starknet<B, BE, C, P> {
         pool: Arc<P>,
         sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
+        hasher: Arc<H>,
     ) -> Self {
-        Self { client, backend, overrides, pool, sync_service, starting_block, _marker: PhantomData }
+        Self { client, backend, overrides, pool, sync_service, starting_block, hasher, _marker: PhantomData }
     }
 }
 
-impl<B, BE, C, P> Starknet<B, BE, C, P>
+impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -80,13 +84,14 @@ where
     }
 }
 
-impl<B, BE, C, P> Starknet<B, BE, C, P>
+impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
+    H: HasherT + ThreadSafeCopy,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
@@ -97,7 +102,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().hash(PedersenHasher::default()).into())
+        Ok(block.header().hash(*self.hasher).into())
     }
 
     /// Returns the substrate block corresponding to the given Starknet block id
@@ -127,7 +132,7 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<B, BE, C, P> StarknetRpcApiServer for Starknet<B, BE, C, P>
+impl<B, BE, C, P, H> StarknetRpcApiServer for Starknet<B, BE, C, P, H>
 where
     B: BlockT,
     P: TransactionPool<Block = B> + 'static,
@@ -135,6 +140,7 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    H: HasherT + ThreadSafeCopy,
 {
     fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
@@ -311,13 +317,13 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = starting_block?.header().hash(PedersenHasher::default()).0;
+                    let starting_block_hash = starting_block?.header().hash(*self.hasher).0;
 
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = current_block?.header().hash(PedersenHasher::default()).0;
+                    let current_block_hash = current_block?.header().hash(*self.hasher).0;
 
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = highest_block?.header().hash(PedersenHasher::default()).0;
+                    let highest_block_hash = highest_block?.header().hash(*self.hasher).0;
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(SyncStatusType::Syncing(SyncStatus {
@@ -380,7 +386,7 @@ where
             .unwrap_or_default();
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
-        let blockhash = block.header().hash(PedersenHasher::default());
+        let blockhash = block.header().hash(*self.hasher);
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
@@ -600,7 +606,7 @@ where
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
             status: BlockStatus::AcceptedOnL2,
-            block_hash: block.header().hash(PedersenHasher::default()).into(),
+            block_hash: block.header().hash(*self.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
             block_number: block.header().block_number.as_u64(),
             new_root: block.header().global_state_root.into(),
