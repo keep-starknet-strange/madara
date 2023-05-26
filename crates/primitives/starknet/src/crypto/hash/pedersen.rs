@@ -1,18 +1,8 @@
 //! Pedersen hash module.
 use starknet_crypto::{pedersen_hash, FieldElement};
 
+use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
-
-/// The Pedersen hash function.
-/// ### Arguments
-/// * `x`: The x coordinate
-/// * `y`: The y coordinate
-pub fn hash(data: &[u8]) -> Felt252Wrapper {
-    // For now we use the first 31 bytes of the data as the field element, to avoid any panics.
-    // TODO: have proper error handling and think about how to hash efficiently big chunks of data.
-    let field_element = FieldElement::from_byte_slice_be(&data[..31]).unwrap();
-    Felt252Wrapper(pedersen_hash(&FieldElement::ZERO, &field_element))
-}
 
 /// The Pedersen hasher.
 #[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
@@ -21,13 +11,16 @@ pub struct PedersenHasher;
 
 /// The Pedersen hasher implementation.
 impl HasherT for PedersenHasher {
-    /// Hashes the given data.
+    /// The Pedersen hash function.
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
     fn hash(&self, data: &[u8]) -> Felt252Wrapper {
-        hash(data)
+        // For now we use the first 31 bytes of the data as the field element, to avoid any panics.
+        // TODO: have proper error handling and think about how to hash efficiently big chunks of data.
+        let field_element = FieldElement::from_byte_slice_be(&data[..31]).unwrap();
+        Felt252Wrapper(pedersen_hash(&FieldElement::ZERO, &field_element))
     }
 }
 
