@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["BlockTransactions"],"mod":["serialize"],"struct":["Block","Header"],"type":["MaxTransactions"]};
+window.SIDEBAR_ITEMS = {"enum":["BlockTransactions"],"struct":["Block","Header"],"type":["MaxTransactions"]};
