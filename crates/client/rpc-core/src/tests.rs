@@ -1,4 +1,4 @@
-use starknet_providers::jsonrpc::models::BlockTag;
+use starknet_core::types::BlockTag;
 
 use super::*;
 #[test]

@@ -39,7 +39,6 @@ sc-network-sync = { workspace = true }
 # Starknet
 starknet_api = { workspace = true, default-features = false }
 blockifier = { workspace = true, default-features = false, features = ["testing"] }
-starknet-providers = { workspace = true }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 # Others

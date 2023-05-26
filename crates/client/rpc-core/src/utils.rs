@@ -10,17 +10,16 @@ use sp_runtime::BoundedVec;
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
-use starknet_core::types::FieldElement;
-use starknet_providers::jsonrpc::models::{
+use starknet_core::types::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    EntryPointsByType, ErrorCode, SierraContractClass,
+    EntryPointsByType, FieldElement, FlattenedSierraClass, StarknetError,
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
 // TODO: see https://github.com/keep-starknet-strange/madara/issues/363
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
     let entry_points_by_type = EntryPointsByType { constructor: vec![], external: vec![], l1_handler: vec![] };
-    let default = SierraContractClass {
+    let default = FlattenedSierraClass {
         sierra_program: vec![FieldElement::from_dec_str("0").unwrap()],
         contract_class_version: String::from("version"),
         entry_points_by_type,
@@ -50,7 +49,7 @@ pub(crate) fn _encode_base64(data: &[u8]) -> String {
 pub fn to_tx(request: BroadcastedTransaction) -> Result<Transaction> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.into()),
-        BroadcastedTransaction::Declare(_) => Err(ErrorCode::FailedToReceiveTransaction.into()), /* TODO: add support once #341 is supported */
+        BroadcastedTransaction::Declare(_) => Err(StarknetError::FailedToReceiveTransaction.into()), /* TODO: add support once #341 is supported */
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
             to_deploy_account_tx(deploy_account_tx).map(|inner| inner.into())
         }
@@ -59,7 +58,7 @@ pub fn to_tx(request: BroadcastedTransaction) -> Result<Transaction> {
 
 pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction> {
     match tx {
-        BroadcastedInvokeTransaction::V0(_) => Err(ErrorCode::FailedToReceiveTransaction.into()),
+        BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
         BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
             version: 1_u8,
             signature: BoundedVec::try_from(
@@ -79,10 +78,6 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
 }
 
 pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction> {
-    let version = tx.version;
-    let version: u8 =
-        version.try_into().map_err(|e| anyhow!("failed to convert version '{}' to u8: {e}", tx.version))?;
-
     let contract_address_salt = tx.contract_address_salt.to_bytes_be();
 
     let account_class_hash = tx.class_hash;
@@ -121,7 +116,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
     let max_fee = U256::from(tx.max_fee.to_bytes_be());
 
     Ok(DeployAccountTransaction {
-        version,
+        version: 1_u8,
         sender_address,
         calldata,
         salt: U256::from(contract_address_salt),
