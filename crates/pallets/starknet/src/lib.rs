@@ -877,10 +877,9 @@ impl<T: Config> Pallet<T> {
 
         // TODO: need more experienced rust dev here to understand
         // what is the correct way of doing the next two clones.
-        let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(tx, _)| tx.clone()).collect();
+        let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(tx, _)| tx).collect();
 
-        let transactions_receipts: Vec<(Transaction, TransactionReceiptWrapper)> =
-            pending.clone().into_iter().collect();
+        let transactions_receipts: Vec<(Transaction, TransactionReceiptWrapper)> = pending.into_iter().collect();
 
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =

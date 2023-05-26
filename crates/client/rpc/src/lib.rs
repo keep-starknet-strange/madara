@@ -700,12 +700,12 @@ where
                     })?);
                 }
 
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+                Err(StarknetRpcApiError::TxnHashNotFound.into())
             }
             BlockTransactions::Hashes(_hashes) => {
                 // TODO: Here what can I do? I don't have all the info,
                 // so what's the expected result, TxnNotFount? Error?
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+                Err(StarknetRpcApiError::TxnHashNotFound.into())
             }
         }
     }
@@ -750,37 +750,14 @@ where
                     }
 
                     return Ok(receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
-
-                    // match MaybePendingTransactionReceipt::try_from(receipt.clone()) {
-                    //     Ok(r) => {
-                    //         r.status = TransactionStatus::AcceptedOnL2;
-                    //         return Ok(r);
-                    //     },
-                    //     Err(e) => {
-                    //         error!("{:?}", e);
-                    //         return Err(StarknetRpcApiError::InternalServerError.into());
-                    //     }
-                    // };
-                    // // .map_err(|e| {
-                    // //     error!("{:?}", e);
-                    // //     StarknetRpcApiError::InternalServerError
-                    // // })?;
-
-                    // // TODO: how to know if it's accepted on L1?
-                    // //       perhaps having a local db mapping of blocks
-                    // //       accepting on L1 can help as we know the block hash/number
-                    // //       at this point.
-                    // receipt.status = TransactionStatus::AcceptedOnL2;
-
-                    // return Ok(receipt);
                 }
 
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+                Err(StarknetRpcApiError::TxnHashNotFound.into())
             }
             BlockTransactions::Hashes(_hashes) => {
                 // TODO: Here what can I do? I don't have all the info,
                 // so what's the expected result, TxnNotFount? Error?
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+                Err(StarknetRpcApiError::TxnHashNotFound.into())
             }
         }
     }
