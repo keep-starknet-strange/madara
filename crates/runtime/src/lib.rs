@@ -322,6 +322,13 @@ impl_runtime_apis! {
         fn get_hasher() -> Hasher {
             Starknet::get_system_hash().into()
         }
+
+		fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>{
+			xts.into_iter().filter_map(|xt| match xt.function {
+				RuntimeCall::Starknet( invoke { transaction }) => Some(transaction),
+				_ => None
+			}).collect::<Vec<Transaction>>()
+		}
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {

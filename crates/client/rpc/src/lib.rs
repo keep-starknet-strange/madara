@@ -632,7 +632,17 @@ where
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
-        todo!("Not implemented")
+	    let substrate_block_hash = self.client.info().best_hash;
+
+		let mut transactions: Vec<<B as BlockT>::Extrinsic> = Vec::new();
+
+		transactions.extend(
+		self.transaction_pool.ready().map(|tx|  tx.data().clone()).collect::<Vec<<B as BlockT>::Extrinsic>>());
+
+
+
+        let api = self.client.runtime_api();
+        api.extrinsic_filter(substrate_block_hash, transactions)
     }
 
     /// Returns all events matching the given filter
