@@ -6,3 +6,9 @@ coverage:
     project:
       default:
         threshold: 0%
+
+ignore:
+  - ".github"
+  - "docs"
+  - "examples"
+  - "README.md"
