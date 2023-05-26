@@ -267,6 +267,10 @@ blockchain, even without connecting it to Polkadot. This is referred to as
 [Substrate and Polkadot](
 https://medium.com/polkadot-network/a-brief-summary-of-everything-substrate-and-polkadot-f1f21071499d)
 
+For a more practical learning experience, these [Substrate
+Tutorials](https://github.com/rusty-crewmates/substrate-tutorials) would be a
+great place to start.
+
 ## Diving into Madara <a name="madara-dive"/>
 
 Now that you have a better understanding of the context, what is Madara?
