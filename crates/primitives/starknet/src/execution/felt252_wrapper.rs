@@ -109,12 +109,34 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
     }
 }
 
-/// [`Felt252Wrapper`] from u128.
-impl From<u128> for Felt252Wrapper {
-    fn from(value: u128) -> Self {
-        Felt252Wrapper::try_from(U256::from(value)).unwrap()
-    }
+macro_rules! impl_from_primitive {
+    ($($t:ty),*) => {
+        $(
+            impl From<$t> for Felt252Wrapper {
+                fn from(value: $t) -> Self {
+                    Felt252Wrapper::try_from(U256::from(value)).unwrap()
+                }
+            }
+        )*
+    };
 }
+
+impl_from_primitive!(u8, u16, u32, u64, u128);
+
+macro_rules! impl_try_into_primitive {
+    ($($t:ty),*) => {
+        $(
+            impl TryFrom<Felt252Wrapper> for $t {
+                type Error = Felt252WrapperError;
+                fn try_from(value: Felt252Wrapper) -> Result<Self, Self::Error> {
+                    <$t>::try_from(value.0).map_err(|_| Felt252WrapperError::ValueTooLarge)
+                }
+            }
+        )*
+    };
+}
+
+impl_try_into_primitive!(u8, u16, u32, u64);
 
 /// [`Felt252Wrapper`] to [`U256`].
 impl From<Felt252Wrapper> for U256 {
@@ -252,6 +274,8 @@ pub enum Felt252WrapperError {
     InvalidCharacter,
     /// Value is too large for FieldElement (felt252).
     OutOfRange,
+    /// Value is too large to fit into target type.
+    ValueTooLarge,
 }
 
 #[cfg(feature = "std")]
@@ -266,6 +290,7 @@ impl From<Felt252WrapperError> for Cow<'static, str> {
             Felt252WrapperError::InvalidCharacter => Cow::Borrowed("invalid character"),
             Felt252WrapperError::OutOfRange => Cow::Borrowed("number out of range"),
             Felt252WrapperError::InvalidLength => Cow::Borrowed("invalid length"),
+            Felt252WrapperError::ValueTooLarge => Cow::Borrowed("felt252 value too large"),
         }
     }
 }
@@ -277,6 +302,7 @@ impl From<Felt252WrapperError> for String {
             Felt252WrapperError::InvalidCharacter => String::from("invalid character"),
             Felt252WrapperError::OutOfRange => String::from("number out of range"),
             Felt252WrapperError::InvalidLength => String::from("invalid length"),
+            Felt252WrapperError::ValueTooLarge => String::from("felt252 value too large"),
         }
     }
 }
@@ -288,6 +314,7 @@ impl core::fmt::Display for Felt252WrapperError {
             Self::InvalidCharacter => write!(f, "invalid character"),
             Self::OutOfRange => write!(f, "number out of range"),
             Self::InvalidLength => write!(f, "invalid length"),
+            Self::ValueTooLarge => write!(f, "felt252 value too large"),
         }
     }
 }
@@ -396,5 +423,38 @@ mod felt252_wrapper_tests {
         let encoded = input.encode();
         let decoded = Vec::<Felt252Wrapper>::decode(&mut &encoded[..]);
         assert_eq!(decoded, Ok(input));
+    }
+
+    #[test]
+    fn felt252_from_primitives() {
+        let felt_u8 = Felt252Wrapper::from(1u8);
+        assert_eq!(felt_u8, Felt252Wrapper::from_dec_str("1").unwrap());
+
+        let felt_u16 = Felt252Wrapper::from(256u16);
+        assert_eq!(felt_u16, Felt252Wrapper::from_dec_str("256").unwrap());
+
+        let felt_u32 = Felt252Wrapper::from(65_536u32);
+        assert_eq!(felt_u32, Felt252Wrapper::from_dec_str("65536").unwrap());
+
+        let felt_u64 = Felt252Wrapper::from(4_294_967_296u64);
+        assert_eq!(felt_u64, Felt252Wrapper::from_dec_str("4294967296").unwrap());
+
+        let felt_u128 = Felt252Wrapper::from(18_446_744_073_709_551_616u128);
+        assert_eq!(felt_u128, Felt252Wrapper::from_dec_str("18446744073709551616").unwrap());
+    }
+
+    #[test]
+    fn primitives_try_from_felt252() {
+        let felt_u8 = Felt252Wrapper::from(1u8);
+        assert_eq!(TryInto::<u8>::try_into(felt_u8).unwrap(), 1u8);
+
+        let felt_u16 = Felt252Wrapper::from(256u16);
+        assert_eq!(TryInto::<u16>::try_into(felt_u16).unwrap(), 256u16);
+
+        let felt_u32 = Felt252Wrapper::from(65_536u32);
+        assert_eq!(TryInto::<u32>::try_into(felt_u32).unwrap(), 65_536u32);
+
+        let felt_u64 = Felt252Wrapper::from(4_294_967_296u64);
+        assert_eq!(TryInto::<u64>::try_into(felt_u64).unwrap(), 4_294_967_296u64);
     }
 }
