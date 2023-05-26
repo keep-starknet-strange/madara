@@ -4717,6 +4717,7 @@ dependencies = [
  "sp-std 5.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.42)",
  "starknet-crypto 0.5.1",
  "starknet-ff 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?rev=403f02e83fb3fd9f87654aae1f34c94ad480e9ef)",
+ "starknet-providers",
  "starknet_api",
  "thiserror-no-std",
  "zstd 0.12.3+zstd.1.5.2",
