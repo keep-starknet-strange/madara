@@ -40,8 +40,8 @@ sp_api::decl_runtime_apis! {
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
         /// Returns the hasher used by the runtime.
         fn get_hasher() -> Hasher;
-		/// Filters extrinsic transactions to return only Starknet transactions
-	    fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
+        /// Filters extrinsic transactions to return only Starknet transactions
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
     }
 
     pub trait ConvertTransactionRuntimeApi {

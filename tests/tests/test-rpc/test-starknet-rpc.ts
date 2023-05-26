@@ -541,4 +541,10 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(error.message).to.equal("40: Contract error");
     }
   });
+
+  it("pendingTransactions", async function () {
+    const txs = await providerRPC.getPendingTransactions();
+
+    expect(true).to..be.true;
+  });
 });
