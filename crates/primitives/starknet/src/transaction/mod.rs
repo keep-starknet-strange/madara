@@ -33,7 +33,6 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
@@ -458,8 +457,7 @@ impl Transaction {
         // Create the block context.
         // TODO: don't do that.
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
-            .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
+        let block_context = block.header().clone().into_block_context(fee_token_address);
 
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
