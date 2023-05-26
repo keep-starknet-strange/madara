@@ -581,6 +581,41 @@
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
 <a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -600,7 +635,7 @@
 <span class="kw">use </span>mp_starknet::block::BlockTransactions;
 <span class="kw">use </span>mp_starknet::crypto::hash::pedersen::PedersenHasher;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
-<span class="kw">use </span>mp_starknet::transaction::types::{Transaction <span class="kw">as </span>MPTransaction, TxType};
+<span class="kw">use </span>mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction <span class="kw">as </span>MPTransaction, TxType};
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
@@ -613,7 +648,7 @@
 <span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, Header <span class="kw">as </span>HeaderT};
 <span class="kw">use </span>starknet_core::types::FieldElement;
 <span class="kw">use </span>starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BroadcastedDeclareTransaction,
+    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatus,
@@ -1128,7 +1163,42 @@
 
     <span class="doccomment">/// Get block information with full transactions given the block id
     </span><span class="kw">fn </span>get_block_with_txs(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt; {
-        <span class="macro">todo!</span>(<span class="string">&quot;Not implemented&quot;</span>)
+        <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+            StarknetRpcApiError::BlockNotFound
+        })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>block = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        <span class="kw">let </span>transactions = <span class="kw">match </span>block.transactions() {
+            BlockTransactions::Full(transactions) =&gt; transactions.to_vec(),
+            BlockTransactions::Hashes(<span class="kw">_</span>) =&gt; <span class="macro">vec!</span>[],
+        };
+
+        <span class="kw">let </span>block_with_txs = BlockWithTxs {
+            <span class="comment">// TODO: Get status from block
+            </span>status: BlockStatus::AcceptedOnL2,
+            block_hash: block.header().hash(PedersenHasher::default()).into(),
+            parent_hash: block.header().parent_block_hash.into(),
+            block_number: block.header().block_number.as_u64(),
+            new_root: block.header().global_state_root.into(),
+            timestamp: block.header().block_timestamp,
+            sequencer_address: block.header().sequencer_address.into(),
+            transactions: transactions
+                .into_iter()
+                .map(Transaction::try_from)
+                .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, RPCTransactionConversionError&gt;&gt;()
+                .map_err(|e| {
+                    <span class="macro">error!</span>(<span class="string">&quot;{:#?}&quot;</span>, e);
+                    StarknetRpcApiError::InternalServerError
+                })<span class="question-mark">?</span>,
+        };
+
+        <span class="prelude-val">Ok</span>(MaybePendingBlockWithTxs::Block(block_with_txs))
     }
 
     <span class="doccomment">/// Get the information about the result of executing the requested block

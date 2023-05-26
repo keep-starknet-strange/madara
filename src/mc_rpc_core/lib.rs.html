@@ -202,6 +202,10 @@
     </span><span class="attr">#[method(name = <span class="string">&quot;getNonce&quot;</span>)]
     </span><span class="kw">fn </span>get_nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;FieldElement&gt;;
 
+    <span class="doccomment">/// Get block information with full transactions given the block id
+    </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxs&quot;</span>)]
+    </span><span class="kw">fn </span>get_block_with_txs(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;;
+
     <span class="doccomment">/// Get the chain id
     </span><span class="attr">#[method(name = <span class="string">&quot;chainId&quot;</span>)]
     </span><span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;String&gt;;
@@ -223,10 +227,6 @@
     <span class="doccomment">/// Get the details of a transaction by a given block id and index
     </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionByBlockIdAndIndex&quot;</span>)]
     </span><span class="kw">fn </span>get_transaction_by_block_id_and_index(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, index: usize) -&gt; RpcResult&lt;Transaction&gt;;
-
-    <span class="doccomment">/// Get block information with full transactions given the block id
-    </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxs&quot;</span>)]
-    </span><span class="kw">fn </span>get_block_with_txs(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;;
 
     <span class="doccomment">/// Get the information about the result of executing the requested block
     </span><span class="attr">#[method(name = <span class="string">&quot;getStateUpdate&quot;</span>)]

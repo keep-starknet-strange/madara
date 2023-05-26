@@ -43,6 +43,10 @@
         contract_address: FieldElement,
         block_id: BlockId
     ) -&gt; RpcResult&lt;FieldElement&gt;;
+<span class="item-spacer"></span>    fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
+        &amp;self,
+        block_id: BlockId
+    ) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.chain_id" class="fn">chain_id</a>(&amp;self) -&gt; RpcResult&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.add_invoke_transaction" class="fn">add_invoke_transaction</a>&lt;'life0, 'async_trait&gt;(
         &amp;'life0 self,
@@ -61,10 +65,6 @@
         block_id: BlockId,
         index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>
     ) -&gt; RpcResult&lt;Transaction&gt;;
-<span class="item-spacer"></span>    fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
-        &amp;self,
-        block_id: BlockId
-    ) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.get_state_update" class="fn">get_state_update</a>(&amp;self, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.estimate_fee" class="fn">estimate_fee</a>&lt;'life0, 'async_trait&gt;(
         &amp;'life0 self,
@@ -136,28 +136,28 @@ address</p>
     contract_address: FieldElement,
     block_id: BlockId
 ) -&gt; RpcResult&lt;FieldElement&gt;</h4></section></summary><div class="docblock"><p>Get the nonce associated with the given address at the given block</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.chain_id" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#78">source</a><h4 class="code-header">fn <a href="#tymethod.chain_id" class="fn">chain_id</a>(&amp;self) -&gt; RpcResult&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</h4></section></summary><div class="docblock"><p>Get the chain id</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_invoke_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#82-85">source</a><h4 class="code-header">fn <a href="#tymethod.add_invoke_transaction" class="fn">add_invoke_transaction</a>&lt;'life0, 'async_trait&gt;(
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_block_with_txs" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#78">source</a><h4 class="code-header">fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
+    &amp;self,
+    block_id: BlockId
+) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;</h4></section></summary><div class="docblock"><p>Get block information with full transactions given the block id</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.chain_id" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#82">source</a><h4 class="code-header">fn <a href="#tymethod.chain_id" class="fn">chain_id</a>(&amp;self) -&gt; RpcResult&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</h4></section></summary><div class="docblock"><p>Get the chain id</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_invoke_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#86-89">source</a><h4 class="code-header">fn <a href="#tymethod.add_invoke_transaction" class="fn">add_invoke_transaction</a>&lt;'life0, 'async_trait&gt;(
     &amp;'life0 self,
     invoke_transaction: BroadcastedInvokeTransaction
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;InvokeTransactionResult&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Add an Invoke Transaction to invoke a contract function</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_deploy_account_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#89-92">source</a><h4 class="code-header">fn <a href="#tymethod.add_deploy_account_transaction" class="fn">add_deploy_account_transaction</a>&lt;'life0, 'async_trait&gt;(
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_deploy_account_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#93-96">source</a><h4 class="code-header">fn <a href="#tymethod.add_deploy_account_transaction" class="fn">add_deploy_account_transaction</a>&lt;'life0, 'async_trait&gt;(
     &amp;'life0 self,
     deploy_account_transaction: BroadcastedDeployAccountTransaction
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = RpcResult&lt;DeployAccountTransactionResult&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<span class="where fmt-newline">where
     Self: 'async_trait,
     'life0: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Add a Deploy Account Transaction</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_transaction_by_block_id_and_index" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#96">source</a><h4 class="code-header">fn <a href="#tymethod.get_transaction_by_block_id_and_index" class="fn">get_transaction_by_block_id_and_index</a>(
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_transaction_by_block_id_and_index" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#100">source</a><h4 class="code-header">fn <a href="#tymethod.get_transaction_by_block_id_and_index" class="fn">get_transaction_by_block_id_and_index</a>(
     &amp;self,
     block_id: BlockId,
     index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>
 ) -&gt; RpcResult&lt;Transaction&gt;</h4></section></summary><div class="docblock"><p>Get the details of a transaction by a given block id and index</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_block_with_txs" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#100">source</a><h4 class="code-header">fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
-    &amp;self,
-    block_id: BlockId
-) -&gt; RpcResult&lt;MaybePendingBlockWithTxs&gt;</h4></section></summary><div class="docblock"><p>Get block information with full transactions given the block id</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_state_update" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#104">source</a><h4 class="code-header">fn <a href="#tymethod.get_state_update" class="fn">get_state_update</a>(&amp;self, block_id: BlockId) -&gt; RpcResult&lt;StateUpdate&gt;</h4></section></summary><div class="docblock"><p>Get the information about the result of executing the requested block</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.estimate_fee" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#108">source</a><h4 class="code-header">fn <a href="#tymethod.estimate_fee" class="fn">estimate_fee</a>&lt;'life0, 'async_trait&gt;(
     &amp;'life0 self,

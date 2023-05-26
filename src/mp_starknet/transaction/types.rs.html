@@ -602,6 +602,9 @@
 <a href="#602" id="602">602</a>
 <a href="#603" id="603">603</a>
 <a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 
@@ -1008,6 +1011,8 @@
     </span>InvalidCharacter,
     <span class="doccomment">/// Value is too large for FieldElement (felt252).
     </span>OutOfRange,
+    <span class="doccomment">/// Value is too large to fit into target type.
+    </span>ValueTooLarge,
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
@@ -1018,6 +1023,7 @@
             Felt252WrapperError::InvalidLength =&gt; <span class="self">Self</span>::InvalidLength,
             Felt252WrapperError::InvalidCharacter =&gt; <span class="self">Self</span>::InvalidCharacter,
             Felt252WrapperError::OutOfRange =&gt; <span class="self">Self</span>::OutOfRange,
+            Felt252WrapperError::ValueTooLarge =&gt; <span class="self">Self</span>::ValueTooLarge,
         }
     }
 }

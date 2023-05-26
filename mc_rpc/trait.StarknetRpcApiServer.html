@@ -46,6 +46,10 @@
         contract_address: FieldElement,
         block_id: BlockId
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;FieldElement, Error&gt;;
+<span class="item-spacer"></span>    fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
+        &amp;self,
+        block_id: BlockId
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;MaybePendingBlockWithTxs, Error&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.chain_id" class="fn">chain_id</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, Error&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.add_invoke_transaction" class="fn">add_invoke_transaction</a>&lt;'life0, 'async_trait&gt;(
         &amp;'life0 self,
@@ -64,10 +68,6 @@
         block_id: BlockId,
         index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Transaction, Error&gt;;
-<span class="item-spacer"></span>    fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
-        &amp;self,
-        block_id: BlockId
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;MaybePendingBlockWithTxs, Error&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.get_state_update" class="fn">get_state_update</a>(&amp;self, block_id: BlockId) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;StateUpdate, Error&gt;;
 <span class="item-spacer"></span>    fn <a href="#tymethod.estimate_fee" class="fn">estimate_fee</a>&lt;'life0, 'async_trait&gt;(
         &amp;'life0 self,
@@ -143,28 +143,28 @@ address</p>
     contract_address: FieldElement,
     block_id: BlockId
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;FieldElement, Error&gt;</h4></section></summary><div class="docblock"><p>Get the nonce associated with the given address at the given block</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.chain_id" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#78">source</a><h4 class="code-header">fn <a href="#tymethod.chain_id" class="fn">chain_id</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, Error&gt;</h4></section></summary><div class="docblock"><p>Get the chain id</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_invoke_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#82-85">source</a><h4 class="code-header">fn <a href="#tymethod.add_invoke_transaction" class="fn">add_invoke_transaction</a>&lt;'life0, 'async_trait&gt;(
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_block_with_txs" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#78">source</a><h4 class="code-header">fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
+    &amp;self,
+    block_id: BlockId
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;MaybePendingBlockWithTxs, Error&gt;</h4></section></summary><div class="docblock"><p>Get block information with full transactions given the block id</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.chain_id" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#82">source</a><h4 class="code-header">fn <a href="#tymethod.chain_id" class="fn">chain_id</a>(&amp;self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, Error&gt;</h4></section></summary><div class="docblock"><p>Get the chain id</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_invoke_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#86-89">source</a><h4 class="code-header">fn <a href="#tymethod.add_invoke_transaction" class="fn">add_invoke_transaction</a>&lt;'life0, 'async_trait&gt;(
     &amp;'life0 self,
     invoke_transaction: BroadcastedInvokeTransaction
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;InvokeTransactionResult, Error&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/alloc/struct.Global.html" title="struct alloc::alloc::Global">Global</a>&gt;&gt;<span class="where fmt-newline">where
     'life0: 'async_trait,
     Self: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Add an Invoke Transaction to invoke a contract function</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_deploy_account_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#89-92">source</a><h4 class="code-header">fn <a href="#tymethod.add_deploy_account_transaction" class="fn">add_deploy_account_transaction</a>&lt;'life0, 'async_trait&gt;(
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add_deploy_account_transaction" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#93-96">source</a><h4 class="code-header">fn <a href="#tymethod.add_deploy_account_transaction" class="fn">add_deploy_account_transaction</a>&lt;'life0, 'async_trait&gt;(
     &amp;'life0 self,
     deploy_account_transaction: BroadcastedDeployAccountTransaction
 ) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/nightly/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;DeployAccountTransactionResult, Error&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/alloc/struct.Global.html" title="struct alloc::alloc::Global">Global</a>&gt;&gt;<span class="where fmt-newline">where
     'life0: 'async_trait,
     Self: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Add a Deploy Account Transaction</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_transaction_by_block_id_and_index" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#96">source</a><h4 class="code-header">fn <a href="#tymethod.get_transaction_by_block_id_and_index" class="fn">get_transaction_by_block_id_and_index</a>(
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_transaction_by_block_id_and_index" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#100">source</a><h4 class="code-header">fn <a href="#tymethod.get_transaction_by_block_id_and_index" class="fn">get_transaction_by_block_id_and_index</a>(
     &amp;self,
     block_id: BlockId,
     index: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.usize.html">usize</a>
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;Transaction, Error&gt;</h4></section></summary><div class="docblock"><p>Get the details of a transaction by a given block id and index</p>
-</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_block_with_txs" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#100">source</a><h4 class="code-header">fn <a href="#tymethod.get_block_with_txs" class="fn">get_block_with_txs</a>(
-    &amp;self,
-    block_id: BlockId
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;MaybePendingBlockWithTxs, Error&gt;</h4></section></summary><div class="docblock"><p>Get block information with full transactions given the block id</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_state_update" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#104">source</a><h4 class="code-header">fn <a href="#tymethod.get_state_update" class="fn">get_state_update</a>(&amp;self, block_id: BlockId) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;StateUpdate, Error&gt;</h4></section></summary><div class="docblock"><p>Get the information about the result of executing the requested block</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="tymethod.estimate_fee" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#108">source</a><h4 class="code-header">fn <a href="#tymethod.estimate_fee" class="fn">estimate_fee</a>&lt;'life0, 'async_trait&gt;(
     &amp;'life0 self,
@@ -193,7 +193,7 @@ address</p>
     'life0: 'async_trait,
     Self: 'async_trait,</span></h4></section></summary><div class="docblock"><p>Submit a new transaction to be added to the chain</p>
 </div></details></div><h2 id="provided-methods" class="small-section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.into_rpc" class="method"><a class="srclink rightside" href="../src/mc_rpc_core/lib.rs.html#24">source</a><h4 class="code-header">fn <a href="#method.into_rpc" class="fn">into_rpc</a>(self) -&gt; RpcModule&lt;Self&gt;</h4></section></summary><div class="docblock"><p>Collects all the methods and subscriptions defined in the trait and adds them into a single <code>RpcModule</code>.</p>
-</div></details></div><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-StarknetRpcApiServer-for-Starknet%3CB,+BE,+C,+P%3E" class="impl"><a class="srclink rightside" href="../src/mc_rpc/lib.rs.html#131-583">source</a><a href="#impl-StarknetRpcApiServer-for-Starknet%3CB,+BE,+C,+P%3E" class="anchor">§</a><h3 class="code-header">impl&lt;B, BE, C, P&gt; <a class="trait" href="trait.StarknetRpcApiServer.html" title="trait mc_rpc::StarknetRpcApiServer">StarknetRpcApiServer</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;B, BE, C, P&gt;<span class="where fmt-newline">where
+</div></details></div><h2 id="implementors" class="small-section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-StarknetRpcApiServer-for-Starknet%3CB,+BE,+C,+P%3E" class="impl"><a class="srclink rightside" href="../src/mc_rpc/lib.rs.html#131-618">source</a><a href="#impl-StarknetRpcApiServer-for-Starknet%3CB,+BE,+C,+P%3E" class="anchor">§</a><h3 class="code-header">impl&lt;B, BE, C, P&gt; <a class="trait" href="trait.StarknetRpcApiServer.html" title="trait mc_rpc::StarknetRpcApiServer">StarknetRpcApiServer</a> for <a class="struct" href="struct.Starknet.html" title="struct mc_rpc::Starknet">Starknet</a>&lt;B, BE, C, P&gt;<span class="where fmt-newline">where
     B: BlockT,
     P: TransactionPool&lt;Block = B&gt; + 'static,
     BE: Backend&lt;B&gt; + 'static,
