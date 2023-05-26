@@ -206,11 +206,9 @@ where
     let nonce = FieldElement::from_bytes_be(&nonce.into()).unwrap();
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
-    // TODO: make it configurable
-    // get the currently configured runtime
 
-    let chain_id = get_chain_id(chain_id);
-
+    let chain_id = FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap();
+    
     let tx_hash = <T as CryptoHasher>::compute_hash_on_elements(&vec![
         tx_prefix,
         version,
@@ -224,11 +222,6 @@ where
 
     tx_hash.into()
     //    H256::from_slice(&tx_hash.to_bytes_be())
-}
-
-/// Get the chain id as a field element.
-fn get_chain_id(chain_id: &str) -> FieldElement {
-    FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap()
 }
 
 /// Calculate the hash of an event.
