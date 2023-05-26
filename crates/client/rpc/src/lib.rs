@@ -17,7 +17,7 @@ use mc_storage::OverrideHandle;
 use mp_starknet::block::BlockTransactions;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::types::{Transaction as MPTransaction, TxType};
+use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -30,7 +30,7 @@ use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::FieldElement;
 use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BroadcastedDeclareTransaction,
+    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatus,
@@ -555,7 +555,7 @@ where
     }
 
     // Returns the details of a transaction by a given block id and index
-    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<MPTransaction> {
+    fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -568,11 +568,13 @@ where
             .unwrap_or_default();
 
         let block_transactions = block.transactions();
-        let transaction;
         match block_transactions {
             BlockTransactions::Full(transactions) => {
-                transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
-                Ok(transaction.clone())
+                let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
+                    error!("{:?}", e);
+                    StarknetRpcApiError::InternalServerError
+                })?)
             }
             BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
         }
@@ -580,7 +582,42 @@ where
 
     /// Get block information with full transactions given the block id
     fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs> {
-        todo!("Not implemented")
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let transactions = match block.transactions() {
+            BlockTransactions::Full(transactions) => transactions.to_vec(),
+            BlockTransactions::Hashes(_) => vec![],
+        };
+
+        let block_with_txs = BlockWithTxs {
+            // TODO: Get status from block
+            status: BlockStatus::AcceptedOnL2,
+            block_hash: block.header().hash(PedersenHasher::default()).into(),
+            parent_hash: block.header().parent_block_hash.into(),
+            block_number: block.header().block_number.as_u64(),
+            new_root: block.header().global_state_root.into(),
+            timestamp: block.header().block_timestamp,
+            sequencer_address: block.header().sequencer_address.into(),
+            transactions: transactions
+                .into_iter()
+                .map(Transaction::try_from)
+                .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
+                .map_err(|e| {
+                    error!("{:#?}", e);
+                    StarknetRpcApiError::InternalServerError
+                })?,
+        };
+
+        Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
     }
 
     /// Get the information about the result of executing the requested block

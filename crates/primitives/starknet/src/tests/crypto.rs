@@ -18,7 +18,7 @@ use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::{CryptoHasher, Hasher};
 use crate::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
 
 #[test]
@@ -79,6 +79,7 @@ fn test_invoke_tx_hash() {
 fn test_merkle_tree() {
     let txs = vec![
         Transaction {
+            tx_type: TxType::Invoke,
             version: 0_u8,
             hash: Felt252Wrapper::from(6_u128),
             signature: bounded_vec![
@@ -94,6 +95,7 @@ fn test_merkle_tree() {
             max_fee: U256::from(u128::MAX),
         },
         Transaction {
+            tx_type: TxType::Invoke,
             version: 0_u8,
             hash: Felt252Wrapper::from(28_u128),
             signature: bounded_vec![Felt252Wrapper::from(40_u128)],

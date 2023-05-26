@@ -156,7 +156,7 @@ export function describeDevMadara(
             ? transactions
             : [transactions];
         for await (const call of txs) {
-          if (typeof call === "object") {
+          if (call.transaction_hash) {
             // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
