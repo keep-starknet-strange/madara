@@ -454,9 +454,6 @@ impl Transaction {
         contract_class: Option<ContractClass>,
         fee_token_address: ContractAddressWrapper,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
-        // Create the block context.
-        // TODO: don't do that.
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
         let block_context = block.header().clone().into_block_context(fee_token_address);
 
         // Initialize the execution resources.
