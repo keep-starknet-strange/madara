@@ -155,8 +155,16 @@ export function describeDevMadara(
             : Array.isArray(transactions)
             ? transactions
             : [transactions];
+
         for await (const call of txs) {
           if (call.transaction_hash) {
+            // Temporary solution to get the transaction hash back
+            // after awaiting the transaction.
+            results.push({
+              type: "starknet",
+              hash: call.transaction_hash,
+            });
+
             // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
