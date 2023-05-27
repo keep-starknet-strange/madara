@@ -4,14 +4,19 @@ use madara_runtime::{
     SystemConfig, WASM_BINARY,
 };
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_state_machine::BasicExternalities;
+use starknet_core::types::FieldElement;
+use starknet_core::utils::get_storage_var_address;
+
+use super::constants::*;
 
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 
@@ -171,6 +176,27 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
     serde_json::from_slice(contract_content).unwrap()
 }
+
+/// Returns the storage key for a given storage name, keys and offset.
+/// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
+/// starknet contract for storage_name(key_1, key_2, ..., key_n).
+/// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
+pub fn get_storage_key(
+    address: &Felt252Wrapper,
+    storage_name: &str,
+    keys: &[Felt252Wrapper],
+    storage_key_offset: u64,
+) -> ContractStorageKeyWrapper {
+    let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
+    let mut storage_key = get_storage_var_address(
+        storage_name,
+        keys.iter().map(|x| FieldElement::from(*x)).collect::<Vec<_>>().as_slice(),
+    )
+    .unwrap();
+    storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
+    (*address, storage_key.into())
+}
+
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -190,36 +216,33 @@ fn testnet_genesis(
         get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
-    let contract_address = Felt252Wrapper::from_hex_be("0x1").unwrap();
+    let contract_address = Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap();
 
-    let class_hash =
-        Felt252Wrapper::from_hex_be("0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f").unwrap();
+    let class_hash = Felt252Wrapper::from_hex_be(CLASS_HASH).unwrap();
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_account_address = Felt252Wrapper::from_hex_be("0x2").unwrap();
+    let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
 
-    let argent_account_class_hash =
-        Felt252Wrapper::from_hex_be("0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d").unwrap();
+    let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
 
-    let argent_proxy_class_hash =
-        Felt252Wrapper::from_hex_be("0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9").unwrap();
+    let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     // TEST CONTRACT
-    let other_contract_address = Felt252Wrapper::from_hex_be("0x1111").unwrap();
+    let other_contract_address = Felt252Wrapper::from_hex_be(OTHER_CONTRACT_ADDRESS).unwrap();
 
-    let other_class_hash = Felt252Wrapper::from_hex_be("0x1000").unwrap();
+    let other_class_hash = Felt252Wrapper::from_hex_be(OTHER_CLASS_HASH).unwrap();
 
     // Fee token
-    let fee_token_address =
-        Felt252Wrapper::from_hex_be("0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01").unwrap();
+    let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
-    let fee_token_class_hash = Felt252Wrapper::from_hex_be("0x20000").unwrap();
+    let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let token_contract_address =
-        Felt252Wrapper::from_hex_be("0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00").unwrap();
+    let token_contract_address = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_ADDRESS).unwrap();
 
-    let token_class_hash = Felt252Wrapper::from_hex_be("0x10000").unwrap();
+    let token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CLASS_HASH).unwrap();
+
+    let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
 
     GenesisConfig {
         system: SystemConfig {
@@ -262,88 +285,31 @@ fn testnet_genesis(
             ],
             storage: vec![
                 (
-                    (
-                        fee_token_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
-                        // ERC20_balances(0x01).low
-                        Felt252Wrapper::from_hex_be(
-                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[contract_address], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        fee_token_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
-                        // for ERC20_balances(0x01).high
-                        Felt252Wrapper::from_hex_be(
-                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[contract_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        fee_token_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x02) which is the key in the starknet contract
-                        // for ERC20_balances(0x02).low
-                        Felt252Wrapper::from_hex_be(
-                            "0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[argent_account_address], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        token_contract_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) which is the key in the starknet contract for
-                        // ERC20_balances(0x01).low
-                        Felt252Wrapper::from_hex_be(
-                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[contract_address], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        token_contract_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"), 0x01) + 1 which is the key in the starknet contract
-                        // for ERC20_balances(0x01).high
-                        Felt252Wrapper::from_hex_be(
-                            "0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[contract_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        fee_token_address,
-                        // pedersen(sn_keccak(b"ERC20_balances"),
-                        // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
-                        // starknet contract for
-                        // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
-                        Felt252Wrapper::from_hex_be(
-                            "0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[public_key], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        argent_account_address,
-                        // pedersen(sn_keccak(b"_signer"))
-                        Felt252Wrapper::from_hex_be(
-                            "0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05",
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(&argent_account_address, "_signer", &[], 0),
                     Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
                 ),
             ],
