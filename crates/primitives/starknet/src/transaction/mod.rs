@@ -282,11 +282,11 @@ impl Transaction {
         hash: Felt252Wrapper,
         signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
         sender_address: ContractAddressWrapper,
-        nonce: U256,
+        nonce: Felt252Wrapper,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
         contract_address_salt: Option<U256>,
-        max_fee: U256,
+        max_fee: Felt252Wrapper,
     ) -> Self {
         Self {
             tx_type,
@@ -686,12 +686,12 @@ impl Default for Transaction {
             version: 1_u8,
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
-            nonce: U256::default(),
+            nonce: Felt252Wrapper::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u128::MAX),
         }
     }
 }

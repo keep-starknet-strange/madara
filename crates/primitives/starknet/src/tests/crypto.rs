@@ -31,11 +31,11 @@ fn test_deploy_account_tx_hash() {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
         calldata: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE),
-        nonce: U256::zero(),
+        nonce: Felt252Wrapper::ZERO,
         salt: U256::zero(),
         signature: bounded_vec!(),
         account_class_hash: Felt252Wrapper::THREE,
-        max_fee: U256::one(),
+        max_fee: Felt252Wrapper::ONE,
     };
     assert_eq!(calculate_deploy_account_tx_hash(transaction), expected_tx_hash);
 }
@@ -49,9 +49,9 @@ fn test_declare_tx_hash() {
     let transaction = DeclareTransaction {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
-        nonce: U256::zero(),
+        nonce: Felt252Wrapper::ZERO,
         signature: bounded_vec!(),
-        max_fee: U256::one(),
+        max_fee: Felt252Wrapper::ONE,
         compiled_class_hash: Felt252Wrapper::THREE,
         contract_class: ContractClassWrapper::default(),
     };
@@ -68,9 +68,9 @@ fn test_invoke_tx_hash() {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
         calldata: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE),
-        nonce: U256::zero(),
+        nonce: Felt252Wrapper::ZERO,
         signature: bounded_vec!(),
-        max_fee: U256::one(),
+        max_fee: Felt252Wrapper::ONE,
     };
     assert_eq!(calculate_invoke_tx_hash(transaction), expected_tx_hash);
 }
@@ -88,11 +88,11 @@ fn test_merkle_tree() {
                 Felt252Wrapper::from(30_u128),
             ],
             sender_address: Felt252Wrapper::ZERO,
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u128::MAX),
         },
         Transaction {
             tx_type: TxType::Invoke,
@@ -100,11 +100,11 @@ fn test_merkle_tree() {
             hash: Felt252Wrapper::from(28_u128),
             signature: bounded_vec![Felt252Wrapper::from(40_u128)],
             sender_address: Felt252Wrapper::try_from(&[1; 32]).unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u128::MAX),
         },
     ];
     let tx_com = calculate_transaction_commitment::<PedersenHasher>(&txs);
