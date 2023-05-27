@@ -2,7 +2,7 @@ import "@keep-starknet-strange/madara-api-augment";
 import { type ApiPromise } from "@polkadot/api";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
-import { stringify, u8aWrapBytes, numberToU8a } from "@polkadot/util";
+import { stringify, u8aWrapBytes } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 import { numberToU832Bytes } from "./utils";
 export async function sendTransactionNoValidation(

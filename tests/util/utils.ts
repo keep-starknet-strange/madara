@@ -27,7 +27,7 @@ export function toBN(value: BigNumberish) {
 
 // Convert a BigNumberish to a 32 byte uint array
 export function numberToU832Bytes(value: number) {
-  return numberToU8a(value,256)
+  return numberToU8a(value, 256);
 }
 
 export async function rpcTransfer(

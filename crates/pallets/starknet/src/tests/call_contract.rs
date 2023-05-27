@@ -1,7 +1,7 @@
 use frame_support::{assert_ok, bounded_vec};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::InvokeTransaction;
-use sp_core::{ConstU32};
+use sp_core::ConstU32;
 use sp_runtime::BoundedVec;
 
 use super::constants::TOKEN_CONTRACT_CLASS_HASH;

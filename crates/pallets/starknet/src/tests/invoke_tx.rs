@@ -8,7 +8,7 @@ use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
-use sp_core::{H256};
+use sp_core::H256;
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
