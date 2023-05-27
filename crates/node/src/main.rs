@@ -9,6 +9,7 @@ mod cli;
 mod command;
 mod rpc;
 mod starknet;
+mod constants;
 
 fn main() -> sc_cli::Result<()> {
     command::run()

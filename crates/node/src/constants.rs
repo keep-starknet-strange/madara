@@ -1,0 +1,12 @@
+pub const ARGENT_ACCOUNT_ADDRESS: &str = "0x2";
+pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d";
+pub const ARGENT_PROXY_CLASS_HASH: &str = "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9";
+pub const CONTRACT_ADDRESS: &str = "0x1";
+pub const CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
+pub const FEE_TOKEN_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01";
+pub const FEE_TOKEN_CLASS_HASH: &str = "0x20000";
+pub const OTHER_CONTRACT_ADDRESS: &str = "0x1111";
+pub const OTHER_CLASS_HASH: &str = "0x1000";
+pub const PUBLIC_KEY: &str = "0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d";
+pub const TOKEN_CONTRACT_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
+pub const TOKEN_CLASS_HASH: &str = "0x10000";
