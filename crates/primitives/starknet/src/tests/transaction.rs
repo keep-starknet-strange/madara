@@ -175,7 +175,7 @@ fn verify_tx_version_passes_for_valid_version() {
             Felt252Wrapper::from(30_u128)
         ],
         sender_address: Felt252Wrapper::ZERO,
-        nonce: U256::zero(),
+        nonce: Felt252Wrapper::ZERO,
         ..Transaction::default()
     };
 
@@ -193,7 +193,7 @@ fn verify_tx_version_fails_for_invalid_version() {
             Felt252Wrapper::from(30_u128)
         ],
         sender_address: Felt252Wrapper::ZERO,
-        nonce: U256::zero(),
+        nonce: Felt252Wrapper::ZERO,
         ..Transaction::default()
     };
 

@@ -8,7 +8,7 @@ use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
-use sp_core::{H256, U256};
+use sp_core::{H256};
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
@@ -32,8 +32,8 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             version: 1_u8,
             sender_address: contract_address,
             calldata: bounded_vec!(),
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
 

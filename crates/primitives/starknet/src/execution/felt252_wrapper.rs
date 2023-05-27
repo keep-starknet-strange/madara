@@ -65,6 +65,7 @@ impl Felt252Wrapper {
         let fe = FieldElement::from_dec_str(value)?;
         Ok(Self(fe))
     }
+
 }
 
 impl Default for Felt252Wrapper {
@@ -214,6 +215,7 @@ impl From<Felt252Wrapper> for StarkFelt {
         StarkFelt::new(buf).unwrap()
     }
 }
+
 
 /// SCALE trait.
 impl Encode for Felt252Wrapper {

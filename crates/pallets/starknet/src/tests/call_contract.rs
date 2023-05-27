@@ -1,7 +1,7 @@
 use frame_support::{assert_ok, bounded_vec};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::InvokeTransaction;
-use sp_core::{ConstU32, U256};
+use sp_core::{ConstU32};
 use sp_runtime::BoundedVec;
 
 use super::constants::TOKEN_CONTRACT_CLASS_HASH;
@@ -39,9 +39,9 @@ fn given_call_contract_call_works() {
             version: 1,
             sender_address: sender_account,
             signature: bounded_vec!(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
             calldata: constructor_calldata,
-            max_fee: U256::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u128::MAX),
         };
 
         assert_ok!(Starknet::invoke(origin, deploy_transaction));

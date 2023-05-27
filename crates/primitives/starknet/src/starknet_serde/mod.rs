@@ -214,7 +214,7 @@ impl TryFrom<DeserializeTransaction> for Transaction {
             .map_err(DeserializeTransactionError::InvalidSenderAddress)?;
 
         // Convert nonce to U256
-        let nonce = U256::from(d.nonce);
+        let nonce = Felt252Wrapper::try_from( U256::from(d.nonce)).unwrap();
 
         // Convert call_entrypoint to CallEntryPointWrapper
         let call_entrypoint = CallEntryPointWrapper::try_from(d.call_entrypoint)
