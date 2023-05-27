@@ -543,8 +543,37 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("pendingTransactions", async function () {
-    const txs = await providerRPC.getPendingTransactions();
+    await rpcTransfer(
+      providerRPC,
+      ARGENT_CONTRACT_NONCE,
+      ARGENT_CONTRACT_ADDRESS,
+      MINT_AMOUNT
+    );
 
-    expect(true).to..be.true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const txs: { type?: any; sender_address?: string; calldata?: string[] }[] =
+      await providerRPC.getPendingTransactions();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tx: { type?: any; sender_address?: string; calldata?: string[] } =
+      txs[0];
+
+    expect(txs.length).equals(1);
+
+    expect(tx.type).to.be.equal("INVOKE");
+    expect(tx.sender_address).to.be.equal(toHex(ARGENT_CONTRACT_ADDRESS));
+    expect(tx.calldata).to.deep.equal(
+      [
+        1,
+        FEE_TOKEN_ADDRESS,
+        hash.getSelectorFromName("transfer"),
+        0,
+        3,
+        3,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT,
+        0,
+      ].map(toHex)
+    );
   });
 });

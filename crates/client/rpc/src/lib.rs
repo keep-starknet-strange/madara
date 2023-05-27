@@ -645,14 +645,13 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let transactions = mp_transactions
-            .into_iter()
-            .map(|tx| Transaction::try_from(tx))
-            .collect::<Result<Vec<Transaction>, _>>()
-            .map_err(|e| {
-                error!("{:#?}", e);
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let transactions =
+            mp_transactions.into_iter().map(Transaction::try_from).collect::<Result<Vec<Transaction>, _>>().map_err(
+                |e| {
+                    error!("{:#?}", e);
+                    StarknetRpcApiError::InternalServerError
+                },
+            )?;
 
         Ok(transactions)
     }
