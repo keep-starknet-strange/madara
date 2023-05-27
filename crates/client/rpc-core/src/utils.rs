@@ -145,7 +145,7 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
 
             // Program is send as gzip + base64 encoded, we need to decompress it
             // Decode the base64 encoded string
-            let compressed_bytes = base64::decode(&declare_tx_v1.contract_class.program).unwrap();
+            let compressed_bytes = general_purpose::STANDARD.decode(&declare_tx_v1.contract_class.program).unwrap();
 
             // Create a GzipDecoder to decompress the bytes
             let mut gz = GzDecoder::new(&compressed_bytes[..]);

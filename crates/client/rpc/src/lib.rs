@@ -11,7 +11,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
+use mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::block::BlockTransactions;
@@ -684,6 +684,6 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: todo!() })
+        Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
     }
 }
