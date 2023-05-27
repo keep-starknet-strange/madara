@@ -4,6 +4,7 @@ use std::vec;
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
+use cairo_vm::types::program::Program;
 use flate2::read::GzDecoder;
 use mp_starknet::execution::types::{
     ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
@@ -143,16 +144,17 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
                 .try_into()
                 .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
-            // Program is send as gzip + base64 encoded, we need to decompress it
-            // Decode the base64 encoded string
-            let compressed_bytes = general_purpose::STANDARD.decode(&declare_tx_v1.contract_class.program).unwrap();
-
             // Create a GzipDecoder to decompress the bytes
-            let mut gz = GzDecoder::new(&compressed_bytes[..]);
+            let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
 
             // Read the decompressed bytes into a Vec<u8>
             let mut decompressed_bytes = Vec::new();
-            std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).unwrap();
+            std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
+                .map_err(|_| anyhow!("Failed to decompress the contract class program"))?;
+
+            // Deserialize it then
+            let program: Program = Program::from_bytes(&decompressed_bytes, None)
+                .map_err(|_| anyhow!("Failed to deserialize the contract class program"))?;
 
             Ok(DeclareTransaction {
                 version: 1_u8,
@@ -161,7 +163,7 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
                 max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
                 signature,
                 contract_class: ContractClassWrapper {
-                    program: serde_json::from_slice(&decompressed_bytes).unwrap(),
+                    program: program.try_into().map_err(|_| anyhow!("Failed to convert program to program wrapper"))?,
                     entry_points_by_type: BoundedBTreeMap::try_from(_to_btree_map_entrypoints(
                         declare_tx_v1.contract_class.entry_points_by_type.clone(),
                     ))
