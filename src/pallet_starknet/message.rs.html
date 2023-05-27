@@ -147,7 +147,6 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
-<a href="#150" id="150">150</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
@@ -155,7 +154,6 @@
 <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
 <span class="kw">use </span>scale_codec::{Decode, Encode};
 <span class="kw">use </span>serde::Deserialize;
-<span class="kw">use </span>sp_core::U256;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::format;
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::String;
@@ -219,8 +217,9 @@
         // string which is the concatenation of those fields).
         </span><span class="kw">let </span>data_map = char_vec.chunks(<span class="number">64</span>).map(|chunk| chunk.iter().collect::&lt;String&gt;());
         <span class="comment">// L1 message nonce.
-        </span><span class="kw">let </span>nonce = U256::from_str_radix(<span class="kw-2">&amp;</span>data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>, <span class="number">16</span>)
-            .map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
+        </span><span class="kw">let </span>nonce =
+            Felt252Wrapper::from_hex_be(<span class="kw-2">&amp;</span>data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>)
+                .map_err(|<span class="kw">_</span>| OffchainWorkerError::ToTransactionError)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>calldata: Vec&lt;Felt252Wrapper&gt; = Vec::new();
         <span class="kw">for </span>val <span class="kw">in </span>data_map.take(<span class="self">self</span>.data.len() - <span class="number">2</span>) {
             calldata.push(<span class="kw">match </span>Felt252Wrapper::from_hex_be(val.as_str()) {
@@ -247,7 +246,6 @@
     <span class="kw">use </span>mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     <span class="kw">use </span>mp_starknet::transaction::types::Transaction;
     <span class="kw">use </span>pretty_assertions;
-    <span class="kw">use </span>sp_core::U256;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span><span class="kw">crate</span>::offchain_worker::OffchainWorkerError;
@@ -261,7 +259,7 @@
             Message { topics: <span class="macro">vec!</span>[hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         <span class="kw">let </span>expected_tx = Transaction {
             sender_address,
-            nonce: U256::from(<span class="number">1</span>),
+            nonce: Felt252Wrapper::ONE,
             call_entrypoint: CallEntryPointWrapper {
                 class_hash: <span class="prelude-val">None</span>,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,

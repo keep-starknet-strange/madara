@@ -1728,25 +1728,25 @@
             // Once we have a real fee market this is where we&#39;ll chose the most profitable transaction.
             </span><span class="kw">match </span>call {
                 Call::invoke { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(<span class="number">64_u64</span>)
                     .propagate(<span class="bool-val">true</span>)
                     .build(),
                 Call::declare { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(<span class="number">64_u64</span>)
                     .propagate(<span class="bool-val">true</span>)
                     .build(),
                 Call::deploy_account { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(<span class="number">64_u64</span>)
                     .propagate(<span class="bool-val">true</span>)
                     .build(),
                 Call::consume_l1_message { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(<span class="number">64_u64</span>)
                     .propagate(<span class="bool-val">true</span>)

@@ -992,11 +992,11 @@
         hash: Felt252Wrapper,
         signature: BoundedVec&lt;Felt252Wrapper, MaxArraySize&gt;,
         sender_address: ContractAddressWrapper,
-        nonce: U256,
+        nonce: Felt252Wrapper,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
         contract_address_salt: <span class="prelude-ty">Option</span>&lt;U256&gt;,
-        max_fee: U256,
+        max_fee: Felt252Wrapper,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             tx_type,
@@ -1396,12 +1396,12 @@
             version: <span class="number">1_u8</span>,
             hash: one,
             signature: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
-            nonce: U256::default(),
+            nonce: Felt252Wrapper::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
-            max_fee: U256::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u128::MAX),
         }
     }
 }

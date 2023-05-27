@@ -578,7 +578,7 @@
             .map_err(DeserializeTransactionError::InvalidSenderAddress)<span class="question-mark">?</span>;
 
         <span class="comment">// Convert nonce to U256
-        </span><span class="kw">let </span>nonce = U256::from(d.nonce);
+        </span><span class="kw">let </span>nonce = Felt252Wrapper::try_from(U256::from(d.nonce)).unwrap();
 
         <span class="comment">// Convert call_entrypoint to CallEntryPointWrapper
         </span><span class="kw">let </span>call_entrypoint = CallEntryPointWrapper::try_from(d.call_entrypoint)

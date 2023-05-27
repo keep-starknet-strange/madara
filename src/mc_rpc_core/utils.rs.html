@@ -195,12 +195,12 @@
             .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to convert signature: {:?}&quot;</span>, e))<span class="question-mark">?</span>,
 
             sender_address: invoke_tx_v1.sender_address.into(),
-            nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
+            nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
             )
             .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to convert calldata: {:?}&quot;</span>, e))<span class="question-mark">?</span>,
-            max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
+            max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
         }),
     }
 }
@@ -240,8 +240,8 @@
         .try_into()
         .map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxArraySize&quot;</span>))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>nonce = U256::from(tx.nonce.to_bytes_be());
-    <span class="kw">let </span>max_fee = U256::from(tx.max_fee.to_bytes_be());
+    <span class="kw">let </span>nonce = Felt252Wrapper::from(tx.nonce);
+    <span class="kw">let </span>max_fee = Felt252Wrapper::from(tx.max_fee);
 
     <span class="prelude-val">Ok</span>(DeployAccountTransaction {
         version: <span class="number">1_u8</span>,

@@ -239,7 +239,7 @@
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
-<span class="kw">use </span>sp_core::{H256, U256};
+<span class="kw">use </span>sp_core::H256;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">super</span>::hash::pedersen::PedersenHasher;
@@ -422,8 +422,8 @@
 <span class="kw">fn </span>calculate_transaction_hash_common&lt;T&gt;(
     sender_address: [u8; <span class="number">32</span>],
     calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
-    max_fee: U256,
-    nonce: U256,
+    max_fee: Felt252Wrapper,
+    nonce: Felt252Wrapper,
     version: u8,
     tx_prefix: <span class="kw-2">&amp;</span>[u8],
 ) -&gt; Felt252Wrapper
