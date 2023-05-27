@@ -2,7 +2,6 @@ use frame_support::{assert_ok, bounded_vec};
 use lazy_static::lazy_static;
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
-use sp_core::U256;
 
 use super::mock::*;
 use super::utils::get_contract_class_wrapper;
@@ -40,9 +39,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
                 sender_account  // recipient
             ],
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
         };
         let expected_erc20_address =
             Felt252Wrapper::from_hex_be("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
@@ -116,9 +115,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 Felt252Wrapper::from(15u128), // initial supply low
                 Felt252Wrapper::ZERO,   // initial supply high
             ],
+            nonce: Felt252Wrapper::ONE,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            nonce: U256::one(),
-            max_fee: U256::from(u128::MAX),
         };
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));

@@ -33,7 +33,6 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
@@ -283,11 +282,11 @@ impl Transaction {
         hash: Felt252Wrapper,
         signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
         sender_address: ContractAddressWrapper,
-        nonce: U256,
+        nonce: Felt252Wrapper,
         call_entrypoint: CallEntryPointWrapper,
         contract_class: Option<ContractClassWrapper>,
         contract_address_salt: Option<U256>,
-        max_fee: U256,
+        max_fee: Felt252Wrapper,
     ) -> Self {
         Self {
             tx_type,
@@ -455,11 +454,7 @@ impl Transaction {
         contract_class: Option<ContractClass>,
         fee_token_address: ContractAddressWrapper,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
-        // Create the block context.
-        // TODO: don't do that.
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/330
-        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
-            .map_err(|_| TransactionExecutionErrorWrapper::BlockContextSerializationError)?;
+        let block_context = block.header().clone().into_block_context(fee_token_address);
 
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
@@ -691,12 +686,12 @@ impl Default for Transaction {
             version: 1_u8,
             hash: one,
             signature: BoundedVec::try_from(vec![one, one]).unwrap(),
-            nonce: U256::default(),
+            nonce: Felt252Wrapper::default(),
             sender_address: ContractAddressWrapper::default(),
             call_entrypoint: CallEntryPointWrapper::default(),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: U256::from(u128::MAX),
+            max_fee: Felt252Wrapper::from(u128::MAX),
         }
     }
 }
