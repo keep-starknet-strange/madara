@@ -100,7 +100,7 @@ pallet-utility = { default-features = false, git = "https://github.com/paritytec
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false }
+mp-starknet = { path = "crates/primitives/starknet", default-features = false}
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
 
 # Madara client

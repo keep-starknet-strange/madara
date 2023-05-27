@@ -67,12 +67,12 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
             .map_err(|e| anyhow!("failed to convert signature: {:?}", e))?,
 
             sender_address: invoke_tx_v1.sender_address.into(),
-            nonce: U256::from(invoke_tx_v1.nonce.to_bytes_be()),
+            nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
             calldata: BoundedVec::try_from(
                 invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
             )
             .map_err(|e| anyhow!("failed to convert calldata: {:?}", e))?,
-            max_fee: U256::from(invoke_tx_v1.max_fee.to_bytes_be()),
+            max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
         }),
     }
 }
@@ -112,8 +112,8 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         .try_into()
         .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxArraySize"))?;
 
-    let nonce = U256::from(tx.nonce.to_bytes_be());
-    let max_fee = U256::from(tx.max_fee.to_bytes_be());
+    let nonce = Felt252Wrapper::from(tx.nonce);
+    let max_fee = Felt252Wrapper::from(tx.max_fee);
 
     Ok(DeployAccountTransaction {
         version: 1_u8,

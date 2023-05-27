@@ -2,7 +2,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use bitvec::vec::BitVec;
-use sp_core::{H256, U256};
+use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
@@ -185,8 +185,8 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -
 fn calculate_transaction_hash_common<T>(
     sender_address: [u8; 32],
     calldata: &[Felt252Wrapper],
-    max_fee: U256,
-    nonce: U256,
+    max_fee: Felt252Wrapper,
+    nonce: Felt252Wrapper,
     version: u8,
     tx_prefix: &[u8],
 ) -> Felt252Wrapper
