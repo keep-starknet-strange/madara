@@ -1,18 +1,23 @@
+use std::collections::BTreeMap;
 use std::vec;
 
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
-use mp_starknet::transaction::types::{DeployAccountTransaction, InvokeTransaction, Transaction};
+use flate2::read::GzDecoder;
+use mp_starknet::execution::types::{
+    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
+};
+use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_core::U256;
-use sp_runtime::BoundedVec;
+use sp_runtime::{BoundedBTreeMap, BoundedVec};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::{
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    EntryPointsByType, FieldElement, FlattenedSierraClass, StarknetError,
+    BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
+    BroadcastedTransaction, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
+    LegacyEntryPointsByType, StarknetError,
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
@@ -125,4 +130,73 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         nonce,
         max_fee,
     })
+}
+
+pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction> {
+    match tx {
+        BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
+            let signature = declare_tx_v1
+                .signature
+                .iter()
+                .map(|f| (*f).into())
+                .collect::<Vec<Felt252Wrapper>>()
+                .try_into()
+                .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
+
+            // Program is send as gzip + base64 encoded, we need to decompress it
+            // Decode the base64 encoded string
+            let compressed_bytes = base64::decode(&declare_tx_v1.contract_class.program).unwrap();
+
+            // Create a GzipDecoder to decompress the bytes
+            let mut gz = GzDecoder::new(&compressed_bytes[..]);
+
+            // Read the decompressed bytes into a Vec<u8>
+            let mut decompressed_bytes = Vec::new();
+            std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).unwrap();
+
+            Ok(DeclareTransaction {
+                version: 1_u8,
+                sender_address: declare_tx_v1.sender_address.into(),
+                nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
+                max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
+                signature,
+                contract_class: ContractClassWrapper {
+                    program: serde_json::from_slice(&decompressed_bytes).unwrap(),
+                    entry_points_by_type: BoundedBTreeMap::try_from(_to_btree_map_entrypoints(
+                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                    ))
+                    .unwrap(),
+                },
+                compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
+            })
+        }
+        BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
+    }
+}
+
+/// Returns a hash map of entry point types to entrypoint from deprecated entry point by type
+fn _to_btree_map_entrypoints(
+    entries: LegacyEntryPointsByType,
+) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
+    let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
+        BTreeMap::new();
+    // We can unwrap safely as we already checked the length of the vectors
+    entry_points_by_type.insert(
+        EntryPointTypeWrapper::Constructor,
+        BoundedVec::try_from(
+            entries.constructor.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>(),
+        )
+        .unwrap(),
+    );
+    entry_points_by_type.insert(
+        EntryPointTypeWrapper::External,
+        BoundedVec::try_from(entries.external.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>())
+            .unwrap(),
+    );
+    entry_points_by_type.insert(
+        EntryPointTypeWrapper::L1Handler,
+        BoundedVec::try_from(entries.l1_handler.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>())
+            .unwrap(),
+    );
+    entry_points_by_type
 }

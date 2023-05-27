@@ -494,7 +494,7 @@ where
 
         let deploy_account_transaction = to_deploy_account_tx(deploy_account_transaction).map_err(|e| {
             error!("{e}");
-            StarknetRpcApiError::ClassHashNotFound
+            StarknetRpcApiError::InternalServerError
         })?;
 
         let transaction: MPTransaction = deploy_account_transaction.into();
@@ -504,16 +504,16 @@ where
             .convert_transaction(best_block_hash, transaction.clone(), TxType::DeployAccount)
             .map_err(|e| {
                 error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::ClassHashNotFound
+                StarknetRpcApiError::InternalServerError
             })?
             .map_err(|e| {
                 error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::ClassHashNotFound
+                StarknetRpcApiError::InternalServerError
             })?;
 
         self.pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
             error!("Failed to submit extrinsic: {:?}", e);
-            StarknetRpcApiError::ClassHashNotFound
+            StarknetRpcApiError::InternalServerError
         })?;
 
         Ok(DeployAccountTransactionResult {
@@ -645,11 +645,45 @@ where
         todo!("Not implemented")
     }
 
-    /// Submit a new transaction to be added to the chain
+    /// Submit a new declare transaction to be added to the chain
+    ///
+    /// # Arguments
+    ///
+    /// * `declare_transaction` - the declare transaction to be added to the chain
+    ///
+    /// # Returns
+    ///
+    /// * `declare_transaction_result` - the result of the declare transaction
     async fn add_declare_transaction(
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
-        todo!("Not implemented")
+        let best_block_hash = self.client.info().best_hash;
+
+        let declare_tx = to_declare_tx(declare_transaction).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let transaction: MPTransaction = declare_tx.into();
+        let extrinsic = self
+            .client
+            .runtime_api()
+            .convert_transaction(best_block_hash, transaction.clone(), TxType::Declare)
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to convert transaction: {:?}", e);
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        self.pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
+            error!("Failed to submit extrinsic: {:?}", e);
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: todo!() })
     }
 }

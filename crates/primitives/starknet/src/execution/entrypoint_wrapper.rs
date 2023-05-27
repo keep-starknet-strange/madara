@@ -4,6 +4,7 @@ use starknet_api::api_core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
+use starknet_core::types::LegacyContractEntryPoint;
 
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
@@ -99,6 +100,14 @@ impl From<EntryPointWrapper> for EntryPoint {
             selector: EntryPointSelector(StarkFelt(entry_point.selector)),
             offset: EntryPointOffset(entry_point.offset as usize),
         }
+    }
+}
+
+impl From<LegacyContractEntryPoint> for EntryPointWrapper {
+    fn from(value: LegacyContractEntryPoint) -> Self {
+        let selector = value.selector.to_bytes_be();
+        let offset = value.offset.into();
+        Self { selector, offset }
     }
 }
 
