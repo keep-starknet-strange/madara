@@ -12,12 +12,12 @@ use jsonrpsee::proc_macros::rpc;
 
 pub mod utils;
 
-use starknet_core::types::FieldElement;
-use starknet_providers::jsonrpc::models::{
+use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall, InvokeTransactionResult,
-    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType, Transaction,
+    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType,
+    Transaction,
 };
 
 /// Starknet rpc interface.
@@ -73,6 +73,10 @@ pub trait StarknetRpcApi {
     #[method(name = "getNonce")]
     fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement>;
 
+    /// Get block information with full transactions given the block id
+    #[method(name = "getBlockWithTxs")]
+    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs>;
+
     /// Get the chain id
     #[method(name = "chainId")]
     fn chain_id(&self) -> RpcResult<String>;
@@ -91,21 +95,17 @@ pub trait StarknetRpcApi {
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<DeployAccountTransactionResult>;
 
+    /// Estimate the fee associated with transaction
+    #[method(name = "estimateFee")]
+    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
+
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]
     fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction>;
 
-    /// Get block information with full transactions given the block id
-    #[method(name = "getBlockWithTxs")]
-    fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs>;
-
     /// Get the information about the result of executing the requested block
     #[method(name = "getStateUpdate")]
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate>;
-
-    /// Estimate the fee for a given Starknet transaction
-    #[method(name = "estimateFee")]
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     #[method(name = "pendingTransactions")]

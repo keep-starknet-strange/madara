@@ -4,6 +4,7 @@ import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aWrapBytes } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
+import { numberToU832Bytes } from "./utils";
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<void> {
@@ -248,7 +249,7 @@ export function transfer(
     version: 1, // version of the transaction
     signature: [], // leave empty for now, will be filled in when signing the transaction
     sender_address: contractAddress, // address of the sender contract
-    nonce: nonce || 0, // nonce of the transaction
+    nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [
       tokenAddress, // CONTRACT ADDRESS
       "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)

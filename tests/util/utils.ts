@@ -11,12 +11,23 @@ import {
   FEE_TOKEN_ADDRESS,
   SIGNER_PRIVATE,
 } from "../tests/constants";
+import { numberToU8a } from "@polkadot/util";
 
 export type BigNumberish = string | number | BN__default;
 
 // Convert a BigNumberish to a hex string
 export function toHex(value: BigNumberish) {
   return number.toHex(number.toBN(value));
+}
+
+// Convert a string or number to a BN
+export function toBN(value: BigNumberish) {
+  return number.toBN(value);
+}
+
+// Convert a BigNumberish to a 32 byte uint array
+export function numberToU832Bytes(value: number) {
+  return numberToU8a(value, 256);
 }
 
 export async function rpcTransfer(

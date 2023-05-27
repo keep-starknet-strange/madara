@@ -1,7 +1,6 @@
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::DeclareTransaction;
-use sp_core::U256;
 
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
@@ -25,8 +24,8 @@ fn given_contract_declare_tx_works_once_not_twice() {
             version: 1,
             compiled_class_hash: erc20_class_hash,
             contract_class: erc20_class,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -58,8 +57,8 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -88,8 +87,8 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             contract_class: erc20_class,
             version: wrong_tx_version,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -117,8 +116,8 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
         };
 
@@ -148,8 +147,8 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
@@ -177,8 +176,8 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
         };
 
@@ -208,8 +207,8 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
@@ -237,8 +236,8 @@ fn given_contract_declare_on_argent_account_then_it_works() {
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
         };
 
@@ -268,8 +267,8 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             contract_class: erc20_class,
             version: 1,
             compiled_class_hash: erc20_class_hash,
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 

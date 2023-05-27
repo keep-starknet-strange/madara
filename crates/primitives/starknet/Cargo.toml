@@ -20,7 +20,7 @@ sp-runtime = { workspace = true }
 # Starknet
 starknet-crypto = { workspace = true, default-features = false, features = ["alloc"] }
 starknet-ff = { workspace = true, default-features = false, features = ["alloc"] }
-starknet-providers = { workspace = true, optional = true }
+starknet-core = { workspace = true, optional = true }
 poseidon_hash = { workspace = true, default-features = false }
 blockifier = { workspace = true, default-features = false, features = ["testing"] }
 starknet_api = { workspace = true, default-features = false }
@@ -56,7 +56,7 @@ std = [
 	"starknet-crypto/std",
 	"starknet-ff/std",
 	"starknet-ff/serde",
-	"starknet-providers",
+	"starknet-core",
 	"blockifier/std",
 	"starknet_api/std",
 	"poseidon_hash/std",

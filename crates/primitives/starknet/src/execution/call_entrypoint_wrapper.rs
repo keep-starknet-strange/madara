@@ -1,7 +1,6 @@
 use alloc::format;
 use alloc::sync::Arc;
 
-use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
@@ -16,7 +15,6 @@ use super::entrypoint_wrapper::{
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
 use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
-use crate::block::serialize::SerializeBlockContext;
 use crate::block::Block as StarknetBlock;
 
 /// Max number of calldata / tx.
@@ -89,8 +87,7 @@ impl CallEntryPointWrapper {
         let account_context = AccountTransactionContext::default();
 
         // Create the block context.
-        let block_context = BlockContext::try_serialize(block.header().clone(), fee_token_address)
-            .map_err(|_| EntryPointExecutionErrorWrapper::BlockContextSerializationError)?;
+        let block_context = block.header().clone().into_block_context(fee_token_address);
 
         call_entry_point
             .execute(state, execution_resources, execution_context, &block_context, &account_context)

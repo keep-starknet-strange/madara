@@ -72,16 +72,15 @@ use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment;
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
 };
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_starknet::traits::hash::Hasher;
+use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
-    DeclareTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction, Transaction,
-    TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
+    Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -114,7 +113,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-    use mp_starknet::transaction::types::DeployAccountTransaction;
 
     use super::*;
 
@@ -131,7 +129,7 @@ pub mod pallet {
         /// How Starknet state root is calculated.
         type StateRoot: Get<Felt252Wrapper>;
         /// The hashing function to use.
-        type SystemHash: Hasher;
+        type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         /// The time idk what.
         type TimestampProvider: Time;
         /// A configuration for base priority of unsigned transactions.
@@ -734,25 +732,25 @@ pub mod pallet {
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
                 Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
@@ -879,7 +877,7 @@ impl<T: Config> Pallet<T> {
         let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
-            commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
+            commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
         let protocol_version = None;
         let extra_data = None;
 
@@ -897,7 +895,7 @@ impl<T: Config> Pallet<T> {
                 protocol_version,
                 extra_data,
             ),
-            // Safe because `transactions` is build form the `pending` bounded vec,
+            // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
             BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
         );
@@ -962,5 +960,37 @@ impl<T: Config> Pallet<T> {
 
         PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
         Ok(sn_event)
+    }
+
+    /// Estimate the fee associated with transaction
+    pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
+        // Check if contract is deployed
+        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+
+        match transaction.execute(
+            &mut BlockifierStateAdapter::<T>::default(),
+            Self::current_block(),
+            TxType::Invoke,
+            None,
+            Self::fee_token_address(),
+        ) {
+            Ok(v) => {
+                log!(debug, "Transaction executed successfully: {:?}", v);
+                if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
+                    Ok((v.actual_fee.0 as u64, *gas_usage as u64))
+                } else {
+                    Err(Error::<T>::TransactionExecutionFailed.into())
+                }
+            }
+            Err(e) => {
+                log!(error, "Transaction execution failed: {:?}", e);
+                Err(Error::<T>::TransactionExecutionFailed.into())
+            }
+        }
+    }
+
+    /// Returns the hasher used by the runtime.
+    pub fn get_system_hash() -> T::SystemHash {
+        T::SystemHash::hasher()
     }
 }

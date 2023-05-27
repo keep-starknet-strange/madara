@@ -10,9 +10,6 @@ use sp_core::ConstU32;
 use crate::execution::types::Felt252Wrapper;
 use crate::transaction::types::Transaction;
 
-/// Serializer
-pub mod serialize;
-
 /// Block transactions max size
 // TODO: add real value (#250)
 pub type MaxTransactions = ConstU32<4294967295>;

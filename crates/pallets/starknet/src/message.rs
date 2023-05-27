@@ -5,7 +5,6 @@ use mp_starknet::execution::types::{
 use mp_starknet::transaction::types::Transaction;
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
-use sp_core::U256;
 
 use crate::alloc::format;
 use crate::alloc::string::String;
@@ -69,8 +68,9 @@ impl Message {
         // string which is the concatenation of those fields).
         let data_map = char_vec.chunks(64).map(|chunk| chunk.iter().collect::<String>());
         // L1 message nonce.
-        let nonce = U256::from_str_radix(&data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)?, 16)
-            .map_err(|_| OffchainWorkerError::ToTransactionError)?;
+        let nonce =
+            Felt252Wrapper::from_hex_be(&data_map.clone().last().ok_or(OffchainWorkerError::ToTransactionError)?)
+                .map_err(|_| OffchainWorkerError::ToTransactionError)?;
         let mut calldata: Vec<Felt252Wrapper> = Vec::new();
         for val in data_map.take(self.data.len() - 2) {
             calldata.push(match Felt252Wrapper::from_hex_be(val.as_str()) {
@@ -97,7 +97,6 @@ mod test {
     use mp_starknet::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper};
     use mp_starknet::transaction::types::Transaction;
     use pretty_assertions;
-    use sp_core::U256;
 
     use super::*;
     use crate::offchain_worker::OffchainWorkerError;
@@ -111,7 +110,7 @@ mod test {
             Message { topics: vec![hex.clone(), hex.clone(), hex.clone(), hex.clone()], data: hex };
         let expected_tx = Transaction {
             sender_address,
-            nonce: U256::from(1),
+            nonce: Felt252Wrapper::ONE,
             call_entrypoint: CallEntryPointWrapper {
                 class_hash: None,
                 entrypoint_type: EntryPointTypeWrapper::L1Handler,

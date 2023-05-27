@@ -29,7 +29,7 @@ import {
   SIGNER_PUBLIC,
   SALT,
 } from "../constants";
-import { toHex, rpcTransfer } from "../../util/utils";
+import { toHex, toBN, rpcTransfer } from "../../util/utils";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -224,6 +224,66 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
+  it("getBlockWithTxs returns transactions", async function () {
+    await context.createBlock(
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
+    );
+
+    const blockHash = await providerRPC.getBlockHashAndNumber();
+    await jumpBlocks(context, 10);
+
+    const blockWithTxHashes = await providerRPC.getBlockWithTxs(
+      blockHash.block_hash
+    );
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const tx: { type: string; sender_address: string; calldata: string[] } =
+      blockWithTxHashes.transactions[0];
+    expect(blockWithTxHashes).to.not.be.undefined;
+    expect(blockWithTxHashes.transactions.length).to.be.equal(1);
+    expect(tx.type).to.be.equal("INVOKE");
+    expect(tx.sender_address).to.be.equal(toHex(ARGENT_CONTRACT_ADDRESS));
+    expect(tx.calldata).to.deep.equal(
+      [
+        1,
+        FEE_TOKEN_ADDRESS,
+        hash.getSelectorFromName("transfer"),
+        0,
+        3,
+        3,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT,
+        0,
+      ].map(toHex)
+    );
+  });
+
+  it("getBlockWithTxs throws block not found error", async function () {
+    await providerRPC.getBlockWithTxHashes("0x123").catch((error) => {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("24: Block not found");
+    });
+  });
+
+  it("getBlockWithTxs returns empty block", async function () {
+    await context.createBlock(undefined, {
+      parentHash: undefined,
+      finalize: true,
+    });
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const latestBlock: { status: string; transactions: string[] } =
+      await providerRPC.getBlockWithTxHashes("latest");
+    expect(latestBlock).to.not.be.undefined;
+    expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
+    expect(latestBlock.transactions.length).to.be.equal(0);
+  });
+
   it("getBlockWithTxHashes returns empty block", async function () {
     await context.createBlock(undefined, {
       parentHash: undefined,
@@ -321,6 +381,11 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("Adds an invocation transaction successfully", async function () {
+    const nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
     const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
     const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
 
@@ -332,7 +397,7 @@ describeDevMadara("Starknet RPC", (context) => {
       },
       undefined,
       {
-        nonce: "0",
+        nonce: nonce,
         maxFee: "123456",
       }
     );
@@ -415,5 +480,65 @@ describeDevMadara("Starknet RPC", (context) => {
     expect(validateAndParseAddress(accountContractClass)).to.be.equal(
       ARGENT_PROXY_CLASS_HASH
     );
+  });
+
+  // TODO:
+  //    - once starknet-rs supports query tx version
+  //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estiamteAccountDeployFee
+  it("Estimates the fee of an invoke tx successfully", async function () {
+    const tx = {
+      contractAddress: ACCOUNT_CONTRACT,
+      calldata: [
+        TEST_CONTRACT,
+        "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+        "0x0",
+      ],
+    };
+
+    const nonce = await providerRPC.getNonceForAddress(
+      ACCOUNT_CONTRACT,
+      "latest"
+    );
+
+    const txDetails = {
+      nonce: nonce,
+      version: "0x1",
+    };
+
+    const fee_estimate = await providerRPC.getEstimateFee(
+      tx,
+      txDetails,
+      "latest"
+    );
+
+    expect(fee_estimate.overall_fee.cmp(toBN(0))).to.be.equal(1);
+    expect(fee_estimate.gas_consumed.cmp(toBN(0))).to.be.equal(1);
+  });
+
+  it("getEstimateFee throws error if contract does not exist", async function () {
+    const tx = {
+      contractAddress: ACCOUNT_CONTRACT,
+      calldata: [
+        "0x000000000000000000000000000000000000000000000000000000000000DEAD",
+        "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+        "0x0",
+      ],
+    };
+
+    const nonce = await providerRPC.getNonceForAddress(
+      ACCOUNT_CONTRACT,
+      "latest"
+    );
+
+    const txDetails = {
+      nonce: nonce,
+      version: "0x1",
+    };
+    try {
+      await providerRPC.getEstimateFee(tx, txDetails, "latest");
+    } catch (error) {
+      expect(error).to.be.instanceOf(LibraryError);
+      expect(error.message).to.equal("40: Contract error");
+    }
   });
 });

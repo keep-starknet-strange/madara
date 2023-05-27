@@ -11,13 +11,14 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class};
+use mc_rpc_core::utils::{to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::block::BlockTransactions;
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::types::{Transaction as MPTransaction, TxType};
+use mp_starknet::traits::hash::HasherT;
+use mp_starknet::traits::ThreadSafeCopy;
+use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -28,23 +29,23 @@ use sp_blockchain::HeaderBackend;
 use sp_core::H256;
 use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use starknet_core::types::FieldElement;
-use starknet_providers::jsonrpc::models::{
-    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BroadcastedDeclareTransaction,
+use starknet_core::types::{
+    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatus,
-    SyncStatusType, Transaction,
+    DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
+    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate,
+    SyncStatus, SyncStatusType, Transaction,
 };
 
 /// A Starknet RPC server for Madara
-pub struct Starknet<B: BlockT, BE, C, P> {
+pub struct Starknet<B: BlockT, BE, C, P, H> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
     pool: Arc<P>,
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
+    hasher: Arc<H>,
     _marker: PhantomData<(B, BE)>,
 }
 
@@ -55,10 +56,11 @@ pub struct Starknet<B: BlockT, BE, C, P> {
 // * `overrides` - The OverrideHandle
 // * `sync_service` - The Substrate client sync service
 // * `starting_block` - The starting block for the syncing
+// * `hasher` - The hasher used by the runtime
 //
 // # Returns
 // * `Self` - The actual Starknet struct
-impl<B: BlockT, BE, C, P> Starknet<B, BE, C, P> {
+impl<B: BlockT, BE, C, P, H> Starknet<B, BE, C, P, H> {
     pub fn new(
         client: Arc<C>,
         backend: Arc<mc_db::Backend<B>>,
@@ -66,12 +68,13 @@ impl<B: BlockT, BE, C, P> Starknet<B, BE, C, P> {
         pool: Arc<P>,
         sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
+        hasher: Arc<H>,
     ) -> Self {
-        Self { client, backend, overrides, pool, sync_service, starting_block, _marker: PhantomData }
+        Self { client, backend, overrides, pool, sync_service, starting_block, hasher, _marker: PhantomData }
     }
 }
 
-impl<B, BE, C, P> Starknet<B, BE, C, P>
+impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -81,13 +84,14 @@ where
     }
 }
 
-impl<B, BE, C, P> Starknet<B, BE, C, P>
+impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
     BE: Backend<B>,
+    H: HasherT + ThreadSafeCopy,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
@@ -98,7 +102,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        Ok(block.header().hash(PedersenHasher::default()).into())
+        Ok(block.header().hash(*self.hasher).into())
     }
 
     /// Returns the substrate block corresponding to the given Starknet block id
@@ -128,7 +132,7 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<B, BE, C, P> StarknetRpcApiServer for Starknet<B, BE, C, P>
+impl<B, BE, C, P, H> StarknetRpcApiServer for Starknet<B, BE, C, P, H>
 where
     B: BlockT,
     P: TransactionPool<Block = B> + 'static,
@@ -136,6 +140,7 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    H: HasherT + ThreadSafeCopy,
 {
     fn block_number(&self) -> RpcResult<u64> {
         self.current_block_number()
@@ -312,13 +317,13 @@ where
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
                     let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                    let starting_block_hash = starting_block?.header().hash(PedersenHasher::default()).0;
+                    let starting_block_hash = starting_block?.header().hash(*self.hasher).0;
 
                     let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                    let current_block_hash = current_block?.header().hash(PedersenHasher::default()).0;
+                    let current_block_hash = current_block?.header().hash(*self.hasher).0;
 
                     let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                    let highest_block_hash = highest_block?.header().hash(PedersenHasher::default()).0;
+                    let highest_block_hash = highest_block?.header().hash(*self.hasher).0;
 
                     // Build the `SyncStatus` struct with the respective syn information
                     Ok(SyncStatusType::Syncing(SyncStatus {
@@ -381,7 +386,7 @@ where
             .unwrap_or_default();
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
-        let blockhash = block.header().hash(PedersenHasher::default());
+        let blockhash = block.header().hash(*self.hasher);
         let parent_blockhash = block.header().parent_block_hash;
         let block_with_tx_hashes = BlockWithTxHashes {
             transactions,
@@ -517,6 +522,43 @@ where
         })
     }
 
+    /// Estimate the fee associated with transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `request` - starknet transaction request
+    /// * `block_id` - hash of the requested block, number (height), or tag
+    ///
+    /// # Returns
+    ///
+    /// * `fee_estimate` - fee estimate in gwei
+    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate> {
+        // TODO:
+        //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
+        //      - to ensure broadcasted query signatures aren't valid on mainnet
+
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let tx = to_tx(request)?;
+        let (actual_fee, gas_usage) = self
+            .client
+            .runtime_api()
+            .estimate_fee(substrate_block_hash, tx)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        Ok(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee })
+    }
+
     // Returns the details of a transaction by a given block id and index
     fn get_transaction_by_block_id_and_index(&self, block_id: BlockId, index: usize) -> RpcResult<Transaction> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
@@ -545,16 +587,46 @@ where
 
     /// Get block information with full transactions given the block id
     fn get_block_with_txs(&self, block_id: BlockId) -> RpcResult<MaybePendingBlockWithTxs> {
-        todo!("Not implemented")
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let transactions = match block.transactions() {
+            BlockTransactions::Full(transactions) => transactions.to_vec(),
+            BlockTransactions::Hashes(_) => vec![],
+        };
+
+        let block_with_txs = BlockWithTxs {
+            // TODO: Get status from block
+            status: BlockStatus::AcceptedOnL2,
+            block_hash: block.header().hash(*self.hasher).into(),
+            parent_hash: block.header().parent_block_hash.into(),
+            block_number: block.header().block_number.as_u64(),
+            new_root: block.header().global_state_root.into(),
+            timestamp: block.header().block_timestamp,
+            sequencer_address: block.header().sequencer_address.into(),
+            transactions: transactions
+                .into_iter()
+                .map(Transaction::try_from)
+                .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
+                .map_err(|e| {
+                    error!("{:#?}", e);
+                    StarknetRpcApiError::InternalServerError
+                })?,
+        };
+
+        Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
     }
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        todo!("Not implemented")
-    }
-
-    /// Estimate the fee for a given Starknet transaction
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate> {
         todo!("Not implemented")
     }
 

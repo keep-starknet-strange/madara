@@ -100,7 +100,7 @@ pallet-utility = { default-features = false, git = "https://github.com/paritytec
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false }
+mp-starknet = { path = "crates/primitives/starknet", default-features = false}
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
 
 # Madara client
@@ -113,13 +113,12 @@ mc-rpc-core = { path = "crates/client/rpc-core" }
 # Starknet dependencies
 # Cairo Virtual Machine
 cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-support", default-features = false }
-starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "403f02e83fb3fd9f87654aae1f34c94ad480e9ef", default-features = false }
-starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "403f02e83fb3fd9f87654aae1f34c94ad480e9ef", default-features = false }
-starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "403f02e83fb3fd9f87654aae1f34c94ad480e9ef", default-features = false }
+starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
+starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
+starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
 	"alloc",
 ] }
-starknet-providers = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "403f02e83fb3fd9f87654aae1f34c94ad480e9ef", default-features = false }
 blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
 	"testing",

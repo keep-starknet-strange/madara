@@ -11,7 +11,7 @@ use sp_core::{ConstU32, U256};
 use starknet_api::transaction::Fee;
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
-use starknet_providers::jsonrpc::models::{
+use starknet_core::types::{
     DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
     DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
     InvokeTransaction as RPCInvokeTransaction, InvokeTransactionV0 as RPCInvokeTransactionV0,
@@ -159,11 +159,11 @@ pub struct DeclareTransaction {
     /// Contract to declare.
     pub contract_class: ContractClassWrapper,
     /// Account contract nonce.
-    pub nonce: U256,
+    pub nonce: Felt252Wrapper,
     /// Transaction signature.
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
-    pub max_fee: U256,
+    pub max_fee: Felt252Wrapper,
 }
 
 /// Deploy account transaction.
@@ -187,7 +187,7 @@ pub struct DeployAccountTransaction {
     /// Transaction calldata.
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// Account contract nonce.
-    pub nonce: U256,
+    pub nonce: Felt252Wrapper,
     /// Transaction salt.
     pub salt: U256,
     /// Transaction signature.
@@ -195,7 +195,7 @@ pub struct DeployAccountTransaction {
     /// Account class hash.
     pub account_class_hash: Felt252Wrapper,
     /// Max fee.
-    pub max_fee: U256,
+    pub max_fee: Felt252Wrapper,
 }
 
 /// Error of conversion between [DeclareTransaction], [InvokeTransaction],
@@ -246,11 +246,11 @@ pub struct InvokeTransaction {
     /// Transaction calldata.
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// Account contract nonce.
-    pub nonce: U256,
+    pub nonce: Felt252Wrapper,
     /// Transaction signature.
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
-    pub max_fee: U256,
+    pub max_fee: Felt252Wrapper,
 }
 
 impl From<Transaction> for InvokeTransaction {
@@ -290,7 +290,7 @@ pub struct Transaction {
     /// Sender Address
     pub sender_address: ContractAddressWrapper,
     /// Nonce
-    pub nonce: U256,
+    pub nonce: Felt252Wrapper,
     /// Call entrypoint
     pub call_entrypoint: CallEntryPointWrapper,
     /// Contract Class
@@ -298,7 +298,7 @@ pub struct Transaction {
     /// Contract Address Salt
     pub contract_address_salt: Option<U256>,
     /// Max fee.
-    pub max_fee: U256,
+    pub max_fee: Felt252Wrapper,
 }
 
 impl TryFrom<Transaction> for DeployAccountTransaction {
@@ -404,6 +404,8 @@ pub enum RPCTransactionConversionError {
     InvalidCharacter,
     /// Value is too large for FieldElement (felt252).
     OutOfRange,
+    /// Value is too large to fit into target type.
+    ValueTooLarge,
 }
 
 #[cfg(feature = "std")]
@@ -414,6 +416,7 @@ impl From<Felt252WrapperError> for RPCTransactionConversionError {
             Felt252WrapperError::InvalidLength => Self::InvalidLength,
             Felt252WrapperError::InvalidCharacter => Self::InvalidCharacter,
             Felt252WrapperError::OutOfRange => Self::OutOfRange,
+            Felt252WrapperError::ValueTooLarge => Self::ValueTooLarge,
         }
     }
 }
@@ -423,9 +426,9 @@ impl TryFrom<Transaction> for RPCTransaction {
     type Error = RPCTransactionConversionError;
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         let transaction_hash = value.hash.0;
-        let max_fee = Felt252Wrapper::try_from(value.max_fee)?.0;
+        let max_fee = value.max_fee.0;
         let signature = value.signature.iter().map(|&f| f.0).collect();
-        let nonce = Felt252Wrapper::try_from(value.nonce)?.0;
+        let nonce = value.nonce.0;
         let sender_address = value.sender_address.0;
         let class_hash = value.call_entrypoint.class_hash.ok_or(RPCTransactionConversionError::MissingInformation);
         let contract_address = value.call_entrypoint.storage_address.0;
@@ -436,12 +439,22 @@ impl TryFrom<Transaction> for RPCTransaction {
         match value.tx_type {
             TxType::Declare => {
                 let class_hash = class_hash?.0;
-                let declare_txn_v1 =
-                    RPCDeclareTransactionV1 { transaction_hash, max_fee, signature, nonce, class_hash, sender_address };
                 match value.version {
-                    1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(declare_txn_v1))),
+                    1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        class_hash,
+                        sender_address,
+                    }))),
                     2 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
-                        declare_txn_v1,
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        class_hash,
+                        sender_address,
                         compiled_class_hash: class_hash,
                     }))),
                     _ => Err(RPCTransactionConversionError::UnknownVersion),
@@ -470,7 +483,6 @@ impl TryFrom<Transaction> for RPCTransaction {
             TxType::DeployAccount => Ok(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
                 transaction_hash,
                 max_fee,
-                version: value.version.into(),
                 signature,
                 nonce,
                 contract_address_salt: Felt252Wrapper::try_from(
@@ -481,7 +493,7 @@ impl TryFrom<Transaction> for RPCTransaction {
                 class_hash: class_hash?.0,
             })),
             TxType::L1Handler => {
-                let nonce = value.nonce.as_u64(); // this panics in case of overflow
+                let nonce = TryInto::try_into(value.nonce).unwrap(); // this panics in case of overflow
                 Ok(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
                     transaction_hash,
                     version: value.version.into(),

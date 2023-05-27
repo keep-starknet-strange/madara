@@ -19,6 +19,8 @@ use futures::task::{Context, Poll};
 use futures_timer::Delay;
 use log::debug;
 use mc_storage::OverrideHandle;
+use mp_starknet::traits::hash::HasherT;
+use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_client_api::client::ImportNotifications;
@@ -27,7 +29,7 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 
 /// The worker in charge of syncing the Madara db when it receive a new Substrate block
-pub struct MappingSyncWorker<B: BlockT, C, BE> {
+pub struct MappingSyncWorker<B: BlockT, C, BE, H> {
     import_notifications: ImportNotifications<B>,
     timeout: Duration,
     inner_delay: Option<Delay>,
@@ -36,16 +38,17 @@ pub struct MappingSyncWorker<B: BlockT, C, BE> {
     substrate_backend: Arc<BE>,
     overrides: Arc<OverrideHandle<B>>,
     madara_backend: Arc<mc_db::Backend<B>>,
+    hasher: Arc<H>,
 
     have_next: bool,
     retry_times: usize,
     sync_from: <B::Header as HeaderT>::Number,
 }
 
-impl<B: BlockT, C, BE> Unpin for MappingSyncWorker<B, C, BE> {}
+impl<B: BlockT, C, BE, H> Unpin for MappingSyncWorker<B, C, BE, H> {}
 
 #[allow(clippy::too_many_arguments)]
-impl<B: BlockT, C, BE> MappingSyncWorker<B, C, BE> {
+impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
     pub fn new(
         import_notifications: ImportNotifications<B>,
         timeout: Duration,
@@ -55,6 +58,7 @@ impl<B: BlockT, C, BE> MappingSyncWorker<B, C, BE> {
         frontier_backend: Arc<mc_db::Backend<B>>,
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
+        hasher: Arc<H>,
     ) -> Self {
         Self {
             import_notifications,
@@ -65,6 +69,7 @@ impl<B: BlockT, C, BE> MappingSyncWorker<B, C, BE> {
             substrate_backend,
             overrides,
             madara_backend: frontier_backend,
+            hasher,
 
             have_next: true,
             retry_times,
@@ -73,12 +78,13 @@ impl<B: BlockT, C, BE> MappingSyncWorker<B, C, BE> {
     }
 }
 
-impl<B: BlockT, C, BE> Stream for MappingSyncWorker<B, C, BE>
+impl<B: BlockT, C, BE, H> Stream for MappingSyncWorker<B, C, BE, H>
 where
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
     BE: Backend<B>,
+    H: HasherT + ThreadSafeCopy,
 {
     type Item = ();
 
@@ -119,6 +125,7 @@ where
                 self.madara_backend.as_ref(),
                 self.retry_times,
                 self.sync_from,
+                self.hasher.as_ref(),
             ) {
                 Ok(have_next) => {
                     self.have_next = have_next;

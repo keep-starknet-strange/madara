@@ -3,13 +3,12 @@ use core::str::FromStr;
 use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment;
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
-use sp_core::{H256, U256};
+use sp_core::H256;
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
@@ -33,8 +32,8 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             version: 1_u8,
             sender_address: contract_address,
             calldata: bounded_vec!(),
-            nonce: U256::zero(),
-            max_fee: U256::from(u128::MAX),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
 
@@ -177,7 +176,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let events = Starknet::pending_events();
         let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(transaction, _)| transaction).collect();
         let (_transaction_commitment, event_commitment) =
-            commitment::calculate_commitments::<PedersenHasher>(&transactions, &events);
+            commitment::calculate_commitments::<<MockRuntime as crate::Config>::SystemHash>(&transactions, &events);
 
         assert_eq!(
             event_commitment,
