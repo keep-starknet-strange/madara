@@ -10,13 +10,13 @@ use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
-use sp_core::{sr25519, H256, Pair, Public};
+use sp_core::{sr25519, Pair, Public, H256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use sp_state_machine::BasicExternalities;
 use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
-use super::constants::*;
 
+use super::constants::*;
 
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 
@@ -218,17 +218,14 @@ fn testnet_genesis(
     // ACCOUNT CONTRACT
     let contract_address = Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap();
 
-    let class_hash =
-        Felt252Wrapper::from_hex_be(CLASS_HASH).unwrap();
+    let class_hash = Felt252Wrapper::from_hex_be(CLASS_HASH).unwrap();
 
     // ARGENT ACCOUNT CONTRACT
     let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
 
-    let argent_account_class_hash =
-        Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
+    let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
 
-    let argent_proxy_class_hash =
-        Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
+    let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     // TEST CONTRACT
     let other_contract_address = Felt252Wrapper::from_hex_be(OTHER_CONTRACT_ADDRESS).unwrap();
@@ -236,14 +233,12 @@ fn testnet_genesis(
     let other_class_hash = Felt252Wrapper::from_hex_be(OTHER_CLASS_HASH).unwrap();
 
     // Fee token
-    let fee_token_address =
-        Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
+    let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
     let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let token_contract_address =
-        Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_ADDRESS).unwrap();
+    let token_contract_address = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_ADDRESS).unwrap();
 
     let token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CLASS_HASH).unwrap();
 
