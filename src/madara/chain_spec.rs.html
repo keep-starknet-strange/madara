@@ -319,54 +319,25 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a>
-<a href="#328" id="328">328</a>
-<a href="#329" id="329">329</a>
-<a href="#330" id="330">330</a>
-<a href="#331" id="331">331</a>
-<a href="#332" id="332">332</a>
-<a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
     SystemConfig, WASM_BINARY,
 };
 <span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+<span class="kw">use </span>pallet_starknet::types::ContractStorageKeyWrapper;
 <span class="kw">use </span>sc_service::ChainType;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_consensus_grandpa::AuthorityId <span class="kw">as </span>GrandpaId;
 <span class="kw">use </span>sp_core::storage::Storage;
-<span class="kw">use </span>sp_core::{sr25519, Pair, Public};
+<span class="kw">use </span>sp_core::{sr25519, Pair, Public, H256};
 <span class="kw">use </span>sp_runtime::traits::{IdentifyAccount, Verify};
 <span class="kw">use </span>sp_state_machine::BasicExternalities;
+<span class="kw">use </span>starknet_core::types::FieldElement;
+<span class="kw">use </span>starknet_core::utils::get_storage_var_address;
+
+<span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
 
 <span class="kw">pub const </span>ACCOUNT_PUBLIC_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2&quot;</span>;
 
@@ -526,6 +497,27 @@
 <span class="kw">pub fn </span>get_contract_class(contract_content: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8]) -&gt; ContractClass {
     serde_json::from_slice(contract_content).unwrap()
 }
+
+<span class="doccomment">/// Returns the storage key for a given storage name, keys and offset.
+/// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
+/// starknet contract for storage_name(key_1, key_2, ..., key_n).
+/// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
+</span><span class="kw">pub fn </span>get_storage_key(
+    address: <span class="kw-2">&amp;</span>Felt252Wrapper,
+    storage_name: <span class="kw-2">&amp;</span>str,
+    keys: <span class="kw-2">&amp;</span>[Felt252Wrapper],
+    storage_key_offset: u64,
+) -&gt; ContractStorageKeyWrapper {
+    <span class="kw">let </span>storage_key_offset = H256::from_low_u64_be(storage_key_offset);
+    <span class="kw">let </span><span class="kw-2">mut </span>storage_key = get_storage_var_address(
+        storage_name,
+        keys.iter().map(|x| FieldElement::from(<span class="kw-2">*</span>x)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().as_slice(),
+    )
+    .unwrap();
+    storage_key += FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>storage_key_offset.to_fixed_bytes()).unwrap();
+    (<span class="kw-2">*</span>address, storage_key.into())
+}
+
 <span class="doccomment">/// Configure initial storage state for FRAME modules.
 </span><span class="kw">fn </span>testnet_genesis(
     wasm_binary: <span class="kw-2">&amp;</span>[u8],
@@ -545,36 +537,33 @@
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../resources/erc20/erc20.json&quot;</span>)).try_into().unwrap();
 
     <span class="comment">// ACCOUNT CONTRACT
-    </span><span class="kw">let </span>contract_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1&quot;</span>).unwrap();
+    </span><span class="kw">let </span>contract_address = Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap();
 
-    <span class="kw">let </span>class_hash =
-        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f&quot;</span>).unwrap();
+    <span class="kw">let </span>class_hash = Felt252Wrapper::from_hex_be(CLASS_HASH).unwrap();
 
     <span class="comment">// ARGENT ACCOUNT CONTRACT
-    </span><span class="kw">let </span>argent_account_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x2&quot;</span>).unwrap();
+    </span><span class="kw">let </span>argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
 
-    <span class="kw">let </span>argent_account_class_hash =
-        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d&quot;</span>).unwrap();
+    <span class="kw">let </span>argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
 
-    <span class="kw">let </span>argent_proxy_class_hash =
-        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9&quot;</span>).unwrap();
+    <span class="kw">let </span>argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     <span class="comment">// TEST CONTRACT
-    </span><span class="kw">let </span>other_contract_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1111&quot;</span>).unwrap();
+    </span><span class="kw">let </span>other_contract_address = Felt252Wrapper::from_hex_be(OTHER_CONTRACT_ADDRESS).unwrap();
 
-    <span class="kw">let </span>other_class_hash = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x1000&quot;</span>).unwrap();
+    <span class="kw">let </span>other_class_hash = Felt252Wrapper::from_hex_be(OTHER_CLASS_HASH).unwrap();
 
     <span class="comment">// Fee token
-    </span><span class="kw">let </span>fee_token_address =
-        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01&quot;</span>).unwrap();
+    </span><span class="kw">let </span>fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
-    <span class="kw">let </span>fee_token_class_hash = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x20000&quot;</span>).unwrap();
+    <span class="kw">let </span>fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     <span class="comment">// ERC20 CONTRACT
-    </span><span class="kw">let </span>token_contract_address =
-        Felt252Wrapper::from_hex_be(<span class="string">&quot;0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00&quot;</span>).unwrap();
+    </span><span class="kw">let </span>token_contract_address = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_ADDRESS).unwrap();
 
-    <span class="kw">let </span>token_class_hash = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x10000&quot;</span>).unwrap();
+    <span class="kw">let </span>token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CLASS_HASH).unwrap();
+
+    <span class="kw">let </span>public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
 
     GenesisConfig {
         system: SystemConfig {
@@ -617,88 +606,31 @@
             ],
             storage: <span class="macro">vec!</span>[
                 (
-                    (
-                        fee_token_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) which is the key in the starknet contract for
-                        // ERC20_balances(0x01).low
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[contract_address], <span class="number">0</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        fee_token_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) + 1 which is the key in the starknet contract
-                        // for ERC20_balances(0x01).high
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[contract_address], <span class="number">1</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        fee_token_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x02) which is the key in the starknet contract
-                        // for ERC20_balances(0x02).low
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x01d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[argent_account_address], <span class="number">0</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        token_contract_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) which is the key in the starknet contract for
-                        // ERC20_balances(0x01).low
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>token_contract_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[contract_address], <span class="number">0</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        token_contract_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;), 0x01) + 1 which is the key in the starknet contract
-                        // for ERC20_balances(0x01).high
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x07b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0A&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>token_contract_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[contract_address], <span class="number">1</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        fee_token_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;ERC20_balances&quot;),
-                        // 0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d) which is the key in the
-                        // starknet contract for
-                        // ERC20_balances(0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d).low
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x067fdeb147e1d955ee5049d653043a991c811ed3de90746bb2d4b48a5f229d52&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[public_key], <span class="number">0</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    (
-                        argent_account_address,
-                        <span class="comment">// pedersen(sn_keccak(b&quot;_signer&quot;))
-                        </span>Felt252Wrapper::from_hex_be(
-                            <span class="string">&quot;0x01ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05&quot;</span>,
-                        )
-                        .unwrap(),
-                    ),
+                    get_storage_key(<span class="kw-2">&amp;</span>argent_account_address, <span class="string">&quot;_signer&quot;</span>, <span class="kw-2">&amp;</span>[], <span class="number">0</span>),
                     Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
                 ),
             ],
