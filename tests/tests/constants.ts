@@ -1,3 +1,5 @@
+import fs from "fs";
+
 export const TEST_CONTRACT =
   "0x0000000000000000000000000000000000000000000000000000000000001111";
 
@@ -35,3 +37,7 @@ export const ARGENT_CONTRACT_ADDRESS =
 
 // Starknet testnet SN_GOERLI
 export const CHAIN_ID_STARKNET_TESTNET = "0x534e5f474f45524c49";
+
+export const ERC20_COMPILED = fs
+  .readFileSync("./contracts/compiled/erc20.json")
+  .toString();
