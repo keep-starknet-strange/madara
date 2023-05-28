@@ -875,11 +875,14 @@ impl<T: Config> Pallet<T> {
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
 
-        // TODO: need more experienced rust dev here to understand
-        // what is the correct way of doing the next two clones.
-        let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(tx, _)| tx).collect();
+        let mut transactions: Vec<Transaction> = Vec::with_capacity(pending.len());
+        let mut receipts: Vec<TransactionReceiptWrapper> = Vec::with_capacity(pending.len());
 
-        let transactions_receipts: Vec<(Transaction, TransactionReceiptWrapper)> = pending.into_iter().collect();
+        // For loop to iterate once on pending.
+        for (transaction, receipt) in pending.into_iter() {
+            transactions.push(transaction);
+            receipts.push(receipt);
+        }
 
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
@@ -903,7 +906,8 @@ impl<T: Config> Pallet<T> {
             ),
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            BlockTransactions::Full(BoundedVec::try_from(transactions_receipts).unwrap()),
+            BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BoundedVec::try_from(receipts).unwrap(),
         );
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());

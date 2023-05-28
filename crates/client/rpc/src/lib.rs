@@ -575,7 +575,7 @@ where
         let block_transactions = block.transactions();
         match block_transactions {
             BlockTransactions::Full(transactions) => {
-                let (transaction, _) = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+                let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
                 Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
                     error!("{:?}", e);
                     StarknetRpcApiError::InternalServerError
@@ -614,7 +614,7 @@ where
             sequencer_address: block.header().sequencer_address.into(),
             transactions: transactions
                 .into_iter()
-                .map(|(tx, _)| Transaction::try_from(tx))
+                .map(|tx| Transaction::try_from(tx))
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
                 .map_err(|e| {
                     error!("{:#?}", e);
@@ -689,18 +689,25 @@ where
 
         match block.transactions() {
             BlockTransactions::Full(transactions) => {
-                for (txn, _) in transactions {
-                    if txn.hash != transaction_hash.into() {
-                        continue;
+                let find_tx = transactions
+                    .into_iter()
+                    .find(|tx| tx.hash == transaction_hash.into())
+                    .map(|tx| Transaction::try_from(tx.clone()));
+
+                match find_tx {
+                    Some(res_tx) => {
+                        match res_tx {
+                            Ok(tx) => Ok(tx),
+                            Err(e) => {
+                                error!("Error retrieving transaction: {:?}", e);
+                                Err(StarknetRpcApiError::InternalServerError.into())
+                            }
+                        }
+                    },
+                    None => {
+                        Err(StarknetRpcApiError::TxnHashNotFound.into())
                     }
-
-                    return Ok(Transaction::try_from(txn.clone()).map_err(|e| {
-                        error!("{:?}", e);
-                        StarknetRpcApiError::InternalServerError
-                    })?);
                 }
-
-                Err(StarknetRpcApiError::TxnHashNotFound.into())
             }
             BlockTransactions::Hashes(_hashes) => {
                 // TODO: Here what can I do? I don't have all the info,
@@ -742,23 +749,14 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        match block.transactions() {
-            BlockTransactions::Full(transactions) => {
-                for (_, receipt) in transactions {
-                    if receipt.transaction_hash != transaction_hash.into() {
-                        continue;
-                    }
+        let find_receipt = block.transaction_receipts()
+            .into_iter()
+            .find(|receipt| receipt.transaction_hash == transaction_hash.into())
+            .map(|receipt| receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
 
-                    return Ok(receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
-                }
-
-                Err(StarknetRpcApiError::TxnHashNotFound.into())
-            }
-            BlockTransactions::Hashes(_hashes) => {
-                // TODO: Here what can I do? I don't have all the info,
-                // so what's the expected result, TxnNotFount? Error?
-                Err(StarknetRpcApiError::TxnHashNotFound.into())
-            }
+        match find_receipt {
+            Some(receipt) => Ok(receipt),
+            None => Err(StarknetRpcApiError::TxnHashNotFound.into())
         }
     }
 }

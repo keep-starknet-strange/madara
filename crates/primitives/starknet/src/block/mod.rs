@@ -30,8 +30,11 @@ pub enum BlockTransactions {
     /// Only hashes
     Hashes(BoundedVec<Felt252Wrapper, MaxTransactions>),
     /// Full transactions
-    Full(BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>),
+    Full(BoundedVec<Transaction, MaxTransactions>),
 }
+
+/// Block transaction receipts.
+pub type BlockTransactionReceipts = BoundedVec<TransactionReceiptWrapper, MaxTransactions>;
 
 impl Default for BlockTransactions {
     fn default() -> Self {
@@ -57,6 +60,8 @@ pub struct Block {
     header: Header,
     /// The block transactions.
     transactions: BlockTransactions,
+    /// The block transaction receipts.
+    transaction_receipts: BlockTransactionReceipts,
 }
 
 impl Block {
@@ -66,8 +71,12 @@ impl Block {
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    pub fn new(header: Header, transactions: BlockTransactions) -> Self {
-        Self { header, transactions }
+    pub fn new(
+        header: Header,
+        transactions: BlockTransactions,
+        transaction_receipts: BlockTransactionReceipts,
+    ) -> Self {
+        Self { header, transactions, transaction_receipts }
     }
 
     /// Return a reference to the block header
@@ -80,10 +89,16 @@ impl Block {
         &self.transactions
     }
 
+    /// Returns a reference to all transaction receipts.
+    pub fn transaction_receipts(&self) -> &BlockTransactionReceipts {
+        &self.transaction_receipts
+    }
+
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
         match &self.transactions {
-            BlockTransactions::Full(transactions) => transactions.into_iter().map(|(tx, _)| tx.hash).collect(),
+            BlockTransactions::Full(transactions) =>
+                transactions.into_iter().map(|tx| tx.hash).collect(),
 
             BlockTransactions::Hashes(hashes) => hashes.to_vec(),
         }

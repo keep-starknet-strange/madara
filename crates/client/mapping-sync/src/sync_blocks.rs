@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
 use mp_digest_log::FindLogError;
-use mp_starknet::block::{Block as StarknetBlock, BlockTransactions};
+use mp_starknet::block::BlockTransactions;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -45,14 +45,28 @@ where
                              db state ({storage_starknet_block_hash:?})"
                         ))
                     } else {
+
                         // Success, we write the Starknet to Substate hashes mapping to db
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
+                            starknet_transaction_hashes: match digest_starknet_block.transactions() {
+                                BlockTransactions::Full(transactions) => {
+                                    transactions
+                                        .into_iter()
+                                        .map(|tx| H256::from(tx.hash))
+                                        .collect()
+                                }
+                                BlockTransactions::Hashes(hashes) => {
+                                    hashes
+                                        .into_iter()
+                                        .map(|hash| H256::from(*hash))
+                                        .collect()
+                                }
+                            }
                         };
-                        backend.mapping().write_hashes(mapping_commitment)?;
 
-                        commit_transactions_block_hashes_mapping(&substrate_block_hash, &digest_starknet_block, backend)
+                        backend.mapping().write_hashes(mapping_commitment)
                     }
                 }
                 // If there is not Starknet block in this Substrate block, we write it in the db
@@ -81,7 +95,12 @@ where
     let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
     let block_hash = block.header().hash(*hasher);
     let mapping_commitment =
-        mc_db::MappingCommitment::<B> { block_hash: substrate_block_hash, starknet_block_hash: block_hash.into() };
+        mc_db::MappingCommitment::<B> {
+            block_hash: substrate_block_hash,
+            starknet_block_hash: block_hash.into(),
+            starknet_transaction_hashes: Vec::new(),
+        };
+
     backend.mapping().write_hashes(mapping_commitment)?;
 
     Ok(())
@@ -186,31 +205,5 @@ where
         Ok(Some(checking_header)) if checking_header.number() >= &sync_from => Ok(Some(checking_header)),
         Ok(Some(_)) => Ok(None),
         Ok(None) | Err(_) => Err("Header not found".to_string()),
-    }
-}
-
-/// Commits to the database the mapping between
-/// each transaction hash in the block and the block hash.
-fn commit_transactions_block_hashes_mapping<B: BlockT>(
-    substrate_block_hash: &B::Hash,
-    digest_starknet_block: &StarknetBlock,
-    backend: &mc_db::Backend<B>,
-) -> Result<(), String> {
-    let block_transactions = digest_starknet_block.transactions();
-    match block_transactions {
-        BlockTransactions::Full(transactions) => {
-            for (txn, _) in transactions {
-                backend.mapping().transaction_block_hashes_map(&H256::from(txn.hash), substrate_block_hash)?;
-            }
-
-            Ok(())
-        }
-        BlockTransactions::Hashes(hashes) => {
-            for hash in hashes {
-                backend.mapping().transaction_block_hashes_map(&H256::from(*hash), substrate_block_hash)?;
-            }
-
-            Ok(())
-        }
     }
 }

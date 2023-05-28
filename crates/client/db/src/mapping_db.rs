@@ -14,6 +14,7 @@ use crate::DbHash;
 pub struct MappingCommitment<B: BlockT> {
     pub block_hash: B::Hash,
     pub starknet_block_hash: H256,
+    pub starknet_transaction_hashes: Vec<H256>,
 }
 
 /// Allow interaction with the mapping db
@@ -82,29 +83,20 @@ impl<B: BlockT> MappingDb<B> {
             &substrate_hashes.encode(),
         );
 
-        transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
+        transaction.set(
+            crate::columns::SYNCED_MAPPING,
+            &commitment.block_hash.encode(),
+            &true.encode());
 
-        self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
-
-        Ok(())
-    }
-
-    /// Registers a mapping of a transaction's hash and the
-    /// substrate block hash it was inserted into.
-    ///
-    /// # Arguments
-    ///
-    /// * `transaction_hash`: the transaction hash to be mapped. H256 is used here because it's a
-    ///   native type of substrate, and we are sure it's SCALE encoding is optimized and will not
-    ///   change.
-    ///
-    /// * `block_hash`: substrate block hash.
-    pub fn transaction_block_hashes_map(&self, transaction_hash: &H256, block_hash: &B::Hash) -> Result<(), String> {
-        let _lock = self.write_lock.lock();
-
-        let mut transaction = sp_database::Transaction::new();
-
-        transaction.set(crate::columns::TRANSACTION_MAPPING, &transaction_hash.encode(), &block_hash.encode());
+	for transaction_hash in commitment
+	    .starknet_transaction_hashes
+	    .into_iter()
+	{
+            transaction.set(
+                crate::columns::TRANSACTION_MAPPING,
+                &transaction_hash.encode(),
+                &commitment.block_hash.encode());
+	}
 
         self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
 
