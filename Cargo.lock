@@ -4339,6 +4339,7 @@ dependencies = [
  "sp-state-machine",
  "sp-timestamp",
  "sp-trie 7.0.0 (git+https://github.com/paritytech/substrate?branch=master)",
+ "starknet-core",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint 0.10.0-dev (git+https://github.com/paritytech/substrate?branch=master)",
@@ -4663,6 +4664,7 @@ dependencies = [
  "mp-starknet",
  "parity-scale-codec",
  "sp-runtime",
+ "thiserror-no-std",
 ]
 
 [[package]]

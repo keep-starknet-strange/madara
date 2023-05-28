@@ -7,6 +7,7 @@ use blockifier::execution::contract_class::ContractClass;
 use frame_support::BoundedVec;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
+use thiserror_no_std::Error;
 
 use crate::execution::types::{
     CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
@@ -47,43 +48,29 @@ pub struct DeserializeCallEntrypoint {
 }
 
 /// Error enum for CallEntrypoint deserialization
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DeserializeCallEntrypointError {
     /// InvalidClassHash error
+    #[error("Invalid class hash format: {0}")]
     InvalidClassHash(Felt252WrapperError),
     /// InvalidCalldata error
+    #[error("Invalid calldata format: {0}")]
     InvalidCalldata(String),
     /// InvalidEntrypointSelector error
+    #[error("Invalid entrypoint_type selector: {0}")]
     InvalidEntrypointSelector(String),
     /// InvalidEntryPointType error
+    #[error("Invalid entrypoint_type")]
     InvalidEntryPointType,
     /// CalldataExceedsMaxSize error
+    #[error("Calldata exceed max size")]
     CalldataExceedsMaxSize,
     /// InvalidStorageAddress error
+    #[error("Invalid storage_address format: {0:?}")]
     InvalidStorageAddress(Felt252WrapperError),
     /// InvalidCallerAddress error
+    #[error("Invalid caller_address format: {0:?}")]
     InvalidCallerAddress(Felt252WrapperError),
-}
-
-impl fmt::Display for DeserializeCallEntrypointError {
-    /// Implementation of `fmt::Display` for `DeserializeCallEntrypointError`
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeserializeCallEntrypointError::InvalidClassHash(s) => write!(f, "Invalid class hash format: {:?}", s),
-            DeserializeCallEntrypointError::InvalidCalldata(s) => write!(f, "Invalid calldata format: {:?}", s),
-            DeserializeCallEntrypointError::InvalidEntrypointSelector(s) => {
-                write!(f, "Invalid entrypoint_type selector: ${:?}", s)
-            }
-            DeserializeCallEntrypointError::InvalidEntryPointType => write!(f, "Invalid entrypoint_type"),
-            DeserializeCallEntrypointError::CalldataExceedsMaxSize => write!(f, "Calldata exceed max size"),
-            DeserializeCallEntrypointError::InvalidStorageAddress(e) => {
-                write!(f, "Invalid storage_address format: {:?}", e)
-            }
-            DeserializeCallEntrypointError::InvalidCallerAddress(e) => {
-                write!(f, "Invalid caller_address format: {:?}", e)
-            }
-        }
-    }
 }
 
 /// Struct for deserializing Event from JSON
@@ -98,31 +85,23 @@ pub struct DeserializeEventWrapper {
 }
 
 /// Error enum for Event deserialization
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DeserializeEventError {
     /// InvalidKeys error
+    #[error("Invalid keys format: {0}")]
     InvalidKeys(String),
     /// KeysExceedMaxSize error
+    #[error("Keys exceed max size")]
     KeysExceedMaxSize,
     /// InvalidData error
+    #[error("Invalid data format: {0}")]
     InvalidData(String),
     /// DataExceedMaxSize error
+    #[error("Data exceed max size")]
     DataExceedMaxSize,
     /// InvalidFromAddress error
-    InvalidFromAddress(Felt252WrapperError),
-}
-
-impl fmt::Display for DeserializeEventError {
-    /// Implementation of `fmt::Display` for `DeserializeEventError`
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeserializeEventError::InvalidKeys(s) => write!(f, "Invalid keys format: {:?}", s),
-            DeserializeEventError::KeysExceedMaxSize => write!(f, "Keys exceed max size"),
-            DeserializeEventError::InvalidData(s) => write!(f, "Invalid data format: ${:?}", s),
-            DeserializeEventError::DataExceedMaxSize => write!(f, "Data exceed max size"),
-            DeserializeEventError::InvalidFromAddress(e) => write!(f, "Invalid data format: ${:?}", e),
-        }
-    }
+    #[error(transparent)]
+    InvalidFromAddress(#[from] Felt252WrapperError),
 }
 
 /// Struct for deserializing Transaction from JSON
@@ -145,42 +124,32 @@ pub struct DeserializeTransaction {
 }
 
 /// Error enum for Transaction deserialization
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum DeserializeTransactionError {
     /// FailedToParse error
+    #[error("Failed to parse json: {0}")]
     FailedToParse(String),
     /// InvalidHash error
+    #[error("Invalid hash format: {0}")]
     InvalidHash(String),
     /// InvalidSignature error
+    #[error("Invalid signature format: {0}")]
     InvalidSignature(String),
     /// SignatureExceedsMaxSize error
+    #[error("Signature exceed max size")]
     SignatureExceedsMaxSize,
     /// InvalidEvents error
-    InvalidEvents(DeserializeEventError),
+    #[error(transparent)]
+    InvalidEvents(#[from] DeserializeEventError),
     /// EventsExceedMaxSize error
+    #[error("Events exceed max size")]
     EventsExceedMaxSize,
     /// InvalidSenderAddress error
+    #[error("Invalid sender address format: {0}")]
     InvalidSenderAddress(String),
     /// InvalidCallEntryPoint error
-    InvalidCallEntryPoint(DeserializeCallEntrypointError),
-}
-
-impl fmt::Display for DeserializeTransactionError {
-    /// Implementation of `fmt::Display` for `DeserializeTransactionError`
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeserializeTransactionError::FailedToParse(s) => write!(f, "Failed parse json: {:?}", s),
-            DeserializeTransactionError::InvalidHash(s) => write!(f, "Invalid hash format: {:?}", s),
-            DeserializeTransactionError::InvalidSignature(s) => write!(f, "Invalid signature format: {:?}", s),
-            DeserializeTransactionError::SignatureExceedsMaxSize => write!(f, "Signature exceed max size"),
-            DeserializeTransactionError::InvalidEvents(e) => write!(f, "Invalid events format: {:?}", e),
-            DeserializeTransactionError::EventsExceedMaxSize => write!(f, "Events exceed max size"),
-            DeserializeTransactionError::InvalidSenderAddress(e) => write!(f, "Invalid sender address format: {:?}", e),
-            DeserializeTransactionError::InvalidCallEntryPoint(e) => {
-                write!(f, "Invalid call_entry_point format: {:?}", e)
-            }
-        }
-    }
+    #[error(transparent)]
+    InvalidCallEntryPoint(#[from] DeserializeCallEntrypointError),
 }
 
 /// Implementation of `TryFrom<DeserializeTransaction>` for `Transaction`.
