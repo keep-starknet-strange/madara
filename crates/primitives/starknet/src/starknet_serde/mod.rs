@@ -1,7 +1,7 @@
 //! This module contains the serialization and deserialization functions for the StarkNet types.
+use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
-use alloc::{fmt, format};
 
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::BoundedVec;
