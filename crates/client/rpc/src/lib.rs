@@ -614,7 +614,7 @@ where
             sequencer_address: block.header().sequencer_address.into(),
             transactions: transactions
                 .into_iter()
-                .map(|tx| Transaction::try_from(tx))
+                .map(Transaction::try_from)
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
                 .map_err(|e| {
                     error!("{:#?}", e);
@@ -695,18 +695,14 @@ where
                     .map(|tx| Transaction::try_from(tx.clone()));
 
                 match find_tx {
-                    Some(res_tx) => {
-                        match res_tx {
-                            Ok(tx) => Ok(tx),
-                            Err(e) => {
-                                error!("Error retrieving transaction: {:?}", e);
-                                Err(StarknetRpcApiError::InternalServerError.into())
-                            }
+                    Some(res_tx) => match res_tx {
+                        Ok(tx) => Ok(tx),
+                        Err(e) => {
+                            error!("Error retrieving transaction: {:?}", e);
+                            Err(StarknetRpcApiError::InternalServerError.into())
                         }
                     },
-                    None => {
-                        Err(StarknetRpcApiError::TxnHashNotFound.into())
-                    }
+                    None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
                 }
             }
             BlockTransactions::Hashes(_hashes) => {
@@ -749,14 +745,15 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let find_receipt = block.transaction_receipts()
+        let find_receipt = block
+            .transaction_receipts()
             .into_iter()
             .find(|receipt| receipt.transaction_hash == transaction_hash.into())
             .map(|receipt| receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
 
         match find_receipt {
             Some(receipt) => Ok(receipt),
-            None => Err(StarknetRpcApiError::TxnHashNotFound.into())
+            None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
         }
     }
 }

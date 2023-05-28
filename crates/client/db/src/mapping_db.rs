@@ -83,20 +83,15 @@ impl<B: BlockT> MappingDb<B> {
             &substrate_hashes.encode(),
         );
 
-        transaction.set(
-            crate::columns::SYNCED_MAPPING,
-            &commitment.block_hash.encode(),
-            &true.encode());
+        transaction.set(crate::columns::SYNCED_MAPPING, &commitment.block_hash.encode(), &true.encode());
 
-	for transaction_hash in commitment
-	    .starknet_transaction_hashes
-	    .into_iter()
-	{
+        for transaction_hash in commitment.starknet_transaction_hashes.into_iter() {
             transaction.set(
                 crate::columns::TRANSACTION_MAPPING,
                 &transaction_hash.encode(),
-                &commitment.block_hash.encode());
-	}
+                &commitment.block_hash.encode(),
+            );
+        }
 
         self.db.commit(transaction).map_err(|e| format!("{:?}", e))?;
 

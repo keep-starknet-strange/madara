@@ -97,8 +97,7 @@ impl Block {
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
         match &self.transactions {
-            BlockTransactions::Full(transactions) =>
-                transactions.into_iter().map(|tx| tx.hash).collect(),
+            BlockTransactions::Full(transactions) => transactions.into_iter().map(|tx| tx.hash).collect(),
 
             BlockTransactions::Hashes(hashes) => hashes.to_vec(),
         }

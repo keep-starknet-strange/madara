@@ -45,25 +45,18 @@ where
                              db state ({storage_starknet_block_hash:?})"
                         ))
                     } else {
-
                         // Success, we write the Starknet to Substate hashes mapping to db
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
                             starknet_transaction_hashes: match digest_starknet_block.transactions() {
                                 BlockTransactions::Full(transactions) => {
-                                    transactions
-                                        .into_iter()
-                                        .map(|tx| H256::from(tx.hash))
-                                        .collect()
+                                    transactions.into_iter().map(|tx| H256::from(tx.hash)).collect()
                                 }
                                 BlockTransactions::Hashes(hashes) => {
-                                    hashes
-                                        .into_iter()
-                                        .map(|hash| H256::from(*hash))
-                                        .collect()
+                                    hashes.into_iter().map(|hash| H256::from(*hash)).collect()
                                 }
-                            }
+                            },
                         };
 
                         backend.mapping().write_hashes(mapping_commitment)
@@ -94,12 +87,11 @@ where
 
     let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
     let block_hash = block.header().hash(*hasher);
-    let mapping_commitment =
-        mc_db::MappingCommitment::<B> {
-            block_hash: substrate_block_hash,
-            starknet_block_hash: block_hash.into(),
-            starknet_transaction_hashes: Vec::new(),
-        };
+    let mapping_commitment = mc_db::MappingCommitment::<B> {
+        block_hash: substrate_block_hash,
+        starknet_block_hash: block_hash.into(),
+        starknet_transaction_hashes: Vec::new(),
+    };
 
     backend.mapping().write_hashes(mapping_commitment)?;
 
