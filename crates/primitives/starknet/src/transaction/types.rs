@@ -57,7 +57,7 @@ pub enum TransactionExecutionErrorWrapper {
     /// Fee transfer error,
     #[error("Fee transfer error. Max fee is {}, Actual fee is {}", max_fee.0, actual_fee.0)]
     FeeTransferError {
-        /// Max fee specified by the ser.
+        /// Max fee specified by the set.
         max_fee: Fee,
         /// Actual fee.
         actual_fee: Fee,
