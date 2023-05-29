@@ -868,4 +868,27 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     });
   });
+
+  it("getEvents returns events", async function () {
+    await jumpBlocks(context, 10);
+    // Send a transaction
+    await context.createBlock(
+      rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      )
+    );
+
+    let filter = {
+      from_block: { block_number: 0 },
+      to_block: { block_number: 12 },
+      address: FEE_TOKEN_ADDRESS,
+      chunk_size: 10,
+      continuation_token: null,
+    };
+    let events = await providerRPC.getEvents(filter);
+    console.log(events);
+  });
 });

@@ -4505,6 +4505,8 @@ name = "mc-storage"
 version = "0.1.0"
 dependencies = [
  "frame-support",
+ "log",
+ "madara-runtime",
  "mp-starknet",
  "pallet-starknet",
  "parity-scale-codec",

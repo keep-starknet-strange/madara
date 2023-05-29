@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
-use log::error;
+use log::{error, info};
 use mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
@@ -31,8 +31,8 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
-    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
+    FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
     MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionStatus,
 };
 
@@ -146,6 +146,24 @@ where
                 Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
             })?
             .to_string())
+    }
+
+    fn substrate_block_number_from_starknet_block(&self, block_id: BlockId) -> Result<u64, String> {
+        // Short circuit on block number
+        if let BlockId::Number(x) = block_id {
+            return Ok(x);
+        }
+
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id)?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .ok_or("Failed to retrieve the substrate block number".to_string())?;
+
+        u64::try_from(block.header().block_number)
+            .map_err(|e| format!("Failed to convert block number to Felt252: {e}"))
     }
 }
 
@@ -681,13 +699,67 @@ where
     }
 
     /// Returns all events matching the given filter
-    async fn get_events(
-        &self,
-        filter: EventFilter,
-        continuation_token: Option<String>,
-        chunk_size: u64,
-    ) -> RpcResult<EventsPage> {
-        todo!("Not implemented")
+    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage> {
+        let requested_offset = match filter.result_page_request.continuation_token {
+            Some(token) => token.parse::<usize>().map_err(|e| {
+                error!("Failed to parse continuation token: {:?}", e);
+                StarknetRpcApiError::InvalidContinuationToken
+            })?,
+            None => 0usize,
+        };
+
+        // Get the substrate block numbers for the requested range
+        let latest_block =
+            self.substrate_block_number_from_starknet_block(BlockId::Tag(BlockTag::Latest)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+        let mut current_block = self
+            .substrate_block_number_from_starknet_block(filter.event_filter.from_block.unwrap_or(BlockId::Number(0)))
+            .map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+        let to_block = self
+            .substrate_block_number_from_starknet_block(
+                filter.event_filter.to_block.unwrap_or(BlockId::Tag(BlockTag::Latest)),
+            )
+            .map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        // Verify that the requested range is valid
+        if current_block > to_block {
+            return Err(StarknetRpcApiError::BlockNotFound.into());
+        }
+
+        let to_block = if latest_block > to_block { to_block } else { latest_block };
+        info!("Getting events from block {} to block {}", current_block, to_block);
+
+        // Get the events from the substrate chain up to the requested offset + chunk_size
+        let mut events = vec![];
+        while current_block <= to_block {
+            let substrate_block_hash =
+                self.substrate_block_hash_from_starknet_block(BlockId::Number(current_block)).map_err(|e| {
+                    error!("'{e}'");
+                    StarknetRpcApiError::BlockNotFound
+                })?;
+
+            let block_events = self
+                .overrides
+                .for_block_hash(self.client.as_ref(), substrate_block_hash)
+                .events(substrate_block_hash)
+                .unwrap_or_else(|| {
+                    info!("No events found in block {}", current_block);
+                    Vec::new()
+                });
+
+            log::info!("Found {:#?} events in block {}", block_events, current_block);
+
+            current_block += 1;
+        }
+        Ok(EventsPage { events, continuation_token: None })
     }
 
     /// Submit a new declare transaction to be added to the chain

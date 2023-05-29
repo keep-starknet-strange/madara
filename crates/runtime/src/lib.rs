@@ -30,7 +30,7 @@ use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
 use mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -302,6 +302,11 @@ impl_runtime_apis! {
 
         fn nonce(address: ContractAddressWrapper) -> NonceWrapper {
             Starknet::nonce(address)
+        }
+
+        fn events() -> Vec<EventWrapper> {
+            // TODO update this
+            vec![]
         }
 
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper> {

@@ -5,6 +5,12 @@ use scale_codec::{Decode, Encode};
 /// Current version of pallet Starknet's storage schema is stored under this key.
 pub const PALLET_STARKNET_SCHEMA: &[u8] = b":starknet_schema";
 
+/// System storage items.
+/// Pallet name.
+pub const PALLET_SYSTEM: &[u8] = b"System";
+/// System events storage item.
+pub const SYSTEM_EVENTS: &[u8] = b"Events";
+
 /// Pallet Starknet storage items.
 /// Pallet name.
 pub const PALLET_STARKNET: &[u8] = b"Starknet";
