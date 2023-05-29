@@ -125,7 +125,7 @@ starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_
 ], default-features = false }
 # Other third party dependencies
 anyhow = "1.0.71"
-base64 = "0.21.1"
+base64 = "0.21.2"
 flate2 = "1.0.26"
 scale-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 scale-info = { version = "2.6.0", default-features = false }
