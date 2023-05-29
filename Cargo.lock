@@ -4662,6 +4662,7 @@ dependencies = [
  "mp-starknet",
  "parity-scale-codec",
  "sp-runtime",
+ "thiserror-no-std",
 ]
 
 [[package]]

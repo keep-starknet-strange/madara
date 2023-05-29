@@ -6,6 +6,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
 use starknet_core::types::LegacyContractEntryPoint;
+use thiserror_no_std::Error;
 
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
@@ -114,12 +115,15 @@ impl From<LegacyContractEntryPoint> for EntryPointWrapper {
 }
 
 /// Wrapper type for transaction execution error.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum EntryPointExecutionErrorWrapper {
     /// Transaction execution error.
-    EntryPointExecution(EntryPointExecutionError),
+    #[error(transparent)]
+    EntryPointExecution(#[from] EntryPointExecutionError),
     /// Starknet API error.
-    StarknetApi(StarknetApiError),
+    #[error(transparent)]
+    StarknetApi(#[from] StarknetApiError),
     /// Block context serialization error.
+    #[error("Block context serialization error")]
     BlockContextSerializationError,
 }

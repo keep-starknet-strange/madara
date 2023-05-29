@@ -18,6 +18,7 @@ use starknet_core::types::{
     InvokeTransactionV1 as RPCInvokeTransactionV1, L1HandlerTransaction as RPCL1HandlerTransaction,
     Transaction as RPCTransaction,
 };
+use thiserror_no_std::Error;
 
 use crate::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
@@ -36,32 +37,42 @@ pub type MaxArraySize = ConstU32<10000>;
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;
 
 /// Wrapper type for transaction execution error.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum TransactionExecutionErrorWrapper {
     /// Transaction execution error.
-    TransactionExecution(TransactionExecutionError),
+    #[error(transparent)]
+    TransactionExecution(#[from] TransactionExecutionError),
     /// Starknet API error.
-    StarknetApi(StarknetApiError),
+    #[error(transparent)]
+    StarknetApi(#[from] StarknetApiError),
     /// Block context serialization error.
+    #[error("Block context serialization error")]
     BlockContextSerializationError,
     /// State error.
-    StateError(StateError),
+    #[error(transparent)]
+    StateError(#[from] StateError),
     /// Fee computation error,
+    #[error("Fee computation error")]
     FeeComputationError,
     /// Fee transfer error,
+    #[error("Fee transfer error. Max fee is {}, Actual fee is {}", max_fee.0, actual_fee.0)]
     FeeTransferError {
-        /// Max fee specified by the user.
+        /// Max fee specified by the set.
         max_fee: Fee,
         /// Actual fee.
         actual_fee: Fee,
     },
     /// Cairo resources are not contained in the fee costs.
+    #[error("Cairo resources are not contained in the fee costs")]
     CairoResourcesNotContainedInFeeCosts,
     /// Failed to compute the L1 gas usage.
+    #[error("Failed to compute the L1 gas usage")]
     FailedToComputeL1GasUsage,
     /// Entrypoint execution error
-    EntrypointExecution(EntryPointExecutionError),
+    #[error(transparent)]
+    EntrypointExecution(#[from] EntryPointExecutionError),
     /// Unexpected holes.
+    #[error("Unexpected holes: {0}")]
     UnexpectedHoles(String),
 }
 
@@ -78,12 +89,14 @@ impl From<TransactionValidationErrorWrapper> for TransactionExecutionErrorWrappe
 pub type TransactionValidationResultWrapper<T> = Result<T, TransactionValidationErrorWrapper>;
 
 /// Wrapper type for transaction validation error.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum TransactionValidationErrorWrapper {
     /// Transaction execution error
-    TransactionValidationError(TransactionExecutionError),
+    #[error(transparent)]
+    TransactionValidationError(#[from] TransactionExecutionError),
     /// Calldata error
-    CalldataError(StarknetApiError),
+    #[error(transparent)]
+    CalldataError(#[from] StarknetApiError),
 }
 
 impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
@@ -200,11 +213,13 @@ pub struct DeployAccountTransaction {
 
 /// Error of conversion between [DeclareTransaction], [InvokeTransaction],
 /// [DeployAccountTransaction] and [Transaction].
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum TransactionConversionError {
     /// Class hash is missing from the object of type [Transaction]
+    #[error("Class hash is missing from the object of type [Transaction]")]
     MissingClassHash,
     /// Class is missing from the object of type [Transaction]
+    #[error("Class is missing from the object of type [Transaction]")]
     MissingClass,
 }
 impl TryFrom<Transaction> for DeclareTransaction {
@@ -390,21 +405,28 @@ impl From<DeployAccountTransaction> for Transaction {
 
 /// Error of conversion between the Madara Primitive Transaction and the RPC Transaction
 #[cfg(feature = "std")]
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum RPCTransactionConversionError {
     /// The u8 stored version doesn't match any of the existing version at the RPC level
+    #[error("Unknown version")]
     UnknownVersion,
     /// Missing information
+    #[error("Missing information")]
     MissingInformation,
     /// Conversion from byte array has failed.
+    #[error("Conversion from byte array has failed")]
     FromArrayError,
     /// Provided byte array has incorrect lengths.
+    #[error("Provided byte array has incorrect lengths")]
     InvalidLength,
     /// Invalid character in hex string.
+    #[error("Invalid character in hex string")]
     InvalidCharacter,
     /// Value is too large for FieldElement (felt252).
+    #[error("Value is too large for FieldElement (felt252)")]
     OutOfRange,
     /// Value is too large to fit into target type.
+    #[error("Value is too large to fit into target type")]
     ValueTooLarge,
 }
 
@@ -583,16 +605,21 @@ pub struct TransactionExecutionInfoWrapper {
     scale_codec::Decode,
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
+    Error,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum EventError {
     /// Provided keys are invalid.
+    #[error("Provided keys are invalid")]
     InvalidKeys,
     /// Provided data is invalid.
+    #[error("Provided data is invalid")]
     InvalidData,
     /// Provided from address is invalid.
+    #[error("Provided from address is invalid")]
     InvalidFromAddress,
     /// Too many events
+    #[error("Too many events")]
     TooManyEvents,
 }
 
@@ -606,11 +633,14 @@ pub enum EventError {
     scale_codec::Decode,
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
+    Error,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateDiffError {
     /// Couldn't register newly deployed contracts.
+    #[error("Couldn't register newly deployed contracts")]
     DeployedContractError,
     /// Couldn't register newly declared contracts.
+    #[error("Couldn't register newly declared contracts")]
     DeclaredClassError,
 }
