@@ -25,7 +25,7 @@ use starknet_core::types::{
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
     let entry_points_by_type = _to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
 
-    let program: Program =
+    let _program: Program =
         _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
     let compressed_program = _compress_and_encode_base64(&[0])?;
 
@@ -198,9 +198,9 @@ fn _to_btree_map_entrypoints(
     let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
         BTreeMap::new();
 
-    entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, _get_entrypoint_value(&entries.constructor));
-    entry_points_by_type.insert(EntryPointTypeWrapper::External, _get_entrypoint_value(&entries.external));
-    entry_points_by_type.insert(EntryPointTypeWrapper::L1Handler, _get_entrypoint_value(&entries.l1_handler));
+    entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, _get_entrypoint_value(entries.constructor));
+    entry_points_by_type.insert(EntryPointTypeWrapper::External, _get_entrypoint_value(entries.external));
+    entry_points_by_type.insert(EntryPointTypeWrapper::L1Handler, _get_entrypoint_value(entries.l1_handler));
     entry_points_by_type
 }
 
@@ -232,7 +232,7 @@ fn _to_legacy_entry_points_by_type(
 }
 
 /// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
-fn _get_entrypoint_value(entries: &Vec<LegacyContractEntryPoint>) -> BoundedVec<EntryPointWrapper, MaxEntryPoints> {
+fn _get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> BoundedVec<EntryPointWrapper, MaxEntryPoints> {
     // We can unwrap safely as we already checked the length of the vectors
     BoundedVec::try_from(entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()).unwrap()
 }
