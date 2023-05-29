@@ -204,7 +204,8 @@ docker-compose -f infra/docker/docker-compose.yml up -d
 ```
 
 This command will firstly compile your code, and then start a local development
-network. You can also use the `docker_run.sh` script appending your own command. A few useful ones are as follow.
+network. You can also use the `docker_run.sh` script appending your own command.
+A few useful ones are as follow.
 
 ```bash
 # Run Substrate node without re-compiling
