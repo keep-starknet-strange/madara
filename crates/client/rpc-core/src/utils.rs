@@ -27,7 +27,7 @@ pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> R
 
     let _program: Program =
         _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
-    let compressed_program = _compress_and_encode_base64(&[0])?;
+    let compressed_program = compress_and_encode_base64(&[0])?;
 
     Ok(ContractClass::Legacy(CompressedLegacyContractClass {
         program: compressed_program.as_bytes().to_vec(),
@@ -37,20 +37,20 @@ pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> R
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
-pub(crate) fn _compress_and_encode_base64(data: &[u8]) -> Result<String> {
-    let data_compressed = _compress(data)?;
-    Ok(_encode_base64(&data_compressed))
+pub(crate) fn compress_and_encode_base64(data: &[u8]) -> Result<String> {
+    let data_compressed = compress(data)?;
+    Ok(encode_base64(&data_compressed))
 }
 
 /// Returns a compressed vector of bytes
-pub(crate) fn _compress(data: &[u8]) -> Result<Vec<u8>> {
+pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(&mut gzip_encoder, data)?;
     Ok(gzip_encoder.finish()?)
 }
 
 /// Returns a base64 encoded string of the input bytes
-pub(crate) fn _encode_base64(data: &[u8]) -> String {
+pub(crate) fn encode_base64(data: &[u8]) -> String {
     general_purpose::STANDARD.encode(data)
 }
 
