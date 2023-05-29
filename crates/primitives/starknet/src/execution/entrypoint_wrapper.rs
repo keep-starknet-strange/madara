@@ -6,6 +6,7 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
 use starknet_core::types::LegacyContractEntryPoint;
+use starknet_ff::{FieldElement, FromByteArrayError};
 
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
@@ -110,6 +111,16 @@ impl From<LegacyContractEntryPoint> for EntryPointWrapper {
         let selector = value.selector.to_bytes_be();
         let offset = value.offset.into();
         Self { selector, offset }
+    }
+}
+
+#[cfg(feature = "std")]
+impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
+    type Error = FromByteArrayError;
+    fn try_from(value: EntryPointWrapper) -> Result<Self, Self::Error> {
+        let selector = FieldElement::from_bytes_be(&value.selector)?;
+        let offset = value.offset as u64;
+        Ok(Self { selector, offset })
     }
 }
 

@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::vec;
 
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
@@ -17,21 +16,24 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-    BroadcastedTransaction, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
+    BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
     LegacyEntryPointsByType, StarknetError,
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
 // TODO: see https://github.com/keep-starknet-strange/madara/issues/363
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
-    let entry_points_by_type = EntryPointsByType { constructor: vec![], external: vec![], l1_handler: vec![] };
-    let default = FlattenedSierraClass {
-        sierra_program: vec![FieldElement::from_dec_str("0").unwrap()],
-        contract_class_version: String::from("version"),
+    let entry_points_by_type = _to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
+
+    let program: Program =
+        _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
+    let compressed_program = _compress_and_encode_base64(&[0])?;
+
+    Ok(ContractClass::Legacy(CompressedLegacyContractClass {
+        program: compressed_program.as_bytes().to_vec(),
         entry_points_by_type,
-        abi: String::from(""),
-    };
-    Ok(ContractClass::Sierra(default))
+        abi: None, // TODO: add ABI
+    }))
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
@@ -52,16 +54,27 @@ pub(crate) fn _encode_base64(data: &[u8]) -> String {
     general_purpose::STANDARD.encode(data)
 }
 
+/// Converts a broadcasted transaction to a transaction
+/// Supports `Invoke`, `Declare` and `DeployAccount` transactions
+///
+/// # Arguments
+///
+/// * `request` - The broadcasted transaction to convert
+///
+/// # Returns
+///
+/// * `Transaction` - The converted transaction
 pub fn to_tx(request: BroadcastedTransaction) -> Result<Transaction> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.into()),
-        BroadcastedTransaction::Declare(_) => Err(StarknetError::FailedToReceiveTransaction.into()), /* TODO: add support once #341 is supported */
+        BroadcastedTransaction::Declare(declare_tx) => to_declare_tx(declare_tx).map(|inner| inner.into()),
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
             to_deploy_account_tx(deploy_account_tx).map(|inner| inner.into())
         }
     }
 }
 
+/// Converts a broadcasted invoke transaction to an invoke transaction
 pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction> {
     match tx {
         BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
@@ -83,6 +96,7 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
     }
 }
 
+/// Converts a broadcasted deploy account transaction to a deploy account transaction
 pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction> {
     let contract_address_salt = tx.contract_address_salt.to_bytes_be();
 
@@ -133,6 +147,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
     })
 }
 
+/// Converts a broadcasted declare transaction to a declare transaction
 pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction> {
     match tx {
         BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
@@ -176,29 +191,48 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
     }
 }
 
-/// Returns a hash map of entry point types to entrypoint from deprecated entry point by type
+/// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
 fn _to_btree_map_entrypoints(
     entries: LegacyEntryPointsByType,
 ) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
     let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
         BTreeMap::new();
-    // We can unwrap safely as we already checked the length of the vectors
-    entry_points_by_type.insert(
-        EntryPointTypeWrapper::Constructor,
-        BoundedVec::try_from(
-            entries.constructor.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>(),
-        )
-        .unwrap(),
-    );
-    entry_points_by_type.insert(
-        EntryPointTypeWrapper::External,
-        BoundedVec::try_from(entries.external.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>())
-            .unwrap(),
-    );
-    entry_points_by_type.insert(
-        EntryPointTypeWrapper::L1Handler,
-        BoundedVec::try_from(entries.l1_handler.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>())
-            .unwrap(),
-    );
+
+    entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, _get_entrypoint_value(&entries.constructor));
+    entry_points_by_type.insert(EntryPointTypeWrapper::External, _get_entrypoint_value(&entries.external));
+    entry_points_by_type.insert(EntryPointTypeWrapper::L1Handler, _get_entrypoint_value(&entries.l1_handler));
     entry_points_by_type
+}
+
+fn _to_legacy_entry_points_by_type(
+    entries: &BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
+) -> Result<LegacyEntryPointsByType, FromByteArrayError> {
+    let constructor = entries
+        .get(&EntryPointTypeWrapper::Constructor)
+        .unwrap()
+        .iter()
+        .map(|e| (e.clone()).try_into())
+        .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
+
+    let external = entries
+        .get(&EntryPointTypeWrapper::External)
+        .unwrap()
+        .iter()
+        .map(|e| (e.clone()).try_into())
+        .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
+
+    let l1_handler = entries
+        .get(&EntryPointTypeWrapper::L1Handler)
+        .unwrap()
+        .iter()
+        .map(|e| (e.clone()).try_into())
+        .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
+
+    Ok(LegacyEntryPointsByType { constructor, external, l1_handler })
+}
+
+/// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
+fn _get_entrypoint_value(entries: &Vec<LegacyContractEntryPoint>) -> BoundedVec<EntryPointWrapper, MaxEntryPoints> {
+    // We can unwrap safely as we already checked the length of the vectors
+    BoundedVec::try_from(entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()).unwrap()
 }

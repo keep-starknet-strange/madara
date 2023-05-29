@@ -246,6 +246,7 @@ where
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
+
         Ok(to_rpc_contract_class(contract_class).map_err(|e| {
             error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
             StarknetRpcApiError::ContractNotFound
