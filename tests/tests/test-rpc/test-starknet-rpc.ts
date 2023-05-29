@@ -28,6 +28,7 @@ import {
   SIGNER_PRIVATE,
   SIGNER_PUBLIC,
   SALT,
+  ERC20_COMPILED,
 } from "../constants";
 import { toHex, toBN, rpcTransfer } from "../../util/utils";
 
@@ -540,5 +541,27 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(error).to.be.instanceOf(LibraryError);
       expect(error.message).to.equal("40: Contract error");
     }
+  });
+
+  it("Adds a declare transaction successfully", async function () {
+    const nonce = await providerRPC.getNonceForAddress(
+      ARGENT_CONTRACT_ADDRESS,
+      "latest"
+    );
+
+    const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+    const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
+
+    const resp = await account.declare(
+      {
+        classHash:
+          "0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95",
+        contract: ERC20_COMPILED,
+      },
+      { nonce, version: 1, maxFee: "123456" }
+    );
+
+    expect(resp).to.not.be.undefined;
+    expect(resp.transaction_hash).to.contain("0x");
   });
 });

@@ -204,17 +204,16 @@ docker-compose -f infra/docker/docker-compose.yml up -d
 ```
 
 This command will firstly compile your code, and then start a local development
-network. You can also replace the default command
-(`cargo build --release && ./target/release/madara --dev --ws-external`) by
-appending your own. A few useful ones are as follow.
+network. You can also use the `docker_run.sh` script appending your own command.
+A few useful ones are as follow.
 
 ```bash
 # Run Substrate node without re-compiling
-./infra/docker_run.sh ./target/release/madara --dev --ws-external
+./infra/docker/docker_run.sh ./target/release/madara --dev --ws-external
 
 # Purge the local dev chain
-./infra/docker_run.sh ./target/release/madara purge-chain --dev
+./infra/docker/docker_run.sh ./target/release/madara purge-chain --dev
 
 # Check whether the code is compilable
-./infra/docker_run.sh cargo check
+./infra/docker/docker_run.sh cargo check
 ```
