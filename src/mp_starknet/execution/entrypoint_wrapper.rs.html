@@ -123,6 +123,10 @@
 <a href="#123" id="123">123</a>
 <a href="#124" id="124">124</a>
 <a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
 <span class="kw">use </span>sp_core::ConstU32;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
@@ -131,6 +135,7 @@
 <span class="kw">use </span>starknet_api::StarknetApiError;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">use </span>starknet_core::types::LegacyContractEntryPoint;
+<span class="kw">use </span>thiserror_no_std::Error;
 
 <span class="doccomment">/// Max number of entrypoints.
 </span><span class="kw">pub type </span>MaxEntryPoints = ConstU32&lt;<span class="number">4294967295</span>&gt;;
@@ -239,13 +244,16 @@
 }
 
 <span class="doccomment">/// Wrapper type for transaction execution error.
-</span><span class="attr">#[derive(Debug)]
+</span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>EntryPointExecutionErrorWrapper {
     <span class="doccomment">/// Transaction execution error.
-    </span>EntryPointExecution(EntryPointExecutionError),
+    </span><span class="attr">#[error(transparent)]
+    </span>EntryPointExecution(<span class="attr">#[from] </span>EntryPointExecutionError),
     <span class="doccomment">/// Starknet API error.
-    </span>StarknetApi(StarknetApiError),
+    </span><span class="attr">#[error(transparent)]
+    </span>StarknetApi(<span class="attr">#[from] </span>StarknetApiError),
     <span class="doccomment">/// Block context serialization error.
+    </span><span class="attr">#[error(<span class="string">&quot;Block context serialization error&quot;</span>)]
     </span>BlockContextSerializationError,
 }
 </code></pre></div>

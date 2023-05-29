@@ -331,46 +331,16 @@
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
-<a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
-</span><span class="kw">use </span>alloc::string::{String, ToString};
+</span><span class="kw">use </span>alloc::format;
+<span class="kw">use </span>alloc::string::{String, ToString};
 <span class="kw">use </span>alloc::vec::Vec;
-<span class="kw">use </span>alloc::{fmt, format};
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_core::U256;
+<span class="kw">use </span>thiserror_no_std::Error;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{
     CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
@@ -411,43 +381,29 @@
 }
 
 <span class="doccomment">/// Error enum for CallEntrypoint deserialization
-</span><span class="attr">#[derive(Debug)]
+</span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>DeserializeCallEntrypointError {
     <span class="doccomment">/// InvalidClassHash error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid class hash format: {0}&quot;</span>)]
     </span>InvalidClassHash(Felt252WrapperError),
     <span class="doccomment">/// InvalidCalldata error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid calldata format: {0}&quot;</span>)]
     </span>InvalidCalldata(String),
     <span class="doccomment">/// InvalidEntrypointSelector error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid entrypoint_type selector: {0}&quot;</span>)]
     </span>InvalidEntrypointSelector(String),
     <span class="doccomment">/// InvalidEntryPointType error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid entrypoint_type&quot;</span>)]
     </span>InvalidEntryPointType,
     <span class="doccomment">/// CalldataExceedsMaxSize error
+    </span><span class="attr">#[error(<span class="string">&quot;Calldata exceed max size&quot;</span>)]
     </span>CalldataExceedsMaxSize,
     <span class="doccomment">/// InvalidStorageAddress error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid storage_address format: {0:?}&quot;</span>)]
     </span>InvalidStorageAddress(Felt252WrapperError),
     <span class="doccomment">/// InvalidCallerAddress error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid caller_address format: {0:?}&quot;</span>)]
     </span>InvalidCallerAddress(Felt252WrapperError),
-}
-
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>DeserializeCallEntrypointError {
-    <span class="doccomment">/// Implementation of `fmt::Display` for `DeserializeCallEntrypointError`
-    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            DeserializeCallEntrypointError::InvalidClassHash(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid class hash format: {:?}&quot;</span>, s),
-            DeserializeCallEntrypointError::InvalidCalldata(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid calldata format: {:?}&quot;</span>, s),
-            DeserializeCallEntrypointError::InvalidEntrypointSelector(s) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;Invalid entrypoint_type selector: ${:?}&quot;</span>, s)
-            }
-            DeserializeCallEntrypointError::InvalidEntryPointType =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid entrypoint_type&quot;</span>),
-            DeserializeCallEntrypointError::CalldataExceedsMaxSize =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Calldata exceed max size&quot;</span>),
-            DeserializeCallEntrypointError::InvalidStorageAddress(e) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;Invalid storage_address format: {:?}&quot;</span>, e)
-            }
-            DeserializeCallEntrypointError::InvalidCallerAddress(e) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;Invalid caller_address format: {:?}&quot;</span>, e)
-            }
-        }
-    }
 }
 
 <span class="doccomment">/// Struct for deserializing Event from JSON
@@ -462,31 +418,23 @@
 }
 
 <span class="doccomment">/// Error enum for Event deserialization
-</span><span class="attr">#[derive(Debug)]
+</span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>DeserializeEventError {
     <span class="doccomment">/// InvalidKeys error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid keys format: {0}&quot;</span>)]
     </span>InvalidKeys(String),
     <span class="doccomment">/// KeysExceedMaxSize error
+    </span><span class="attr">#[error(<span class="string">&quot;Keys exceed max size&quot;</span>)]
     </span>KeysExceedMaxSize,
     <span class="doccomment">/// InvalidData error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid data format: {0}&quot;</span>)]
     </span>InvalidData(String),
     <span class="doccomment">/// DataExceedMaxSize error
+    </span><span class="attr">#[error(<span class="string">&quot;Data exceed max size&quot;</span>)]
     </span>DataExceedMaxSize,
     <span class="doccomment">/// InvalidFromAddress error
-    </span>InvalidFromAddress(Felt252WrapperError),
-}
-
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>DeserializeEventError {
-    <span class="doccomment">/// Implementation of `fmt::Display` for `DeserializeEventError`
-    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            DeserializeEventError::InvalidKeys(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid keys format: {:?}&quot;</span>, s),
-            DeserializeEventError::KeysExceedMaxSize =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Keys exceed max size&quot;</span>),
-            DeserializeEventError::InvalidData(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid data format: ${:?}&quot;</span>, s),
-            DeserializeEventError::DataExceedMaxSize =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Data exceed max size&quot;</span>),
-            DeserializeEventError::InvalidFromAddress(e) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid data format: ${:?}&quot;</span>, e),
-        }
-    }
+    </span><span class="attr">#[error(transparent)]
+    </span>InvalidFromAddress(<span class="attr">#[from] </span>Felt252WrapperError),
 }
 
 <span class="doccomment">/// Struct for deserializing Transaction from JSON
@@ -509,42 +457,32 @@
 }
 
 <span class="doccomment">/// Error enum for Transaction deserialization
-</span><span class="attr">#[derive(Debug)]
+</span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>DeserializeTransactionError {
     <span class="doccomment">/// FailedToParse error
+    </span><span class="attr">#[error(<span class="string">&quot;Failed to parse json: {0}&quot;</span>)]
     </span>FailedToParse(String),
     <span class="doccomment">/// InvalidHash error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid hash format: {0}&quot;</span>)]
     </span>InvalidHash(String),
     <span class="doccomment">/// InvalidSignature error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid signature format: {0}&quot;</span>)]
     </span>InvalidSignature(String),
     <span class="doccomment">/// SignatureExceedsMaxSize error
+    </span><span class="attr">#[error(<span class="string">&quot;Signature exceed max size&quot;</span>)]
     </span>SignatureExceedsMaxSize,
     <span class="doccomment">/// InvalidEvents error
-    </span>InvalidEvents(DeserializeEventError),
+    </span><span class="attr">#[error(transparent)]
+    </span>InvalidEvents(<span class="attr">#[from] </span>DeserializeEventError),
     <span class="doccomment">/// EventsExceedMaxSize error
+    </span><span class="attr">#[error(<span class="string">&quot;Events exceed max size&quot;</span>)]
     </span>EventsExceedMaxSize,
     <span class="doccomment">/// InvalidSenderAddress error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid sender address format: {0}&quot;</span>)]
     </span>InvalidSenderAddress(String),
     <span class="doccomment">/// InvalidCallEntryPoint error
-    </span>InvalidCallEntryPoint(DeserializeCallEntrypointError),
-}
-
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>DeserializeTransactionError {
-    <span class="doccomment">/// Implementation of `fmt::Display` for `DeserializeTransactionError`
-    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="self">self </span>{
-            DeserializeTransactionError::FailedToParse(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Failed parse json: {:?}&quot;</span>, s),
-            DeserializeTransactionError::InvalidHash(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid hash format: {:?}&quot;</span>, s),
-            DeserializeTransactionError::InvalidSignature(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid signature format: {:?}&quot;</span>, s),
-            DeserializeTransactionError::SignatureExceedsMaxSize =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Signature exceed max size&quot;</span>),
-            DeserializeTransactionError::InvalidEvents(e) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid events format: {:?}&quot;</span>, e),
-            DeserializeTransactionError::EventsExceedMaxSize =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Events exceed max size&quot;</span>),
-            DeserializeTransactionError::InvalidSenderAddress(e) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Invalid sender address format: {:?}&quot;</span>, e),
-            DeserializeTransactionError::InvalidCallEntryPoint(e) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;Invalid call_entry_point format: {:?}&quot;</span>, e)
-            }
-        }
-    }
+    </span><span class="attr">#[error(transparent)]
+    </span>InvalidCallEntryPoint(<span class="attr">#[from] </span>DeserializeCallEntrypointError),
 }
 
 <span class="doccomment">/// Implementation of `TryFrom&lt;DeserializeTransaction&gt;` for `Transaction`.
