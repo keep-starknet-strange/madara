@@ -1,6 +1,7 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
+import fs from "fs";
 import {
   Account,
   LibraryError,
@@ -20,7 +21,6 @@ import {
   ARGENT_CONTRACT_ADDRESS,
   ARGENT_PROXY_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
-  ERC20_COMPILED,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   SALT,
@@ -601,11 +601,15 @@ describeDevMadara("Starknet RPC", (context) => {
         keyPair
       );
 
+      const contract = fs
+        .readFileSync("./contracts/compiled/erc20.json")
+        .toString();
+
       const resp = await account.declare(
         {
           classHash:
             "0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95",
-          contract: ERC20_COMPILED,
+          contract,
         },
         { nonce, version: 1, maxFee: "123456" }
       );
