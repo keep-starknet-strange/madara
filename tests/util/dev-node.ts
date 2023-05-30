@@ -37,7 +37,6 @@ export async function findAvailablePorts() {
   return {
     p2pPort: availablePorts[0],
     rpcPort: availablePorts[1],
-    wsPort: availablePorts[2],
   };
 }
 
@@ -58,7 +57,6 @@ export async function startMadaraDevNode(
 ): Promise<{
   p2pPort: number;
   rpcPort: number;
-  wsPort: number;
   runningNode: ChildProcess;
 }> {
   while (nodeStarted) {
@@ -68,7 +66,7 @@ export async function startMadaraDevNode(
     });
   }
   nodeStarted = true;
-  const { p2pPort, rpcPort, wsPort } = await findAvailablePorts();
+  const { p2pPort, rpcPort } = await findAvailablePorts();
 
   if (process.env.FORCE_WASM_EXECUTION == "true") {
     withWasm = true;
@@ -94,7 +92,6 @@ export async function startMadaraDevNode(
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
     `--rpc-port=${rpcPort}`,
-    `--ws-port=${wsPort}`,
     "--tmp",
     "--rpc-methods=unsafe",
   ];
@@ -104,7 +101,7 @@ export async function startMadaraDevNode(
     args.push("--blocks-pruning=archive");
   }
   debug(
-    `Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort} --ws-port=${wsPort}`
+    `Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`
   );
 
   const onProcessExit = function () {
@@ -124,7 +121,7 @@ export async function startMadaraDevNode(
     process.removeListener("SIGINT", onProcessInterrupt);
     nodeStarted = false;
     debug(
-      `Exiting dev node: --port=${p2pPort} --rpc-port=${rpcPort} --ws-port=${wsPort}`
+      `Exiting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`
     );
   });
 
@@ -172,17 +169,15 @@ export async function startMadaraDevNode(
     runningNode.stdout.on("data", onData);
   });
 
-  return { p2pPort, rpcPort, wsPort, runningNode };
+  return { p2pPort, rpcPort, runningNode };
 }
 
 // This will start a madara dev node from forked state, that has been previously setup with
 // a snapshot of production state via the madara-tools run-fork-solo command
 export async function startMadaraForkedNode(
   rpcPort: number,
-  wsPort: number
 ): Promise<{
   rpcPort: number;
-  wsPort: number;
   runningNode: ChildProcess;
 }> {
   while (nodeStarted) {
@@ -205,14 +200,13 @@ export async function startMadaraForkedNode(
     "--sealing=manual",
     `-l${MADARA_LOG}`,
     `--rpc-port=${rpcPort}`,
-    `--ws-port=${wsPort}`,
     "--trie-cache-size=0",
     "--db-cache=5000",
     "--collator",
     `--base-path=${BASE_PATH}`,
   ];
 
-  debug(`Starting dev node: --rpc-port=${rpcPort} --ws-port=${wsPort}`);
+  debug(`Starting dev node: --rpc-port=${rpcPort}`);
 
   const onProcessExit = function () {
     runningNode && runningNode.kill();
@@ -230,7 +224,7 @@ export async function startMadaraForkedNode(
     process.removeListener("exit", onProcessExit);
     process.removeListener("SIGINT", onProcessInterrupt);
     nodeStarted = false;
-    debug(`Exiting dev node: --rpc-port=${rpcPort} --ws-port=${wsPort}`);
+    debug(`Exiting dev node: --rpc-port=${rpcPort}`);
   });
 
   runningNode.on("error", (err) => {
@@ -277,5 +271,5 @@ export async function startMadaraForkedNode(
     runningNode.stdout.on("data", onData);
   });
 
-  return { rpcPort, wsPort, runningNode };
+  return { rpcPort, runningNode };
 }

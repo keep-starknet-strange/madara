@@ -27,17 +27,17 @@ export interface BlockCreation {
 export interface BlockCreationResponse<
   ApiType extends ApiTypes,
   Call extends
-    | SubmittableExtrinsic<ApiType>
-    | string
-    | Array<SubmittableExtrinsic<ApiType> | string>
+  | SubmittableExtrinsic<ApiType>
+  | string
+  | Array<SubmittableExtrinsic<ApiType> | string>
 > {
   block: {
     duration: number;
     hash: string;
   };
   result: Call extends Array<string | SubmittableExtrinsic<ApiType>>
-    ? ExtrinsicCreation[]
-    : ExtrinsicCreation;
+  ? ExtrinsicCreation[]
+  : ExtrinsicCreation;
 }
 
 export interface DevTestContext {
@@ -47,11 +47,11 @@ export interface DevTestContext {
   createBlock: <
     ApiType extends ApiTypes,
     Call extends
-      | SubmittableExtrinsic<ApiType>
-      | Promise<SubmittableExtrinsic<ApiType>>
-      | string
-      | Promise<string>
-      | Promise<InvokeFunctionResponse>,
+    | SubmittableExtrinsic<ApiType>
+    | Promise<SubmittableExtrinsic<ApiType>>
+    | string
+    | Promise<string>
+    | Promise<InvokeFunctionResponse>,
     Calls extends Call | Call[]
   >(
     transactions?: Calls,
@@ -60,8 +60,8 @@ export interface DevTestContext {
     BlockCreationResponse<
       ApiType,
       Calls extends Call[]
-        ? Array<Awaited<SubmittableExtrinsic<ApiType>>>
-        : Awaited<SubmittableExtrinsic<ApiType>>
+      ? Array<Awaited<SubmittableExtrinsic<ApiType>>>
+      : Awaited<SubmittableExtrinsic<ApiType>>
     >
   >;
 
@@ -81,7 +81,7 @@ export function describeDevMadara(
   withWasm?: boolean,
   forkedMode?: boolean
 ) {
-  describe(title, function () {
+  describe(title, function() {
     // Set timeout to 50000 for all tests.
     this.timeout(50000);
 
@@ -93,16 +93,15 @@ export function describeDevMadara(
     let madaraProcess: ChildProcess;
 
     // Making sure the Madara node has started
-    before("Starting Madara Test Node", async function () {
+    before("Starting Madara Test Node", async function() {
       this.timeout(SPAWNING_TIME);
       const init = forkedMode
-        ? await startMadaraForkedNode(9933, 9944)
+        ? await startMadaraForkedNode(9933)
         : !DEBUG_MODE
-        ? await startMadaraDevNode(withWasm, runtime)
-        : {
+          ? await startMadaraDevNode(withWasm, runtime)
+          : {
             runningNode: null,
             p2pPort: 19931,
-            wsPort: 9944,
             rpcPort: 9933,
           };
       madaraProcess = init.runningNode;
@@ -115,7 +114,7 @@ export function describeDevMadara(
       madaraProcess = init.runningNode;
 
       context.createPolkadotApi = async () => {
-        const apiPromise = await providePolkadotApi(init.wsPort);
+        const apiPromise = await providePolkadotApi(init.rpcPort);
         // We keep track of the polkadotApis to close them at the end of the test
         context._polkadotApis.push(apiPromise);
         await apiPromise.isReady;
@@ -136,11 +135,11 @@ export function describeDevMadara(
       context.createBlock = async <
         ApiType extends ApiTypes,
         Call extends
-          | SubmittableExtrinsic<ApiType>
-          | Promise<SubmittableExtrinsic<ApiType>>
-          | string
-          | Promise<string>
-          | Promise<InvokeFunctionResponse>,
+        | SubmittableExtrinsic<ApiType>
+        | Promise<SubmittableExtrinsic<ApiType>>
+        | string
+        | Promise<string>
+        | Promise<InvokeFunctionResponse>,
         Calls extends Call | Call[]
       >(
         transactions?: Calls,
@@ -153,8 +152,8 @@ export function describeDevMadara(
           transactions == undefined
             ? []
             : Array.isArray(transactions)
-            ? transactions
-            : [transactions];
+              ? transactions
+              : [transactions];
         for await (const call of txs) {
           if (call.transaction_hash) {
             // TODO: update this when we have the rpc endpoint
@@ -222,17 +221,17 @@ export function describeDevMadara(
           const extrinsicIndex =
             result.type == "starknet"
               ? allRecords
-                  .find(
-                    ({ phase, event: { section, method, data } }) =>
-                      phase.isApplyExtrinsic &&
-                      section == "starknet" &&
-                      method == "Executed" &&
-                      data[2].toString() == result.hash
-                  )
-                  ?.phase?.asApplyExtrinsic?.toNumber()
+                .find(
+                  ({ phase, event: { section, method, data } }) =>
+                    phase.isApplyExtrinsic &&
+                    section == "starknet" &&
+                    method == "Executed" &&
+                    data[2].toString() == result.hash
+                )
+                ?.phase?.asApplyExtrinsic?.toNumber()
               : blockData.block.extrinsics.findIndex(
-                  (ext) => ext.hash.toHex() == result.hash
-                );
+                (ext) => ext.hash.toHex() == result.hash
+              );
           // We retrieve the events associated with the extrinsic
           const events = allRecords.filter(
             ({ phase }) =>
@@ -270,7 +269,7 @@ export function describeDevMadara(
       debug(`Setup ready`);
     });
 
-    after(async function () {
+    after(async function() {
       await Promise.all(
         context._polkadotApis.map(async (p) => {
           await p.disconnect();
