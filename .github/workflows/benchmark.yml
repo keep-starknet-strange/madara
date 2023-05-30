@@ -59,7 +59,7 @@ jobs:
           fail-on-alert: true
           comment-on-alert: true
           summary-always: false
-          comment-always: false
+          comment-always: true
           auto-push: false
       - name: Push result on gh page
         if: github.event_name == 'push' && github.base_ref == 'main'
