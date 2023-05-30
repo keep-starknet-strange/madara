@@ -62,7 +62,7 @@ jobs:
           comment-always: true
           auto-push: false
       - name: Push result on gh page
-        if: github.event_name == 'push' && github.base_ref == 'main'
+        # if: github.event_name == 'push' && github.base_ref == 'main'
         run:
           git push
           'https://keep-starknet-strange:${{secrets.GITHUB_TOKEN}}@github.com/keep-starknet-strange/madara.git'
