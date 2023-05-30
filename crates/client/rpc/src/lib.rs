@@ -1,10 +1,11 @@
 //! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
-
+extern crate alloc;
 mod errors;
 mod madara_backend_client;
 
+use alloc::str::from_utf8_unchecked;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -429,11 +430,12 @@ where
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<String> {
         let hash = self.client.info().best_hash;
-        let res = self.client.runtime_api().chain_id(hash).map_err(|_| {
+        let chain_id = self.client.runtime_api().chain_id(hash).map_err(|_| {
             error!("fetch runtime chain id failed");
             StarknetRpcApiError::InternalServerError
         })?;
-        Ok(format!("0x{:x}", res))
+        let res = unsafe { from_utf8_unchecked(&chain_id.0.to_bytes_be()).to_string() };
+        Ok(format!("0x{}", res))
     }
 
     /// Add an Invoke Transaction to invoke a contract function
@@ -457,7 +459,8 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = invoke_tx.from_invoke(&chain_id.to_string());
+        let transaction: MPTransaction =
+            invoke_tx.from_invoke(unsafe { from_utf8_unchecked(&chain_id.0.to_bytes_be()) });
         let extrinsic = self
             .client
             .runtime_api()
@@ -507,7 +510,8 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&chain_id.to_string());
+        let transaction: MPTransaction =
+            deploy_account_transaction.from_deploy(unsafe { from_utf8_unchecked(&chain_id.0.to_bytes_be()) });
         let extrinsic = self
             .client
             .runtime_api()
@@ -559,7 +563,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let tx = to_tx(request, &chain_id.to_string())?;
+        let tx = to_tx(request, unsafe { from_utf8_unchecked(&chain_id.0.to_bytes_be()) })?;
         let (actual_fee, gas_usage) = self
             .client
             .runtime_api()
@@ -687,7 +691,8 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = declare_tx.from_declare(&chain_id.to_string());
+        let transaction: MPTransaction =
+            declare_tx.from_declare(unsafe { from_utf8_unchecked(&chain_id.0.to_bytes_be()) });
         let extrinsic = self
             .client
             .runtime_api()

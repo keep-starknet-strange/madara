@@ -311,7 +311,7 @@ impl_runtime_apis! {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 
-        fn chain_id() -> u128 {
+        fn chain_id() -> Felt252Wrapper {
             Starknet::chain_id()
         }
 
