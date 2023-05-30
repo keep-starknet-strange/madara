@@ -49,27 +49,20 @@ jobs:
           cd benchmarking
           cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
           npm run test
-
-      - name: Download previous benchmark data
-        uses: actions/cache@v1
-        with:
-          path: ./cache
-          key: ${{ runner.os }}-benchmark
-
-      - name: Store benchmark result
+      - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          # What benchmark tool the output.txt came from
           tool: "customBiggerIsBetter"
-          # Where the output from the benchmark tool is stored
           output-file-path: ./benchmarking/reports/metrics.json
-          # Where the previous data file is stored
-          external-data-json-path: ./cache/benchmark-data.json
-          # Workflow will fail when an alert happens
+          alert-threshold: "150%"
           fail-on-alert: true
-          # GitHub API token to make a commit comment
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Enable alert commit comment
           comment-on-alert: true
-          # Enable Job Summary for PRs
           summary-always: true
+          comment-always: true
+          auto-push: false
+      - name: Push result on gh page
+        if: github.event_name == 'push' && github.base_ref == 'main'
+        run:
+          git push
+          'https://keep-starknet-strange:${{secrets.GITHUB_TOKEN}}@github.com/keep-starknet-strange/madara.git'
+          gh-pages:gh-pages
