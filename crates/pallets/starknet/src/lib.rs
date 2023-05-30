@@ -85,8 +85,10 @@ use mp_starknet::transaction::types::{
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::ContractAddress;
+use starknet_api::api_core::{ContractAddress, ChainId};
 use starknet_api::transaction::EventContent;
+
+use crate::alloc::string::ToString;
 
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
@@ -115,6 +117,7 @@ macro_rules! log {
 pub mod pallet {
 
     use super::*;
+    use starknet_api::api_core::ChainId as StarknetChainId;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -409,6 +412,7 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
+            let chain_id = Self::chain_id();
             let transaction: Transaction = transaction.into();
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
@@ -416,6 +420,7 @@ pub mod pallet {
                 TxType::Invoke,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -494,6 +499,7 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
+            let chain_id = Self::chain_id();
 
             // Parse contract class
             let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
@@ -505,6 +511,7 @@ pub mod pallet {
                 TxType::Declare,
                 Some(contract_class),
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -582,6 +589,7 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
+            let chain_id = Self::chain_id();
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
@@ -589,6 +597,7 @@ pub mod pallet {
                 TxType::DeployAccount,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -658,12 +667,14 @@ pub mod pallet {
 
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
+            let chain_id = Self::chain_id();
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
                 TxType::L1Handler,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id.to_string()),
             ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v);
@@ -835,7 +846,9 @@ impl<T: Config> Pallet<T> {
             ContractAddressWrapper::default(),
         );
 
-        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
+        let chain_id = Self::chain_id();
+
+        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address, ChainId(chain_id.to_string())) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
@@ -967,12 +980,14 @@ impl<T: Config> Pallet<T> {
         // Check if contract is deployed
         ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
+        let chain_id = Self::chain_id();
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             Self::current_block(),
             TxType::Invoke,
             None,
             Self::fee_token_address(),
+            ChainId(chain_id.to_string()),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);

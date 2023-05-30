@@ -202,8 +202,7 @@ where
     let nonce = FieldElement::from_bytes_be(&nonce.into()).unwrap();
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
-    // TODO: make it configurable
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/364
+
     let chain_id = FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap();
 
     let tx_hash = <T as CryptoHasherT>::compute_hash_on_elements(&vec![
@@ -218,7 +217,6 @@ where
     ]);
 
     tx_hash.into()
-    //    H256::from_slice(&tx_hash.to_bytes_be())
 }
 
 /// Calculate the hash of an event.

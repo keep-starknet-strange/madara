@@ -6,7 +6,6 @@ use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 
-use crate::alloc::string::ToString;
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::HasherT;
 
@@ -81,7 +80,7 @@ impl Header {
     }
 
     /// Converts to a blockifier BlockContext
-    pub fn into_block_context(self, fee_token_address: ContractAddressWrapper) -> BlockContext {
+    pub fn into_block_context(self, fee_token_address: ContractAddressWrapper, chain_id: ChainId) -> BlockContext {
         // Convert from ContractAddressWrapper to ContractAddress
         let sequencer_address =
             ContractAddress::try_from(StarkFelt::new(self.sequencer_address.into()).unwrap()).unwrap();
@@ -89,7 +88,7 @@ impl Header {
         let fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
 
         BlockContext {
-            chain_id: ChainId("SN_GOERLI".to_string()),
+            chain_id: chain_id,
             block_number: BlockNumber(self.block_number.as_u64()),
             block_timestamp: BlockTimestamp(self.block_timestamp),
             sequencer_address,
@@ -151,8 +150,10 @@ fn test_to_block_context() {
     let block_header = Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
     // Create a fee token address.
     let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
+    // Create a chain id.
+    let chain_id = ChainId("0x1".to_string());
     // Try to serialize the block header.
-    let block_context = block_header.into_block_context(fee_token_address);
+    let block_context = block_header.into_block_context(fee_token_address, chain_id);
     let expected_sequencer_address =
         ContractAddress::try_from(StarkFelt::new(sequencer_address.into()).unwrap()).unwrap();
     let expected_fee_token_address =
