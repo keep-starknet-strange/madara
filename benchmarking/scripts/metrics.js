@@ -27,7 +27,14 @@ async function main() {
   // Save avgExtrinsicsPerBlock to file reports/metrics.json
   fs.writeFileSync(
     "reports/metrics.json",
-    JSON.stringify({ avgExtrinsicsPerBlock, avgTps })
+    JSON.stringify([
+      {
+        name: "Average Extrinsics per block",
+        unit: "extrinsics/block",
+        value: avgExtrinsicsPerBlock,
+      },
+      { name: "Average TPS", unit: "tps", value: avgTps },
+    ])
   );
 
   console.log(
