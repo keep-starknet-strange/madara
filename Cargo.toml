@@ -54,7 +54,7 @@ sp-database = { git = "https://github.com/paritytech/substrate", branch = "polka
 sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sp-storage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
-sp-trie = { version = "7.0.0", git = "https://github.com/paritytech/substrate", branch = "master", default-features = false }
+sp-trie = { version = "7.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 # Substrate client dependencies
 sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", features = [
