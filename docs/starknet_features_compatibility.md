@@ -30,7 +30,7 @@
 | Feature                                  | State              |
 | ---------------------------------------- | ------------------ |
 | starknet_getBlockWithTxHashes            | :white_check_mark: |
-| starknet_getBlockWithTxs                 | :construction:     |
+| starknet_getBlockWithTxs                 | :white_check_mark: |
 | starknet_getStateUpdate                  | :construction:     |
 | starknet_getStorageAt                    | :white_check_mark: |
 | starknet_getTransactionByHash            | :construction:     |
@@ -53,7 +53,7 @@
 | starknet_simulateTransaction             | :construction:     |
 | starknet_traceBlockTransactions          | :construction:     |
 | starknet_addInvokeTransaction            | :white_check_mark: |
-| starknet_addDeclareTransaction           | :construction:     |
+| starknet_addDeclareTransaction           | :white_check_mark: |
 | starknet_addDeployAccountTransaction     | :white_check_mark: |
 
 ## Decentralisation

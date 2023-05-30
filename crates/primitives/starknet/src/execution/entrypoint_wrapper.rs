@@ -4,6 +4,9 @@ use starknet_api::api_core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
+#[cfg(feature = "std")]
+use starknet_core::types::LegacyContractEntryPoint;
+use thiserror_no_std::Error;
 
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
@@ -102,13 +105,25 @@ impl From<EntryPointWrapper> for EntryPoint {
     }
 }
 
+#[cfg(feature = "std")]
+impl From<LegacyContractEntryPoint> for EntryPointWrapper {
+    fn from(value: LegacyContractEntryPoint) -> Self {
+        let selector = value.selector.to_bytes_be();
+        let offset = value.offset.into();
+        Self { selector, offset }
+    }
+}
+
 /// Wrapper type for transaction execution error.
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum EntryPointExecutionErrorWrapper {
     /// Transaction execution error.
-    EntryPointExecution(EntryPointExecutionError),
+    #[error(transparent)]
+    EntryPointExecution(#[from] EntryPointExecutionError),
     /// Starknet API error.
-    StarknetApi(StarknetApiError),
+    #[error(transparent)]
+    StarknetApi(#[from] StarknetApiError),
     /// Block context serialization error.
+    #[error("Block context serialization error")]
     BlockContextSerializationError,
 }

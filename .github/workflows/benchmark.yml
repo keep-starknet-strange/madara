@@ -22,6 +22,12 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  # deployments permission to deploy GitHub pages website
+  deployments: write
+  # contents permission to update benchmark contents in gh-pages branch
+  contents: write
+
 jobs:
   benchmark:
     runs-on: [self-hosted, linux, benchmark]
@@ -29,30 +35,41 @@ jobs:
       - uses: actions/checkout@v3
         with:
           clean: false
-      - name: Install
+      - name: Build tests and install benchmark projects
         run: |-
           cd tests
           npm clean-install
           npm run build
           cd ../benchmarking
           npm i
-      - run: cargo build --workspace --release
+      - name: Build madara in release mode
+        run: cargo build --workspace --release
       - name: Run benchmark
         run: |
           cd benchmarking
           cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
           npm run test
-      - name: Download old benchmark
-        uses: dawidd6/action-download-artifact@v2
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
         with:
-          workflow: benchmark.yml
-          branch: main
-          path: report
-      - name: Upload new benchmark if on main
-        uses: actions/upload-artifact@v3
-        if: github.ref == 'refs/heads/main'
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
         with:
-          name: benchmark
-          path: benchmarking/reports/metrics.json
-      - name: Check performance regression
-        run: python3 scripts/check-regression.py
+          # What benchmark tool the output.txt came from
+          tool: "customBiggerIsBetter"
+          # Where the output from the benchmark tool is stored
+          output-file-path: ./benchmarking/reports/metrics.json
+          # Where the previous data file is stored
+          external-data-json-path: ./cache/benchmark-data.json
+          # Workflow will fail when an alert happens
+          fail-on-alert: true
+          # GitHub API token to make a commit comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Enable alert commit comment
+          comment-on-alert: true
+          # Enable Job Summary for PRs
+          summary-always: true

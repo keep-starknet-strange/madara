@@ -1,4 +1,4 @@
-import { type ApiPromise, Keyring } from "@polkadot/api";
+import { Keyring, type ApiPromise } from "@polkadot/api";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type EventRecord } from "@polkadot/types/interfaces";
 import { type RegistryError } from "@polkadot/types/types";
@@ -7,12 +7,12 @@ import { type ChildProcess } from "child_process";
 import { createAndFinalizeBlock } from "./block";
 import { DEBUG_MODE, SPAWNING_TIME } from "./constants";
 import {
-  type RuntimeChain,
   startMadaraDevNode,
   startMadaraForkedNode,
+  type RuntimeChain,
 } from "./dev-node";
 import { providePolkadotApi } from "./providers";
-import { type ExtrinsicCreation, extractError } from "./substrate-rpc";
+import { extractError, type ExtrinsicCreation } from "./substrate-rpc";
 
 import { type KeyringPair } from "@polkadot/keyring/types";
 import debugFactory from "debug";
@@ -267,7 +267,7 @@ export function describeDevMadara(
         };
       };
 
-      debug(`Setup ready for ${this.currentTest.title}`);
+      debug(`Setup ready`);
     });
 
     after(async function () {
