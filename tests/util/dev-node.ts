@@ -100,9 +100,7 @@ export async function startMadaraDevNode(
     // For tracing tests now we require to enable archive block pruning.
     args.push("--blocks-pruning=archive");
   }
-  debug(
-    `Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`
-  );
+  debug(`Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`);
 
   const onProcessExit = function () {
     runningNode && runningNode.kill();
@@ -120,9 +118,7 @@ export async function startMadaraDevNode(
     process.removeListener("exit", onProcessExit);
     process.removeListener("SIGINT", onProcessInterrupt);
     nodeStarted = false;
-    debug(
-      `Exiting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`
-    );
+    debug(`Exiting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`);
   });
 
   runningNode.on("error", (err) => {
@@ -174,9 +170,7 @@ export async function startMadaraDevNode(
 
 // This will start a madara dev node from forked state, that has been previously setup with
 // a snapshot of production state via the madara-tools run-fork-solo command
-export async function startMadaraForkedNode(
-  rpcPort: number,
-): Promise<{
+export async function startMadaraForkedNode(rpcPort: number): Promise<{
   rpcPort: number;
   runningNode: ChildProcess;
 }> {
