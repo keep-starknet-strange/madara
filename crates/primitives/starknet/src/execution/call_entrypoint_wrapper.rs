@@ -6,7 +6,7 @@ use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, ChainId};
+use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
 use starknet_api::StarknetApiError;

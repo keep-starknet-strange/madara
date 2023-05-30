@@ -6,7 +6,7 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
 use sp_runtime::BoundedBTreeMap;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, PatriciaKey, ChainId};
+use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;

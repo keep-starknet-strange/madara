@@ -85,11 +85,10 @@ use mp_starknet::transaction::types::{
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::{ContractAddress, ChainId};
+use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::transaction::EventContent;
 
 use crate::alloc::string::ToString;
-
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
@@ -116,8 +115,9 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
-    use super::*;
     use starknet_api::api_core::ChainId as StarknetChainId;
+
+    use super::*;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -848,7 +848,12 @@ impl<T: Config> Pallet<T> {
 
         let chain_id = Self::chain_id();
 
-        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address, ChainId(chain_id.to_string())) {
+        match entrypoint.execute(
+            &mut BlockifierStateAdapter::<T>::default(),
+            block,
+            fee_token_address,
+            ChainId(chain_id.to_string()),
+        ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();

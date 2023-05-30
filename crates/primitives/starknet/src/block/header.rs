@@ -88,7 +88,7 @@ impl Header {
         let fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
 
         BlockContext {
-            chain_id: chain_id,
+            chain_id,
             block_number: BlockNumber(self.block_number.as_u64()),
             block_timestamp: BlockTimestamp(self.block_timestamp),
             sequencer_address,
