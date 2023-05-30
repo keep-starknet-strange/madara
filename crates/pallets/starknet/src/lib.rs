@@ -413,7 +413,7 @@ pub mod pallet {
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
             let chain_id = Self::chain_id();
-            let transaction: Transaction = transaction.into();
+            let transaction: Transaction = transaction.from_invoke(&chain_id.to_string());
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block.clone(),
@@ -482,7 +482,10 @@ pub mod pallet {
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-            let transaction: Transaction = transaction.into();
+
+            let chain_id = Self::chain_id();
+
+            let transaction: Transaction = transaction.from_declare(&chain_id.to_string());
             // Check that contract class is not None
             let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
@@ -499,7 +502,6 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            let chain_id = Self::chain_id();
 
             // Parse contract class
             let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
@@ -583,13 +585,13 @@ pub mod pallet {
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            let transaction: Transaction = transaction.into();
+            let chain_id = Self::chain_id();
+            let transaction: Transaction = transaction.from_deploy(&chain_id.to_string());
 
             // Get current block
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            let chain_id = Self::chain_id();
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),

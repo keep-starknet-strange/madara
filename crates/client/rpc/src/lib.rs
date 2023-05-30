@@ -452,7 +452,12 @@ where
         let best_block_hash = self.client.info().best_hash;
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
 
-        let transaction: MPTransaction = invoke_tx.into();
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let transaction: MPTransaction = invoke_tx.from_invoke(&chain_id.to_string());
         let extrinsic = self
             .client
             .runtime_api()
@@ -497,7 +502,12 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.into();
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&chain_id.to_string());
         let extrinsic = self
             .client
             .runtime_api()
@@ -542,7 +552,14 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let tx = to_tx(request)?;
+        let best_block_hash = self.client.info().best_hash;
+
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let tx = to_tx(request, &chain_id.to_string())?;
         let (actual_fee, gas_usage) = self
             .client
             .runtime_api()
@@ -665,7 +682,12 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = declare_tx.into();
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+
+        let transaction: MPTransaction = declare_tx.from_declare(&chain_id.to_string());
         let extrinsic = self
             .client
             .runtime_api()
