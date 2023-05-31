@@ -35,7 +35,7 @@ sp_api::decl_runtime_apis! {
         /// Returns the contract class for the given class hash.
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
         /// Returns the chain id.
-        fn chain_id() -> u128;
+        fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
         /// Returns the hasher used by the runtime.

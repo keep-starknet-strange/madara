@@ -27,6 +27,8 @@ permissions:
   deployments: write
   # contents permission to update benchmark contents in gh-pages branch
   contents: write
+  # post on the pull-request page
+  pull-requests: write
 
 jobs:
   benchmark:
@@ -57,9 +59,9 @@ jobs:
           alert-threshold: "120%"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-alert: true
-          comment-on-alert: true
+          comment-on-alert: false
           summary-always: false
-          comment-always: true
+          comment-always: false
           auto-push: false
       - name: Push result on gh page
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
