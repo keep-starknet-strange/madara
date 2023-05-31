@@ -37,9 +37,9 @@ fn given_contract_run_deploy_account_tx_works() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -88,9 +88,9 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             .unwrap(),
             salt: U256::from_str(salt).unwrap(),
             version: 1,
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin.clone(), transaction.clone()));
@@ -114,10 +114,10 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             sender_address: rand_address,
             version: 1,
             calldata: bounded_vec!(),
-            nonce: U256::zero(),
             salt: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(
@@ -153,10 +153,10 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
             salt: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(
@@ -196,9 +196,9 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -234,9 +234,9 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(
@@ -276,9 +276,9 @@ fn given_contract_run_deploy_account_argent_tx_works() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -314,9 +314,9 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(
@@ -363,9 +363,9 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: signatures.try_into().unwrap(),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -403,9 +403,9 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            nonce: U256::zero(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
             signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
-            max_fee: U256::from(u128::MAX),
         };
 
         assert_err!(

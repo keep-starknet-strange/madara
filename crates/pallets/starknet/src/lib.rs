@@ -732,25 +732,25 @@ pub mod pallet {
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
                 Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)
                     .build(),
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - transaction.nonce.as_u64())
+                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(64_u64)
                     .propagate(true)

@@ -1,52 +1,69 @@
 name: Benchmark
 
-# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the master branch
+  # Triggers the workflow on push or pull request events but only for the main branch
   push:
     branches: [main]
+    paths-ignore:
+      - ".github/**"
+      - "docs/**"
+      - "examples/**"
+      - ".*"
+      - "README.md"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - ".github/**"
+      - "docs/**"
+      - "examples/**"
+      - ".*"
+      - "README.md"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+permissions:
+  # deployments permission to deploy GitHub pages website
+  deployments: write
+  # contents permission to update benchmark contents in gh-pages branch
+  contents: write
+
 jobs:
   benchmark:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, linux, benchmark]
     steps:
       - uses: actions/checkout@v3
         with:
           clean: false
-      - uses: actions/setup-node@v3
-        with:
-          node-version: ">=20"
-          cache: "npm"
-          cache-dependency-path: ./tests/package-lock.json
-      - name: Install
+      - name: Build tests and install benchmark projects
         run: |-
           cd tests
           npm clean-install
           npm run build
           cd ../benchmarking
           npm i
-      - run: cargo build --workspace --release
+      - name: Build madara in release mode
+        run: cargo build --workspace --release
       - name: Run benchmark
         run: |
           cd benchmarking
           cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
           npm run test
-      - name: Download old benchmark
-        uses: dawidd6/action-download-artifact@v2
+      - name: Compare result
+        uses: benchmark-action/github-action-benchmark@v1
         with:
-          workflow: benchmark.yml
-          branch: main
-          path: report
-      - name: Upload new benchmark if on main
-        uses: actions/upload-artifact@v3
-        if: github.ref == 'refs/heads/main'
-        with:
-          name: benchmark
-          path: benchmarking/reports/metrics.json
-      - name: Check performance regression
-        run: python3 scripts/check-regression.py
+          tool: "customBiggerIsBetter"
+          output-file-path: ./benchmarking/reports/metrics.json
+          alert-threshold: "120%"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fail-on-alert: true
+          comment-on-alert: true
+          summary-always: false
+          comment-always: true
+          auto-push: false
+      - name: Push result on gh page
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run:
+          git push
+          'https://keep-starknet-strange:${{secrets.GITHUB_TOKEN}}@github.com/keep-starknet-strange/madara.git'
+          gh-pages:gh-pages
