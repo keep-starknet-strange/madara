@@ -755,8 +755,32 @@ where
         let substrate_block_hash = match block_hash_from_db {
             Some(block_hash) => block_hash,
             None => {
-                // TODO: verify if the tx is in the tx pool PR #293.
-                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+                // Not found in the local mapping tx_hash <> block_hash, we
+                // then check into the transaction pool.
+                let transactions: Vec<<B as BlockT>::Extrinsic> =
+                    self.pool.ready().map(|tx| tx.data().clone()).collect::<Vec<<B as BlockT>::Extrinsic>>();
+
+                let api = self.client.runtime_api();
+
+                let mp_txn_find: Option<MPTransaction> = api.extrinsic_filter_by_hash(
+                    self.client.info().best_hash,
+                    transactions,
+                    transaction_hash.into()
+                ).map_err(|e| {
+                    error!("{:#?}", e);
+                    StarknetRpcApiError::InternalServerError
+                })?;
+
+                match mp_txn_find {
+                    Some(mp_txn) => match Transaction::try_from(mp_txn.clone()) {
+                        Ok(txn) => return Ok(txn),
+                        Err(e) => {
+                            error!("Error retrieving transaction: {:?}", e);
+                            return Err(StarknetRpcApiError::InternalServerError.into())
+                        }
+                    },
+                    None => return Err(StarknetRpcApiError::TxnHashNotFound.into())
+                }
             }
         };
 

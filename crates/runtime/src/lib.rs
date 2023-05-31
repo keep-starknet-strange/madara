@@ -324,7 +324,7 @@ impl_runtime_apis! {
             Starknet::get_system_hash().into()
         }
 
-        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>{
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
             let chain_id  = &Starknet::chain_id_str();
 
             xts.into_iter().filter_map(|xt| match xt.function {
@@ -334,6 +334,34 @@ impl_runtime_apis! {
                 _ => None
             }).collect::<Vec<Transaction>>()
         }
+
+        fn extrinsic_filter_by_hash(
+            xts: Vec<<Block as BlockT>::Extrinsic>,
+            transaction_hash: Felt252Wrapper,
+        ) -> Option<Transaction> {
+            let chain_id  = &Starknet::chain_id_str();
+
+            for xt in xts.into_iter() {
+                let txn_res = match xt.function {
+                    RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
+                    RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
+                    RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.from_deploy(chain_id)),
+                    _ => None
+                };
+
+                match txn_res {
+                    Some(txn) => {
+                        if txn.hash == transaction_hash {
+                            return Some(txn);
+                        }
+                    },
+                    None => ()
+                }
+            }
+
+            None
+        }
+
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
