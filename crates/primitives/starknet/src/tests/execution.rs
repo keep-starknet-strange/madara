@@ -6,7 +6,7 @@ use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
 use sp_runtime::BoundedBTreeMap;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;
@@ -29,6 +29,8 @@ fn test_call_entry_point_execute_works() {
     let selector = selector_from_name("return_result").0.into();
     let calldata = bounded_vec![42_u128.into()];
 
+    let chain_id = ChainId("0x1".to_string());
+
     let entrypoint = CallEntryPointWrapper::new(
         Some(class_hash),
         EntryPointTypeWrapper::External,
@@ -40,7 +42,7 @@ fn test_call_entry_point_execute_works() {
 
     let block = Block::create_for_testing();
 
-    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO));
+    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO, chain_id));
 }
 
 #[test]
@@ -62,7 +64,9 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
 
     let block = Block::create_for_testing();
 
-    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO).is_err());
+    let chain_id = ChainId("0x1".to_string());
+
+    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO, chain_id).is_err());
 }
 
 #[test]

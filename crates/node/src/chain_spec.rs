@@ -244,6 +244,8 @@ fn testnet_genesis(
 
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
 
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
+
     GenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
@@ -315,7 +317,7 @@ fn testnet_genesis(
             ],
             fee_token_address,
             _phantom: Default::default(),
-            chain_id: CHAIN_ID_STARKNET_TESTNET,
+            chain_id,
         },
     }
 }

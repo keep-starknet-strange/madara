@@ -1,7 +1,6 @@
 //! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
-
 mod errors;
 mod madara_backend_client;
 
@@ -22,7 +21,7 @@ use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
-use sc_transaction_pool_api::{TransactionPool, TransactionSource};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -124,6 +123,29 @@ where
             },
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
+    }
+
+    /// Helper function to convert the chain_id from a felt to an ascii string. Ex:
+    /// 0x534e5f474f45524c49 => SN_GOERLI
+    ///
+    /// # Argument
+    ///
+    /// * `hash` - The block hash to get the chain_id from.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if it can't retrieve the chain id or can't convert it to an ascii string.
+    fn chain_id_str(&self, hash: B::Hash) -> RpcResult<String> {
+        let chain_id = self.client.runtime_api().chain_id(hash).map_err(|_| {
+            error!("fetch runtime chain id failed");
+            StarknetRpcApiError::InternalServerError
+        })?;
+        Ok(std::str::from_utf8(&chain_id.0.to_bytes_be())
+            .map_err(|_| {
+                error!("Couldn't convert chain id to string");
+                Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
+            })?
+            .to_string())
     }
 }
 
@@ -429,11 +451,11 @@ where
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<String> {
         let hash = self.client.info().best_hash;
-        let res = self.client.runtime_api().chain_id(hash).map_err(|_| {
+        let chain_id = self.client.runtime_api().chain_id(hash).map_err(|_| {
             error!("fetch runtime chain id failed");
             StarknetRpcApiError::InternalServerError
         })?;
-        Ok(format!("0x{:x}", res))
+        Ok(format!("0x{:x}", chain_id.0))
     }
 
     /// Add an Invoke Transaction to invoke a contract function
@@ -452,7 +474,7 @@ where
         let best_block_hash = self.client.info().best_hash;
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
 
-        let transaction: MPTransaction = invoke_tx.into();
+        let transaction: MPTransaction = invoke_tx.from_invoke(&self.chain_id_str(best_block_hash)?);
         let extrinsic = self
             .client
             .runtime_api()
@@ -497,7 +519,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.into();
+        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&self.chain_id_str(best_block_hash)?);
         let extrinsic = self
             .client
             .runtime_api()
@@ -542,7 +564,9 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let tx = to_tx(request)?;
+        let best_block_hash = self.client.info().best_hash;
+
+        let tx = to_tx(request, &self.chain_id_str(best_block_hash)?)?;
         let (actual_fee, gas_usage) = self
             .client
             .runtime_api()
@@ -632,7 +656,28 @@ where
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
-        todo!("Not implemented")
+        let substrate_block_hash = self.client.info().best_hash;
+
+        let transactions: Vec<<B as BlockT>::Extrinsic> =
+            self.pool.ready().map(|tx| tx.data().clone()).collect::<Vec<<B as BlockT>::Extrinsic>>();
+
+        let api = self.client.runtime_api();
+
+        let mp_transactions: Vec<MPTransaction> =
+            api.extrinsic_filter(substrate_block_hash, transactions).map_err(|e| {
+                error!("{:#?}", e);
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let transactions =
+            mp_transactions.into_iter().map(Transaction::try_from).collect::<Result<Vec<Transaction>, _>>().map_err(
+                |e| {
+                    error!("{:#?}", e);
+                    StarknetRpcApiError::InternalServerError
+                },
+            )?;
+
+        Ok(transactions)
     }
 
     /// Returns all events matching the given filter
@@ -665,7 +710,7 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = declare_tx.into();
+        let transaction: MPTransaction = declare_tx.from_declare(&self.chain_id_str(best_block_hash)?);
         let extrinsic = self
             .client
             .runtime_api()

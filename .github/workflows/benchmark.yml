@@ -27,6 +27,8 @@ permissions:
   deployments: write
   # contents permission to update benchmark contents in gh-pages branch
   contents: write
+  # post on the pull-request page
+  pull-requests: write
 
 jobs:
   benchmark:
@@ -47,7 +49,7 @@ jobs:
       - name: Run benchmark
         run: |
           cd benchmarking
-          cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=0 --no-telemetry &
+          cargo run --release -- --dev  --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=1 --no-telemetry &
           npm run test
       - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
@@ -57,9 +59,9 @@ jobs:
           alert-threshold: "120%"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-alert: true
-          comment-on-alert: true
+          comment-on-alert: false
           summary-always: false
-          comment-always: true
+          comment-always: false
           auto-push: false
       - name: Push result on gh page
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
