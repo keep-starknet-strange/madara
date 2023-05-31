@@ -21,7 +21,7 @@ use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
-use sc_transaction_pool_api::{TransactionPool, TransactionSource};
+use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
 use sp_blockchain::HeaderBackend;
@@ -656,7 +656,28 @@ where
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
     async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
-        todo!("Not implemented")
+        let substrate_block_hash = self.client.info().best_hash;
+
+        let transactions: Vec<<B as BlockT>::Extrinsic> =
+            self.pool.ready().map(|tx| tx.data().clone()).collect::<Vec<<B as BlockT>::Extrinsic>>();
+
+        let api = self.client.runtime_api();
+
+        let mp_transactions: Vec<MPTransaction> =
+            api.extrinsic_filter(substrate_block_hash, transactions).map_err(|e| {
+                error!("{:#?}", e);
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let transactions =
+            mp_transactions.into_iter().map(Transaction::try_from).collect::<Result<Vec<Transaction>, _>>().map_err(
+                |e| {
+                    error!("{:#?}", e);
+                    StarknetRpcApiError::InternalServerError
+                },
+            )?;
+
+        Ok(transactions)
     }
 
     /// Returns all events matching the given filter
