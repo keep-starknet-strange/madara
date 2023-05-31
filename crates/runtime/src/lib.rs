@@ -325,10 +325,12 @@ impl_runtime_apis! {
         }
 
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>{
+            let chain_id  = &Starknet::chain_id_str();
+
             xts.into_iter().filter_map(|xt| match xt.function {
-                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.into()),
-                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.into()),
-                RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.into()),
+                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
+                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.from_deploy(chain_id)),
                 _ => None
             }).collect::<Vec<Transaction>>()
         }
