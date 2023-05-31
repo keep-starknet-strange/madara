@@ -676,7 +676,7 @@ where
         let substrate_block_hash = match block_hash_from_db {
             Some(block_hash) => block_hash,
             None => {
-                // TODO: verify if the tx is in the tx pool (self.pool.ready()).
+                // TODO: verify if the tx is in the tx pool PR #293.
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
         };
@@ -706,8 +706,8 @@ where
                 }
             }
             BlockTransactions::Hashes(_hashes) => {
-                // TODO: Here what can I do? I don't have all the info,
-                // so what's the expected result, TxnNotFount? Error?
+                // Only transactions hashes are not enough to return a full transaction.
+                // Consider the transaction as not found.
                 Err(StarknetRpcApiError::TxnHashNotFound.into())
             }
         }
@@ -731,10 +731,8 @@ where
         let substrate_block_hash = match block_hash_from_db {
             Some(block_hash) => block_hash,
             None => {
-                // TODO: verify if the tx is in the tx pool (self.pool.ready()).
-                //       Question: If the transaction is in the mempool, it's not actually
-                //       Pending status. Because we don't have any receipt at this point.
-                //       What is the expected behavior? TxnHashNotFound?
+                // If the transaction is still in the pool, the receipt
+                // is not available, considered as not found.
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
         };
