@@ -619,54 +619,45 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
-  it("getTransactionByHash returns transaction", async function () {
-    // Send a transaction
-    let b = await context.createBlock(
-      rpcTransfer(
-        providerRPC,
-        ARGENT_CONTRACT_NONCE,
-        ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
-      )
-    );
+  describe("getTransactionByHash", () => {
+    it("should return a transaction", async function () {
+      // Send a transaction
+      let b = await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true
+        }
+      );
 
-    // getTransactionByBlockIdAndIndex is doing exactly the same thing,
-    // and it has the transaction well included in the block.
+      
 
-    // TODO: is the block b already finalize?
-    // Because testing with hurl, I have the transactions.
-    // But here, I am not sure if the block is finalize or not.
-    // Below my attempts to finalize the block.
+      let r = await providerRPC.getTransactionByHash(b.result.hash);
+      expect(r).to.not.be.undefined;
+    });
 
-    // await context.createBlock(undefined, {
-    //   parentHash: undefined,
-    //   finalize: true,
-    // });
+    it("should return transaction hash not found", async function () {
+      // Send a transaction
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        )
+      );
 
-    await createAndFinalizeBlock(context.polkadotApi);
-
-    let r = await providerRPC.getTransactionByHash(b.result.hash);
-    expect(r).to.not.be.undefined;
-  });
-
-  it("getTransactionByHash returns transaction hash not found", async function () {
-
-    // Send a transaction
-    await context.createBlock(
-      rpcTransfer(
-        providerRPC,
-        ARGENT_CONTRACT_NONCE,
-        ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
-      )
-    );
-
-    try {
-      await providerRPC.getTransactionByHash("0x1234");
-    } catch (error) {
-      expect(error).to.be.instanceOf(LibraryError);
-      expect(error.message).to.equal("25: Transaction hash not found");
-    }
+      try {
+        await providerRPC.getTransactionByHash("0x1234");
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("25: Transaction hash not found");
+      }
+    });
   });
 
 });
