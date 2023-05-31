@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685543165266,
+  "lastUpdate": 1685545363210,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -67,6 +67,40 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 58.25,
+            "unit": "tps"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "5263301+d-roak@users.noreply.github.com",
+            "name": "Oak",
+            "username": "d-roak"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1dec4f629f35eb80eaa19ce3339ef54ac22cb941",
+          "message": "fix: run node script (#501)",
+          "timestamp": "2023-05-31T16:55:22+02:00",
+          "tree_id": "b090710a2d4d8e474fa8fa377466eca753c13404",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/1dec4f629f35eb80eaa19ce3339ef54ac22cb941"
+        },
+        "date": 1685545362691,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 344,
+            "unit": "extrinsics/block"
+          },
+          {
+            "name": "Average TPS",
+            "value": 57.333333333333336,
             "unit": "tps"
           }
         ]
