@@ -105,22 +105,8 @@ pub enum DeserializeEventError {
     #[error(transparent)]
     InvalidFromAddress(#[from] Felt252WrapperError),
     /// InvalidTransactionHash error
-    #[error(transparent)]
-    InvalidTransactionHash(#[from] Felt252WrapperError),
-}
-
-impl fmt::Display for DeserializeEventError {
-    /// Implementation of `fmt::Display` for `DeserializeEventError`
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            DeserializeEventError::InvalidKeys(s) => write!(f, "Invalid keys format: {:?}", s),
-            DeserializeEventError::KeysExceedMaxSize => write!(f, "Keys exceed max size"),
-            DeserializeEventError::InvalidData(s) => write!(f, "Invalid data format: ${:?}", s),
-            DeserializeEventError::DataExceedMaxSize => write!(f, "Data exceed max size"),
-            DeserializeEventError::InvalidFromAddress(e) => write!(f, "Invalid address data format: ${:?}", e),
-            DeserializeEventError::InvalidTransactionHash(e) => write!(f, "Invalid hash data format: ${:?}", e),
-        }
-    }
+    #[error("Invalid transaction hash format: {0}")]
+    InvalidTransactionHash(String),
 }
 
 /// Struct for deserializing Transaction from JSON
@@ -313,7 +299,7 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
 
         let transaction_hash = match Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
             Ok(felt) => felt,
-            Err(e) => return Err(DeserializeEventError::InvalidTransactionHash(e)),
+            Err(_) => return Err(DeserializeEventError::InvalidTransactionHash(d.transaction_hash.to_string())),
         };
 
         // Create EventWrapper with validated and converted fields
