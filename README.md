@@ -42,6 +42,11 @@
  height="50" />
 </a>
 
+<a href="https://keep-starknet-strange.github.io/madara/dev/bench/">
+<img src="https://img.shields.io/badge/Benchmark-Performance-blue?logo=github-actions"
+ height="50" />
+</a>
+
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
 
@@ -76,13 +81,39 @@ project structure and architecture to benchmarking and running Madara:
 - [Architecture Overview](./docs/architecture.md)
 - [Project Structure](./docs/project-structure.md)
 - [Getting Started Guide](./docs/getting-started.md)
-- [Benchmarking](./benchmarking/README.md)
+- [Run benchmark yourself](./benchmarking/README.md)
 
 ## 🏗️ Build & Run
 
 Want to dive straight in? Check out our
 [Getting Started Guide](./docs/getting-started.md) for instructions on how to
 build and run Madara on your local machine.
+
+## Benchmarking
+
+Benchmarking is an essential process in our project development lifecycle,
+as it helps us to track the performance evolution of Madara over time.
+It provides us with valuable insights into how well Madara handles transaction throughput,
+ and whether any recent changes have impacted performance.
+
+You can follow the evolution of Madara's performance by visiting our [Benchmark Page](https://keep-starknet-strange.github.io/madara/dev/bench/).
+
+However, it's important to understand that the absolute numbers presented
+on this page should not be taken as the reference or target numbers
+for a production environment.
+The benchmarks are run on a self-hosted GitHub runner,
+ which may not represent the most powerful machine configurations in real-world
+ production scenarios.
+
+Therefore, these numbers primarily serve as a tool to track
+the _relative_ performance changes over time.
+They allow us to quickly identify and address any performance regressions,
+and continuously optimize the system's performance.
+
+In other words, while the absolute throughput numbers may not be reflective of
+ a production environment, the relative changes and trends over time
+ are what we focus on. This way, we can ensure that Madara is always improving,
+ and that we maintain a high standard of performance as the project evolves.
 
 ## 🌐 Connect to the dev webapp
 
