@@ -88,7 +88,7 @@ export async function startMadaraDevNode(
     "--dev",
     "--sealing=manual",
     "--in-peers=0",
-    //"--out-peers=0",
+    "--out-peers=1",
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
     `--rpc-port=${rpcPort}`,
@@ -102,10 +102,10 @@ export async function startMadaraDevNode(
   }
   debug(`Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`);
 
-  const onProcessExit = function () {
+  const onProcessExit = function() {
     runningNode && runningNode.kill();
   };
-  const onProcessInterrupt = function () {
+  const onProcessInterrupt = function() {
     process.exit(2);
   };
 
@@ -126,7 +126,7 @@ export async function startMadaraDevNode(
     if ((err as any).errno == "ENOENT") {
       console.error(
         "\x1b[31mMissing Madara binary " +
-          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
+        `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
       );
     } else {
       console.error(err);
@@ -202,10 +202,10 @@ export async function startMadaraForkedNode(rpcPort: number): Promise<{
 
   debug(`Starting dev node: --rpc-port=${rpcPort}`);
 
-  const onProcessExit = function () {
+  const onProcessExit = function() {
     runningNode && runningNode.kill();
   };
-  const onProcessInterrupt = function () {
+  const onProcessInterrupt = function() {
     process.exit(2);
   };
 
@@ -226,7 +226,7 @@ export async function startMadaraForkedNode(rpcPort: number): Promise<{
     if ((err as any).errno == "ENOENT") {
       console.error(
         "\x1b[31mMissing Madara binary " +
-          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
+        `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
       );
     } else {
       console.error(err);
