@@ -96,13 +96,12 @@ export function describeDevMadara(
     before("Starting Madara Test Node", async function () {
       this.timeout(SPAWNING_TIME);
       const init = forkedMode
-        ? await startMadaraForkedNode(9933, 9944)
+        ? await startMadaraForkedNode(9933)
         : !DEBUG_MODE
         ? await startMadaraDevNode(withWasm, runtime)
         : {
             runningNode: null,
             p2pPort: 19931,
-            wsPort: 9944,
             rpcPort: 9933,
           };
       madaraProcess = init.runningNode;
@@ -115,7 +114,7 @@ export function describeDevMadara(
       madaraProcess = init.runningNode;
 
       context.createPolkadotApi = async () => {
-        const apiPromise = await providePolkadotApi(init.wsPort);
+        const apiPromise = await providePolkadotApi(init.rpcPort);
         // We keep track of the polkadotApis to close them at the end of the test
         context._polkadotApis.push(apiPromise);
         await apiPromise.isReady;

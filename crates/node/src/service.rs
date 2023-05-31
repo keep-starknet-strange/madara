@@ -221,7 +221,7 @@ where
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -236,6 +236,8 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
         other: (block_import, grandpa_link, mut telemetry, madara_backend),
     } = new_partial(&config, build_import_queue)?;
 
+    let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+
     let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
         &client.block_hash(0).ok().flatten().expect("Genesis block exists; qed"),
         &config.chain_spec,
@@ -244,7 +246,8 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     let warp_sync_params = if sealing.is_some() {
         None
     } else {
-        config.network.extra_sets.push(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+        net_config
+            .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
         let warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
             backend.clone(),
             grandpa_link.shared_authority_set().clone(),
@@ -256,6 +259,7 @@ pub fn new_full(mut config: Configuration, sealing: Option<Sealing>) -> Result<T
     let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
             config: &config,
+            net_config,
             client: client.clone(),
             transaction_pool: transaction_pool.clone(),
             spawn_handle: task_manager.spawn_handle(),
