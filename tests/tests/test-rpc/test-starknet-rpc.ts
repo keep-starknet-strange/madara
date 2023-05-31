@@ -700,5 +700,4 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     });
   });
-
 });
