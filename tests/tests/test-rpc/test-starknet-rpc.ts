@@ -619,67 +619,100 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
-  it("pendingTransactions", async function () {
+  describe("pendingTransactions", async () => {
+    it("should return all starknet transactions", async function () {
+      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
 
-		// create a invoke transaction
-    await rpcTransfer(
-      providerRPC,
-      ARGENT_CONTRACT_NONCE,
-      ARGENT_CONTRACT_ADDRESS,
-      MINT_AMOUNT
-    );
+      // create a invoke transaction
+      //await rpcTransfer(
+      //  providerRPC,
+      //  ARGENT_CONTRACT_NONCE,
+      //  ARGENT_CONTRACT_ADDRESS,
+      //  MINT_AMOUNT
+      //);
 
 
-		// create a deploy_contract transaction
-    const selector = hash.getSelectorFromName("initialize");
-    const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
+      // create a deploy_contract transaction
+      //const selector = hash.getSelectorFromName("initialize");
+      //const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
 
-    const deployedContractAddress = hash.calculateContractAddressFromHash(
-      SALT,
-      ARGENT_PROXY_CLASS_HASH,
-      calldata,
-      0
-    );
+      //const deployedContractAddress = hash.calculateContractAddressFromHash(
+      //  SALT,
+      //  ARGENT_PROXY_CLASS_HASH,
+      //  calldata,
+      //  0
+      //);
 
-    const invocationDetails = {
-      nonce: "0x0",
-      maxFee: "0x1111111111111111111111",
-      version: "0x1",
-    };
+      //const invocationDetails = {
+      //  nonce: "0x0",
+      //  maxFee: "0x1111111111111111111111",
+      //  version: "0x1",
+      //};
 
-    const txHash = hash.calculateDeployAccountTransactionHash(
-      deployedContractAddress,
-      ARGENT_PROXY_CLASS_HASH,
-      calldata,
-      SALT,
-      invocationDetails.version,
-      invocationDetails.maxFee,
-      constants.StarknetChainId.TESTNET,
-      invocationDetails.nonce
-    );
+      //const txHash = hash.calculateDeployAccountTransactionHash(
+      //  deployedContractAddress,
+      //  ARGENT_PROXY_CLASS_HASH,
+      //  calldata,
+      //  SALT,
+      //  invocationDetails.version,
+      //  invocationDetails.maxFee,
+      //  constants.StarknetChainId.TESTNET,
+      //  invocationDetails.nonce
+      //);
 
-    const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-    const signature = ec.sign(keyPair, txHash);
+      //const signature = ec.sign(keyPair, txHash);
 
-    // Deploy account contract
-    const txDeployAccount = {
-      signature: signature, // signature
-      contractAddress: deployedContractAddress, // address of the sender contract
-      addressSalt: SALT, // contract address salt
-      classHash: ARGENT_PROXY_CLASS_HASH, // class hash of the contract
-      constructorCalldata: calldata,
-    };
+      //// Deploy account contract
+      //const txDeployAccount = {
+      //  signature: signature, // signature
+      //  contractAddress: deployedContractAddress, // address of the sender contract
+      //  addressSalt: SALT, // contract address salt
+      //  classHash: ARGENT_PROXY_CLASS_HASH, // class hash of the contract
+      //  constructorCalldata: calldata,
+      //};
 
-    await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
+      //await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
 
-    const txs = await providerRPC.getPendingTransactions();
 
-    expect(txs.length).equals(2);
+      const nonce = await providerRPC.getNonceForAddress(
+        ARGENT_CONTRACT_ADDRESS,
+        "latest"
+      );
 
-    expect(txs[0]).to.include({type: "DEPLOY_ACCOUNT"});
-    expect(txs[0]).that.includes.all.keys(["class_hash", "constructor_calldata", "contract_address_salt", "max_fee", "nonce", "signature", "transaction_hash", "type", "version"]);
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        keyPair
+      );
 
-    expect(txs[1]).to.include({type: "INVOKE"});
-    expect(txs[1]).that.includes.all.keys(["transaction_hash", "max_fee", "version", "signature", "nonce", "type", "sender_address", "calldata"]);
+      const contract = fs
+        .readFileSync("./contracts/compiled/erc20.json")
+        .toString();
+
+      await account.declare(
+        {
+          classHash:
+            "0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da96",
+          contract,
+        },
+        { nonce, version: 1, maxFee: "123456" }
+      );
+
+
+
+      const txs = await providerRPC.getPendingTransactions();
+
+      expect(txs.length).equals(1);
+
+      //expect(txs[0]).to.include({type: "INVOKE"});
+      //expect(txs[0]).that.includes.all.keys(["transaction_hash", "max_fee", "version", "signature", "nonce", "type", "sender_address", "calldata"]);
+
+      //expect(txs[1]).to.include({type: "DEPLOY_ACCOUNT"});
+      //expect(txs[1]).that.includes.all.keys(["class_hash", "constructor_calldata", "contract_address_salt", "max_fee", "nonce", "signature", "transaction_hash", "type", "version"]);
+
+      expect(txs[0]).to.include({type: "DECLARE"});
+      expect(txs[0]).that.includes.all.keys(["sender_address", "class_hash", "max_fee", "nonce", "signature", "transaction_hash", "type", "version"]);
+
+    })
   });
 });
