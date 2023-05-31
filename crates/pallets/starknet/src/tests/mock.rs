@@ -228,6 +228,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
         ],
+        chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
         ..Default::default()
     }
     .assimilate_storage(&mut t)
