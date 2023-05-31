@@ -678,7 +678,6 @@ describeDevMadara("Starknet RPC", (context) => {
       );
 
       const r = await providerRPC.getTransactionReceipt(b.result.hash);
-      console.log(r);
       expect(r).to.not.be.undefined;
     });
 
