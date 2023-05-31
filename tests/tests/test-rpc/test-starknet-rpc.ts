@@ -13,7 +13,6 @@ import {
 } from "starknet";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { rpcTransfer, toBN, toHex } from "../../util/utils";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
@@ -30,6 +29,14 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
 } from "../constants";
+import {
+  toHex,
+  toBN,
+  rpcTransfer,
+  starknetKeccak,
+  cleanHex,
+} from "../../util/utils";
+import { InvokeTransaction } from "./types";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -868,27 +875,231 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     });
   });
+  describe("getEvents", function () {
+    it("should fail on invalid continuation token", async function () {
+      let filter = {
+        from_block: { block_number: 0 },
+        to_block: { block_number: 1 },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 1,
+        continuation_token: "0xabdel",
+      };
+      try {
+        await providerRPC.getEvents(filter);
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal(
+          "33: The supplied continuation token is invalid or unknown"
+        );
+      }
+    });
 
-  it("getEvents returns events", async function () {
-    await jumpBlocks(context, 10);
-    // Send a transaction
-    await context.createBlock(
-      rpcTransfer(
-        providerRPC,
-        ARGENT_CONTRACT_NONCE,
-        ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
-      )
-    );
+    it("should fail on chunk size too big", async function () {
+      let filter = {
+        from_block: { block_number: 0 },
+        to_block: { block_number: 1 },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 1001,
+      };
+      try {
+        await providerRPC.getEvents(filter);
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("31: Requested page size is too big");
+      }
+    });
 
-    let filter = {
-      from_block: { block_number: 0 },
-      to_block: { block_number: 12 },
-      address: FEE_TOKEN_ADDRESS,
-      chunk_size: 10,
-      continuation_token: null,
-    };
-    let events = await providerRPC.getEvents(filter);
-    console.log(events);
+    it("should fail on keys too big", async function () {
+      let filter = {
+        from_block: { block_number: 0 },
+        to_block: { block_number: 1 },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 1,
+        keys: Array(101).fill(["0x0"]),
+      };
+      try {
+        // @ts-ignore
+        await providerRPC.getEvents(filter);
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal(
+          "34: Too many keys provided in a filter"
+        );
+      }
+    });
+
+    it("returns expected events on correct filter", async function () {
+      // Send a transaction
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        )
+      );
+
+      // @ts-ignore
+      let tx: InvokeTransaction =
+        await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
+      let block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+      let filter = {
+        from_block: { block_number: 0 },
+        to_block: { block_number: 1 },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 10,
+      };
+      let events = await providerRPC.getEvents(filter);
+
+      expect(events.events.length).to.be.equal(2);
+      for (const event of events.events) {
+        expect(validateAndParseAddress(event.from_address)).to.be.equal(
+          FEE_TOKEN_ADDRESS
+        );
+        expect(event.transaction_hash).to.be.equal(tx.transaction_hash);
+      }
+      // check transfer event
+      let transfer_event = events.events[0];
+      expect(transfer_event).to.deep.equal({
+        transaction_hash: tx.transaction_hash,
+        block_hash: block_hash_and_number.block_hash,
+        block_number: block_hash_and_number.block_number,
+        from_address: cleanHex(FEE_TOKEN_ADDRESS),
+        keys: [toHex(starknetKeccak("Transfer"))],
+        data: [
+          ARGENT_CONTRACT_ADDRESS,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT,
+          "0x0",
+        ].map(cleanHex),
+      });
+      // check fee transfer event
+      let fee_event = events.events[1];
+      expect(fee_event).to.deep.equal({
+        transaction_hash: tx.transaction_hash,
+        block_hash: block_hash_and_number.block_hash,
+        block_number: block_hash_and_number.block_number,
+        from_address: cleanHex(FEE_TOKEN_ADDRESS),
+        keys: [toHex(starknetKeccak("Transfer"))],
+        data: [
+          ARGENT_CONTRACT_ADDRESS,
+          ARGENT_CONTRACT_ADDRESS,
+          "0x19e1a", // current fee perceived for the transfer
+          "0x0",
+        ].map(cleanHex),
+      });
+    });
+
+    it("returns expected events on correct filter with chunk size", async function () {
+      // Send transactions
+      let transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+
+      let filter = {
+        from_block: "latest",
+        to_block: "latest",
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 4,
+      };
+      // @ts-ignore
+      let events = await providerRPC.getEvents(filter);
+      expect(events.events.length).to.be.equal(4);
+      for (let i = 0; i < 2; i++) {
+        // @ts-ignore
+        let tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex("latest", i);
+        expect(
+          validateAndParseAddress(events.events[2 * i].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[2 * i].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+        expect(
+          validateAndParseAddress(events.events[2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[2 * i + 1].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+    });
+
+    it("returns expected events on correct filter with continuation token", async function () {
+      // Send transactions
+      let transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+
+      let skip = 3;
+      let filter = {
+        from_block: "latest",
+        to_block: "latest",
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 4,
+        continuation_token: (skip * 3).toString(), // 3 events per transaction
+      };
+      // @ts-ignore
+      let events = await providerRPC.getEvents(filter);
+      expect(events.events.length).to.be.equal(4);
+      for (let i = 0; i < 2; i++) {
+        // @ts-ignore
+        let tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex("latest", skip + i);
+        expect(
+          validateAndParseAddress(events.events[2 * i].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[2 * i].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+        expect(
+          validateAndParseAddress(events.events[2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[2 * i + 1].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+    });
+
+    it("returns expected events on correct filter with keys", async function () {
+      // @ts-ignore
+      let tx: InvokeTransaction =
+        await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
+      let block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+      let filter = {
+        from_block: "latest",
+        to_block: "latest",
+        chunk_size: 1,
+        keys: [[toHex(starknetKeccak("transaction_executed"))]],
+      };
+      // @ts-ignore
+      let events = await providerRPC.getEvents(filter);
+      expect(events.events.length).to.be.equal(1);
+      expect(events.events[0]).to.deep.equal({
+        transaction_hash: tx.transaction_hash,
+        block_hash: block_hash_and_number.block_hash,
+        block_number: block_hash_and_number.block_number,
+        from_address: cleanHex(ARGENT_CONTRACT_ADDRESS),
+        keys: [toHex(starknetKeccak("transaction_executed"))],
+        data: [tx.transaction_hash, "0x2", "0x1", "0x1"].map(cleanHex),
+      });
+    });
   });
 });
