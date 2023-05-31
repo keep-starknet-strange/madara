@@ -621,6 +621,8 @@ describeDevMadara("Starknet RPC", (context) => {
 
   describe("getTransactionByHash", () => {
     it("should return a transaction", async function () {
+      await createAndFinalizeBlock(context.polkadotApi);
+
       // Send a transaction
       const b = await context.createBlock(
         rpcTransfer(
