@@ -409,6 +409,18 @@
 <a href="#409" id="409">409</a>
 <a href="#410" id="410">410</a>
 <a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
 </pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -448,6 +460,7 @@
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
 <span class="kw">use </span>pallet_starknet::types::NonceWrapper;
+<span class="kw">use </span>pallet_starknet::Call::{declare, deploy_account, invoke};
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
 <span class="kw">use </span>sp_api::impl_runtime_apis;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -732,6 +745,17 @@
 
         <span class="kw">fn </span>get_hasher() -&gt; Hasher {
             Starknet::get_system_hash().into()
+        }
+
+        <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt;{
+            <span class="kw">let </span>chain_id  = <span class="kw-2">&amp;</span>Starknet::chain_id_str();
+
+            xts.into_iter().filter_map(|xt| <span class="kw">match </span>xt.function {
+                RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(transaction.from_invoke(chain_id)),
+                RuntimeCall::Starknet( declare { transaction }) =&gt; <span class="prelude-val">Some</span>(transaction.from_declare(chain_id)),
+                RuntimeCall::Starknet( deploy_account { transaction }) =&gt; <span class="prelude-val">Some</span>(transaction.from_deploy(chain_id)),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None
+            </span>}).collect::&lt;Vec&lt;Transaction&gt;&gt;()
         }
     }
 
