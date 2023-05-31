@@ -30,3 +30,4 @@ starknet_api = { workspace = true, default-features = false }
 frame-support = { workspace = true }
 sp-core = { workspace = true }
 starknet-core = { workspace = true }
+cairo-vm = { workspace = true, default-features = false }

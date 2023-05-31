@@ -41,6 +41,7 @@ sc-consensus = { workspace = true }
 sc-consensus-grandpa = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
 sc-client-api = { workspace = true }
+sc-network = { workspace = true }
 sp-runtime = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-inherents = { workspace = true }
@@ -81,9 +82,10 @@ pallet-starknet = { path = "../pallets/starknet" }
 mp-starknet = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
+starknet-core = { workspace = true }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 serde_json = { workspace = true }
 
