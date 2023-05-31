@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685523739631,
+  "lastUpdate": 1685543165266,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -33,6 +33,40 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 58.333333333333336,
+            "unit": "tps"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "76247491+chirag-bgh@users.noreply.github.com",
+            "name": "chirag-bgh",
+            "username": "chirag-bgh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf7ad421562d7219d79968564ec23db5a6b497fc",
+          "message": "feat: make chain_id configurable (#494)\n\nCo-authored-by: LucasLvy <lucaslevy10@gmail.com>",
+          "timestamp": "2023-05-31T16:22:51+02:00",
+          "tree_id": "05099bf2475a75413486bf901be9e55e93cfdeaf",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/cf7ad421562d7219d79968564ec23db5a6b497fc"
+        },
+        "date": 1685543164780,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 349.5,
+            "unit": "extrinsics/block"
+          },
+          {
+            "name": "Average TPS",
+            "value": 58.25,
             "unit": "tps"
           }
         ]
