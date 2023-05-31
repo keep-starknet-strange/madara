@@ -237,6 +237,12 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     t.into()
 }
 
+impl MockRuntime {
+    pub fn chain_id() -> String {
+        "SN_GOERLI".to_string()
+    }
+}
+
 /// Run to block n.
 /// The function will repeatedly create and run blocks until the block number is equal to `n`.
 /// # Arguments

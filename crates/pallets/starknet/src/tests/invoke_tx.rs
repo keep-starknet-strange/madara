@@ -67,7 +67,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone());
+        let chain_id = MockRuntime::chain_id();
+        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), &chain_id);
 
         let tx = Message {
             topics: vec![
@@ -134,7 +135,8 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone());
+        let chain_id = MockRuntime::chain_id();
+        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), &chain_id);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
 
