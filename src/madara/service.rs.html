@@ -556,6 +556,10 @@
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
 <a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -779,7 +783,7 @@
 }
 
 <span class="doccomment">/// Builds a new service for a full client.
-</span><span class="kw">pub fn </span>new_full(<span class="kw-2">mut </span>config: Configuration, sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
+</span><span class="kw">pub fn </span>new_full(config: Configuration, sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;TaskManager, ServiceError&gt; {
     <span class="kw">let </span>build_import_queue =
         <span class="kw">if </span>sealing.is_some() { build_manual_seal_import_queue } <span class="kw">else </span>{ build_aura_grandpa_import_queue };
 
@@ -794,6 +798,8 @@
         other: (block_import, grandpa_link, <span class="kw-2">mut </span>telemetry, madara_backend),
     } = new_partial(<span class="kw-2">&amp;</span>config, build_import_queue)<span class="question-mark">?</span>;
 
+    <span class="kw">let </span><span class="kw-2">mut </span>net_config = sc_network::config::FullNetworkConfiguration::new(<span class="kw-2">&amp;</span>config.network);
+
     <span class="kw">let </span>grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
         <span class="kw-2">&amp;</span>client.block_hash(<span class="number">0</span>).ok().flatten().expect(<span class="string">&quot;Genesis block exists; qed&quot;</span>),
         <span class="kw-2">&amp;</span>config.chain_spec,
@@ -802,7 +808,8 @@
     <span class="kw">let </span>warp_sync_params = <span class="kw">if </span>sealing.is_some() {
         <span class="prelude-val">None
     </span>} <span class="kw">else </span>{
-        config.network.extra_sets.push(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
+        net_config
+            .add_notification_protocol(sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone()));
         <span class="kw">let </span>warp_sync = Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
             backend.clone(),
             grandpa_link.shared_authority_set().clone(),
@@ -814,6 +821,7 @@
     <span class="kw">let </span>(network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
             config: <span class="kw-2">&amp;</span>config,
+            net_config,
             client: client.clone(),
             transaction_pool: transaction_pool.clone(),
             spawn_handle: task_manager.spawn_handle(),
