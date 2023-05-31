@@ -36,7 +36,7 @@ import {
   starknetKeccak,
   cleanHex,
 } from "../../util/utils";
-import { InvokeTransaction } from "./types";
+import { Block, InvokeTransaction } from "./types";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -159,6 +159,7 @@ describeDevMadara("Starknet RPC", (context) => {
         TEST_CONTRACT_CLASS_HASH
       );
     });
+
     it("should raise with invalid block id", async () => {
       // Invalid block id
       try {
@@ -168,6 +169,7 @@ describeDevMadara("Starknet RPC", (context) => {
         expect(error.message).to.equal("24: Block not found");
       }
     });
+
     it("should raise with invalid contract address", async () => {
       // Invalid/un-deployed contract address
       try {
@@ -233,8 +235,9 @@ describeDevMadara("Starknet RPC", (context) => {
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const blockWithTxHashes: { status: string; transactions: string[] } =
-        await providerRPC.getBlockWithTxHashes("latest");
+      const blockWithTxHashes: Block = await providerRPC.getBlockWithTxHashes(
+        "latest"
+      );
       expect(blockWithTxHashes).to.not.be.undefined;
       expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
       expect(blockWithTxHashes.transactions.length).to.be.equal(1);
@@ -267,8 +270,7 @@ describeDevMadara("Starknet RPC", (context) => {
       );
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const tx: { type: string; sender_address: string; calldata: string[] } =
-        blockWithTxHashes.transactions[0];
+      const tx: InvokeTransaction = blockWithTxHashes.transactions[0];
       expect(blockWithTxHashes).to.not.be.undefined;
       expect(blockWithTxHashes.transactions.length).to.be.equal(1);
       expect(tx.type).to.be.equal("INVOKE");
@@ -302,8 +304,9 @@ describeDevMadara("Starknet RPC", (context) => {
       });
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const latestBlock: { status: string; transactions: string[] } =
-        await providerRPC.getBlockWithTxHashes("latest");
+      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
+        "latest"
+      );
       expect(latestBlock).to.not.be.undefined;
       expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
       expect(latestBlock.transactions.length).to.be.equal(0);
@@ -318,8 +321,9 @@ describeDevMadara("Starknet RPC", (context) => {
       });
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const latestBlock: { status: string; transactions: string[] } =
-        await providerRPC.getBlockWithTxHashes("latest");
+      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
+        "latest"
+      );
       expect(latestBlock).to.not.be.undefined;
       expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
       expect(latestBlock.transactions.length).to.be.equal(0);
@@ -435,6 +439,7 @@ describeDevMadara("Starknet RPC", (context) => {
           maxFee: "123456",
         }
       );
+      await jumpBlocks(context, 1);
 
       expect(resp).to.not.be.undefined;
       expect(resp.transaction_hash).to.contain("0x");
@@ -620,6 +625,7 @@ describeDevMadara("Starknet RPC", (context) => {
         },
         { nonce, version: 1, maxFee: "123456" }
       );
+      await jumpBlocks(context, 1);
 
       expect(resp).to.not.be.undefined;
       expect(resp.transaction_hash).to.contain("0x");
@@ -944,11 +950,12 @@ describeDevMadara("Starknet RPC", (context) => {
         await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
       let block_hash_and_number = await providerRPC.getBlockHashAndNumber();
       let filter = {
-        from_block: { block_number: 0 },
-        to_block: { block_number: 1 },
+        from_block: "latest",
+        to_block: "latest",
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 10,
       };
+      // @ts-ignore
       let events = await providerRPC.getEvents(filter);
 
       expect(events.events.length).to.be.equal(2);

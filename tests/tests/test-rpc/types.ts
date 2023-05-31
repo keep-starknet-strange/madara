@@ -9,3 +9,8 @@ export interface InvokeTransaction {
   nonce: string;
   sender_address: string;
 }
+
+export interface Block {
+  status: string;
+  transactions: string[];
+}
