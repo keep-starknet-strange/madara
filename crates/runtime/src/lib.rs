@@ -37,6 +37,7 @@ use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as G
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 use pallet_starknet::types::NonceWrapper;
+use pallet_starknet::Call::{declare, deploy_account, invoke};
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -311,7 +312,7 @@ impl_runtime_apis! {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 
-        fn chain_id() -> u128 {
+        fn chain_id() -> Felt252Wrapper {
             Starknet::chain_id()
         }
 
@@ -321,6 +322,17 @@ impl_runtime_apis! {
 
         fn get_hasher() -> Hasher {
             Starknet::get_system_hash().into()
+        }
+
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>{
+            let chain_id  = &Starknet::chain_id_str();
+
+            xts.into_iter().filter_map(|xt| match xt.function {
+                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
+                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.from_deploy(chain_id)),
+                _ => None
+            }).collect::<Vec<Transaction>>()
         }
     }
 

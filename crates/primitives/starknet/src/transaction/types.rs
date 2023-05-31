@@ -179,6 +179,31 @@ pub struct DeclareTransaction {
     pub max_fee: Felt252Wrapper,
 }
 
+impl DeclareTransaction {
+    /// converts the transaction to a [Transaction] object
+    pub fn from_declare(self, chain_id: &str) -> Transaction {
+        Transaction {
+            tx_type: TxType::Declare,
+            version: self.version,
+            hash: calculate_declare_tx_hash(self.clone(), chain_id),
+            signature: self.signature,
+            sender_address: self.sender_address,
+            nonce: self.nonce,
+            call_entrypoint: CallEntryPointWrapper::new(
+                Some(self.compiled_class_hash),
+                EntryPointTypeWrapper::External,
+                None,
+                BoundedVec::default(),
+                self.sender_address,
+                self.sender_address,
+            ),
+            contract_class: Some(self.contract_class),
+            contract_address_salt: None,
+            max_fee: self.max_fee,
+        }
+    }
+}
+
 /// Deploy account transaction.
 #[derive(
     Clone,
@@ -209,6 +234,31 @@ pub struct DeployAccountTransaction {
     pub account_class_hash: Felt252Wrapper,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+}
+
+impl DeployAccountTransaction {
+    /// converts the transaction to a [Transaction] object
+    pub fn from_deploy(self, chain_id: &str) -> Transaction {
+        Transaction {
+            tx_type: TxType::DeployAccount,
+            version: self.version,
+            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id),
+            signature: self.signature,
+            sender_address: self.sender_address,
+            nonce: self.nonce,
+            call_entrypoint: CallEntryPointWrapper::new(
+                Some(self.account_class_hash),
+                EntryPointTypeWrapper::External,
+                None,
+                self.calldata,
+                self.sender_address,
+                self.sender_address,
+            ),
+            contract_class: None,
+            contract_address_salt: Some(self.salt),
+            max_fee: self.max_fee,
+        }
+    }
 }
 
 /// Error of conversion between [DeclareTransaction], [InvokeTransaction],
@@ -281,6 +331,31 @@ impl From<Transaction> for InvokeTransaction {
     }
 }
 
+impl InvokeTransaction {
+    /// converts the transaction to a [Transaction] object
+    pub fn from_invoke(self, chain_id: &str) -> Transaction {
+        Transaction {
+            tx_type: TxType::Invoke,
+            version: self.version,
+            hash: calculate_invoke_tx_hash(self.clone(), chain_id),
+            signature: self.signature,
+            sender_address: self.sender_address,
+            nonce: self.nonce,
+            call_entrypoint: CallEntryPointWrapper::new(
+                None,
+                EntryPointTypeWrapper::External,
+                None,
+                self.calldata,
+                self.sender_address,
+                self.sender_address,
+            ),
+            contract_class: None,
+            contract_address_salt: None,
+            max_fee: self.max_fee,
+        }
+    }
+}
+
 /// Representation of a Starknet transaction.
 #[derive(
     Clone,
@@ -329,77 +404,6 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
         })
-    }
-}
-
-impl From<InvokeTransaction> for Transaction {
-    fn from(value: InvokeTransaction) -> Self {
-        Self {
-            tx_type: TxType::Invoke,
-            version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                None,
-                EntryPointTypeWrapper::External,
-                None,
-                value.calldata,
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: None,
-            contract_address_salt: None,
-            max_fee: value.max_fee,
-        }
-    }
-}
-impl From<DeclareTransaction> for Transaction {
-    fn from(value: DeclareTransaction) -> Self {
-        Self {
-            tx_type: TxType::Declare,
-            version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(value.compiled_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                BoundedVec::default(),
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: Some(value.contract_class),
-            contract_address_salt: None,
-            max_fee: value.max_fee,
-        }
-    }
-}
-
-impl From<DeployAccountTransaction> for Transaction {
-    fn from(value: DeployAccountTransaction) -> Self {
-        Self {
-            tx_type: TxType::DeployAccount,
-            version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                Some(value.account_class_hash),
-                EntryPointTypeWrapper::External,
-                None,
-                value.calldata,
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: None,
-            contract_address_salt: Some(value.salt),
-            max_fee: value.max_fee,
-        }
     }
 }
 
