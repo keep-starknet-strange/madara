@@ -644,6 +644,10 @@
 <a href="#644" id="644">644</a>
 <a href="#645" id="645">645</a>
 <a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 
@@ -825,6 +829,31 @@
     </span><span class="kw">pub </span>max_fee: Felt252Wrapper,
 }
 
+<span class="kw">impl </span>DeclareTransaction {
+    <span class="doccomment">/// converts the transaction to a [Transaction] object
+    </span><span class="kw">pub fn </span>from_declare(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Transaction {
+        Transaction {
+            tx_type: TxType::Declare,
+            version: <span class="self">self</span>.version,
+            hash: calculate_declare_tx_hash(<span class="self">self</span>.clone(), chain_id),
+            signature: <span class="self">self</span>.signature,
+            sender_address: <span class="self">self</span>.sender_address,
+            nonce: <span class="self">self</span>.nonce,
+            call_entrypoint: CallEntryPointWrapper::new(
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.compiled_class_hash),
+                EntryPointTypeWrapper::External,
+                <span class="prelude-val">None</span>,
+                BoundedVec::default(),
+                <span class="self">self</span>.sender_address,
+                <span class="self">self</span>.sender_address,
+            ),
+            contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
+            contract_address_salt: <span class="prelude-val">None</span>,
+            max_fee: <span class="self">self</span>.max_fee,
+        }
+    }
+}
+
 <span class="doccomment">/// Deploy account transaction.
 </span><span class="attr">#[derive(
     Clone,
@@ -855,6 +884,31 @@
     </span><span class="kw">pub </span>account_class_hash: Felt252Wrapper,
     <span class="doccomment">/// Max fee.
     </span><span class="kw">pub </span>max_fee: Felt252Wrapper,
+}
+
+<span class="kw">impl </span>DeployAccountTransaction {
+    <span class="doccomment">/// converts the transaction to a [Transaction] object
+    </span><span class="kw">pub fn </span>from_deploy(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Transaction {
+        Transaction {
+            tx_type: TxType::DeployAccount,
+            version: <span class="self">self</span>.version,
+            hash: calculate_deploy_account_tx_hash(<span class="self">self</span>.clone(), chain_id),
+            signature: <span class="self">self</span>.signature,
+            sender_address: <span class="self">self</span>.sender_address,
+            nonce: <span class="self">self</span>.nonce,
+            call_entrypoint: CallEntryPointWrapper::new(
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.account_class_hash),
+                EntryPointTypeWrapper::External,
+                <span class="prelude-val">None</span>,
+                <span class="self">self</span>.calldata,
+                <span class="self">self</span>.sender_address,
+                <span class="self">self</span>.sender_address,
+            ),
+            contract_class: <span class="prelude-val">None</span>,
+            contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt),
+            max_fee: <span class="self">self</span>.max_fee,
+        }
+    }
 }
 
 <span class="doccomment">/// Error of conversion between [DeclareTransaction], [InvokeTransaction],
@@ -927,6 +981,31 @@
     }
 }
 
+<span class="kw">impl </span>InvokeTransaction {
+    <span class="doccomment">/// converts the transaction to a [Transaction] object
+    </span><span class="kw">pub fn </span>from_invoke(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Transaction {
+        Transaction {
+            tx_type: TxType::Invoke,
+            version: <span class="self">self</span>.version,
+            hash: calculate_invoke_tx_hash(<span class="self">self</span>.clone(), chain_id),
+            signature: <span class="self">self</span>.signature,
+            sender_address: <span class="self">self</span>.sender_address,
+            nonce: <span class="self">self</span>.nonce,
+            call_entrypoint: CallEntryPointWrapper::new(
+                <span class="prelude-val">None</span>,
+                EntryPointTypeWrapper::External,
+                <span class="prelude-val">None</span>,
+                <span class="self">self</span>.calldata,
+                <span class="self">self</span>.sender_address,
+                <span class="self">self</span>.sender_address,
+            ),
+            contract_class: <span class="prelude-val">None</span>,
+            contract_address_salt: <span class="prelude-val">None</span>,
+            max_fee: <span class="self">self</span>.max_fee,
+        }
+    }
+}
+
 <span class="doccomment">/// Representation of a Starknet transaction.
 </span><span class="attr">#[derive(
     Clone,
@@ -975,77 +1054,6 @@
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>,
             max_fee: value.max_fee,
         })
-    }
-}
-
-<span class="kw">impl </span>From&lt;InvokeTransaction&gt; <span class="kw">for </span>Transaction {
-    <span class="kw">fn </span>from(value: InvokeTransaction) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            tx_type: TxType::Invoke,
-            version: value.version,
-            hash: calculate_invoke_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                <span class="prelude-val">None</span>,
-                EntryPointTypeWrapper::External,
-                <span class="prelude-val">None</span>,
-                value.calldata,
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: <span class="prelude-val">None</span>,
-            contract_address_salt: <span class="prelude-val">None</span>,
-            max_fee: value.max_fee,
-        }
-    }
-}
-<span class="kw">impl </span>From&lt;DeclareTransaction&gt; <span class="kw">for </span>Transaction {
-    <span class="kw">fn </span>from(value: DeclareTransaction) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            tx_type: TxType::Declare,
-            version: value.version,
-            hash: calculate_declare_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                <span class="prelude-val">Some</span>(value.compiled_class_hash),
-                EntryPointTypeWrapper::External,
-                <span class="prelude-val">None</span>,
-                BoundedVec::default(),
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: <span class="prelude-val">Some</span>(value.contract_class),
-            contract_address_salt: <span class="prelude-val">None</span>,
-            max_fee: value.max_fee,
-        }
-    }
-}
-
-<span class="kw">impl </span>From&lt;DeployAccountTransaction&gt; <span class="kw">for </span>Transaction {
-    <span class="kw">fn </span>from(value: DeployAccountTransaction) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            tx_type: TxType::DeployAccount,
-            version: value.version,
-            hash: calculate_deploy_account_tx_hash(value.clone()),
-            signature: value.signature,
-            sender_address: value.sender_address,
-            nonce: value.nonce,
-            call_entrypoint: CallEntryPointWrapper::new(
-                <span class="prelude-val">Some</span>(value.account_class_hash),
-                EntryPointTypeWrapper::External,
-                <span class="prelude-val">None</span>,
-                value.calldata,
-                value.sender_address,
-                value.sender_address,
-            ),
-            contract_class: <span class="prelude-val">None</span>,
-            contract_address_salt: <span class="prelude-val">Some</span>(value.salt),
-            max_fee: value.max_fee,
-        }
     }
 }
 

@@ -319,6 +319,8 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
@@ -565,6 +567,8 @@
 
     <span class="kw">let </span>public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
 
+    <span class="kw">let </span>chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
+
     GenesisConfig {
         system: SystemConfig {
             <span class="comment">// Add Wasm runtime to storage.
@@ -636,7 +640,7 @@
             ],
             fee_token_address,
             _phantom: Default::default(),
-            chain_id: CHAIN_ID_STARKNET_TESTNET,
+            chain_id,
         },
     }
 }

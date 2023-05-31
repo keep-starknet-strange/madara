@@ -84,7 +84,7 @@
         <span class="doccomment">/// Returns the contract class for the given class hash.
         </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;;
         <span class="doccomment">/// Returns the chain id.
-        </span><span class="kw">fn </span>chain_id() -&gt; u128;
+        </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns fee estimate
         </span><span class="kw">fn </span>estimate_fee(transaction: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Returns the hasher used by the runtime.

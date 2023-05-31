@@ -256,12 +256,12 @@
     general_purpose::STANDARD.encode(data)
 }
 
-<span class="kw">pub fn </span>to_tx(request: BroadcastedTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction&gt; {
+<span class="kw">pub fn </span>to_tx(request: BroadcastedTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction&gt; {
     <span class="kw">match </span>request {
-        BroadcastedTransaction::Invoke(invoke_tx) =&gt; to_invoke_tx(invoke_tx).map(|inner| inner.into()),
+        BroadcastedTransaction::Invoke(invoke_tx) =&gt; to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
         BroadcastedTransaction::Declare(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()), <span class="comment">/* TODO: add support once #341 is supported */
         </span>BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.into())
+            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
         }
     }
 }

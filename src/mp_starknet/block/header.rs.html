@@ -163,6 +163,7 @@
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>scale_codec::Encode;
 <span class="kw">use </span>sp_core::U256;
@@ -171,7 +172,6 @@
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
-<span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
@@ -246,7 +246,7 @@
     }
 
     <span class="doccomment">/// Converts to a blockifier BlockContext
-    </span><span class="kw">pub fn </span>into_block_context(<span class="self">self</span>, fee_token_address: ContractAddressWrapper) -&gt; BlockContext {
+    </span><span class="kw">pub fn </span>into_block_context(<span class="self">self</span>, fee_token_address: ContractAddressWrapper, chain_id: ChainId) -&gt; BlockContext {
         <span class="comment">// Convert from ContractAddressWrapper to ContractAddress
         </span><span class="kw">let </span>sequencer_address =
             ContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sequencer_address.into()).unwrap()).unwrap();
@@ -254,7 +254,7 @@
         </span><span class="kw">let </span>fee_token_address = ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
 
         BlockContext {
-            chain_id: ChainId(<span class="string">&quot;SN_GOERLI&quot;</span>.to_string()),
+            chain_id,
             block_number: BlockNumber(<span class="self">self</span>.block_number.as_u64()),
             block_timestamp: BlockTimestamp(<span class="self">self</span>.block_timestamp),
             sequencer_address,
@@ -316,8 +316,10 @@
     </span><span class="kw">let </span>block_header = Header { block_number: <span class="number">1</span>.into(), block_timestamp: <span class="number">1</span>, sequencer_address, ..Default::default() };
     <span class="comment">// Create a fee token address.
     </span><span class="kw">let </span>fee_token_address = Felt252Wrapper::from_hex_be(<span class="string">&quot;AA&quot;</span>).unwrap();
+    <span class="comment">// Create a chain id.
+    </span><span class="kw">let </span>chain_id = ChainId(<span class="string">&quot;0x1&quot;</span>.to_string());
     <span class="comment">// Try to serialize the block header.
-    </span><span class="kw">let </span>block_context = block_header.into_block_context(fee_token_address);
+    </span><span class="kw">let </span>block_context = block_header.into_block_context(fee_token_address, chain_id);
     <span class="kw">let </span>expected_sequencer_address =
         ContractAddress::try_from(StarkFelt::new(sequencer_address.into()).unwrap()).unwrap();
     <span class="kw">let </span>expected_fee_token_address =

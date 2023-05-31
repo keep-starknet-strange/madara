@@ -708,6 +708,7 @@
 <a href="#708" id="708">708</a>
 <a href="#709" id="709">709</a>
 <a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -728,7 +729,7 @@
 <span class="kw">use </span>blockifier::transaction::transactions::Executable;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::U256;
-<span class="kw">use </span>starknet_api::api_core::{ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::transaction::{
@@ -1163,8 +1164,9 @@
         tx_type: TxType,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -&gt; TransactionExecutionResultWrapper&lt;TransactionExecutionInfoWrapper&gt; {
-        <span class="kw">let </span>block_context = block.header().clone().into_block_context(fee_token_address);
+        <span class="kw">let </span>block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
 
         <span class="comment">// Initialize the execution resources.
         </span><span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();

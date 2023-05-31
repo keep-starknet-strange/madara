@@ -235,6 +235,8 @@
 <a href="#235" id="235">235</a>
 <a href="#236" id="236">236</a>
 <a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
@@ -372,7 +374,7 @@
 /// # Argument
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address.into(),
         transaction.calldata.as_slice(),
@@ -380,6 +382,7 @@
         transaction.nonce,
         transaction.version,
         <span class="string">b&quot;invoke&quot;</span>,
+        chain_id,
     )
 }
 
@@ -388,7 +391,7 @@
 /// # Argument
 ///
 /// * `transaction` - The declare transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address.into(),
         <span class="kw-2">&amp;</span>[transaction.compiled_class_hash],
@@ -396,6 +399,7 @@
         transaction.nonce,
         transaction.version,
         <span class="string">b&quot;declare&quot;</span>,
+        chain_id,
     )
 }
 
@@ -404,7 +408,7 @@
 /// # Argument
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address.into(),
         <span class="kw-2">&amp;</span><span class="macro">vec!</span>[
@@ -416,6 +420,7 @@
         transaction.nonce,
         transaction.version,
         <span class="string">b&quot;deploy_account&quot;</span>,
+        chain_id,
     )
 }
 
@@ -426,6 +431,7 @@
     nonce: Felt252Wrapper,
     version: u8,
     tx_prefix: <span class="kw-2">&amp;</span>[u8],
+    chain_id: <span class="kw-2">&amp;</span>str,
 ) -&gt; Felt252Wrapper
 <span class="kw">where
     </span>T: CryptoHasherT,
@@ -439,9 +445,8 @@
     <span class="kw">let </span>nonce = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>nonce.into()).unwrap();
     <span class="kw">let </span>version = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>version.to_be_bytes()).unwrap();
     <span class="kw">let </span>tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
-    <span class="comment">// TODO: make it configurable
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/364
-    </span><span class="kw">let </span>chain_id = FieldElement::from_byte_slice_be(<span class="string">b&quot;SN_GOERLI&quot;</span>).unwrap();
+
+    <span class="kw">let </span>chain_id = FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap();
 
     <span class="kw">let </span>tx_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[
         tx_prefix,
@@ -455,8 +460,7 @@
     ]);
 
     tx_hash.into()
-    <span class="comment">//    H256::from_slice(&amp;tx_hash.to_bytes_be())
-</span>}
+}
 
 <span class="doccomment">/// Calculate the hash of an event.
 ///

@@ -145,6 +145,7 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::sync::Arc;
 
@@ -153,7 +154,7 @@
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::ConstU32;
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
+<span class="kw">use </span>starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::transaction::Calldata;
 <span class="kw">use </span>starknet_api::StarknetApiError;
@@ -225,6 +226,7 @@
         state: <span class="kw-2">&amp;mut </span>S,
         block: StarknetBlock,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -&gt; EntryPointExecutionResultWrapper&lt;CallInfo&gt; {
         <span class="kw">let </span>call_entry_point: CallEntryPoint =
             <span class="self">self</span>.clone().try_into().map_err(EntryPointExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
@@ -234,7 +236,7 @@
         <span class="kw">let </span>account_context = AccountTransactionContext::default();
 
         <span class="comment">// Create the block context.
-        </span><span class="kw">let </span>block_context = block.header().clone().into_block_context(fee_token_address);
+        </span><span class="kw">let </span>block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
 
         call_entry_point
             .execute(state, execution_resources, execution_context, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context)
