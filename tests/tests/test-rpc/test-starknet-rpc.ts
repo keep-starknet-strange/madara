@@ -883,7 +883,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
   describe("getEvents", function () {
     it("should fail on invalid continuation token", async function () {
-      let filter = {
+      const filter = {
         from_block: { block_number: 0 },
         to_block: { block_number: 1 },
         address: FEE_TOKEN_ADDRESS,
@@ -901,7 +901,7 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should fail on chunk size too big", async function () {
-      let filter = {
+      const filter = {
         from_block: { block_number: 0 },
         to_block: { block_number: 1 },
         address: FEE_TOKEN_ADDRESS,
@@ -916,7 +916,7 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should fail on keys too big", async function () {
-      let filter = {
+      const filter = {
         from_block: { block_number: 0 },
         to_block: { block_number: 1 },
         address: FEE_TOKEN_ADDRESS,
@@ -924,6 +924,7 @@ describeDevMadara("Starknet RPC", (context) => {
         keys: Array(101).fill(["0x0"]),
       };
       try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         await providerRPC.getEvents(filter);
       } catch (error) {
@@ -945,18 +946,20 @@ describeDevMadara("Starknet RPC", (context) => {
         )
       );
 
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      let tx: InvokeTransaction =
+      const tx: InvokeTransaction =
         await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
-      let block_hash_and_number = await providerRPC.getBlockHashAndNumber();
-      let filter = {
+      const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+      const filter = {
         from_block: "latest",
         to_block: "latest",
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 10,
       };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      let events = await providerRPC.getEvents(filter);
+      const events = await providerRPC.getEvents(filter);
 
       expect(events.events.length).to.be.equal(2);
       for (const event of events.events) {
@@ -966,7 +969,7 @@ describeDevMadara("Starknet RPC", (context) => {
         expect(event.transaction_hash).to.be.equal(tx.transaction_hash);
       }
       // check transfer event
-      let transfer_event = events.events[0];
+      const transfer_event = events.events[0];
       expect(transfer_event).to.deep.equal({
         transaction_hash: tx.transaction_hash,
         block_hash: block_hash_and_number.block_hash,
@@ -981,7 +984,7 @@ describeDevMadara("Starknet RPC", (context) => {
         ].map(cleanHex),
       });
       // check fee transfer event
-      let fee_event = events.events[1];
+      const fee_event = events.events[1];
       expect(fee_event).to.deep.equal({
         transaction_hash: tx.transaction_hash,
         block_hash: block_hash_and_number.block_hash,
@@ -999,7 +1002,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("returns expected events on correct filter with chunk size", async function () {
       // Send transactions
-      let transactions = [];
+      const transactions = [];
       for (let i = 0; i < 5; i++) {
         transactions.push(
           rpcTransfer(
@@ -1012,18 +1015,20 @@ describeDevMadara("Starknet RPC", (context) => {
       }
       await context.createBlock(transactions);
 
-      let filter = {
+      const filter = {
         from_block: "latest",
         to_block: "latest",
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 4,
       };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      let events = await providerRPC.getEvents(filter);
+      const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(4);
       for (let i = 0; i < 2; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        let tx: InvokeTransaction =
+        const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex("latest", i);
         expect(
           validateAndParseAddress(events.events[2 * i].from_address)
@@ -1042,7 +1047,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("returns expected events on correct filter with continuation token", async function () {
       // Send transactions
-      let transactions = [];
+      const transactions = [];
       for (let i = 0; i < 5; i++) {
         transactions.push(
           rpcTransfer(
@@ -1055,20 +1060,22 @@ describeDevMadara("Starknet RPC", (context) => {
       }
       await context.createBlock(transactions);
 
-      let skip = 3;
-      let filter = {
+      const skip = 3;
+      const filter = {
         from_block: "latest",
         to_block: "latest",
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 4,
         continuation_token: (skip * 3).toString(), // 3 events per transaction
       };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      let events = await providerRPC.getEvents(filter);
+      const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(4);
       for (let i = 0; i < 2; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        let tx: InvokeTransaction =
+        const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex("latest", skip + i);
         expect(
           validateAndParseAddress(events.events[2 * i].from_address)
@@ -1086,18 +1093,30 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("returns expected events on correct filter with keys", async function () {
+      // Send a transaction
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        )
+      );
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      let tx: InvokeTransaction =
+      const tx: InvokeTransaction =
         await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
-      let block_hash_and_number = await providerRPC.getBlockHashAndNumber();
-      let filter = {
+      const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+      const filter = {
         from_block: "latest",
         to_block: "latest",
         chunk_size: 1,
         keys: [[toHex(starknetKeccak("transaction_executed"))]],
       };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      let events = await providerRPC.getEvents(filter);
+      const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(1);
       expect(events.events[0]).to.deep.equal({
         transaction_hash: tx.transaction_hash,

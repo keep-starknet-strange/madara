@@ -38,7 +38,7 @@ export function starknetKeccak(value: string) {
 
 // Clean a hex string, remove leading 0's
 export function cleanHex(value: string) {
-  let cleaned = number.cleanHex(value);
+  const cleaned = number.cleanHex(value);
   if (cleaned === "0x") {
     return "0x0";
   }
