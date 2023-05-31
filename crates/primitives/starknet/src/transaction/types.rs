@@ -662,6 +662,8 @@ pub struct EventWrapper {
     pub data: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
+    /// The hash of the transaction that emitted the event
+    pub transaction_hash: Felt252Wrapper,
 }
 
 #[cfg(feature = "std")]

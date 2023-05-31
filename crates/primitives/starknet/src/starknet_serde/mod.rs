@@ -82,6 +82,8 @@ pub struct DeserializeEventWrapper {
     pub data: Vec<String>,
     /// The address that emitted the event
     pub from_address: String,
+    /// The transaction hash that emitted the event
+    pub transaction_hash: String,
 }
 
 /// Error enum for Event deserialization
@@ -102,6 +104,23 @@ pub enum DeserializeEventError {
     /// InvalidFromAddress error
     #[error(transparent)]
     InvalidFromAddress(#[from] Felt252WrapperError),
+    /// InvalidTransactionHash error
+    #[error(transparent)]
+    InvalidTransactionHash(#[from] Felt252WrapperError),
+}
+
+impl fmt::Display for DeserializeEventError {
+    /// Implementation of `fmt::Display` for `DeserializeEventError`
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DeserializeEventError::InvalidKeys(s) => write!(f, "Invalid keys format: {:?}", s),
+            DeserializeEventError::KeysExceedMaxSize => write!(f, "Keys exceed max size"),
+            DeserializeEventError::InvalidData(s) => write!(f, "Invalid data format: ${:?}", s),
+            DeserializeEventError::DataExceedMaxSize => write!(f, "Data exceed max size"),
+            DeserializeEventError::InvalidFromAddress(e) => write!(f, "Invalid address data format: ${:?}", e),
+            DeserializeEventError::InvalidTransactionHash(e) => write!(f, "Invalid hash data format: ${:?}", e),
+        }
+    }
 }
 
 /// Struct for deserializing Transaction from JSON
@@ -292,8 +311,13 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
             Err(e) => return Err(DeserializeEventError::InvalidFromAddress(e)),
         };
 
+        let transaction_hash = match Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
+            Ok(felt) => felt,
+            Err(e) => return Err(DeserializeEventError::InvalidTransactionHash(e)),
+        };
+
         // Create EventWrapper with validated and converted fields
-        Ok(Self { keys, data, from_address })
+        Ok(Self { keys, data, from_address, transaction_hash })
     }
 }
 
