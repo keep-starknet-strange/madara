@@ -631,7 +631,6 @@ describeDevMadara("Starknet RPC", (context) => {
       //  MINT_AMOUNT
       //);
 
-
       // create a deploy_contract transaction
       //const selector = hash.getSelectorFromName("initialize");
       //const calldata = [ARGENT_ACCOUNT_CLASS_HASH, selector, 2, SIGNER_PUBLIC, 0];
@@ -673,7 +672,6 @@ describeDevMadara("Starknet RPC", (context) => {
 
       //await providerRPC.deployAccountContract(txDeployAccount, invocationDetails);
 
-
       const nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
         "latest"
@@ -698,8 +696,6 @@ describeDevMadara("Starknet RPC", (context) => {
         { nonce, version: 1, maxFee: "123456" }
       );
 
-
-
       const txs = await providerRPC.getPendingTransactions();
 
       expect(txs.length).equals(1);
@@ -710,9 +706,17 @@ describeDevMadara("Starknet RPC", (context) => {
       //expect(txs[1]).to.include({type: "DEPLOY_ACCOUNT"});
       //expect(txs[1]).that.includes.all.keys(["class_hash", "constructor_calldata", "contract_address_salt", "max_fee", "nonce", "signature", "transaction_hash", "type", "version"]);
 
-      expect(txs[0]).to.include({type: "DECLARE"});
-      expect(txs[0]).that.includes.all.keys(["sender_address", "class_hash", "max_fee", "nonce", "signature", "transaction_hash", "type", "version"]);
-
-    })
+      expect(txs[0]).to.include({ type: "DECLARE" });
+      expect(txs[0]).that.includes.all.keys([
+        "sender_address",
+        "class_hash",
+        "max_fee",
+        "nonce",
+        "signature",
+        "transaction_hash",
+        "type",
+        "version",
+      ]);
+    });
   });
 });
