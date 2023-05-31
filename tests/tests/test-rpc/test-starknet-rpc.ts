@@ -812,7 +812,7 @@ describeDevMadara("Starknet RPC", (context) => {
       await createAndFinalizeBlock(context.polkadotApi);
 
       // create a invoke transaction
-      let b = await rpcTransfer(
+      const b = await rpcTransfer(
         providerRPC,
         ARGENT_CONTRACT_NONCE,
         ARGENT_CONTRACT_ADDRESS,
