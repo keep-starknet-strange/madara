@@ -1,6 +1,8 @@
 //! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
+
+mod constants;
 mod errors;
 mod madara_backend_client;
 
@@ -17,7 +19,9 @@ use mp_starknet::block::BlockTransactions;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
-use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
+use mp_starknet::transaction::types::{
+    EventWrapper, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
+};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -31,10 +35,13 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    DeclareTransactionResult, DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate,
-    FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
-    MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionStatus,
+    DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
+    FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
+    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    TransactionStatus,
 };
+
+use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C, P, H> {
@@ -650,7 +657,10 @@ where
             status: BlockStatus::AcceptedOnL2,
             block_hash: block.header().hash(*self.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
-            block_number: block.header().block_number.as_u64(),
+            block_number: block.header().block_number.try_into().map_err(|e| {
+                error!("Failed to convert block number to u64: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -700,13 +710,23 @@ where
 
     /// Returns all events matching the given filter
     async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage> {
-        let requested_offset = match filter.result_page_request.continuation_token {
+        let mut continuation_token = match filter.result_page_request.continuation_token {
             Some(token) => token.parse::<usize>().map_err(|e| {
                 error!("Failed to parse continuation token: {:?}", e);
                 StarknetRpcApiError::InvalidContinuationToken
             })?,
             None => 0usize,
         };
+        let filter_address = filter.event_filter.address.map(Felt252Wrapper::from);
+        let keys = filter.event_filter.keys.unwrap_or_default();
+        let chunk_size = filter.result_page_request.chunk_size;
+
+        if keys.len() > MAX_EVENTS_KEYS {
+            return Err(StarknetRpcApiError::TooManyKeysInFilter.into());
+        }
+        if chunk_size > MAX_EVENTS_CHUNK_SIZE {
+            return Err(StarknetRpcApiError::PageSizeTooBig.into());
+        }
 
         // Get the substrate block numbers for the requested range
         let latest_block =
@@ -731,20 +751,33 @@ where
 
         // Verify that the requested range is valid
         if current_block > to_block {
-            return Err(StarknetRpcApiError::BlockNotFound.into());
+            return Ok(EventsPage { events: vec![], continuation_token: None });
         }
 
         let to_block = if latest_block > to_block { to_block } else { latest_block };
-        info!("Getting events from block {} to block {}", current_block, to_block);
 
-        // Get the events from the substrate chain up to the requested offset + chunk_size
-        let mut events = vec![];
+        let mut filtered_events = vec![];
+        let mut index = 0;
         while current_block <= to_block {
             let substrate_block_hash =
                 self.substrate_block_hash_from_starknet_block(BlockId::Number(current_block)).map_err(|e| {
                     error!("'{e}'");
                     StarknetRpcApiError::BlockNotFound
                 })?;
+
+            let block = self
+                .overrides
+                .for_block_hash(self.client.as_ref(), substrate_block_hash)
+                .current_block(substrate_block_hash)
+                .ok_or_else(|| {
+                    error!("Failed to retrieve block");
+                    StarknetRpcApiError::BlockNotFound
+                })?;
+            let block_hash = block.header().hash(*self.hasher).into();
+            let block_number = block.header().block_number.try_into().map_err(|e| {
+                error!("Failed to convert block number to u64: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?;
 
             let block_events = self
                 .overrides
@@ -754,12 +787,50 @@ where
                     info!("No events found in block {}", current_block);
                     Vec::new()
                 });
+            let block_events_len = block_events.len();
 
-            log::info!("Found {:#?} events in block {}", block_events, current_block);
+            let block_events = block_events.into_iter().skip(continuation_token).collect::<Vec<EventWrapper>>();
+            // if block_events is empty, keep going and reduce the pagination by block_events_len
+            if block_events.is_empty() {
+                continuation_token -= block_events_len;
+                index += block_events_len;
+                current_block += 1;
+                continue;
+            }
+
+            let mut block_events = block_events.into_iter().peekable();
+
+            while let Some(event) = block_events.peek() {
+                if filtered_events.len() == chunk_size as usize {
+                    return Ok(EventsPage { events: filtered_events, continuation_token: Some((index).to_string()) });
+                }
+
+                let match_from_address = event.from_address == filter_address.unwrap_or(event.from_address);
+                // Based on https://github.com/starkware-libs/papyrus
+                let match_keys = keys
+                    .iter()
+                    .enumerate()
+                    .all(|(i, keys)| event.keys.len() > i && (keys.is_empty() || keys.contains(&event.keys[i].into())));
+
+                if match_from_address && match_keys {
+                    filtered_events.push(EmittedEvent {
+                        from_address: event.from_address.into(),
+                        keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
+                        data: event.data.clone().into_iter().map(|data| data.into()).collect(),
+                        block_hash,
+                        block_number,
+                        transaction_hash: event.transaction_hash.into(),
+                    });
+                }
+
+                index += 1;
+                block_events.next();
+            }
 
             current_block += 1;
+            continuation_token = 0;
         }
-        Ok(EventsPage { events, continuation_token: None })
+        Ok(EventsPage { events: filtered_events, continuation_token: None })
     }
 
     /// Submit a new declare transaction to be added to the chain
