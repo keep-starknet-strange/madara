@@ -762,24 +762,22 @@ where
 
                 let api = self.client.runtime_api();
 
-                let mp_txn_find: Option<MPTransaction> = api.extrinsic_filter_by_hash(
-                    self.client.info().best_hash,
-                    transactions,
-                    transaction_hash.into()
-                ).map_err(|e| {
-                    error!("{:#?}", e);
-                    StarknetRpcApiError::InternalServerError
-                })?;
+                let mp_txn_find: Option<MPTransaction> = api
+                    .extrinsic_filter_by_hash(self.client.info().best_hash, transactions, transaction_hash.into())
+                    .map_err(|e| {
+                        error!("{:#?}", e);
+                        StarknetRpcApiError::InternalServerError
+                    })?;
 
                 match mp_txn_find {
-                    Some(mp_txn) => match Transaction::try_from(mp_txn.clone()) {
+                    Some(mp_txn) => match Transaction::try_from(mp_txn) {
                         Ok(txn) => return Ok(txn),
                         Err(e) => {
                             error!("Error retrieving transaction: {:?}", e);
-                            return Err(StarknetRpcApiError::InternalServerError.into())
+                            return Err(StarknetRpcApiError::InternalServerError.into());
                         }
                     },
-                    None => return Err(StarknetRpcApiError::TxnHashNotFound.into())
+                    None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
                 }
             }
         };

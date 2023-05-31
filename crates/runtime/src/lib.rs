@@ -349,13 +349,10 @@ impl_runtime_apis! {
                     _ => None
                 };
 
-                match txn_res {
-                    Some(txn) => {
-                        if txn.hash == transaction_hash {
-                            return Some(txn);
-                        }
-                    },
-                    None => ()
+                if let Some(txn) = txn_res {
+                    if txn.hash == transaction_hash {
+                        return Some(txn);
+                    }
                 }
             }
 
