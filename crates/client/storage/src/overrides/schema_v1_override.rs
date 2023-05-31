@@ -1,18 +1,17 @@
-use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use frame_support::BoundedVec;
-use madara_runtime::Runtime;
+use frame_system::EventRecord;
+use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK,
     STARKNET_NONCE, SYSTEM_EVENTS,
 };
-use mp_starknet::transaction::types::{EventWrapper, MaxArraySize};
+use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::NonceWrapper;
-use pallet_starknet::Event as RuntimeEvent;
+use pallet_starknet::Event;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
@@ -40,13 +39,9 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
-    fn query_storage<T: Decode + Debug>(&self, block_hash: B::Hash, key: &StorageKey) -> Option<T> {
-        let data = self.client.storage(block_hash, key);
-        log::info!("data: {:?}", data);
+    fn query_storage<T: Decode>(&self, block_hash: B::Hash, key: &StorageKey) -> Option<T> {
         if let Ok(Some(data)) = self.client.storage(block_hash, key) {
-            let result = Decode::decode(&mut &data.0[..]);
-            log::info!("result: {:?}", result);
-            if let Ok(result) = result {
+            if let Ok(result) = Decode::decode(&mut &data.0[..]) {
                 return Some(result);
             }
         }
@@ -122,7 +117,15 @@ where
 
     fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
         let events_key = storage_prefix_build(PALLET_SYSTEM, SYSTEM_EVENTS);
-        self.query_storage::<BoundedVec<RuntimeEvent<Runtime>, MaxArraySize>>(block_hash, &StorageKey(events_key));
-        None
+        let events = self.query_storage::<Vec<EventRecord<RuntimeEvent, Hash>>>(block_hash, &StorageKey(events_key));
+        events.map(|events| {
+            events
+                .into_iter()
+                .filter_map(|e| match e {
+                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } => Some(event),
+                    _ => None,
+                })
+                .collect()
+        })
     }
 }
