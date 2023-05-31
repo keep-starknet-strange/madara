@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685545363210,
+  "lastUpdate": 1685549604760,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -101,6 +101,40 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 57.333333333333336,
+            "unit": "tps"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "17102689+ZePedroResende@users.noreply.github.com",
+            "name": "Resende",
+            "username": "ZePedroResende"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a63858f60ad654558de222ef89f0c07433644b26",
+          "message": "feat: Pending Transaction RPC (#293)",
+          "timestamp": "2023-05-31T18:10:08+02:00",
+          "tree_id": "c982672565944afd5594379549452228722d9d2c",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/a63858f60ad654558de222ef89f0c07433644b26"
+        },
+        "date": 1685549604247,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 343.75,
+            "unit": "extrinsics/block"
+          },
+          {
+            "name": "Average TPS",
+            "value": 57.291666666666664,
             "unit": "tps"
           }
         ]
