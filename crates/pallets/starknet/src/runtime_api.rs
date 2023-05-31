@@ -41,6 +41,13 @@ sp_api::decl_runtime_apis! {
         /// Returns the hasher used by the runtime.
         fn get_hasher() -> Hasher;
         /// Filters extrinsic transactions to return only Starknet transactions
+		///
+        /// To support runtime upgrades, the client must be unaware of the specific extrinsic
+		/// details. To achieve this, the client uses an OpaqueExtrinsic type to represent and
+		/// manipulate extrinsics. However, the client cannot decode and filter extrinsics due to
+		/// this limitation. The solution is to offload decoding and filtering to the RuntimeApi in
+		/// the runtime itself, accomplished through the extrinsic_filter method. This enables the
+		/// client to operate seamlessly while abstracting the extrinsic complexity.
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
     }
 

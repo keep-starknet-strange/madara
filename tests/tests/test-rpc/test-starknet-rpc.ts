@@ -543,6 +543,33 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   it("pendingTransactions", async function () {
+    const expected_txs = [
+      {
+        transaction_hash:
+          "0x5afb89108b508aec2b638aa157153493690bafb3bf0fd61414953c5b6e24e0",
+        max_fee: "0x1e240",
+        version: "0x1",
+        signature: [
+          "0x3f2426cb8064cb8dc5ca740e349d4b857c800c055122ee443e9b6d10a30cbbe",
+          "0x7b1b8e2cdda6ad252257cf753d3ad2043a7e67a9b6d2eb7db90c671c12b20b0",
+        ],
+        nonce: "0x4",
+        type: "INVOKE",
+        sender_address: "0x2",
+        calldata: [
+          "0x1",
+          "0x40e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01",
+          "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
+          "0x0",
+          "0x3",
+          "0x3",
+          "0x2",
+          "0x1",
+          "0x0",
+        ],
+      },
+    ];
+
     await rpcTransfer(
       providerRPC,
       ARGENT_CONTRACT_NONCE,
@@ -550,30 +577,10 @@ describeDevMadara("Starknet RPC", (context) => {
       MINT_AMOUNT
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const txs: { type?: any; sender_address?: string; calldata?: string[] }[] =
-      await providerRPC.getPendingTransactions();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tx: { type?: any; sender_address?: string; calldata?: string[] } =
-      txs[0];
+    const txs = await providerRPC.getPendingTransactions();
 
     expect(txs.length).equals(1);
 
-    expect(tx.type).to.be.equal("INVOKE");
-    expect(tx.sender_address).to.be.equal(toHex(ARGENT_CONTRACT_ADDRESS));
-    expect(tx.calldata).to.deep.equal(
-      [
-        1,
-        FEE_TOKEN_ADDRESS,
-        hash.getSelectorFromName("transfer"),
-        0,
-        3,
-        3,
-        ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT,
-        0,
-      ].map(toHex)
-    );
+    expect(txs).to.be.deep.equal(expected_txs);
   });
 });
