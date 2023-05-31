@@ -622,7 +622,7 @@ describeDevMadara("Starknet RPC", (context) => {
   describe("getTransactionByHash", () => {
     it("should return a transaction", async function () {
       // Send a transaction
-      let b = await context.createBlock(
+      const b = await context.createBlock(
         rpcTransfer(
           providerRPC,
           ARGENT_CONTRACT_NONCE,
@@ -630,13 +630,11 @@ describeDevMadara("Starknet RPC", (context) => {
           MINT_AMOUNT
         ),
         {
-          finalize: true
+          finalize: true,
         }
       );
 
-      
-
-      let r = await providerRPC.getTransactionByHash(b.result.hash);
+      const r = await providerRPC.getTransactionByHash(b.result.hash);
       expect(r).to.not.be.undefined;
     });
 
@@ -659,5 +657,4 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     });
   });
-
 });
