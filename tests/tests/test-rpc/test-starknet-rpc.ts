@@ -659,4 +659,47 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     });
   });
+
+  describe("getTransactionReceipt", () => {
+    it("should return a receipt", async function () {
+      await createAndFinalizeBlock(context.polkadotApi);
+
+      // Send a transaction
+      const b = await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+
+      const r = await providerRPC.getTransactionReceipt(b.result.hash);
+      console.log(r);
+      expect(r).to.not.be.undefined;
+    });
+
+    it("should return transaction hash not found", async function () {
+      // Send a transaction
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        )
+      );
+
+      try {
+        await providerRPC.getTransactionReceipt("0x1234");
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("25: Transaction hash not found");
+      }
+    });
+  });
+
 });
