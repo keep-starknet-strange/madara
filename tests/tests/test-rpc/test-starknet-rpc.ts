@@ -807,6 +807,23 @@ describeDevMadara("Starknet RPC", (context) => {
         expect(error.message).to.equal("25: Transaction hash not found");
       }
     });
+
+    it("should return a transaction from the pool", async function () {
+      await createAndFinalizeBlock(context.polkadotApi);
+
+      // create a invoke transaction
+      let b = await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      );
+
+      const txn = await providerRPC.getTransactionByHash(b.transaction_hash);
+
+      expect(txn).to.include({ type: "INVOKE" });
+      expect(txn.transaction_hash).equals(b.transaction_hash);
+    });
   });
 
   describe("getTransactionReceipt", () => {
