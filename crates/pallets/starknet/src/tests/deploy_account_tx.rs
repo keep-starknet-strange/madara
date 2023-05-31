@@ -5,6 +5,8 @@ use mp_starknet::crypto::commitment::calculate_deploy_account_tx_hash;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_core::U256;
+use sp_runtime::traits::ValidateUnsigned;
+use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 
 use super::mock::*;
 use super::utils::sign_message_hash;
@@ -206,6 +208,12 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             signature: sign_message_hash(tx_hash),
         };
 
+        // let validate_result = Starknet::validate_unsigned(
+        //     TransactionSource::InBlock,
+        //     &crate::Call::deploy_account { transaction: transaction.clone() },
+        // );
+        // assert_ok!(validate_result);
+
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
     });
@@ -243,6 +251,12 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
         };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::deploy_account { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
@@ -286,6 +300,12 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             signature: sign_message_hash(tx_hash),
         };
 
+        // let validate_result = Starknet::validate_unsigned(
+        //     TransactionSource::InBlock,
+        //     &crate::Call::deploy_account { transaction: transaction.clone() },
+        // );
+        // assert_ok!(validate_result);
+
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
     });
@@ -323,6 +343,12 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
         };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::deploy_account { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
@@ -373,6 +399,12 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             signature: signatures.try_into().unwrap(),
         };
 
+        //  let validate_result = Starknet::validate_unsigned(
+        //     TransactionSource::InBlock,
+        //     &crate::Call::deploy_account { transaction: transaction.clone() },
+        // );
+        // assert_ok!(validate_result);
+
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), proxy_class_hash);
     });
@@ -412,6 +444,12 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
         };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::deploy_account { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
