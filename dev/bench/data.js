@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685549604760,
+  "lastUpdate": 1685557403446,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -135,6 +135,40 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 57.291666666666664,
+            "unit": "tps"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "37338401+sparqet@users.noreply.github.com",
+            "name": "sparqet",
+            "username": "sparqet"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2eabc13cb6327c3ad25dc468b2383ded0be487b4",
+          "message": "Bugfix: chain_spec generation fails 🔨 (#507)\n\nCo-authored-by: drspacemn <dontpanicdao@gmail.com>",
+          "timestamp": "2023-05-31T20:20:10+02:00",
+          "tree_id": "8d8dda38b0b5b1219e70edce75cb3428bd3995f6",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/2eabc13cb6327c3ad25dc468b2383ded0be487b4"
+        },
+        "date": 1685557402948,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 346.5,
+            "unit": "extrinsics/block"
+          },
+          {
+            "name": "Average TPS",
+            "value": 57.75,
             "unit": "tps"
           }
         ]
