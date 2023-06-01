@@ -50,8 +50,10 @@
   "dependencies": {
     "@keep-starknet-strange/madara-api-augment": "^0.1.4",
     "@polkadot/api": "^10.7.3",
-    "@polkadot/api-augment": "^10.7.3",
+    "@polkadot/api-derive": "^10.7.3",
     "@polkadot/keyring": "^12.2.1",
+    "@polkadot/types": "^10.7.3",
+    "@polkadot/types-codec": "^10.7.3",
     "@polkadot/util": "^12.2.1",
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
@@ -66,25 +68,8 @@
     "tcp-port-used": "^1.0.2",
     "ts-node": "^10.9.1"
   },
-  "overrides": {
-    "@polkadot/api": "$@polkadot/api",
-    "@polkadot/api-derive": "$@polkadot/api",
-    "@polkadot/api-base": "$@polkadot/api",
-    "@polkadot/api-augment": "$@polkadot/api-augment",
-    "@polkadot/rpc-augment": "$@polkadot/api",
-    "@polkadot/rpc-core": "$@polkadot/api",
-    "@polkadot/keyring": "$@polkadot/keyring",
-    "@polkadot/rpc-provider": "$@polkadot/api",
-    "@polkadot/types-create": "$@polkadot/api",
-    "@polkadot/types-augment": "$@polkadot/api",
-    "@polkadot/types-support": "$@polkadot/api",
-    "@polkadot/types-codec": "$@polkadot/api",
-    "@polkadot/types": "$@polkadot/api",
-    "@polkadot/types-known": "$@polkadot/api",
-    "@polkadot/util": "$@polkadot/util",
-    "@polkadot/util-crypto": "$@polkadot/util"
-  },
   "devDependencies": {
+    "@keep-starknet-strange/madara-api-augment": "^0.1.4",
     "@types/debug": "^4.1.8",
     "@types/deep-equal-in-any-order": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^5.59.8",

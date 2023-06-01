@@ -19,9 +19,9 @@
     "generate": "npm run load:meta && npm run generate:defs && npm run generate:meta",
     "postgenerate": "npm run pretty",
     "load:meta": "npm run load:meta:local",
-    "load:meta:local": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9933 > metadata-sharingan.json",
+    "load:meta:local": "curl -s -H \"Content-Type: application/json\" -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9934 > metadata-sharingan.json",
     "generate:defs": "npm run generate:defs:sharingan",
-    "generate:defs:sharingan": "node --experimental-specifier-resolution=node --loader ts-node/esm  node_modules/.bin/polkadot-types-from-defs --package @keep-starknet-strange/madara-api-augment/sharingan/interfaces --input ./src/sharingan/interfaces --endpoint ./metadata-sharingan.json",
+    "generate:defs:sharingan": "node --loader ts-node/esm node_modules/.bin/polkadot-types-from-defs --package @keep-starknet-strange/madara-api-augment/sharingan/interfaces --input ./src/sharingan/interfaces --endpoint ./metadata-sharingan.json",
     "generate:meta": "npm run generate:meta:sharingan",
     "generate:meta:sharingan": "node --experimental-specifier-resolution=node --loader ts-node/esm node_modules/.bin/polkadot-types-from-chain --endpoint ./metadata-sharingan.json --package @keep-starknet-strange/madara-api-augment/sharingan/interfaces --output ./src/sharingan/interfaces",
     "prebuild": "rimraf build",
@@ -60,27 +60,16 @@
     "api"
   ],
   "devDependencies": {
-    "@polkadot/api": "^10.1.3",
-    "@polkadot/typegen": "^10.1.3",
-    "prettier": "^2.7.1",
-    "prettier-plugin-jsdoc": "^0.3.38",
-    "rimraf": "^3.0.2",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.2"
+    "@polkadot/api-base": "^10.7.3",
+    "@polkadot/rpc-core": "^10.7.3",
+    "@polkadot/types": "^10.7.3",
+    "@polkadot/types-codec": "^10.7.3",
+    "prettier": "^2.8.8",
+    "prettier-plugin-jsdoc": "^0.4.2",
+    "rimraf": "^5.0.1",
+    "ts-node": "^10.9.1"
   },
-  "overrides": {
-    "@polkadot/api": "$@polkadot/api",
-    "@polkadot/api-derive": "$@polkadot/api",
-    "@polkadot/api-augment": "$@polkadot/api",
-    "@polkadot/api-base": "$@polkadot/api",
-    "@polkadot/rpc-augment": "$@polkadot/api",
-    "@polkadot/rpc-core": "$@polkadot/api",
-    "@polkadot/rpc-provider": "$@polkadot/api",
-    "@polkadot/types-create": "$@polkadot/api",
-    "@polkadot/types-augment": "$@polkadot/api",
-    "@polkadot/types-support": "$@polkadot/api",
-    "@polkadot/types-codec": "$@polkadot/api",
-    "@polkadot/types": "$@polkadot/api",
-    "@polkadot/types-known": "$@polkadot/api"
+  "dependencies": {
+    "@polkadot/typegen": "^10.7.3"
   }
 }
