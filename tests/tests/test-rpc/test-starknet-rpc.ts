@@ -619,8 +619,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const resp = await account.declare(
         {
-          classHash:
-            "0",
+          classHash: "0",
           contract,
         },
         { nonce, version: 1, maxFee: "123456" }
@@ -683,8 +682,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       await account.declare(
         {
-          classHash:
-            "0",
+          classHash: "0",
           contract,
         },
         { nonce, version: 1, maxFee: "123456" }
