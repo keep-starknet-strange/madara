@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685557403446,
+  "lastUpdate": 1685611900259,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -169,6 +169,40 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 57.75,
+            "unit": "tps"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "95699312+apoorveth@users.noreply.github.com",
+            "name": "apoorveth",
+            "username": "apoorveth"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dd65e4496da23252784a3dd00179715c51b6935f",
+          "message": "bugfix: fixed the endless loop in benchmarking if node start fails (#511)",
+          "timestamp": "2023-06-01T11:28:28+02:00",
+          "tree_id": "63a7732a2a753ae3273f5b145ef5114f68755701",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/dd65e4496da23252784a3dd00179715c51b6935f"
+        },
+        "date": 1685611899737,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 350.5,
+            "unit": "extrinsics/block"
+          },
+          {
+            "name": "Average TPS",
+            "value": 58.416666666666664,
             "unit": "tps"
           }
         ]
