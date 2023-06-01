@@ -40,7 +40,7 @@ pub(crate) mod columns {
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
-    // pub const TRANSACTION_MAPPING: u32 = 2;
+    pub const TRANSACTION_MAPPING: u32 = 2;
     pub const SYNCED_MAPPING: u32 = 3;
 }
 
