@@ -185,7 +185,7 @@ pub fn calculate_deploy_account_tx_hash(
     )
 }
 
-/// Computes the transaction hash using a hash funciton of type T
+/// Computes the transaction hash using a hash function of type T
 pub fn calculate_transaction_hash_common<T>(
     sender_address: [u8; 32],
     calldata: &[Felt252Wrapper],

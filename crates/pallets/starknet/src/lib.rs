@@ -364,6 +364,7 @@ pub mod pallet {
         StateDiffError,
         ContractNotFound,
         ReachedBoundedVecLimit,
+        TransactionConversionError,
     }
 
     /// The Starknet pallet external functions.
@@ -594,7 +595,8 @@ pub mod pallet {
             ensure_none(origin)?;
 
             let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_deploy(&chain_id).unwrap();
+            let transaction: Transaction =
+                transaction.from_deploy(&chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
 
             // Check if contract is deployed
             ensure!(

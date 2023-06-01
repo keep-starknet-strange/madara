@@ -3,7 +3,6 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-// use anyhow::Result;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
