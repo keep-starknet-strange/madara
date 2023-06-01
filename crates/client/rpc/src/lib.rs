@@ -32,8 +32,8 @@ use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
-    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction,
+    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs,
+    MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction, TransactionStatus,
 };
 
 /// A Starknet RPC server for Madara
@@ -730,5 +730,103 @@ where
         })?;
 
         Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
+    }
+
+    /// Returns a transaction details from it's hash.
+    ///
+    /// If the transaction is in the transactions pool,
+    /// it considers the transaction hash as not found.
+    /// Consider using `pending_transaction` for that purpose.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash corresponding to the transaction.
+    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
+        let block_hash_from_db = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+
+        let substrate_block_hash = match block_hash_from_db {
+            Some(block_hash) => block_hash,
+            None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        };
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        match block.transactions() {
+            BlockTransactions::Full(transactions) => {
+                let find_tx = transactions
+                    .into_iter()
+                    .find(|tx| tx.hash == transaction_hash.into())
+                    .map(|tx| Transaction::try_from(tx.clone()));
+
+                match find_tx {
+                    Some(res_tx) => match res_tx {
+                        Ok(tx) => Ok(tx),
+                        Err(e) => {
+                            error!("Error retrieving transaction: {:?}", e);
+                            Err(StarknetRpcApiError::InternalServerError.into())
+                        }
+                    },
+                    None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+                }
+            }
+            BlockTransactions::Hashes(_hashes) => {
+                // Only transactions hashes are not enough to return a full transaction.
+                // Consider the transaction as not found.
+                Err(StarknetRpcApiError::TxnHashNotFound.into())
+            }
+        }
+    }
+
+    /// Returns the receipt of a transaction by transaction hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash corresponding to the transaction.
+    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt> {
+        let block_hash_from_db = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+
+        let substrate_block_hash = match block_hash_from_db {
+            Some(block_hash) => block_hash,
+            None => {
+                // If the transaction is still in the pool, the receipt
+                // is not available, thus considered as not found.
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+        };
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let find_receipt = block
+            .transaction_receipts()
+            .into_iter()
+            .find(|receipt| receipt.transaction_hash == transaction_hash.into())
+            .map(|receipt| receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
+
+        match find_receipt {
+            Some(receipt) => Ok(receipt),
+            None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        }
     }
 }

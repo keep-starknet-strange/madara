@@ -902,7 +902,16 @@ impl<T: Config> Pallet<T> {
         let sequencer_address = SEQUENCER_ADDRESS;
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
-        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+
+        let mut transactions: Vec<Transaction> = Vec::with_capacity(pending.len());
+        let mut receipts: Vec<TransactionReceiptWrapper> = Vec::with_capacity(pending.len());
+
+        // For loop to iterate once on pending.
+        for (transaction, receipt) in pending.into_iter() {
+            transactions.push(transaction);
+            receipts.push(receipt);
+        }
+
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
@@ -926,6 +935,7 @@ impl<T: Config> Pallet<T> {
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
             BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BoundedVec::try_from(receipts).unwrap(),
         );
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());

@@ -767,4 +767,105 @@ describeDevMadara("Starknet RPC", (context) => {
       await jumpBlocks(context, 10);
     });
   });
+
+  describe("getTransactionByHash", () => {
+    it("should return a transaction", async function () {
+      await createAndFinalizeBlock(context.polkadotApi);
+
+      // Send a transaction
+      const b = await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+
+      const r = await providerRPC.getTransactionByHash(b.result.hash);
+      expect(r).to.not.be.undefined;
+    });
+
+    it("should return transaction hash not found", async function () {
+      // Send a transaction
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        )
+      );
+
+      try {
+        await providerRPC.getTransactionByHash("0x1234");
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("25: Transaction hash not found");
+      }
+    });
+
+    it("should return transaction hash not found when a transaction is in the pool", async function () {
+      await createAndFinalizeBlock(context.polkadotApi);
+
+      // create a invoke transaction
+      const b = await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      );
+
+      try {
+        await providerRPC.getTransactionByHash(b.transaction_hash);
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("25: Transaction hash not found");
+      }
+    });
+  });
+
+  describe("getTransactionReceipt", () => {
+    it("should return a receipt", async function () {
+      await createAndFinalizeBlock(context.polkadotApi);
+
+      // Send a transaction
+      const b = await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+
+      const r = await providerRPC.getTransactionReceipt(b.result.hash);
+      expect(r).to.not.be.undefined;
+    });
+
+    it("should return transaction hash not found", async function () {
+      // Send a transaction
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        )
+      );
+
+      try {
+        await providerRPC.getTransactionReceipt("0x1234");
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("25: Transaction hash not found");
+      }
+    });
+  });
 });

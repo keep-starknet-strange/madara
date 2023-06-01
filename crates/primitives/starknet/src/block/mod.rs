@@ -8,7 +8,7 @@ pub use header::*;
 use sp_core::ConstU32;
 
 use crate::execution::types::Felt252Wrapper;
-use crate::transaction::types::Transaction;
+use crate::transaction::types::{Transaction, TransactionReceiptWrapper};
 
 /// Block transactions max size
 // TODO: add real value (#250)
@@ -32,6 +32,9 @@ pub enum BlockTransactions {
     /// Full transactions
     Full(BoundedVec<Transaction, MaxTransactions>),
 }
+
+/// Block transaction receipts.
+pub type BlockTransactionReceipts = BoundedVec<TransactionReceiptWrapper, MaxTransactions>;
 
 impl Default for BlockTransactions {
     fn default() -> Self {
@@ -57,6 +60,8 @@ pub struct Block {
     header: Header,
     /// The block transactions.
     transactions: BlockTransactions,
+    /// The block transaction receipts.
+    transaction_receipts: BlockTransactionReceipts,
 }
 
 impl Block {
@@ -66,8 +71,12 @@ impl Block {
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    pub fn new(header: Header, transactions: BlockTransactions) -> Self {
-        Self { header, transactions }
+    pub fn new(
+        header: Header,
+        transactions: BlockTransactions,
+        transaction_receipts: BlockTransactionReceipts,
+    ) -> Self {
+        Self { header, transactions, transaction_receipts }
     }
 
     /// Return a reference to the block header
@@ -78,6 +87,11 @@ impl Block {
     /// Return a reference to all transactions
     pub fn transactions(&self) -> &BlockTransactions {
         &self.transactions
+    }
+
+    /// Returns a reference to all transaction receipts.
+    pub fn transaction_receipts(&self) -> &BlockTransactionReceipts {
+        &self.transaction_receipts
     }
 
     /// Return a reference to all transaction hashes

@@ -324,7 +324,7 @@ impl_runtime_apis! {
             Starknet::get_system_hash().into()
         }
 
-        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>{
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
             let chain_id  = &Starknet::chain_id_str();
 
             xts.into_iter().filter_map(|xt| match xt.function {

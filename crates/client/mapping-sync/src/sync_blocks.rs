@@ -2,12 +2,14 @@ use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
 use mp_digest_log::FindLogError;
+use mp_starknet::block::BlockTransactions;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Backend as _, HeaderBackend};
+use sp_core::H256;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
 fn sync_block<B: BlockT, C, BE, H>(
@@ -47,7 +49,16 @@ where
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
+                            starknet_transaction_hashes: match digest_starknet_block.transactions() {
+                                BlockTransactions::Full(transactions) => {
+                                    transactions.into_iter().map(|tx| H256::from(tx.hash)).collect()
+                                }
+                                BlockTransactions::Hashes(hashes) => {
+                                    hashes.into_iter().map(|hash| H256::from(*hash)).collect()
+                                }
+                            },
                         };
+
                         backend.mapping().write_hashes(mapping_commitment)
                     }
                 }
@@ -76,8 +87,12 @@ where
 
     let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
     let block_hash = block.header().hash(*hasher);
-    let mapping_commitment =
-        mc_db::MappingCommitment::<B> { block_hash: substrate_block_hash, starknet_block_hash: block_hash.into() };
+    let mapping_commitment = mc_db::MappingCommitment::<B> {
+        block_hash: substrate_block_hash,
+        starknet_block_hash: block_hash.into(),
+        starknet_transaction_hashes: Vec::new(),
+    };
+
     backend.mapping().write_hashes(mapping_commitment)?;
 
     Ok(())
