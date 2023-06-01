@@ -55,9 +55,8 @@ pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transact
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
         BroadcastedTransaction::Declare(_) => Err(StarknetError::FailedToReceiveTransaction.into()), /* TODO: add support once #341 is supported */
-        BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
-        }
+        BroadcastedTransaction::DeployAccount(deploy_account_tx) => to_deploy_account_tx(deploy_account_tx)
+            .and_then(|inner| inner.from_deploy(chain_id).map_err(|e| anyhow!(e))),
     }
 }
 

@@ -594,7 +594,7 @@ pub mod pallet {
             ensure_none(origin)?;
 
             let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_deploy(&chain_id);
+            let transaction: Transaction = transaction.from_deploy(&chain_id).unwrap();
 
             // Check if contract is deployed
             ensure!(

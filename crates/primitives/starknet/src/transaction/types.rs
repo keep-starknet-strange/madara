@@ -3,7 +3,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-use anyhow::{anyhow, Result};
+// use anyhow::Result;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
@@ -245,7 +245,7 @@ pub struct DeployAccountTransaction {
 
 impl DeployAccountTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self, chain_id: &str) -> Transaction {
+    pub fn from_deploy(self, chain_id: &str) -> Result<Transaction, TransactionConversionError> {
         let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
         let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
             .into_inner()
@@ -255,20 +255,19 @@ impl DeployAccountTransaction {
 
         let sender_address: ContractAddressWrapper = calculate_contract_address(
             ContractAddressSalt(salt_as_felt),
-            ClassHash(self.account_class_hash.try_into().unwrap()),
+            ClassHash(self.account_class_hash.try_into().map_err(|_| TransactionConversionError::MissingClassHash)?),
             &Calldata(Arc::new(stark_felt_vec)),
             ContractAddress::default(),
         )
-        .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))
-        .unwrap()
+        .map_err(|_| TransactionConversionError::ContractAddressDerivationError)?
         .0
         .0
         .into();
 
-        Transaction {
+        Ok(Transaction {
             tx_type: TxType::DeployAccount,
             version: self.version,
-            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id),
+            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id, sender_address.into()),
             signature: self.signature,
             sender_address,
             nonce: self.nonce,
@@ -283,7 +282,7 @@ impl DeployAccountTransaction {
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
             max_fee: self.max_fee,
-        }
+        })
     }
 }
 
@@ -297,6 +296,9 @@ pub enum TransactionConversionError {
     /// Class is missing from the object of type [Transaction]
     #[error("Class is missing from the object of type [Transaction]")]
     MissingClass,
+    /// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
+    #[error("Impossible to derive the contract address from the object of type [DeployAccountTransaction]")]
+    ContractAddressDerivationError,
 }
 impl TryFrom<Transaction> for DeclareTransaction {
     type Error = TransactionConversionError;

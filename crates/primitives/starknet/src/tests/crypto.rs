@@ -38,7 +38,9 @@ fn test_deploy_account_tx_hash() {
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,
     };
-    assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id), expected_tx_hash);
+    let address = transaction.clone().from_deploy(chain_id).unwrap().sender_address.into();
+
+    assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id, address), expected_tx_hash);
 }
 
 #[test]

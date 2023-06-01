@@ -169,10 +169,13 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str
 /// # Argument
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
-pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, chain_id: &str) -> Felt252Wrapper {
-    let sender_address = transaction.clone().from_deploy(chain_id).sender_address.into();
+pub fn calculate_deploy_account_tx_hash(
+    transaction: DeployAccountTransaction,
+    chain_id: &str,
+    address: [u8; 32],
+) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
-        sender_address,
+        address,
         &vec![vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
@@ -182,7 +185,8 @@ pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, c
     )
 }
 
-fn calculate_transaction_hash_common<T>(
+/// Computes the transaction hash using a hash funciton of type T
+pub fn calculate_transaction_hash_common<T>(
     sender_address: [u8; 32],
     calldata: &[Felt252Wrapper],
     max_fee: Felt252Wrapper,
