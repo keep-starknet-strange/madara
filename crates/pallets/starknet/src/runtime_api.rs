@@ -49,19 +49,6 @@ sp_api::decl_runtime_apis! {
         /// the runtime itself, accomplished through the extrinsic_filter method. This enables the
         /// client to operate seamlessly while abstracting the extrinsic complexity.
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
-
-        /// Filters extrinsic transactions to return Starknet transaction corresponding
-        /// to the given hash, if any.
-        ///
-        /// This implementation avoids the extrinsic_filter overhead to convert
-        /// all the extrinsic during the process.
-        ///
-        /// At worst, the complexity in time of this method is the same
-        /// as extrinsic_filter if the transaction is the last one in the list.
-        fn extrinsic_filter_by_hash(
-            xts: Vec<<Block as BlockT>::Extrinsic>,
-            transaction_hash: Felt252Wrapper,
-        ) -> Option<Transaction>;
     }
 
     pub trait ConvertTransactionRuntimeApi {
