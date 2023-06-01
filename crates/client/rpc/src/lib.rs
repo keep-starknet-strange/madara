@@ -807,7 +807,7 @@ where
             Some(block_hash) => block_hash,
             None => {
                 // If the transaction is still in the pool, the receipt
-                // is not available, considered as not found.
+                // is not available, thus considered as not found.
                 return Err(StarknetRpcApiError::TxnHashNotFound.into());
             }
         };
