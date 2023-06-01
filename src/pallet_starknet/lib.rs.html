@@ -1024,6 +1024,16 @@
 <a href="#1024" id="1024">1024</a>
 <a href="#1025" id="1025">1025</a>
 <a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1928,7 +1938,16 @@
         </span><span class="kw">let </span>sequencer_address = SEQUENCER_ADDRESS;
         <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
         <span class="kw">let </span>transaction_count = pending.len() <span class="kw">as </span>u128;
-        <span class="kw">let </span>transactions: Vec&lt;Transaction&gt; = pending.into_iter().map(|(transaction, <span class="kw">_</span>)| transaction).collect();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions: Vec&lt;Transaction&gt; = Vec::with_capacity(pending.len());
+        <span class="kw">let </span><span class="kw-2">mut </span>receipts: Vec&lt;TransactionReceiptWrapper&gt; = Vec::with_capacity(pending.len());
+
+        <span class="comment">// For loop to iterate once on pending.
+        </span><span class="kw">for </span>(transaction, receipt) <span class="kw">in </span>pending.into_iter() {
+            transactions.push(transaction);
+            receipts.push(receipt);
+        }
+
         <span class="kw">let </span>events = <span class="self">Self</span>::pending_events();
         <span class="kw">let </span>(transaction_commitment, event_commitment) =
             commitment::calculate_commitments::&lt;T::SystemHash&gt;(<span class="kw-2">&amp;</span>transactions, <span class="kw-2">&amp;</span>events);
@@ -1952,6 +1971,7 @@
             <span class="comment">// Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
             </span>BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BoundedVec::try_from(receipts).unwrap(),
         );
         <span class="comment">// Save the current block.
         </span>CurrentBlock::&lt;T&gt;::put(block.clone());

@@ -747,7 +747,7 @@
             Starknet::get_system_hash().into()
         }
 
-        <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt;{
+        <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt; {
             <span class="kw">let </span>chain_id  = <span class="kw-2">&amp;</span>Starknet::chain_id_str();
 
             xts.into_iter().filter_map(|xt| <span class="kw">match </span>xt.function {

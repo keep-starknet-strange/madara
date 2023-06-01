@@ -127,6 +127,14 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -145,8 +153,8 @@
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
     DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType,
-    Transaction,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
+    StateUpdate, SyncStatusType, Transaction,
 };
 
 <span class="doccomment">/// Starknet rpc interface.
@@ -255,6 +263,14 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -&gt; RpcResult&lt;DeclareTransactionResult&gt;;
+
+    <span class="doccomment">/// Returns the information about a transaction by transaction hash.
+    </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionByHash&quot;</span>)]
+    </span><span class="kw">fn </span>get_transaction_by_hash(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;Transaction&gt;;
+
+    <span class="doccomment">/// Returns the receipt of a transaction by transaction hash.
+    </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionReceipt&quot;</span>)]
+    </span><span class="kw">fn </span>get_transaction_receipt(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;MaybePendingTransactionReceipt&gt;;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mc_rpc_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
