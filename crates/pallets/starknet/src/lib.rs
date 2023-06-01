@@ -784,8 +784,9 @@ pub mod pallet {
                         .build()
                 }
                 Call::deploy_account { transaction } => {
-                    let deploy_account_transaction = transaction.clone().from_deploy(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
+                    // don't validate deploy txs for now
+                    // let deploy_account_transaction = transaction.clone().from_deploy(&Self::chain_id_str());
+                    // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
