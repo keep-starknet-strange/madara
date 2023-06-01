@@ -104,16 +104,16 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         .try_into()
         .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
-    let sender_address = calculate_contract_address(
-        ContractAddressSalt(StarkFelt(contract_address_salt)),
-        ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
-        &Calldata(calldata.into()),
-        StarknetContractAddress::default(),
-    )
-    .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
-    .0
-    .0
-    .into();
+    // let sender_address = calculate_contract_address(
+    //     ContractAddressSalt(StarkFelt(contract_address_salt)),
+    //     ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
+    //     &Calldata(calldata.into()),
+    //     StarknetContractAddress::default(),
+    // )
+    // .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
+    // .0
+    // .0
+    // .into();
 
     let calldata = tx
         .constructor_calldata
@@ -128,7 +128,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 
     Ok(DeployAccountTransaction {
         version: 1_u8,
-        sender_address,
+        // sender_address,
         calldata,
         salt: U256::from(contract_address_salt),
         signature,
