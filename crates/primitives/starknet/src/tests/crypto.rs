@@ -27,6 +27,8 @@ fn test_deploy_account_tx_hash() {
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x050a9c8ed9d8053fc3cf6704b95c1b368cf9a110ff72b87b760db832155b7022").unwrap();
 
+    let chain_id = "SN_GOERLI";
+
     let transaction = DeployAccountTransaction {
         version: 1,
         sender_address: Felt252Wrapper::from(19911991_u128),
@@ -37,7 +39,7 @@ fn test_deploy_account_tx_hash() {
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,
     };
-    assert_eq!(calculate_deploy_account_tx_hash(transaction), expected_tx_hash);
+    assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id), expected_tx_hash);
 }
 
 #[test]
@@ -45,6 +47,8 @@ fn test_declare_tx_hash() {
     // Computed with `calculate_declare_transaction_hash` from the cairo lang package
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x077f205d4855199564663dc9810c1edfcf97573393033dedc3f12dac740aac13").unwrap();
+
+    let chain_id = "SN_GOERLI";
 
     let transaction = DeclareTransaction {
         version: 1,
@@ -55,7 +59,7 @@ fn test_declare_tx_hash() {
         compiled_class_hash: Felt252Wrapper::THREE,
         contract_class: ContractClassWrapper::default(),
     };
-    assert_eq!(calculate_declare_tx_hash(transaction), expected_tx_hash);
+    assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }
 
 #[test]
@@ -63,6 +67,8 @@ fn test_invoke_tx_hash() {
     // Computed with `calculate_transaction_hash_common` from the cairo lang package
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
+
+    let chain_id = "SN_GOERLI";
 
     let transaction = InvokeTransaction {
         version: 1,
@@ -72,7 +78,7 @@ fn test_invoke_tx_hash() {
         signature: bounded_vec!(),
         max_fee: Felt252Wrapper::ONE,
     };
-    assert_eq!(calculate_invoke_tx_hash(transaction), expected_tx_hash);
+    assert_eq!(calculate_invoke_tx_hash(transaction, chain_id), expected_tx_hash);
 }
 
 #[test]
@@ -123,7 +129,8 @@ fn test_event_hash() {
     let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
     let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
     let from_address = Felt252Wrapper::from(10_u128);
-    let event = EventWrapper::new(keys, data, from_address);
+    let transaction_hash = Felt252Wrapper::from(0_u128);
+    let event = EventWrapper::new(keys, data, from_address, transaction_hash);
     assert_eq!(
         calculate_event_hash::<PedersenHasher>(&event),
         FieldElement::from_str("0x3f44fb0516121d225664058ecc7e415c4725d6a7a11fd7d515c55c34ef8270b").unwrap()

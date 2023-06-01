@@ -25,18 +25,21 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use frame_system::EventRecord;
 use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
 use mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
 pub use pallet_balances::Call as BalancesCall;
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 use pallet_starknet::types::NonceWrapper;
+use pallet_starknet::Call::{declare, deploy_account, invoke};
+use pallet_starknet::Event;
 pub use pallet_timestamp::Call as TimestampCall;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -303,6 +306,18 @@ impl_runtime_apis! {
             Starknet::nonce(address)
         }
 
+        fn events() -> Vec<EventWrapper> {
+            // (Greg) Substrate documentation states "Should only be called if you know
+            // what you are doing and outside of the runtime block
+            // execution". Is it ok to call here?
+            System::read_events_no_consensus().filter_map(|event| {
+                match *event {
+                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } => Some(event),
+                    _ => None,
+                }
+            }).collect()
+        }
+
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper> {
             Starknet::contract_class_hash_by_address(address)
         }
@@ -311,7 +326,7 @@ impl_runtime_apis! {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 
-        fn chain_id() -> u128 {
+        fn chain_id() -> Felt252Wrapper {
             Starknet::chain_id()
         }
 
@@ -321,6 +336,17 @@ impl_runtime_apis! {
 
         fn get_hasher() -> Hasher {
             Starknet::get_system_hash().into()
+        }
+
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
+            let chain_id  = &Starknet::chain_id_str();
+
+            xts.into_iter().filter_map(|xt| match xt.function {
+                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
+                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.from_deploy(chain_id)),
+                _ => None
+            }).collect::<Vec<Transaction>>()
         }
     }
 

@@ -61,6 +61,8 @@ pub use pallet::*;
 
 #[macro_use]
 pub extern crate alloc;
+use alloc::str::from_utf8_unchecked;
+use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -85,9 +87,10 @@ use mp_starknet::transaction::types::{
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
-use starknet_api::api_core::ContractAddress;
-use starknet_api::transaction::EventContent;
+use starknet_api::api_core::{ChainId, ContractAddress};
+use starknet_api::transaction::{EventContent, TransactionHash};
 
+use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
@@ -113,6 +116,8 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+
+    use starknet_api::api_core::ChainId as StarknetChainId;
 
     use super::*;
 
@@ -252,7 +257,7 @@ pub mod pallet {
     /// The chain id.
     #[pallet::storage]
     #[pallet::getter(fn chain_id)]
-    pub(super) type ChainId<T: Config> = StorageValue<_, u128, ValueQuery>;
+    pub(super) type ChainId<T: Config> = StorageValue<_, Felt252Wrapper, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -275,7 +280,7 @@ pub mod pallet {
         pub fee_token_address: ContractAddressWrapper,
         pub _phantom: PhantomData<T>,
         /// The chain id.
-        pub chain_id: u128,
+        pub chain_id: Felt252Wrapper,
     }
 
     #[cfg(feature = "std")]
@@ -409,13 +414,15 @@ pub mod pallet {
             let block = Self::current_block();
             // Get fee token address
             let fee_token_address = Self::fee_token_address();
-            let transaction: Transaction = transaction.into();
+            let chain_id = Self::chain_id_str();
+            let transaction: Transaction = transaction.from_invoke(&chain_id);
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block.clone(),
                 TxType::Invoke,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -427,13 +434,19 @@ pub mod pallet {
                 }) => {
                     log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
+                    let tx_hash = TransactionHash(transaction.hash.into());
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
-                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            let mut events =
+                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(
+                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+                            );
                             events
                         }
-                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        (_, Some(mut fee)) => {
+                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
+                        }
                         _ => Vec::default(),
                     };
 
@@ -477,7 +490,10 @@ pub mod pallet {
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
-            let transaction: Transaction = transaction.into();
+
+            let chain_id = Self::chain_id_str();
+
+            let transaction: Transaction = transaction.from_declare(&chain_id);
             // Check that contract class is not None
             let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
@@ -505,6 +521,7 @@ pub mod pallet {
                 TxType::Declare,
                 Some(contract_class),
                 fee_token_address,
+                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -516,13 +533,19 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
+                    let tx_hash = TransactionHash(transaction.hash.into());
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
-                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            let mut events =
+                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(
+                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+                            );
                             events
                         }
-                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        (_, Some(mut fee)) => {
+                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
+                        }
                         _ => Vec::default(),
                     };
 
@@ -576,7 +599,8 @@ pub mod pallet {
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            let transaction: Transaction = transaction.into();
+            let chain_id = Self::chain_id_str();
+            let transaction: Transaction = transaction.from_deploy(&chain_id);
 
             // Get current block
             let block = Self::current_block();
@@ -589,6 +613,7 @@ pub mod pallet {
                 TxType::DeployAccount,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -600,13 +625,19 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
+                    let tx_hash = TransactionHash(transaction.hash.into());
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
-                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            let mut events =
+                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(
+                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+                            );
                             events
                         }
-                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        (_, Some(mut fee)) => {
+                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
+                        }
                         _ => Vec::default(),
                     };
 
@@ -658,12 +689,14 @@ pub mod pallet {
 
             let block = Self::current_block();
             let fee_token_address = Self::fee_token_address();
+            let chain_id = Self::chain_id_str();
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 block,
                 TxType::L1Handler,
                 None,
                 fee_token_address,
+                StarknetChainId(chain_id),
             ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v);
@@ -773,6 +806,12 @@ impl<T: Config> Pallet<T> {
         Self::current_block().header().hash(T::SystemHash::hasher())
     }
 
+    /// convert chain_id
+    #[inline(always)]
+    pub fn chain_id_str() -> String {
+        unsafe { from_utf8_unchecked(&Self::chain_id().0.to_bytes_be()).to_string() }
+    }
+
     /// Get the block hash of the previous block.
     ///
     /// # Arguments
@@ -835,7 +874,14 @@ impl<T: Config> Pallet<T> {
             ContractAddressWrapper::default(),
         );
 
-        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block, fee_token_address) {
+        let chain_id = Self::chain_id_str();
+
+        match entrypoint.execute(
+            &mut BlockifierStateAdapter::<T>::default(),
+            block,
+            fee_token_address,
+            ChainId(chain_id),
+        ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
@@ -874,7 +920,16 @@ impl<T: Config> Pallet<T> {
         let sequencer_address = SEQUENCER_ADDRESS;
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
-        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+
+        let mut transactions: Vec<Transaction> = Vec::with_capacity(pending.len());
+        let mut receipts: Vec<TransactionReceiptWrapper> = Vec::with_capacity(pending.len());
+
+        // For loop to iterate once on pending.
+        for (transaction, receipt) in pending.into_iter() {
+            transactions.push(transaction);
+            receipts.push(receipt);
+        }
+
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
@@ -898,6 +953,7 @@ impl<T: Config> Pallet<T> {
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
             BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BoundedVec::try_from(receipts).unwrap(),
         );
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());
@@ -921,19 +977,19 @@ impl<T: Config> Pallet<T> {
     ///
     /// The result of the operation.
     #[inline(always)]
-    fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
+    fn emit_events(call_info: &mut CallInfo, tx_hash: TransactionHash) -> Result<Vec<StarknetEventType>, EventError> {
         let mut events = Vec::new();
 
         call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
         for ordered_event in &call_info.execution.events {
-            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address, tx_hash)?;
             events.push(event_type);
         }
 
         for inner_call in &mut call_info.inner_calls {
             inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
             for ordered_event in &inner_call.execution.events {
-                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address)?;
+                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address, tx_hash)?;
                 events.push(event_type);
             }
         }
@@ -952,10 +1008,17 @@ impl<T: Config> Pallet<T> {
     ///
     /// Returns an error if the event construction fails.
     #[inline(always)]
-    fn emit_event(event: &EventContent, from_address: ContractAddress) -> Result<StarknetEventType, EventError> {
+    fn emit_event(
+        event: &EventContent,
+        from_address: ContractAddress,
+        tx_hash: TransactionHash,
+    ) -> Result<StarknetEventType, EventError> {
         log!(debug, "Transaction event: {:?}", event);
-        let sn_event =
-            StarknetEventType::builder().with_event_content(event.clone()).with_from_address(from_address).build()?;
+        let sn_event = StarknetEventType::builder()
+            .with_event_content(event.clone())
+            .with_from_address(from_address)
+            .with_transaction_hash(tx_hash)
+            .build()?;
         Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
 
         PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
@@ -967,12 +1030,14 @@ impl<T: Config> Pallet<T> {
         // Check if contract is deployed
         ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
+        let chain_id = Self::chain_id_str();
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             Self::current_block(),
             TxType::Invoke,
             None,
             Self::fee_token_address(),
+            ChainId(chain_id),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);

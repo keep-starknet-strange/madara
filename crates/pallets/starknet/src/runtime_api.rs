@@ -9,7 +9,7 @@ use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
-use mp_starknet::transaction::types::{Transaction, TxType};
+use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 use sp_api::BlockT;
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -26,6 +26,8 @@ sp_api::decl_runtime_apis! {
         fn current_block() -> mp_starknet::block::Block;
         /// Returns the nonce associated with the given address in the given block
         fn nonce(contract_address: ContractAddressWrapper) -> NonceWrapper;
+        /// Returns the events associated with the given block
+        fn events() -> Vec<EventWrapper>;
         /// Returns a storage slot value
         fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<Felt252Wrapper, DispatchError>;
         /// Returns a `Call` response.
@@ -35,11 +37,20 @@ sp_api::decl_runtime_apis! {
         /// Returns the contract class for the given class hash.
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
         /// Returns the chain id.
-        fn chain_id() -> u128;
+        fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
         /// Returns the hasher used by the runtime.
         fn get_hasher() -> Hasher;
+        /// Filters extrinsic transactions to return only Starknet transactions
+        ///
+        /// To support runtime upgrades, the client must be unaware of the specific extrinsic
+        /// details. To achieve this, the client uses an OpaqueExtrinsic type to represent and
+        /// manipulate extrinsics. However, the client cannot decode and filter extrinsics due to
+        /// this limitation. The solution is to offload decoding and filtering to the RuntimeApi in
+        /// the runtime itself, accomplished through the extrinsic_filter method. This enables the
+        /// client to operate seamlessly while abstracting the extrinsic complexity.
+        fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction>;
     }
 
     pub trait ConvertTransactionRuntimeApi {

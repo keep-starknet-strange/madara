@@ -18,7 +18,7 @@ use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contrac
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ChainId, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
@@ -46,12 +46,14 @@ impl EventWrapper {
     /// * `keys` - Event keys.
     /// * `data` - Event data.
     /// * `from_address` - Contract Address where the event was emitted from.
+    /// * `transaction_hash` - Transaction hash where the event was emitted from.
     pub fn new(
         keys: BoundedVec<Felt252Wrapper, MaxArraySize>,
         data: BoundedVec<Felt252Wrapper, MaxArraySize>,
         from_address: ContractAddressWrapper,
+        transaction_hash: Felt252Wrapper,
     ) -> Self {
-        Self { keys, data, from_address }
+        Self { keys, data, from_address, transaction_hash }
     }
 
     /// Creates an empty event.
@@ -60,6 +62,7 @@ impl EventWrapper {
             keys: BoundedVec::try_from(vec![]).unwrap(),
             data: BoundedVec::try_from(vec![]).unwrap(),
             from_address: ContractAddressWrapper::default(),
+            transaction_hash: Felt252Wrapper::default(),
         }
     }
 
@@ -75,6 +78,7 @@ pub struct EventBuilder {
     keys: vec::Vec<Felt252Wrapper>,
     data: vec::Vec<Felt252Wrapper>,
     from_address: Option<StarknetContractAddress>,
+    transaction_hash: Option<TransactionHash>,
 }
 
 impl EventBuilder {
@@ -108,6 +112,16 @@ impl EventBuilder {
         self
     }
 
+    /// Sets the transaction hash of the event.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash where the event was emitted from.
+    pub fn with_transaction_hash(mut self, transaction_hash: TransactionHash) -> Self {
+        self.transaction_hash = Some(transaction_hash);
+        self
+    }
+
     /// Sets keys and data from an event content.
     ///
     /// # Arguments
@@ -134,6 +148,7 @@ impl EventBuilder {
                 .bytes()
                 .try_into()
                 .map_err(|_| EventError::InvalidFromAddress)?,
+            transaction_hash: self.transaction_hash.unwrap_or_default().0.into(),
         })
     }
 }
@@ -145,6 +160,7 @@ impl Default for EventWrapper {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
             from_address: one,
+            transaction_hash: Felt252Wrapper::default(),
         }
     }
 }
@@ -453,8 +469,9 @@ impl Transaction {
         tx_type: TxType,
         contract_class: Option<ContractClass>,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
-        let block_context = block.header().clone().into_block_context(fee_token_address);
+        let block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
 
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
