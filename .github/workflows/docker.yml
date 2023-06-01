@@ -4,6 +4,8 @@ on:
   release:
     types:
       - created
+  push:
+    branches: [fix/refactor-docker]
 
 jobs:
   build-and-push:
