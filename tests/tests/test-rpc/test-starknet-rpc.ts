@@ -962,6 +962,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const events = await providerRPC.getEvents(filter);
 
       expect(events.events.length).to.be.equal(2);
+      expect(events.continuation_token).to.be.null;
       for (const event of events.events) {
         expect(validateAndParseAddress(event.from_address)).to.be.equal(
           FEE_TOKEN_ADDRESS
@@ -1025,6 +1026,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // @ts-ignore
       const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(4);
+      expect(toHex(events.continuation_token)).to.be.equal("0x6");
       for (let i = 0; i < 2; i++) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -1072,6 +1074,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // @ts-ignore
       const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(4);
+      expect(events.continuation_token).to.be.null;
       for (let i = 0; i < 2; i++) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -1118,6 +1121,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // @ts-ignore
       const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(1);
+      expect(toHex(events.continuation_token)).to.be.equal("0x1");
       expect(events.events[0]).to.deep.equal({
         transaction_hash: tx.transaction_hash,
         block_hash: block_hash_and_number.block_hash,
