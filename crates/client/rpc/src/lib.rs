@@ -734,14 +734,13 @@ where
 
     /// Returns a transaction details from it's hash.
     ///
-    /// It first verifies if the transaction was included
-    /// in an older block, verifying db mapping in the client database.
-    /// If not found, it also verifies if the transaction is pending
-    /// in the runtime.
+    /// If the transaction is in the transactions pool,
+    /// it considers the transaction hash as not found.
+    /// Consider using `pending_transaction` for that purpose.
     ///
     /// # Arguments
     ///
-    /// * `transaction_hash` - Hex string of the transaction hash.
+    /// * `transaction_hash` - Transaction hash corresponding to the transaction.
     fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
         let block_hash_from_db = self
             .backend
@@ -754,32 +753,7 @@ where
 
         let substrate_block_hash = match block_hash_from_db {
             Some(block_hash) => block_hash,
-            None => {
-                // Not found in the local mapping tx_hash <> block_hash, we
-                // then check into the transaction pool.
-                let transactions: Vec<<B as BlockT>::Extrinsic> =
-                    self.pool.ready().map(|tx| tx.data().clone()).collect::<Vec<<B as BlockT>::Extrinsic>>();
-
-                let api = self.client.runtime_api();
-
-                let mp_txn_find: Option<MPTransaction> = api
-                    .extrinsic_filter_by_hash(self.client.info().best_hash, transactions, transaction_hash.into())
-                    .map_err(|e| {
-                        error!("{:#?}", e);
-                        StarknetRpcApiError::InternalServerError
-                    })?;
-
-                match mp_txn_find {
-                    Some(mp_txn) => match Transaction::try_from(mp_txn) {
-                        Ok(txn) => return Ok(txn),
-                        Err(e) => {
-                            error!("Error retrieving transaction: {:?}", e);
-                            return Err(StarknetRpcApiError::InternalServerError.into());
-                        }
-                    },
-                    None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
-                }
-            }
+            None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
         };
 
         let block = self
@@ -818,7 +792,7 @@ where
     ///
     /// # Arguments
     ///
-    /// * `transaction_hash` - Hex string of the transaction hash.
+    /// * `transaction_hash` - Transaction hash corresponding to the transaction.
     fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt> {
         let block_hash_from_db = self
             .backend

@@ -103,7 +103,7 @@ impl<B: BlockT> MappingDb<B> {
     ///
     /// # Arguments
     ///
-    /// * `transaction_hash`: the transaction hash to search for. H256 is used here because it's a
+    /// * `transaction_hash` - the transaction hash to search for. H256 is used here because it's a
     ///   native type of substrate, and we are sure it's SCALE encoding is optimized and will not
     ///   change.
     pub fn block_hash_from_transaction_hash(&self, transaction_hash: H256) -> Result<Option<B::Hash>, String> {

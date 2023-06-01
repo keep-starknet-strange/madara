@@ -808,7 +808,7 @@ describeDevMadara("Starknet RPC", (context) => {
       }
     });
 
-    it("should return a transaction from the pool", async function () {
+    it("should return transaction hash not found when a transaction is in the pool", async function () {
       await createAndFinalizeBlock(context.polkadotApi);
 
       // create a invoke transaction
@@ -819,10 +819,12 @@ describeDevMadara("Starknet RPC", (context) => {
         MINT_AMOUNT
       );
 
-      const txn = await providerRPC.getTransactionByHash(b.transaction_hash);
-
-      expect(txn).to.include({ type: "INVOKE" });
-      expect(txn.transaction_hash).equals(b.transaction_hash);
+      try {
+        await providerRPC.getTransactionByHash(b.transaction_hash);
+      } catch (error) {
+        expect(error).to.be.instanceOf(LibraryError);
+        expect(error.message).to.equal("25: Transaction hash not found");
+      }
     });
   });
 
