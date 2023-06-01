@@ -169,8 +169,7 @@ where
             .current_block(substrate_block_hash)
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
-        u64::try_from(block.header().block_number)
-            .map_err(|e| format!("Failed to convert block number to Felt252: {e}"))
+        u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
     }
 }
 
@@ -724,7 +723,7 @@ where
         if keys.len() > MAX_EVENTS_KEYS {
             return Err(StarknetRpcApiError::TooManyKeysInFilter.into());
         }
-        if chunk_size > MAX_EVENTS_CHUNK_SIZE {
+        if chunk_size > MAX_EVENTS_CHUNK_SIZE as u64 {
             return Err(StarknetRpcApiError::PageSizeTooBig.into());
         }
 
