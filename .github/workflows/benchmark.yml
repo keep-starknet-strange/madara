@@ -60,4 +60,5 @@ jobs:
           fail-on-alert: true
           summary-always: ${{ github.ref == 'refs/heads/main' }}
           comment-always: false
+          comment-on-alert: false
           auto-push: ${{ github.ref == 'refs/heads/main' }}
