@@ -21,12 +21,11 @@
     "benchmark"
   ],
   "devDependencies": {
+    "@polkadot/api": "^10.7.3",
+    "@polkadot/util": "^12.2.1",
     "artillery": "^2.0.0-30",
+    "artillery-engine-substrate": "^1.0.7",
     "concurrently": "^8.1.0",
     "wait-on": "^7.0.1"
-  },
-  "dependencies": {
-    "@polkadot/api": "^10.7.3",
-    "artillery-engine-substrate": "^1.0.7"
   }
 }
