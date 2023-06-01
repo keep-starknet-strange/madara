@@ -5,8 +5,6 @@ use mp_starknet::crypto::commitment::calculate_deploy_account_tx_hash;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_core::U256;
-use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 
 use super::mock::*;
 use super::utils::sign_message_hash;
