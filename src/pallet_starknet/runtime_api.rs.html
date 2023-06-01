@@ -56,6 +56,8 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -67,7 +69,7 @@
 <span class="kw">use </span>mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
-<span class="kw">use </span>mp_starknet::transaction::types::{Transaction, TxType};
+<span class="kw">use </span>mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">pub extern crate </span>alloc;
 <span class="kw">use </span>alloc::vec::Vec;
@@ -84,6 +86,8 @@
         </span><span class="kw">fn </span>current_block() -&gt; mp_starknet::block::Block;
         <span class="doccomment">/// Returns the nonce associated with the given address in the given block
         </span><span class="kw">fn </span>nonce(contract_address: ContractAddressWrapper) -&gt; NonceWrapper;
+        <span class="doccomment">/// Returns the events associated with the given block
+        </span><span class="kw">fn </span>events() -&gt; Vec&lt;EventWrapper&gt;;
         <span class="doccomment">/// Returns a storage slot value
         </span><span class="kw">fn </span>get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;Felt252Wrapper, DispatchError&gt;;
         <span class="doccomment">/// Returns a `Call` response.

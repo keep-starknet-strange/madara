@@ -709,6 +709,22 @@
 <a href="#709" id="709">709</a>
 <a href="#710" id="710">710</a>
 <a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -757,12 +773,14 @@
     /// * `keys` - Event keys.
     /// * `data` - Event data.
     /// * `from_address` - Contract Address where the event was emitted from.
+    /// * `transaction_hash` - Transaction hash where the event was emitted from.
     </span><span class="kw">pub fn </span>new(
         keys: BoundedVec&lt;Felt252Wrapper, MaxArraySize&gt;,
         data: BoundedVec&lt;Felt252Wrapper, MaxArraySize&gt;,
         from_address: ContractAddressWrapper,
+        transaction_hash: Felt252Wrapper,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ keys, data, from_address }
+        <span class="self">Self </span>{ keys, data, from_address, transaction_hash }
     }
 
     <span class="doccomment">/// Creates an empty event.
@@ -771,6 +789,7 @@
             keys: BoundedVec::try_from(<span class="macro">vec!</span>[]).unwrap(),
             data: BoundedVec::try_from(<span class="macro">vec!</span>[]).unwrap(),
             from_address: ContractAddressWrapper::default(),
+            transaction_hash: Felt252Wrapper::default(),
         }
     }
 
@@ -786,6 +805,7 @@
     keys: vec::Vec&lt;Felt252Wrapper&gt;,
     data: vec::Vec&lt;Felt252Wrapper&gt;,
     from_address: <span class="prelude-ty">Option</span>&lt;StarknetContractAddress&gt;,
+    transaction_hash: <span class="prelude-ty">Option</span>&lt;TransactionHash&gt;,
 }
 
 <span class="kw">impl </span>EventBuilder {
@@ -819,6 +839,16 @@
         <span class="self">self
     </span>}
 
+    <span class="doccomment">/// Sets the transaction hash of the event.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash where the event was emitted from.
+    </span><span class="kw">pub fn </span>with_transaction_hash(<span class="kw-2">mut </span><span class="self">self</span>, transaction_hash: TransactionHash) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.transaction_hash = <span class="prelude-val">Some</span>(transaction_hash);
+        <span class="self">self
+    </span>}
+
     <span class="doccomment">/// Sets keys and data from an event content.
     ///
     /// # Arguments
@@ -845,6 +875,7 @@
                 .bytes()
                 .try_into()
                 .map_err(|<span class="kw">_</span>| EventError::InvalidFromAddress)<span class="question-mark">?</span>,
+            transaction_hash: <span class="self">self</span>.transaction_hash.unwrap_or_default().<span class="number">0</span>.into(),
         })
     }
 }
@@ -856,6 +887,7 @@
             keys: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
             data: BoundedVec::try_from(<span class="macro">vec!</span>[one, one]).unwrap(),
             from_address: one,
+            transaction_hash: Felt252Wrapper::default(),
         }
     }
 }

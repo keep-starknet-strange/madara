@@ -421,6 +421,20 @@
 <a href="#421" id="421">421</a>
 <a href="#422" id="422">422</a>
 <a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
 </pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -448,12 +462,13 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
+<span class="kw">use </span>frame_system::EventRecord;
 <span class="kw">use </span>mp_starknet::crypto::hash::Hasher;
 <span class="kw">use </span>mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
 <span class="kw">use </span>mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
 <span class="kw">pub use </span>pallet_balances::Call <span class="kw">as </span>BalancesCall;
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
@@ -461,6 +476,7 @@
 </span><span class="kw">pub use </span>pallet_starknet;
 <span class="kw">use </span>pallet_starknet::types::NonceWrapper;
 <span class="kw">use </span>pallet_starknet::Call::{declare, deploy_account, invoke};
+<span class="kw">use </span>pallet_starknet::Event;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
 <span class="kw">use </span>sp_api::impl_runtime_apis;
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -725,6 +741,18 @@
 
         <span class="kw">fn </span>nonce(address: ContractAddressWrapper) -&gt; NonceWrapper {
             Starknet::nonce(address)
+        }
+
+        <span class="kw">fn </span>events() -&gt; Vec&lt;EventWrapper&gt; {
+            <span class="comment">// (Greg) Substrate documentation states &quot;Should only be called if you know
+            // what you are doing and outside of the runtime block
+            // execution&quot;. Is it ok to call here?
+            </span>System::read_events_no_consensus().filter_map(|event| {
+                <span class="kw">match </span><span class="kw-2">*</span>event {
+                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } =&gt; <span class="prelude-val">Some</span>(event),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+                }
+            }).collect()
         }
 
         <span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt; {

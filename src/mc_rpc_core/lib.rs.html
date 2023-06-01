@@ -130,11 +130,6 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -152,7 +147,7 @@
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
+    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
     StateUpdate, SyncStatusType, Transaction,
 };
@@ -250,12 +245,7 @@
 
     <span class="doccomment">/// Returns all events matching the given filter
     </span><span class="attr">#[method(name = <span class="string">&quot;getEvents&quot;</span>)]
-    </span><span class="kw">async fn </span>get_events(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        filter: EventFilter,
-        continuation_token: <span class="prelude-ty">Option</span>&lt;String&gt;,
-        chunk_size: u64,
-    ) -&gt; RpcResult&lt;EventsPage&gt;;
+    </span><span class="kw">async fn </span>get_events(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: EventFilterWithPage) -&gt; RpcResult&lt;EventsPage&gt;;
 
     <span class="doccomment">/// Submit a new transaction to be added to the chain
     </span><span class="attr">#[method(name = <span class="string">&quot;addDeclareTransaction&quot;</span>)]

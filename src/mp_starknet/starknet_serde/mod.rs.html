@@ -331,6 +331,13 @@
 <a href="#331" id="331">331</a>
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
 </span><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::string::{String, ToString};
@@ -415,6 +422,8 @@
     </span><span class="kw">pub </span>data: Vec&lt;String&gt;,
     <span class="doccomment">/// The address that emitted the event
     </span><span class="kw">pub </span>from_address: String,
+    <span class="doccomment">/// The transaction hash that emitted the event
+    </span><span class="kw">pub </span>transaction_hash: String,
 }
 
 <span class="doccomment">/// Error enum for Event deserialization
@@ -432,9 +441,9 @@
     <span class="doccomment">/// DataExceedMaxSize error
     </span><span class="attr">#[error(<span class="string">&quot;Data exceed max size&quot;</span>)]
     </span>DataExceedMaxSize,
-    <span class="doccomment">/// InvalidFromAddress error
+    <span class="doccomment">/// InvalidFelt252 error
     </span><span class="attr">#[error(transparent)]
-    </span>InvalidFromAddress(<span class="attr">#[from] </span>Felt252WrapperError),
+    </span>InvalidFelt252(<span class="attr">#[from] </span>Felt252WrapperError),
 }
 
 <span class="doccomment">/// Struct for deserializing Transaction from JSON
@@ -622,11 +631,16 @@
         <span class="comment">// Convert from_address to [u8; 32]
         </span><span class="kw">let </span>from_address = <span class="kw">match </span>Felt252Wrapper::from_hex_be(d.from_address.as_str()) {
             <span class="prelude-val">Ok</span>(felt) =&gt; felt,
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeEventError::InvalidFromAddress(e)),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeEventError::InvalidFelt252(e)),
+        };
+
+        <span class="kw">let </span>transaction_hash = <span class="kw">match </span>Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
+            <span class="prelude-val">Ok</span>(felt) =&gt; felt,
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeEventError::InvalidFelt252(e)),
         };
 
         <span class="comment">// Create EventWrapper with validated and converted fields
-        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ keys, data, from_address })
+        </span><span class="prelude-val">Ok</span>(<span class="self">Self </span>{ keys, data, from_address, transaction_hash })
     }
 }
 
