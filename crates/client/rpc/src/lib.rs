@@ -154,7 +154,10 @@ where
         })?;
 
         Ok(BlockHashAndNumber {
-            block_hash: FieldElement::from_byte_slice_be(block_hash.as_bytes()).unwrap(),
+            block_hash: FieldElement::from_byte_slice_be(block_hash.as_bytes()).map_err(|e| {
+                error!("");
+                StarknetRpcApiError::NoBlocks
+            })?,
             block_number,
         })
     }

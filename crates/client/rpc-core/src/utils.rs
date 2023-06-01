@@ -26,7 +26,7 @@ use starknet_core::types::{
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
     let entry_points_by_type = EntryPointsByType { constructor: vec![], external: vec![], l1_handler: vec![] };
     let default = FlattenedSierraClass {
-        sierra_program: vec![FieldElement::from_dec_str("0").unwrap()],
+        sierra_program: vec![FieldElement::from_dec_str("0")?],
         contract_class_version: String::from("version"),
         entry_points_by_type,
         abi: String::from(""),
@@ -167,7 +167,7 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
                     entry_points_by_type: BoundedBTreeMap::try_from(_to_btree_map_entrypoints(
                         declare_tx_v1.contract_class.entry_points_by_type.clone(),
                     ))
-                    .unwrap(),
+                    .map_err(|_| anyhow!("failed to convert to entry_points_by_type"))?,
                 },
                 compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
             })
