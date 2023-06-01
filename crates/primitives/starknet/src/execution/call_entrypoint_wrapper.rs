@@ -6,7 +6,7 @@ use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
-use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
+use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
 use starknet_api::StarknetApiError;
@@ -78,6 +78,7 @@ impl CallEntryPointWrapper {
         state: &mut S,
         block: StarknetBlock,
         fee_token_address: ContractAddressWrapper,
+        chain_id: ChainId,
     ) -> EntryPointExecutionResultWrapper<CallInfo> {
         let call_entry_point: CallEntryPoint =
             self.clone().try_into().map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
@@ -87,7 +88,7 @@ impl CallEntryPointWrapper {
         let account_context = AccountTransactionContext::default();
 
         // Create the block context.
-        let block_context = block.header().clone().into_block_context(fee_token_address);
+        let block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
 
         call_entry_point
             .execute(state, execution_resources, execution_context, &block_context, &account_context)
