@@ -82,6 +82,8 @@ pub struct DeserializeEventWrapper {
     pub data: Vec<String>,
     /// The address that emitted the event
     pub from_address: String,
+    /// The transaction hash that emitted the event
+    pub transaction_hash: String,
 }
 
 /// Error enum for Event deserialization
@@ -99,9 +101,9 @@ pub enum DeserializeEventError {
     /// DataExceedMaxSize error
     #[error("Data exceed max size")]
     DataExceedMaxSize,
-    /// InvalidFromAddress error
+    /// InvalidFelt252 error
     #[error(transparent)]
-    InvalidFromAddress(#[from] Felt252WrapperError),
+    InvalidFelt252(#[from] Felt252WrapperError),
 }
 
 /// Struct for deserializing Transaction from JSON
@@ -289,11 +291,16 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
         // Convert from_address to [u8; 32]
         let from_address = match Felt252Wrapper::from_hex_be(d.from_address.as_str()) {
             Ok(felt) => felt,
-            Err(e) => return Err(DeserializeEventError::InvalidFromAddress(e)),
+            Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
+        };
+
+        let transaction_hash = match Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
+            Ok(felt) => felt,
+            Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
         };
 
         // Create EventWrapper with validated and converted fields
-        Ok(Self { keys, data, from_address })
+        Ok(Self { keys, data, from_address, transaction_hash })
     }
 }
 

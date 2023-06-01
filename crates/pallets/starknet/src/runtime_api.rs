@@ -9,7 +9,7 @@ use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{
     ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
 };
-use mp_starknet::transaction::types::{Transaction, TxType};
+use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 use sp_api::BlockT;
 pub extern crate alloc;
 use alloc::vec::Vec;
@@ -26,6 +26,8 @@ sp_api::decl_runtime_apis! {
         fn current_block() -> mp_starknet::block::Block;
         /// Returns the nonce associated with the given address in the given block
         fn nonce(contract_address: ContractAddressWrapper) -> NonceWrapper;
+        /// Returns the events associated with the given block
+        fn events() -> Vec<EventWrapper>;
         /// Returns a storage slot value
         fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<Felt252Wrapper, DispatchError>;
         /// Returns a `Call` response.
