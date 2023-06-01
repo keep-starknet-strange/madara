@@ -101,12 +101,9 @@ pub enum DeserializeEventError {
     /// DataExceedMaxSize error
     #[error("Data exceed max size")]
     DataExceedMaxSize,
-    /// InvalidFromAddress error
+    /// InvalidFelt252 error
     #[error(transparent)]
-    InvalidFromAddress(#[from] Felt252WrapperError),
-    /// InvalidTransactionHash error
-    #[error("Invalid transaction hash format: {0}")]
-    InvalidTransactionHash(String),
+    InvalidFelt252(#[from] Felt252WrapperError),
 }
 
 /// Struct for deserializing Transaction from JSON
@@ -294,12 +291,12 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
         // Convert from_address to [u8; 32]
         let from_address = match Felt252Wrapper::from_hex_be(d.from_address.as_str()) {
             Ok(felt) => felt,
-            Err(e) => return Err(DeserializeEventError::InvalidFromAddress(e)),
+            Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
         };
 
         let transaction_hash = match Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
             Ok(felt) => felt,
-            Err(_) => return Err(DeserializeEventError::InvalidTransactionHash(d.transaction_hash.to_string())),
+            Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
         };
 
         // Create EventWrapper with validated and converted fields
