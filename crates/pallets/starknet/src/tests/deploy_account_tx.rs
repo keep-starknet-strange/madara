@@ -42,8 +42,9 @@ fn given_contract_run_deploy_account_tx_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = MockRuntime::chain_id();
-        let transaction_hash = calculate_deploy_account_tx_hash(transaction.clone(), &chain_id);
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_deploy_account_tx_hash(transaction.clone(), chain_id);
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);

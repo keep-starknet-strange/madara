@@ -67,8 +67,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let chain_id = MockRuntime::chain_id();
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), &chain_id);
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         let tx = Message {
             topics: vec![
@@ -135,8 +136,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let chain_id = MockRuntime::chain_id();
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), &chain_id);
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
 
