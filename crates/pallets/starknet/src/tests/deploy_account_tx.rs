@@ -26,8 +26,7 @@ fn given_contract_run_deploy_account_tx_works() {
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             // Calldata is hex so this works fine
             calldata: BoundedVec::try_from(
@@ -82,7 +81,6 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
             calldata: BoundedVec::try_from(
                 calldata
                     .clone()
@@ -91,7 +89,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
@@ -116,10 +114,9 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
         let (_, account_class_hash, _) = account_helper(salt, AccountType::ArgentV0);
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: rand_address,
             version: 1,
             calldata: bounded_vec!(),
-            salt: U256::zero(),
+            salt: Felt252Wrapper::ZERO,
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
@@ -148,7 +145,6 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
             version: wrong_tx_version,
             calldata: BoundedVec::try_from(
                 calldata
@@ -158,7 +154,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
                     .collect::<Vec<Felt252Wrapper>>(),
             )
             .unwrap(),
-            salt: U256::zero(),
+            salt: Felt252Wrapper::ZERO,
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
@@ -188,8 +184,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 
         let mut transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -230,8 +225,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -270,8 +264,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
         let mut transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -313,8 +306,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -362,8 +354,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 
         let transaction = DeployAccountTransaction {
             account_class_hash: proxy_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -402,8 +393,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 
         let transaction = DeployAccountTransaction {
             account_class_hash: proxy_class_hash,
-            sender_address: test_addr,
-            salt: U256::from_str(salt).unwrap(),
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata

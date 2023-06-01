@@ -170,13 +170,10 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
 pub fn calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, chain_id: &str) -> Felt252Wrapper {
+    let sender_address = transaction.clone().from_deploy(chain_id).sender_address.into();
     calculate_transaction_hash_common::<PedersenHasher>(
-        transaction.sender_address.into(),
-        &vec![
-            vec![transaction.account_class_hash, transaction.salt.try_into().expect("overflow from U256 to Felt252")],
-            transaction.calldata.to_vec(),
-        ]
-        .concat(),
+        sender_address,
+        &vec![vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,

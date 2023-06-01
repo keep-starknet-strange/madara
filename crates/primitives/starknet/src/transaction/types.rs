@@ -1,6 +1,7 @@
 use alloc::collections::BTreeMap;
 use alloc::string::String;
-use std::sync::Arc;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
 
 use anyhow::{anyhow, Result};
 use blockifier::execution::entry_point::CallInfo;
@@ -187,7 +188,6 @@ pub struct DeclareTransaction {
     pub max_fee: Felt252Wrapper,
 }
 
-// @audit
 impl DeclareTransaction {
     /// converts the transaction to a [Transaction] object
     pub fn from_declare(self, chain_id: &str) -> Transaction {
@@ -229,8 +229,6 @@ impl DeclareTransaction {
 pub struct DeployAccountTransaction {
     /// Transaction version.
     pub version: u8,
-    /// Transaction sender address.
-    // pub sender_address: ContractAddressWrapper,
     /// Transaction calldata.
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// Account contract nonce.
@@ -249,7 +247,7 @@ impl DeployAccountTransaction {
     /// converts the transaction to a [Transaction] object
     pub fn from_deploy(self, chain_id: &str) -> Transaction {
         let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
-        let stark_felt_vec: Vec<StarkFelt> = self.calldata
+        let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
             .into_inner()
             .into_iter()
             .map(|felt_wrapper| felt_wrapper.try_into().unwrap()) // Here, we are assuming that the conversion will not fail.
@@ -259,7 +257,6 @@ impl DeployAccountTransaction {
             ContractAddressSalt(salt_as_felt),
             ClassHash(self.account_class_hash.try_into().unwrap()),
             &Calldata(Arc::new(stark_felt_vec)),
-            // map(|obj| obj.try_into().unwrap()).collect()
             ContractAddress::default(),
         )
         .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))
@@ -385,7 +382,6 @@ impl InvokeTransaction {
     }
 }
 
-// @audit
 /// Representation of a Starknet transaction.
 #[derive(
     Clone,

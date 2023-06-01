@@ -31,10 +31,9 @@ fn test_deploy_account_tx_hash() {
 
     let transaction = DeployAccountTransaction {
         version: 1,
-        sender_address: Felt252Wrapper::from(19911991_u128),
         calldata: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE),
         nonce: Felt252Wrapper::ZERO,
-        salt: U256::zero(),
+        salt: Felt252Wrapper::ZERO,
         signature: bounded_vec!(),
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,

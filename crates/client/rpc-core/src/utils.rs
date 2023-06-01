@@ -13,13 +13,7 @@ use mp_starknet::execution::types::{
     ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
 };
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
-use sp_api::HeaderT;
-use sp_blockchain::HeaderBackend;
-use sp_core::U256;
 use sp_runtime::{BoundedBTreeMap, BoundedVec};
-use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     BroadcastedTransaction, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
@@ -89,12 +83,9 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
 }
 
 pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction> {
-    let contract_address_salt = tx.contract_address_salt.to_bytes_be();
+    let contract_address_salt = tx.contract_address_salt.into();
 
     let account_class_hash = tx.class_hash;
-
-    let calldata =
-        tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::<Vec<_>>();
 
     let signature = tx
         .signature
@@ -103,17 +94,6 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         .collect::<Vec<Felt252Wrapper>>()
         .try_into()
         .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
-
-    // let sender_address = calculate_contract_address(
-    //     ContractAddressSalt(StarkFelt(contract_address_salt)),
-    //     ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
-    //     &Calldata(calldata.into()),
-    //     StarknetContractAddress::default(),
-    // )
-    // .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
-    // .0
-    // .0
-    // .into();
 
     let calldata = tx
         .constructor_calldata
@@ -128,9 +108,8 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 
     Ok(DeployAccountTransaction {
         version: 1_u8,
-        // sender_address,
         calldata,
-        salt: U256::from(contract_address_salt),
+        salt: contract_address_salt,
         signature,
         account_class_hash: account_class_hash.into(),
         nonce,

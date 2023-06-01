@@ -593,14 +593,14 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
+            let chain_id = Self::chain_id_str();
+            let transaction: Transaction = transaction.from_deploy(&chain_id);
+
             // Check if contract is deployed
             ensure!(
                 !ContractClassHashes::<T>::contains_key(transaction.sender_address),
                 Error::<T>::AccountAlreadyDeployed
             );
-
-            let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_deploy(&chain_id);
 
             // Get current block
             let block = Self::current_block();
