@@ -26,6 +26,7 @@
     "wait-on": "^7.0.1"
   },
   "dependencies": {
-    "@polkadot/api": "^10.7.3"
+    "@polkadot/api": "^10.7.3",
+    "artillery-engine-substrate": "^1.0.7"
   }
 }
