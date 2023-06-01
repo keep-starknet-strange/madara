@@ -13,8 +13,8 @@
     "metrics": "node scripts/metrics.js",
     "test": "npm run test:transfer && npm run metrics",
     "chain:dev": "../scripts/run_node.sh",
-    "test:wait": "wait-on tcp:9944 && npm run test",
-    "test:ci": "concurrently 'npm run chain:dev' '../scripts/test.sh'"
+    "test:wait": "wait-on tcp:9944 --timeout 300000 && npm run test",
+    "test:ci": "concurrently -k --sucess first 'npm run chain:dev' 'npm run test:wait'"
   },
   "keywords": [
     "madara",
