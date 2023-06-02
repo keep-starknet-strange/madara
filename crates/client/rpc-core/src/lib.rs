@@ -15,9 +15,9 @@ pub mod utils;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate, SyncStatusType,
-    Transaction,
+    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
+    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
+    StateUpdate, SyncStatusType, Transaction,
 };
 
 /// Starknet rpc interface.
@@ -113,12 +113,7 @@ pub trait StarknetRpcApi {
 
     /// Returns all events matching the given filter
     #[method(name = "getEvents")]
-    async fn get_events(
-        &self,
-        filter: EventFilter,
-        continuation_token: Option<String>,
-        chunk_size: u64,
-    ) -> RpcResult<EventsPage>;
+    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage>;
 
     /// Submit a new transaction to be added to the chain
     #[method(name = "addDeclareTransaction")]
@@ -126,4 +121,12 @@ pub trait StarknetRpcApi {
         &self,
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult>;
+
+    /// Returns the information about a transaction by transaction hash.
+    #[method(name = "getTransactionByHash")]
+    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction>;
+
+    /// Returns the receipt of a transaction by transaction hash.
+    #[method(name = "getTransactionReceipt")]
+    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt>;
 }

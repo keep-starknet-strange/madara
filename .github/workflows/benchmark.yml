@@ -58,13 +58,7 @@ jobs:
           alert-threshold: "120%"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-alert: true
-          comment-on-alert: false
-          summary-always: false
+          summary-always: ${{ github.ref == 'refs/heads/main' }}
           comment-always: false
-          auto-push: false
-      - name: Push result on gh page
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run:
-          git push
-          'https://keep-starknet-strange:${{secrets.GITHUB_TOKEN}}@github.com/keep-starknet-strange/madara.git'
-          gh-pages:gh-pages
+          comment-on-alert: false
+          auto-push: ${{ github.ref == 'refs/heads/main' }}
