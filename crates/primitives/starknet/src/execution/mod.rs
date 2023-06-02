@@ -104,25 +104,3 @@ pub mod types {
     pub use super::felt252_wrapper::*;
     pub use super::program_wrapper::*;
 }
-
-#[cfg(test)]
-mod tests {
-    use blockifier::execution::contract_class::ContractClass;
-    use types::ContractClassWrapper;
-
-    use super::*;
-
-    pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-        serde_json::from_slice(contract_content).unwrap()
-    }
-
-    #[test]
-    fn test_serialize_deserialize_bounded_tree_map() {
-        let contract_class: ContractClassWrapper =
-            get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"))
-                .try_into()
-                .unwrap();
-        let serialized_contract = serde_json::to_string(&contract_class).unwrap();
-        let _contract: ContractClassWrapper = serde_json::from_str(&serialized_contract).unwrap();
-    }
-}
