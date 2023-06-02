@@ -3,7 +3,7 @@ use core::cell::RefCell;
 use std::str::FromStr;
 
 use frame_support::bounded_vec;
-use sp_core::{H256, U256};
+use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{
@@ -38,7 +38,7 @@ fn test_deploy_account_tx_hash() {
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,
     };
-    let address = transaction.clone().from_deploy(chain_id).unwrap().sender_address.into();
+    let address = FieldElement::from(19911991_u64).to_bytes_be();
 
     assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id, address), expected_tx_hash);
 }
