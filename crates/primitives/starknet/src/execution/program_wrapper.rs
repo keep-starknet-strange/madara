@@ -807,7 +807,7 @@ impl From<AttributeWrapper> for Attribute {
 /// Wrapper type from [Identifier] using (substrate compatible type).
 struct IdentifierWrapper {
     pc: Option<u128>,
-    #[cfg_attr(feature = "std", serde(rename(deserialize = "type")))]
+    #[cfg_attr(feature = "std", serde(rename = "type"))]
     type_: Option<StringWrapper>,
     value: Option<Felt252Wrapper>,
 
