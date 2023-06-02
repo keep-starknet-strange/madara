@@ -267,7 +267,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
         set_infinite_tokens(test_addr);
         set_signer(test_addr, AccountType::Argent);
-    
+
         let mut transaction = DeployAccountTransaction {
             account_class_hash,
             sender_address: test_addr,
