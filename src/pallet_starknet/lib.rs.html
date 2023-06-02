@@ -1059,6 +1059,43 @@
 <a href="#1059" id="1059">1059</a>
 <a href="#1060" id="1060">1060</a>
 <a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1127,7 +1164,7 @@
 <span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
+<span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 <span class="kw">use </span>blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>frame_support::traits::Time;
@@ -1819,30 +1856,42 @@
         /// here we make sure that some particular calls (in this case all calls)
         /// are being whitelisted and marked as valid.
         </span><span class="kw">fn </span>validate_unsigned(_source: TransactionSource, call: <span class="kw-2">&amp;</span><span class="self">Self</span>::Call) -&gt; TransactionValidity {
-            <span class="comment">// TODO: Call `__validate__` entrypoint of the contract. #69
-            // The priority right now is the max u64 - nonce because for unsigned transactions we need to
+            <span class="comment">// The priority right now is the max u64 - nonce because for unsigned transactions we need to
             // determine an absolute priority. For now we use that for the benchmark (lowest nonce goes first)
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we&#39;ll chose the most profitable transaction.
             </span><span class="kw">match </span>call {
-                Call::invoke { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(<span class="number">64_u64</span>)
-                    .propagate(<span class="bool-val">true</span>)
-                    .build(),
-                Call::declare { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(<span class="number">64_u64</span>)
-                    .propagate(<span class="bool-val">true</span>)
-                    .build(),
-                Call::deploy_account { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                    .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(<span class="number">64_u64</span>)
-                    .propagate(<span class="bool-val">true</span>)
-                    .build(),
+                Call::invoke { transaction } =&gt; {
+                    <span class="kw">let </span>invoke_transaction = transaction.clone().from_invoke(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id_str());
+                    Pallet::&lt;T&gt;::validate_tx(invoke_transaction, TxType::Invoke)<span class="question-mark">?</span>;
+                    ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                        .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(<span class="number">64_u64</span>)
+                        .propagate(<span class="bool-val">true</span>)
+                        .build()
+                }
+                Call::declare { transaction } =&gt; {
+                    <span class="kw">let </span>declare_transaction = transaction.clone().from_declare(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id_str());
+                    Pallet::&lt;T&gt;::validate_tx(declare_transaction, TxType::Declare)<span class="question-mark">?</span>;
+                    ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                        .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(<span class="number">64_u64</span>)
+                        .propagate(<span class="bool-val">true</span>)
+                        .build()
+                }
+                Call::deploy_account { transaction } =&gt; {
+                    <span class="comment">// don&#39;t validate deploy txs for now
+                    // let deploy_account_transaction = transaction.clone().from_deploy(&amp;Self::chain_id_str());
+                    // Pallet::&lt;T&gt;::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
+                    </span>ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                        .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(<span class="number">64_u64</span>)
+                        .propagate(<span class="bool-val">true</span>)
+                        .build()
+                }
                 Call::consume_l1_message { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                     .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
@@ -1857,6 +1906,31 @@
 
 <span class="doccomment">/// The Starknet pallet internal functions.
 </span><span class="kw">impl</span>&lt;T: Config&gt; Pallet&lt;T&gt; {
+    <span class="doccomment">/// Validates transaction and returns substrate error if any.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - The transaction to be validated.
+    /// * `tx_type` - The type of the transaction.
+    ///
+    /// # Error
+    ///
+    /// Returns an error if transaction validation fails.
+    </span><span class="kw">fn </span>validate_tx(transaction: Transaction, tx_type: TxType) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
+        <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
+
+        <span class="kw">let </span>block_context = <span class="self">Self</span>::current_block()
+            .header()
+            .clone()
+            .into_block_context(Pallet::&lt;T&gt;::fee_token_address(), ChainId(Pallet::&lt;T&gt;::chain_id_str()));
+
+        transaction
+            .validate_account_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>tx_type)
+            .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))<span class="question-mark">?</span>;
+
+        <span class="prelude-val">Ok</span>(())
+    }
     <span class="doccomment">/// Get current block hash.
     ///
     /// # Returns
