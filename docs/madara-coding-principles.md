@@ -16,16 +16,16 @@
 ## 1. Introduction
 
 This document outlines the principles and practices we strive to uphold in the
- development of the Madara project. We aim to create a codebase that is clean,
- maintainable, and efficient. To achieve this, we draw inspiration
- from principles laid out in various reference books, most notably Clean Code:
- A Handbook of Agile Software Craftsmanship.
+development of the Madara project. We aim to create a codebase that is clean,
+maintainable, and efficient. To achieve this, we draw inspiration from
+principles laid out in various reference books, most notably Clean Code: A
+Handbook of Agile Software Craftsmanship.
 
 ## 2. Clean Code
 
-A core philosophy of our project is to create clean, readable,
-and maintainable code. Clean code allows developers to understand the code better,
-reduce bugs, and ease the maintenance process.
+A core philosophy of our project is to create clean, readable, and maintainable
+code. Clean code allows developers to understand the code better, reduce bugs,
+and ease the maintenance process.
 
 In the spirit of Clean Code, we strive to:
 
@@ -55,16 +55,16 @@ impl Circle {
 }
 ```
 
-This simple `Circle` struct and its implementation is clean:
-it's straightforward, self-describing, and only has the necessary functionality.
+This simple `Circle` struct and its implementation is clean: it's
+straightforward, self-describing, and only has the necessary functionality.
 
 ## 3. Principles
 
 ### 3.1 KISS: Keep It Simple, Stupid
 
-The KISS principle states that simplicity should be a key goal in design
-and unnecessary complexity should be avoided.
-This will make your code more readable and maintainable.
+The KISS principle states that simplicity should be a key goal in design and
+unnecessary complexity should be avoided. This will make your code more readable
+and maintainable.
 
 Here's an example of adhering to the KISS principle:
 
@@ -124,14 +124,13 @@ fn add_n(num: i32, n: i32) -> i32 {
 }
 ```
 
-In this case, instead of having separate functions
-to add ten or twenty to a number, we can have a general function
-to add any integer to another.
+In this case, instead of having separate functions to add ten or twenty to a
+number, we can have a general function to add any integer to another.
 
 ### 3.4 SRP: Single Responsibility Principle
 
-SRP suggests a component of software (a module, a class, or a function)
-should have one, and only one, reason to change.
+SRP suggests a component of software (a module, a class, or a function) should
+have one, and only one, reason to change.
 
 Let's look at a struct that violates the SRP:
 
@@ -159,8 +158,8 @@ impl Report {
 }
 ```
 
-Here, the `Report` struct is responsible for data handling (`new`, `format`)
-and for output (`print`). This violates the Single Responsibility Principle.
+Here, the `Report` struct is responsible for data handling (`new`, `format`) and
+for output (`print`). This violates the Single Responsibility Principle.
 
 A better approach is to separate these responsibilities into different structs:
 
@@ -198,14 +197,13 @@ impl ReportPrinter {
 }
 ```
 
-Now, `Report` is responsible for data handling, and `ReportPrinter`
-is responsible for output. Each struct now has a single responsibility.
+Now, `Report` is responsible for data handling, and `ReportPrinter` is
+responsible for output. Each struct now has a single responsibility.
 
 ## 4. Conclusion
 
-This document laid out the core coding principles we strive to uphold in
-the Madara project. Remember, these are principles, not strict rules.
-They are meant to guide us towards producing a clean, maintainable,
-and efficient codebase. The purpose is not to create perfect code,
-but to aim for better code every day.
+This document laid out the core coding principles we strive to uphold in the
+Madara project. Remember, these are principles, not strict rules. They are meant
+to guide us towards producing a clean, maintainable, and efficient codebase. The
+purpose is not to create perfect code, but to aim for better code every day.
 Let's write some clean and beautiful Rust code together!
