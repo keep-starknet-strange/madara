@@ -2,7 +2,7 @@
 use core::convert::TryFrom;
 
 use frame_support::BoundedVec;
-use crate::block::{Block, BlockTransactions, Header, MaxTransactions};
+use crate::block::{Block, Header, MaxTransactions};
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper};
 use crate::transaction::types::{MaxArraySize, Transaction};
 use sp_core::{Encode, H256, U256};
@@ -65,7 +65,7 @@ fn test_header_hash() {
 #[test]
 fn test_transactions() {
     let header = generate_dummy_header();
-    let transactions = BlockTransactions::Full(generate_dummy_transactions());
+    let transactions = generate_dummy_transactions();
     let block = Block::new(header, transactions.clone());
 
     assert_eq!(block.transactions(), &transactions);
@@ -75,7 +75,7 @@ fn test_transactions() {
 fn test_transactions_hashes() {
     let header = generate_dummy_header();
     let transactions = generate_dummy_transactions();
-    let block = Block::new(header, BlockTransactions::Full(transactions.clone()));
+    let block = Block::new(header, transactions.clone());
 
     let expected_hashes: Vec<H256> = transactions.iter().map(|tx| tx.hash).collect();
 
@@ -89,7 +89,7 @@ fn test_transactions_hashes_from_hashes() {
     let vec_hashes: Vec<H256> = transactions.iter().map(|tx| tx.hash).collect();
     let hashes = BoundedVec::<H256, MaxTransactions>::try_from(vec_hashes).unwrap();
 
-    let block = Block::new(header, BlockTransactions::Hashes(hashes.clone()));
+    let block = Block::new(header, hashes.clone());
 
     let expected_hashes: Vec<H256> = hashes.into_iter().collect();
 
