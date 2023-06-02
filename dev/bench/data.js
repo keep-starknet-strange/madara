@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685696213676,
+  "lastUpdate": 1685696215484,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -486,6 +486,42 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 49.458333333333336,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "76247491+chirag-bgh@users.noreply.github.com",
+            "name": "chirag-bgh",
+            "username": "chirag-bgh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fdb07041e1f107ae72a9700c84bb9dc5b1e99487",
+          "message": "feat: validate tx before accepting them to mempool (#508)",
+          "timestamp": "2023-06-02T10:53:41+02:00",
+          "tree_id": "a231fa0d882c7af833527dfa896ed6130f932c25",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/fdb07041e1f107ae72a9700c84bb9dc5b1e99487"
+        },
+        "date": 1685696213178,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 797.75,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 132.95833333333334,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
