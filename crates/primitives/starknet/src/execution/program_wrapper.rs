@@ -94,6 +94,7 @@ impl From<MaybeRelocatableWrapper> for MaybeRelocatable {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "std", serde(into = "String"))]
+#[cfg_attr(feature = "std", serde(try_from = "String"))]
 struct StringWrapper(BoundedVec<u8, MaxStringLength>);
 
 impl From<String> for StringWrapper {
