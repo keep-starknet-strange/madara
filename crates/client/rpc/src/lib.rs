@@ -1,15 +1,18 @@
 //! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
+
+mod constants;
 mod errors;
 mod madara_backend_client;
+mod types;
 
 use std::marker::PhantomData;
 use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
-use log::error;
+use log::{error, info};
 use mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
@@ -31,10 +34,14 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
-    DeclareTransactionResult, DeployAccountTransactionResult, EventFilter, EventsPage, FeeEstimate, FieldElement,
-    FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, StateUpdate,
-    SyncStatus, SyncStatusType, Transaction,
+    DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
+    FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
+    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction,
+    TransactionStatus,
 };
+
+use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
+use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
 pub struct Starknet<B: BlockT, BE, C, P, H> {
@@ -146,6 +153,129 @@ where
                 Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
             })?
             .to_string())
+    }
+
+    /// Helper function to get the substrate block number from a Starknet block id
+    ///
+    /// # Arguments
+    ///
+    /// * `block_id` - The Starknet block id
+    ///
+    /// # Returns
+    ///
+    /// * `u64` - The substrate block number
+    fn substrate_block_number_from_starknet_block(&self, block_id: BlockId) -> Result<u64, String> {
+        // Short circuit on block number
+        if let BlockId::Number(x) = block_id {
+            return Ok(x);
+        }
+
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id)?;
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .ok_or("Failed to retrieve the substrate block number".to_string())?;
+
+        u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
+    }
+
+    /// Helper function to filter Starknet events provided a RPC event filter
+    ///
+    /// # Arguments
+    ///
+    /// * `filter` - The RPC event filter
+    ///
+    /// # Returns
+    ///
+    /// * `EventsPage` - The filtered events with continuation token
+    fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPage> {
+        let mut filtered_events = vec![];
+        let mut index = 0;
+
+        // get filter values
+        let mut current_block = filter.from_block;
+        let to_block = filter.to_block;
+        let from_address = filter.from_address;
+        let keys = filter.keys;
+        let mut continuation_token = filter.continuation_token;
+        let chunk_size = filter.chunk_size;
+
+        // Iterate on block range
+        while current_block <= to_block {
+            let substrate_block_hash =
+                self.substrate_block_hash_from_starknet_block(BlockId::Number(current_block)).map_err(|e| {
+                    error!("'{e}'");
+                    StarknetRpcApiError::BlockNotFound
+                })?;
+
+            let block = self
+                .overrides
+                .for_block_hash(self.client.as_ref(), substrate_block_hash)
+                .current_block(substrate_block_hash)
+                .ok_or_else(|| {
+                    error!("Failed to retrieve block");
+                    StarknetRpcApiError::BlockNotFound
+                })?;
+            let block_hash = block.header().hash(*self.hasher).into();
+            let block_number = block.header().block_number.try_into().map_err(|e| {
+                error!("Failed to convert block number to u64: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+            let block_events = self
+                .overrides
+                .for_block_hash(self.client.as_ref(), substrate_block_hash)
+                .events(substrate_block_hash)
+                .unwrap_or_else(|| {
+                    info!("No events found in block {}", current_block);
+                    Vec::new()
+                });
+            let block_events_len = block_events.len();
+            // if block_events length < continuation_token, keep going and reduce the pagination
+            if block_events_len < continuation_token {
+                continuation_token -= block_events_len;
+                index += block_events_len;
+                current_block += 1;
+                continue;
+            }
+
+            let block_events = block_events.into_iter().skip(continuation_token);
+            // Kept in order to calculate continuation token.
+            let block_events_len = block_events_len - continuation_token;
+            let index_before_loop = index;
+
+            // Iterate on block events.
+            for event in block_events {
+                let match_from_address = from_address.map_or(true, |add| add == event.from_address);
+                // Based on https://github.com/starkware-libs/papyrus
+                let match_keys = keys
+                    .iter()
+                    .enumerate()
+                    .all(|(i, keys)| event.keys.len() > i && (keys.is_empty() || keys.contains(&event.keys[i].into())));
+
+                if match_from_address && match_keys {
+                    filtered_events.push(EmittedEvent {
+                        from_address: event.from_address.into(),
+                        keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
+                        data: event.data.clone().into_iter().map(|data| data.into()).collect(),
+                        block_hash,
+                        block_number,
+                        transaction_hash: event.transaction_hash.into(),
+                    });
+                }
+                index += 1;
+                if filtered_events.len() == chunk_size as usize {
+                    let token =
+                        if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
+                    return Ok(EventsPage { events: filtered_events, continuation_token: token });
+                }
+            }
+            current_block += 1;
+            continuation_token = 0;
+        }
+        Ok(EventsPage { events: filtered_events, continuation_token: None })
     }
 }
 
@@ -632,7 +762,10 @@ where
             status: BlockStatus::AcceptedOnL2,
             block_hash: block.header().hash(*self.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
-            block_number: block.header().block_number.as_u64(),
+            block_number: block.header().block_number.try_into().map_err(|e| {
+                error!("Failed to convert block number to u64: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -681,13 +814,55 @@ where
     }
 
     /// Returns all events matching the given filter
-    async fn get_events(
-        &self,
-        filter: EventFilter,
-        continuation_token: Option<String>,
-        chunk_size: u64,
-    ) -> RpcResult<EventsPage> {
-        todo!("Not implemented")
+    async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage> {
+        let continuation_token = match filter.result_page_request.continuation_token {
+            Some(token) => token.parse::<usize>().map_err(|e| {
+                error!("Failed to parse continuation token: {:?}", e);
+                StarknetRpcApiError::InvalidContinuationToken
+            })?,
+            None => 0usize,
+        };
+        let from_address = filter.event_filter.address.map(Felt252Wrapper::from);
+        let keys = filter.event_filter.keys.unwrap_or_default();
+        let chunk_size = filter.result_page_request.chunk_size;
+
+        if keys.len() > MAX_EVENTS_KEYS {
+            return Err(StarknetRpcApiError::TooManyKeysInFilter.into());
+        }
+        if chunk_size > MAX_EVENTS_CHUNK_SIZE as u64 {
+            return Err(StarknetRpcApiError::PageSizeTooBig.into());
+        }
+
+        // Get the substrate block numbers for the requested range
+        let latest_block =
+            self.substrate_block_number_from_starknet_block(BlockId::Tag(BlockTag::Latest)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+        let from_block = self
+            .substrate_block_number_from_starknet_block(filter.event_filter.from_block.unwrap_or(BlockId::Number(0)))
+            .map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+        let to_block = self
+            .substrate_block_number_from_starknet_block(
+                filter.event_filter.to_block.unwrap_or(BlockId::Tag(BlockTag::Latest)),
+            )
+            .map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        // Verify that the requested range is valid
+        if from_block > to_block {
+            return Ok(EventsPage { events: vec![], continuation_token: None });
+        }
+
+        let to_block = if latest_block > to_block { to_block } else { latest_block };
+        let filter = RpcEventFilter { from_block, to_block, from_address, keys, chunk_size, continuation_token };
+
+        self.filter_events(filter)
     }
 
     /// Submit a new declare transaction to be added to the chain
@@ -730,5 +905,103 @@ where
         })?;
 
         Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
+    }
+
+    /// Returns a transaction details from it's hash.
+    ///
+    /// If the transaction is in the transactions pool,
+    /// it considers the transaction hash as not found.
+    /// Consider using `pending_transaction` for that purpose.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash corresponding to the transaction.
+    fn get_transaction_by_hash(&self, transaction_hash: FieldElement) -> RpcResult<Transaction> {
+        let block_hash_from_db = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+
+        let substrate_block_hash = match block_hash_from_db {
+            Some(block_hash) => block_hash,
+            None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        };
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        match block.transactions() {
+            BlockTransactions::Full(transactions) => {
+                let find_tx = transactions
+                    .into_iter()
+                    .find(|tx| tx.hash == transaction_hash.into())
+                    .map(|tx| Transaction::try_from(tx.clone()));
+
+                match find_tx {
+                    Some(res_tx) => match res_tx {
+                        Ok(tx) => Ok(tx),
+                        Err(e) => {
+                            error!("Error retrieving transaction: {:?}", e);
+                            Err(StarknetRpcApiError::InternalServerError.into())
+                        }
+                    },
+                    None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+                }
+            }
+            BlockTransactions::Hashes(_hashes) => {
+                // Only transactions hashes are not enough to return a full transaction.
+                // Consider the transaction as not found.
+                Err(StarknetRpcApiError::TxnHashNotFound.into())
+            }
+        }
+    }
+
+    /// Returns the receipt of a transaction by transaction hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash corresponding to the transaction.
+    fn get_transaction_receipt(&self, transaction_hash: FieldElement) -> RpcResult<MaybePendingTransactionReceipt> {
+        let block_hash_from_db = self
+            .backend
+            .mapping()
+            .block_hash_from_transaction_hash(H256::from(transaction_hash.to_bytes_be()))
+            .map_err(|e| {
+                error!("Failed to get transaction's substrate block hash from mapping_db: {e}");
+                StarknetRpcApiError::TxnHashNotFound
+            })?;
+
+        let substrate_block_hash = match block_hash_from_db {
+            Some(block_hash) => block_hash,
+            None => {
+                // If the transaction is still in the pool, the receipt
+                // is not available, thus considered as not found.
+                return Err(StarknetRpcApiError::TxnHashNotFound.into());
+            }
+        };
+
+        let block = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .current_block(substrate_block_hash)
+            .unwrap_or_default();
+
+        let find_receipt = block
+            .transaction_receipts()
+            .into_iter()
+            .find(|receipt| receipt.transaction_hash == transaction_hash.into())
+            .map(|receipt| receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
+
+        match find_receipt {
+            Some(receipt) => Ok(receipt),
+            None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        }
     }
 }

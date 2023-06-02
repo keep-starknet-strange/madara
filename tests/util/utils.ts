@@ -3,6 +3,7 @@ import {
   InvokeFunctionResponse,
   RpcProvider,
   ec,
+  hash,
   number,
 } from "starknet";
 import BN__default from "bn.js";
@@ -28,6 +29,20 @@ export function toBN(value: BigNumberish) {
 // Convert a BigNumberish to a 32 byte uint array
 export function numberToU832Bytes(value: number) {
   return numberToU8a(value, 256);
+}
+
+// Calculate the StarkNet keccak hash of a string
+export function starknetKeccak(value: string) {
+  return hash.starknetKeccak(value);
+}
+
+// Clean a hex string, remove leading 0's
+export function cleanHex(value: string) {
+  const cleaned = number.cleanHex(value);
+  if (cleaned === "0x") {
+    return "0x0";
+  }
+  return cleaned;
 }
 
 export async function rpcTransfer(
