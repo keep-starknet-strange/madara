@@ -1,6 +1,8 @@
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::DeclareTransaction;
+use sp_runtime::traits::ValidateUnsigned;
+use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
@@ -121,6 +123,12 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
             signature: sign_message_hash(tx_hash),
         };
 
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare { transaction: transaction.clone() },
+        );
+        assert_ok!(validate_result);
+
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
             Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
@@ -152,6 +160,12 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
+
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
@@ -180,6 +194,12 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
         };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare { transaction: transaction.clone() },
+        );
+        assert_ok!(validate_result);
 
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
@@ -212,6 +232,12 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
 
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
+
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
@@ -240,6 +266,12 @@ fn given_contract_declare_on_argent_account_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: sign_message_hash(tx_hash),
         };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare { transaction: transaction.clone() },
+        );
+        assert_ok!(validate_result);
 
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
@@ -271,6 +303,12 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
         };
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::declare { transaction: transaction.clone() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
