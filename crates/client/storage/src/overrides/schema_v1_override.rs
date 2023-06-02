@@ -3,11 +3,12 @@ use std::sync::Arc;
 
 use frame_system::EventRecord;
 use madara_runtime::{Hash, RuntimeEvent};
+use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK,
-    STARKNET_NONCE, SYSTEM_EVENTS,
+    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE,
+    SYSTEM_EVENTS,
 };
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::NonceWrapper;
@@ -15,6 +16,7 @@ use pallet_starknet::Event;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
+use sp_api::HeaderT;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_storage::StorageKey;
@@ -50,6 +52,9 @@ where
     fn encode_storage_key<T: Encode>(&self, key: &T) -> Vec<u8> {
         Encode::encode(key)
     }
+    fn get_header(&self, block_hash: B::Hash) -> Option<B::Header> {
+        self.client.header(block_hash).ok().flatten()
+    }
 }
 
 impl<B, C, BE> StorageOverride<B> for SchemaV1Override<B, C, BE>
@@ -58,12 +63,11 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
-    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock> {
-        self.query_storage::<StarknetBlock>(
-            block_hash,
-            &StorageKey(storage_prefix_build(PALLET_STARKNET, STARKNET_CURRENT_BLOCK)),
-        )
-        .map(Into::into)
+    fn current_block(&self, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock> {
+        let header = self.get_header(block_hash)?;
+        let digest = header.digest();
+        let block = find_starknet_block(digest).ok()?;
+        Some(block)
     }
 
     fn contract_class_by_address(

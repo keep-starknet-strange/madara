@@ -4507,6 +4507,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "madara-runtime",
+ "mp-digest-log",
  "mp-starknet",
  "pallet-starknet",
  "parity-scale-codec",
