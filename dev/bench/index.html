@@ -292,7 +292,19 @@
             graphsElem.className = "benchmark-graphs";
             setElem.appendChild(graphsElem);
 
-            for (const [benchName, benches] of benchSet.entries()) {
+            for (const [benchName, benches] of [...benchSet.entries()].sort(
+              ([keyA], [keyB]) => {
+                const lowerCaseKeyA = keyA.toLowerCase();
+                const lowerCaseKeyB = keyB.toLowerCase();
+
+                if (lowerCaseKeyA.includes("tps")) {
+                  return -1; // keyA comes first
+                } else if (lowerCaseKeyB.includes("tps")) {
+                  return 1; // keyB comes first
+                }
+                return 0; // maintain the original order
+              }
+            )) {
               renderGraph(graphsElem, benchName, benches);
             }
           }
