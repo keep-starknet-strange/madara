@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::sync::Arc;
 use std::vec;
 
 use anyhow::{anyhow, Result};
@@ -6,10 +7,16 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use cairo_vm::types::program::Program;
 use flate2::read::GzDecoder;
+use frame_support::inherent::BlockT;
+use mp_digest_log::find_starknet_block;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{
     ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
 };
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
+use sc_client_api::backend::{Backend, StorageProvider};
+use sp_api::HeaderT;
+use sp_blockchain::HeaderBackend;
 use sp_core::U256;
 use sp_runtime::{BoundedBTreeMap, BoundedVec};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
@@ -201,4 +208,17 @@ fn _to_btree_map_entrypoints(
             .unwrap(),
     );
     entry_points_by_type
+}
+
+/// Returns the current Starknet block from the block header's digest
+pub fn get_block_by_block_hash<B, C, BE>(client: Arc<C>, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
+where
+    B: BlockT,
+    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
+    BE: Backend<B> + 'static,
+{
+    let header = client.header(block_hash).ok().flatten()?;
+    let digest = header.digest();
+    let block = find_starknet_block(digest).ok()?;
+    Some(block)
 }
