@@ -72,7 +72,7 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
@@ -989,7 +989,7 @@ impl<T: Config> Pallet<T> {
             ),
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BoundedVec::try_from(transactions).unwrap(),
             BoundedVec::try_from(receipts).unwrap(),
         );
         // Save the current block.

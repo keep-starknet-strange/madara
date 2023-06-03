@@ -16,7 +16,6 @@ use log::{error, info};
 use mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::block::BlockTransactions;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -726,17 +725,11 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let block_transactions = block.transactions();
-        match block_transactions {
-            BlockTransactions::Full(transactions) => {
-                let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
-                Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
-                    error!("{:?}", e);
-                    StarknetRpcApiError::InternalServerError
-                })?)
-            }
-            BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
-        }
+        let transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+        Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
+            error!("{:?}", e);
+            StarknetRpcApiError::InternalServerError
+        })?)
     }
 
     /// Get block information with full transactions given the block id
@@ -752,11 +745,6 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let transactions = match block.transactions() {
-            BlockTransactions::Full(transactions) => transactions.to_vec(),
-            BlockTransactions::Hashes(_) => vec![],
-        };
-
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
             status: BlockStatus::AcceptedOnL2,
@@ -769,8 +757,10 @@ where
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
-            transactions: transactions
-                .into_iter()
+            transactions: block
+                .transactions()
+                .iter()
+                .cloned()
                 .map(Transaction::try_from)
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
                 .map_err(|e| {
@@ -937,29 +927,21 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        match block.transactions() {
-            BlockTransactions::Full(transactions) => {
-                let find_tx = transactions
-                    .into_iter()
-                    .find(|tx| tx.hash == transaction_hash.into())
-                    .map(|tx| Transaction::try_from(tx.clone()));
+        let find_tx = block
+            .transactions()
+            .into_iter()
+            .find(|tx| tx.hash == transaction_hash.into())
+            .map(|tx| Transaction::try_from(tx.clone()));
 
-                match find_tx {
-                    Some(res_tx) => match res_tx {
-                        Ok(tx) => Ok(tx),
-                        Err(e) => {
-                            error!("Error retrieving transaction: {:?}", e);
-                            Err(StarknetRpcApiError::InternalServerError.into())
-                        }
-                    },
-                    None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        match find_tx {
+            Some(res_tx) => match res_tx {
+                Ok(tx) => Ok(tx),
+                Err(e) => {
+                    error!("Error retrieving transaction: {:?}", e);
+                    Err(StarknetRpcApiError::InternalServerError.into())
                 }
-            }
-            BlockTransactions::Hashes(_hashes) => {
-                // Only transactions hashes are not enough to return a full transaction.
-                // Consider the transaction as not found.
-                Err(StarknetRpcApiError::TxnHashNotFound.into())
-            }
+            },
+            None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
         }
     }
 
