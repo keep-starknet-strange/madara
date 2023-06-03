@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685811490421,
+  "lastUpdate": 1685811492353,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -774,6 +774,42 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 130.16666666666666,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "31368580+lana-shanghai@users.noreply.github.com",
+            "name": "lanaivina",
+            "username": "lana-shanghai"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cf62bb0dc1ffbd1263b5e8f575eea6f9e1242a4c",
+          "message": "remove Hashes from BlockTransactions enum (#528)",
+          "timestamp": "2023-06-03T18:55:01+02:00",
+          "tree_id": "04c7c0d0394e2220578d65a0377ae64f4ac0b0c6",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/cf62bb0dc1ffbd1263b5e8f575eea6f9e1242a4c"
+        },
+        "date": 1685811489951,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 792.5,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 132.08333333333334,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
