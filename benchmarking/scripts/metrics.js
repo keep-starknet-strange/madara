@@ -1,7 +1,32 @@
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const fs = require("fs");
+const os = require("os");
 
 const BLOCK_TIME = 6; // in seconds
+
+function hostSpec() {
+  // Retrieve the CPU information
+  const cpuCount = os.cpus().length;
+  const cpu = os.cpus()[0];
+  const cpuModel = cpu.model;
+  const cpuSpeed = cpu.speed;
+
+  // Retrieve the total memory in bytes
+  const totalMemory = os.totalmem();
+
+  // Retrieve the operating system platform
+  const platform = os.platform();
+
+  // Retrieve the operating system release
+  const release = os.release();
+
+  // Retrieve the architecture of the machine
+  const architecture = os.arch();
+
+  return `CPU Count: ${cpuCount}\nCPU Model: ${cpuModel}\nCPU Speed (MHz): ${cpuSpeed}\nTotal Memory: ${
+    totalMemory / 1e9
+  } GB\nPlatform: ${platform}\nRelease: ${release}\nArchitecture: ${architecture}`;
+}
 
 async function main() {
   const wsProvider = new WsProvider("ws://localhost:9944");
@@ -27,9 +52,18 @@ async function main() {
   // Save avgExtrinsicsPerBlock to file reports/metrics.json
   fs.writeFileSync(
     "reports/metrics.json",
-    JSON.stringify({ avgExtrinsicsPerBlock, avgTps })
+    JSON.stringify([
+      {
+        name: "Average Extrinsics per block",
+        unit: "extrinsics/block",
+        value: avgExtrinsicsPerBlock,
+        extra: hostSpec(),
+      },
+      { name: "Average TPS", unit: "tps", value: avgTps, extra: hostSpec() },
+    ])
   );
 
+  console.log(`Benchmark running on:\n${hostSpec()}`);
   console.log(
     `Average TPS : ${avgTps} (avgExtrinsicsPerBlock: ${avgExtrinsicsPerBlock})`
   );

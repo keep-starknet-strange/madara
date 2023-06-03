@@ -14,7 +14,7 @@
     "test": "npm run test:transfer && npm run metrics",
     "chain:dev": "../scripts/run_node.sh",
     "test:wait": "wait-on tcp:9944 && npm run test",
-    "test:ci": "concurrently 'npm run chain:dev' '../scripts/test.sh'"
+    "test:ci": "concurrently -k --success 'command-1' 'npm run chain:dev' 'npm run test:wait'"
   },
   "keywords": [
     "madara",

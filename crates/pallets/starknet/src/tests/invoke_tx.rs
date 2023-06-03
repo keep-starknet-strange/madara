@@ -2,13 +2,15 @@ use core::str::FromStr;
 
 use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
-use mp_starknet::crypto::commitment;
+use mp_starknet::crypto::commitment::{self, calculate_invoke_tx_hash};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
 use sp_core::H256;
+use sp_runtime::traits::ValidateUnsigned;
+use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 use starknet_core::utils::get_selector_from_name;
 
 use super::mock::*;
@@ -65,8 +67,11 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let transaction =
+        let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         let tx = Message {
             topics: vec![
@@ -114,6 +119,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     Felt252Wrapper::ZERO,
                 ],
                 from_address: Starknet::fee_token_address(),
+                transaction_hash
             },],
         };
 
@@ -130,8 +136,11 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
-        let transaction =
+        let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
 
@@ -145,6 +154,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 "0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7",
             )
             .unwrap(),
+            transaction_hash,
         };
         let expected_fee_transfer_event = EventWrapper {
             keys: bounded_vec![
@@ -159,6 +169,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
+            transaction_hash,
         };
         let events = System::events();
         // Actual event.
@@ -264,6 +275,12 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone().into() },
+        );
+        assert_ok!(validate_result);
+
         assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
@@ -279,6 +296,12 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone().into() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -298,6 +321,12 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone().into() },
+        );
+        assert_ok!(validate_result);
+
         assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
@@ -312,6 +341,12 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone().into() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),
@@ -331,6 +366,12 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = sign_message_hash(transaction.hash);
 
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone().into() },
+        );
+        assert_ok!(validate_result);
+
         assert_ok!(Starknet::invoke(none_origin, transaction.into()));
     });
 }
@@ -345,6 +386,12 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
         let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone().into() },
+        );
+        assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
         assert_err!(
             Starknet::invoke(none_origin, transaction.into()),

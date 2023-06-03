@@ -69,7 +69,7 @@ pub fn to_tx(request: BroadcastedTransaction) -> Result<Transaction> {
         BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.into()),
         BroadcastedTransaction::Declare(declare_tx) => to_declare_tx(declare_tx).map(|inner| inner.into()),
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.into())
+            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
         }
     }
 }

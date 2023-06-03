@@ -16,6 +16,7 @@ use scale_info::{Path, Type, TypeInfo};
 use sp_core::{H256, U256};
 use starknet_api::hash::StarkFelt;
 use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
+use thiserror_no_std::Error;
 
 ///
 #[derive(Clone, Debug, PartialEq, Eq, Copy)]
@@ -258,23 +259,25 @@ impl TypeInfo for Felt252Wrapper {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Error)]
 /// Error related to Felt252Wrapper.
 pub enum Felt252WrapperError {
     /// Conversion from byte array has failed.
+    #[error("input array invalid")]
     FromArrayError,
     /// Provided byte array has incorrect lengths.
+    #[error("invalid length")]
     InvalidLength,
     /// Invalid character in hex string.
+    #[error("invalid character")]
     InvalidCharacter,
     /// Value is too large for FieldElement (felt252).
+    #[error("number out of range")]
     OutOfRange,
     /// Value is too large to fit into target type.
+    #[error("felt252 value too large")]
     ValueTooLarge,
 }
-
-#[cfg(feature = "std")]
-impl std::error::Error for Felt252WrapperError {}
 
 use alloc::borrow::Cow;
 
@@ -298,18 +301,6 @@ impl From<Felt252WrapperError> for String {
             Felt252WrapperError::OutOfRange => String::from("number out of range"),
             Felt252WrapperError::InvalidLength => String::from("invalid length"),
             Felt252WrapperError::ValueTooLarge => String::from("felt252 value too large"),
-        }
-    }
-}
-
-impl core::fmt::Display for Felt252WrapperError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::FromArrayError => write!(f, "input array invalid"),
-            Self::InvalidCharacter => write!(f, "invalid character"),
-            Self::OutOfRange => write!(f, "number out of range"),
-            Self::InvalidLength => write!(f, "invalid length"),
-            Self::ValueTooLarge => write!(f, "felt252 value too large"),
         }
     }
 }

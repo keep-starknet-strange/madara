@@ -37,8 +37,18 @@
  height="50" />
 </a>
 
+<a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/madara-coding-principles.md">
+<img src="https://img.shields.io/badge/Coding%20principles-Doc-green?logo=github"
+ height="50" />
+</a>
+
 <a href="https://keep-starknet-strange.github.io/madara/pallet_starknet/index.html">
 <img src="https://img.shields.io/badge/Rust%20doc-%F0%9F%A6%80-pink?logo=rust"
+ height="50" />
+</a>
+
+<a href="https://keep-starknet-strange.github.io/madara/dev/bench/">
+<img src="https://img.shields.io/badge/Benchmark-Performance-blue?logo=github-actions"
  height="50" />
 </a>
 
@@ -76,13 +86,39 @@ project structure and architecture to benchmarking and running Madara:
 - [Architecture Overview](./docs/architecture.md)
 - [Project Structure](./docs/project-structure.md)
 - [Getting Started Guide](./docs/getting-started.md)
-- [Benchmarking](./benchmarking/README.md)
+- [Run benchmark yourself](./benchmarking/README.md)
 
 ## 🏗️ Build & Run
 
 Want to dive straight in? Check out our
 [Getting Started Guide](./docs/getting-started.md) for instructions on how to
 build and run Madara on your local machine.
+
+## Benchmarking
+
+Benchmarking is an essential process in our project development lifecycle,
+as it helps us to track the performance evolution of Madara over time.
+It provides us with valuable insights into how well Madara handles transaction throughput,
+ and whether any recent changes have impacted performance.
+
+You can follow the evolution of Madara's performance by visiting our [Benchmark Page](https://keep-starknet-strange.github.io/madara/dev/bench/).
+
+However, it's important to understand that the absolute numbers presented
+on this page should not be taken as the reference or target numbers
+for a production environment.
+The benchmarks are run on a self-hosted GitHub runner,
+ which may not represent the most powerful machine configurations in real-world
+ production scenarios.
+
+Therefore, these numbers primarily serve as a tool to track
+the _relative_ performance changes over time.
+They allow us to quickly identify and address any performance regressions,
+and continuously optimize the system's performance.
+
+In other words, while the absolute throughput numbers may not be reflective of
+ a production environment, the relative changes and trends over time
+ are what we focus on. This way, we can ensure that Madara is always improving,
+ and that we maintain a high standard of performance as the project evolves.
 
 ## 🌐 Connect to the dev webapp
 
@@ -158,6 +194,9 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/robinstraub"><img src="https://avatars.githubusercontent.com/u/17799181?v=4?s=100" width="100px;" alt="Robin Straub"/><br /><sub><b>Robin Straub</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=robinstraub" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/edisontim"><img src="https://avatars.githubusercontent.com/u/76473430?v=4?s=100" width="100px;" alt="tedison"/><br /><sub><b>tedison</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=edisontim" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lana-shanghai"><img src="https://avatars.githubusercontent.com/u/31368580?v=4?s=100" width="100px;" alt="lanaivina"/><br /><sub><b>lanaivina</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=lana-shanghai" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://droak.sh/"><img src="https://avatars.githubusercontent.com/u/5263301?v=4?s=100" width="100px;" alt="Oak"/><br /><sub><b>Oak</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=d-roak" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/rkdud007"><img src="https://avatars.githubusercontent.com/u/76558220?v=4?s=100" width="100px;" alt="Pia"/><br /><sub><b>Pia</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=rkdud007" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/apoorvsadana"><img src="https://avatars.githubusercontent.com/u/95699312?v=4?s=100" width="100px;" alt="apoorvsadana"/><br /><sub><b>apoorvsadana</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=apoorvsadana" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

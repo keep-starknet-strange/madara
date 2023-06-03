@@ -297,6 +297,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "d-roak",
+      "name": "Oak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5263301?v=4",
+      "profile": "https://droak.sh/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rkdud007",
+      "name": "Pia",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76558220?v=4",
+      "profile": "https://github.com/rkdud007",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "apoorvsadana",
+      "name": "apoorvsadana",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95699312?v=4",
+      "profile": "https://github.com/apoorvsadana",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

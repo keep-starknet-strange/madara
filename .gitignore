@@ -25,3 +25,7 @@ benchmarking/reports/*.json
 
 # Python & Cairo env
 cairo_venv
+
+# emacs
+.dir-locals.el
+**/*.emacs

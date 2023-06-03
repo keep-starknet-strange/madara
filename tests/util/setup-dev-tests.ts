@@ -1,4 +1,4 @@
-import { type ApiPromise, Keyring } from "@polkadot/api";
+import { Keyring, type ApiPromise } from "@polkadot/api";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type EventRecord } from "@polkadot/types/interfaces";
 import { type RegistryError } from "@polkadot/types/types";
@@ -7,12 +7,12 @@ import { type ChildProcess } from "child_process";
 import { createAndFinalizeBlock } from "./block";
 import { DEBUG_MODE, SPAWNING_TIME } from "./constants";
 import {
-  type RuntimeChain,
   startMadaraDevNode,
   startMadaraForkedNode,
+  type RuntimeChain,
 } from "./dev-node";
 import { providePolkadotApi } from "./providers";
-import { type ExtrinsicCreation, extractError } from "./substrate-rpc";
+import { extractError, type ExtrinsicCreation } from "./substrate-rpc";
 
 import { type KeyringPair } from "@polkadot/keyring/types";
 import debugFactory from "debug";
@@ -96,13 +96,12 @@ export function describeDevMadara(
     before("Starting Madara Test Node", async function () {
       this.timeout(SPAWNING_TIME);
       const init = forkedMode
-        ? await startMadaraForkedNode(9933, 9944)
+        ? await startMadaraForkedNode(9933)
         : !DEBUG_MODE
         ? await startMadaraDevNode(withWasm, runtime)
         : {
             runningNode: null,
             p2pPort: 19931,
-            wsPort: 9944,
             rpcPort: 9933,
           };
       madaraProcess = init.runningNode;
@@ -115,7 +114,7 @@ export function describeDevMadara(
       madaraProcess = init.runningNode;
 
       context.createPolkadotApi = async () => {
-        const apiPromise = await providePolkadotApi(init.wsPort);
+        const apiPromise = await providePolkadotApi(init.rpcPort);
         // We keep track of the polkadotApis to close them at the end of the test
         context._polkadotApis.push(apiPromise);
         await apiPromise.isReady;
@@ -155,8 +154,16 @@ export function describeDevMadara(
             : Array.isArray(transactions)
             ? transactions
             : [transactions];
+
         for await (const call of txs) {
           if (call.transaction_hash) {
+            // Temporary solution to get the transaction hash back
+            // after awaiting the transaction.
+            results.push({
+              type: "starknet",
+              hash: call.transaction_hash,
+            });
+
             // TODO: update this when we have the rpc endpoint
             // results.push({
             //   type: "eth",
@@ -267,7 +274,7 @@ export function describeDevMadara(
         };
       };
 
-      debug(`Setup ready for ${this.currentTest.title}`);
+      debug(`Setup ready`);
     });
 
     after(async function () {
