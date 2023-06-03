@@ -759,8 +759,8 @@ where
             sequencer_address: block.header().sequencer_address.into(),
             transactions: block
                 .transactions()
-                .to_vec()
-                .into_iter()
+                .iter()
+                .cloned()
                 .map(Transaction::try_from)
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
                 .map_err(|e| {
