@@ -195,15 +195,10 @@
 <a href="#195" id="195">195</a>
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_digest_log::FindLogError;
-<span class="kw">use </span>mp_starknet::block::BlockTransactions;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
 <span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -250,14 +245,11 @@
                         </span><span class="kw">let </span>mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
-                            starknet_transaction_hashes: <span class="kw">match </span>digest_starknet_block.transactions() {
-                                BlockTransactions::Full(transactions) =&gt; {
-                                    transactions.into_iter().map(|tx| H256::from(tx.hash)).collect()
-                                }
-                                BlockTransactions::Hashes(hashes) =&gt; {
-                                    hashes.into_iter().map(|hash| H256::from(<span class="kw-2">*</span>hash)).collect()
-                                }
-                            },
+                            starknet_transaction_hashes: digest_starknet_block
+                                .transactions()
+                                .into_iter()
+                                .map(|tx| H256::from(tx.hash))
+                                .collect(),
                         };
 
                         backend.mapping().write_hashes(mapping_commitment)

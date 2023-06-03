@@ -987,24 +987,6 @@
 <a href="#987" id="987">987</a>
 <a href="#988" id="988">988</a>
 <a href="#989" id="989">989</a>
-<a href="#990" id="990">990</a>
-<a href="#991" id="991">991</a>
-<a href="#992" id="992">992</a>
-<a href="#993" id="993">993</a>
-<a href="#994" id="994">994</a>
-<a href="#995" id="995">995</a>
-<a href="#996" id="996">996</a>
-<a href="#997" id="997">997</a>
-<a href="#998" id="998">998</a>
-<a href="#999" id="999">999</a>
-<a href="#1000" id="1000">1000</a>
-<a href="#1001" id="1001">1001</a>
-<a href="#1002" id="1002">1002</a>
-<a href="#1003" id="1003">1003</a>
-<a href="#1004" id="1004">1004</a>
-<a href="#1005" id="1005">1005</a>
-<a href="#1006" id="1006">1006</a>
-<a href="#1007" id="1007">1007</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1023,7 +1005,6 @@
 <span class="kw">use </span>mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
-<span class="kw">use </span>mp_starknet::block::BlockTransactions;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
 <span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
@@ -1733,17 +1714,11 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="kw">let </span>block_transactions = block.transactions();
-        <span class="kw">match </span>block_transactions {
-            BlockTransactions::Full(transactions) =&gt; {
-                <span class="kw">let </span>transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
-                <span class="prelude-val">Ok</span>(Transaction::try_from(transaction.clone()).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;{:?}&quot;</span>, e);
-                    StarknetRpcApiError::InternalServerError
-                })<span class="question-mark">?</span>)
-            }
-            BlockTransactions::Hashes(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::InvalidTxnIndex.into()),
-        }
+        <span class="kw">let </span>transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(Transaction::try_from(transaction.clone()).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;{:?}&quot;</span>, e);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>)
     }
 
     <span class="doccomment">/// Get block information with full transactions given the block id
@@ -1759,11 +1734,6 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="kw">let </span>transactions = <span class="kw">match </span>block.transactions() {
-            BlockTransactions::Full(transactions) =&gt; transactions.to_vec(),
-            BlockTransactions::Hashes(<span class="kw">_</span>) =&gt; <span class="macro">vec!</span>[],
-        };
-
         <span class="kw">let </span>block_with_txs = BlockWithTxs {
             <span class="comment">// TODO: Get status from block
             </span>status: BlockStatus::AcceptedOnL2,
@@ -1776,8 +1746,10 @@
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
-            transactions: transactions
-                .into_iter()
+            transactions: block
+                .transactions()
+                .iter()
+                .cloned()
                 .map(Transaction::try_from)
                 .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="kw">_</span>&gt;, RPCTransactionConversionError&gt;&gt;()
                 .map_err(|e| {
@@ -1944,29 +1916,21 @@
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        <span class="kw">match </span>block.transactions() {
-            BlockTransactions::Full(transactions) =&gt; {
-                <span class="kw">let </span>find_tx = transactions
-                    .into_iter()
-                    .find(|tx| tx.hash == transaction_hash.into())
-                    .map(|tx| Transaction::try_from(tx.clone()));
+        <span class="kw">let </span>find_tx = block
+            .transactions()
+            .into_iter()
+            .find(|tx| tx.hash == transaction_hash.into())
+            .map(|tx| Transaction::try_from(tx.clone()));
 
-                <span class="kw">match </span>find_tx {
-                    <span class="prelude-val">Some</span>(res_tx) =&gt; <span class="kw">match </span>res_tx {
-                        <span class="prelude-val">Ok</span>(tx) =&gt; <span class="prelude-val">Ok</span>(tx),
-                        <span class="prelude-val">Err</span>(e) =&gt; {
-                            <span class="macro">error!</span>(<span class="string">&quot;Error retrieving transaction: {:?}&quot;</span>, e);
-                            <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError.into())
-                        }
-                    },
-                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound.into()),
+        <span class="kw">match </span>find_tx {
+            <span class="prelude-val">Some</span>(res_tx) =&gt; <span class="kw">match </span>res_tx {
+                <span class="prelude-val">Ok</span>(tx) =&gt; <span class="prelude-val">Ok</span>(tx),
+                <span class="prelude-val">Err</span>(e) =&gt; {
+                    <span class="macro">error!</span>(<span class="string">&quot;Error retrieving transaction: {:?}&quot;</span>, e);
+                    <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError.into())
                 }
-            }
-            BlockTransactions::Hashes(_hashes) =&gt; {
-                <span class="comment">// Only transactions hashes are not enough to return a full transaction.
-                // Consider the transaction as not found.
-                </span><span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound.into())
-            }
+            },
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound.into()),
         }
     }
 

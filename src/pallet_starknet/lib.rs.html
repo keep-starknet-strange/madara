@@ -1170,7 +1170,7 @@
 <span class="kw">use </span>frame_support::traits::Time;
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
-<span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, BlockTransactions, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
+<span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
 <span class="kw">use </span>mp_starknet::crypto::commitment;
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
@@ -2087,7 +2087,7 @@
             ),
             <span class="comment">// Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            </span>BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            </span>BoundedVec::try_from(transactions).unwrap(),
             BoundedVec::try_from(receipts).unwrap(),
         );
         <span class="comment">// Save the current block.
