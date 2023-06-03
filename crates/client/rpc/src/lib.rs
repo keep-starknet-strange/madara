@@ -725,8 +725,7 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let block_transactions = block.transactions();
-        let transaction = block_transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+        let transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
         Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
             error!("{:?}", e);
             StarknetRpcApiError::InternalServerError
