@@ -114,6 +114,30 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::vec::Vec;
 
@@ -228,6 +252,30 @@
             entry_points_by_type: BoundedBTreeMap::try_from(entrypoints)
                 .map_err(|<span class="kw">_</span>| ContractClassFromWrapperError::ContractClassConversionError)<span class="question-mark">?</span>,
         })
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">pub fn </span>get_contract_class(contract_content: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8]) -&gt; ContractClass {
+        serde_json::from_slice(contract_content).unwrap()
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_serialize_deserialize_contract_class() {
+        <span class="kw">let </span>contract_class: ContractClassWrapper =
+            get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../../../resources/account/simple/account.json&quot;</span>))
+                .try_into()
+                .unwrap();
+        <span class="kw">let </span>contract_class_serialized = serde_json::to_string(<span class="kw-2">&amp;</span>contract_class).unwrap();
+        <span class="kw">let </span>contract_class_deserialized: ContractClassWrapper =
+            serde_json::from_str(<span class="kw-2">&amp;</span>contract_class_serialized).unwrap();
+
+        <span class="macro">assert_eq!</span>(contract_class, contract_class_deserialized);
     }
 }
 </code></pre></div>
