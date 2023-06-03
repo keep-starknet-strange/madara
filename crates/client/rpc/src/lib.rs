@@ -745,8 +745,6 @@ where
             .current_block(substrate_block_hash)
             .unwrap_or_default();
 
-        let transactions = block.transactions().to_vec();
-
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
             status: BlockStatus::AcceptedOnL2,
@@ -759,7 +757,9 @@ where
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
-            transactions: transactions
+            transactions: block
+                .transactions()
+                .to_vec()
                 .into_iter()
                 .map(Transaction::try_from)
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
