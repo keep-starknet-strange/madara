@@ -114,3 +114,27 @@ impl TryFrom<ContractClass> for ContractClassWrapper {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use blockifier::execution::contract_class::ContractClass;
+
+    use super::*;
+
+    pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
+        serde_json::from_slice(contract_content).unwrap()
+    }
+
+    #[test]
+    fn test_serialize_deserialize_contract_class() {
+        let contract_class: ContractClassWrapper =
+            get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"))
+                .try_into()
+                .unwrap();
+        let contract_class_serialized = serde_json::to_string(&contract_class).unwrap();
+        let contract_class_deserialized: ContractClassWrapper =
+            serde_json::from_str(&contract_class_serialized).unwrap();
+
+        assert_eq!(contract_class, contract_class_deserialized);
+    }
+}
