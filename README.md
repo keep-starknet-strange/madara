@@ -37,6 +37,11 @@
  height="50" />
 </a>
 
+<a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/madara-coding-principles.md">
+<img src="https://img.shields.io/badge/Coding%20principles-Doc-green?logo=github"
+ height="50" />
+</a>
+
 <a href="https://keep-starknet-strange.github.io/madara/pallet_starknet/index.html">
 <img src="https://img.shields.io/badge/Rust%20doc-%F0%9F%A6%80-pink?logo=rust"
  height="50" />
