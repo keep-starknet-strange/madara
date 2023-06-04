@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685811865415,
+  "lastUpdate": 1685892993693,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -920,6 +920,42 @@ window.BENCHMARK_DATA = {
             "value": 131.54166666666666,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "76247491+chirag-bgh@users.noreply.github.com",
+            "name": "chirag-bgh",
+            "username": "chirag-bgh"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c6eaa46c33ea018f923a7a89d9d18d1e219f6f38",
+          "message": "feat: remove hardcoded values in starknet pallet tests (#527)",
+          "timestamp": "2023-06-04T17:30:27+02:00",
+          "tree_id": "19bdc43f893df3869aba97990032c7d29c2e2ed6",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/c6eaa46c33ea018f923a7a89d9d18d1e219f6f38"
+        },
+        "date": 1685892993202,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 753.5,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 125.58333333333333,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
