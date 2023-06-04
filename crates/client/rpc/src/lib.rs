@@ -98,7 +98,7 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
-    BE: Backend<B> + 'static,
+    BE: Backend<B>,
     H: HasherT + ThreadSafeCopy,
 {
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {

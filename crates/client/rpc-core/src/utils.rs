@@ -13,7 +13,6 @@ use mp_starknet::execution::types::{
     ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
 };
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
-use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::HeaderT;
 use sp_blockchain::HeaderBackend;
 use sp_core::U256;
@@ -210,11 +209,10 @@ fn _to_btree_map_entrypoints(
 }
 
 /// Returns the current Starknet block from the block header's digest
-pub fn get_block_by_block_hash<B, C, BE>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
+pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
 where
     B: BlockT,
-    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
-    BE: Backend<B> + 'static,
+    C: HeaderBackend<B>,
 {
     let header = client.header(block_hash).ok().flatten()?;
     let digest = header.digest();

@@ -17,8 +17,8 @@ fn sync_block<B: BlockT, C, BE, H>(
     hasher: &H,
 ) -> Result<(), String>
 where
-    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
-    BE: Backend<B> + 'static,
+    C: HeaderBackend<B> + StorageProvider<B, BE>,
+    BE: Backend<B>,
     H: HasherT + ThreadSafeCopy,
 {
     // Before storing the new block in the Madara backend database, we want to make sure that the
@@ -102,10 +102,10 @@ fn sync_one_block<B: BlockT, C, BE, H>(
     hasher: &H,
 ) -> Result<bool, String>
 where
-    C: ProvideRuntimeApi<B> + 'static,
+    C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
-    BE: Backend<B> + 'static,
+    BE: Backend<B>,
     H: HasherT + ThreadSafeCopy,
 {
     let mut current_syncing_tips = madara_backend.meta().current_syncing_tips()?;
@@ -158,10 +158,10 @@ pub fn sync_blocks<B: BlockT, C, BE, H>(
     hasher: &H,
 ) -> Result<bool, String>
 where
-    C: ProvideRuntimeApi<B> + 'static,
+    C: ProvideRuntimeApi<B>,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
-    BE: Backend<B> + 'static,
+    BE: Backend<B>,
     H: HasherT + ThreadSafeCopy,
 {
     let mut synced_any = false;
