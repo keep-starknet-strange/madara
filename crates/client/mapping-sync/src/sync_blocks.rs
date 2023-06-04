@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use mc_storage::OverrideHandle;
 use mp_digest_log::FindLogError;
-use mp_starknet::block::BlockTransactions;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -49,14 +48,11 @@ where
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
-                            starknet_transaction_hashes: match digest_starknet_block.transactions() {
-                                BlockTransactions::Full(transactions) => {
-                                    transactions.into_iter().map(|tx| H256::from(tx.hash)).collect()
-                                }
-                                BlockTransactions::Hashes(hashes) => {
-                                    hashes.into_iter().map(|hash| H256::from(*hash)).collect()
-                                }
-                            },
+                            starknet_transaction_hashes: digest_starknet_block
+                                .transactions()
+                                .into_iter()
+                                .map(|tx| H256::from(tx.hash))
+                                .collect(),
                         };
 
                         backend.mapping().write_hashes(mapping_commitment)
