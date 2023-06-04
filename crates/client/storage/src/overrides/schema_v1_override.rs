@@ -3,8 +3,6 @@ use std::sync::Arc;
 
 use frame_system::EventRecord;
 use madara_runtime::{Hash, RuntimeEvent};
-use mc_rpc_core::utils::get_block_by_block_hash;
-use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE,
@@ -59,10 +57,6 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
-    fn current_block(&self, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock> {
-        get_block_by_block_hash(self.client.clone(), block_hash)
-    }
-
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,

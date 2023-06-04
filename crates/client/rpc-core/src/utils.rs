@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::sync::Arc;
 use std::vec;
 
 use anyhow::{anyhow, Result};
@@ -211,7 +210,7 @@ fn _to_btree_map_entrypoints(
 }
 
 /// Returns the current Starknet block from the block header's digest
-pub fn get_block_by_block_hash<B, C, BE>(client: Arc<C>, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
+pub fn get_block_by_block_hash<B, C, BE>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
 where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,

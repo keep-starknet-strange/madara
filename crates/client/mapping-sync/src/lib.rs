@@ -18,7 +18,6 @@ use futures::prelude::*;
 use futures::task::{Context, Poll};
 use futures_timer::Delay;
 use log::debug;
-use mc_storage::OverrideHandle;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -36,7 +35,6 @@ pub struct MappingSyncWorker<B: BlockT, C, BE, H> {
 
     client: Arc<C>,
     substrate_backend: Arc<BE>,
-    overrides: Arc<OverrideHandle<B>>,
     madara_backend: Arc<mc_db::Backend<B>>,
     hasher: Arc<H>,
 
@@ -54,7 +52,6 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
         timeout: Duration,
         client: Arc<C>,
         substrate_backend: Arc<BE>,
-        overrides: Arc<OverrideHandle<B>>,
         frontier_backend: Arc<mc_db::Backend<B>>,
         retry_times: usize,
         sync_from: <B::Header as HeaderT>::Number,
@@ -67,7 +64,6 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
 
             client,
             substrate_backend,
-            overrides,
             madara_backend: frontier_backend,
             hasher,
 
@@ -80,10 +76,10 @@ impl<B: BlockT, C, BE, H> MappingSyncWorker<B, C, BE, H> {
 
 impl<B: BlockT, C, BE, H> Stream for MappingSyncWorker<B, C, BE, H>
 where
-    C: ProvideRuntimeApi<B>,
+    C: ProvideRuntimeApi<B> + 'static,
     C::Api: StarknetRuntimeApi<B>,
     C: HeaderBackend<B> + StorageProvider<B, BE>,
-    BE: Backend<B>,
+    BE: Backend<B> + 'static,
     H: HasherT + ThreadSafeCopy,
 {
     type Item = ();
@@ -121,7 +117,6 @@ where
             match sync_blocks::sync_blocks(
                 self.client.as_ref(),
                 self.substrate_backend.as_ref(),
-                self.overrides.clone(),
                 self.madara_backend.as_ref(),
                 self.retry_times,
                 self.sync_from,

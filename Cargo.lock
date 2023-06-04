@@ -4437,6 +4437,7 @@ dependencies = [
  "futures-timer",
  "log",
  "mc-db",
+ "mc-rpc-core",
  "mc-storage",
  "mp-digest-log",
  "mp-starknet",
