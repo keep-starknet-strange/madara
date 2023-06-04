@@ -185,10 +185,8 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 
         set_infinite_tokens(test_addr);
         set_signer(test_addr, AccountType::Openzeppelin);
-        let tx_hash =
-            Felt252Wrapper::from_hex_be("0x06ff0e0245daed20c0b4f21ae5c9286ba3a03e0c62b2bec2d0dcec2a4d6b9889").unwrap();
 
-        let transaction = DeployAccountTransaction {
+        let mut transaction = DeployAccountTransaction {
             account_class_hash,
             sender_address: test_addr,
             salt: U256::from_str(salt).unwrap(),
@@ -203,8 +201,12 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             .unwrap(),
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
-            signature: sign_message_hash(tx_hash),
+            signature: bounded_vec!(),
         };
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_deploy_account_tx_hash(transaction.clone(), chain_id);
+        transaction.signature = sign_message_hash(transaction_hash);
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
@@ -265,10 +267,8 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
         set_infinite_tokens(test_addr);
         set_signer(test_addr, AccountType::Argent);
-        let tx_hash =
-            Felt252Wrapper::from_hex_be("0x0781152a4f3fc0dada10f24a40f7499ce3c17c3867acae82024f5507475f89da").unwrap();
 
-        let transaction = DeployAccountTransaction {
+        let mut transaction = DeployAccountTransaction {
             account_class_hash,
             sender_address: test_addr,
             salt: U256::from_str(salt).unwrap(),
@@ -283,8 +283,13 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             .unwrap(),
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
-            signature: sign_message_hash(tx_hash),
+            signature: bounded_vec!(),
         };
+
+        let chain_id = Starknet::chain_id().0.to_bytes_be();
+        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let transaction_hash = calculate_deploy_account_tx_hash(transaction.clone(), chain_id);
+        transaction.signature = sign_message_hash(transaction_hash);
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
