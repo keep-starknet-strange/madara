@@ -194,19 +194,21 @@ fn to_legacy_entry_points_by_type(
     entries: &BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
 ) -> Result<LegacyEntryPointsByType> {
     let constructor = entries
-        .get(&EntryPointTypeWrapper::Constructor)?
+        .get(&EntryPointTypeWrapper::Constructor).ok_or(anyhow!("Missing constructor entry point"))? // TODO: change to StarknetError
         .iter()
         .map(|e| (e.clone()).try_into())
         .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
 
     let external = entries
-        .get(&EntryPointTypeWrapper::External)?
+        .get(&EntryPointTypeWrapper::External)
+        .ok_or(anyhow!("Missing external entry point"))?
         .iter()
         .map(|e| (e.clone()).try_into())
         .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
 
     let l1_handler = entries
-        .get(&EntryPointTypeWrapper::L1Handler)?
+        .get(&EntryPointTypeWrapper::L1Handler)
+        .ok_or(anyhow!("Missing l1 handler entry point"))?
         .iter()
         .map(|e| (e.clone()).try_into())
         .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
