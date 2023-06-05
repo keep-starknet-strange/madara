@@ -25,9 +25,9 @@ use starknet_core::types::{
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
     let entry_points_by_type = _to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
 
-    let _program: Program =
+    let program: Program =
         _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
-    let compressed_program = compress_and_encode_base64(&[0])?;
+    let compressed_program = compress_and_encode_base64(&program.to_bytes())?;
 
     Ok(ContractClass::Legacy(CompressedLegacyContractClass {
         program: compressed_program.as_bytes().to_vec(),
@@ -64,10 +64,10 @@ pub(crate) fn encode_base64(data: &[u8]) -> String {
 /// # Returns
 ///
 /// * `Transaction` - The converted transaction
-pub fn to_tx(request: BroadcastedTransaction) -> Result<Transaction> {
+pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transaction> {
     match request {
-        BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.into()),
-        BroadcastedTransaction::Declare(declare_tx) => to_declare_tx(declare_tx).map(|inner| inner.into()),
+        BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
+        BroadcastedTransaction::Declare(declare_tx) => to_declare_tx(declare_tx).map(|inner| inner.from_declare(chain_id)),
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
             to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
         }
