@@ -758,11 +758,6 @@
 <a href="#758" id="758">758</a>
 <a href="#759" id="759">759</a>
 <a href="#760" id="760">760</a>
-<a href="#761" id="761">761</a>
-<a href="#762" id="762">762</a>
-<a href="#763" id="763">763</a>
-<a href="#764" id="764">764</a>
-<a href="#765" id="765">765</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -783,7 +778,7 @@
 <span class="kw">use </span>blockifier::transaction::transactions::Executable;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::U256;
-<span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::api_core::{ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::transaction::{
@@ -798,7 +793,6 @@
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-<span class="kw">use </span><span class="kw">crate</span>::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::fees::{<span class="self">self</span>, charge_fee};
 <span class="kw">use </span><span class="kw">crate</span>::state::StateChanges;
@@ -1268,14 +1262,10 @@
     </span><span class="kw">pub fn </span>execute&lt;S: State + StateChanges&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span>S,
-        block: StarknetBlock,
+        block_context: <span class="kw-2">&amp;</span>BlockContext,
         tx_type: TxType,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
-        fee_token_address: ContractAddressWrapper,
-        chain_id: ChainId,
     ) -&gt; TransactionExecutionResultWrapper&lt;TransactionExecutionInfoWrapper&gt; {
-        <span class="kw">let </span>block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
-
         <span class="comment">// Initialize the execution resources.
         </span><span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
 
@@ -1294,11 +1284,11 @@
 
                 <span class="comment">// Validate.
                 </span><span class="kw">let </span>validate_call_info =
-                    <span class="self">self</span>.validate_tx(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
+                    <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
                 <span class="comment">// Execute.
                 </span>(
-                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
                     validate_call_info,
                     account_context,
@@ -1308,7 +1298,7 @@
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_l1_handler_transaction_context(<span class="kw-2">&amp;</span>tx);
                 (
-                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
                     <span class="prelude-val">None</span>,
                     account_context,
@@ -1323,11 +1313,11 @@
 
                 <span class="comment">// Validate.
                 </span><span class="kw">let </span>validate_call_info =
-                    <span class="self">self</span>.validate_tx(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
+                    <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
                 <span class="comment">// Execute.
                 </span>(
-                    tx.run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>,
                     validate_call_info,
                     account_context,
@@ -1341,12 +1331,12 @@
 
                 <span class="comment">// Execute.
                 </span><span class="kw">let </span>transaction_execution = tx
-                    .run_execute(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
+                    .run_execute(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)<span class="question-mark">?</span>;
 
                 (
                     transaction_execution,
-                    <span class="self">self</span>.validate_tx(state, execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>,
+                    <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>,
                     account_context,
                 )
             }
@@ -1358,7 +1348,7 @@
             execution_resources,
             tx_type,
         )<span class="question-mark">?</span>;
-        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(state, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_resources)<span class="question-mark">?</span>;
+        <span class="kw">let </span>(actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_resources)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,

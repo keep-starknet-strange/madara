@@ -1101,6 +1101,12 @@
 <a href="#1101" id="1101">1101</a>
 <a href="#1102" id="1102">1102</a>
 <a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1135,6 +1141,7 @@
 </span><span class="comment">// Ensure we&#39;re `no_std` when compiling for Wasm.
 </span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
 #![allow(clippy::large_enum_variant)]
+
 </span><span class="doccomment">/// Starknet pallet.
 /// Definition of the pallet&#39;s runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -1169,6 +1176,7 @@
 <span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
+<span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 <span class="kw">use </span>blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
@@ -1191,6 +1199,9 @@
 <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_runtime::DigestItem;
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
+<span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 <span class="kw">use </span>starknet_api::transaction::{EventContent, TransactionHash};
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
@@ -1219,8 +1230,6 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
-
-    <span class="kw">use </span>starknet_api::api_core::ChainId <span class="kw">as </span>StarknetChainId;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -1514,20 +1523,12 @@
             <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
-            <span class="comment">// Get current block
-            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
-            <span class="comment">// Get fee token address
-            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
+            <span class="comment">// Get current block context
+            </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
             <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
             <span class="kw">let </span>transaction: Transaction = transaction.from_invoke(<span class="kw-2">&amp;</span>chain_id);
-            <span class="kw">let </span>call_info = transaction.execute(
-                <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block.clone(),
-                TxType::Invoke,
-                <span class="prelude-val">None</span>,
-                fee_token_address,
-                StarknetChainId(chain_id),
-            );
+            <span class="kw">let </span>call_info =
+                transaction.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, TxType::Invoke, <span class="prelude-val">None</span>);
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
@@ -1559,8 +1560,8 @@
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.<span class="number">0</span>.into(),
-                        block_hash: block.header().hash(T::SystemHash::hasher()), <span class="comment">// unwrap to check.
-                        </span>block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(), <span class="comment">// unwrap to check.
+                        </span>block_number: block_context.block_number.<span class="number">0</span>,
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
@@ -1610,10 +1611,8 @@
             <span class="comment">// Check class hash is not already declared
             </span><span class="macro">ensure!</span>(!ContractClasses::&lt;T&gt;::contains_key(class_hash), Error::&lt;T&gt;::ClassHashAlreadyDeclared);
 
-            <span class="comment">// Get current block
-            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
-            <span class="comment">// Get fee token address
-            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
+            <span class="comment">// Get current block context
+            </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
 
             <span class="comment">// Parse contract class
             </span><span class="kw">let </span>contract_class = contract_class.try_into().or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidContractClass))<span class="question-mark">?</span>;
@@ -1621,11 +1620,9 @@
             <span class="comment">// Execute transaction
             </span><span class="kw">let </span>call_info = transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block.clone(),
+                <span class="kw-2">&amp;</span>block_context,
                 TxType::Declare,
                 <span class="prelude-val">Some</span>(contract_class),
-                fee_token_address,
-                StarknetChainId(chain_id),
             );
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
@@ -1657,8 +1654,8 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: block.header().hash(T::SystemHash::hasher()),
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(),
+                        block_number: block_context.block_number.<span class="number">0</span>,
                         actual_fee: actual_fee.<span class="number">0</span>.into(),
                     }
                 }
@@ -1707,18 +1704,15 @@
                 Error::&lt;T&gt;::AccountAlreadyDeployed
             );
 
-            <span class="comment">// Get current block
-            </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
-            <span class="comment">// Get fee token address
-            </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
+            <span class="comment">// Get current block context
+            </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
+
             <span class="comment">// Execute transaction
             </span><span class="kw">let </span>call_info = transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block.clone(),
+                <span class="kw-2">&amp;</span>block_context,
                 TxType::DeployAccount,
                 <span class="prelude-val">None</span>,
-                fee_token_address,
-                StarknetChainId(chain_id),
             );
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
@@ -1750,8 +1744,8 @@
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: block.header().hash(T::SystemHash::hasher()),
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(),
+                        block_number: block_context.block_number.<span class="number">0</span>,
                         actual_fee: actual_fee.<span class="number">0</span>.into(),
                     }
                 }
@@ -1792,16 +1786,12 @@
             <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
-            <span class="kw">let </span>block = <span class="self">Self</span>::current_block();
-            <span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
+            <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
             <span class="kw">match </span>transaction.execute(
                 <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-                block,
+                <span class="kw-2">&amp;</span>block_context,
                 TxType::L1Handler,
                 <span class="prelude-val">None</span>,
-                fee_token_address,
-                StarknetChainId(chain_id),
             ) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
@@ -1929,17 +1919,42 @@
     </span><span class="kw">fn </span>validate_tx(transaction: Transaction, tx_type: TxType) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
         <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
-
-        <span class="kw">let </span>block_context = <span class="self">Self</span>::current_block()
-            .header()
-            .clone()
-            .into_block_context(Pallet::&lt;T&gt;::fee_token_address(), ChainId(Pallet::&lt;T&gt;::chain_id_str()));
-
+        <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         transaction
             .validate_account_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>tx_type)
             .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
+    /// properly the transaction. Substrate caches data so it&#39;s fine to call multiple times this
+    /// function, only the first transaction/block will be &quot;slow&quot; to load these data.
+    </span><span class="kw">fn </span>get_block_context() -&gt; BlockContext {
+        <span class="kw">let </span>block_number = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(frame_system::Pallet::&lt;T&gt;::block_number());
+        <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
+        <span class="comment">// Get fee token address. Its value is checked when we set it so it&#39;s fine to unwrap
+        </span><span class="kw">let </span>fee_token_address =
+            ContractAddress::try_from(StarkFelt::new(<span class="self">Self</span>::fee_token_address().into()).unwrap()).unwrap();
+        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
+        <span class="kw">let </span>sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
+        <span class="kw">let </span>vm_resource_fee_cost = HashMap::default();
+        <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/545
+        </span><span class="kw">let </span>invoke_tx_max_n_steps = <span class="number">1000000</span>;
+        <span class="kw">let </span>validate_max_n_steps = <span class="number">1000000</span>;
+        <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+        </span><span class="kw">let </span>gas_price = <span class="number">10</span>;
+        BlockContext {
+            block_number: BlockNumber(block_number),
+            block_timestamp: BlockTimestamp(block_timestamp),
+            chain_id: ChainId(chain_id),
+            sequencer_address,
+            fee_token_address,
+            vm_resource_fee_cost,
+            invoke_tx_max_n_steps,
+            validate_max_n_steps,
+            gas_price,
+        }
     }
     <span class="doccomment">/// Get current block hash.
     ///
@@ -2175,14 +2190,11 @@
         <span class="comment">// Check if contract is deployed
         </span><span class="macro">ensure!</span>(ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address), Error::&lt;T&gt;::AccountNotDeployed);
 
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
         <span class="kw">match </span>transaction.execute(
             <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-            <span class="self">Self</span>::current_block(),
+            <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
             TxType::Invoke,
             <span class="prelude-val">None</span>,
-            <span class="self">Self</span>::fee_token_address(),
-            ChainId(chain_id),
         ) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
                 <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
