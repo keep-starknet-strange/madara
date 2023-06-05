@@ -346,3 +346,11 @@ pub fn calculate_contract_address(
         ContractAddress::default(),
     )
 }
+
+/// Returns the chain id used by the mock runtime.
+/// # Returns
+/// The chain id of the mock runtime.
+pub fn get_chain_id() -> String {
+    let chain_id = Starknet::chain_id().0.to_bytes_be();
+    std::str::from_utf8(&chain_id[..]).unwrap().to_string()
+}

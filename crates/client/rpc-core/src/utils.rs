@@ -100,7 +100,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         .map(|f| (*f).into())
         .collect::<Vec<Felt252Wrapper>>()
         .try_into()
-        .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxArraySize"))?;
+        .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxCalldataSize"))?;
 
     let nonce = Felt252Wrapper::from(tx.nonce);
     let max_fee = Felt252Wrapper::from(tx.max_fee);
