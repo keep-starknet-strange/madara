@@ -21,7 +21,6 @@ use starknet_core::types::{
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
-// TODO: see https://github.com/keep-starknet-strange/madara/issues/363
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
     let entry_points_by_type = _to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
 
@@ -67,7 +66,9 @@ pub(crate) fn encode_base64(data: &[u8]) -> String {
 pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transaction> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
-        BroadcastedTransaction::Declare(declare_tx) => to_declare_tx(declare_tx).map(|inner| inner.from_declare(chain_id)),
+        BroadcastedTransaction::Declare(declare_tx) => {
+            to_declare_tx(declare_tx).map(|inner| inner.from_declare(chain_id))
+        }
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
             to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
         }
