@@ -32,6 +32,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
+
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -66,6 +67,7 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
+use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
@@ -88,6 +90,9 @@ use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ContractAddress};
+use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::hash::StarkFelt;
+use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::{EventContent, TransactionHash};
 
 use crate::alloc::string::ToString;
@@ -116,8 +121,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-
-    use starknet_api::api_core::ChainId as StarknetChainId;
 
     use super::*;
 
@@ -411,20 +414,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
+            // Get current block context
+            let block_context = Self::get_block_context();
             let chain_id = Self::chain_id_str();
             let transaction: Transaction = transaction.from_invoke(&chain_id);
-            let call_info = transaction.execute(
-                &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
-                TxType::Invoke,
-                None,
-                fee_token_address,
-                StarknetChainId(chain_id),
-            );
+            let call_info =
+                transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
@@ -456,8 +451,8 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.0.into(),
-                        block_hash: block.header().hash(T::SystemHash::hasher()), // unwrap to check.
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(), // unwrap to check.
+                        block_number: block_context.block_number.0,
                     }
                 }
                 Err(e) => {
@@ -507,10 +502,8 @@ pub mod pallet {
             // Check class hash is not already declared
             ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
 
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
+            // Get current block context
+            let block_context = Self::get_block_context();
 
             // Parse contract class
             let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
@@ -518,11 +511,9 @@ pub mod pallet {
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
+                &block_context,
                 TxType::Declare,
                 Some(contract_class),
-                fee_token_address,
-                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -554,8 +545,8 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: block.header().hash(T::SystemHash::hasher()),
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(),
+                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -604,18 +595,15 @@ pub mod pallet {
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
+            // Get current block context
+            let block_context = Self::get_block_context();
+
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
+                &block_context,
                 TxType::DeployAccount,
                 None,
-                fee_token_address,
-                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -647,8 +635,8 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: block.header().hash(T::SystemHash::hasher()),
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(),
+                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -689,16 +677,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            let block = Self::current_block();
-            let fee_token_address = Self::fee_token_address();
-            let chain_id = Self::chain_id_str();
+            let block_context = Self::get_block_context();
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block,
+                &block_context,
                 TxType::L1Handler,
                 None,
-                fee_token_address,
-                StarknetChainId(chain_id),
             ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v);
@@ -826,17 +810,38 @@ impl<T: Config> Pallet<T> {
     fn validate_tx(transaction: Transaction, tx_type: TxType) -> Result<(), TransactionValidityError> {
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
         let mut execution_resources = ExecutionResources::default();
-
-        let block_context = Self::current_block()
-            .header()
-            .clone()
-            .into_block_context(Pallet::<T>::fee_token_address(), ChainId(Pallet::<T>::chain_id_str()));
-
+        let block_context = Self::get_block_context();
         transaction
             .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
             .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
 
         Ok(())
+    }
+
+    fn get_block_context() -> BlockContext {
+        let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
+        let block_timestamp = Self::block_timestamp();
+        // Get fee token address
+        let fee_token_address =
+            ContractAddress::try_from(StarkFelt::new(Self::fee_token_address().into()).unwrap()).unwrap();
+        let chain_id = Self::chain_id_str();
+        let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
+        let vm_resource_fee_cost = HashMap::default();
+        let invoke_tx_max_n_steps = 1000000;
+        let validate_max_n_steps = 1000000;
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+        let gas_price = 10;
+        BlockContext {
+            block_number: BlockNumber(block_number),
+            block_timestamp: BlockTimestamp(block_timestamp),
+            chain_id: ChainId(chain_id),
+            sequencer_address,
+            fee_token_address,
+            vm_resource_fee_cost,
+            invoke_tx_max_n_steps,
+            validate_max_n_steps,
+            gas_price,
+        }
     }
     /// Get current block hash.
     ///
@@ -1072,14 +1077,11 @@ impl<T: Config> Pallet<T> {
         // Check if contract is deployed
         ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-        let chain_id = Self::chain_id_str();
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
-            Self::current_block(),
+            &Self::get_block_context(),
             TxType::Invoke,
             None,
-            Self::fee_token_address(),
-            ChainId(chain_id),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);

@@ -18,7 +18,7 @@ use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contrac
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{ChainId, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
@@ -33,7 +33,6 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::block::Block as StarknetBlock;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
@@ -503,14 +502,10 @@ impl Transaction {
     pub fn execute<S: State + StateChanges>(
         &self,
         state: &mut S,
-        block: StarknetBlock,
+        block_context: &BlockContext,
         tx_type: TxType,
         contract_class: Option<ContractClass>,
-        fee_token_address: ContractAddressWrapper,
-        chain_id: ChainId,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
-        let block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
-
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
 
@@ -529,11 +524,11 @@ impl Transaction {
 
                 // Validate.
                 let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                    self.validate_tx(state, execution_resources, block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
                     account_context,
@@ -543,7 +538,7 @@ impl Transaction {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     None,
                     account_context,
@@ -558,11 +553,11 @@ impl Transaction {
 
                 // Validate.
                 let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                    self.validate_tx(state, execution_resources, block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
                     account_context,
@@ -576,12 +571,12 @@ impl Transaction {
 
                 // Execute.
                 let transaction_execution = tx
-                    .run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    .run_execute(state, execution_resources, block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
 
                 (
                     transaction_execution,
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?,
+                    self.validate_tx(state, execution_resources, block_context, &account_context, &tx_type)?,
                     account_context,
                 )
             }
@@ -593,7 +588,7 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &account_context, &tx_resources)?;
+        let (actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, &account_context, &tx_resources)?;
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
