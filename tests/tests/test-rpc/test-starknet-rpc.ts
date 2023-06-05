@@ -856,8 +856,15 @@ describeDevMadara("Starknet RPC", (context) => {
         }
       );
 
-      const r = await providerRPC.getTransactionReceipt(b.result.hash);
+      const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const r: TransactionReceipt = await providerRPC.getTransactionReceipt(
+        b.result.hash
+      );
       expect(r).to.not.be.undefined;
+      expect(r.block_hash).to.be.equal(block_hash_and_number.block_hash);
+      expect(r.block_number).to.be.equal(block_hash_and_number.block_number);
     });
 
     it("should return transaction hash not found", async function () {
