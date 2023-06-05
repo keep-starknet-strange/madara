@@ -71,7 +71,7 @@ pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transact
             to_declare_tx(declare_tx).map(|inner| inner.from_declare(chain_id))
         }
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
+            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id).map_err(|e| anyhow!(e)))
         }
     }
 }
