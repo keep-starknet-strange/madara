@@ -742,8 +742,34 @@
 <a href="#742" id="742">742</a>
 <a href="#743" id="743">743</a>
 <a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
+<span class="kw">use </span>alloc::sync::Arc;
+<span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
 <span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
@@ -752,7 +778,9 @@
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, U256};
-<span class="kw">use </span>starknet_api::transaction::Fee;
+<span class="kw">use </span>starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
+<span class="kw">use </span>starknet_api::hash::StarkFelt;
+<span class="kw">use </span>starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 <span class="kw">use </span>starknet_api::StarknetApiError;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">use </span>starknet_core::types::{
@@ -968,14 +996,12 @@
 </span><span class="kw">pub struct </span>DeployAccountTransaction {
     <span class="doccomment">/// Transaction version.
     </span><span class="kw">pub </span>version: u8,
-    <span class="doccomment">/// Transaction sender address.
-    </span><span class="kw">pub </span>sender_address: ContractAddressWrapper,
     <span class="doccomment">/// Transaction calldata.
     </span><span class="kw">pub </span>calldata: BoundedVec&lt;Felt252Wrapper, MaxCalldataSize&gt;,
     <span class="doccomment">/// Account contract nonce.
     </span><span class="kw">pub </span>nonce: Felt252Wrapper,
     <span class="doccomment">/// Transaction salt.
-    </span><span class="kw">pub </span>salt: U256,
+    </span><span class="kw">pub </span>salt: Felt252Wrapper,
     <span class="doccomment">/// Transaction signature.
     </span><span class="kw">pub </span>signature: BoundedVec&lt;Felt252Wrapper, MaxArraySize&gt;,
     <span class="doccomment">/// Account class hash.
@@ -986,26 +1012,44 @@
 
 <span class="kw">impl </span>DeployAccountTransaction {
     <span class="doccomment">/// converts the transaction to a [Transaction] object
-    </span><span class="kw">pub fn </span>from_deploy(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Transaction {
-        Transaction {
+    </span><span class="kw">pub fn </span>from_deploy(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, TransactionConversionError&gt; {
+        <span class="kw">let </span>salt_as_felt: StarkFelt = StarkFelt(<span class="self">self</span>.salt.into());
+        <span class="kw">let </span>stark_felt_vec: Vec&lt;StarkFelt&gt; = <span class="self">self</span>.calldata.clone()
+            .into_inner()
+            .into_iter()
+            .map(|felt_wrapper| felt_wrapper.try_into().unwrap()) <span class="comment">// Here, we are assuming that the conversion will not fail.
+            </span>.collect();
+
+        <span class="kw">let </span>sender_address: ContractAddressWrapper = calculate_contract_address(
+            ContractAddressSalt(salt_as_felt),
+            ClassHash(<span class="self">self</span>.account_class_hash.try_into().map_err(|<span class="kw">_</span>| TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>),
+            <span class="kw-2">&amp;</span>Calldata(Arc::new(stark_felt_vec)),
+            ContractAddress::default(),
+        )
+        .map_err(|<span class="kw">_</span>| TransactionConversionError::ContractAddressDerivationError)<span class="question-mark">?
+        </span>.<span class="number">0
+        </span>.<span class="number">0
+        </span>.into();
+
+        <span class="prelude-val">Ok</span>(Transaction {
             tx_type: TxType::DeployAccount,
             version: <span class="self">self</span>.version,
-            hash: calculate_deploy_account_tx_hash(<span class="self">self</span>.clone(), chain_id),
+            hash: calculate_deploy_account_tx_hash(<span class="self">self</span>.clone(), chain_id, sender_address.into()),
             signature: <span class="self">self</span>.signature,
-            sender_address: <span class="self">self</span>.sender_address,
+            sender_address,
             nonce: <span class="self">self</span>.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
                 <span class="prelude-val">Some</span>(<span class="self">self</span>.account_class_hash),
                 EntryPointTypeWrapper::External,
                 <span class="prelude-val">None</span>,
                 <span class="self">self</span>.calldata,
-                <span class="self">self</span>.sender_address,
-                <span class="self">self</span>.sender_address,
+                sender_address,
+                sender_address,
             ),
             contract_class: <span class="prelude-val">None</span>,
-            contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt),
+            contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt.into()),
             max_fee: <span class="self">self</span>.max_fee,
-        }
+        })
     }
 }
 
@@ -1019,6 +1063,9 @@
     <span class="doccomment">/// Class is missing from the object of type [Transaction]
     </span><span class="attr">#[error(<span class="string">&quot;Class is missing from the object of type [Transaction]&quot;</span>)]
     </span>MissingClass,
+    <span class="doccomment">/// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
+    </span><span class="attr">#[error(<span class="string">&quot;Impossible to derive the contract address from the object of type [DeployAccountTransaction]&quot;</span>)]
+    </span>ContractAddressDerivationError,
 }
 <span class="kw">impl </span>TryFrom&lt;Transaction&gt; <span class="kw">for </span>DeclareTransaction {
     <span class="kw">type </span>Error = TransactionConversionError;
@@ -1142,13 +1189,14 @@
 <span class="kw">impl </span>TryFrom&lt;Transaction&gt; <span class="kw">for </span>DeployAccountTransaction {
     <span class="kw">type </span>Error = TransactionConversionError;
     <span class="kw">fn </span>try_from(value: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="comment">// REPLACE BY ERROR HANDLING
+        </span><span class="kw">let </span>salt_as_felt_wrapper: Felt252Wrapper = value.contract_address_salt.unwrap_or_default().try_into().unwrap();
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             version: value.version,
             signature: value.signature,
-            sender_address: value.sender_address,
             nonce: value.nonce,
             calldata: value.call_entrypoint.calldata,
-            salt: value.contract_address_salt.unwrap_or_default(),
+            salt: salt_as_felt_wrapper,
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>,
             max_fee: value.max_fee,
         })

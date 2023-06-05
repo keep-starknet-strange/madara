@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["calculate_commitments","calculate_declare_tx_hash","calculate_deploy_account_tx_hash","calculate_event_commitment","calculate_event_hash","calculate_invoke_tx_hash","calculate_transaction_commitment"]};
+window.SIDEBAR_ITEMS = {"fn":["calculate_commitments","calculate_declare_tx_hash","calculate_deploy_account_tx_hash","calculate_event_commitment","calculate_event_hash","calculate_invoke_tx_hash","calculate_transaction_commitment","calculate_transaction_hash_common"]};

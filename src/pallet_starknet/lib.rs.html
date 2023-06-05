@@ -1096,6 +1096,11 @@
 <a href="#1096" id="1096">1096</a>
 <a href="#1097" id="1097">1097</a>
 <a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1462,6 +1467,7 @@
         StateDiffError,
         ContractNotFound,
         ReachedBoundedVecLimit,
+        TransactionConversionError,
     }
 
     <span class="doccomment">/// The Starknet pallet external functions.
@@ -1691,14 +1697,15 @@
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
+            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
+            <span class="kw">let </span>transaction: Transaction =
+                transaction.from_deploy(<span class="kw-2">&amp;</span>chain_id).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionConversionError)<span class="question-mark">?</span>;
+
             <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(
                 !ContractClassHashes::&lt;T&gt;::contains_key(transaction.sender_address),
                 Error::&lt;T&gt;::AccountAlreadyDeployed
             );
-
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
-            <span class="kw">let </span>transaction: Transaction = transaction.from_deploy(<span class="kw-2">&amp;</span>chain_id);
 
             <span class="comment">// Get current block
             </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
@@ -1883,11 +1890,14 @@
                 }
                 Call::deploy_account { transaction } =&gt; {
                     <span class="comment">// don&#39;t validate deploy txs for now
-                    // let deploy_account_transaction = transaction.clone().from_deploy(&amp;Self::chain_id_str());
-                    // Pallet::&lt;T&gt;::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
+                    </span><span class="kw">let </span>deploy_account_transaction = transaction
+                        .clone()
+                        .from_deploy(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id_str())
+                        .map_err(|<span class="kw">_</span>| TransactionValidityError::Unknown(UnknownTransaction::CannotLookup))<span class="question-mark">?</span>;
+                    <span class="comment">// Pallet::&lt;T&gt;::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     </span>ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
                         .longevity(<span class="number">64_u64</span>)
                         .propagate(<span class="bool-val">true</span>)
                         .build()

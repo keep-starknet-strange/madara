@@ -199,26 +199,6 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a>
-<a href="#208" id="208">208</a>
-<a href="#209" id="209">209</a>
-<a href="#210" id="210">210</a>
-<a href="#211" id="211">211</a>
-<a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
 <span class="kw">use </span>std::vec;
 
@@ -236,11 +216,7 @@
 <span class="kw">use </span>mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 <span class="kw">use </span>sp_api::HeaderT;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
-<span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>sp_runtime::{BoundedBTreeMap, BoundedVec};
-<span class="kw">use </span>starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress};
-<span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::transaction::{Calldata, ContractAddressSalt};
 <span class="kw">use </span>starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     BroadcastedTransaction, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
@@ -282,9 +258,8 @@
     <span class="kw">match </span>request {
         BroadcastedTransaction::Invoke(invoke_tx) =&gt; to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
         BroadcastedTransaction::Declare(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()), <span class="comment">/* TODO: add support once #341 is supported */
-        </span>BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
-        }
+        </span>BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; to_deploy_account_tx(deploy_account_tx)
+            .and_then(|inner| inner.from_deploy(chain_id).map_err(|e| <span class="macro">anyhow!</span>(e))),
     }
 }
 
@@ -310,12 +285,9 @@
 }
 
 <span class="kw">pub fn </span>to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction&gt; {
-    <span class="kw">let </span>contract_address_salt = tx.contract_address_salt.to_bytes_be();
+    <span class="kw">let </span>contract_address_salt = tx.contract_address_salt.into();
 
     <span class="kw">let </span>account_class_hash = tx.class_hash;
-
-    <span class="kw">let </span>calldata =
-        tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 
     <span class="kw">let </span>signature = tx
         .signature
@@ -325,33 +297,21 @@
         .try_into()
         .map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to bound signatures Vec&lt;H256&gt; by MaxArraySize&quot;</span>))<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>sender_address = calculate_contract_address(
-        ContractAddressSalt(StarkFelt(contract_address_salt)),
-        ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
-        <span class="kw-2">&amp;</span>Calldata(calldata.into()),
-        StarknetContractAddress::default(),
-    )
-    .map_err(|e| <span class="macro">anyhow!</span>(<span class="string">&quot;Failed to calculate contract address: {e}&quot;</span>))<span class="question-mark">?
-    </span>.<span class="number">0
-    </span>.<span class="number">0
-    </span>.into();
-
     <span class="kw">let </span>calldata = tx
         .constructor_calldata
         .iter()
         .map(|f| (<span class="kw-2">*</span>f).into())
         .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
         .try_into()
-        .map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxArraySize&quot;</span>))<span class="question-mark">?</span>;
+        .map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize&quot;</span>))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>nonce = Felt252Wrapper::from(tx.nonce);
     <span class="kw">let </span>max_fee = Felt252Wrapper::from(tx.max_fee);
 
     <span class="prelude-val">Ok</span>(DeployAccountTransaction {
         version: <span class="number">1_u8</span>,
-        sender_address,
         calldata,
-        salt: U256::from(contract_address_salt),
+        salt: contract_address_salt,
         signature,
         account_class_hash: account_class_hash.into(),
         nonce,

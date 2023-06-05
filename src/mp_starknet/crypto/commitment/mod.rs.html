@@ -237,6 +237,7 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
@@ -408,14 +409,14 @@
 /// # Argument
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
-</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(transaction: DeployAccountTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(
+    transaction: DeployAccountTransaction,
+    chain_id: <span class="kw-2">&amp;</span>str,
+    address: [u8; <span class="number">32</span>],
+) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address.into(),
-        <span class="kw-2">&amp;</span><span class="macro">vec!</span>[
-            <span class="macro">vec!</span>[transaction.account_class_hash, transaction.salt.try_into().expect(<span class="string">&quot;overflow from U256 to Felt252&quot;</span>)],
-            transaction.calldata.to_vec(),
-        ]
-        .concat(),
+        address,
+        <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="macro">vec!</span>[transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
@@ -424,7 +425,8 @@
     )
 }
 
-<span class="kw">fn </span>calculate_transaction_hash_common&lt;T&gt;(
+<span class="doccomment">/// Computes the transaction hash using a hash function of type T
+</span><span class="kw">pub fn </span>calculate_transaction_hash_common&lt;T&gt;(
     sender_address: [u8; <span class="number">32</span>],
     calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
     max_fee: Felt252Wrapper,

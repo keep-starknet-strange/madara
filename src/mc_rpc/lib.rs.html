@@ -948,6 +948,11 @@
 <a href="#948" id="948">948</a>
 <a href="#949" id="949">949</a>
 <a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1575,7 +1580,12 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>transaction: MPTransaction = deploy_account_transaction.from_deploy(<span class="kw-2">&amp;</span><span class="self">self</span>.chain_id_str(best_block_hash)<span class="question-mark">?</span>);
+        <span class="kw">let </span>transaction: MPTransaction =
+            deploy_account_transaction.from_deploy(<span class="kw-2">&amp;</span><span class="self">self</span>.chain_id_str(best_block_hash)<span class="question-mark">?</span>).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
+
         <span class="kw">let </span>extrinsic = <span class="self">self
             </span>.client
             .runtime_api()
