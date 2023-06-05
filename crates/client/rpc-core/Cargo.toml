@@ -26,8 +26,11 @@ serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
+mp-digest-log = { workspace = true }
 starknet_api = { workspace = true, default-features = false }
 frame-support = { workspace = true }
 sp-core = { workspace = true }
 starknet-core = { workspace = true }
 cairo-vm = { workspace = true, default-features = false }
+sp-api = { workspace = true, default-features = true }
+
