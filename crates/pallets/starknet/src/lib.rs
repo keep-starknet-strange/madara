@@ -819,16 +819,18 @@ impl<T: Config> Pallet<T> {
     }
 
     /// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
-    /// properly the transaction;
+    /// properly the transaction. Substrate caches data so it's fine to call multiple times this
+    /// function, only the first transaction/block will be "slow" to load these data.
     fn get_block_context() -> BlockContext {
         let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
         let block_timestamp = Self::block_timestamp();
-        // Get fee token address
+        // Get fee token address. Its value is checked when we set it so it's fine to unwrap
         let fee_token_address =
             ContractAddress::try_from(StarkFelt::new(Self::fee_token_address().into()).unwrap()).unwrap();
         let chain_id = Self::chain_id_str();
         let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
         let vm_resource_fee_cost = HashMap::default();
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/545
         let invoke_tx_max_n_steps = 1000000;
         let validate_max_n_steps = 1000000;
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
