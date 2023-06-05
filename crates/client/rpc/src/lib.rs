@@ -766,7 +766,10 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
+        Ok(DeclareTransactionResult {
+            transaction_hash: transaction.hash.into(),
+            class_hash: declare_tx.compiled_class_hash.into(),
+        })
     }
 
     /// Returns a transaction details from it's hash.
