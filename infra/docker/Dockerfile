@@ -1,4 +1,4 @@
-FROM rust:slim as builder
+FROM rust:slim-buster as builder
 LABEL description="Multistage Docker image for Madara" \
   image.type="builder" \
   image.authors="abdelhamid.bakhta@gmail.com" \
@@ -10,7 +10,7 @@ LABEL description="Multistage Docker image for Madara" \
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
         libssl-dev make clang llvm protobuf-compiler \
-        pkg-config libz-dev; \
+        pkg-config libz-dev zstd; \
     apt-get autoremove -y; \
     apt-get clean; \
     rm -rf /var/lib/apt/lists/*
