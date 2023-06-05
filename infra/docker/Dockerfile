@@ -17,7 +17,7 @@ RUN apt-get -y update; \
 
 WORKDIR /madara
 COPY . .
-RUN cargo +nightly build --release -Z sparse-registry
+RUN cargo build --release -Z sparse-registry --config net.git-fetch-with-cli=true
 
 #FROM debian:buster-slim
 FROM scratch
