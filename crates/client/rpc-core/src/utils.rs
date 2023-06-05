@@ -178,7 +178,7 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
 }
 
 /// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
-fn _to_btree_map_entrypoints(
+fn to_btree_map_entrypoints(
     entries: LegacyEntryPointsByType,
 ) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
     let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
