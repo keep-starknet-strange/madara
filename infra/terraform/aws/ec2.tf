@@ -51,3 +51,16 @@ resource "aws_autoscaling_group" "nodes" {
     propagate_at_launch = true
   }
 }
+
+data "aws_instances" "instances" {
+  instance_tags = {
+    Application = "madara"
+  }
+
+  instance_state_names = ["running"]
+}
+
+resource "local_file" "instances-ips" { 
+  filename = "${path.module}/../../ansible/nodes.ips"
+  content = jsonencode(data.aws_instances.instances.public_ips)
+}

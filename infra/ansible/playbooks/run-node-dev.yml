@@ -1,0 +1,5 @@
+---
+- name: Run Madara Dev Node
+  hosts: madara-node-cluster
+  roles:
+    - '../roles/node-dev'
