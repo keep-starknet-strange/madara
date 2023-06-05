@@ -17,9 +17,9 @@ RUN apt-get -y update; \
 
 WORKDIR /madara
 COPY . .
-RUN cargo build --release
+RUN cargo +nightly build --release -Z sparse-registry
 
-#FROM debian:slim
+#FROM debian:buster-slim
 FROM scratch
 COPY --from=builder /madara/target/release/madara /
 EXPOSE 30333 9933 9944 9615
