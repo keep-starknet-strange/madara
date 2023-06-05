@@ -26,3 +26,4 @@ mc-storage = { workspace = true }
 mc-db = { workspace = true }
 mp-starknet = { workspace = true }
 pallet-starknet = { workspace = true }
+mc-rpc-core = { workspace = true }

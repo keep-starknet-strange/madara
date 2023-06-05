@@ -1,5 +1,7 @@
 use alloc::collections::BTreeMap;
 use alloc::string::String;
+use alloc::sync::Arc;
+use alloc::vec::Vec;
 
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
@@ -8,7 +10,9 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
-use starknet_api::transaction::Fee;
+use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
 use starknet_core::types::{
@@ -224,14 +228,12 @@ impl DeclareTransaction {
 pub struct DeployAccountTransaction {
     /// Transaction version.
     pub version: u8,
-    /// Transaction sender address.
-    pub sender_address: ContractAddressWrapper,
     /// Transaction calldata.
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// Account contract nonce.
     pub nonce: Felt252Wrapper,
     /// Transaction salt.
-    pub salt: U256,
+    pub salt: Felt252Wrapper,
     /// Transaction signature.
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Account class hash.
@@ -242,26 +244,44 @@ pub struct DeployAccountTransaction {
 
 impl DeployAccountTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self, chain_id: &str) -> Transaction {
-        Transaction {
+    pub fn from_deploy(self, chain_id: &str) -> Result<Transaction, TransactionConversionError> {
+        let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
+        let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
+            .into_inner()
+            .into_iter()
+            .map(|felt_wrapper| felt_wrapper.try_into().unwrap()) // Here, we are assuming that the conversion will not fail.
+            .collect();
+
+        let sender_address: ContractAddressWrapper = calculate_contract_address(
+            ContractAddressSalt(salt_as_felt),
+            ClassHash(self.account_class_hash.try_into().map_err(|_| TransactionConversionError::MissingClassHash)?),
+            &Calldata(Arc::new(stark_felt_vec)),
+            ContractAddress::default(),
+        )
+        .map_err(|_| TransactionConversionError::ContractAddressDerivationError)?
+        .0
+        .0
+        .into();
+
+        Ok(Transaction {
             tx_type: TxType::DeployAccount,
             version: self.version,
-            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id),
+            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id, sender_address.into()),
             signature: self.signature,
-            sender_address: self.sender_address,
+            sender_address,
             nonce: self.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
                 Some(self.account_class_hash),
                 EntryPointTypeWrapper::External,
                 None,
                 self.calldata,
-                self.sender_address,
-                self.sender_address,
+                sender_address,
+                sender_address,
             ),
             contract_class: None,
-            contract_address_salt: Some(self.salt),
+            contract_address_salt: Some(self.salt.into()),
             max_fee: self.max_fee,
-        }
+        })
     }
 }
 
@@ -275,6 +295,9 @@ pub enum TransactionConversionError {
     /// Class is missing from the object of type [Transaction]
     #[error("Class is missing from the object of type [Transaction]")]
     MissingClass,
+    /// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
+    #[error("Impossible to derive the contract address from the object of type [DeployAccountTransaction]")]
+    ContractAddressDerivationError,
 }
 impl TryFrom<Transaction> for DeclareTransaction {
     type Error = TransactionConversionError;
@@ -398,13 +421,14 @@ pub struct Transaction {
 impl TryFrom<Transaction> for DeployAccountTransaction {
     type Error = TransactionConversionError;
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+        // REPLACE BY ERROR HANDLING
+        let salt_as_felt_wrapper: Felt252Wrapper = value.contract_address_salt.unwrap_or_default().try_into().unwrap();
         Ok(Self {
             version: value.version,
             signature: value.signature,
-            sender_address: value.sender_address,
             nonce: value.nonce,
             calldata: value.call_entrypoint.calldata,
-            salt: value.contract_address_salt.unwrap_or_default(),
+            salt: salt_as_felt_wrapper,
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
         })

@@ -13,10 +13,11 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::{error, info};
-use mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
+use mc_rpc_core::utils::{
+    get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
+};
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::block::BlockTransactions;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -102,11 +103,7 @@ where
     pub fn current_block_hash(&self) -> Result<H256, ApiError> {
         let substrate_block_hash = self.client.info().best_hash;
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         Ok(block.header().hash(*self.hasher).into())
     }
@@ -172,10 +169,7 @@ where
 
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id)?;
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
         u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
@@ -210,14 +204,11 @@ where
                     StarknetRpcApiError::BlockNotFound
                 })?;
 
-            let block = self
-                .overrides
-                .for_block_hash(self.client.as_ref(), substrate_block_hash)
-                .current_block(substrate_block_hash)
-                .ok_or_else(|| {
-                    error!("Failed to retrieve block");
-                    StarknetRpcApiError::BlockNotFound
-                })?;
+            let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+                error!("Failed to retrieve block");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
             let block_hash = block.header().hash(*self.hasher).into();
             let block_number = block.header().block_number.try_into().map_err(|e| {
                 error!("Failed to convert block number to u64: {e}");
@@ -317,11 +308,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         Ok(block.header().transaction_count)
     }
@@ -449,23 +436,16 @@ where
                 // get a starknet block from the starting substrate block number
                 let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
                     self.client.as_ref(),
-                    &self.overrides,
                     self.starting_block,
                 );
 
                 // get a starknet block from the current substrate block number
-                let current_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    self.client.as_ref(),
-                    &self.overrides,
-                    best_number,
-                );
+                let current_block =
+                    madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), best_number);
 
                 // get a starknet block from the highest substrate block number
-                let highest_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    self.client.as_ref(),
-                    &self.overrides,
-                    highest_number,
-                );
+                let highest_block =
+                    madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), highest_number);
 
                 if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
                     // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
@@ -532,11 +512,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         let transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
         let blockhash = block.header().hash(*self.hasher);
@@ -650,7 +626,12 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&self.chain_id_str(best_block_hash)?);
+        let transaction: MPTransaction =
+            deploy_account_transaction.from_deploy(&self.chain_id_str(best_block_hash)?).map_err(|e| {
+                error!("{e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
         let extrinsic = self
             .client
             .runtime_api()
@@ -721,23 +702,13 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        let block_transactions = block.transactions();
-        match block_transactions {
-            BlockTransactions::Full(transactions) => {
-                let transaction = transactions.get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
-                Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
-                    error!("{:?}", e);
-                    StarknetRpcApiError::InternalServerError
-                })?)
-            }
-            BlockTransactions::Hashes(_) => Err(StarknetRpcApiError::InvalidTxnIndex.into()),
-        }
+        let transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)?;
+        Ok(Transaction::try_from(transaction.clone()).map_err(|e| {
+            error!("{:?}", e);
+            StarknetRpcApiError::InternalServerError
+        })?)
     }
 
     /// Get block information with full transactions given the block id
@@ -747,16 +718,7 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
-
-        let transactions = match block.transactions() {
-            BlockTransactions::Full(transactions) => transactions.to_vec(),
-            BlockTransactions::Hashes(_) => vec![],
-        };
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         let block_with_txs = BlockWithTxs {
             // TODO: Get status from block
@@ -770,8 +732,10 @@ where
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
-            transactions: transactions
-                .into_iter()
+            transactions: block
+                .transactions()
+                .iter()
+                .cloned()
                 .map(Transaction::try_from)
                 .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
                 .map_err(|e| {
@@ -932,35 +896,23 @@ where
             None => return Err(StarknetRpcApiError::TxnHashNotFound.into()),
         };
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        match block.transactions() {
-            BlockTransactions::Full(transactions) => {
-                let find_tx = transactions
-                    .into_iter()
-                    .find(|tx| tx.hash == transaction_hash.into())
-                    .map(|tx| Transaction::try_from(tx.clone()));
+        let find_tx = block
+            .transactions()
+            .into_iter()
+            .find(|tx| tx.hash == transaction_hash.into())
+            .map(|tx| Transaction::try_from(tx.clone()));
 
-                match find_tx {
-                    Some(res_tx) => match res_tx {
-                        Ok(tx) => Ok(tx),
-                        Err(e) => {
-                            error!("Error retrieving transaction: {:?}", e);
-                            Err(StarknetRpcApiError::InternalServerError.into())
-                        }
-                    },
-                    None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        match find_tx {
+            Some(res_tx) => match res_tx {
+                Ok(tx) => Ok(tx),
+                Err(e) => {
+                    error!("Error retrieving transaction: {:?}", e);
+                    Err(StarknetRpcApiError::InternalServerError.into())
                 }
-            }
-            BlockTransactions::Hashes(_hashes) => {
-                // Only transactions hashes are not enough to return a full transaction.
-                // Consider the transaction as not found.
-                Err(StarknetRpcApiError::TxnHashNotFound.into())
-            }
+            },
+            None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
         }
     }
 
@@ -988,11 +940,7 @@ where
             }
         };
 
-        let block = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         let find_receipt = block
             .transaction_receipts()

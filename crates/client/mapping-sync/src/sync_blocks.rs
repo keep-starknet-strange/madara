@@ -1,8 +1,5 @@
-use std::sync::Arc;
-
-use mc_storage::OverrideHandle;
+use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_digest_log::FindLogError;
-use mp_starknet::block::BlockTransactions;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -14,7 +11,6 @@ use sp_runtime::traits::{Block as BlockT, Header as HeaderT, Zero};
 
 fn sync_block<B: BlockT, C, BE, H>(
     client: &C,
-    overrides: Arc<OverrideHandle<B>>,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
     hasher: &H,
@@ -32,8 +28,7 @@ where
     match mp_digest_log::find_starknet_block(header.digest()) {
         Ok(digest_starknet_block) => {
             // Read the runtime storage in order to find the Starknet block stored under this Substrate block
-            let opt_storage_starknet_block =
-                overrides.for_block_hash(client, substrate_block_hash).current_block(substrate_block_hash);
+            let opt_storage_starknet_block = get_block_by_block_hash(client, substrate_block_hash);
             match opt_storage_starknet_block {
                 Some(storage_starknet_block) => {
                     let digest_starknet_block_hash = digest_starknet_block.header().hash(*hasher);
@@ -49,14 +44,11 @@ where
                         let mapping_commitment = mc_db::MappingCommitment {
                             block_hash: substrate_block_hash,
                             starknet_block_hash: digest_starknet_block_hash.into(),
-                            starknet_transaction_hashes: match digest_starknet_block.transactions() {
-                                BlockTransactions::Full(transactions) => {
-                                    transactions.into_iter().map(|tx| H256::from(tx.hash)).collect()
-                                }
-                                BlockTransactions::Hashes(hashes) => {
-                                    hashes.into_iter().map(|hash| H256::from(*hash)).collect()
-                                }
-                            },
+                            starknet_transaction_hashes: digest_starknet_block
+                                .transactions()
+                                .into_iter()
+                                .map(|tx| H256::from(tx.hash))
+                                .collect(),
                         };
 
                         backend.mapping().write_hashes(mapping_commitment)
@@ -101,7 +93,6 @@ where
 fn sync_one_block<B: BlockT, C, BE, H>(
     client: &C,
     substrate_backend: &BE,
-    overrides: Arc<OverrideHandle<B>>,
     madara_backend: &mc_db::Backend<B>,
     sync_from: <B::Header as HeaderT>::Number,
     hasher: &H,
@@ -146,7 +137,7 @@ where
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
         Ok(true)
     } else {
-        sync_block(client, overrides, madara_backend, &operating_header, hasher)?;
+        sync_block(client, madara_backend, &operating_header, hasher)?;
 
         current_syncing_tips.push(*operating_header.parent_hash());
         madara_backend.meta().write_current_syncing_tips(current_syncing_tips)?;
@@ -157,7 +148,6 @@ where
 pub fn sync_blocks<B: BlockT, C, BE, H>(
     client: &C,
     substrate_backend: &BE,
-    overrides: Arc<OverrideHandle<B>>,
     madara_backend: &mc_db::Backend<B>,
     limit: usize,
     sync_from: <B::Header as HeaderT>::Number,
@@ -173,8 +163,7 @@ where
     let mut synced_any = false;
 
     for _ in 0..limit {
-        synced_any = synced_any
-            || sync_one_block(client, substrate_backend, overrides.clone(), madara_backend, sync_from, hasher)?;
+        synced_any = synced_any || sync_one_block(client, substrate_backend, madara_backend, sync_from, hasher)?;
     }
 
     Ok(synced_any)

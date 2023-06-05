@@ -344,7 +344,7 @@ impl_runtime_apis! {
             xts.into_iter().filter_map(|xt| match xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
                 RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
-                RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.from_deploy(chain_id)),
+                RuntimeCall::Starknet( deploy_account { transaction }) => transaction.from_deploy(chain_id).ok(),
                 _ => None
             }).collect::<Vec<Transaction>>()
         }

@@ -1,10 +1,11 @@
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::StateReader;
-use crate::state::*;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
+
+use crate::state::*;
 
 #[test]
 fn test_get_storage_at() {
