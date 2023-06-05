@@ -70,9 +70,8 @@ pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transact
         BroadcastedTransaction::Declare(declare_tx) => {
             to_declare_tx(declare_tx).map(|inner| inner.from_declare(chain_id))
         }
-        BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id).map_err(|e| anyhow!(e)))
-        }
+        BroadcastedTransaction::DeployAccount(deploy_account_tx) => to_deploy_account_tx(deploy_account_tx)
+            .and_then(|inner| inner.from_deploy(chain_id).map_err(|e| anyhow!(e))),
     }
 }
 
