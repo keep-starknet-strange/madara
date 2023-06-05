@@ -67,8 +67,7 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
-<a href="#70" id="70">70</a>
-</pre><pre class="rust"><code><span class="kw">use </span>mc_storage::OverrideHandle;
+</pre><pre class="rust"><code><span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
 <span class="kw">use </span>mp_starknet::block::Block;
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sp_api::BlockId;
@@ -119,7 +118,6 @@
 // or Error.
 </span><span class="kw">pub fn </span>starknet_block_from_substrate_hash&lt;B: BlockT, C, BE&gt;(
     client: <span class="kw-2">&amp;</span>C,
-    overrides: <span class="kw-2">&amp;</span>OverrideHandle&lt;B&gt;,
     target_number: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Block, StarknetRpcApiError&gt;
 <span class="kw">where
@@ -131,7 +129,7 @@
 
     <span class="kw">match </span>substrate_block_hash {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(block_hash)) =&gt; {
-            <span class="kw">let </span>block = overrides.for_block_hash(client, block_hash).current_block(block_hash).unwrap_or_default();
+            <span class="kw">let </span>block = get_block_by_block_hash(client, block_hash).unwrap_or_default();
 
             <span class="prelude-val">Ok</span>(block)
         }

@@ -559,7 +559,6 @@
 <a href="#559" id="559">559</a>
 <a href="#560" id="560">560</a>
 <a href="#561" id="561">561</a>
-<a href="#562" id="562">562</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -851,7 +850,7 @@
     <span class="kw">let </span>starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
-        overrides: overrides.clone(),
+        overrides,
         sync_service: sync_service.clone(),
         starting_block,
     };
@@ -898,7 +897,6 @@
             Duration::new(<span class="number">6</span>, <span class="number">0</span>),
             client.clone(),
             backend,
-            overrides,
             madara_backend,
             <span class="number">3</span>,
             <span class="number">0</span>,

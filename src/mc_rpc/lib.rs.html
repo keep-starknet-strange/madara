@@ -948,45 +948,6 @@
 <a href="#948" id="948">948</a>
 <a href="#949" id="949">949</a>
 <a href="#950" id="950">950</a>
-<a href="#951" id="951">951</a>
-<a href="#952" id="952">952</a>
-<a href="#953" id="953">953</a>
-<a href="#954" id="954">954</a>
-<a href="#955" id="955">955</a>
-<a href="#956" id="956">956</a>
-<a href="#957" id="957">957</a>
-<a href="#958" id="958">958</a>
-<a href="#959" id="959">959</a>
-<a href="#960" id="960">960</a>
-<a href="#961" id="961">961</a>
-<a href="#962" id="962">962</a>
-<a href="#963" id="963">963</a>
-<a href="#964" id="964">964</a>
-<a href="#965" id="965">965</a>
-<a href="#966" id="966">966</a>
-<a href="#967" id="967">967</a>
-<a href="#968" id="968">968</a>
-<a href="#969" id="969">969</a>
-<a href="#970" id="970">970</a>
-<a href="#971" id="971">971</a>
-<a href="#972" id="972">972</a>
-<a href="#973" id="973">973</a>
-<a href="#974" id="974">974</a>
-<a href="#975" id="975">975</a>
-<a href="#976" id="976">976</a>
-<a href="#977" id="977">977</a>
-<a href="#978" id="978">978</a>
-<a href="#979" id="979">979</a>
-<a href="#980" id="980">980</a>
-<a href="#981" id="981">981</a>
-<a href="#982" id="982">982</a>
-<a href="#983" id="983">983</a>
-<a href="#984" id="984">984</a>
-<a href="#985" id="985">985</a>
-<a href="#986" id="986">986</a>
-<a href="#987" id="987">987</a>
-<a href="#988" id="988">988</a>
-<a href="#989" id="989">989</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1002,7 +963,9 @@
 <span class="kw">use </span>errors::StarknetRpcApiError;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
 <span class="kw">use </span>log::{error, info};
-<span class="kw">use </span>mc_rpc_core::utils::{to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx};
+<span class="kw">use </span>mc_rpc_core::utils::{
+    get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
+};
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
@@ -1090,11 +1053,7 @@
     <span class="kw">pub fn </span>current_block_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;H256, ApiError&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.client.info().best_hash;
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="prelude-val">Ok</span>(block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into())
     }
@@ -1160,10 +1119,7 @@
 
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.substrate_block_hash_from_starknet_block(block_id)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
             .ok_or(<span class="string">&quot;Failed to retrieve the substrate block number&quot;</span>.to_string())<span class="question-mark">?</span>;
 
         u64::try_from(block.header().block_number).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>))
@@ -1198,14 +1154,11 @@
                     StarknetRpcApiError::BlockNotFound
                 })<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>block = <span class="self">self
-                </span>.overrides
-                .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-                .current_block(substrate_block_hash)
-                .ok_or_else(|| {
-                    <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve block&quot;</span>);
-                    StarknetRpcApiError::BlockNotFound
-                })<span class="question-mark">?</span>;
+            <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve block&quot;</span>);
+                StarknetRpcApiError::BlockNotFound
+            })<span class="question-mark">?</span>;
+
             <span class="kw">let </span>block_hash = block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into();
             <span class="kw">let </span>block_number = block.header().block_number.try_into().map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>);
@@ -1305,11 +1258,7 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="prelude-val">Ok</span>(block.header().transaction_count)
     }
@@ -1436,23 +1385,16 @@
                 <span class="comment">// get a starknet block from the starting substrate block number
                 </span><span class="kw">let </span>starting_block = madara_backend_client::starknet_block_from_substrate_hash(
                     <span class="self">self</span>.client.as_ref(),
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.overrides,
                     <span class="self">self</span>.starting_block,
                 );
 
                 <span class="comment">// get a starknet block from the current substrate block number
-                </span><span class="kw">let </span>current_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    <span class="self">self</span>.client.as_ref(),
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.overrides,
-                    best_number,
-                );
+                </span><span class="kw">let </span>current_block =
+                    madara_backend_client::starknet_block_from_substrate_hash(<span class="self">self</span>.client.as_ref(), best_number);
 
                 <span class="comment">// get a starknet block from the highest substrate block number
-                </span><span class="kw">let </span>highest_block = madara_backend_client::starknet_block_from_substrate_hash(
-                    <span class="self">self</span>.client.as_ref(),
-                    <span class="kw-2">&amp;</span><span class="self">self</span>.overrides,
-                    highest_number,
-                );
+                </span><span class="kw">let </span>highest_block =
+                    madara_backend_client::starknet_block_from_substrate_hash(<span class="self">self</span>.client.as_ref(), highest_number);
 
                 <span class="kw">if </span>starting_block.is_ok() &amp;&amp; current_block.is_ok() &amp;&amp; highest_block.is_ok() {
                     <span class="comment">// Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
@@ -1519,11 +1461,7 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="kw">let </span>transactions = block.transactions_hashes().into_iter().map(FieldElement::from).collect();
         <span class="kw">let </span>blockhash = block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher);
@@ -1708,11 +1646,7 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="kw">let </span>transaction = block.transactions().get(index).ok_or(StarknetRpcApiError::InvalidTxnIndex)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(Transaction::try_from(transaction.clone()).map_err(|e| {
@@ -1728,11 +1662,7 @@
             StarknetRpcApiError::BlockNotFound
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="kw">let </span>block_with_txs = BlockWithTxs {
             <span class="comment">// TODO: Get status from block
@@ -1910,11 +1840,7 @@
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound.into()),
         };
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="kw">let </span>find_tx = block
             .transactions()
@@ -1958,11 +1884,7 @@
             }
         };
 
-        <span class="kw">let </span>block = <span class="self">self
-            </span>.overrides
-            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-            .current_block(substrate_block_hash)
-            .unwrap_or_default();
+        <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
         <span class="kw">let </span>find_receipt = block
             .transaction_receipts()
