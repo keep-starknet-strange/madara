@@ -580,10 +580,6 @@ pub struct TransactionReceiptWrapper {
     pub actual_fee: Felt252Wrapper,
     /// Transaction type
     pub tx_type: TxType,
-    /// Block Number
-    pub block_number: u64,
-    /// Block Hash
-    pub block_hash: Felt252Wrapper,
     /// Messages sent in the transaction.
     // pub messages_sent: BoundedVec<Message, MaxArraySize>, // TODO: add messages
     /// Events emitted in the transaction.
@@ -595,20 +591,21 @@ impl TransactionReceiptWrapper {
     /// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
     ///
     /// This conversion is done in a function and not `From` trait due to the need
-    /// to pass some arguments like the [`RPCTransactionStatus`] which is unknown
-    /// in the [`TransactionReceiptWrapper`].
+    /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
+    /// which are unknown in the [`TransactionReceiptWrapper`].
     ///
     /// Maybe extended later for other missing fields like messages sent to L1
     /// and the contract class for the deploy.
     pub fn into_maybe_pending_transaction_receipt(
         self,
         status: RPCTransactionStatus,
+        block_hash_and_number: (FieldElement, u64),
     ) -> RPCMaybePendingTransactionReceipt {
         let transaction_hash = self.transaction_hash.into();
         let actual_fee = self.actual_fee.into();
         let status = status;
-        let block_hash = self.block_hash.into();
-        let block_number = self.block_number;
+        let block_hash = block_hash_and_number.0;
+        let block_number = block_hash_and_number.1;
         let events = self.events.iter().map(|e| (*e).clone().into()).collect();
 
         // TODO: from where those message must be taken?

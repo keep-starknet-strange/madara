@@ -939,13 +939,24 @@ where
             }
         };
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let block: mp_starknet::block::Block =
+            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let block_header = block.header();
+        let block_hash = block_header.hash(*self.hasher).into();
+        let block_number = u64::try_from(block_header.block_number).map_err(|e| {
+            error!("Failed to convert block number to u64: {e}");
+            StarknetRpcApiError::TxnHashNotFound
+        })?;
 
         let find_receipt = block
             .transaction_receipts()
             .into_iter()
             .find(|receipt| receipt.transaction_hash == transaction_hash.into())
-            .map(|receipt| receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
+            .map(|receipt| {
+                receipt
+                    .clone()
+                    .into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2, (block_hash, block_number))
+            });
 
         match find_receipt {
             Some(receipt) => Ok(receipt),
