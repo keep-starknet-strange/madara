@@ -33,9 +33,9 @@
 | starknet_getBlockWithTxs                 | :white_check_mark: |
 | starknet_getStateUpdate                  | :construction:     |
 | starknet_getStorageAt                    | :white_check_mark: |
-| starknet_getTransactionByHash            | :construction:     |
+| starknet_getTransactionByHash            | :white_check_mark: |
 | starknet_getTransactionByBlockIdAndIndex | :white_check_mark: |
-| starknet_getTransactionReceipt           | :construction:     |
+| starknet_getTransactionReceipt           | :white_check_mark: |
 | starknet_getClass                        | :white_check_mark: |
 | starknet_getClassHashAt                  | :white_check_mark: |
 | starknet_getClassAt                      | :white_check_mark: |
@@ -45,9 +45,9 @@
 | starknet_blockNumber                     | :white_check_mark: |
 | starknet_blockHashAndNumber              | :white_check_mark: |
 | starknet_chainId                         | :white_check_mark: |
-| starknet_pendingTransactions             | :construction:     |
+| starknet_pendingTransactions             | :white_check_mark: |
 | starknet_syncing                         | :white_check_mark: |
-| starknet_getEvents                       | :construction:     |
+| starknet_getEvents                       | :white_check_mark: |
 | starknet_getNonce                        | :white_check_mark: |
 | starknet_traceTransaction                | :construction:     |
 | starknet_simulateTransaction             | :construction:     |
