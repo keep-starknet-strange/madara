@@ -364,6 +364,7 @@ pub mod pallet {
         StateDiffError,
         ContractNotFound,
         ReachedBoundedVecLimit,
+        TransactionConversionError,
     }
 
     /// The Starknet pallet external functions.
@@ -593,14 +594,15 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
+            let chain_id = Self::chain_id_str();
+            let transaction: Transaction =
+                transaction.from_deploy(&chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
+
             // Check if contract is deployed
             ensure!(
                 !ContractClassHashes::<T>::contains_key(transaction.sender_address),
                 Error::<T>::AccountAlreadyDeployed
             );
-
-            let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_deploy(&chain_id);
 
             // Get current block
             let block = Self::current_block();
@@ -785,11 +787,14 @@ pub mod pallet {
                 }
                 Call::deploy_account { transaction } => {
                     // don't validate deploy txs for now
-                    // let deploy_account_transaction = transaction.clone().from_deploy(&Self::chain_id_str());
+                    let deploy_account_transaction = transaction
+                        .clone()
+                        .from_deploy(&Self::chain_id_str())
+                        .map_err(|_| TransactionValidityError::Unknown(UnknownTransaction::CannotLookup))?;
                     // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
                         .longevity(64_u64)
                         .propagate(true)
                         .build()

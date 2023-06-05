@@ -625,7 +625,12 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&self.chain_id_str(best_block_hash)?);
+        let transaction: MPTransaction =
+            deploy_account_transaction.from_deploy(&self.chain_id_str(best_block_hash)?).map_err(|e| {
+                error!("{e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
         let extrinsic = self
             .client
             .runtime_api()
