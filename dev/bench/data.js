@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1685949000511,
+  "lastUpdate": 1685957560094,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -1134,6 +1134,42 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 125.75,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "101047205+0xEniotna@users.noreply.github.com",
+            "name": "Antoine",
+            "username": "0xEniotna"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "83f99c8046583bf34e0bc53c76ff5caf6678b006",
+          "message": "feat: move calculation of deployed account address #500 (#514)\n\nCo-authored-by: Gregory Edison <gregory.edison1993@gmail.com>",
+          "timestamp": "2023-06-05T11:29:27+02:00",
+          "tree_id": "85cef0efe95a13bf2a4a2206841076adf50395a8",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/83f99c8046583bf34e0bc53c76ff5caf6678b006"
+        },
+        "date": 1685957559586,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 775,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 129.16666666666666,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
