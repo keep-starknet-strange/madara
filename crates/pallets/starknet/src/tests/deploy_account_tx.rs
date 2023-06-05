@@ -190,11 +190,6 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
-        let transaction_hash = calculate_deploy_account_tx_hash(transaction.clone(), chain_id);
-        transaction.signature = sign_message_hash(transaction_hash);
-
         let mp_transaction = transaction.clone().from_deploy(&get_chain_id()).unwrap();
 
         let tx_hash = mp_transaction.hash;

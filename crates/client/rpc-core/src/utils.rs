@@ -13,6 +13,8 @@ use mp_starknet::execution::types::{
     ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
 };
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
+use sp_api::HeaderT;
+use sp_blockchain::HeaderBackend;
 use sp_runtime::{BoundedBTreeMap, BoundedVec};
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
