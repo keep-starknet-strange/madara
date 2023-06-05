@@ -818,6 +818,8 @@ impl<T: Config> Pallet<T> {
         Ok(())
     }
 
+    /// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
+    /// properly the transaction;
     fn get_block_context() -> BlockContext {
         let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
         let block_timestamp = Self::block_timestamp();
