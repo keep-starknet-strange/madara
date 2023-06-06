@@ -36,21 +36,18 @@
     msg: "{{ substrate_compile_output.stdout_lines }}"
 
 - name: Wait for bootstrap_node
-  wait_for:
-    host={{ bootstrap_node }}
-    port=9944
-    delay=1
-    timeout=300
+  wait_for: host={{ bootstrap_node }} port=9944 delay=1 timeout=300
   when: bootstrap_node is defined
 
 - name: Get bootstrap peer id
-  ansible.builtin.uri: 
+  ansible.builtin.uri:
     url: http://{{bootstrap_node}}:9944
     method: POST
     return_content: yes
-    headers: 
+    headers:
       Content-Type: "application/json"
-    body: '{"jsonrpc": "2.0","method": "system_localPeerId","params": [],"id": 1}'
+    body:
+      '{"jsonrpc": "2.0","method": "system_localPeerId","params": [],"id": 1}'
   register: bootstrap_peerid
   when: bootstrap_node is defined
 
