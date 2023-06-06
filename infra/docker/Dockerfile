@@ -9,6 +9,7 @@ RUN apt-get -y update; \
 
 WORKDIR /madara
 COPY . .
+COPY ./infra/chain-specs /chain-specs
 RUN cargo build --release -Z sparse-registry --config net.git-fetch-with-cli=true
 
 FROM debian:buster-slim
