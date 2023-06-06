@@ -1156,7 +1156,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(nonce).to.not.be.undefined;
     });
 
-        it("should support 'latest' block id", async function () {
+    it("should support 'latest' block id", async function () {
       const nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
         "latest"
