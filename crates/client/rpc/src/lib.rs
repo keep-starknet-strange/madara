@@ -2,6 +2,9 @@
 //!
 //! It uses the madara client and backend in order to answer queries.
 
+#[cfg(test)]
+mod tests;
+
 mod constants;
 mod errors;
 mod madara_backend_client;
