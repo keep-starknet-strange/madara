@@ -277,7 +277,7 @@ where
                 StarknetRpcApiError::BlockNotFound
             })?;
 
-            let (mut new_filtered_events, continuation_index) = self.filter_events_by_params(
+            let (mut new_filtered_events, continuation_index) = Starknet::<B, BE, C, P, H>::filter_events_by_params(
                 block_events,
                 from_address,
                 keys.clone(),
