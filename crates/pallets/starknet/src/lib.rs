@@ -451,8 +451,6 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.0.into(),
-                        block_hash: Felt252Wrapper::default(), // unwrap to check.
-                        block_number: block_context.block_number.0,
                     }
                 }
                 Err(e) => {
@@ -545,8 +543,6 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: Felt252Wrapper::default(),
-                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -635,8 +631,6 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: Felt252Wrapper::default(),
-                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }

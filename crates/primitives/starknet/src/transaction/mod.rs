@@ -188,8 +188,6 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
                 TransactionOutput::L1Handler(_) => TxType::L1Handler,
                 _ => TxType::Invoke,
             },
-            block_hash: self.block_hash.0.into(),
-            block_number: self.block_number.0,
             events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
         })
     }
@@ -752,8 +750,6 @@ impl Default for TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper::default(),
             actual_fee: Felt252Wrapper::default(),
             tx_type: TxType::Invoke,
-            block_hash: Felt252Wrapper::default(),
-            block_number: 0_u64,
             events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
         }
     }
