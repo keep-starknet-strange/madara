@@ -6,4 +6,4 @@ echo "*** Start Madara node (Docker) ***"
 cd $(dirname $0)/../..
 
 docker build -t madara/docker -f infra/docker/Dockerfile .
-docker run -it madara/docker @
+docker run -it madara/docker $@
