@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686038315141,
+  "lastUpdate": 1686038316918,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -1568,6 +1568,42 @@ window.BENCHMARK_DATA = {
             "value": 203.41666666666666,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Artevolve@yahoo.com",
+            "name": "0xevolve",
+            "username": "EvolveArt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "529d5a6e6af276cf9b70bbc585509f3f69e842ec",
+          "message": "fix: to_rpc_contract_class ✨ (#485)\n\nCo-authored-by: Lucas @ StarkWare <70894690+LucasLvy@users.noreply.github.com>",
+          "timestamp": "2023-06-06T09:55:23+02:00",
+          "tree_id": "f23055a83f3a51849bc2d1d1b6cb430907989cf1",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/529d5a6e6af276cf9b70bbc585509f3f69e842ec"
+        },
+        "date": 1686038312923,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 1217.25,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3598\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 202.875,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3598\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       },
