@@ -199,8 +199,40 @@
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
 <a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
-<span class="kw">use </span>std::vec;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
@@ -219,51 +251,66 @@
 <span class="kw">use </span>sp_runtime::{BoundedBTreeMap, BoundedVec};
 <span class="kw">use </span>starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-    BroadcastedTransaction, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
+    BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
     LegacyEntryPointsByType, StarknetError,
 };
 
 <span class="doccomment">/// Returns a `ContractClass` from a `ContractClassWrapper`
-</span><span class="comment">// TODO: see https://github.com/keep-starknet-strange/madara/issues/363
 </span><span class="kw">pub fn </span>to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
-    <span class="kw">let </span>entry_points_by_type = EntryPointsByType { constructor: <span class="macro">vec!</span>[], external: <span class="macro">vec!</span>[], l1_handler: <span class="macro">vec!</span>[] };
-    <span class="kw">let </span>default = FlattenedSierraClass {
-        sierra_program: <span class="macro">vec!</span>[FieldElement::from_dec_str(<span class="string">&quot;0&quot;</span>).unwrap()],
-        contract_class_version: String::from(<span class="string">&quot;version&quot;</span>),
+    <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>_contract_class_wrapped.entry_points_by_type.into())<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>program: Program =
+        _contract_class_wrapped.program.try_into().map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;Contract Class conversion failed.&quot;</span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>compressed_program = compress_and_encode_base64(<span class="kw-2">&amp;</span>program.to_bytes())<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
+        program: compressed_program.as_bytes().to_vec(),
         entry_points_by_type,
-        abi: String::from(<span class="string">&quot;&quot;</span>),
-    };
-    <span class="prelude-val">Ok</span>(ContractClass::Sierra(default))
+        abi: <span class="prelude-val">None</span>, <span class="comment">// TODO: add ABI
+    </span>}))
 }
 
 <span class="doccomment">/// Returns a base64 encoded and compressed string of the input bytes
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>_compress_and_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
-    <span class="kw">let </span>data_compressed = _compress(data)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(_encode_base64(<span class="kw-2">&amp;</span>data_compressed))
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compress_and_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
+    <span class="kw">let </span>data_compressed = compress(data)<span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(encode_base64(<span class="kw-2">&amp;</span>data_compressed))
 }
 
 <span class="doccomment">/// Returns a compressed vector of bytes
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>_compress(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compress(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(<span class="kw-2">&amp;mut </span>gzip_encoder, data)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(gzip_encoder.finish()<span class="question-mark">?</span>)
 }
 
 <span class="doccomment">/// Returns a base64 encoded string of the input bytes
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
     general_purpose::STANDARD.encode(data)
 }
 
-<span class="kw">pub fn </span>to_tx(request: BroadcastedTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction&gt; {
+<span class="doccomment">/// Converts a broadcasted transaction to a transaction
+/// Supports `Invoke`, `Declare` and `DeployAccount` transactions
+///
+/// # Arguments
+///
+/// * `request` - The broadcasted transaction to convert
+///
+/// # Returns
+///
+/// * `Transaction` - The converted transaction
+</span><span class="kw">pub fn </span>to_tx(request: BroadcastedTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction&gt; {
     <span class="kw">match </span>request {
         BroadcastedTransaction::Invoke(invoke_tx) =&gt; to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
-        BroadcastedTransaction::Declare(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()), <span class="comment">/* TODO: add support once #341 is supported */
-        </span>BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; to_deploy_account_tx(deploy_account_tx)
+        BroadcastedTransaction::Declare(declare_tx) =&gt; {
+            to_declare_tx(declare_tx).map(|inner| inner.from_declare(chain_id))
+        }
+        BroadcastedTransaction::DeployAccount(deploy_account_tx) =&gt; to_deploy_account_tx(deploy_account_tx)
             .and_then(|inner| inner.from_deploy(chain_id).map_err(|e| <span class="macro">anyhow!</span>(e))),
     }
 }
 
-<span class="kw">pub fn </span>to_invoke_tx(tx: BroadcastedInvokeTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction&gt; {
+<span class="doccomment">/// Converts a broadcasted invoke transaction to an invoke transaction
+</span><span class="kw">pub fn </span>to_invoke_tx(tx: BroadcastedInvokeTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction&gt; {
     <span class="kw">match </span>tx {
         BroadcastedInvokeTransaction::V0(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
         BroadcastedInvokeTransaction::V1(invoke_tx_v1) =&gt; <span class="prelude-val">Ok</span>(InvokeTransaction {
@@ -284,7 +331,8 @@
     }
 }
 
-<span class="kw">pub fn </span>to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction&gt; {
+<span class="doccomment">/// Converts a broadcasted deploy account transaction to a deploy account transaction
+</span><span class="kw">pub fn </span>to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction&gt; {
     <span class="kw">let </span>contract_address_salt = tx.contract_address_salt.into();
 
     <span class="kw">let </span>account_class_hash = tx.class_hash;
@@ -319,7 +367,8 @@
     })
 }
 
-<span class="kw">pub fn </span>to_declare_tx(tx: BroadcastedDeclareTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction&gt; {
+<span class="doccomment">/// Converts a broadcasted declare transaction to a declare transaction
+</span><span class="kw">pub fn </span>to_declare_tx(tx: BroadcastedDeclareTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction&gt; {
     <span class="kw">match </span>tx {
         BroadcastedDeclareTransaction::V1(declare_tx_v1) =&gt; {
             <span class="kw">let </span>signature = declare_tx_v1
@@ -350,7 +399,7 @@
                 signature,
                 contract_class: ContractClassWrapper {
                     program: program.try_into().map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;Failed to convert program to program wrapper&quot;</span>))<span class="question-mark">?</span>,
-                    entry_points_by_type: BoundedBTreeMap::try_from(_to_btree_map_entrypoints(
+                    entry_points_by_type: BoundedBTreeMap::try_from(to_btree_map_entrypoints(
                         declare_tx_v1.contract_class.entry_points_by_type.clone(),
                     ))
                     .unwrap(),
@@ -362,33 +411,50 @@
     }
 }
 
-<span class="doccomment">/// Returns a hash map of entry point types to entrypoint from deprecated entry point by type
-</span><span class="kw">fn </span>_to_btree_map_entrypoints(
+<span class="doccomment">/// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
+</span><span class="kw">fn </span>to_btree_map_entrypoints(
     entries: LegacyEntryPointsByType,
 ) -&gt; BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type: BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt; =
         BTreeMap::new();
-    <span class="comment">// We can unwrap safely as we already checked the length of the vectors
-    </span>entry_points_by_type.insert(
-        EntryPointTypeWrapper::Constructor,
-        BoundedVec::try_from(
-            entries.constructor.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-        )
-        .unwrap(),
-    );
-    entry_points_by_type.insert(
-        EntryPointTypeWrapper::External,
-        BoundedVec::try_from(entries.external.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
-            .unwrap(),
-    );
-    entry_points_by_type.insert(
-        EntryPointTypeWrapper::L1Handler,
-        BoundedVec::try_from(entries.l1_handler.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
-            .unwrap(),
-    );
+
+    entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, get_entrypoint_value(entries.constructor));
+    entry_points_by_type.insert(EntryPointTypeWrapper::External, get_entrypoint_value(entries.external));
+    entry_points_by_type.insert(EntryPointTypeWrapper::L1Handler, get_entrypoint_value(entries.l1_handler));
     entry_points_by_type
 }
 
+<span class="kw">fn </span>to_legacy_entry_points_by_type(
+    entries: <span class="kw-2">&amp;</span>BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
+    <span class="kw">let </span>constructor = entries
+        .get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::Constructor).ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing constructor entry point&quot;</span>))<span class="question-mark">? </span><span class="comment">// TODO: change to StarknetError
+        </span>.iter()
+        .map(|e| (e.clone()).try_into())
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>external = entries
+        .get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::External)
+        .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing external entry point&quot;</span>))<span class="question-mark">?
+        </span>.iter()
+        .map(|e| (e.clone()).try_into())
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>l1_handler = entries
+        .get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::L1Handler)
+        .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing l1 handler entry point&quot;</span>))<span class="question-mark">?
+        </span>.iter()
+        .map(|e| (e.clone()).try_into())
+        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
+
+    <span class="prelude-val">Ok</span>(LegacyEntryPointsByType { constructor, external, l1_handler })
+}
+
+<span class="doccomment">/// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
+</span><span class="kw">fn </span>get_entrypoint_value(entries: Vec&lt;LegacyContractEntryPoint&gt;) -&gt; BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt; {
+    <span class="comment">// We can unwrap safely as we already checked the length of the vectors
+    </span>BoundedVec::try_from(entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()).unwrap()
+}
 <span class="doccomment">/// Returns the current Starknet block from the block header&#39;s digest
 </span><span class="kw">pub fn </span>get_block_by_block_hash&lt;B, C&gt;(client: <span class="kw-2">&amp;</span>C, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash) -&gt; <span class="prelude-ty">Option</span>&lt;StarknetBlock&gt;
 <span class="kw">where
