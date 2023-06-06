@@ -4,8 +4,6 @@ on:
   release:
     types:
       - created
-  push:
-    branches: [fix/refactor-docker]
 
 jobs:
   build-and-push:
@@ -33,4 +31,5 @@ jobs:
           push: true
           file: infra/docker/Dockerfile
           tags: >
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:latest,
+            ghcr.io/${{github.repository }}:${{ github.event.release.tag_name }}
