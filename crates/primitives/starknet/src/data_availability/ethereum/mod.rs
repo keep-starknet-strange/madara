@@ -26,24 +26,10 @@ impl DataAvailability for EthereumDataAvailability {
         // Send data to Ethereum.
         // Check the result
         // Return the result.
-            /**
-         Updates the state of the StarkNet, based on a proof of the
-        StarkNet OS that the state transition is valid.
-
-        Arguments:
-            programOutput - The main part of the StarkNet OS program output.
-            data_availability_fact - An encoding of the on-chain data associated
-            with the 'programOutput'.
-        */
-        
         abigen!(
             STARKNET,
             r#"[
-                function updateState(
-                    uint256[] calldata programOutput,
-                    uint256 onchainDataHash,
-                    uint256 onchainDataSize
-                ) external onlyOperator
+                function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
             ]"#,
         );
 
