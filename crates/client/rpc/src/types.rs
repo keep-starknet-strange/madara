@@ -1,4 +1,6 @@
+use mp_starknet::block::Block;
 use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::transaction::types::EventWrapper;
 use starknet_ff::FieldElement;
 
 pub struct RpcEventFilter {

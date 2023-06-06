@@ -19,10 +19,13 @@ use mc_rpc_core::utils::{
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mp_starknet::block::{Block, BlockTransactions};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
-use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
+use mp_starknet::transaction::types::{
+    EventWrapper, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
+};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -150,7 +153,84 @@ where
         u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
     }
 
-    /// Helper function to filter Starknet events provided a RPC event filter
+    /// Helper function to get Starknet block details
+    ///
+    /// # Arguments
+    ///
+    /// * `block_id` - The Starknet block id
+    ///
+    /// # Returns
+    ///
+    /// * `(block_events: Vec<EventWrapper>, block: Block)` - A tuple of the block events in
+    ///   block_id and an instance of Block
+    fn get_block_events(&self, block_id: u64) -> Result<(Vec<EventWrapper>, Block), StarknetRpcApiError> {
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(BlockId::Number(block_id)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+		let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+			error!("Failed to retrieve block");
+			StarknetRpcApiError::BlockNotFound
+		})?;
+        let block_events = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .events(substrate_block_hash)
+            .unwrap_or_else(|| {
+                info!("No events found in block {}", block_id);
+                Vec::new()
+            });
+        Ok((block_events, block))
+    }
+
+    /// Helper function to get filter events using address and keys
+    ///
+    /// # Arguments
+    ///
+    /// * `events` - A vector of all events
+    /// * `address` - Address to use to filter the events
+    /// * `keys` - Keys to use to filter the events. An event is filtered if any key is present
+    /// * `max_results` - Optional, indicated the max events that need to be filtered
+    ///
+    /// # Returns
+    ///
+    /// * `(block_events: Vec<EventWrapper>, continuation_token: usize)` - A tuple of the filtered
+    ///   events and the first index which still hasn't been processed block_id and an instance of
+    ///   Block
+    fn filter_events_by_params(
+        events: Vec<EventWrapper>,
+        address: Option<Felt252Wrapper>,
+        keys: Vec<Vec<FieldElement>>,
+        max_results: Option<usize>,
+    ) -> (Vec<EventWrapper>, usize) {
+        let mut filtered_events = vec![];
+        let mut index = 0;
+
+        // Iterate on block events.
+        for event in events {
+            index += 1;
+            let match_from_address = address.map_or(true, |add| add == event.from_address);
+            // Based on https://github.com/starkware-libs/papyrus
+            let match_keys = keys
+                .iter()
+                .enumerate()
+                .all(|(i, keys)| event.keys.len() > i && (keys.is_empty() || keys.contains(&event.keys[i].into())));
+
+            if match_from_address && match_keys {
+                filtered_events.push(event);
+                if let Some(max_results) = max_results {
+                    if filtered_events.len() >= max_results {
+                        break;
+                    }
+                }
+            }
+        }
+        (filtered_events, index)
+    }
+
+    /// Helper function to filter Starknet evetomnts provided a RPC event filter
     ///
     /// # Arguments
     ///
@@ -173,31 +253,7 @@ where
 
         // Iterate on block range
         while current_block <= to_block {
-            let substrate_block_hash =
-                self.substrate_block_hash_from_starknet_block(BlockId::Number(current_block)).map_err(|e| {
-                    error!("'{e}'");
-                    StarknetRpcApiError::BlockNotFound
-                })?;
-
-            let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-                error!("Failed to retrieve block");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-            let block_hash = block.header().hash(*self.hasher).into();
-            let block_number = block.header().block_number.try_into().map_err(|e| {
-                error!("Failed to convert block number to u64: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-            let block_events = self
-                .overrides
-                .for_block_hash(self.client.as_ref(), substrate_block_hash)
-                .events(substrate_block_hash)
-                .unwrap_or_else(|| {
-                    info!("No events found in block {}", current_block);
-                    Vec::new()
-                });
+            let (block_events, block) = self.get_block_events(current_block)?;
             let block_events_len = block_events.len();
             // if block_events length < continuation_token, keep going and reduce the pagination
             if block_events_len < continuation_token {
@@ -207,36 +263,42 @@ where
                 continue;
             }
 
-            let block_events = block_events.into_iter().skip(continuation_token);
+            let block_events = block_events.into_iter().skip(continuation_token).collect();
             // Kept in order to calculate continuation token.
             let block_events_len = block_events_len - continuation_token;
             let index_before_loop = index;
 
-            // Iterate on block events.
-            for event in block_events {
-                let match_from_address = from_address.map_or(true, |add| add == event.from_address);
-                // Based on https://github.com/starkware-libs/papyrus
-                let match_keys = keys
-                    .iter()
-                    .enumerate()
-                    .all(|(i, keys)| event.keys.len() > i && (keys.is_empty() || keys.contains(&event.keys[i].into())));
+            let block_hash = block.header().hash(*self.hasher).into();
+            let block_number = block.header().block_number.try_into().map_err(|e| {
+                error!("Failed to convert block number to u64: {e}");
+                StarknetRpcApiError::BlockNotFound
+            })?;
 
-                if match_from_address && match_keys {
-                    filtered_events.push(EmittedEvent {
+            let (mut new_filtered_events, continuation_index) = self.filter_events_by_params(
+                block_events,
+                from_address,
+                keys.clone(),
+                Some((chunk_size as usize) - filtered_events.len()),
+            );
+            index = continuation_index;
+
+            filtered_events.extend(
+                new_filtered_events
+                    .iter()
+                    .map(|event| EmittedEvent {
                         from_address: event.from_address.into(),
                         keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
                         data: event.data.clone().into_iter().map(|data| data.into()).collect(),
                         block_hash,
                         block_number,
                         transaction_hash: event.transaction_hash.into(),
-                    });
-                }
-                index += 1;
-                if filtered_events.len() == chunk_size as usize {
-                    let token =
-                        if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
-                    return Ok(EventsPage { events: filtered_events, continuation_token: token });
-                }
+                    })
+                    .collect::<Vec<EmittedEvent>>(),
+            );
+
+            if filtered_events.len() >= chunk_size as usize {
+                let token = if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
+                return Ok(EventsPage { events: filtered_events, continuation_token: token });
             }
             current_block += 1;
             continuation_token = 0;
