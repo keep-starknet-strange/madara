@@ -37,6 +37,8 @@ import {
   cleanHex,
 } from "../../util/utils";
 import { Block, InvokeTransaction } from "./types";
+import testJson from "../../contracts/compiled/test.json";
+import erc20Json from "../../contracts/compiled/erc20.json";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -134,6 +136,9 @@ describeDevMadara("Starknet RPC", (context) => {
       );
 
       expect(contract_class).to.not.be.undefined;
+      expect(contract_class.entry_points_by_type).to.deep.equal(
+        testJson.entry_points_by_type
+      );
     });
   });
 
@@ -218,7 +223,11 @@ describeDevMadara("Starknet RPC", (context) => {
         TOKEN_CLASS_HASH,
         "latest"
       );
+
       expect(contract_class).to.not.be.undefined;
+      expect(contract_class.entry_points_by_type).to.deep.equal(
+        erc20Json.entry_points_by_type
+      );
     });
   });
 
@@ -856,8 +865,15 @@ describeDevMadara("Starknet RPC", (context) => {
         }
       );
 
-      const r = await providerRPC.getTransactionReceipt(b.result.hash);
+      const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const r: TransactionReceipt = await providerRPC.getTransactionReceipt(
+        b.result.hash
+      );
       expect(r).to.not.be.undefined;
+      expect(r.block_hash).to.be.equal(block_hash_and_number.block_hash);
+      expect(r.block_number).to.be.equal(block_hash_and_number.block_number);
     });
 
     it("should return transaction hash not found", async function () {

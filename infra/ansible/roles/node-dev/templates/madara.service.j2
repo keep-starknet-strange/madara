@@ -1,0 +1,13 @@
+[Unit]
+Description=Madara Dev Node
+
+[Service]
+WorkingDirectory=/home/admin/madara
+Restart=on-failure
+ExecStart=/home/admin/madara/target/release/madara --chain local --{{keypair}} --validator --force-authoring --rpc-external --execution native --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --no-telemetry {% if bootstrap_node is defined %} --bootnodes /ip4/{{bootstrap_node}}/tcp/30333/p2p/{{bootstrap_peerid.json.result}}{% endif %}
+
+ExecReload=/bin/kill -HUP
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
