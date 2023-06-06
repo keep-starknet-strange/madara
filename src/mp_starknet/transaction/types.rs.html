@@ -763,9 +763,6 @@
 <a href="#763" id="763">763</a>
 <a href="#764" id="764">764</a>
 <a href="#765" id="765">765</a>
-<a href="#766" id="766">766</a>
-<a href="#767" id="767">767</a>
-<a href="#768" id="768">768</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1348,10 +1345,6 @@
     </span><span class="kw">pub </span>actual_fee: Felt252Wrapper,
     <span class="doccomment">/// Transaction type
     </span><span class="kw">pub </span>tx_type: TxType,
-    <span class="doccomment">/// Block Number
-    </span><span class="kw">pub </span>block_number: u64,
-    <span class="doccomment">/// Block Hash
-    </span><span class="kw">pub </span>block_hash: Felt252Wrapper,
     <span class="doccomment">/// Messages sent in the transaction.
     </span><span class="comment">// pub messages_sent: BoundedVec&lt;Message, MaxArraySize&gt;, // TODO: add messages
     </span><span class="doccomment">/// Events emitted in the transaction.
@@ -1363,20 +1356,21 @@
     <span class="doccomment">/// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
     ///
     /// This conversion is done in a function and not `From` trait due to the need
-    /// to pass some arguments like the [`RPCTransactionStatus`] which is unknown
-    /// in the [`TransactionReceiptWrapper`].
+    /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
+    /// which are unknown in the [`TransactionReceiptWrapper`].
     ///
     /// Maybe extended later for other missing fields like messages sent to L1
     /// and the contract class for the deploy.
     </span><span class="kw">pub fn </span>into_maybe_pending_transaction_receipt(
         <span class="self">self</span>,
         status: RPCTransactionStatus,
+        block_hash_and_number: (FieldElement, u64),
     ) -&gt; RPCMaybePendingTransactionReceipt {
         <span class="kw">let </span>transaction_hash = <span class="self">self</span>.transaction_hash.into();
         <span class="kw">let </span>actual_fee = <span class="self">self</span>.actual_fee.into();
         <span class="kw">let </span>status = status;
-        <span class="kw">let </span>block_hash = <span class="self">self</span>.block_hash.into();
-        <span class="kw">let </span>block_number = <span class="self">self</span>.block_number;
+        <span class="kw">let </span>block_hash = block_hash_and_number.<span class="number">0</span>;
+        <span class="kw">let </span>block_number = block_hash_and_number.<span class="number">1</span>;
         <span class="kw">let </span>events = <span class="self">self</span>.events.iter().map(|e| (<span class="kw-2">*</span>e).clone().into()).collect();
 
         <span class="comment">// TODO: from where those message must be taken?

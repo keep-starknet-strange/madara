@@ -754,10 +754,6 @@
 <a href="#754" id="754">754</a>
 <a href="#755" id="755">755</a>
 <a href="#756" id="756">756</a>
-<a href="#757" id="757">757</a>
-<a href="#758" id="758">758</a>
-<a href="#759" id="759">759</a>
-<a href="#760" id="760">760</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -948,8 +944,6 @@
                 TransactionOutput::L1Handler(<span class="kw">_</span>) =&gt; TxType::L1Handler,
                 <span class="kw">_ </span>=&gt; TxType::Invoke,
             },
-            block_hash: <span class="self">self</span>.block_hash.<span class="number">0</span>.into(),
-            block_number: <span class="self">self</span>.block_number.<span class="number">0</span>,
             events: BoundedVec::try_from(_events<span class="question-mark">?</span>).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>,
         })
     }
@@ -1512,8 +1506,6 @@
             transaction_hash: Felt252Wrapper::default(),
             actual_fee: Felt252Wrapper::default(),
             tx_type: TxType::Invoke,
-            block_hash: Felt252Wrapper::default(),
-            block_number: <span class="number">0_u64</span>,
             events: BoundedVec::try_from(<span class="macro">vec!</span>[EventWrapper::default(), EventWrapper::default()]).unwrap(),
         }
     }
