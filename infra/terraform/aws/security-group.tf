@@ -26,6 +26,39 @@ resource "aws_security_group_rule" "ssh" {
   cidr_blocks = ["0.0.0.0/0"]
 }
 
+resource "aws_security_group_rule" "rpc" {
+  security_group_id = aws_security_group.nodes.id
+
+  description = "Allow RPC access"
+  type        = "ingress"
+  from_port   = 9944
+  to_port     = 9944
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}
+
+resource "aws_security_group_rule" "prometheus" {
+  security_group_id = aws_security_group.nodes.id
+
+  description = "Allow Prometheus access"
+  type        = "ingress"
+  from_port   = 9615
+  to_port     = 9615
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}
+
+resource "aws_security_group_rule" "p2p" {
+  security_group_id = aws_security_group.nodes.id
+
+  description = "Allow RPC access"
+  type        = "ingress"
+  from_port   = 30333
+  to_port     = 30333
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+}
+
 resource "aws_security_group_rule" "internal_traffic" {
   security_group_id = aws_security_group.nodes.id
 

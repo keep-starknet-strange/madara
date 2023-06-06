@@ -53,6 +53,7 @@ resource "aws_autoscaling_group" "nodes" {
 }
 
 data "aws_instances" "instances" {
+  depends_on = [aws_autoscaling_group.nodes]
   instance_tags = {
     Application = "madara"
   }
