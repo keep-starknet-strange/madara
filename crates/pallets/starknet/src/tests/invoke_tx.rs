@@ -99,11 +99,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
             .unwrap(),
             actual_fee: Felt252Wrapper::from(52980_u128),
             tx_type: TxType::Invoke,
-            block_number: 2_u64,
-            block_hash: Felt252Wrapper::from_hex_be(
-                "0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA",
-            )
-            .unwrap(),
             events: bounded_vec![EventWrapper {
                 keys: bounded_vec!(
                     Felt252Wrapper::from_hex_be("0x0099cd8bde557814842a3121e8ddfd433a539b8c9f14bf31ebf108d12e6196e9")
@@ -203,11 +198,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             .unwrap(),
             actual_fee: Felt252Wrapper::from(53490_u128),
             tx_type: TxType::Invoke,
-            block_number: 2_u64,
-            block_hash: Felt252Wrapper::from_hex_be(
-                "0x62A89580109015D0B9B899DF7A158C248654EFDEC86C600228AC90D4D1E74FA",
-            )
-            .unwrap(),
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),
         };
         let receipt = &pending.get(0).unwrap().1;

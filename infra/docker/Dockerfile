@@ -32,4 +32,6 @@ USER node-dev
 EXPOSE 30333 9933 9944 9615
 VOLUME ["/chain-data"]
 
+COPY ./infra/chain-specs /chain-specs
+
 ENTRYPOINT ["/usr/local/bin/madara"]
