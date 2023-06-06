@@ -74,4 +74,5 @@ std = [
   "sp-std/std",
   "sp-runtime/std",
   "thiserror-no-std/std",
+  "serde/std",
 ]

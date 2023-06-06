@@ -32,7 +32,7 @@ pub type BlockTransactionReceipts = BoundedVec<TransactionReceiptWrapper, MaxTra
     Default,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "std", derive(serde::Deserialize))]
 pub struct Block {
     /// The block header.
     header: Header,

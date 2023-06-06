@@ -1,4 +1,5 @@
 use blockifier::execution::errors::EntryPointExecutionError;
+use serde::{Deserialize, Serialize};
 use sp_core::ConstU32;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
@@ -9,33 +10,28 @@ use starknet_core::types::LegacyContractEntryPoint;
 use starknet_ff::{FieldElement, FromByteArrayError};
 use thiserror_no_std::Error;
 
+use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
 /// Max number of entrypoints.
 pub type MaxEntryPoints = ConstU32<4294967295>;
 
 /// Wrapper type for transaction execution result.
 pub type EntryPointExecutionResultWrapper<T> = Result<T, EntryPointExecutionErrorWrapper>;
 
-/// Enum that represents all the entrypoints types.
+// /// Enum that represents all the entrypoints types.
 #[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-    PartialOrd,
-    Ord,
-    Hash,
+    Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, MaxEncodedLen, PartialOrd, Ord, Hash,
 )]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EntryPointTypeWrapper {
-    /// Constructor.
+    /// A constructor entry point.
+    #[cfg_attr(feature = "std", serde(rename = "CONSTRUCTOR"))]
     Constructor,
-    /// External.
+    /// An external4 entry point.
+    #[cfg_attr(feature = "std", serde(rename = "EXTERNAL"))]
+    #[default]
     External,
-    /// L1 Handler.
+    /// An L1 handler entry point.
+    #[cfg_attr(feature = "std", serde(rename = "L1_HANDLER"))]
     L1Handler,
 }
 
@@ -61,31 +57,28 @@ impl From<EntryPointTypeWrapper> for EntryPointType {
 }
 
 /// Representation of a Starknet Entry Point.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-    PartialOrd,
-    Ord,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub struct EntryPointWrapper {
-    /// The entrypoint offset
-    pub offset: u128,
-    /// The entrypoint selector
-    pub selector: [u8; 32],
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct EntryPointWrapper(EntryPoint);
+/// SCALE trait.
+impl Encode for EntryPointWrapper {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        dest.write(&self.0.selector.0.0);
+        dest.write(&self.0.offset.0.to_be_bytes());
+    }
 }
+/// SCALE trait.
+impl Decode for EntryPointWrapper {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        let mut selector = [0u8; 32];
+        let mut offset = [0u8; core::mem::size_of::<usize>()];
+        input.read(&mut selector)?;
+        input.read(&mut offset)?;
 
-// Regular implementation.
-impl EntryPointWrapper {
-    /// Creates a new instance of an entrypoint.
-    pub fn new(selector: [u8; 32], offset: u128) -> Self {
-        Self { selector, offset }
+        Ok(EntryPointWrapper(EntryPoint {
+            selector: EntryPointSelector(StarkFelt(selector)),
+            offset: EntryPointOffset(usize::from_be_bytes(offset)),
+        }))
     }
 }
 
@@ -93,25 +86,32 @@ impl EntryPointWrapper {
 
 impl From<EntryPoint> for EntryPointWrapper {
     fn from(entry_point: EntryPoint) -> Self {
-        Self { selector: entry_point.selector.0.0, offset: entry_point.offset.0 as u128 }
+        Self(entry_point)
     }
 }
 
 impl From<EntryPointWrapper> for EntryPoint {
     fn from(entry_point: EntryPointWrapper) -> Self {
-        Self {
-            selector: EntryPointSelector(StarkFelt(entry_point.selector)),
-            offset: EntryPointOffset(entry_point.offset as usize),
-        }
+        entry_point.0
     }
 }
 
 #[cfg(feature = "std")]
 impl From<LegacyContractEntryPoint> for EntryPointWrapper {
     fn from(value: LegacyContractEntryPoint) -> Self {
-        let selector = value.selector.to_bytes_be();
-        let offset = value.offset.into();
-        Self { selector, offset }
+        let selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
+        let offset = EntryPointOffset(value.offset as usize);
+        Self(EntryPoint { selector, offset })
+    }
+}
+
+#[cfg(feature = "std")]
+impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
+    type Error = FromByteArrayError;
+    fn try_from(value: EntryPointWrapper) -> Result<Self, Self::Error> {
+        let selector = FieldElement::from_bytes_be(&value.0.selector.0.0)?;
+        let offset = value.0.offset.0 as u64;
+        Ok(Self { selector, offset })
     }
 }
 

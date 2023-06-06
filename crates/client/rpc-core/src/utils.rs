@@ -23,17 +23,19 @@ use starknet_core::types::{
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
-    let entry_points_by_type = to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
+    todo!()
+    // let entry_points_by_type =
+    // to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
 
-    let program: Program =
-        _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
-    let compressed_program = compress_and_encode_base64(&program.to_bytes())?;
+    // let program: Program =
+    //     _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion
+    // failed."))?; let compressed_program = compress_and_encode_base64(&program.to_bytes())?;
 
-    Ok(ContractClass::Legacy(CompressedLegacyContractClass {
-        program: compressed_program.as_bytes().to_vec(),
-        entry_points_by_type,
-        abi: None, // TODO: add ABI
-    }))
+    // Ok(ContractClass::Legacy(CompressedLegacyContractClass {
+    //     program: compressed_program.as_bytes().to_vec(),
+    //     entry_points_by_type,
+    //     abi: None, // TODO: add ABI
+    // }))
 }
 
 /// Returns a base64 encoded and compressed string of the input bytes
@@ -135,46 +137,47 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 
 /// Converts a broadcasted declare transaction to a declare transaction
 pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction> {
-    match tx {
-        BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
-            let signature = declare_tx_v1
-                .signature
-                .iter()
-                .map(|f| (*f).into())
-                .collect::<Vec<Felt252Wrapper>>()
-                .try_into()
-                .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
+    todo!();
+    // match tx {
+    //     BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
+    //         let signature = declare_tx_v1
+    //             .signature
+    //             .iter()
+    //             .map(|f| (*f).into())
+    //             .collect::<Vec<Felt252Wrapper>>()
+    //             .try_into()
+    //             .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
-            // Create a GzipDecoder to decompress the bytes
-            let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
+    //         // Create a GzipDecoder to decompress the bytes
+    //         let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
 
-            // Read the decompressed bytes into a Vec<u8>
-            let mut decompressed_bytes = Vec::new();
-            std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
-                .map_err(|_| anyhow!("Failed to decompress the contract class program"))?;
+    //         // Read the decompressed bytes into a Vec<u8>
+    //         let mut decompressed_bytes = Vec::new();
+    //         std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
+    //             .map_err(|_| anyhow!("Failed to decompress the contract class program"))?;
 
-            // Deserialize it then
-            let program: Program = Program::from_bytes(&decompressed_bytes, None)
-                .map_err(|_| anyhow!("Failed to deserialize the contract class program"))?;
+    //         // Deserialize it then
+    //         let program: Program = Program::from_bytes(&decompressed_bytes, None)
+    //             .map_err(|_| anyhow!("Failed to deserialize the contract class program"))?;
 
-            Ok(DeclareTransaction {
-                version: 1_u8,
-                sender_address: declare_tx_v1.sender_address.into(),
-                nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                signature,
-                contract_class: ContractClassWrapper {
-                    program: program.try_into().map_err(|_| anyhow!("Failed to convert program to program wrapper"))?,
-                    entry_points_by_type: BoundedBTreeMap::try_from(to_btree_map_entrypoints(
-                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                    ))
-                    .unwrap(),
-                },
-                compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
-            })
-        }
-        BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
-    }
+    //         Ok(DeclareTransaction {
+    //             version: 1_u8,
+    //             sender_address: declare_tx_v1.sender_address.into(),
+    //             nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
+    //             max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
+    //             signature,
+    //             contract_class: ContractClassWrapper {
+    //                 program: program.try_into().map_err(|_| anyhow!("Failed to convert program to
+    // program wrapper"))?,                 entry_points_by_type:
+    // BoundedBTreeMap::try_from(to_btree_map_entrypoints(
+    // declare_tx_v1.contract_class.entry_points_by_type.clone(),                 ))
+    //                 .unwrap(),
+    //             },
+    //             compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
+    //         })
+    //     }
+    //     BroadcastedDeclareTransaction::V2(_) =>
+    // Err(StarknetError::FailedToReceiveTransaction.into()), }
 }
 
 /// Returns a btree map of entry point types to entrypoint from deprecated entry point by type

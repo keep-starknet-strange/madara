@@ -1,117 +1,184 @@
-use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::sync::Arc;
+use alloc::vec;
 use alloc::vec::Vec;
+use core::mem;
 
-use blockifier::execution::contract_class::ContractClass;
-use cairo_vm::types::errors::program_errors::ProgramError;
-use frame_support::{BoundedBTreeMap, BoundedVec};
-use sp_core::ConstU32;
-use starknet_api::deprecated_contract_class::EntryPoint;
+use blockifier::execution::contract_class::{deserialize_program, ContractClass};
+use cairo_vm::felt::Felt252;
+use cairo_vm::serde::deserialize_program::ReferenceManager;
+use cairo_vm::types::program::{Program, SharedProgramData};
+use serde::{Deserialize, Deserializer, Serialize};
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
-use thiserror_no_std::Error;
 
-use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
-use super::program_wrapper::ProgramWrapper;
-#[cfg(feature = "std")]
-use super::{deserialize_bounded_btreemap, serialize_bounded_btreemap};
-
+use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
+use crate::alloc::string::ToString;
+use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
+use crate::scale_info::build::Fields;
+use crate::scale_info::{Path, Type, TypeInfo};
 /// Max number of entrypoints types (EXTERNAL/L1_HANDLER/CONSTRUCTOR)
-type MaxEntryPointsType = ConstU32<3>;
+/// Converts the program type from SN API into a Cairo VM-compatible type.
+pub fn deserialize_program_wrapper<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ProgramWrapper, D::Error> {
+    Ok(deserialize_program(deserializer)?.into())
+}
 
 /// Contract Class type wrapper.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    Default,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ContractClassWrapper {
-    /// Contract class program json.
+    #[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_program_wrapper"))]
     pub program: ProgramWrapper,
-    /// Contract class entrypoints.
-    #[cfg_attr(
-        feature = "std",
-        serde(deserialize_with = "deserialize_bounded_btreemap", serialize_with = "serialize_bounded_btreemap")
-    )]
-    pub entry_points_by_type:
-        BoundedBTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>, MaxEntryPointsType>,
+    pub entry_points_by_type: EntrypointMapWrapper,
 }
 
-// Regular implementation.
-impl ContractClassWrapper {
-    /// Creates a new instance of a contract class.
-    pub fn new(
-        program: ProgramWrapper,
-        entry_points_by_type: BoundedBTreeMap<
-            EntryPointTypeWrapper,
-            BoundedVec<EntryPointWrapper, MaxEntryPoints>,
-            MaxEntryPointsType,
-        >,
-    ) -> Self {
-        Self { program, entry_points_by_type }
-    }
-}
-
-/// Errors in the try_from implementation of [ContractClassWrapper]
-#[derive(Debug, Error)]
-pub enum ContractClassFromWrapperError {
-    /// Program error.
-    #[error(transparent)]
-    Program(#[from] ProgramError),
-    /// Serde error.
-    #[error(transparent)]
-    Serde(#[from] serde_json::Error),
-    #[error("something else happened")]
-    /// Error in the conversion of a contract class.
-    ContractClassConversionError,
-}
-
-// Traits implementation.
-
-impl TryFrom<ContractClassWrapper> for ContractClass {
-    type Error = ContractClassFromWrapperError;
-
-    fn try_from(wrapper: ContractClassWrapper) -> Result<Self, Self::Error> {
-        let mut entrypoints = HashMap::new();
-        wrapper.entry_points_by_type.into_iter().for_each(|(key, val)| {
-            entrypoints.insert(key.into(), val.iter().map(|entrypoint| EntryPoint::from(entrypoint.clone())).collect());
-        });
-
-        Ok(ContractClass {
-            program: wrapper
-                .program
-                .try_into()
-                .map_err(|_| ContractClassFromWrapperError::ContractClassConversionError)?,
-            entry_points_by_type: entrypoints,
-        })
-    }
-}
-
-impl TryFrom<ContractClass> for ContractClassWrapper {
-    type Error = ContractClassFromWrapperError;
-
-    fn try_from(contract_class: ContractClass) -> Result<Self, Self::Error> {
-        let mut entrypoints = BTreeMap::new();
-        for (key, val) in contract_class.entry_points_by_type.iter() {
-            entrypoints.insert(
-                (*key).into(),
-                BoundedVec::try_from(val.iter().map(|elt| elt.clone().into()).collect::<Vec<EntryPointWrapper>>())
-                    .unwrap(),
-            );
+impl From<ContractClassWrapper> for ContractClass {
+    fn from(value: ContractClassWrapper) -> Self {
+        Self {
+            program: value.program.into(),
+            entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.0.iter().clone().map(
+                |(entrypoint_type, entrypoints)| {
+                    (entrypoint_type.clone().into(), entrypoints.clone().into_iter().map(|val| val.into()).collect())
+                },
+            )),
         }
-        Ok(Self {
-            program: contract_class
-                .program
-                .try_into()
-                .map_err(|_| ContractClassFromWrapperError::ContractClassConversionError)?,
-            entry_points_by_type: BoundedBTreeMap::try_from(entrypoints)
-                .map_err(|_| ContractClassFromWrapperError::ContractClassConversionError)?,
-        })
+    }
+}
+
+impl From<ContractClass> for ContractClassWrapper {
+    fn from(value: ContractClass) -> Self {
+        Self {
+            program: value.program.into(),
+            entry_points_by_type: EntrypointMapWrapper(unsafe {
+                mem::transmute::<
+                    HashMap<EntryPointType, Vec<EntryPoint>>,
+                    HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>,
+                >(value.entry_points_by_type)
+            }),
+        }
+    }
+}
+/// SCALE trait.
+impl MaxEncodedLen for ContractClassWrapper {
+    fn max_encoded_len() -> usize {
+        20971520
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct EntrypointMapWrapper(HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
+#[derive(Clone, Debug, PartialEq, Eq, Default, Encode, Decode)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+struct TupleTemp(EntryPointTypeWrapper, Vec<EntryPointWrapper>);
+
+impl From<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> for TupleTemp {
+    fn from(value: (EntryPointTypeWrapper, Vec<EntryPointWrapper>)) -> Self {
+        Self(value.0, value.1)
+    }
+}
+impl From<TupleTemp> for (EntryPointTypeWrapper, Vec<EntryPointWrapper>) {
+    fn from(value: TupleTemp) -> Self {
+        (value.0, value.1)
+    }
+}
+
+/// SCALE trait.
+impl Encode for EntrypointMapWrapper {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        let val: Vec<TupleTemp> = self.0.clone().into_iter().map(|val| val.into()).collect();
+        dest.write(&Encode::encode(&val));
+    }
+}
+/// SCALE trait.
+impl Decode for EntrypointMapWrapper {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> =
+            Decode::decode(input).map_err(|_| Error::from("Can't get EntrypointMap from input buffer."))?;
+        Ok(EntrypointMapWrapper(HashMap::from_iter(val.into_iter())))
+    }
+}
+
+/// SCALE trait.
+impl TypeInfo for EntrypointMapWrapper {
+    type Identity = Self;
+
+    // The type info is saying that the field element must be seen as an
+    // array of bytes.
+    fn type_info() -> Type {
+        Type::builder()
+            .path(Path::new("EntrypointMapWrapper", module_path!()))
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("EntrypointMap")))
+    }
+}
+
+// Program
+
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct ProgramWrapper {
+    pub shared_program_data: Arc<SharedProgramData>,
+    pub constants: HashMap<String, Felt252>,
+    pub reference_manager: ReferenceManager,
+}
+
+impl From<Program> for ProgramWrapper {
+    fn from(value: Program) -> Self {
+        Self {
+            shared_program_data: value.shared_program_data,
+            constants: value.constants,
+            reference_manager: value.reference_manager,
+        }
+    }
+}
+
+impl From<ProgramWrapper> for Program {
+    fn from(value: ProgramWrapper) -> Self {
+        Self {
+            shared_program_data: value.shared_program_data,
+            constants: value.constants,
+            reference_manager: value.reference_manager,
+        }
+    }
+}
+/// SCALE trait.
+impl Encode for ProgramWrapper {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        let program_bytes = &Into::<Program>::into(self.clone()).to_bytes();
+        let program_len = program_bytes.len() as u128;
+        assert_eq!(program_len.to_be_bytes().len(), 16);
+
+        dest.write(&program_len.to_be_bytes());
+        dest.write(program_bytes);
+    }
+}
+
+/// SCALE trait.
+impl Decode for ProgramWrapper {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        let mut buf: [u8; 16] = [0; 16];
+        input.read(&mut buf)?;
+        let size = u128::from_be_bytes(buf);
+        let mut program_buf = vec![0u8; size as usize];
+        input.read(program_buf.as_mut_slice())?;
+        #[cfg(feature = "std")]
+        println!("byy {:?}", program_buf);
+        let program = Program::from_bytes(&program_buf, None)
+            .map_err(|e| Error::from("Can't get Program from input buffer.").chain(e.to_string()))?;
+        Ok(program.into())
+    }
+}
+
+/// SCALE trait.
+impl TypeInfo for ProgramWrapper {
+    type Identity = Self;
+
+    // The type info is saying that the field element must be seen as an
+    // array of bytes.
+    fn type_info() -> Type {
+        Type::builder()
+            .path(Path::new("ProgramWrapper", module_path!()))
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("Program")))
     }
 }
 
@@ -128,13 +195,20 @@ mod tests {
     #[test]
     fn test_serialize_deserialize_contract_class() {
         let contract_class: ContractClassWrapper =
-            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"))
-                .try_into()
-                .unwrap();
+            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
         let contract_class_serialized = serde_json::to_string(&contract_class).unwrap();
+        println!("{:?}", contract_class_serialized);
         let contract_class_deserialized: ContractClassWrapper =
             serde_json::from_str(&contract_class_serialized).unwrap();
 
         assert_eq!(contract_class, contract_class_deserialized);
+    }
+
+    #[test]
+    fn test_encode_decode_contract_class() {
+        let contract_class: ContractClassWrapper =
+            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
+        let encoded = contract_class.encode();
+        assert_eq!(contract_class, <ContractClassWrapper>::decode(&mut &encoded[..]).unwrap())
     }
 }
