@@ -1,12 +1,4 @@
 FROM rust:slim-buster as builder
-LABEL description="Multistage Docker image for Madara" \
-  image.type="builder" \
-  image.authors="abdelhamid.bakhta@gmail.com" \
-  image.vendor="Substrate Developer Hub" \
-  image.description="Multistage Docker image for Madara" \
-  image.source="https://github.com/keep-starknet-strange/madara" \
-  image.documentation="https://github.com/keep-starknet-strange/madara"
-
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
         libssl-dev make clang llvm protobuf-compiler \
@@ -19,8 +11,14 @@ WORKDIR /madara
 COPY . .
 RUN cargo build --release -Z sparse-registry --config net.git-fetch-with-cli=true
 
-#FROM debian:buster-slim
-FROM scratch
+FROM debian:buster-slim
+LABEL description="Madara, a blazing fast Starknet sequencer" \
+  authors="Oak <me@droak.sh>" \
+  source="https://github.com/keep-starknet-strange/madara" \
+  documentation="https://docs.madara.wtf/"
+
 COPY --from=builder /madara/target/release/madara /
-EXPOSE 30333 9933 9944 9615
+# 9444 JSON-RPC server
+# 9615 Prometheus exporter
+EXPOSE 9933 9944 9615 30333
 ENTRYPOINT ["/madara"]
