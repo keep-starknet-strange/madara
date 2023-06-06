@@ -41,6 +41,7 @@ derive_more = { workspace = true, features = ["constructor"] }
 lazy_static = { workspace = true }
 # anyhow = { workspace = true }
 ethers = { version = "2.0.7"}
+async-trait = { version = "0.1.68" }
 
 [dev-dependencies]
 rand = "0.8.5"
