@@ -8,36 +8,17 @@ pub use header::*;
 use sp_core::ConstU32;
 
 use crate::execution::types::Felt252Wrapper;
-use crate::transaction::types::Transaction;
+use crate::transaction::types::{Transaction, TransactionReceiptWrapper};
 
 /// Block transactions max size
 // TODO: add real value (#250)
 pub type MaxTransactions = ConstU32<4294967295>;
 
 /// Block Transactions
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum BlockTransactions {
-    /// Only hashes
-    Hashes(BoundedVec<Felt252Wrapper, MaxTransactions>),
-    /// Full transactions
-    Full(BoundedVec<Transaction, MaxTransactions>),
-}
+pub type BlockTransactions = BoundedVec<Transaction, MaxTransactions>;
 
-impl Default for BlockTransactions {
-    fn default() -> Self {
-        Self::Full(BoundedVec::default())
-    }
-}
+/// Block transaction receipts.
+pub type BlockTransactionReceipts = BoundedVec<TransactionReceiptWrapper, MaxTransactions>;
 
 /// Starknet block definition.
 #[derive(
@@ -57,6 +38,8 @@ pub struct Block {
     header: Header,
     /// The block transactions.
     transactions: BlockTransactions,
+    /// The block transaction receipts.
+    transaction_receipts: BlockTransactionReceipts,
 }
 
 impl Block {
@@ -66,8 +49,12 @@ impl Block {
     ///
     /// * `header` - The block header.
     /// * `transactions` - The block transactions.
-    pub fn new(header: Header, transactions: BlockTransactions) -> Self {
-        Self { header, transactions }
+    pub fn new(
+        header: Header,
+        transactions: BlockTransactions,
+        transaction_receipts: BlockTransactionReceipts,
+    ) -> Self {
+        Self { header, transactions, transaction_receipts }
     }
 
     /// Return a reference to the block header
@@ -80,12 +67,14 @@ impl Block {
         &self.transactions
     }
 
+    /// Returns a reference to all transaction receipts.
+    pub fn transaction_receipts(&self) -> &BlockTransactionReceipts {
+        &self.transaction_receipts
+    }
+
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
-        match &self.transactions {
-            BlockTransactions::Full(transactions) => transactions.into_iter().map(|tx| tx.hash).collect(),
-
-            BlockTransactions::Hashes(hashes) => hashes.to_vec(),
-        }
+        let transactions = &self.transactions;
+        transactions.into_iter().map(|tx| tx.hash).collect()
     }
 }

@@ -289,7 +289,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     let starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
-        overrides: overrides.clone(),
+        overrides,
         sync_service: sync_service.clone(),
         starting_block,
     };
@@ -336,7 +336,6 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             Duration::new(6, 0),
             client.clone(),
             backend,
-            overrides,
             madara_backend,
             3,
             0,

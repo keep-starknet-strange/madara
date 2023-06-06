@@ -18,7 +18,7 @@ use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contrac
 use blockifier::transaction::transactions::Executable;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{ChainId, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
@@ -33,7 +33,6 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::block::Block as StarknetBlock;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
@@ -46,12 +45,14 @@ impl EventWrapper {
     /// * `keys` - Event keys.
     /// * `data` - Event data.
     /// * `from_address` - Contract Address where the event was emitted from.
+    /// * `transaction_hash` - Transaction hash where the event was emitted from.
     pub fn new(
         keys: BoundedVec<Felt252Wrapper, MaxArraySize>,
         data: BoundedVec<Felt252Wrapper, MaxArraySize>,
         from_address: ContractAddressWrapper,
+        transaction_hash: Felt252Wrapper,
     ) -> Self {
-        Self { keys, data, from_address }
+        Self { keys, data, from_address, transaction_hash }
     }
 
     /// Creates an empty event.
@@ -60,6 +61,7 @@ impl EventWrapper {
             keys: BoundedVec::try_from(vec![]).unwrap(),
             data: BoundedVec::try_from(vec![]).unwrap(),
             from_address: ContractAddressWrapper::default(),
+            transaction_hash: Felt252Wrapper::default(),
         }
     }
 
@@ -75,6 +77,7 @@ pub struct EventBuilder {
     keys: vec::Vec<Felt252Wrapper>,
     data: vec::Vec<Felt252Wrapper>,
     from_address: Option<StarknetContractAddress>,
+    transaction_hash: Option<TransactionHash>,
 }
 
 impl EventBuilder {
@@ -108,6 +111,16 @@ impl EventBuilder {
         self
     }
 
+    /// Sets the transaction hash of the event.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction_hash` - Transaction hash where the event was emitted from.
+    pub fn with_transaction_hash(mut self, transaction_hash: TransactionHash) -> Self {
+        self.transaction_hash = Some(transaction_hash);
+        self
+    }
+
     /// Sets keys and data from an event content.
     ///
     /// # Arguments
@@ -134,6 +147,7 @@ impl EventBuilder {
                 .bytes()
                 .try_into()
                 .map_err(|_| EventError::InvalidFromAddress)?,
+            transaction_hash: self.transaction_hash.unwrap_or_default().0.into(),
         })
     }
 }
@@ -145,6 +159,7 @@ impl Default for EventWrapper {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
             from_address: one,
+            transaction_hash: Felt252Wrapper::default(),
         }
     }
 }
@@ -357,6 +372,44 @@ impl Transaction {
         }
     }
 
+    /// Validates account transaction
+    ///
+    /// # Arguments
+    ///
+    /// * `self` - The transaction to validate.
+    /// * `state` - The state to validate the transaction on.
+    /// * `execution_resources` - The execution resources to validate the transaction on.
+    /// * `block_context` - The block context to validate the transaction on.
+    /// * `tx_type` - The type of the transaction to execute.
+    pub fn validate_account_tx<S: State>(
+        &self,
+        state: &mut S,
+        execution_resources: &mut ExecutionResources,
+        block_context: &BlockContext,
+        tx_type: &TxType,
+    ) -> TransactionValidationResultWrapper<Option<CallInfo>> {
+        let account_context = match tx_type {
+            TxType::Invoke => {
+                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
+                self.get_invoke_transaction_context(&tx)
+            }
+            TxType::Declare => {
+                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
+                self.get_declare_transaction_context(&tx)
+            }
+            TxType::L1Handler => {
+                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
+                self.get_l1_handler_transaction_context(&tx)
+            }
+            TxType::DeployAccount => {
+                let tx = self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
+                self.get_deploy_account_transaction_context(&tx)
+            }
+        };
+
+        self.validate_tx(state, execution_resources, block_context, &account_context, tx_type)
+    }
+
     /// Validates a transaction
     ///
     /// # Arguments
@@ -449,14 +502,10 @@ impl Transaction {
     pub fn execute<S: State + StateChanges>(
         &self,
         state: &mut S,
-        block: StarknetBlock,
+        block_context: &BlockContext,
         tx_type: TxType,
         contract_class: Option<ContractClass>,
-        fee_token_address: ContractAddressWrapper,
-        chain_id: ChainId,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
-        let block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
-
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
 
@@ -475,11 +524,11 @@ impl Transaction {
 
                 // Validate.
                 let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                    self.validate_tx(state, execution_resources, block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
                     account_context,
@@ -489,7 +538,7 @@ impl Transaction {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     None,
                     account_context,
@@ -504,11 +553,11 @@ impl Transaction {
 
                 // Validate.
                 let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                    self.validate_tx(state, execution_resources, block_context, &account_context, &tx_type)?;
 
                 // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, block_context, &account_context, contract_class)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
                     account_context,
@@ -522,12 +571,12 @@ impl Transaction {
 
                 // Execute.
                 let transaction_execution = tx
-                    .run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    .run_execute(state, execution_resources, block_context, &account_context, contract_class)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
 
                 (
                     transaction_execution,
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?,
+                    self.validate_tx(state, execution_resources, block_context, &account_context, &tx_type)?,
                     account_context,
                 )
             }
@@ -539,7 +588,7 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &account_context, &tx_resources)?;
+        let (actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, &account_context, &tx_resources)?;
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,

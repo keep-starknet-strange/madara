@@ -6,15 +6,16 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use cairo_vm::types::program::Program;
 use flate2::read::GzDecoder;
+use frame_support::inherent::BlockT;
+use mp_digest_log::find_starknet_block;
+use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{
     ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
 };
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
-use sp_core::U256;
+use sp_api::HeaderT;
+use sp_blockchain::HeaderBackend;
 use sp_runtime::{BoundedBTreeMap, BoundedVec};
-use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     BroadcastedTransaction, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
@@ -56,9 +57,8 @@ pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transact
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => to_invoke_tx(invoke_tx).map(|inner| inner.from_invoke(chain_id)),
         BroadcastedTransaction::Declare(_) => Err(StarknetError::FailedToReceiveTransaction.into()), /* TODO: add support once #341 is supported */
-        BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            to_deploy_account_tx(deploy_account_tx).map(|inner| inner.from_deploy(chain_id))
-        }
+        BroadcastedTransaction::DeployAccount(deploy_account_tx) => to_deploy_account_tx(deploy_account_tx)
+            .and_then(|inner| inner.from_deploy(chain_id).map_err(|e| anyhow!(e))),
     }
 }
 
@@ -84,12 +84,9 @@ pub fn to_invoke_tx(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransactio
 }
 
 pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction> {
-    let contract_address_salt = tx.contract_address_salt.to_bytes_be();
+    let contract_address_salt = tx.contract_address_salt.into();
 
     let account_class_hash = tx.class_hash;
-
-    let calldata =
-        tx.constructor_calldata.iter().filter_map(|f| StarkFelt::new(f.to_bytes_be()).ok()).collect::<Vec<_>>();
 
     let signature = tx
         .signature
@@ -99,33 +96,21 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
         .try_into()
         .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
 
-    let sender_address = calculate_contract_address(
-        ContractAddressSalt(StarkFelt(contract_address_salt)),
-        ClassHash(StarkFelt(account_class_hash.to_bytes_be())),
-        &Calldata(calldata.into()),
-        StarknetContractAddress::default(),
-    )
-    .map_err(|e| anyhow!("Failed to calculate contract address: {e}"))?
-    .0
-    .0
-    .into();
-
     let calldata = tx
         .constructor_calldata
         .iter()
         .map(|f| (*f).into())
         .collect::<Vec<Felt252Wrapper>>()
         .try_into()
-        .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxArraySize"))?;
+        .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxCalldataSize"))?;
 
     let nonce = Felt252Wrapper::from(tx.nonce);
     let max_fee = Felt252Wrapper::from(tx.max_fee);
 
     Ok(DeployAccountTransaction {
         version: 1_u8,
-        sender_address,
         calldata,
-        salt: U256::from(contract_address_salt),
+        salt: contract_address_salt,
         signature,
         account_class_hash: account_class_hash.into(),
         nonce,
@@ -201,4 +186,16 @@ fn _to_btree_map_entrypoints(
             .unwrap(),
     );
     entry_points_by_type
+}
+
+/// Returns the current Starknet block from the block header's digest
+pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>
+where
+    B: BlockT,
+    C: HeaderBackend<B>,
+{
+    let header = client.header(block_hash).ok().flatten()?;
+    let digest = header.digest();
+    let block = find_starknet_block(digest).ok()?;
+    Some(block)
 }

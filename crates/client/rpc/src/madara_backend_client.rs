@@ -1,4 +1,4 @@
-use mc_storage::OverrideHandle;
+use mc_rpc_core::utils::get_block_by_block_hash;
 use mp_starknet::block::Block;
 use sc_client_api::backend::{Backend, StorageProvider};
 use sp_api::BlockId;
@@ -49,7 +49,6 @@ where
 // or Error.
 pub fn starknet_block_from_substrate_hash<B: BlockT, C, BE>(
     client: &C,
-    overrides: &OverrideHandle<B>,
     target_number: <<B>::Header as HeaderT>::Number,
 ) -> Result<Block, StarknetRpcApiError>
 where
@@ -61,7 +60,7 @@ where
 
     match substrate_block_hash {
         Ok(Some(block_hash)) => {
-            let block = overrides.for_block_hash(client, block_hash).current_block(block_hash).unwrap_or_default();
+            let block = get_block_by_block_hash(client, block_hash).unwrap_or_default();
 
             Ok(block)
         }

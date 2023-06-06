@@ -3,9 +3,9 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
+use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use pallet_starknet::types::NonceWrapper;
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
@@ -54,8 +54,6 @@ impl<B: BlockT> OverrideHandle<B> {
 /// State Backend with some assumptions about pallet-starknet's storage schema. Using such an
 /// optimized implementation avoids spawning a runtime and the overhead associated with it.
 pub trait StorageOverride<B: BlockT>: Send + Sync {
-    /// Return the current block.
-    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
     /// Return the class hash at the provided address for the provided block.
     fn contract_class_hash_by_address(
         &self,
@@ -76,6 +74,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     ) -> Option<ContractClassWrapper>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
+    /// Returns the events for a provided block hash.
+    fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -109,12 +109,6 @@ where
     C: ProvideRuntimeApi<B> + Send + Sync,
     C::Api: StarknetRuntimeApi<B>,
 {
-    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock> {
-        let api = self.client.runtime_api();
-
-        api.current_block(block_hash).ok()
-    }
-
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
@@ -174,5 +168,17 @@ where
     /// * `Some(nonce)` - The nonce for the provided contract address and block hash
     fn nonce(&self, block_hash: <B as BlockT>::Hash, contract_address: ContractAddressWrapper) -> Option<NonceWrapper> {
         self.client.runtime_api().nonce(block_hash, contract_address).ok()
+    }
+
+    /// Return the events for a provided block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(events)` - The events for the provided block hash
+    fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
+        self.client.runtime_api().events(block_hash).ok()
     }
 }

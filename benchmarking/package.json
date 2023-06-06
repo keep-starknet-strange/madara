@@ -21,10 +21,11 @@
     "benchmark"
   ],
   "devDependencies": {
-    "@polkadot/keyring": "^10.4.2",
+    "@polkadot/api": "^10.7.3",
+    "@polkadot/util": "^12.2.1",
     "artillery": "^2.0.0-30",
-    "artillery-engine-substrate": "^1.0.6-2",
-    "concurrently": "^7.6.0",
-    "wait-on": "^6.0.1"
+    "artillery-engine-substrate": "^1.0.7",
+    "concurrently": "^8.1.0",
+    "wait-on": "^7.0.1"
   }
 }

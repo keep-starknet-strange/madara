@@ -32,6 +32,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
+
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -66,13 +67,14 @@ use alloc::string::String;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use blockifier::execution::entry_point::CallInfo;
+use blockifier::block_context::BlockContext;
+use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, BlockTransactions, Header as StarknetHeader, MaxTransactions};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
@@ -88,7 +90,10 @@ use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ContractAddress};
-use starknet_api::transaction::EventContent;
+use starknet_api::block::{BlockNumber, BlockTimestamp};
+use starknet_api::hash::StarkFelt;
+use starknet_api::stdlib::collections::HashMap;
+use starknet_api::transaction::{EventContent, TransactionHash};
 
 use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
@@ -116,8 +121,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-
-    use starknet_api::api_core::ChainId as StarknetChainId;
 
     use super::*;
 
@@ -364,6 +367,7 @@ pub mod pallet {
         StateDiffError,
         ContractNotFound,
         ReachedBoundedVecLimit,
+        TransactionConversionError,
     }
 
     /// The Starknet pallet external functions.
@@ -410,20 +414,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
+            // Get current block context
+            let block_context = Self::get_block_context();
             let chain_id = Self::chain_id_str();
             let transaction: Transaction = transaction.from_invoke(&chain_id);
-            let call_info = transaction.execute(
-                &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
-                TxType::Invoke,
-                None,
-                fee_token_address,
-                StarknetChainId(chain_id),
-            );
+            let call_info =
+                transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
@@ -434,13 +430,19 @@ pub mod pallet {
                 }) => {
                     log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
+                    let tx_hash = TransactionHash(transaction.hash.into());
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
-                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            let mut events =
+                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(
+                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+                            );
                             events
                         }
-                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        (_, Some(mut fee)) => {
+                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
+                        }
                         _ => Vec::default(),
                     };
 
@@ -449,8 +451,8 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.0.into(),
-                        block_hash: block.header().hash(T::SystemHash::hasher()), // unwrap to check.
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(), // unwrap to check.
+                        block_number: block_context.block_number.0,
                     }
                 }
                 Err(e) => {
@@ -500,10 +502,8 @@ pub mod pallet {
             // Check class hash is not already declared
             ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
 
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
+            // Get current block context
+            let block_context = Self::get_block_context();
 
             // Parse contract class
             let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
@@ -511,11 +511,9 @@ pub mod pallet {
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
+                &block_context,
                 TxType::Declare,
                 Some(contract_class),
-                fee_token_address,
-                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -527,13 +525,19 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
+                    let tx_hash = TransactionHash(transaction.hash.into());
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
-                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            let mut events =
+                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(
+                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+                            );
                             events
                         }
-                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        (_, Some(mut fee)) => {
+                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
+                        }
                         _ => Vec::default(),
                     };
 
@@ -541,8 +545,8 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: block.header().hash(T::SystemHash::hasher()),
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(),
+                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -581,27 +585,25 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
+            let chain_id = Self::chain_id_str();
+            let transaction: Transaction =
+                transaction.from_deploy(&chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
+
             // Check if contract is deployed
             ensure!(
                 !ContractClassHashes::<T>::contains_key(transaction.sender_address),
                 Error::<T>::AccountAlreadyDeployed
             );
 
-            let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_deploy(&chain_id);
+            // Get current block context
+            let block_context = Self::get_block_context();
 
-            // Get current block
-            let block = Self::current_block();
-            // Get fee token address
-            let fee_token_address = Self::fee_token_address();
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block.clone(),
+                &block_context,
                 TxType::DeployAccount,
                 None,
-                fee_token_address,
-                StarknetChainId(chain_id),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -613,13 +615,19 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
+                    let tx_hash = TransactionHash(transaction.hash.into());
                     let events = match (execute_call_info, fee_transfer_call_info) {
                         (Some(mut exec), Some(mut fee)) => {
-                            let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
+                            let mut events =
+                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                            events.append(
+                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+                            );
                             events
                         }
-                        (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
+                        (_, Some(mut fee)) => {
+                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
+                        }
                         _ => Vec::default(),
                     };
 
@@ -627,8 +635,8 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: block.header().hash(T::SystemHash::hasher()),
-                        block_number: block.header().block_number.as_u64(),
+                        block_hash: Felt252Wrapper::default(),
+                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -669,16 +677,12 @@ pub mod pallet {
             // Check if contract is deployed
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-            let block = Self::current_block();
-            let fee_token_address = Self::fee_token_address();
-            let chain_id = Self::chain_id_str();
+            let block_context = Self::get_block_context();
             match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
-                block,
+                &block_context,
                 TxType::L1Handler,
                 None,
-                fee_token_address,
-                StarknetChainId(chain_id),
             ) {
                 Ok(v) => {
                     log!(debug, "Transaction executed successfully: {:?}", v);
@@ -740,30 +744,45 @@ pub mod pallet {
         /// here we make sure that some particular calls (in this case all calls)
         /// are being whitelisted and marked as valid.
         fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-            // TODO: Call `__validate__` entrypoint of the contract. #69
             // The priority right now is the max u64 - nonce because for unsigned transactions we need to
             // determine an absolute priority. For now we use that for the benchmark (lowest nonce goes first)
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
-                Call::invoke { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
-                Call::declare { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
-                Call::deploy_account { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
-                    .propagate(true)
-                    .build(),
+                Call::invoke { transaction } => {
+                    let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
+                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                }
+                Call::declare { transaction } => {
+                    let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
+                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        .and_provides((transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                }
+                Call::deploy_account { transaction } => {
+                    // don't validate deploy txs for now
+                    let deploy_account_transaction = transaction
+                        .clone()
+                        .from_deploy(&Self::chain_id_str())
+                        .map_err(|_| TransactionValidityError::Unknown(UnknownTransaction::CannotLookup))?;
+                    // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
+                    ValidTransaction::with_tag_prefix("starknet")
+                        .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
+                        .longevity(64_u64)
+                        .propagate(true)
+                        .build()
+                }
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
@@ -778,6 +797,56 @@ pub mod pallet {
 
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
+    /// Validates transaction and returns substrate error if any.
+    ///
+    /// # Arguments
+    ///
+    /// * `transaction` - The transaction to be validated.
+    /// * `tx_type` - The type of the transaction.
+    ///
+    /// # Error
+    ///
+    /// Returns an error if transaction validation fails.
+    fn validate_tx(transaction: Transaction, tx_type: TxType) -> Result<(), TransactionValidityError> {
+        let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
+        let mut execution_resources = ExecutionResources::default();
+        let block_context = Self::get_block_context();
+        transaction
+            .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
+            .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
+
+        Ok(())
+    }
+
+    /// Creates a [BlockContext] object. The [BlockContext] is needed by the blockifier to execute
+    /// properly the transaction. Substrate caches data so it's fine to call multiple times this
+    /// function, only the first transaction/block will be "slow" to load these data.
+    fn get_block_context() -> BlockContext {
+        let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
+        let block_timestamp = Self::block_timestamp();
+        // Get fee token address. Its value is checked when we set it so it's fine to unwrap
+        let fee_token_address =
+            ContractAddress::try_from(StarkFelt::new(Self::fee_token_address().into()).unwrap()).unwrap();
+        let chain_id = Self::chain_id_str();
+        let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
+        let vm_resource_fee_cost = HashMap::default();
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/545
+        let invoke_tx_max_n_steps = 1000000;
+        let validate_max_n_steps = 1000000;
+        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
+        let gas_price = 10;
+        BlockContext {
+            block_number: BlockNumber(block_number),
+            block_timestamp: BlockTimestamp(block_timestamp),
+            chain_id: ChainId(chain_id),
+            sequencer_address,
+            fee_token_address,
+            vm_resource_fee_cost,
+            invoke_tx_max_n_steps,
+            validate_max_n_steps,
+            gas_price,
+        }
+    }
     /// Get current block hash.
     ///
     /// # Returns
@@ -902,7 +971,16 @@ impl<T: Config> Pallet<T> {
         let sequencer_address = SEQUENCER_ADDRESS;
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
-        let transactions: Vec<Transaction> = pending.into_iter().map(|(transaction, _)| transaction).collect();
+
+        let mut transactions: Vec<Transaction> = Vec::with_capacity(pending.len());
+        let mut receipts: Vec<TransactionReceiptWrapper> = Vec::with_capacity(pending.len());
+
+        // For loop to iterate once on pending.
+        for (transaction, receipt) in pending.into_iter() {
+            transactions.push(transaction);
+            receipts.push(receipt);
+        }
+
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
@@ -925,7 +1003,8 @@ impl<T: Config> Pallet<T> {
             ),
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            BlockTransactions::Full(BoundedVec::try_from(transactions).unwrap()),
+            BoundedVec::try_from(transactions).unwrap(),
+            BoundedVec::try_from(receipts).unwrap(),
         );
         // Save the current block.
         CurrentBlock::<T>::put(block.clone());
@@ -949,19 +1028,19 @@ impl<T: Config> Pallet<T> {
     ///
     /// The result of the operation.
     #[inline(always)]
-    fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
+    fn emit_events(call_info: &mut CallInfo, tx_hash: TransactionHash) -> Result<Vec<StarknetEventType>, EventError> {
         let mut events = Vec::new();
 
         call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
         for ordered_event in &call_info.execution.events {
-            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address, tx_hash)?;
             events.push(event_type);
         }
 
         for inner_call in &mut call_info.inner_calls {
             inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
             for ordered_event in &inner_call.execution.events {
-                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address)?;
+                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address, tx_hash)?;
                 events.push(event_type);
             }
         }
@@ -980,10 +1059,17 @@ impl<T: Config> Pallet<T> {
     ///
     /// Returns an error if the event construction fails.
     #[inline(always)]
-    fn emit_event(event: &EventContent, from_address: ContractAddress) -> Result<StarknetEventType, EventError> {
+    fn emit_event(
+        event: &EventContent,
+        from_address: ContractAddress,
+        tx_hash: TransactionHash,
+    ) -> Result<StarknetEventType, EventError> {
         log!(debug, "Transaction event: {:?}", event);
-        let sn_event =
-            StarknetEventType::builder().with_event_content(event.clone()).with_from_address(from_address).build()?;
+        let sn_event = StarknetEventType::builder()
+            .with_event_content(event.clone())
+            .with_from_address(from_address)
+            .with_transaction_hash(tx_hash)
+            .build()?;
         Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
 
         PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
@@ -995,14 +1081,11 @@ impl<T: Config> Pallet<T> {
         // Check if contract is deployed
         ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
-        let chain_id = Self::chain_id_str();
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
-            Self::current_block(),
+            &Self::get_block_context(),
             TxType::Invoke,
             None,
-            Self::fee_token_address(),
-            ChainId(chain_id),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);

@@ -3,7 +3,7 @@ use core::cell::RefCell;
 use std::str::FromStr;
 
 use frame_support::bounded_vec;
-use sp_core::{H256, U256};
+use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{
@@ -31,15 +31,16 @@ fn test_deploy_account_tx_hash() {
 
     let transaction = DeployAccountTransaction {
         version: 1,
-        sender_address: Felt252Wrapper::from(19911991_u128),
         calldata: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE),
         nonce: Felt252Wrapper::ZERO,
-        salt: U256::zero(),
+        salt: Felt252Wrapper::ZERO,
         signature: bounded_vec!(),
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,
     };
-    assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id), expected_tx_hash);
+    let address = FieldElement::from(19911991_u64).to_bytes_be();
+
+    assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id, address), expected_tx_hash);
 }
 
 #[test]
@@ -129,7 +130,8 @@ fn test_event_hash() {
     let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
     let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
     let from_address = Felt252Wrapper::from(10_u128);
-    let event = EventWrapper::new(keys, data, from_address);
+    let transaction_hash = Felt252Wrapper::from(0_u128);
+    let event = EventWrapper::new(keys, data, from_address, transaction_hash);
     assert_eq!(
         calculate_event_hash::<PedersenHasher>(&event),
         FieldElement::from_str("0x3f44fb0516121d225664058ecc7e415c4725d6a7a11fd7d515c55c34ef8270b").unwrap()

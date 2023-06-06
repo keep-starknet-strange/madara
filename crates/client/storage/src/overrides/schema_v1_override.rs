@@ -1,12 +1,16 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-use mp_starknet::block::Block as StarknetBlock;
+use frame_system::EventRecord;
+use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CURRENT_BLOCK, STARKNET_NONCE,
+    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE,
+    SYSTEM_EVENTS,
 };
+use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::NonceWrapper;
+use pallet_starknet::Event;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
@@ -53,14 +57,6 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
-    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock> {
-        self.query_storage::<StarknetBlock>(
-            block_hash,
-            &StorageKey(storage_prefix_build(PALLET_STARKNET, STARKNET_CURRENT_BLOCK)),
-        )
-        .map(Into::into)
-    }
-
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
@@ -108,5 +104,19 @@ where
             Some(nonce) => Some(nonce),
             None => Some(NonceWrapper::default()),
         }
+    }
+
+    fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
+        let events_key = storage_prefix_build(PALLET_SYSTEM, SYSTEM_EVENTS);
+        let events = self.query_storage::<Vec<EventRecord<RuntimeEvent, Hash>>>(block_hash, &StorageKey(events_key));
+        events.map(|events| {
+            events
+                .into_iter()
+                .filter_map(|e| match e {
+                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } => Some(event),
+                    _ => None,
+                })
+                .collect()
+        })
     }
 }
