@@ -9,8 +9,8 @@ async function main() {
   const blockHash = await api.rpc.chain.getBlock();
   const blockNumber = blockHash.block.header.number;
 
-  // check last 50 blocks for failed extrinsics
-  for (let i = blockNumber.toNumber() - 49; i <= blockNumber.toNumber(); i++) {
+  // check last 10 blocks for failed extrinsics
+  for (let i = blockNumber.toNumber() - 9; i <= blockNumber.toNumber(); i++) {
     const hash = await api.rpc.chain.getBlockHash(i);
     const signedBlock = await api.rpc.chain.getBlock(hash);
 
