@@ -13,7 +13,7 @@ RUN cargo build --release -Z sparse-registry --config net.git-fetch-with-cli=tru
 
 FROM debian:buster-slim
 LABEL description="Madara, a blazing fast Starknet sequencer" \
-  authors="Oak <me@droak.sh>" \
+  authors="Oak <me+madara@droak.sh>" \
   source="https://github.com/keep-starknet-strange/madara" \
   documentation="https://docs.madara.wtf/"
 
