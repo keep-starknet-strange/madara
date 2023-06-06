@@ -37,6 +37,8 @@ import {
   cleanHex,
 } from "../../util/utils";
 import { Block, InvokeTransaction } from "./types";
+import testJson from "../../contracts/compiled/test.json";
+import erc20Json from "../../contracts/compiled/erc20.json";
 
 chai.use(deepEqualInAnyOrder);
 
@@ -134,6 +136,9 @@ describeDevMadara("Starknet RPC", (context) => {
       );
 
       expect(contract_class).to.not.be.undefined;
+      expect(contract_class.entry_points_by_type).to.deep.equal(
+        testJson.entry_points_by_type
+      );
     });
   });
 
@@ -218,7 +223,11 @@ describeDevMadara("Starknet RPC", (context) => {
         TOKEN_CLASS_HASH,
         "latest"
       );
+
       expect(contract_class).to.not.be.undefined;
+      expect(contract_class.entry_points_by_type).to.deep.equal(
+        erc20Json.entry_points_by_type
+      );
     });
   });
 
