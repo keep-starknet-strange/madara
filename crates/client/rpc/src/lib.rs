@@ -121,10 +121,7 @@ where
                 .client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
-            BlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => None,
-            },
+            BlockId::Tag(_) => Some(self.client.info().best_hash),      
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
     }

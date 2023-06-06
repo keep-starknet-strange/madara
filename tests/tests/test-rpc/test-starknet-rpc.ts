@@ -1146,4 +1146,22 @@ describeDevMadara("Starknet RPC", (context) => {
       });
     });
   });
+
+  describe("Fix #551: Madara RPC doesn't handle 'pending' block id", async () => {
+    it("should support 'pending' block id", async function () {
+      const nonce = await providerRPC.getNonceForAddress(
+        ARGENT_CONTRACT_ADDRESS,
+        "pending"
+      );
+      expect(nonce).to.not.be.undefined;
+    });
+
+        it("should support 'latest' block id", async function () {
+      const nonce = await providerRPC.getNonceForAddress(
+        ARGENT_CONTRACT_ADDRESS,
+        "latest"
+      );
+      expect(nonce).to.not.be.undefined;
+    });
+  });
 });
