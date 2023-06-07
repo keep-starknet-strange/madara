@@ -16,11 +16,23 @@ pub struct Cli {
     pub subcommand: Option<Subcommand>,
 
     #[clap(flatten)]
-    pub run: RunCmd,
+    pub run: ExtendedRunCmd,
 
     /// Choose sealing method.
     #[arg(long, value_enum, ignore_case = true)]
     pub sealing: Option<Sealing>,
+}
+
+#[derive(Debug, clap::Args)]
+pub struct ExtendedRunCmd {
+    #[clap(flatten)]
+    pub run_cmd: RunCmd,
+    
+	#[arg(long)]
+    pub full_node: bool,
+
+	#[arg(long)]
+    pub testnet: bool,
 }
 
 #[allow(clippy::large_enum_variant)]
