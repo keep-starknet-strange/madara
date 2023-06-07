@@ -146,12 +146,12 @@ pub mod pallet {
         /// multiple pallets send unsigned transactions.
         #[pallet::constant]
         type UnsignedPriority: Get<TransactionPriority>;
-		/// A configuration for longevity of transactions.
+        /// A configuration for longevity of transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime to
         /// set how long transactions are kept in the mempool.
-		#[pallet::constant]
-		type TransactionLongevity: Get<TransactionLongevity>;
+        #[pallet::constant]
+        type TransactionLongevity: Get<TransactionLongevity>;
     }
 
     /// The Starknet pallet hooks.

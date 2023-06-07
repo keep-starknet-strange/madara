@@ -39,7 +39,7 @@ impl pallet_starknet::Config for Runtime {
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
-	type TransactionLongevity = TransactionLongevity;
+    type TransactionLongevity = TransactionLongevity;
 }
 
 /// --------------------------------------
@@ -185,7 +185,7 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
-	pub const TransactionLongevity: u64 = 64;
+    pub const TransactionLongevity: u64 = 64;
 }
 
 /// A stateless module with helpers for dispatch management which does no re-authentication.
