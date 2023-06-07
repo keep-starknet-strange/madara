@@ -10,6 +10,7 @@ packages = [{ include = "utils" }]
 python = ">=3.9,<3.10"
 cairo-lang = "^0.11"
 starknet-py = "^0.16"
+openzeppelin-cairo-contracts = "^0.6.1"
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"

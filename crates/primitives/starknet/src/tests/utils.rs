@@ -28,8 +28,8 @@ pub const TEST_FAULTY_ACCOUNT_CONTRACT_CLASS_HASH: &str = "0x113";
 pub const SECURITY_TEST_CLASS_HASH: &str = "0x114";
 
 // Paths.
-pub const TEST_CONTRACT_PATH: &str = "../../../resources/test.json";
-pub const SECURITY_TEST_CONTRACT_PATH: &str = "../../../resources/security_test.json";
+pub const TEST_CONTRACT_PATH: &str = "../../../cairo-contracts/build/test.json";
+pub const SECURITY_TEST_CONTRACT_PATH: &str = "../../../cairo-contracts/build/security_test.json";
 
 impl Block {
     /// Creates a mock block.

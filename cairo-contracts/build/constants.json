@@ -18,69 +18,121 @@
         },
         "hints": {},
         "identifiers": {
-            "__main__.DEFAULT_ADMIN_ROLE": {
+            "__main__.A0": {
                 "type": "const",
-                "value": 0
+                "value": 77371252455336267181195260
             },
-            "__main__.IACCESSCONTROL_ID": {
+            "__main__.A1": {
                 "type": "const",
-                "value": 2036718347
+                "value": 1023
             },
-            "__main__.IACCOUNT_ID": {
+            "__main__.A2": {
                 "type": "const",
-                "value": 2792084853
+                "value": 19342813109330467168976896
             },
-            "__main__.IERC1155_ID": {
+            "__main__.B0": {
                 "type": "const",
-                "value": 3652614694
+                "value": 23805269282153275520606283
             },
-            "__main__.IERC1155_METADATA_ID": {
+            "__main__.B1": {
                 "type": "const",
-                "value": 243872796
+                "value": 64478498050055519801623345
             },
-            "__main__.IERC1155_RECEIVER_ID": {
+            "__main__.B2": {
                 "type": "const",
-                "value": 1310921440
+                "value": 6858709101169761702330043
             },
-            "__main__.IERC165_ID": {
+            "__main__.BASE": {
                 "type": "const",
-                "value": 33540519
+                "value": 77371252455336267181195264
             },
-            "__main__.IERC721_ENUMERABLE_ID": {
+            "__main__.GX0": {
                 "type": "const",
-                "value": 2014223715
+                "value": 52227620040540588600771222
             },
-            "__main__.IERC721_ID": {
+            "__main__.GX1": {
                 "type": "const",
-                "value": 2158778573
+                "value": 33347259622618539004134583
             },
-            "__main__.IERC721_METADATA_ID": {
+            "__main__.GX2": {
                 "type": "const",
-                "value": 1532892063
+                "value": 8091721874918813684698062
             },
-            "__main__.IERC721_RECEIVER_ID": {
+            "__main__.GY0": {
                 "type": "const",
-                "value": 353073666
+                "value": 59685082318776612195095029
             },
-            "__main__.INVALID_ID": {
+            "__main__.GY1": {
                 "type": "const",
-                "value": 4294967295
+                "value": 54599710628478995760242092
             },
-            "__main__.ON_ERC1155_BATCH_RECEIVED_SELECTOR": {
+            "__main__.GY2": {
                 "type": "const",
-                "value": 3155786881
+                "value": 6036146923926000695307902
             },
-            "__main__.ON_ERC1155_RECEIVED_SELECTOR": {
+            "__main__.N0": {
                 "type": "const",
-                "value": 4063915617
+                "value": 28553880287938765337601361
             },
-            "__main__.TRANSACTION_VERSION": {
+            "__main__.N1": {
+                "type": "const",
+                "value": 77371252455335114450843292
+            },
+            "__main__.N2": {
+                "type": "const",
+                "value": 19342813109330467168976895
+            },
+            "__main__.P0": {
+                "type": "const",
+                "value": 77371252455336267181195263
+            },
+            "__main__.P1": {
+                "type": "const",
+                "value": 1023
+            },
+            "__main__.P2": {
+                "type": "const",
+                "value": 19342813109330467168976896
+            },
+            "__main__.SECP_REM": {
+                "type": "const",
+                "value": 26959946660873538059280334323183841250350249843923952699046031785985
+            },
+            "__main__.SECP_REM0": {
                 "type": "const",
                 "value": 1
             },
-            "__main__.UINT8_MAX": {
+            "__main__.SECP_REM1": {
                 "type": "const",
-                "value": 255
+                "value": -1024
+            },
+            "__main__.SECP_REM2": {
+                "type": "const",
+                "value": 4503599626321920
+            },
+            "__main__.r0": {
+                "type": "const",
+                "value": 4
+            },
+            "__main__.r1": {
+                "type": "const",
+                "value": -4096
+            },
+            "__main__.r2": {
+                "type": "const",
+                "value": 18014398505287680
+            },
+            "__main__.s0": {
+                "type": "const",
+                "value": 72057594037927936
+            },
+            "__main__.s1": {
+                "type": "const",
+                "value": -73786976294838206460
+            },
+            "__main__.s2": {
+                "type": "const",
+                "value": -75557863725914323423232
             },
             "starkware.cairo.common.bool.FALSE": {
                 "type": "const",

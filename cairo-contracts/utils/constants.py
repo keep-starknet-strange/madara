@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from enum import Enum
 from pathlib import Path
@@ -8,6 +9,11 @@ from dotenv import load_dotenv
 from starknet_py.net.full_node_client import FullNodeClient
 
 load_dotenv()
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 
 RPC_CLIENT = FullNodeClient(node_url=os.getenv("RPC_URL", "http://127.0.0.1:5050/rpc"))
 BLOCK_EXPLORER_URL = "https://starknet-madara.netlify.app/#/explorer/query"
@@ -26,19 +32,21 @@ DEPLOYMENTS_DIR.mkdir(exist_ok=True, parents=True)
 
 
 # TODO: Remove enum when starknet-py doesn't expect an enum as chain_id
-response = requests.post(
-    RPC_CLIENT.url,
-    json={
-        "jsonrpc": "2.0",
-        "method": f"starknet_chainId",
-        "params": {},
-        "id": 0,
-    },
-)
+try:
+    response = requests.post(
+        RPC_CLIENT.url,
+        json={
+            "jsonrpc": "2.0",
+            "method": f"starknet_chainId",
+            "params": {},
+            "id": 0,
+        },
+    )
 
+    class ChainId(Enum):
+        chain_id = int(json.loads(response.text)["result"], 16)
 
-class ChainId(Enum):
-    chain_id = int(json.loads(response.text)["result"], 16)
-
-
-CHAIN_ID = getattr(ChainId, "chain_id")
+    CHAIN_ID = getattr(ChainId, "chain_id")
+except Exception:
+    logger.info("⚠ Could not fetch CHAIN_ID from RPC")
+    CHAIN_ID = ""

@@ -13,8 +13,17 @@ import {
   validateAndParseAddress,
   RPC,
 } from "starknet";
+import erc20Json from "../../../cairo-contracts/build/ERC20.json";
+import testJson from "../../../cairo-contracts/build/test.json";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
+import {
+  cleanHex,
+  rpcTransfer,
+  starknetKeccak,
+  toBN,
+  toHex,
+} from "../../util/utils";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
@@ -32,16 +41,7 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
 } from "../constants";
-import {
-  toHex,
-  toBN,
-  rpcTransfer,
-  starknetKeccak,
-  cleanHex,
-} from "../../util/utils";
 import { Block, InvokeTransaction } from "./types";
-import testJson from "../../contracts/compiled/test.json";
-import erc20Json from "../../contracts/compiled/erc20.json";
 
 chai.use(deepEqualInAnyOrder);
 chai.use(chaiAsPromised);

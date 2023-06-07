@@ -214,10 +214,12 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/storage_read_write.json");
-        let transaction =
-            transaction_from_json(json_content, include_bytes!("../../../../../resources/account/simple/account.json"))
-                .expect("Failed to create Transaction from JSON")
-                .into();
+        let transaction = transaction_from_json(
+            json_content,
+            include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"),
+        )
+        .expect("Failed to create Transaction from JSON")
+        .into();
 
         let target_contract_address =
             Felt252Wrapper::from_hex_be("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();

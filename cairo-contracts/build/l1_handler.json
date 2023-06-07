@@ -78,7 +78,7 @@
                         "end_col": 29,
                         "end_line": 5,
                         "input_file": {
-                            "filename": "src/l1_handler.cairo"
+                            "filename": "src/test_contracts/l1_handler.cairo"
                         },
                         "start_col": 5,
                         "start_line": 5
@@ -96,7 +96,7 @@
                         "end_col": 18,
                         "end_line": 6,
                         "input_file": {
-                            "filename": "src/l1_handler.cairo"
+                            "filename": "src/test_contracts/l1_handler.cairo"
                         },
                         "start_col": 5,
                         "start_line": 6
@@ -114,7 +114,7 @@
                         "end_col": 15,
                         "end_line": 7,
                         "input_file": {
-                            "filename": "src/l1_handler.cairo"
+                            "filename": "src/test_contracts/l1_handler.cairo"
                         },
                         "start_col": 5,
                         "start_line": 7
@@ -140,7 +140,7 @@
                                 "end_col": 56,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -154,7 +154,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "parent_location": [
                                                     {
@@ -168,7 +168,7 @@
                                                                 "end_col": 28,
                                                                 "end_line": 4,
                                                                 "input_file": {
-                                                                    "filename": "src/l1_handler.cairo"
+                                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                                 },
                                                                 "start_col": 6,
                                                                 "start_line": 4
@@ -219,7 +219,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "start_col": 6,
                                 "start_line": 4
@@ -250,7 +250,7 @@
                                 "end_col": 47,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -264,7 +264,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "start_col": 6,
                                                 "start_line": 4
@@ -305,7 +305,7 @@
                                 "end_col": 56,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -319,7 +319,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "start_col": 6,
                                                 "start_line": 4
@@ -353,7 +353,7 @@
                         "end_col": 28,
                         "end_line": 4,
                         "input_file": {
-                            "filename": "src/l1_handler.cairo"
+                            "filename": "src/test_contracts/l1_handler.cairo"
                         },
                         "start_col": 6,
                         "start_line": 4
@@ -380,7 +380,7 @@
                                         "end_col": 28,
                                         "end_line": 4,
                                         "input_file": {
-                                            "filename": "src/l1_handler.cairo"
+                                            "filename": "src/test_contracts/l1_handler.cairo"
                                         },
                                         "start_col": 6,
                                         "start_line": 4
@@ -404,7 +404,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "start_col": 6,
                                 "start_line": 4
@@ -435,7 +435,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -449,7 +449,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "start_col": 6,
                                                 "start_line": 4
@@ -490,7 +490,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -504,7 +504,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "start_col": 6,
                                                 "start_line": 4
@@ -545,7 +545,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -559,7 +559,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "start_col": 6,
                                                 "start_line": 4
@@ -600,7 +600,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "parent_location": [
                                     {
@@ -614,7 +614,7 @@
                                                 "end_col": 28,
                                                 "end_line": 4,
                                                 "input_file": {
-                                                    "filename": "src/l1_handler.cairo"
+                                                    "filename": "src/test_contracts/l1_handler.cairo"
                                                 },
                                                 "start_col": 6,
                                                 "start_line": 4
@@ -655,7 +655,7 @@
                                 "end_col": 28,
                                 "end_line": 4,
                                 "input_file": {
-                                    "filename": "src/l1_handler.cairo"
+                                    "filename": "src/test_contracts/l1_handler.cairo"
                                 },
                                 "start_col": 6,
                                 "start_line": 4

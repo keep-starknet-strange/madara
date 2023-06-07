@@ -213,16 +213,16 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let account_class =
-        get_contract_class(include_bytes!("../../../resources/account/simple/account.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
     let argent_account_class =
-        get_contract_class(include_bytes!("../../../resources/account/argent/account.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json")).try_into().unwrap();
     let argent_proxy_class =
-        get_contract_class(include_bytes!("../../../resources/account/argent/proxy/proxy.json")).try_into().unwrap();
-    let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json")).try_into().unwrap();
+    let test_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json")).try_into().unwrap();
     let erc20_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json")).try_into().unwrap();
     let erc721_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../resources/erc721/erc721.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address = Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap();

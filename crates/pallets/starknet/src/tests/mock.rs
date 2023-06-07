@@ -95,18 +95,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let blockifier_account_class_hash = Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_CLASS).unwrap();
 
     // TEST CLASSES
-    let argent_proxy_class = get_contract_class("argent_proxy_v0.json");
-    let argent_account_class_v0 = get_contract_class("argent_account_v0.json");
-    let openzeppelin_account_class = get_contract_class("account/openzeppelin/account.json");
-    let argent_account_class = get_contract_class("account/argent/account.json");
-    let braavos_account_class = get_contract_class("account/braavos/account.json");
-    let braavos_proxy_class = get_contract_class("account/braavos/openzeppelin_deps/proxy.json");
+    let argent_proxy_class = get_contract_class("Proxy.json");
+    let argent_account_class_v0 = get_contract_class("ArgentAccount.json");
+    let openzeppelin_account_class = get_contract_class("OpenzeppelinAccount.json");
+    let argent_account_class = get_contract_class("ArgentAccount.json");
+    let braavos_account_class = get_contract_class("BraavosAccount.json");
+    let braavos_proxy_class = get_contract_class("Proxy.json");
     let test_class = get_contract_class("test.json");
     let l1_handler_class = get_contract_class("l1_handler.json");
-    let blockifier_account_class = get_contract_class("account/simple/account.json");
-    let simple_account_class = get_contract_class("account/simple/account.json");
-    let inner_call_account_class = get_contract_class("account/unauthorized_inner_call/account.json");
-    let erc20_class = get_contract_class("erc20/erc20.json");
+    let blockifier_account_class = get_contract_class("NoValidateAccount.json");
+    let simple_account_class = get_contract_class("NoValidateAccount.json");
+    let inner_call_account_class = get_contract_class("UnauthorizedInnerCallAccount.json");
+    let erc20_class = get_contract_class("ERC20.json");
 
     // ACCOUNT CONTRACT
     // - ref testnet tx(0x06cfa9b097bec7a811e791b4c412b3728fb4cd6d3b84ae57db3a10c842b00740)

@@ -6,7 +6,7 @@ end-to-end testing.
 ## Installation
 
 This is actually a python project using [poetry](https://python-poetry.org/) as
-a package manage.
+a package manager.
 
 To install the project, make sure you have `poetry` available and run:
 
@@ -19,10 +19,15 @@ poetry install
 The goal of this folder is to provide artifacts for madara testing and deploy
 scripts targeting madara endpoints for end-to-end testing.
 
-Every cairo file in the `src` is automatically compiled when running
+The script folder contains example scripts, for example for compiling all the
+files:
 
 ```bash
-python utils/compile_all.py
+python scripts/compile_all.py
 ```
 
-An example deploy script
+Or for deploying an ERC20
+
+```bash
+python scripts/deploy_erc20.py
+```
