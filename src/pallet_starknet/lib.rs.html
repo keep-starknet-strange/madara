@@ -1101,6 +1101,12 @@
 <a href="#1101" id="1101">1101</a>
 <a href="#1102" id="1102">1102</a>
 <a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1249,6 +1255,12 @@
         /// multiple pallets send unsigned transactions.
         </span><span class="attr">#[pallet::constant]
         </span><span class="kw">type </span>UnsignedPriority: Get&lt;TransactionPriority&gt;;
+        <span class="doccomment">/// A configuration for longevity of transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime to
+        /// set how long transactions are kept in the mempool.
+        </span><span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>TransactionLongevity: Get&lt;TransactionLongevity&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -1852,7 +1864,7 @@
                     ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(<span class="number">64_u64</span>)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(<span class="bool-val">true</span>)
                         .build()
                 }
@@ -1862,7 +1874,7 @@
                     ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(<span class="number">64_u64</span>)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(<span class="bool-val">true</span>)
                         .build()
                 }
@@ -1876,14 +1888,14 @@
                     </span>ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                         .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
-                        .longevity(<span class="number">64_u64</span>)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(<span class="bool-val">true</span>)
                         .build()
                 }
                 Call::consume_l1_message { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                     .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(<span class="number">64_u64</span>)
+                    .longevity(T::TransactionLongevity::get())
                     .propagate(<span class="bool-val">true</span>)
                     .build(),
                 <span class="kw">_ </span>=&gt; InvalidTransaction::Call.into(),
