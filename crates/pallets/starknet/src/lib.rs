@@ -146,6 +146,12 @@ pub mod pallet {
         /// multiple pallets send unsigned transactions.
         #[pallet::constant]
         type UnsignedPriority: Get<TransactionPriority>;
+        /// A configuration for longevity of transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime to
+        /// set how long transactions are kept in the mempool.
+        #[pallet::constant]
+        type TransactionLongevity: Get<TransactionLongevity>;
     }
 
     /// The Starknet pallet hooks.
@@ -749,7 +755,7 @@ pub mod pallet {
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
@@ -759,7 +765,7 @@ pub mod pallet {
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
@@ -773,14 +779,14 @@ pub mod pallet {
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
+                    .longevity(T::TransactionLongevity::get())
                     .propagate(true)
                     .build(),
                 _ => InvalidTransaction::Call.into(),
