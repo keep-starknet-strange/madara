@@ -12,6 +12,7 @@ import {
   hash,
   validateAndParseAddress,
   RPC,
+  stark,
 } from "starknet";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
@@ -730,6 +731,9 @@ describeDevMadara("Starknet RPC", (context) => {
       // TODO compare the program as well
       expect(contractClassActual.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
+      );
+      expect(contractClassActual.program).to.be.equal(
+        stark.compressProgram(ERC20_CONTRACT.program)
       );
       expect(res.class_hash).to.be.eq(classHash);
     });
