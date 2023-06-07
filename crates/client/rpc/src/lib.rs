@@ -16,6 +16,7 @@ use log::{error, info};
 use mc_rpc_core::utils::{
     get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
 };
+use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::execution::types::Felt252Wrapper;
@@ -311,12 +312,7 @@ where
     }
 
     /// get the storage at a given address and key and at a given block
-    fn get_storage_at(
-        &self,
-        contract_address: FieldElement,
-        key: FieldElement,
-        block_id: BlockId,
-    ) -> RpcResult<FieldElement> {
+    fn get_storage_at(&self, contract_address: FieldElement, key: FieldElement, block_id: BlockId) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -340,7 +336,7 @@ where
             error!("Failed to get storage from contract: {:#?}", e);
             StarknetRpcApiError::InternalServerError
         })?;
-        Ok(value)
+        Ok(Felt(value))
     }
 
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>> {
@@ -367,7 +363,7 @@ where
     }
 
     /// Get the contract class at a given contract address for a given block id
-    fn get_class_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<ContractClass> {
+    fn get_class_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -401,7 +397,7 @@ where
     /// # Returns
     ///
     /// * `class_hash` - The class hash of the given contract
-    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
+    fn get_class_hash_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -415,7 +411,7 @@ where
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-        Ok(class_hash.into())
+        Ok(Felt(class_hash.into()))
     }
 
     // Implementation of the `syncing` RPC Endpoint.
@@ -529,7 +525,7 @@ where
     }
 
     /// Get the nonce associated with the given address at the given block
-    fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
+    fn get_nonce(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -549,7 +545,7 @@ where
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        Ok(nonce)
+        Ok(Felt(nonce))
     }
 
     /// Returns the chain id.
