@@ -130,6 +130,8 @@
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
 <a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -141,9 +143,12 @@
 
 <span class="kw">use </span>jsonrpsee::core::RpcResult;
 <span class="kw">use </span>jsonrpsee::proc_macros::rpc;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>serde_with::serde_as;
 
 <span class="kw">pub mod </span>utils;
 
+<span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
@@ -151,6 +156,10 @@
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
     StateUpdate, SyncStatusType, Transaction,
 };
+
+<span class="attr">#[serde_as]
+#[derive(Serialize, Deserialize)]
+</span><span class="kw">pub struct </span>Felt(<span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;UfeHex&quot;</span>)] </span><span class="kw">pub </span>FieldElement);
 
 <span class="doccomment">/// Starknet rpc interface.
 </span><span class="attr">#[rpc(server, namespace = <span class="string">&quot;starknet&quot;</span>)]
@@ -169,12 +178,7 @@
 
     <span class="doccomment">/// Get the value of the storage at the given address and key, at the given block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getStorageAt&quot;</span>)]
-    </span><span class="kw">fn </span>get_storage_at(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        contract_address: FieldElement,
-        key: FieldElement,
-        block_id: BlockId,
-    ) -&gt; RpcResult&lt;FieldElement&gt;;
+    </span><span class="kw">fn </span>get_storage_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, key: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;Felt&gt;;
 
     <span class="doccomment">/// Call a contract function at a given block id
     </span><span class="attr">#[method(name = <span class="string">&quot;call&quot;</span>)]
@@ -182,12 +186,12 @@
 
     <span class="doccomment">/// Get the contract class at a given contract address for a given block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getClassAt&quot;</span>)]
-    </span><span class="kw">fn </span>get_class_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;ContractClass&gt;;
+    </span><span class="kw">fn </span>get_class_at(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, contract_address: FieldElement) -&gt; RpcResult&lt;ContractClass&gt;;
 
     <span class="doccomment">/// Get the contract class hash in the given block for the contract deployed at the given
     /// address
     </span><span class="attr">#[method(name = <span class="string">&quot;getClassHashAt&quot;</span>)]
-    </span><span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;FieldElement&gt;;
+    </span><span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, contract_address: FieldElement) -&gt; RpcResult&lt;Felt&gt;;
 
     <span class="doccomment">/// Get an object about the sync status, or false if the node is not syncing
     </span><span class="attr">#[method(name = <span class="string">&quot;syncing&quot;</span>)]
@@ -203,7 +207,7 @@
 
     <span class="doccomment">/// Get the nonce associated with the given address at the given block
     </span><span class="attr">#[method(name = <span class="string">&quot;getNonce&quot;</span>)]
-    </span><span class="kw">fn </span>get_nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, contract_address: FieldElement, block_id: BlockId) -&gt; RpcResult&lt;FieldElement&gt;;
+    </span><span class="kw">fn </span>get_nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_id: BlockId, contract_address: FieldElement) -&gt; RpcResult&lt;Felt&gt;;
 
     <span class="doccomment">/// Get block information with full transactions given the block id
     </span><span class="attr">#[method(name = <span class="string">&quot;getBlockWithTxs&quot;</span>)]
