@@ -1107,6 +1107,9 @@
 <a href="#1107" id="1107">1107</a>
 <a href="#1108" id="1108">1108</a>
 <a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1315,6 +1318,9 @@
         StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;(Transaction, TransactionReceiptWrapper), MaxTransactions&gt;, ValueQuery&gt;;
 
     <span class="doccomment">/// Current building block&#39;s events.
+    </span><span class="comment">// TODO: This is redundant information but more performant
+    // than removing this and computing events from the tx reciepts.
+    // More info: https://github.com/keep-starknet-strange/madara/pull/561
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>pending_events)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>PendingEvents&lt;T: Config&gt; =
