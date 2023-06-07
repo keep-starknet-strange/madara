@@ -107,7 +107,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 data: bounded_vec![
                     Felt252Wrapper::from_hex_be("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77")
                         .unwrap(),
-                    Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000002")
+                    Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                         .unwrap(),
                     Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000cef4")
                         .unwrap(),
@@ -159,7 +159,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             data: bounded_vec!(
                 Felt252Wrapper::from_hex_be("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0")
                     .unwrap(), // From
-                Felt252Wrapper::from_hex_be("0x2").unwrap(),    // To
+                Felt252Wrapper::from_hex_be("0xdead").unwrap(), // To
                 Felt252Wrapper::from_hex_be("0xd0f2").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
@@ -186,7 +186,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         assert_eq!(
             event_commitment,
-            H256::from_str("0x00ebe70524f4d05a64dc130466d97d0852733d731033a59005c980530b09dd3d").unwrap()
+            H256::from_str("0x0627b4c3f2b6b1d89df90492d1f98d4479d59e7e074496f893731cb79ea2f6ba").unwrap()
         );
         assert_eq!(events.len(), 2);
         assert_eq!(pending.len(), 1);

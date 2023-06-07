@@ -51,7 +51,7 @@ fn given_contract_run_deploy_account_tx_works() {
             ],
             data: bounded_vec!(
                 test_addr,                                      // From
-                Felt252Wrapper::from_hex_be("0x2").unwrap(),    // To
+                Felt252Wrapper::from_hex_be("0xdead").unwrap(), // To
                 Felt252Wrapper::from_hex_be("0xd3b8").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
