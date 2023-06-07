@@ -33,4 +33,5 @@ sp-core = { workspace = true }
 starknet-core = { workspace = true }
 cairo-vm = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = true }
+serde_with = { workspace = true }
 

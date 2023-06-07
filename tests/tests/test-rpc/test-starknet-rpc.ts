@@ -109,7 +109,7 @@ describeDevMadara("Starknet RPC", (context) => {
       );
 
       expect(nonce).to.not.be.undefined;
-      expect(toHex(nonce)).to.be.equal(toHex(ARGENT_CONTRACT_NONCE.value));
+      expect(nonce).to.be.equal(toHex(ARGENT_CONTRACT_NONCE.value));
     });
   });
 
@@ -348,7 +348,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       // fees were paid du to the transfer in the previous test so the value is still u128::MAX
-      expect(toHex(value)).to.be.equal("0xffffffffffffffffffffffffffffffff");
+      expect(value).to.be.equal("0xffffffffffffffffffffffffffffffff");
     });
 
     it("should return 0 if the storage slot is not set", async function () {
@@ -357,7 +357,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "latest"
       );
-      expect(value).to.be.equal("0");
+      expect(value).to.be.equal("0x0");
     });
 
     it("should raise if the contract does not exist", async function () {
