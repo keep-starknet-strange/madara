@@ -7,7 +7,6 @@ use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityErr
 
 use super::mock::*;
 use super::utils::{get_contract_class, sign_message_hash};
-use crate::tests::constants::TEST_ACCOUNT_SALT;
 use crate::Error;
 
 #[test]
@@ -76,7 +75,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
         run_to_block(2);
 
         let none_origin = RuntimeOrigin::none();
-        let (account_addr, _, _) = account_helper(TEST_ACCOUNT_SALT, AccountType::ArgentV0);
+        let account_addr = get_account_address(AccountType::Argent);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
         // TODO: Delete when the class hash can be derived from ContractClass

@@ -46,5 +46,6 @@ async def main():
     dump_deployments(deployments)
 
 
+# %% Run
 if __name__ == "__main__":
     run(main())
