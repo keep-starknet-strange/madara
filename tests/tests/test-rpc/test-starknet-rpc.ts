@@ -1,4 +1,5 @@
 import "@keep-starknet-strange/madara-api-augment";
+import chaiAsPromised from "chai-as-promised";
 import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import fs from "fs";
@@ -10,6 +11,7 @@ import {
   ec,
   hash,
   validateAndParseAddress,
+  RPC,
 } from "starknet";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
@@ -23,6 +25,7 @@ import {
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   SALT,
+  SEQUENCER_ADDRESS,
   SIGNER_PRIVATE,
   SIGNER_PUBLIC,
   TEST_CONTRACT,
@@ -41,6 +44,7 @@ import testJson from "../../contracts/compiled/test.json";
 import erc20Json from "../../contracts/compiled/erc20.json";
 
 chai.use(deepEqualInAnyOrder);
+chai.use(chaiAsPromised);
 
 // keep "let" over "const" as the nonce is passed by reference
 // to abstract the increment
@@ -62,6 +66,8 @@ describeDevMadara("Starknet RPC", (context) => {
       const block = await providerRPC.getBlockHashAndNumber();
 
       expect(block).to.not.be.undefined;
+      expect(block.block_hash).to.not.be.equal("");
+      expect(block.block_number).to.be.equal(0);
     });
   });
 
@@ -86,6 +92,32 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(transactionCount).to.not.be.undefined;
       expect(transactionCount).to.be.equal(0);
     });
+
+    it("should return 1 for 1 transaction", async function () {
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+
+      const transactionCount = await providerRPC.getTransactionCount("latest");
+
+      expect(transactionCount).to.not.be.undefined;
+      expect(transactionCount).to.be.equal(1);
+    });
+
+    it("should raise on invalid block id", async () => {
+      const count = providerRPC.getTransactionCount("0x123");
+      await expect(count)
+        .to.eventually.be.rejectedWith("24: Block not found")
+        .and.be.an.instanceOf(LibraryError);
+    });
   });
 
   describe("getNonce", async () => {
@@ -94,6 +126,7 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         "latest"
       );
+
       await context.createBlock(
         rpcTransfer(
           providerRPC,
@@ -125,6 +158,20 @@ describeDevMadara("Starknet RPC", (context) => {
       );
 
       expect(call.result).to.contain("0x19");
+    });
+
+    it("should raise with invalid entrypoint", async () => {
+      const callResult = providerRPC.callContract(
+        {
+          contractAddress: TEST_CONTRACT,
+          entrypoint: "return_result_WRONG",
+          calldata: ["0x19"],
+        },
+        "latest"
+      );
+      await expect(callResult)
+        .to.eventually.be.rejectedWith("40: Contract error")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -167,22 +214,18 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("should raise with invalid block id", async () => {
       // Invalid block id
-      try {
-        await providerRPC.getClassHashAt(TEST_CONTRACT, "0x123");
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("24: Block not found");
-      }
+      const classHash = providerRPC.getClassHashAt(TEST_CONTRACT, "0x123");
+      await expect(classHash)
+        .to.eventually.be.rejectedWith("24: Block not found")
+        .and.be.an.instanceOf(LibraryError);
     });
 
     it("should raise with invalid contract address", async () => {
       // Invalid/un-deployed contract address
-      try {
-        await providerRPC.getClassHashAt("0x123", "latest");
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("20: Contract not found");
-      }
+      const classHash = providerRPC.getClassHashAt("0x123", "latest");
+      await expect(classHash)
+        .to.eventually.be.rejectedWith("20: Contract not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -232,6 +275,21 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("getBlockWithTxHashes", async () => {
+    it("should return an empty block", async function () {
+      await context.createBlock(undefined, {
+        parentHash: undefined,
+        finalize: true,
+      });
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
+        "latest"
+      );
+      expect(latestBlock).to.not.be.undefined;
+      expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
+      expect(latestBlock.transactions.length).to.be.equal(0);
+    });
+
     it("should returns transactions", async function () {
       await context.createBlock(
         rpcTransfer(
@@ -252,15 +310,28 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(blockWithTxHashes.transactions.length).to.be.equal(1);
     });
 
-    it("should throws block not found error", async function () {
-      await providerRPC.getBlockWithTxHashes("0x123").catch((error) => {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("24: Block not found");
-      });
+    it("should raise with invalid block id", async function () {
+      const block = providerRPC.getBlockWithTxHashes("0x123");
+      await expect(block)
+        .to.eventually.be.rejectedWith("24: Block not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
   describe("getBlockWithTxs", async () => {
+    it("should returns empty block", async function () {
+      await context.createBlock(undefined, {
+        parentHash: undefined,
+        finalize: true,
+      });
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const latestBlock: Block = await providerRPC.getBlockWithTxs("latest");
+      expect(latestBlock).to.not.be.undefined;
+      expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
+      expect(latestBlock.transactions.length).to.be.equal(0);
+    });
+
     it("should returns transactions", async function () {
       await context.createBlock(
         rpcTransfer(
@@ -299,43 +370,11 @@ describeDevMadara("Starknet RPC", (context) => {
       );
     });
 
-    it("should throws block not found error", async function () {
-      await providerRPC.getBlockWithTxHashes("0x123").catch((error) => {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("24: Block not found");
-      });
-    });
-
-    it("should returns empty block", async function () {
-      await context.createBlock(undefined, {
-        parentHash: undefined,
-        finalize: true,
-      });
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
-        "latest"
-      );
-      expect(latestBlock).to.not.be.undefined;
-      expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
-      expect(latestBlock.transactions.length).to.be.equal(0);
-    });
-  });
-
-  describe("getBlockWithTxHashes", async () => {
-    it("should return an empty block", async function () {
-      await context.createBlock(undefined, {
-        parentHash: undefined,
-        finalize: true,
-      });
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
-        "latest"
-      );
-      expect(latestBlock).to.not.be.undefined;
-      expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
-      expect(latestBlock.transactions.length).to.be.equal(0);
+    it("should raise with invalid block id", async function () {
+      const block = providerRPC.getBlockWithTxs("0x123");
+      await expect(block)
+        .to.eventually.be.rejectedWith("24: Block not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -347,8 +386,8 @@ describeDevMadara("Starknet RPC", (context) => {
         "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
         "latest"
       );
-      // fees were paid du to the transfer in the previous test so the value is still u128::MAX
-      expect(value).to.be.equal("0xffffffffffffffffffffffffffffffff");
+      // fees were paid du to the transfer in the previous test so the value should be < u128::MAX
+      expect(value).to.be.equal("0xfffffffffffffffffffffffffff98797");
     });
 
     it("should return 0 if the storage slot is not set", async function () {
@@ -361,16 +400,14 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should raise if the contract does not exist", async function () {
-      try {
-        await providerRPC.getStorageAt(
-          "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "0x0000000000000000000000000000000000000000000000000000000000000000",
-          "latest"
-        );
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("20: Contract not found");
-      }
+      const storage = providerRPC.getStorageAt(
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "latest"
+      );
+      await expect(storage)
+        .to.eventually.be.rejectedWith("20: Contract not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -384,7 +421,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("getTransactionByBlockIdAndIndex", async () => {
-    it("should returns transactions", async function () {
+    it("should returns 1 transaction", async function () {
       // Send a transaction
       await context.createBlock(
         rpcTransfer(
@@ -395,19 +432,36 @@ describeDevMadara("Starknet RPC", (context) => {
         )
       );
 
-      const getTransactionByBlockIdAndIndexResponse =
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const tx: InvokeTransaction =
         await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
-
-      expect(getTransactionByBlockIdAndIndexResponse).to.not.be.undefined;
+      expect(tx).to.not.be.undefined;
+      expect(tx.type).to.be.equal("INVOKE");
+      expect(tx.sender_address).to.be.equal(toHex(ARGENT_CONTRACT_ADDRESS));
+      expect(tx.calldata).to.deep.equal(
+        [
+          1,
+          FEE_TOKEN_ADDRESS,
+          hash.getSelectorFromName("transfer"),
+          0,
+          3,
+          3,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT,
+          0,
+        ].map(toHex)
+      );
     });
 
     it("should throws block not found error", async function () {
-      await providerRPC
-        .getTransactionByBlockIdAndIndex("0x123", 2)
-        .catch((error) => {
-          expect(error).to.be.instanceOf(LibraryError);
-          expect(error.message).to.equal("24: Block not found");
-        });
+      const transaction = providerRPC.getTransactionByBlockIdAndIndex(
+        "0x123",
+        2
+      );
+      await expect(transaction)
+        .to.eventually.be.rejectedWith("24: Block not found")
+        .and.be.an.instanceOf(LibraryError);
     });
 
     it("should throws invalid transaction index error", async function () {
@@ -416,14 +470,15 @@ describeDevMadara("Starknet RPC", (context) => {
         finalize: true,
       });
       const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
-      await providerRPC
-        .getTransactionByBlockIdAndIndex(latestBlockCreated.block_hash, 2)
-        .catch((error) => {
-          expect(error).to.be.instanceOf(LibraryError);
-          expect(error.message).to.equal(
-            "27: Invalid transaction index in a block"
-          );
-        });
+      const transaction = providerRPC.getTransactionByBlockIdAndIndex(
+        latestBlockCreated.block_hash,
+        2
+      );
+      await expect(transaction)
+        .to.eventually.be.rejectedWith(
+          "27: Invalid transaction index in a block"
+        )
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -436,49 +491,28 @@ describeDevMadara("Starknet RPC", (context) => {
         keyPair
       );
 
-      const resp = await account.execute(
+      await account.execute(
         {
-          contractAddress: TEST_CONTRACT,
-          entrypoint: "test_storage_var",
-          calldata: [],
+          contractAddress: FEE_TOKEN_ADDRESS,
+          entrypoint: "transfer",
+          calldata: ["0xdeadbeef", "0x123", "0x0"],
         },
         undefined,
         {
-          nonce: "0",
+          nonce: ARGENT_CONTRACT_NONCE.value,
           maxFee: "123456",
         }
       );
+      ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
-      expect(resp).to.not.be.undefined;
-      expect(resp.transaction_hash).to.contain("0x");
-    });
-
-    it("should raise with unknown entrypoint", async function () {
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-      const account = new Account(
-        providerRPC,
-        ARGENT_CONTRACT_ADDRESS,
-        keyPair
+      // ERC20_balances(0xdeadbeef).low = 0x4c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016
+      const balance = await providerRPC.getStorageAt(
+        FEE_TOKEN_ADDRESS,
+        "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
+        "latest"
       );
-
-      try {
-        await account.execute(
-          {
-            contractAddress: TEST_CONTRACT,
-            entrypoint: "test_storage_var_WRONG",
-            calldata: [],
-          },
-          undefined,
-          {
-            nonce: "0",
-            maxFee: "123456",
-          }
-        );
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("40: Contract error");
-      }
+      expect(toHex(balance)).to.be.equal("0x123");
     });
   });
 
@@ -599,22 +633,16 @@ describeDevMadara("Starknet RPC", (context) => {
         nonce: nonce,
         version: "0x1",
       };
-      try {
-        await providerRPC.getEstimateFee(tx, txDetails, "latest");
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("40: Contract error");
-      }
+
+      const estimate = providerRPC.getEstimateFee(tx, txDetails, "latest");
+      await expect(estimate)
+        .to.eventually.be.rejectedWith("40: Contract error")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
   describe("addDeclareTransaction", async () => {
     it("should return hash starting with 0x", async function () {
-      const nonce = await providerRPC.getNonceForAddress(
-        ARGENT_CONTRACT_ADDRESS,
-        "latest"
-      );
-
       const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
       const account = new Account(
         providerRPC,
@@ -626,19 +654,24 @@ describeDevMadara("Starknet RPC", (context) => {
         .readFileSync("./contracts/compiled/erc20.json")
         .toString();
 
-      const resp = await account.declare(
+      await account.declare(
         {
           classHash: "0",
           contract,
         },
-        { nonce, version: 1, maxFee: "123456" }
+        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
+      ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
-      expect(resp).to.not.be.undefined;
-      expect(resp.transaction_hash).to.contain("0x");
-
-      await jumpBlocks(context, 10);
+      const contractClassExpected: RPC.ContractClass = JSON.parse(
+        contract
+      ) as RPC.ContractClass;
+      const contractClassActual = await providerRPC.getClass("0", "latest");
+      // TODO compare the program as well
+      expect(contractClassActual.entry_points_by_type).to.deep.equal(
+        contractClassExpected.entry_points_by_type
+      );
     });
   });
 
@@ -820,12 +853,10 @@ describeDevMadara("Starknet RPC", (context) => {
         )
       );
 
-      try {
-        await providerRPC.getTransactionByHash("0x1234");
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("25: Transaction hash not found");
-      }
+      const transaction = providerRPC.getTransactionByHash("0x1234");
+      await expect(transaction)
+        .to.eventually.be.rejectedWith("25: Transaction hash not found")
+        .and.be.an.instanceOf(LibraryError);
     });
 
     it("should return transaction hash not found when a transaction is in the pool", async function () {
@@ -839,12 +870,10 @@ describeDevMadara("Starknet RPC", (context) => {
         MINT_AMOUNT
       );
 
-      try {
-        await providerRPC.getTransactionByHash(b.transaction_hash);
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("25: Transaction hash not found");
-      }
+      const transaction = providerRPC.getTransactionByHash(b.transaction_hash);
+      await expect(transaction)
+        .to.eventually.be.rejectedWith("25: Transaction hash not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -887,12 +916,10 @@ describeDevMadara("Starknet RPC", (context) => {
         )
       );
 
-      try {
-        await providerRPC.getTransactionReceipt("0x1234");
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("25: Transaction hash not found");
-      }
+      const transaction = providerRPC.getTransactionReceipt("0x1234");
+      await expect(transaction)
+        .to.eventually.be.rejectedWith("25: Transaction hash not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
   describe("getEvents", function () {
@@ -904,14 +931,13 @@ describeDevMadara("Starknet RPC", (context) => {
         chunk_size: 1,
         continuation_token: "0xabdel",
       };
-      try {
-        await providerRPC.getEvents(filter);
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal(
+
+      const events = providerRPC.getEvents(filter);
+      await expect(events)
+        .to.eventually.be.rejectedWith(
           "33: The supplied continuation token is invalid or unknown"
-        );
-      }
+        )
+        .and.be.an.instanceOf(LibraryError);
     });
 
     it("should fail on chunk size too big", async function () {
@@ -921,12 +947,11 @@ describeDevMadara("Starknet RPC", (context) => {
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1001,
       };
-      try {
-        await providerRPC.getEvents(filter);
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal("31: Requested page size is too big");
-      }
+
+      const events = providerRPC.getEvents(filter);
+      await expect(events)
+        .to.eventually.be.rejectedWith("31: Requested page size is too big")
+        .and.be.an.instanceOf(LibraryError);
     });
 
     it("should fail on keys too big", async function () {
@@ -937,16 +962,13 @@ describeDevMadara("Starknet RPC", (context) => {
         chunk_size: 1,
         keys: Array(101).fill(["0x0"]),
       };
-      try {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        await providerRPC.getEvents(filter);
-      } catch (error) {
-        expect(error).to.be.instanceOf(LibraryError);
-        expect(error.message).to.equal(
-          "34: Too many keys provided in a filter"
-        );
-      }
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const events = providerRPC.getEvents(filter);
+      await expect(events)
+        .to.eventually.be.rejectedWith("34: Too many keys provided in a filter")
+        .and.be.an.instanceOf(LibraryError);
     });
 
     it("returns expected events on correct filter", async function () {
@@ -1008,7 +1030,7 @@ describeDevMadara("Starknet RPC", (context) => {
         keys: [toHex(starknetKeccak("Transfer"))],
         data: [
           ARGENT_CONTRACT_ADDRESS,
-          ARGENT_CONTRACT_ADDRESS,
+          SEQUENCER_ADDRESS,
           "0x19e1a", // current fee perceived for the transfer
           "0x0",
         ].map(cleanHex),
