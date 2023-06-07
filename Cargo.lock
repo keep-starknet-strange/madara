@@ -4510,7 +4510,6 @@ name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64 0.21.2",
  "cairo-vm",
  "flate2",
  "frame-support",
