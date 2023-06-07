@@ -179,7 +179,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         );
 
         let pending = Starknet::pending();
-        let events = Starknet::pending_events();
+        let pending_reciepts = pending.clone().into_iter().map(|(_, event)| event).collect::<Vec<_>>();
+        let events = pending_reciepts.into_iter().map(|receipt| receipt.events).flatten().collect::<Vec<_>>();
+
         let transactions: Vec<Transaction> = pending.clone().into_iter().map(|(transaction, _)| transaction).collect();
         let (_transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<<MockRuntime as crate::Config>::SystemHash>(&transactions, &events);

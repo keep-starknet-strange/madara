@@ -83,8 +83,8 @@ use mp_starknet::execution::types::{
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
-    Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, EventWrapper,
+    InvokeTransaction, Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
@@ -198,12 +198,6 @@ pub mod pallet {
     #[pallet::getter(fn pending)]
     pub(super) type Pending<T: Config> =
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
-
-    /// Current building block's events.
-    #[pallet::storage]
-    #[pallet::getter(fn pending_events)]
-    pub(super) type PendingEvents<T: Config> =
-        StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
 
     /// The current Starknet block.
     #[pallet::storage]
@@ -361,7 +355,6 @@ pub mod pallet {
         InvalidContractClass,
         ClassHashMustBeSpecified,
         TooManyPendingTransactions,
-        TooManyPendingEvents,
         StateReaderError,
         EmitEventError,
         StateDiffError,
@@ -383,10 +376,6 @@ pub mod pallet {
             ensure_none(origin)?;
             Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
                 .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
-            PendingEvents::<T>::try_append(StarknetEventType::default())
-                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
-            PendingEvents::<T>::try_append(StarknetEventType::default())
-                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
             log!(info, "Keep Starknet Strange!");
             Self::deposit_event(Event::KeepStarknetStrange);
             Ok(())
@@ -894,7 +883,14 @@ impl<T: Config> Pallet<T> {
     /// Get the number of events in the block.
     #[inline(always)]
     pub fn event_count() -> u128 {
-        Self::pending_events().len() as u128
+        Self::get_events().len() as u128
+    }
+
+    #[inline(always)]
+    pub fn get_events() -> Vec<EventWrapper> {
+        let pending = Self::pending();
+        let pending_reciepts = pending.into_iter().map(|(_, event)| event).collect::<Vec<_>>();
+        pending_reciepts.into_iter().flat_map(|receipt| receipt.events).collect::<Vec<_>>()
     }
 
     /// Call a smart contract function.
@@ -975,7 +971,8 @@ impl<T: Config> Pallet<T> {
             receipts.push(receipt);
         }
 
-        let events = Self::pending_events();
+        let events = Self::get_events();
+
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
         let protocol_version = None;
@@ -1006,7 +1003,6 @@ impl<T: Config> Pallet<T> {
         let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);
         Pending::<T>::kill();
-        PendingEvents::<T>::kill();
 
         let digest = DigestItem::Consensus(MADARA_ENGINE_ID, mp_digest_log::Log::Block(block).encode());
         frame_system::Pallet::<T>::deposit_log(digest);
@@ -1066,7 +1062,6 @@ impl<T: Config> Pallet<T> {
             .build()?;
         Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
 
-        PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
         Ok(sn_event)
     }
 
