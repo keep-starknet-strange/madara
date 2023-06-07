@@ -323,3 +323,30 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
+
+#[test]
+fn test_verify_tx_longevity() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        let account_addr = get_account_address(AccountType::NoValidate);
+
+        let erc20_class = ContractClassWrapper::try_from(get_contract_class("erc20/erc20.json")).unwrap();
+        let erc20_class_hash =
+            Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            version: 1,
+            compiled_class_hash: erc20_class_hash,
+            contract_class: erc20_class,
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+            signature: bounded_vec!(),
+        };
+        let validate_result =
+            Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::declare { transaction });
+
+        assert!(validate_result.unwrap().longevity == TransactionLongevity::get());
+    });
+}

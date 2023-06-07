@@ -423,3 +423,20 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         );
     });
 }
+
+#[test]
+fn test_verify_tx_longevity() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let transaction: InvokeTransaction =
+            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+
+        let validate_result =
+            Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::invoke { transaction });
+
+        assert!(validate_result.unwrap().longevity == TransactionLongevity::get());
+    });
+}
