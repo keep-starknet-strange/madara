@@ -32,4 +32,3 @@ jsonrpsee = { workspace = true, default-features = true, features = [
 	"macros",
 ] }
 log = { workspace = true, default-features = true }
-mc-rpc = { path = "../rpc" }

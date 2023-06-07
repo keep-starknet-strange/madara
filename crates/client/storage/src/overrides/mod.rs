@@ -79,7 +79,7 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
     /// Returns the storage value for a provided key and block hash.
-    fn chain_id(&self, block_hash: B::Hash) -> RpcResult<String>;
+    fn chain_id(&self, block_hash: B::Hash) -> Option<String>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -191,14 +191,9 @@ where
     /// * `block_hash` - The block hash
     /// # Returns
     /// * `Some(chain_id)` - The chain id for the provided block hash
-    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> RpcResult<String> {
-        let chain_id =
-            self.client.runtime_api().chain_id(block_hash).map_err(|_| error!("fetch runtime chain id failed"));
-        Ok(std::str::from_utf8(&chain_id.0.to_bytes_be())
-            .map_err(|_| {
-                error!("Couldn't convert chain id to string");
-                Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
-            })?
-            .to_string())
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<String> {
+        let chain_id = self.client.runtime_api().chain_id(block_hash).ok()?;
+        let chain_id_str = chain_id.0.to_string();
+        Some(chain_id_str.to_owned())
     }
 }
