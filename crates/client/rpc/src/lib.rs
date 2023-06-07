@@ -16,6 +16,7 @@ use log::{error, info};
 use mc_rpc_core::utils::{
     get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
 };
+use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::execution::types::Felt252Wrapper;
@@ -121,10 +122,7 @@ where
                 .client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
-            BlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => None,
-            },
+            BlockId::Tag(_) => Some(self.client.info().best_hash),
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
     }
@@ -306,12 +304,7 @@ where
     }
 
     /// get the storage at a given address and key and at a given block
-    fn get_storage_at(
-        &self,
-        contract_address: FieldElement,
-        key: FieldElement,
-        block_id: BlockId,
-    ) -> RpcResult<FieldElement> {
+    fn get_storage_at(&self, contract_address: FieldElement, key: FieldElement, block_id: BlockId) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -335,7 +328,7 @@ where
             error!("Failed to get storage from contract: {:#?}", e);
             StarknetRpcApiError::InternalServerError
         })?;
-        Ok(value)
+        Ok(Felt(value))
     }
 
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>> {
@@ -362,7 +355,7 @@ where
     }
 
     /// Get the contract class at a given contract address for a given block id
-    fn get_class_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<ContractClass> {
+    fn get_class_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -377,6 +370,7 @@ where
                 error!("Failed to retrieve contract class at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
+
         Ok(to_rpc_contract_class(contract_class).map_err(|e| {
             error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
             StarknetRpcApiError::ContractNotFound
@@ -395,7 +389,7 @@ where
     /// # Returns
     ///
     /// * `class_hash` - The class hash of the given contract
-    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
+    fn get_class_hash_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -409,7 +403,7 @@ where
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-        Ok(class_hash.into())
+        Ok(Felt(class_hash.into()))
     }
 
     // Implementation of the `syncing` RPC Endpoint.
@@ -523,7 +517,7 @@ where
     }
 
     /// Get the nonce associated with the given address at the given block
-    fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
+    fn get_nonce(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -543,7 +537,7 @@ where
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        Ok(nonce)
+        Ok(Felt(nonce))
     }
 
     /// Returns the chain id.
@@ -931,13 +925,24 @@ where
             }
         };
 
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let block: mp_starknet::block::Block =
+            get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+        let block_header = block.header();
+        let block_hash = block_header.hash(*self.hasher).into();
+        let block_number = u64::try_from(block_header.block_number).map_err(|e| {
+            error!("Failed to convert block number to u64: {e}");
+            StarknetRpcApiError::TxnHashNotFound
+        })?;
 
         let find_receipt = block
             .transaction_receipts()
             .into_iter()
             .find(|receipt| receipt.transaction_hash == transaction_hash.into())
-            .map(|receipt| receipt.clone().into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2));
+            .map(|receipt| {
+                receipt
+                    .clone()
+                    .into_maybe_pending_transaction_receipt(TransactionStatus::AcceptedOnL2, (block_hash, block_number))
+            });
 
         match find_receipt {
             Some(receipt) => Ok(receipt),

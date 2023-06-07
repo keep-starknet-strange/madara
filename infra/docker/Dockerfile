@@ -1,37 +1,26 @@
-# This is a base image to build substrate nodes
-FROM docker.io/paritytech/ci-linux:production as builder
+FROM rust:slim-buster as builder
+RUN apt-get -y update; \
+    apt-get install -y --no-install-recommends \
+        libssl-dev make clang llvm protobuf-compiler \
+        pkg-config libz-dev zstd git; \
+    apt-get autoremove -y; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /madara
 COPY . .
-RUN cargo build --locked --release
+RUN cargo build --release -Z sparse-registry --config net.git-fetch-with-cli=true
 
-# This is the 2nd stage: a very small image where we copy the binary."
-FROM docker.io/library/ubuntu:20.04
-LABEL description="Multistage Docker image for Madara" \
-  image.type="builder" \
-  image.authors="abdelhamid.bakhta@gmail.com" \
-  image.vendor="Substrate Developer Hub" \
-  image.description="Multistage Docker image for Madara" \
-  image.source="https://github.com/keep-starknet-strange/madara" \
-  image.documentation="https://github.com/keep-starknet-strange/madara"
+FROM debian:buster-slim
+LABEL description="Madara, a blazing fast Starknet sequencer" \
+  authors="Oak <me+madara@droak.sh>" \
+  source="https://github.com/keep-starknet-strange/madara" \
+  documentation="https://docs.madara.wtf/"
 
-# Copy the node binary.
-COPY --from=builder /madara/target/release/madara /usr/local/bin
-
-RUN useradd -m -u 1000 -U -s /bin/sh -d /node-dev node-dev && \
-  mkdir -p /chain-data /node-dev/.local/share && \
-  chown -R node-dev:node-dev /chain-data && \
-  ln -s /chain-data /node-dev/.local/share/madara && \
-  # unclutter and minimize the attack surface
-  rm -rf /usr/bin /usr/sbin && \
-  # check if executable works in this container
-  /usr/local/bin/madara --version
-
-USER node-dev
-
-EXPOSE 30333 9933 9944 9615
-VOLUME ["/chain-data"]
-
-COPY ./infra/chain-specs /chain-specs
-
-ENTRYPOINT ["/usr/local/bin/madara"]
+COPY --from=builder /madara/target/release/madara /
+COPY --from=builder /madara/infra/chain-specs /chain-specs
+# 9444 JSON-RPC server
+# 9615 Prometheus exporter
+# 30333 P2P communication
+EXPOSE 9933 9944 9615 30333
+ENTRYPOINT ["/madara"]

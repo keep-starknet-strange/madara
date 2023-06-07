@@ -324,6 +324,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "fracek",
+      "name": "Francesco Ceccon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/282580?v=4",
+      "profile": "https://ceccon.me/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ptisserand",
+      "name": "ptisserand",
+      "avatar_url": "https://avatars.githubusercontent.com/u/544314?v=4",
+      "profile": "https://github.com/ptisserand",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

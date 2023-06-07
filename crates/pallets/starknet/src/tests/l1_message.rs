@@ -1,6 +1,8 @@
 use frame_support::assert_err;
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::DeclareTransaction;
+use sp_runtime::traits::ValidateUnsigned;
+use sp_runtime::transaction_validity::TransactionSource;
 
 use super::mock::*;
 use super::utils::get_contract_class;
@@ -28,4 +30,19 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
     })
+}
+
+#[test]
+fn test_verify_tx_longevity() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let transaction = crate::Transaction::default();
+
+        let validate_result =
+            Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::consume_l1_message { transaction });
+
+        assert!(validate_result.unwrap().longevity == TransactionLongevity::get());
+    });
 }

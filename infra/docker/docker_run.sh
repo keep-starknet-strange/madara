@@ -2,9 +2,8 @@
 # This script is meant to be run on Unix/Linux based systems
 set -e
 
-echo "*** Start Substrate node template ***"
+echo "*** Start Madara node (Docker) ***"
+cd $(dirname $0)/../..
 
-cd $(dirname $0)
-
-docker-compose down --remove-orphans
-docker-compose run --rm --service-ports dev $@
+docker build -t madara/docker -f infra/docker/Dockerfile .
+docker run -it madara/docker $@

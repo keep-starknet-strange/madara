@@ -103,7 +103,7 @@ pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 // TODO: don't use a const for this but a real sequencer address for block header
 // FIXME https://github.com/keep-starknet-strange/madara/issues/243
 pub const SEQUENCER_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
@@ -146,6 +146,12 @@ pub mod pallet {
         /// multiple pallets send unsigned transactions.
         #[pallet::constant]
         type UnsignedPriority: Get<TransactionPriority>;
+        /// A configuration for longevity of transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime to
+        /// set how long transactions are kept in the mempool.
+        #[pallet::constant]
+        type TransactionLongevity: Get<TransactionLongevity>;
     }
 
     /// The Starknet pallet hooks.
@@ -200,6 +206,9 @@ pub mod pallet {
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
 
     /// Current building block's events.
+    // TODO: This is redundant information but more performant
+    // than removing this and computing events from the tx reciepts.
+    // More info: https://github.com/keep-starknet-strange/madara/pull/561
     #[pallet::storage]
     #[pallet::getter(fn pending_events)]
     pub(super) type PendingEvents<T: Config> =
@@ -451,8 +460,6 @@ pub mod pallet {
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.0.into(),
-                        block_hash: Felt252Wrapper::default(), // unwrap to check.
-                        block_number: block_context.block_number.0,
                     }
                 }
                 Err(e) => {
@@ -545,8 +552,6 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::Declare,
-                        block_hash: Felt252Wrapper::default(),
-                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -635,8 +640,6 @@ pub mod pallet {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
                         transaction_hash: transaction.hash,
                         tx_type: TxType::DeployAccount,
-                        block_hash: Felt252Wrapper::default(),
-                        block_number: block_context.block_number.0,
                         actual_fee: actual_fee.0.into(),
                     }
                 }
@@ -755,7 +758,7 @@ pub mod pallet {
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
@@ -765,7 +768,7 @@ pub mod pallet {
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
@@ -779,14 +782,14 @@ pub mod pallet {
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
+                    .longevity(T::TransactionLongevity::get())
                     .propagate(true)
                     .build(),
                 _ => InvalidTransaction::Call.into(),

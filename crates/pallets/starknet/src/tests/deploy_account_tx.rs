@@ -1,6 +1,8 @@
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
+use sp_runtime::traits::ValidateUnsigned;
+use sp_runtime::transaction_validity::TransactionSource;
 
 use super::mock::*;
 use super::utils::sign_message_hash;
@@ -49,7 +51,7 @@ fn given_contract_run_deploy_account_tx_works() {
             ],
             data: bounded_vec!(
                 test_addr,                                      // From
-                Felt252Wrapper::from_hex_be("0x2").unwrap(),    // To
+                Felt252Wrapper::from_hex_be("0xdead").unwrap(), // To
                 Felt252Wrapper::from_hex_be("0xd3b8").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
@@ -410,6 +412,40 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             Starknet::deploy_account(none_origin, transaction),
             Error::<MockRuntime>::TransactionExecutionFailed
         );
+    });
+}
+
+#[test]
+fn test_verify_tx_longevity() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+        // TEST ACCOUNT CONTRACT
+        // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
+        let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::NoValidate);
+
+        let transaction = DeployAccountTransaction {
+            account_class_hash,
+            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
+            version: 1,
+            // Calldata is hex so this works fine
+            calldata: BoundedVec::try_from(
+                calldata
+                    .clone()
+                    .into_iter()
+                    .map(|e| Felt252Wrapper::from_hex_be(e).unwrap())
+                    .collect::<Vec<Felt252Wrapper>>(),
+            )
+            .unwrap(),
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+            signature: bounded_vec!(),
+        };
+        let validate_result =
+            Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::deploy_account { transaction });
+
+        assert!(validate_result.unwrap().longevity == TransactionLongevity::get());
     });
 }
 

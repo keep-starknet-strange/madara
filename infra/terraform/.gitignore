@@ -1,0 +1,27 @@
+
+creds.tfvars
+
+# Compiled files
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tfstate.lock.info
+**/*.terraform.lock.hcl
+
+# Module-specific .terraform directories
+**/.terraform/*
+
+# Provider plugins
+.terraform/plugins/
+
+# Crash log files
+crash.log
+
+# Ignore override files as they can contain sensitive data
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc

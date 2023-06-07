@@ -5,6 +5,7 @@ import { type ISubmittableResult } from "@polkadot/types/types";
 import { stringify, u8aWrapBytes } from "@polkadot/util";
 import erc20Json from "../contracts/compiled/erc20.json";
 import { numberToU832Bytes } from "./utils";
+import { NFT_CONTRACT_ADDRESS } from "../tests/constants";
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<void> {
@@ -293,4 +294,33 @@ export function batchTransfer(
   const extrisinc_transfers = Array(200).fill(extrisinc_transfer);
 
   return extrisinc_transfers;
+}
+
+export function mintERC721(
+  api: ApiPromise,
+  contractAddress: string,
+  recipientAddress: string,
+  tokenID: string,
+  nonce?: number
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
+  // Initialize contract
+
+  // Initialize contract
+  const tx_mint = {
+    version: 1, // version of the transaction
+    signature: [], // leave empty for now, will be filled in when signing the transaction
+    sender_address: contractAddress, // address of the sender contract
+    nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
+    calldata: [
+      NFT_CONTRACT_ADDRESS, // CONTRACT ADDRESS
+      "0x02f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354", // SELECTOR (transfer)
+      "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+      recipientAddress,
+      tokenID,
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ],
+  };
+
+  const extrisinc_mint = api.tx.starknet.invoke(tx_mint);
+  return extrisinc_mint;
 }

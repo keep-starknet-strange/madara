@@ -9,9 +9,12 @@ mod tests;
 
 use jsonrpsee::core::RpcResult;
 use jsonrpsee::proc_macros::rpc;
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 pub mod utils;
 
+use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
     BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
@@ -19,6 +22,10 @@ use starknet_core::types::{
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
     StateUpdate, SyncStatusType, Transaction,
 };
+
+#[serde_as]
+#[derive(Serialize, Deserialize)]
+pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);
 
 /// Starknet rpc interface.
 #[rpc(server, namespace = "starknet")]
@@ -37,12 +44,7 @@ pub trait StarknetRpcApi {
 
     /// Get the value of the storage at the given address and key, at the given block id
     #[method(name = "getStorageAt")]
-    fn get_storage_at(
-        &self,
-        contract_address: FieldElement,
-        key: FieldElement,
-        block_id: BlockId,
-    ) -> RpcResult<FieldElement>;
+    fn get_storage_at(&self, contract_address: FieldElement, key: FieldElement, block_id: BlockId) -> RpcResult<Felt>;
 
     /// Call a contract function at a given block id
     #[method(name = "call")]
@@ -50,12 +52,12 @@ pub trait StarknetRpcApi {
 
     /// Get the contract class at a given contract address for a given block id
     #[method(name = "getClassAt")]
-    fn get_class_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<ContractClass>;
+    fn get_class_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<ContractClass>;
 
     /// Get the contract class hash in the given block for the contract deployed at the given
     /// address
     #[method(name = "getClassHashAt")]
-    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement>;
+    fn get_class_hash_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt>;
 
     /// Get an object about the sync status, or false if the node is not syncing
     #[method(name = "syncing")]
@@ -71,7 +73,7 @@ pub trait StarknetRpcApi {
 
     /// Get the nonce associated with the given address at the given block
     #[method(name = "getNonce")]
-    fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement>;
+    fn get_nonce(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt>;
 
     /// Get block information with full transactions given the block id
     #[method(name = "getBlockWithTxs")]
