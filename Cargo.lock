@@ -4516,6 +4516,8 @@ version = "0.1.0"
 dependencies = [
  "frame-support",
  "frame-system",
+ "jsonrpsee",
+ "log",
  "madara-runtime",
  "mp-starknet",
  "pallet-starknet",
