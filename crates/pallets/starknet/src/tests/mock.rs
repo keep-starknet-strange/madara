@@ -71,7 +71,7 @@ impl system::Config for MockRuntime {
 
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
-    pub const TransactionLongevity: u64 = 64;
+    pub const TransactionLongevity: u64 = u64::MAX;
 }
 
 impl pallet_starknet::Config for MockRuntime {
