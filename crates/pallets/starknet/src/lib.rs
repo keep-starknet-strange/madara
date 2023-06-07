@@ -206,7 +206,7 @@ pub mod pallet {
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
 
     /// Current building block's events.
-    // TODO: This is redundant information but more perfomant
+    // TODO: This is redundant information but more performant
     // than removing this and computing events from the tx reciepts.
     // More info: https://github.com/keep-starknet-strange/madara/pull/561
     #[pallet::storage]
