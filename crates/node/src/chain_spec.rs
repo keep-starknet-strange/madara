@@ -221,6 +221,8 @@ fn testnet_genesis(
     let test_class = get_contract_class(include_bytes!("../../../resources/test.json")).try_into().unwrap();
     let erc20_class: ContractClassWrapper =
         get_contract_class(include_bytes!("../../../resources/erc20/erc20.json")).try_into().unwrap();
+    let erc721_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../resources/erc721/erc721.json")).try_into().unwrap();
 
     // ACCOUNT CONTRACT
     let contract_address = Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap();
@@ -248,6 +250,12 @@ fn testnet_genesis(
     let token_contract_address = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_ADDRESS).unwrap();
 
     let token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CLASS_HASH).unwrap();
+
+    // ERC721 CONTRACT
+
+    let nft_contract_address = Felt252Wrapper::from_hex_be(NFT_CONTRACT_ADDRESS).unwrap();
+
+    let nft_class_hash = Felt252Wrapper::from_hex_be(NFT_CLASS_HASH).unwrap();
 
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
 
@@ -281,6 +289,7 @@ fn testnet_genesis(
                 (other_contract_address, other_class_hash),
                 (token_contract_address, token_class_hash),
                 (token_contract_address, token_class_hash),
+                (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
                 (argent_account_address, argent_account_class_hash),
             ],
@@ -291,6 +300,7 @@ fn testnet_genesis(
                 (other_class_hash, test_class),
                 (token_class_hash, erc20_class.clone()),
                 (fee_token_class_hash, erc20_class),
+                (nft_class_hash, erc721_class),
             ],
             storage: vec![
                 (
@@ -320,6 +330,10 @@ fn testnet_genesis(
                 (
                     get_storage_key(&argent_account_address, "_signer", &[], 0),
                     Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
+                ),
+                (
+                    get_storage_key(&nft_contract_address, "Ownable_owner", &[], 0),
+                    Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap(),
                 ),
             ],
             fee_token_address,

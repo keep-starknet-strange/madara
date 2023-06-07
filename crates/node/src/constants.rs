@@ -10,3 +10,5 @@ pub const OTHER_CLASS_HASH: &str = "0x1000";
 pub const PUBLIC_KEY: &str = "0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d";
 pub const TOKEN_CONTRACT_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
 pub const TOKEN_CLASS_HASH: &str = "0x10000";
+pub const NFT_CONTRACT_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01";
+pub const NFT_CLASS_HASH: &str = "0x80000";

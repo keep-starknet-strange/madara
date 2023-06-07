@@ -4,13 +4,14 @@ import { expect } from "chai";
 
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { declare, deploy, transfer } from "../../util/starknet";
+import { declare, deploy, mintERC721, transfer } from "../../util/starknet";
 import {
   CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   TOKEN_CLASS_HASH,
 } from "../constants";
+import { numberToHex } from "@polkadot/util";
 
 describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   it("should connect to local node", async function () {
@@ -67,6 +68,27 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         CONTRACT_ADDRESS,
         MINT_AMOUNT,
         nonce
+      )
+    );
+
+    expect(
+      events.find(
+        ({ event: { section, method } }) =>
+          section == "system" && method == "ExtrinsicSuccess"
+      )
+    ).to.exist;
+  });
+
+  it("mint NFTs", async function () {
+    const {
+      result: { events },
+    } = await context.createBlock(
+      mintERC721(
+        context.polkadotApi,
+        CONTRACT_ADDRESS,
+        CONTRACT_ADDRESS,
+        numberToHex(1, 256),
+        2
       )
     );
 
