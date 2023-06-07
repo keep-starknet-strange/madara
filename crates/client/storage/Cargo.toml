@@ -27,3 +27,9 @@ sp-core = { workspace = true, default-features = true }
 sp-io = { workspace = true, default-features = true }
 scale-codec = { workspace = true, default-features = true }
 pallet-starknet = { workspace = true, default-features = true }
+jsonrpsee = { workspace = true, default-features = true, features = [
+	"server",
+	"macros",
+] }
+log = { workspace = true, default-features = true }
+mc-rpc = { path = "../rpc" }

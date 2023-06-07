@@ -3,7 +3,9 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use jsonrpsee::core::RpcResult;
+use log::error;
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -76,6 +78,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
+    /// Returns the storage value for a provided key and block hash.
+    fn chain_id(&self, block_hash: B::Hash) -> RpcResult<String>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -180,5 +184,21 @@ where
     /// * `Some(events)` - The events for the provided block hash
     fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
         self.client.runtime_api().events(block_hash).ok()
+    }
+
+    /// Return the chain id for a provided block hash.
+    /// # Arguments
+    /// * `block_hash` - The block hash
+    /// # Returns
+    /// * `Some(chain_id)` - The chain id for the provided block hash
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> RpcResult<String> {
+        let chain_id =
+            self.client.runtime_api().chain_id(block_hash).map_err(|_| error!("fetch runtime chain id failed"));
+        Ok(std::str::from_utf8(&chain_id.0.to_bytes_be())
+            .map_err(|_| {
+                error!("Couldn't convert chain id to string");
+                Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
+            })?
+            .to_string())
     }
 }

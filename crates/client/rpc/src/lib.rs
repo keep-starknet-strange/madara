@@ -144,6 +144,10 @@ where
             error!("fetch runtime chain id failed");
             StarknetRpcApiError::InternalServerError
         })?;
+        // let chain_id = self.overrides.runtime_api().chain_id(hash).map_err(|_| {
+        //     error!("fetch runtime chain id failed");
+        //     StarknetRpcApiError::InternalServerError
+        // })?;
         Ok(std::str::from_utf8(&chain_id.0.to_bytes_be())
             .map_err(|_| {
                 error!("Couldn't convert chain id to string");
