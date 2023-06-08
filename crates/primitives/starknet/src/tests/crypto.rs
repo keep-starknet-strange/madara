@@ -40,7 +40,7 @@ fn test_deploy_account_tx_hash() {
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,
     };
-    let address = FieldElement::from(19911991_u64).to_bytes_be();
+    let address = Felt252Wrapper::from(19911991_u64);
 
     assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id, address), expected_tx_hash);
 }
