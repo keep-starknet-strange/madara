@@ -94,7 +94,6 @@ pallet-transaction-payment = { default-features = false, git = "https://github.c
 pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
-pallet-utility = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
