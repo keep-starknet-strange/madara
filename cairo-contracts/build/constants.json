@@ -12,10 +12,7 @@
         ],
         "compiler_version": "0.11.2",
         "data": [],
-        "debug_info": {
-            "file_contents": {},
-            "instruction_locations": {}
-        },
+        "debug_info": null,
         "hints": {},
         "identifiers": {
             "__main__.A0": {

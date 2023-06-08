@@ -212,53 +212,44 @@ fn testnet_genesis(
     endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
-    let argent_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json")).try_into().unwrap();
-    let argent_proxy_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json")).try_into().unwrap();
-    let test_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json")).try_into().unwrap();
-    let erc20_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json")).try_into().unwrap();
-    let erc721_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json")).try_into().unwrap();
-
     // ACCOUNT CONTRACT
-    let contract_address = Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap();
-
-    let class_hash = Felt252Wrapper::from_hex_be(CLASS_HASH).unwrap();
+    let no_validate_account_class =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
+    let no_validate_account_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
+    let no_validate_account_address = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
-
+    let argent_account_class =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json")).try_into().unwrap();
     let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
-
+    let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
+    let argent_proxy_class =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json")).try_into().unwrap();
     let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     // TEST CONTRACT
-    let other_contract_address = Felt252Wrapper::from_hex_be(OTHER_CONTRACT_ADDRESS).unwrap();
-
-    let other_class_hash = Felt252Wrapper::from_hex_be(OTHER_CLASS_HASH).unwrap();
+    let test_contract_class =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json")).try_into().unwrap();
+    let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CONTRACT_CLASS_HASH).unwrap();
+    let test_contract_address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
 
     // Fee token
     let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-
     let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let token_contract_address = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_ADDRESS).unwrap();
-
-    let token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CLASS_HASH).unwrap();
+    let erc20_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json")).try_into().unwrap();
+    let token_class_hash = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH).unwrap();
+    let token_contract_address = Felt252Wrapper::from_hex_be(ERC20_ADDRESS).unwrap();
 
     // ERC721 CONTRACT
-
-    let nft_contract_address = Felt252Wrapper::from_hex_be(NFT_CONTRACT_ADDRESS).unwrap();
-
-    let nft_class_hash = Felt252Wrapper::from_hex_be(NFT_CLASS_HASH).unwrap();
+    let erc721_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json")).try_into().unwrap();
+    let nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
+    let nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
-
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
     GenesisConfig {
@@ -283,8 +274,8 @@ fn testnet_genesis(
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
-                (contract_address, class_hash),
-                (other_contract_address, other_class_hash),
+                (no_validate_account_address, no_validate_account_class_hash),
+                (test_contract_address, test_contract_class_hash),
                 (token_contract_address, token_class_hash),
                 (token_contract_address, token_class_hash),
                 (nft_contract_address, nft_class_hash),
@@ -292,21 +283,21 @@ fn testnet_genesis(
                 (argent_account_address, argent_account_class_hash),
             ],
             contract_classes: vec![
-                (class_hash, account_class),
+                (no_validate_account_class_hash, no_validate_account_class),
                 (argent_account_class_hash, argent_account_class),
                 (argent_proxy_class_hash, argent_proxy_class),
-                (other_class_hash, test_class),
+                (test_contract_class_hash, test_contract_class),
                 (token_class_hash, erc20_class.clone()),
                 (fee_token_class_hash, erc20_class),
                 (nft_class_hash, erc721_class),
             ],
             storage: vec![
                 (
-                    get_storage_key(&fee_token_address, "ERC20_balances", &[contract_address], 0),
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_account_address], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    get_storage_key(&fee_token_address, "ERC20_balances", &[contract_address], 1),
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
@@ -314,11 +305,11 @@ fn testnet_genesis(
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    get_storage_key(&token_contract_address, "ERC20_balances", &[contract_address], 0),
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[no_validate_account_address], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    get_storage_key(&token_contract_address, "ERC20_balances", &[contract_address], 1),
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[no_validate_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
@@ -331,7 +322,7 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&nft_contract_address, "Ownable_owner", &[], 0),
-                    Felt252Wrapper::from_hex_be(CONTRACT_ADDRESS).unwrap(),
+                    Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_ADDRESS).unwrap(),
                 ),
             ],
             fee_token_address,

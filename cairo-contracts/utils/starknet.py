@@ -110,6 +110,7 @@ def compile_contract(contract_name: str):
             BUILD_DIR / f"{contract_name}.json",
             "--cairo_path",
             str(SOURCE_DIR),
+            "--no_debug_info",
             *(["--account_contract"] if "account" in contract_name.lower() else []),
         ],
         capture_output=True,

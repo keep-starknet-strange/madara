@@ -1,4 +1,8 @@
-export const TEST_CONTRACT =
+import { CompiledContract } from "starknet";
+import erc20Json from "../../cairo-contracts/build/ERC20.json";
+import testJson from "../../cairo-contracts/build/test.json";
+
+export const TEST_CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000001111";
 
 export const ACCOUNT_CONTRACT =
@@ -41,5 +45,30 @@ export const SEQUENCER_ADDRESS =
 export const CHAIN_ID_STARKNET_TESTNET = "0x534e5f474f45524c49";
 
 export const NFT_CONTRACT_ADDRESS =
-  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01";
+  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02";
 export const NFT_CLASS_HASH = "0x90000";
+
+// Contract classes
+
+// For some reasons, the starknet-compile-deprecated command
+// writes all the offsets as integer while the RPC returns them as hex string
+// This chatGPT utils recursively updates them
+function convertOffsetToHex(obj) {
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      obj[i] = convertOffsetToHex(obj[i]);
+    }
+  } else if (typeof obj === "object" && obj !== null) {
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        obj[key] = convertOffsetToHex(obj[key]);
+      }
+    }
+  } else if (typeof obj === "number" && Number.isInteger(obj) && obj >= 0) {
+    obj = `0x${obj.toString(16)}`;
+  }
+  return obj;
+}
+
+export const ERC20_CONTRACT: CompiledContract = convertOffsetToHex(erc20Json);
+export const TEST_CONTRACT: CompiledContract = convertOffsetToHex(testJson);
