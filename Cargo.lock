@@ -4527,6 +4527,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-storage",
+ "starknet-core",
 ]
 
 [[package]]

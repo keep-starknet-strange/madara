@@ -24,6 +24,8 @@ pub const STARKNET_CONTRACT_CLASS: &[u8] = b"ContractClasses";
 pub const STARKNET_NONCE: &[u8] = b"Nonces";
 /// Starknet chain id storage item.
 pub const STARKNET_CHAIN_ID: &[u8] = b"ChainId";
+/// Starknet storage
+pub const STARKNET_STORAGE: &[u8] = b"StorageView";
 
 /// The schema version for Pallet Starknet's storage.
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]

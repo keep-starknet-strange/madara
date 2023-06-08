@@ -6,7 +6,7 @@ use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
-    STARKNET_NONCE, SYSTEM_EVENTS,
+    STARKNET_NONCE, STARKNET_STORAGE, SYSTEM_EVENTS,
 };
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::NonceWrapper;
@@ -17,6 +17,8 @@ use scale_codec::{Decode, Encode};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_storage::StorageKey;
+use starknet_core::types::FieldElement;
+pub extern crate alloc;
 
 use super::{storage_key_build, storage_prefix_build, StorageOverride};
 
@@ -57,6 +59,33 @@ where
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
     BE: Backend<B> + 'static,
 {
+    fn get_storage_by_storage_key(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+        key: FieldElement,
+    ) -> Option<Felt252Wrapper> {
+        let storage_storage_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_STORAGE);
+        let key = key.to_bytes_be();
+        let key = (address, key);
+
+        // check if contract exists
+        match self.contract_class_hash_by_address(block_hash, address) {
+            Some(_) => (),
+            None => return None,
+        }
+
+        let storage = self.query_storage::<Felt252Wrapper>(
+            block_hash,
+            &StorageKey(storage_key_build(storage_storage_prefix, &self.encode_storage_key(&key))),
+        );
+
+        match storage {
+            Some(storage) => Some(storage),
+            None => Some(Felt252Wrapper::default()),
+        }
+    }
+
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
