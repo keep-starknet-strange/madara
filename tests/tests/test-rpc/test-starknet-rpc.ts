@@ -85,6 +85,15 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
+  describe("getStateUpdate", async () => {
+    it("should fail on unimplemented method", async function () {
+      const stateUpdate = providerRPC.getStateUpdate("latest");
+      await expect(stateUpdate)
+        .to.eventually.be.rejectedWith("501: Unimplemented method")
+        .and.be.an.instanceOf(LibraryError);
+    });
+  });
+
   describe("getBlockTransactionCount", async () => {
     it("should return 0 for latest block", async function () {
       const transactionCount = await providerRPC.getTransactionCount("latest");
