@@ -185,7 +185,7 @@ working on handling them.
 
 Here are some examples of RPC using the sequencer-1 of Starkware:
 
-### Get the last block hash:
+### Get the last block hash
 
 ```bash
 starkli block-hash --rpc http://52.7.206.208:9933
