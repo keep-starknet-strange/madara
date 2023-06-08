@@ -719,7 +719,7 @@ where
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        todo!("Not implemented")
+        Err(StarknetRpcApiError::UnimplementedMethod.into())
     }
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer

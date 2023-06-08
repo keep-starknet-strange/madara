@@ -76,7 +76,9 @@ impl Felt252Wrapper {
     ///
     /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
     pub fn from_utf8(&self) -> Result<String, Felt252WrapperError> {
-        Ok(std::str::from_utf8(&self.0.to_bytes_be()).map_err(|_| Felt252WrapperError::InvalidCharacter)?.to_string())
+        let s =
+            std::str::from_utf8(&self.0.to_bytes_be()).map_err(|_| Felt252WrapperError::InvalidCharacter)?.to_string();
+        Ok(s.trim_start_matches('\0').to_string())
     }
 }
 
@@ -436,5 +438,11 @@ mod felt252_wrapper_tests {
     fn primitives_try_from_felt252() {
         let felt_u64 = Felt252Wrapper::from(4_294_967_296u64);
         assert_eq!(TryInto::<u64>::try_into(felt_u64).unwrap(), 4_294_967_296u64);
+    }
+
+    #[test]
+    fn decode_utf8() {
+        let felt = Felt252Wrapper::from_hex_be("0x534e5f474f45524c49").unwrap();
+        assert_eq!(felt.from_utf8().unwrap(), "SN_GOERLI".to_string());
     }
 }
