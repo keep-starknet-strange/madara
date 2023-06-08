@@ -420,7 +420,7 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
-  describe("chainId", async () => {
+  describe("getChainId", async () => {
     it("should return the correct value", async function () {
       const chainId = await providerRPC.getChainId();
 

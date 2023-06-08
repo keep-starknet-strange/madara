@@ -32,7 +32,6 @@ sp-version = { workspace = true }
 
 pallet-aura = { workspace = true }
 pallet-balances = { workspace = true }
-pallet-utility = { workspace = true }
 frame-support = { workspace = true }
 pallet-grandpa = { workspace = true }
 pallet-sudo = { workspace = true }
@@ -83,7 +82,6 @@ std = [
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
-	"pallet-utility/std",
 	# Substrate primitives dependencies
 	"sp-api/std",
 	"sp-block-builder/std",
@@ -111,7 +109,6 @@ try-runtime = [
 	"pallet-balances/try-runtime",
 	"pallet-grandpa/try-runtime",
 	"pallet-sudo/try-runtime",
-	"pallet-utility/try-runtime",
 	# Madara pallets
 	"pallet-starknet/try-runtime",
 ]
@@ -124,7 +121,6 @@ runtime-benchmarks = [
 	"pallet-balances/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
-	"pallet-utility/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 	# Madara pallets
 	"pallet-starknet/runtime-benchmarks",
