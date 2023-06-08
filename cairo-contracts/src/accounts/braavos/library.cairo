@@ -291,7 +291,7 @@ namespace Account {
         return ();
     }
 
-    // Extract auxilary data out of txn signature
+    // Extract auxiliary data out of txn signature
     // signature[2] -> actual_impl: for no actual_impl, send 0
     // signature[3:10] -> hw_signer: for no hw_signer, send 0's
     func parse_initializer_signature_aux_data(signature_len: felt, signature: felt*) -> (
