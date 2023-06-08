@@ -2,9 +2,6 @@
 //!
 //! It uses the madara client and backend in order to answer queries.
 
-#[cfg(test)]
-mod tests;
-
 mod constants;
 mod errors;
 mod madara_backend_client;
@@ -202,7 +199,7 @@ where
     /// * `(block_events: Vec<EventWrapper>, continuation_token: usize)` - A tuple of the filtered
     ///   events and the first index which still hasn't been processed block_id and an instance of
     ///   Block
-    fn filter_events_by_params(
+	pub fn filter_events_by_params(
         events: Vec<EventWrapper>,
         address: Option<Felt252Wrapper>,
         keys: Vec<Vec<FieldElement>>,
@@ -278,7 +275,7 @@ where
             })?;
 
             let (mut new_filtered_events, continuation_index) = Starknet::<B, BE, C, P, H>::filter_events_by_params(
-                block_events,
+				block_events,
                 from_address,
                 keys.clone(),
                 Some((chunk_size as usize) - filtered_events.len()),
