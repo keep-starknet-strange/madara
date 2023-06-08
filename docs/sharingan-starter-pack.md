@@ -52,14 +52,64 @@ guide, made by Nadai for StarknetES community.
 As mentioned, Sharingan relies on `sequencers` to produce, validate and add
 block to the chain. As of today, Sharingan has the following known `sequencers`:
 
-| Maintainer  | ID  | Key alias | IP               | Peer ID                                                | RPC port |
-| ----------- | --- | --------- | ---------------- | ------------------------------------------------------ | -------- |
-| Starkware   | 1   | alice     | `52.7.206.208`   | `12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE` | `9933`   |
-| Starkware   | 2   | bob       | `44.195.161.82`  | `12D3KooWHocNfvLz6rgpb8wJsynSpMwkspkcRn6gmN5UiK1tTTeG` | `9933`   |
-| Cartridge   | 3   | charlie   | `208.67.222.222` | `12D3KooWQe2ZtqiyC5CLJKZr9i9xTmEyiAikZcr5J18w3cG1dQAc` | `9933`   |
-| LambdaClass | 4   | dave      | `65.109.91.29`   | `12D3KooWK8QhFjkGYGyMskDuCyaS1nrhfTfadMeRjJkox4SV32co` | `9933`   |
-| Pragma      | 5   | eve       | `13.39.22.82`    | `12D3KooWGMCGJ517tFor12U9n2v3ax5WNw1pXFdj48hSHYQe6oyJ` | `9933`   |
-| Kakarot     | 6   | ferdie    | `52.50.242.182`  | `12D3KooWHnQ8LC113DgB5cVVyx2mvTN7bBkm75zvzsndr2WhstEE` | `9933`   |
+<table>
+  <tr>
+    <th>Maintainer</th>
+    <th>ID</th>
+    <th>Key alias</th>
+    <th>IP</th>
+    <th>Peer ID</th>
+    <th>RPC port</th>
+  </tr>
+  <tr>
+    <td>Starkware</td>
+    <td>1</td>
+    <td><code>alice</code></td>
+    <td><code>52.7.206.208</code></td>
+    <td><code>12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE</code></td>
+    <td><code>9933</code></td>
+  </tr>
+  <tr>
+    <td>Starkware</td>
+    <td>2</td>
+    <td><code>bob</code></td>
+    <td><code>44.195.161.82</code></td>
+    <td><code>12D3KooWHocNfvLz6rgpb8wJsynSpMwkspkcRn6gmN5UiK1tTTeG</code></td>
+    <td><code>9933</code></td>
+  </tr>
+  <tr>
+    <td>Cartridge</td>
+    <td>3</td>
+    <td><code>charlie</code></td>
+    <td><code>208.67.222.222</code></td>
+    <td><code>12D3KooWQe2ZtqiyC5CLJKZr9i9xTmEyiAikZcr5J18w3cG1dQAc</code></td>
+    <td><code>9933</code></td>
+  </tr>
+  <tr>
+    <td>LambdaClass</td>
+    <td>4</td>
+    <td><code>dave</code></td>
+    <td><code>65.109.91.29</code></td>
+    <td><code>12D3KooWK8QhFjkGYGyMskDuCyaS1nrhfTfadMeRjJkox4SV32co</code></td>
+    <td><code>9933</code></td>
+  </tr>
+  <tr>
+    <td>Pragma</td>
+    <td>5</td>
+    <td><code>eve</code></td>
+    <td><code>13.39.22.82</code></td>
+    <td><code>12D3KooWGMCGJ517tFor12U9n2v3ax5WNw1pXFdj48hSHYQe6oyJ</code></td>
+    <td><code>9933</code></td>
+  </tr>
+  <tr>
+    <td>Kakarot</td>
+    <td>6</td>
+    <td><code>ferdie</code></td>
+    <td><code>52.50.242.182</code></td>
+    <td><code>12D3KooWHnQ8LC113DgB5cVVyx2mvTN7bBkm75zvzsndr2WhstEE</code></td>
+    <td><code>9933</code></td>
+  </tr>
+</table>
 
 More technical details can be found in the discussion
 [here](https://github.com/keep-starknet-strange/madara/discussions/553).
