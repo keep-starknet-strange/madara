@@ -66,6 +66,21 @@
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
 </pre><pre class="rust"><code><span class="kw">use </span>sc_cli::RunCmd;
 
 <span class="doccomment">/// Available Sealing methods.
@@ -78,17 +93,32 @@
     </span>Instant,
 }
 
+<span class="doccomment">/// Available testnets.
+</span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+</span><span class="kw">pub enum </span>Testnet {
+    Sharingan,
+}
+
 <span class="attr">#[derive(Debug, clap::Parser)]
 </span><span class="kw">pub struct </span>Cli {
     <span class="attr">#[command(subcommand)]
     </span><span class="kw">pub </span>subcommand: <span class="prelude-ty">Option</span>&lt;Subcommand&gt;,
 
     <span class="attr">#[clap(flatten)]
-    </span><span class="kw">pub </span>run: RunCmd,
+    </span><span class="kw">pub </span>run: ExtendedRunCmd,
 
     <span class="doccomment">/// Choose sealing method.
     </span><span class="attr">#[arg(long, value_enum, ignore_case = <span class="bool-val">true</span>)]
     </span><span class="kw">pub </span>sealing: <span class="prelude-ty">Option</span>&lt;Sealing&gt;,
+}
+
+<span class="attr">#[derive(Debug, clap::Args)]
+</span><span class="kw">pub struct </span>ExtendedRunCmd {
+    <span class="attr">#[clap(flatten)]
+    </span><span class="kw">pub </span>run_cmd: RunCmd,
+
+    <span class="attr">#[clap(long)]
+    </span><span class="kw">pub </span>testnet: <span class="prelude-ty">Option</span>&lt;Testnet&gt;,
 }
 
 <span class="attr">#[allow(clippy::large_enum_variant)]
