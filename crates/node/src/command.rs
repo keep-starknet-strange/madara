@@ -183,12 +183,9 @@ pub fn run() -> sc_cli::Result<()> {
                 Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
             cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
             if cli.run.testnet.is_some() {
-                match cli.run.testnet {
-                    Some(Testnet::Sharingan) => {
-                        cli.run.run_cmd.shared_params.chain =
-                            Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
-                    }
-                    None => {}
+                if let Some(Testnet::Sharingan) = cli.run.testnet {
+                    cli.run.run_cmd.shared_params.chain =
+                        Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
                 }
 
                 cli.run.run_cmd.shared_params.dev = true;
