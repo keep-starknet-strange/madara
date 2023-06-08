@@ -1,6 +1,5 @@
-import { CompiledContract } from "starknet";
-import erc20Json from "../../cairo-contracts/build/ERC20.json";
-import testJson from "../../cairo-contracts/build/test.json";
+import fs from "fs";
+import { CompiledContract, json } from "starknet";
 
 export const TEST_CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000001111";
@@ -70,5 +69,17 @@ function convertOffsetToHex(obj) {
   return obj;
 }
 
-export const ERC20_CONTRACT: CompiledContract = convertOffsetToHex(erc20Json);
-export const TEST_CONTRACT: CompiledContract = convertOffsetToHex(testJson);
+const erc20Json = json.parse(
+  fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
+);
+const testJson = json.parse(
+  fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")
+);
+export const ERC20_CONTRACT: CompiledContract = {
+  ...erc20Json,
+  entry_points_by_type: convertOffsetToHex(erc20Json.entry_points_by_type),
+};
+export const TEST_CONTRACT: CompiledContract = {
+  ...testJson,
+  entry_points_by_type: convertOffsetToHex(testJson.entry_points_by_type),
+};
