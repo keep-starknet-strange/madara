@@ -18,7 +18,6 @@ use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
 use sp_storage::StorageKey;
 use starknet_core::types::FieldElement;
-pub extern crate alloc;
 
 use super::{storage_key_build, storage_prefix_build, StorageOverride};
 
