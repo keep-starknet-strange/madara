@@ -70,7 +70,7 @@ directly go here to the
 [node info](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer/node)
 tab.
 
-Currently, `sequencers` are choosen by Starkware, and you can join as a
+Currently, `sequencers` are chosen by Starkware, and you can join as a
 `fullnode` only.
 
 ## Participate to Sharingan as a fullnode
