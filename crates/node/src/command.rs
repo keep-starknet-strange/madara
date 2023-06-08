@@ -1,6 +1,6 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::{Block, EXISTENTIAL_DEPOSIT};
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli, RpcMethods};
+use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 use sp_keyring::Sr25519Keyring;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
@@ -178,23 +178,22 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            let home_path = std::env::var("HOME")
-                .unwrap_or(std::env::var("USERPROFILE")
-                .unwrap_or(".".into()));
-            cli.run.run_cmd.network_params.node_key_params.node_key_file = Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
+            let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+            cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
             cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
             if cli.run.testnet.is_some() {
                 match cli.run.testnet {
                     Some(Testnet::Sharingan) => {
-                        cli.run.run_cmd.shared_params.chain = Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
+                        cli.run.run_cmd.shared_params.chain =
+                            Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
                     }
                     None => {}
                 }
-                
+
                 cli.run.run_cmd.shared_params.dev = true;
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
-
             }
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {

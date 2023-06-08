@@ -3,9 +3,7 @@ use substrate_build_script_utils::{generate_cargo_keys, rerun_if_git_head_change
 fn copy_chain_spec() {
     let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     src.push("chain-specs");
-    let home_path = std::env::var("HOME")
-        .unwrap_or(std::env::var("USERPROFILE")
-        .unwrap_or(".".into()));
+    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
     let mut dst = std::path::PathBuf::from(home_path);
     dst.push(".madara");
     dst.push("chain-specs");
