@@ -120,9 +120,8 @@ where
         })
     }
 
-    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<String> {
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
         let chain_id_prefix = storage_prefix_build(PALLET_SYSTEM, STARKNET_CHAIN_ID);
-        let chain_id = self.query_storage::<Felt252Wrapper>(block_hash, &StorageKey(chain_id_prefix));
-        chain_id.map(|chain_id| chain_id.0.to_string())
+        self.query_storage::<Felt252Wrapper>(block_hash, &StorageKey(chain_id_prefix))
     }
 }

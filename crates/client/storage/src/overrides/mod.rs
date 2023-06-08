@@ -77,8 +77,7 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
     /// Returns the storage value for a provided key and block hash.
-    fn chain_id(&self, block_hash: B::Hash) -> Option<String>;
-}
+    fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
 
 /// Returns the storage prefix given the pallet module name and the storage name
 fn storage_prefix_build(module: &[u8], storage: &[u8]) -> Vec<u8> {
@@ -192,9 +191,9 @@ where
     ///
     /// # Returns
     /// * `Some(chain_id)` - The chain id for the provided block hash
-    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<String> {
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
         let chain_id = self.client.runtime_api().chain_id(block_hash).ok()?;
-        let chain_id_str = chain_id.0.to_string();
-        Some(chain_id_str)
-    }
+        Some(chain_id)
+    }   
+}
 }

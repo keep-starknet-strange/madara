@@ -138,8 +138,8 @@ where
     ///
     /// Returns an error if it can't retrieve the chain id or can't convert it to an ascii string.
     fn chain_id_str(&self, hash: B::Hash) -> RpcResult<String> {
-        let chain_id_option = self.overrides.for_block_hash(self.client.as_ref(), hash).chain_id(hash);
-        Ok(chain_id_option.ok_or(StarknetRpcApiError::InternalServerError)?)
+        let chain_id = self.overrides.for_block_hash(self.client.as_ref(), hash).chain_id(hash);
+        Ok(chain_id.map(|chain_id| chain_id.0.to_string()).ok_or(StarknetRpcApiError::InternalServerError)?)
     }
 
     /// Helper function to get the substrate block number from a Starknet block id
