@@ -81,7 +81,7 @@ pub trait StarknetRpcApi {
 
     /// Get the chain id
     #[method(name = "chainId")]
-    fn chain_id(&self) -> RpcResult<String>;
+    fn chain_id(&self) -> RpcResult<Felt>;
 
     /// Add an Invoke Transaction to invoke a contract function
     #[method(name = "addInvokeTransaction")]
