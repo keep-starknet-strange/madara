@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use frame_system::EventRecord;
 use madara_runtime::{Hash, RuntimeEvent};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE,
-    SYSTEM_EVENTS,
+    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
+    STARKNET_NONCE, SYSTEM_EVENTS,
 };
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::NonceWrapper;
@@ -118,5 +118,10 @@ where
                 })
                 .collect()
         })
+    }
+
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
+        let chain_id_prefix = storage_prefix_build(PALLET_SYSTEM, STARKNET_CHAIN_ID);
+        self.query_storage::<Felt252Wrapper>(block_hash, &StorageKey(chain_id_prefix))
     }
 }

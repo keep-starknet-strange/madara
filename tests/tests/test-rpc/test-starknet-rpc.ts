@@ -146,6 +146,15 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
+  describe("getChainId", async () => {
+    it("should return correct chain id", async function () {
+      const chainId = await providerRPC.getChainId();
+
+      expect(chainId).to.not.be.undefined;
+      expect(chainId).to.be.equal(CHAIN_ID_STARKNET_TESTNET);
+    });
+  });
+
   describe("call", async () => {
     it("should return calldata on return_result entrypoint", async function () {
       const call = await providerRPC.callContract(

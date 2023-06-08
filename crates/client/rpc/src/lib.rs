@@ -138,16 +138,8 @@ where
     ///
     /// Returns an error if it can't retrieve the chain id or can't convert it to an ascii string.
     fn chain_id_str(&self, hash: B::Hash) -> RpcResult<String> {
-        let chain_id = self.client.runtime_api().chain_id(hash).map_err(|_| {
-            error!("fetch runtime chain id failed");
-            StarknetRpcApiError::InternalServerError
-        })?;
-        Ok(std::str::from_utf8(&chain_id.0.to_bytes_be())
-            .map_err(|_| {
-                error!("Couldn't convert chain id to string");
-                Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
-            })?
-            .to_string())
+        let chain_id = self.overrides.for_block_hash(self.client.as_ref(), hash).chain_id(hash);
+        Ok(chain_id.map(|chain_id| chain_id.0.to_string()).ok_or(StarknetRpcApiError::InternalServerError)?)
     }
 
     /// Helper function to get the substrate block number from a Starknet block id

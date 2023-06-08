@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -76,6 +76,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
+    /// Returns the storage value for a provided key and block hash.
+    fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -180,5 +182,17 @@ where
     /// * `Some(events)` - The events for the provided block hash
     fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
         self.client.runtime_api().events(block_hash).ok()
+    }
+    /// Return the chain id for a provided block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(chain_id)` - The chain id for the provided block hash
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
+        let chain_id = self.client.runtime_api().chain_id(block_hash).ok()?;
+        Some(chain_id)
     }
 }
