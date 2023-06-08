@@ -3,9 +3,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
-use jsonrpsee::core::RpcResult;
-use log::error;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -187,13 +185,16 @@ where
     }
 
     /// Return the chain id for a provided block hash.
+    ///
     /// # Arguments
+    ///
     /// * `block_hash` - The block hash
+    ///
     /// # Returns
     /// * `Some(chain_id)` - The chain id for the provided block hash
     fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<String> {
         let chain_id = self.client.runtime_api().chain_id(block_hash).ok()?;
         let chain_id_str = chain_id.0.to_string();
-        Some(chain_id_str.to_owned())
+        Some(chain_id_str)
     }
 }
