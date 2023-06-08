@@ -18,7 +18,7 @@ LABEL description="Madara, a blazing fast Starknet sequencer" \
   documentation="https://docs.madara.wtf/"
 
 COPY --from=builder /madara/target/release/madara /
-COPY --from=builder /madara/infra/chain-specs /chain-specs
+COPY --from=builder /madara/crates/node/chain-specs /chain-specs
 # 9444 JSON-RPC server
 # 9615 Prometheus exporter
 # 30333 P2P communication
