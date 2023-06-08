@@ -12,4 +12,4 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.error" not exists
-jsonpath "$.result.transaction_hash" exists
+jsonpath "$.result.transaction_hash" matches /^0x[A-Fa-f0-9]+$/
