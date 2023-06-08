@@ -2,7 +2,11 @@
   "name": "Sharingan Testnet",
   "id": "sharingan_testnet",
   "chainType": "Live",
-  "bootNodes": ["/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE","/ip4/44.195.161.82/tcp/30333/p2p/12D3KooWHocNfvLz6rgpb8wJsynSpMwkspkcRn6gmN5UiK1tTTeG","/ip4/208.67.222.222/tcp/30333/p2p/12D3KooWQe2ZtqiyC5CLJKZr9i9xTmEyiAikZcr5J18w3cG1dQAc"],
+  "bootNodes": [
+    "/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE",
+    "/ip4/44.195.161.82/tcp/30333/p2p/12D3KooWHocNfvLz6rgpb8wJsynSpMwkspkcRn6gmN5UiK1tTTeG",
+    "/ip4/208.67.222.222/tcp/30333/p2p/12D3KooWQe2ZtqiyC5CLJKZr9i9xTmEyiAikZcr5J18w3cG1dQAc"
+  ],
   "telemetryEndpoints": null,
   "protocolId": null,
   "properties": null,
