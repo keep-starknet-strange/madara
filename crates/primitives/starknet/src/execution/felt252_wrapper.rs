@@ -68,6 +68,18 @@ impl Felt252Wrapper {
     }
 }
 
+#[cfg(feature = "std")]
+impl Felt252Wrapper {
+    /// Decodes the bytes representation in utf-8
+    ///
+    /// # Errors
+    ///
+    /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
+    pub fn from_utf8(&self) -> Result<String, Felt252WrapperError> {
+        Ok(std::str::from_utf8(&self.0.to_bytes_be()).map_err(|_| Felt252WrapperError::InvalidCharacter)?.to_string())
+    }
+}
+
 impl Default for Felt252Wrapper {
     fn default() -> Self {
         Self(FieldElement::ZERO)
