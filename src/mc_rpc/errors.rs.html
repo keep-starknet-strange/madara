@@ -43,6 +43,8 @@
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
 <a href="#45" id="45">45</a>
+<a href="#46" id="46">46</a>
+<a href="#47" id="47">47</a>
 </pre><pre class="rust"><code><span class="kw">use </span>jsonrpsee::types::error::{CallError, ErrorObject};
 
 <span class="attr">#[derive(thiserror::Error, Clone, Copy, Debug)]
@@ -81,6 +83,8 @@
     </span>InternalServerError = <span class="number">500</span>,
     <span class="attr">#[error(<span class="string">&quot;Failed to fetch pending transactions&quot;</span>)]
     </span>FailedToFetchPendingTransactions = <span class="number">38</span>,
+    <span class="attr">#[error(<span class="string">&quot;Unimplemented method&quot;</span>)]
+    </span>UnimplementedMethod = <span class="number">501</span>,
 }
 
 <span class="kw">impl </span>From&lt;StarknetRpcApiError&gt; <span class="kw">for </span>jsonrpsee::core::Error {
