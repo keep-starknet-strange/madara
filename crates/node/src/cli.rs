@@ -10,6 +10,12 @@ pub enum Sealing {
     Instant,
 }
 
+/// Available testnets.
+#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+pub enum Testnet {
+    Sharingan,
+}
+
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
     #[command(subcommand)]
@@ -27,12 +33,9 @@ pub struct Cli {
 pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub run_cmd: RunCmd,
-    
-	#[arg(long)]
-    pub full_node: bool,
 
-	#[arg(long)]
-    pub testnet: bool,
+    #[clap(long)]
+    pub testnet: Option<Testnet>,
 }
 
 #[allow(clippy::large_enum_variant)]

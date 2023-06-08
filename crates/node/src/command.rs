@@ -182,10 +182,8 @@ pub fn run() -> sc_cli::Result<()> {
                 .unwrap_or(std::env::var("USERPROFILE")
                 .unwrap_or(".".into()));
             cli.run.run_cmd.network_params.node_key_params.node_key_file = Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
-            if cli.run.full_node {
-                cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara/sharingan").into());
-            }
-            if cli.run.testnet {
+            cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
+            if cli.run.testnet.is_some() {
                 cli.run.run_cmd.shared_params.chain = Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
                 cli.run.run_cmd.shared_params.dev = true;
                 cli.run.run_cmd.rpc_external = true;
