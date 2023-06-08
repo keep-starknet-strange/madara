@@ -17,7 +17,7 @@ pub type MaxEntryPoints = ConstU32<4294967295>;
 /// Wrapper type for transaction execution result.
 pub type EntryPointExecutionResultWrapper<T> = Result<T, EntryPointExecutionErrorWrapper>;
 
-// /// Enum that represents all the entrypoints types.
+/// Enum that represents all the entrypoints types.
 #[derive(
     Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, MaxEncodedLen, PartialOrd, Ord, Hash,
 )]

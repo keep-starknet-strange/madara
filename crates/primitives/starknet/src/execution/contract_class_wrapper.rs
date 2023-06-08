@@ -6,9 +6,9 @@ use core::mem;
 
 use blockifier::execution::contract_class::{deserialize_program, ContractClass};
 use cairo_vm::felt::Felt252;
-use cairo_vm::serde::deserialize_program::ReferenceManager;
+use cairo_vm::serde::deserialize_program::{parse_program, ProgramJson, ReferenceManager};
 use cairo_vm::types::program::{Program, SharedProgramData};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
 
@@ -22,13 +22,26 @@ use crate::scale_info::{Path, Type, TypeInfo};
 pub fn deserialize_program_wrapper<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ProgramWrapper, D::Error> {
     Ok(deserialize_program(deserializer)?.into())
 }
+/// Helper function to serialize a [ProgramWrapper]. This function uses the [Serialize] function
+/// from [ProgramJson]
+fn serialize_program_wrapper<S: Serializer>(v: &ProgramWrapper, serializer: S) -> Result<S::Ok, S::Error> {
+    let v: ProgramJson = v.clone().into();
+    v.serialize(serializer)
+}
 
 /// Contract Class type wrapper.
 #[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ContractClassWrapper {
-    #[cfg_attr(feature = "std", serde(deserialize_with = "deserialize_program_wrapper"))]
+    /// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
+    /// we implement the necessary traits.)
+    #[cfg_attr(
+        feature = "std",
+        serde(deserialize_with = "deserialize_program_wrapper", serialize_with = "serialize_program_wrapper")
+    )]
     pub program: ProgramWrapper,
+    /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
+    /// copy of the type but we implement the necessary traits.)
     pub entry_points_by_type: EntrypointMapWrapper,
 }
 
@@ -65,6 +78,8 @@ impl MaxEncodedLen for ContractClassWrapper {
     }
 }
 
+/// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
+/// copy of the type but we implement the necessary traits.)
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct EntrypointMapWrapper(HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
@@ -112,13 +127,15 @@ impl TypeInfo for EntrypointMapWrapper {
     }
 }
 
-// Program
-
+/// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
+/// we implement the necessary traits.)
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ProgramWrapper {
+    /// Fields contained in the program object.
     pub shared_program_data: Arc<SharedProgramData>,
+    /// Constants of the program.
     pub constants: HashMap<String, Felt252>,
+    /// All the references of the program.
     pub reference_manager: ReferenceManager,
 }
 
@@ -141,6 +158,13 @@ impl From<ProgramWrapper> for Program {
         }
     }
 }
+
+impl From<ProgramWrapper> for ProgramJson {
+    fn from(value: ProgramWrapper) -> Self {
+        parse_program(value.into())
+    }
+}
+
 /// SCALE trait.
 impl Encode for ProgramWrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
@@ -161,8 +185,6 @@ impl Decode for ProgramWrapper {
         let size = u128::from_be_bytes(buf);
         let mut program_buf = vec![0u8; size as usize];
         input.read(program_buf.as_mut_slice())?;
-        #[cfg(feature = "std")]
-        println!("byy {:?}", program_buf);
         let program = Program::from_bytes(&program_buf, None)
             .map_err(|e| Error::from("Can't get Program from input buffer.").chain(e.to_string()))?;
         Ok(program.into())
@@ -184,6 +206,7 @@ impl TypeInfo for ProgramWrapper {
 
 #[cfg(test)]
 mod tests {
+
     use blockifier::execution::contract_class::ContractClass;
 
     use super::*;
@@ -205,10 +228,28 @@ mod tests {
     }
 
     #[test]
+    fn test_temp_encode_decode_contract_class() {
+        let contract_class: ContractClass =
+            get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
+        let bytes = contract_class.program.to_bytes();
+        std::fs::File::create("foo.json").unwrap().write(&bytes);
+        let des = &mut serde_json::Deserializer::from_slice(&bytes);
+        let result: Result<ProgramJson, _> = serde_path_to_error::deserialize(des);
+        match result {
+            Ok(_) => panic!("expected a type error"),
+            Err(err) => {
+                let path = err.path().to_string();
+                println!("Error path: {:?}", path);
+            }
+        }
+        Program::from_bytes(&bytes, None).unwrap();
+        assert_eq!(contract_class.program, Program::from_bytes(&contract_class.program.to_bytes(), None).unwrap())
+    }
+    #[test]
     fn test_encode_decode_contract_class() {
         let contract_class: ContractClassWrapper =
             get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
         let encoded = contract_class.encode();
-        assert_eq!(contract_class, <ContractClassWrapper>::decode(&mut &encoded[..]).unwrap())
+        assert_eq!(contract_class, ContractClassWrapper::decode(&mut &encoded[..]).unwrap())
     }
 }

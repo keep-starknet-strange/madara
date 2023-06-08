@@ -3,8 +3,6 @@ use std::collections::BTreeMap;
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
-use cairo_vm::types::program::Program;
-use flate2::read::GzDecoder;
 use frame_support::inherent::BlockT;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
@@ -50,9 +48,7 @@ pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
     serde_json::to_writer(&mut gzip_encoder, data)?;
     Ok(gzip_encoder.finish()?)
 }
-
-/// Returns a base64 encoded string of the input bytes
-pub(crate) fn encode_base64(data: &[u8]) -> String {
+pub(crate) fn _encode_base64(data: &[u8]) -> String {
     general_purpose::STANDARD.encode(data)
 }
 
@@ -136,7 +132,7 @@ pub fn to_deploy_account_tx(tx: BroadcastedDeployAccountTransaction) -> Result<D
 }
 
 /// Converts a broadcasted declare transaction to a declare transaction
-pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction> {
+pub fn to_declare_tx(_tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction> {
     todo!();
     // match tx {
     //     BroadcastedDeclareTransaction::V1(declare_tx_v1) => {

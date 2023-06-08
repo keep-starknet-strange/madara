@@ -122,6 +122,8 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
+    use starknet_crypto::FieldElement;
+
     use super::*;
 
     #[pallet::pallet]
