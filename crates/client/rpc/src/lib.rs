@@ -297,12 +297,11 @@ where
 
         let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.into();
-        let hex_key = key;
 
         let value = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .get_storage_by_storage_key(substrate_block_hash, hex_address, hex_key)
+            .get_storage_by_storage_key(substrate_block_hash, hex_address, key)
             .ok_or_else(|| {
                 error!("Failed to retrieve storage at '{contract_address}' and '{key}'");
                 StarknetRpcApiError::ContractNotFound

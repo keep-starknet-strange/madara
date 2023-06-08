@@ -127,8 +127,12 @@ where
         key: FieldElement,
     ) -> Option<Felt252Wrapper> {
         let api = self.client.runtime_api();
-        let storage = api.get_storage_at(block_hash, address, key.into()).unwrap().unwrap();
-        Some(storage)
+
+        match api.get_storage_at(block_hash, address, key.into()) {
+            Ok(Ok(storage)) => Some(storage),
+            Ok(Err(_)) => None,
+            Err(_) => None,
+        }
     }
 
     fn contract_class_by_address(
