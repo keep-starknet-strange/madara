@@ -438,6 +438,14 @@
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
 <a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
 </pre><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -516,7 +524,9 @@
     ///
     /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
     </span><span class="kw">pub fn </span>from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, Felt252WrapperError&gt; {
-        <span class="prelude-val">Ok</span>(std::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.to_bytes_be()).map_err(|<span class="kw">_</span>| Felt252WrapperError::InvalidCharacter)<span class="question-mark">?</span>.to_string())
+        <span class="kw">let </span>s =
+            std::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.to_bytes_be()).map_err(|<span class="kw">_</span>| Felt252WrapperError::InvalidCharacter)<span class="question-mark">?</span>.to_string();
+        <span class="prelude-val">Ok</span>(s.trim_start_matches(<span class="string">&#39;\0&#39;</span>).to_string())
     }
 }
 
@@ -876,6 +886,12 @@
     </span><span class="kw">fn </span>primitives_try_from_felt252() {
         <span class="kw">let </span>felt_u64 = Felt252Wrapper::from(<span class="number">4_294_967_296u64</span>);
         <span class="macro">assert_eq!</span>(TryInto::&lt;u64&gt;::try_into(felt_u64).unwrap(), <span class="number">4_294_967_296u64</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>decode_utf8() {
+        <span class="kw">let </span>felt = Felt252Wrapper::from_hex_be(<span class="string">&quot;0x534e5f474f45524c49&quot;</span>).unwrap();
+        <span class="macro">assert_eq!</span>(felt.from_utf8().unwrap(), <span class="string">&quot;SN_GOERLI&quot;</span>.to_string());
     }
 }
 </code></pre></div>
