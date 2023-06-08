@@ -71,7 +71,6 @@ construct_runtime!(
         Balances: pallet_balances,
         TransactionPayment: pallet_transaction_payment,
         Sudo: pallet_sudo,
-        Utility: pallet_utility,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
     }
