@@ -426,6 +426,18 @@
 <a href="#426" id="426">426</a>
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
 </pre><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -493,6 +505,18 @@
     </span><span class="kw">pub fn </span>from_dec_str(value: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Felt252WrapperError&gt; {
         <span class="kw">let </span>fe = FieldElement::from_dec_str(value)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">Self</span>(fe))
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">impl </span>Felt252Wrapper {
+    <span class="doccomment">/// Decodes the bytes representation in utf-8
+    ///
+    /// # Errors
+    ///
+    /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
+    </span><span class="kw">pub fn </span>from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, Felt252WrapperError&gt; {
+        <span class="prelude-val">Ok</span>(std::str::from_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.to_bytes_be()).map_err(|<span class="kw">_</span>| Felt252WrapperError::InvalidCharacter)<span class="question-mark">?</span>.to_string())
     }
 }
 
