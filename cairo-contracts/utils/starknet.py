@@ -118,6 +118,30 @@ def compile_contract(contract_name: str):
     if output.returncode != 0:
         raise RuntimeError(output.stderr)
 
+    def _convert_offset_to_hex(obj):
+        if isinstance(obj, list):
+            for i in range(len(obj)):
+                obj[i] = _convert_offset_to_hex(obj[i])
+        elif isinstance(obj, dict):
+            for key in obj:
+                if obj.get(key) is not None:
+                    obj[key] = _convert_offset_to_hex(obj[key])
+        elif isinstance(obj, int) and obj >= 0:
+            obj = hex(obj)
+        return obj
+
+    contract = json.loads((BUILD_DIR / f"{contract_name}.json").read_text())
+    json.dump(
+        {
+            **contract,
+            "entry_points_by_type": _convert_offset_to_hex(
+                contract["entry_points_by_type"]
+            ),
+        },
+        open(BUILD_DIR / f"{contract_name}.json", "w"),
+        indent=2,
+    )
+
 
 def class_hash(contract_name: str):
     artifact = get_artifact(contract_name)

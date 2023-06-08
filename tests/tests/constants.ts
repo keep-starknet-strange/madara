@@ -48,38 +48,9 @@ export const NFT_CONTRACT_ADDRESS =
 export const NFT_CLASS_HASH = "0x90000";
 
 // Contract classes
-
-// For some reasons, the starknet-compile-deprecated command
-// writes all the offsets as integer while the RPC returns them as hex string
-// This chatGPT utils recursively updates them
-function convertOffsetToHex(obj) {
-  if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      obj[i] = convertOffsetToHex(obj[i]);
-    }
-  } else if (typeof obj === "object" && obj !== null) {
-    for (const key in obj) {
-      if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        obj[key] = convertOffsetToHex(obj[key]);
-      }
-    }
-  } else if (typeof obj === "number" && Number.isInteger(obj) && obj >= 0) {
-    obj = `0x${obj.toString(16)}`;
-  }
-  return obj;
-}
-
-const erc20Json = json.parse(
+export const ERC20_CONTRACT: CompiledContract = json.parse(
   fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
 );
-const testJson = json.parse(
+export const TEST_CONTRACT: CompiledContract = json.parse(
   fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")
 );
-export const ERC20_CONTRACT: CompiledContract = {
-  ...erc20Json,
-  entry_points_by_type: convertOffsetToHex(erc20Json.entry_points_by_type),
-};
-export const TEST_CONTRACT: CompiledContract = {
-  ...testJson,
-  entry_points_by_type: convertOffsetToHex(testJson.entry_points_by_type),
-};
