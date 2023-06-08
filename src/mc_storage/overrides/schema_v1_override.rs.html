@@ -125,6 +125,34 @@
 <a href="#125" id="125">125</a>
 <a href="#126" id="126">126</a>
 <a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -133,7 +161,7 @@
 <span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
-    STARKNET_NONCE, SYSTEM_EVENTS,
+    STARKNET_NONCE, STARKNET_STORAGE, SYSTEM_EVENTS,
 };
 <span class="kw">use </span>mp_starknet::transaction::types::EventWrapper;
 <span class="kw">use </span>pallet_starknet::types::NonceWrapper;
@@ -144,6 +172,7 @@
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
 <span class="kw">use </span>sp_storage::StorageKey;
+<span class="kw">use </span>starknet_core::types::FieldElement;
 
 <span class="kw">use super</span>::{storage_key_build, storage_prefix_build, StorageOverride};
 
@@ -184,6 +213,33 @@
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
 {
+    <span class="kw">fn </span>get_storage_by_storage_key(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+        address: ContractAddressWrapper,
+        key: FieldElement,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt; {
+        <span class="kw">let </span>storage_storage_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_STORAGE);
+        <span class="kw">let </span>key = key.to_bytes_be();
+        <span class="kw">let </span>key = (address, key);
+
+        <span class="comment">// check if contract exists
+        </span><span class="kw">match </span><span class="self">self</span>.contract_class_hash_by_address(block_hash, address) {
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; (),
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+        }
+
+        <span class="kw">let </span>storage = <span class="self">self</span>.query_storage::&lt;Felt252Wrapper&gt;(
+            block_hash,
+            <span class="kw-2">&amp;</span>StorageKey(storage_key_build(storage_storage_prefix, <span class="kw-2">&amp;</span><span class="self">self</span>.encode_storage_key(<span class="kw-2">&amp;</span>key))),
+        );
+
+        <span class="kw">match </span>storage {
+            <span class="prelude-val">Some</span>(storage) =&gt; <span class="prelude-val">Some</span>(storage),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Some</span>(Felt252Wrapper::default()),
+        }
+    }
+
     <span class="kw">fn </span>contract_class_by_address(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,

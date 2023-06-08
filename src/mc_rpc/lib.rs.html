@@ -937,8 +937,6 @@
 <a href="#937" id="937">937</a>
 <a href="#938" id="938">938</a>
 <a href="#939" id="939">939</a>
-<a href="#940" id="940">940</a>
-<a href="#941" id="941">941</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1238,18 +1236,16 @@
 
         <span class="kw">let </span>runtime_api = <span class="self">self</span>.client.runtime_api();
         <span class="kw">let </span>hex_address = contract_address.into();
-        <span class="kw">let </span>hex_key = key.into();
 
-        <span class="kw">let </span>value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address, hex_key)
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?
-            </span>.map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to get storage from contract: {:#?}&quot;</span>, e);
+        <span class="kw">let </span>value = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
+            .get_storage_by_storage_key(substrate_block_hash, hex_address, key)
+            .ok_or_else(|| {
+                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve storage at &#39;{contract_address}&#39; and &#39;{key}&#39;&quot;</span>);
                 StarknetRpcApiError::ContractNotFound
             })<span class="question-mark">?</span>;
+
         <span class="kw">let </span>value = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>&lt;[u8; <span class="number">32</span>]&gt;::from(value)).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;Failed to get storage from contract: {:#?}&quot;</span>, e);
             StarknetRpcApiError::InternalServerError
