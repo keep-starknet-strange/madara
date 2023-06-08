@@ -4,7 +4,7 @@ use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli, RpcMethods};
 use sp_keyring::Sr25519Keyring;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
-use crate::cli::{Cli, Subcommand};
+use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
 impl SubstrateCli for Cli {
@@ -184,7 +184,13 @@ pub fn run() -> sc_cli::Result<()> {
             cli.run.run_cmd.network_params.node_key_params.node_key_file = Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
             cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
             if cli.run.testnet.is_some() {
-                cli.run.run_cmd.shared_params.chain = Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
+                match cli.run.testnet {
+                    Some(Testnet::Sharingan) => {
+                        cli.run.run_cmd.shared_params.chain = Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
+                    }
+                    None => {}
+                }
+                
                 cli.run.run_cmd.shared_params.dev = true;
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
