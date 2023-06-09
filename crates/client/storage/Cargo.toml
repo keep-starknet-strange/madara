@@ -4,8 +4,8 @@ name = "mc-storage"
 version = "0.1.0"
 description = "Starknet storage compatibility layer for Substrate."
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"

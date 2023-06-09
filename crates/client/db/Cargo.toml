@@ -3,8 +3,8 @@ name = "mc-db"
 version = "0.1.0"
 description = "Starknet database backend"
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -24,7 +24,7 @@ sp-core = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 sc-client-db = { workspace = true, default-features = true }
 scale-codec = { workspace = true, default-features = true, features = [
-	"derive",
+  "derive",
 ] }
 
 

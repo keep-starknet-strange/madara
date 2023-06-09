@@ -375,7 +375,7 @@ where
         self.transaction_pool.remove_invalid(&unqueue_invalid);
 
         // FIXME: use custom implementation of block builder and remove storage proof computation
-        // Issue: https://github.com/keep-starknet-strange/madara/issues/605
+        // Issue: https://github.com/keep-starknet-strange/madara/issues/606
         let (block, storage_changes, proof) = block_builder.build()?.into_inner();
 
         self.metrics.report(|metrics| {
@@ -395,6 +395,7 @@ where
         );
 
         // TODO: try to remove completely the storage proof computation and see if it breaks anything
+        // Issue: https://github.com/keep-starknet-strange/madara/issues/606
         let proof = PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
 
         let propose_with_end = time::Instant::now();

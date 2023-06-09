@@ -1,15 +1,15 @@
 [workspace]
 members = [
-	"crates/node",
-	"crates/runtime",
-	"crates/pallets/starknet",
-	"crates/primitives/starknet",
-	"crates/primitives/digest-log",
-	"crates/client/db",
-	"crates/client/rpc-core",
-	"crates/client/rpc",
-	"crates/client/mapping-sync",
-	"crates/client/storage",
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/starknet",
+  "crates/primitives/starknet",
+  "crates/primitives/digest-log",
+  "crates/client/db",
+  "crates/client/rpc-core",
+  "crates/client/rpc",
+  "crates/client/mapping-sync",
+  "crates/client/storage",
 ]
 [profile.release]
 panic = "unwind"
@@ -58,7 +58,7 @@ sp-trie = { version = "7.0.0", git = "https://github.com/paritytech/substrate", 
 
 # Substrate client dependencies
 sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", features = [
-	"rocksdb",
+  "rocksdb",
 ] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
@@ -97,7 +97,7 @@ pallet-timestamp = { default-features = false, git = "https://github.com/parityt
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false}
+mp-starknet = { path = "crates/primitives/starknet", default-features = false }
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
 
 # Madara client
@@ -115,11 +115,11 @@ starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "
 starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
 starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
-	"alloc",
+  "alloc",
 ] }
 blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
-	"testing",
+  "testing",
 ], default-features = false }
 # Other third party dependencies
 anyhow = "1.0.71"

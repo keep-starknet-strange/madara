@@ -3,8 +3,8 @@ name = "mc-rpc"
 version = "0.1.0"
 description = "Starknet RPC compatibility layer for Substrate"
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -38,12 +38,17 @@ sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
 # Starknet
 starknet_api = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = ["testing"] }
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 # Others
 hex = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, default-features = true, features = ["server", "macros"] }
+jsonrpsee = { workspace = true, default-features = true, features = [
+  "server",
+  "macros",
+] }
 log = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
