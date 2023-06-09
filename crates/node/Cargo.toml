@@ -48,7 +48,6 @@ sp-inherents = { workspace = true }
 sp-keyring = { workspace = true }
 sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
-pallet-transaction-payment = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
 sc-network-sync = { workspace = true }
 
@@ -64,7 +63,7 @@ sc-rpc-api = { workspace = true }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
 sc-basic-authorship = { workspace = true }
 # Substrate frame dependencies
-pallet-transaction-payment-rpc = { workspace = true }
+# no substrate frame pallet dependencies for now
 
 # Substrate tools dependencies
 substrate-frame-rpc-system = { workspace = true }

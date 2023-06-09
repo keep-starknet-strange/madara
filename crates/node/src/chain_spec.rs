@@ -280,8 +280,6 @@ fn testnet_genesis(
             // Assign network admin rights.
             key: Some(root_key),
         },
-        // Provides the logic needed to handle transaction fees
-        transaction_payment: Default::default(),
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
