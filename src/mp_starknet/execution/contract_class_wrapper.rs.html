@@ -268,7 +268,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_serialize_deserialize_contract_class() {
         <span class="kw">let </span>contract_class: ContractClassWrapper =
-            get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../../../resources/account/simple/account.json&quot;</span>))
+            get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../../../cairo-contracts/build/NoValidateAccount.json&quot;</span>))
                 .try_into()
                 .unwrap();
         <span class="kw">let </span>contract_class_serialized = serde_json::to_string(<span class="kw-2">&amp;</span>contract_class).unwrap();
