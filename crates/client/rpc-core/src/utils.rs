@@ -12,11 +12,15 @@ use mp_starknet::execution::types::{
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_api::HeaderT;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{BoundedBTreeMap, BoundedVec};
+use sp_core::U256;
+use sp_runtime::BoundedVec;
+use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress as StarknetContractAddress};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, ContractAddressSalt};
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-    BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
-    LegacyEntryPointsByType, StarknetError,
+    BroadcastedTransaction, ContractClass, FromByteArrayError, LegacyContractEntryPoint, LegacyEntryPointsByType,
+    StarknetError,
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
@@ -39,7 +43,7 @@ pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> R
 /// Returns a base64 encoded and compressed string of the input bytes
 pub(crate) fn compress_and_encode_base64(data: &[u8]) -> Result<String> {
     let data_compressed = compress(data)?;
-    Ok(encode_base64(&data_compressed))
+    Ok(_encode_base64(&data_compressed))
 }
 
 /// Returns a compressed vector of bytes
@@ -177,7 +181,7 @@ pub fn to_declare_tx(_tx: BroadcastedDeclareTransaction) -> Result<DeclareTransa
 }
 
 /// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
-fn to_btree_map_entrypoints(
+pub fn to_btree_map_entrypoints(
     entries: LegacyEntryPointsByType,
 ) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
     let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
@@ -189,7 +193,7 @@ fn to_btree_map_entrypoints(
     entry_points_by_type
 }
 
-fn to_legacy_entry_points_by_type(
+pub fn to_legacy_entry_points_by_type(
     entries: &BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
 ) -> Result<LegacyEntryPointsByType> {
     let constructor = entries

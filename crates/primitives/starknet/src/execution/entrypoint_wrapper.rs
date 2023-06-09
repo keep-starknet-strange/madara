@@ -115,16 +115,6 @@ impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
     }
 }
 
-#[cfg(feature = "std")]
-impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
-    type Error = FromByteArrayError;
-    fn try_from(value: EntryPointWrapper) -> Result<Self, Self::Error> {
-        let selector = FieldElement::from_bytes_be(&value.selector)?;
-        let offset = value.offset as u64;
-        Ok(Self { selector, offset })
-    }
-}
-
 /// Wrapper type for transaction execution error.
 #[derive(Debug, Error)]
 pub enum EntryPointExecutionErrorWrapper {

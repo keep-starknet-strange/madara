@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn test_temp_encode_decode_contract_class() {
         let contract_class: ContractClass =
-            get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"));
+            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"));
         let bytes = contract_class.program.to_bytes();
         std::fs::File::create("foo.json").unwrap().write(&bytes);
         let des = &mut serde_json::Deserializer::from_slice(&bytes);
