@@ -8,6 +8,7 @@ use blockifier::execution::contract_class::{deserialize_program, ContractClass};
 use cairo_vm::felt::Felt252;
 use cairo_vm::serde::deserialize_program::{parse_program, ProgramJson, ReferenceManager};
 use cairo_vm::types::program::{Program, SharedProgramData};
+use derive_more::Constructor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
@@ -80,9 +81,9 @@ impl MaxEncodedLen for ContractClassWrapper {
 
 /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
 /// copy of the type but we implement the necessary traits.)
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct EntrypointMapWrapper(HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
+pub struct EntrypointMapWrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
 #[derive(Clone, Debug, PartialEq, Eq, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 struct TupleTemp(EntryPointTypeWrapper, Vec<EntryPointWrapper>);
@@ -220,31 +221,12 @@ mod tests {
         let contract_class: ContractClassWrapper =
             get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
         let contract_class_serialized = serde_json::to_string(&contract_class).unwrap();
-        println!("{:?}", contract_class_serialized);
         let contract_class_deserialized: ContractClassWrapper =
             serde_json::from_str(&contract_class_serialized).unwrap();
 
         assert_eq!(contract_class, contract_class_deserialized);
     }
 
-    #[test]
-    fn test_temp_encode_decode_contract_class() {
-        let contract_class: ContractClass =
-            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"));
-        let bytes = contract_class.program.to_bytes();
-        std::fs::File::create("foo.json").unwrap().write(&bytes);
-        let des = &mut serde_json::Deserializer::from_slice(&bytes);
-        let result: Result<ProgramJson, _> = serde_path_to_error::deserialize(des);
-        match result {
-            Ok(_) => panic!("expected a type error"),
-            Err(err) => {
-                let path = err.path().to_string();
-                println!("Error path: {:?}", path);
-            }
-        }
-        Program::from_bytes(&bytes, None).unwrap();
-        assert_eq!(contract_class.program, Program::from_bytes(&contract_class.program.to_bytes(), None).unwrap())
-    }
     #[test]
     fn test_encode_decode_contract_class() {
         let contract_class: ContractClassWrapper =
