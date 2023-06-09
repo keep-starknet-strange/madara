@@ -61,7 +61,6 @@ sp-block-builder = { workspace = true }
 # Substrate client dependencies
 sc-rpc-api = { workspace = true }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
-sc-basic-authorship = { workspace = true }
 # Substrate frame dependencies
 # no substrate frame pallet dependencies for now
 
@@ -72,11 +71,13 @@ frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 
 # Starknet
+# FIXME: declare those dependencies on workspace level
 madara-runtime = { path = "../runtime" }
 mc-db = { path = "../client/db" }
 mc-rpc = { path = "../client/rpc" }
 mc-storage = { path = "../client/storage" }
 mc-mapping-sync = { path = "../client/mapping-sync" }
+mc-block-proposer = {workspace = true}
 pallet-starknet = { path = "../pallets/starknet" }
 mp-starknet = { workspace = true }
 blockifier = { workspace = true }
