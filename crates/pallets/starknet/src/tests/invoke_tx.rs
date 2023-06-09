@@ -13,6 +13,7 @@ use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
 use starknet_core::utils::get_selector_from_name;
 
+use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::message::Message;
@@ -105,8 +106,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                         .unwrap(),
                 ),
                 data: bounded_vec![
-                    Felt252Wrapper::from_hex_be("0x02356b628d108863baf8644c945d97bad70190af5957031f4852d00d0f690a77")
-                        .unwrap(),
+                    Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                     Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                         .unwrap(),
                     Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000cef4")
@@ -145,10 +145,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                     .unwrap()
             ],
             data: bounded_vec!(Felt252Wrapper::from_hex_be("0x1").unwrap()),
-            from_address: Felt252Wrapper::from_hex_be(
-                "0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7",
-            )
-            .unwrap(),
+            from_address: Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
             transaction_hash,
         };
         let expected_fee_transfer_event = EventWrapper {
@@ -214,10 +211,12 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/storage_read_write.json");
-        let transaction =
-            transaction_from_json(json_content, include_bytes!("../../../../../resources/account/simple/account.json"))
-                .expect("Failed to create Transaction from JSON")
-                .into();
+        let transaction = transaction_from_json(
+            json_content,
+            include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"),
+        )
+        .expect("Failed to create Transaction from JSON")
+        .into();
 
         let target_contract_address =
             Felt252Wrapper::from_hex_be("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
@@ -403,8 +402,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
         transaction.sender_address = get_account_address(AccountType::InnerCall);
 
         let storage_key = get_storage_var_address("destination", &[]).unwrap();
-        let destination =
-            Felt252Wrapper::from_hex_be("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(); // Test contract address
+        let destination = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
         StorageView::<MockRuntime>::insert(
             (transaction.sender_address, Felt252Wrapper::from(storage_key.0.0)),
             Into::<Felt252Wrapper>::into(destination),

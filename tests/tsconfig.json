@@ -14,14 +14,7 @@
     "resolveJsonModule": true,
     "strictNullChecks": false
   },
-  "include": [
-    "*tests/**/*.ts",
-    "util/*.ts",
-    "tools/*.ts",
-    "util/**/*.json",
-    "contracts/*.ts",
-    "contracts/compiled/*.json"
-  ],
+  "include": ["*tests/**/*.ts", "util/*.ts", "tools/*.ts", "util/**/*.json"],
   "exclude": ["node_modules/"],
   "types": ["mocha", "chai"]
 }
