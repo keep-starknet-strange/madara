@@ -340,8 +340,6 @@
 <a href="#340" id="340">340</a>
 <a href="#341" id="341">341</a>
 <a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
@@ -624,8 +622,6 @@
             <span class="comment">// Assign network admin rights.
             </span>key: <span class="prelude-val">Some</span>(root_key),
         },
-        <span class="comment">// Provides the logic needed to handle transaction fees
-        </span>transaction_payment: Default::default(),
         <span class="doccomment">/// Starknet Genesis configuration.
         </span>starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: <span class="macro">vec!</span>[

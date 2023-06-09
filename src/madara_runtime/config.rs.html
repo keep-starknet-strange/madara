@@ -82,9 +82,6 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the runtime.
 </span><span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -94,9 +91,7 @@
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
 <span class="kw">pub use </span>pallet_balances::Call <span class="kw">as </span>BalancesCall;
-<span class="kw">use </span>pallet_transaction_payment::Multiplier;
 <span class="kw">use </span>sp_runtime::create_runtime_str;
-<span class="kw">use </span>sp_runtime::traits::One;
 <span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, test))]
 </span><span class="kw">pub use </span>sp_runtime::BuildStorage;
 <span class="kw">pub use </span>sp_runtime::{Perbill, Permill};
@@ -165,7 +160,6 @@
     <span class="kw">pub </span>BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
         ::max_with_normal_ratio(<span class="number">5 </span>* <span class="number">1024 </span>* <span class="number">1024</span>, NORMAL_DISPATCH_RATIO);
     <span class="kw">pub const </span>SS58Prefix: u8 = <span class="number">42</span>;
-    <span class="kw">pub </span>FeeMultiplier: Multiplier = Multiplier::one();
 }
 
 <span class="comment">// This storage item will be used to check if we are in the manual sealing mode
