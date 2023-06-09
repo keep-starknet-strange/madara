@@ -108,6 +108,9 @@ mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
 
+# Madara runtime
+madara-runtime = { path = "crates/runtime" }
+
 # Starknet dependencies
 # Cairo Virtual Machine
 cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-support", default-features = false }
