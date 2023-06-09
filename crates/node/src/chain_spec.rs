@@ -1,7 +1,7 @@
 use blockifier::execution::contract_class::ContractClass;
 use madara_runtime::{
-    AccountId, AuraConfig, BalancesConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
-    SystemConfig, WASM_BINARY,
+    AccountId, AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
+    WASM_BINARY,
 };
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use pallet_starknet::types::ContractStorageKeyWrapper;
@@ -91,21 +91,6 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
                     vec![authority_keys_from_seed("Alice")],
                     // Sudo account
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    // Pre-funded accounts
-                    vec![
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                        get_account_id_from_seed::<sr25519::Public>("Dave"),
-                        get_account_id_from_seed::<sr25519::Public>("Eve"),
-                        get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                        get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                        get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                        get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                        get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                        get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                        get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                    ],
                     true,
                 ),
                 enable_manual_seal,
@@ -148,21 +133,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 ],
                 // Sudo account
                 get_account_id_from_seed::<sr25519::Public>("Alice"),
-                // Pre-funded accounts
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
                 true,
             )
         },
@@ -209,7 +179,6 @@ fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     root_key: AccountId,
-    endowed_accounts: Vec<AccountId>,
     _enable_println: bool,
 ) -> GenesisConfig {
     // ACCOUNT CONTRACT
@@ -256,11 +225,6 @@ fn testnet_genesis(
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
-        },
-        // Provides interaction with balances and accounts
-        balances: BalancesConfig {
-            // Configure endowed accounts with initial balance of 1 << 60.
-            balances: endowed_accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
         },
         // Authority-based consensus protocol used for block production
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },

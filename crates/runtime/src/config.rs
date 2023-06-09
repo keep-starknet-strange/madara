@@ -6,7 +6,6 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-pub use pallet_balances::Call as BalancesCall;
 use sp_runtime::create_runtime_str;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
