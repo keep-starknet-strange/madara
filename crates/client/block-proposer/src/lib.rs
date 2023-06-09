@@ -60,8 +60,6 @@ pub struct ProposerFactory<A, B, C, PR> {
     /// we switch to a fixed-amount mode, in which after we see `MAX_SKIPPED_TRANSACTIONS`
     /// transactions which exhaust resources, we will conclude that the block is full.
     soft_deadline_percent: Percent,
-    /// When estimating the block size, should the proof be included?
-    include_proof_in_block_size_estimation: bool,
     /// phantom member to pin the `Backend`/`ProofRecording` type.
     _phantom: PhantomData<(B, PR)>,
 }
@@ -84,7 +82,6 @@ impl<A, B, C> ProposerFactory<A, B, C, DisableProofRecording> {
             default_block_size_limit: DEFAULT_BLOCK_SIZE_LIMIT,
             soft_deadline_percent: DEFAULT_SOFT_DEADLINE_PERCENT,
             client,
-            include_proof_in_block_size_estimation: false,
             _phantom: PhantomData,
         }
     }
@@ -147,7 +144,6 @@ where
             default_block_size_limit: self.default_block_size_limit,
             soft_deadline_percent: self.soft_deadline_percent,
             _phantom: PhantomData,
-            include_proof_in_block_size_estimation: self.include_proof_in_block_size_estimation,
         };
 
         proposer
@@ -182,7 +178,6 @@ pub struct Proposer<B, Block: BlockT, C, A: TransactionPool, PR> {
     now: Box<dyn Fn() -> time::Instant + Send + Sync>,
     metrics: PrometheusMetrics,
     default_block_size_limit: usize,
-    include_proof_in_block_size_estimation: bool,
     soft_deadline_percent: Percent,
     _phantom: PhantomData<(B, PR)>,
 }
@@ -318,7 +313,7 @@ where
             let pending_tx_data = pending_tx.data().clone();
             let pending_tx_hash = pending_tx.hash().clone();
 
-            let block_size = block_builder.estimate_block_size(self.include_proof_in_block_size_estimation);
+            let block_size = block_builder.estimate_block_size(false);
             if block_size + pending_tx_data.encoded_size() > block_size_limit {
                 pending_iterator.report_invalid(&pending_tx);
                 if skipped < MAX_SKIPPED_TRANSACTIONS {
