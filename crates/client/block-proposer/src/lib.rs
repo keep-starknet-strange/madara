@@ -21,7 +21,7 @@ use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::ApplyExtrinsicFailed::Validity;
 use sp_blockchain::Error::ApplyExtrinsicFailed;
 use sp_blockchain::HeaderBackend;
-use sp_consensus::{DisableProofRecording, EnableProofRecording, ProofRecording, Proposal};
+use sp_consensus::{DisableProofRecording, ProofRecording, Proposal};
 use sp_core::traits::SpawnNamed;
 use sp_inherents::InherentData;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
@@ -58,7 +58,7 @@ pub struct ProposerFactory<A, B, C, PR> {
     /// The soft deadline indicates where we should stop attempting to add transactions
     /// to the block, which exhaust resources. After soft deadline is reached,
     /// we switch to a fixed-amount mode, in which after we see `MAX_SKIPPED_TRANSACTIONS`
-    /// transactions which exhaust resrouces, we will conclude that the block is full.
+    /// transactions which exhaust resources, we will conclude that the block is full.
     soft_deadline_percent: Percent,
     /// When estimating the block size, should the proof be included?
     include_proof_in_block_size_estimation: bool,
@@ -90,37 +90,6 @@ impl<A, B, C> ProposerFactory<A, B, C, DisableProofRecording> {
     }
 }
 
-impl<A, B, C> ProposerFactory<A, B, C, EnableProofRecording> {
-    /// Create a new proposer factory with proof recording enabled.
-    ///
-    /// Each proposer created by this instance will record a proof while building a block.
-    ///
-    /// This will also include the proof into the estimation of the block size. This can be disabled
-    /// by calling [`ProposerFactory::disable_proof_in_block_size_estimation`].
-    pub fn with_proof_recording(
-        spawn_handle: impl SpawnNamed + 'static,
-        client: Arc<C>,
-        transaction_pool: Arc<A>,
-        prometheus: Option<&PrometheusRegistry>,
-    ) -> Self {
-        ProposerFactory {
-            client,
-            spawn_handle: Box::new(spawn_handle),
-            transaction_pool,
-            metrics: PrometheusMetrics::new(prometheus),
-            default_block_size_limit: DEFAULT_BLOCK_SIZE_LIMIT,
-            soft_deadline_percent: DEFAULT_SOFT_DEADLINE_PERCENT,
-            include_proof_in_block_size_estimation: true,
-            _phantom: PhantomData,
-        }
-    }
-
-    /// Disable the proof inclusion when estimating the block size.
-    pub fn disable_proof_in_block_size_estimation(&mut self) {
-        self.include_proof_in_block_size_estimation = false;
-    }
-}
-
 impl<A, B, C, PR> ProposerFactory<A, B, C, PR> {
     /// Set the default block size limit in bytes.
     ///
@@ -139,7 +108,7 @@ impl<A, B, C, PR> ProposerFactory<A, B, C, PR> {
     /// The soft deadline indicates where we should stop attempting to add transactions
     /// to the block, which exhaust resources. After soft deadline is reached,
     /// we switch to a fixed-amount mode, in which after we see `MAX_SKIPPED_TRANSACTIONS`
-    /// transactions which exhaust resrouces, we will conclude that the block is full.
+    /// transactions which exhaust resources, we will conclude that the block is full.
     ///
     /// Setting the value too low will significantly limit the amount of transactions
     /// we try in case they exhaust resources. Setting the value too high can
