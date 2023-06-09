@@ -35,7 +35,12 @@ use sp_runtime::{Digest, Percent, SaturatedConversion};
 /// will accept. If the block doesn't fit in such a package, it can not be
 /// transferred to other nodes.
 pub const DEFAULT_BLOCK_SIZE_LIMIT: usize = 4 * 1024 * 1024 + 512;
-
+/// Default value for `soft_deadline_percent` used by [`Proposer`].
+/// `soft_deadline_percent` value is used to compute soft deadline during block production.
+/// The soft deadline indicates where we should stop attempting to add transactions
+/// to the block, which exhaust resources. After soft deadline is reached,
+/// we switch to a fixed-amount mode, in which after we see `MAX_SKIPPED_TRANSACTIONS`
+/// transactions which exhaust resources, we will conclude that the block is full.
 const DEFAULT_SOFT_DEADLINE_PERCENT: Percent = Percent::from_percent(80);
 
 /// [`Proposer`] factory.
