@@ -1,6 +1,7 @@
 var sourcesIndex = JSON.parse('{\
 "madara":["",[["rpc",[],["mod.rs","starknet.rs"]]],["benchmarking.rs","chain_spec.rs","cli.rs","command.rs","constants.rs","main.rs","service.rs","starknet.rs"]],\
 "madara_runtime":["",[],["config.rs","lib.rs","opaque.rs","pallets.rs","runtime_tests.rs","types.rs"]],\
+"mc_block_proposer":["",[],["lib.rs"]],\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["lib.rs","mapping_db.rs","meta_db.rs"]],\
 "mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\
 "mc_rpc":["",[],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","types.rs"]],\

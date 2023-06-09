@@ -555,10 +555,6 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-<a href="#560" id="560">560</a>
-<a href="#561" id="561">561</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -570,6 +566,7 @@
 <span class="kw">use </span>futures::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{<span class="self">self</span>, Hash, RuntimeApi};
+<span class="kw">use </span>mc_block_proposer::ProposerFactory;
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -591,7 +588,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::cli::Sealing;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::StarknetDeps;
 <span class="kw">use </span><span class="kw">crate</span>::starknet::{db_config_dir, MadaraBackend};
-
 <span class="comment">// Our native executor instance.
 </span><span class="kw">pub struct </span>ExecutorDispatch;
 
@@ -916,7 +912,6 @@
                 block_import,
                 <span class="kw-2">&amp;</span>task_manager,
                 prometheus_registry.as_ref(),
-                telemetry.as_ref(),
                 commands_stream,
             )<span class="question-mark">?</span>;
 
@@ -926,12 +921,11 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(task_manager);
         }
 
-        <span class="kw">let </span>proposer_factory = sc_basic_authorship::ProposerFactory::new(
+        <span class="kw">let </span>proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
             transaction_pool,
             prometheus_registry.as_ref(),
-            telemetry.as_ref().map(|x| x.handle()),
         );
 
         <span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
@@ -1024,19 +1018,17 @@
     block_import: BoxBlockImport&lt;FullClient&gt;,
     task_manager: <span class="kw-2">&amp;</span>TaskManager,
     prometheus_registry: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Registry&gt;,
-    telemetry: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Telemetry&gt;,
     commands_stream: mpsc::Receiver&lt;sc_consensus_manual_seal::rpc::EngineCommand&lt;Hash&gt;&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), ServiceError&gt;
 <span class="kw">where
     </span>RuntimeApi: ConstructRuntimeApi&lt;Block, FullClient&gt;,
     RuntimeApi: Send + Sync + <span class="lifetime">&#39;static</span>,
 {
-    <span class="kw">let </span>proposer_factory = sc_basic_authorship::ProposerFactory::new(
+    <span class="kw">let </span>proposer_factory = ProposerFactory::new(
         task_manager.spawn_handle(),
         client.clone(),
         transaction_pool.clone(),
         prometheus_registry,
-        telemetry.as_ref().map(|x| x.handle()),
     );
 
     <span class="macro">thread_local!</span>(<span class="kw">static </span>TIMESTAMP: RefCell&lt;u64&gt; = RefCell::new(<span class="number">0</span>));
