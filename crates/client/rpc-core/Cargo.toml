@@ -3,8 +3,8 @@ name = "mc-rpc-core"
 version = "0.1.0"
 description = "RPC trait of Starknet"
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -20,7 +20,10 @@ anyhow = { workspace = true }
 base64 = { workspace = true }
 flate2 = { workspace = true }
 hex = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, features = ["server", "macros"], default-features = true }
+jsonrpsee = { workspace = true, features = [
+  "server",
+  "macros",
+], default-features = true }
 mp-starknet = { workspace = true, default-features = true }
 serde = { workspace = true, default-features = true }
 serde_json = { workspace = true }
@@ -34,4 +37,3 @@ starknet-core = { workspace = true }
 cairo-vm = { workspace = true, default-features = false }
 sp-api = { workspace = true, default-features = true }
 serde_with = { workspace = true }
-

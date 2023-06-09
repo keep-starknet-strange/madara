@@ -23,4 +23,4 @@ scenarios:
       - loop:
           - function: "executeERC20Transfer"
           - log: "Executed ERC20 transfer {{ nonce }}"
-        count: 100000
+        count: 10000
