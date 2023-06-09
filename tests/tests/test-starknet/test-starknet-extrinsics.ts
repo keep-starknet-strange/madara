@@ -2,6 +2,7 @@ import "@keep-starknet-strange/madara-api-augment";
 
 import { expect } from "chai";
 
+import { numberToHex } from "@polkadot/util";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { declare, deploy, mintERC721, transfer } from "../../util/starknet";
@@ -11,7 +12,6 @@ import {
   MINT_AMOUNT,
   TOKEN_CLASS_HASH,
 } from "../constants";
-import { numberToHex } from "@polkadot/util";
 
 describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   it("should connect to local node", async function () {
@@ -84,11 +84,11 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
       result: { events },
     } = await context.createBlock(
       mintERC721(
-        context.polkadotApi,
-        CONTRACT_ADDRESS,
-        CONTRACT_ADDRESS,
-        numberToHex(1, 256),
-        2
+        context.polkadotApi, // api
+        CONTRACT_ADDRESS, // senderAddress
+        CONTRACT_ADDRESS, // recipientAddress
+        numberToHex(1, 256), // tokenID
+        2 // nonce
       )
     );
 
