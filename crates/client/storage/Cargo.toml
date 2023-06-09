@@ -17,7 +17,7 @@ repository = "https://github.com/keep-starknet-strange/madara"
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 mp-starknet = { workspace = true, default-features = true }
-madara-runtime = { path = "../../runtime" }
+madara-runtime = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 sp-storage = { workspace = true, default-features = true }
