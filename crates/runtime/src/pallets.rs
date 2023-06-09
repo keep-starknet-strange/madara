@@ -188,15 +188,6 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
 }
 
-/// A stateless module with helpers for dispatch management which does no re-authentication.
-/// We use this to enable batch dispatches.
-impl pallet_utility::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeCall = RuntimeCall;
-    type WeightInfo = ();
-    type PalletsOrigin = OriginCaller;
-}
-
 /// Implement the OnTimestampSet trait to override the default Aura.
 /// This is needed to support manual sealing.
 pub struct ConsensusOnTimestampSet<T>(PhantomData<T>);

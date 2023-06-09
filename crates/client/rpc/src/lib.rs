@@ -297,18 +297,16 @@ where
 
         let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.into();
-        let hex_key = key.into();
 
-        let value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address, hex_key)
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to get storage from contract: {:#?}", e);
+        let value = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .get_storage_by_storage_key(substrate_block_hash, hex_address, key)
+            .ok_or_else(|| {
+                error!("Failed to retrieve storage at '{contract_address}' and '{key}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
+
         let value = FieldElement::from_byte_slice_be(&<[u8; 32]>::from(value)).map_err(|e| {
             error!("Failed to get storage from contract: {:#?}", e);
             StarknetRpcApiError::InternalServerError
@@ -721,7 +719,7 @@ where
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        todo!("Not implemented")
+        Err(StarknetRpcApiError::UnimplementedMethod.into())
     }
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer

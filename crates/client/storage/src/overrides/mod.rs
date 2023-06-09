@@ -14,6 +14,7 @@ use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 
 mod schema_v1_override;
+use starknet_core::types::FieldElement;
 
 pub use self::schema_v1_override::SchemaV1Override;
 use crate::onchain_storage_schema;
@@ -54,6 +55,14 @@ impl<B: BlockT> OverrideHandle<B> {
 /// State Backend with some assumptions about pallet-starknet's storage schema. Using such an
 /// optimized implementation avoids spawning a runtime and the overhead associated with it.
 pub trait StorageOverride<B: BlockT>: Send + Sync {
+    /// get storage
+    fn get_storage_by_storage_key(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+        key: FieldElement,
+    ) -> Option<Felt252Wrapper>;
+
     /// Return the class hash at the provided address for the provided block.
     fn contract_class_hash_by_address(
         &self,
@@ -111,6 +120,21 @@ where
     C: ProvideRuntimeApi<B> + Send + Sync,
     C::Api: StarknetRuntimeApi<B>,
 {
+    fn get_storage_by_storage_key(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+        key: FieldElement,
+    ) -> Option<Felt252Wrapper> {
+        let api = self.client.runtime_api();
+
+        match api.get_storage_at(block_hash, address, key.into()) {
+            Ok(Ok(storage)) => Some(storage),
+            Ok(Err(_)) => None,
+            Err(_) => None,
+        }
+    }
+
     fn contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,

@@ -27,3 +27,4 @@ sp-core = { workspace = true, default-features = true }
 sp-io = { workspace = true, default-features = true }
 scale-codec = { workspace = true, default-features = true }
 pallet-starknet = { workspace = true, default-features = true }
+starknet-core = { workspace = true }
