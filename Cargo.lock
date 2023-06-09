@@ -4358,7 +4358,6 @@ dependencies = [
  "frame-try-runtime",
  "mp-starknet",
  "pallet-aura",
- "pallet-balances",
  "pallet-grandpa",
  "pallet-starknet",
  "pallet-sudo",
@@ -5170,21 +5169,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-balances"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#a2037bdedef0aa812017efee1d0fa63d4f5fcbae"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
  "parity-scale-codec",
  "scale-info",
  "sp-runtime",
