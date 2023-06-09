@@ -375,6 +375,7 @@ where
         self.transaction_pool.remove_invalid(&unqueue_invalid);
 
         // FIXME: use custom implementation of block builder and remove storage proof computation
+        // Issue: https://github.com/keep-starknet-strange/madara/issues/605
         let (block, storage_changes, proof) = block_builder.build()?.into_inner();
 
         self.metrics.report(|metrics| {
