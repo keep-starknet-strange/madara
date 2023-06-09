@@ -203,6 +203,7 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ptisserand"><img src="https://avatars.githubusercontent.com/u/544314?v=4?s=100" width="100px;" alt="ptisserand"/><br /><sub><b>ptisserand</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ptisserand" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zizou0x"><img src="https://avatars.githubusercontent.com/u/111426680?v=4?s=100" width="100px;" alt="Zizou"/><br /><sub><b>Zizou</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=zizou0x" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/makluganteng"><img src="https://avatars.githubusercontent.com/u/74396818?v=4?s=100" width="100px;" alt="V.O.T"/><br /><sub><b>V.O.T</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=makluganteng" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MdTeach"><img src="https://avatars.githubusercontent.com/u/19630321?v=4?s=100" width="100px;" alt="Abishek Bashyal"/><br /><sub><b>Abishek Bashyal</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=MdTeach" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
