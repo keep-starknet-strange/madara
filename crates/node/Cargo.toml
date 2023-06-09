@@ -78,6 +78,7 @@ mc-storage = { workspace = true }
 mc-mapping-sync = { workspace = true }
 pallet-starknet = { workspace = true }
 mp-starknet = { workspace = true }
+mc-block-proposer = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
 starknet-core = { workspace = true }
