@@ -191,20 +191,11 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
-<a href="#194" id="194">194</a>
-<a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
-<span class="kw">use </span>madara_runtime::{Block, EXISTENTIAL_DEPOSIT};
+<span class="kw">use </span>madara_runtime::Block;
 <span class="kw">use </span>sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
-<span class="kw">use </span>sp_keyring::Sr25519Keyring;
 
-<span class="kw">use </span><span class="kw">crate</span>::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
+<span class="kw">use </span><span class="kw">crate</span>::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 <span class="kw">use </span><span class="kw">crate</span>::cli::{Cli, Subcommand, Testnet};
 <span class="kw">use crate</span>::{chain_spec, service};
 
@@ -342,15 +333,8 @@
                     }
                     BenchmarkCmd::Extrinsic(cmd) =&gt; {
                         <span class="kw">let </span>(client, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) = service::new_chain_ops(<span class="kw-2">&amp;mut </span>config)<span class="question-mark">?</span>;
-                        <span class="comment">// Register the *Remark* and *TKA* builders.
-                        </span><span class="kw">let </span>ext_factory = ExtrinsicFactory(<span class="macro">vec!</span>[
-                            Box::new(RemarkBuilder::new(client.clone())),
-                            Box::new(TransferKeepAliveBuilder::new(
-                                client.clone(),
-                                Sr25519Keyring::Alice.to_account_id(),
-                                EXISTENTIAL_DEPOSIT,
-                            )),
-                        ]);
+                        <span class="comment">// Register the *Remark* builder.
+                        </span><span class="kw">let </span>ext_factory = ExtrinsicFactory(<span class="macro">vec!</span>[Box::new(RemarkBuilder::new(client.clone()))]);
 
                         cmd.run(client, inherent_benchmark_data()<span class="question-mark">?</span>, Vec::new(), <span class="kw-2">&amp;</span>ext_factory)
                     }

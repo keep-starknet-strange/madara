@@ -36,7 +36,6 @@
 <a href="#36" id="36">36</a>
 <a href="#37" id="37">37</a>
 <a href="#38" id="38">38</a>
-<a href="#39" id="39">39</a>
 </pre><pre class="rust"><code><span class="comment">// A few exports that help ease life for downstream crates.
 </span><span class="kw">pub use </span>frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -45,7 +44,6 @@
 <span class="kw">pub use </span>frame_support::weights::{IdentityFee, Weight};
 <span class="kw">pub use </span>frame_support::{construct_runtime, parameter_types, StorageValue};
 <span class="kw">pub use </span>frame_system::Call <span class="kw">as </span>SystemCall;
-<span class="kw">pub use </span>pallet_balances::Call <span class="kw">as </span>BalancesCall;
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
