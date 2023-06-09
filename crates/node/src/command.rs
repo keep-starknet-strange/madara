@@ -1,9 +1,8 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
-use madara_runtime::{Block, EXISTENTIAL_DEPOSIT};
+use madara_runtime::Block;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
-use sp_keyring::Sr25519Keyring;
 
-use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
+use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
@@ -141,15 +140,8 @@ pub fn run() -> sc_cli::Result<()> {
                     }
                     BenchmarkCmd::Extrinsic(cmd) => {
                         let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
-                        // Register the *Remark* and *TKA* builders.
-                        let ext_factory = ExtrinsicFactory(vec![
-                            Box::new(RemarkBuilder::new(client.clone())),
-                            Box::new(TransferKeepAliveBuilder::new(
-                                client.clone(),
-                                Sr25519Keyring::Alice.to_account_id(),
-                                EXISTENTIAL_DEPOSIT,
-                            )),
-                        ]);
+                        // Register the *Remark* builder.
+                        let ext_factory = ExtrinsicFactory(vec![Box::new(RemarkBuilder::new(client.clone()))]);
 
                         cmd.run(client, inherent_benchmark_data()?, Vec::new(), &ext_factory)
                     }

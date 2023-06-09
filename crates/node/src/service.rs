@@ -9,6 +9,7 @@ use futures::future;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
+use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -30,7 +31,6 @@ use sp_trie::PrefixedMemoryDB;
 use crate::cli::Sealing;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
-
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
@@ -355,7 +355,6 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
                 block_import,
                 &task_manager,
                 prometheus_registry.as_ref(),
-                telemetry.as_ref(),
                 commands_stream,
             )?;
 
@@ -365,12 +364,11 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             return Ok(task_manager);
         }
 
-        let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+        let proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
             transaction_pool,
             prometheus_registry.as_ref(),
-            telemetry.as_ref().map(|x| x.handle()),
         );
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
@@ -463,19 +461,17 @@ fn run_manual_seal_authorship(
     block_import: BoxBlockImport<FullClient>,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
-    telemetry: Option<&Telemetry>,
     commands_stream: mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>,
 ) -> Result<(), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
 {
-    let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+    let proposer_factory = ProposerFactory::new(
         task_manager.spawn_handle(),
         client.clone(),
         transaction_pool.clone(),
         prometheus_registry,
-        telemetry.as_ref().map(|x| x.handle()),
     );
 
     thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));

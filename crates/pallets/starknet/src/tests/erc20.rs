@@ -10,7 +10,7 @@ use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
 use crate::Event;
 
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("erc20/erc20.json");
+    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("ERC20.json");
 }
 
 #[test]

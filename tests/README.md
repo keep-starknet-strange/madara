@@ -74,11 +74,9 @@ DEBUG=smoke:* WSS_URL=wss://localhost:9944 npm run smoke-test
 
 ### Add a new contract
 
-- Add contract source code to `contracts/sources.ts`
-- Run `npm run pre-build-contracts`=> This will generate the necessary abi and
-  byte code
-- Create your contract with
-  `const { contract, rawTx } = await createContract(context.starknet, "TestContract");`
+- Add contract source code to `cairo-contracts/src`
+- Run `starknet-compile-deprecated your_file.cairo`=> This will generate the
+  necessary abi and byte code
 
 ### Verbose mode
 

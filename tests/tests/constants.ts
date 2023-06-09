@@ -1,4 +1,7 @@
-export const TEST_CONTRACT =
+import fs from "fs";
+import { CompiledContract, json } from "starknet";
+
+export const TEST_CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000001111";
 
 export const ACCOUNT_CONTRACT =
@@ -41,5 +44,13 @@ export const SEQUENCER_ADDRESS =
 export const CHAIN_ID_STARKNET_TESTNET = "0x534e5f474f45524c49";
 
 export const NFT_CONTRACT_ADDRESS =
-  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01";
+  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02";
 export const NFT_CLASS_HASH = "0x90000";
+
+// Contract classes
+export const ERC20_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
+);
+export const TEST_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")
+);

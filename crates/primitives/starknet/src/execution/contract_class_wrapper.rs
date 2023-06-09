@@ -128,7 +128,7 @@ mod tests {
     #[test]
     fn test_serialize_deserialize_contract_class() {
         let contract_class: ContractClassWrapper =
-            get_contract_class(include_bytes!("../../../../../resources/account/simple/account.json"))
+            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"))
                 .try_into()
                 .unwrap();
         let contract_class_serialized = serde_json::to_string(&contract_class).unwrap();

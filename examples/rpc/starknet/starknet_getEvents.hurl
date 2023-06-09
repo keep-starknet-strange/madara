@@ -1,4 +1,4 @@
-POST http://0.0.0.0:9944
+POST {{RPC_URL}}
 Content-Type: application/json
 {
   "jsonrpc": "2.0",

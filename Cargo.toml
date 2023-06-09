@@ -1,15 +1,15 @@
 [workspace]
 members = [
-	"crates/node",
-	"crates/runtime",
-	"crates/pallets/starknet",
-	"crates/primitives/starknet",
-	"crates/primitives/digest-log",
-	"crates/client/db",
-	"crates/client/rpc-core",
-	"crates/client/rpc",
-	"crates/client/mapping-sync",
-	"crates/client/storage",
+  "crates/node",
+  "crates/runtime",
+  "crates/pallets/starknet",
+  "crates/primitives/starknet",
+  "crates/primitives/digest-log",
+  "crates/client/db",
+  "crates/client/rpc-core",
+  "crates/client/rpc",
+  "crates/client/mapping-sync",
+  "crates/client/storage",
 ]
 [profile.release]
 panic = "unwind"
@@ -58,7 +58,7 @@ sp-trie = { version = "7.0.0", git = "https://github.com/paritytech/substrate", 
 
 # Substrate client dependencies
 sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", features = [
-	"rocksdb",
+  "rocksdb",
 ] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
@@ -79,6 +79,8 @@ sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polka
 sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-transaction-pool-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
@@ -87,12 +89,8 @@ prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.
 
 # Substrate Frame pallet
 pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
-pallet-transaction-payment = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
-pallet-transaction-payment-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 # Madara pallets
@@ -108,6 +106,7 @@ mc-db = { path = "crates/client/db" }
 mc-storage = { path = "crates/client/storage" }
 mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
+mc-block-proposer = { path = "crates/client/block-proposer" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
@@ -119,11 +118,11 @@ starknet-crypto = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "
 starknet-core = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
 starknet-ff = { git = "https://github.com/xJonathanLEI/starknet-rs", rev = "ca2fafada8da1af5b767af0b990787fa30ff10d2", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
-	"alloc",
+  "alloc",
 ] }
 blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
-	"testing",
+  "testing",
 ], default-features = false }
 # Other third party dependencies
 anyhow = "1.0.71"
