@@ -50,6 +50,7 @@ sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
 sc-network-sync = { workspace = true }
+sc-client-db = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -82,6 +83,9 @@ mc-block-proposer = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
 starknet-core = { workspace = true }
+
+# Tokio
+tokio = "1.28.2"
 
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }

@@ -19,17 +19,19 @@ use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
+use sc_rpc_api::DenyUnsafe;
 use sc_service::error::Error as ServiceError;
-use sc_service::{Configuration, TaskManager, WarpSyncParams};
+use sc_service::{Configuration, LocalCallExecutor, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
-use sc_transaction_pool::FullPool;
-use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
+use sc_transaction_pool::{BasicPool, FullChainApi, FullPool};
+use sp_api::{BlockT, ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_runtime::traits::BlakeTwo256;
+use sp_runtime::OpaqueExtrinsic;
 use sp_trie::PrefixedMemoryDB;
 
 use crate::cli::Sealing;
-use crate::rpc::StarknetDeps;
+use crate::rpc::{FullDeps, StarknetDeps};
 use crate::starknet::{db_config_dir, MadaraBackend};
 // Our native executor instance.
 pub struct ExecutorDispatch;

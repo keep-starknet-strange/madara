@@ -33,6 +33,9 @@ sp-api = { workspace = true, default-features = true }
 sc-transaction-pool-api = { workspace = true }
 sp-arithmetic = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
+sc-service = { workspace = true, default-features = true }
+sc-transaction-pool = { workspace = true }
+sc-network = { workspace = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
@@ -43,6 +46,8 @@ blockifier = { workspace = true, default-features = false, features = [
 ] }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
+# Testing
+substrate-test-runtime-client = { workspace = true }
 # Others
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [

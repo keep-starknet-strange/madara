@@ -7,6 +7,9 @@ mod errors;
 mod madara_backend_client;
 mod types;
 
+#[cfg(test)]
+mod tests;
+
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -200,6 +203,7 @@ where
     ///   events and the first index which still hasn't been processed block_id and an instance of
     ///   Block
 	pub fn filter_events_by_params(
+		&self,
         events: Vec<EventWrapper>,
         address: Option<Felt252Wrapper>,
         keys: Vec<Vec<FieldElement>>,
@@ -274,7 +278,7 @@ where
                 StarknetRpcApiError::BlockNotFound
             })?;
 
-            let (mut new_filtered_events, continuation_index) = Starknet::<B, BE, C, P, H>::filter_events_by_params(
+            let (new_filtered_events, continuation_index) = self.filter_events_by_params(
 				block_events,
                 from_address,
                 keys.clone(),
