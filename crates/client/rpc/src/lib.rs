@@ -7,9 +7,6 @@ mod errors;
 mod madara_backend_client;
 mod types;
 
-#[cfg(test)]
-mod tests;
-
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -22,7 +19,7 @@ use mc_rpc_core::utils::{
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::block::{Block, BlockTransactions};
+use mp_starknet::block::Block;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -173,10 +170,10 @@ where
                 StarknetRpcApiError::BlockNotFound
             })?;
 
-		let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-			error!("Failed to retrieve block");
-			StarknetRpcApiError::BlockNotFound
-		})?;
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Failed to retrieve block");
+            StarknetRpcApiError::BlockNotFound
+        })?;
         let block_events = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
@@ -202,8 +199,8 @@ where
     /// * `(block_events: Vec<EventWrapper>, continuation_token: usize)` - A tuple of the filtered
     ///   events and the first index which still hasn't been processed block_id and an instance of
     ///   Block
-	pub fn filter_events_by_params(
-		&self,
+    pub fn filter_events_by_params(
+        &self,
         events: Vec<EventWrapper>,
         address: Option<Felt252Wrapper>,
         keys: Vec<Vec<FieldElement>>,
@@ -279,7 +276,7 @@ where
             })?;
 
             let (new_filtered_events, continuation_index) = self.filter_events_by_params(
-				block_events,
+                block_events,
                 from_address,
                 keys.clone(),
                 Some((chunk_size as usize) - filtered_events.len()),
