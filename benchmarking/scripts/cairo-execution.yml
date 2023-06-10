@@ -37,6 +37,4 @@ scenarios:
     flow:
       - loop:
           - function: "runCairoProgram"
-          - log:
-              "Cairo program execution done {{ programId }} by {{ accountName }}"
         count: 5000

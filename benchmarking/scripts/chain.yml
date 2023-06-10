@@ -19,8 +19,6 @@ scenarios:
       - call:
           method: api.rpc.chain.getHeader()
           saveTo: header
-      - log: "Current hash: {{ header.hash }}"
       - call:
           method: api.rpc.chain.getBlock({{ header.hash }})
           saveTo: block
-      - log: "Current Block Number: {{ block.block.header.number }}"
