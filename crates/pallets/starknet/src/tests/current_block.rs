@@ -15,7 +15,7 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
         let current_block = Starknet::current_block();
 
         let expected_current_block = StarknetHeader {
-            block_timestamp: 12_000,
+            block_timestamp: 12,
             block_number: U256::from(2),
             parent_block_hash: Felt252Wrapper::from_hex_be(
                 "0x01243efd82a868d20c15c273d185467feb4addc129fb767353fa684e186d3f98",
