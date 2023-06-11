@@ -1183,7 +1183,7 @@
 <span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 <span class="kw">use </span>blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>frame_support::traits::Time;
+<span class="kw">use </span>frame_support::traits::UnixTime;
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
 <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
@@ -1251,7 +1251,7 @@
         <span class="doccomment">/// The hashing function to use.
         </span><span class="kw">type </span>SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         <span class="doccomment">/// The time idk what.
-        </span><span class="kw">type </span>TimestampProvider: Time;
+        </span><span class="kw">type </span>TimestampProvider: UnixTime;
         <span class="doccomment">/// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -2003,7 +2003,7 @@
     /// The current block timestamp.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>block_timestamp() -&gt; u64 {
-        T::TimestampProvider::now().unique_saturated_into()
+        T::TimestampProvider::now().as_secs()
     }
 
     <span class="doccomment">/// Get the number of transactions in the block.
