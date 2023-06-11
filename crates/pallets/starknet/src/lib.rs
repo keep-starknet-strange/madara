@@ -758,8 +758,6 @@ pub mod pallet {
             // nonce errors.
             match call {
                 Call::invoke { transaction } => {
-                    let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
                     let mut tx = ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
@@ -778,8 +776,6 @@ pub mod pallet {
                     tx.build()
                 }
                 Call::declare { transaction } => {
-                    let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
                     let mut tx = ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
@@ -792,11 +788,10 @@ pub mod pallet {
                     tx.build()
                 }
                 Call::deploy_account { transaction } => {
-                    // don't validate deploy txs for now
                     let deploy_account_transaction = transaction
                         .clone()
                         .from_deploy(&Self::chain_id_str())
-                    // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
+                        .map_err(|_| TransactionValidityError::Unknown(UnknownTransaction::CannotLookup))?;
                     let tx = ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
@@ -815,6 +810,36 @@ pub mod pallet {
                     tx.build()
                 }
                 _ => InvalidTransaction::Call.into(),
+            }
+        }
+
+        /// From substrate documentation:
+        /// Validate the call right before dispatch.
+        /// This method should be used to prevent transactions already in the pool
+        /// (i.e. passing validate_unsigned) from being included in blocks in case
+        /// they became invalid since being added to the pool.
+        ///
+        /// In the default implementation of pre_dispatch for the ValidateUnsigned trait,
+        /// this function calls the validate_unsigned function in order to verify validity
+        /// before dispatch. In our case, we validate that the transaction is valid for
+        /// the current block by calling `Transaction::validate_tx`.
+        fn pre_dispatch(call: &Self::Call) -> Result<(), TransactionValidityError> {
+            match call {
+                Call::invoke { transaction } => {
+                    let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
+                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
+                    Ok(())
+                }
+                Call::declare { transaction } => {
+                    let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
+                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
+                    Ok(())
+                }
+                // don't validate deploy txs for now
+                Call::deploy_account { .. } => Ok(()),
+                // Message consumptions don't go through an account contract so no need to identify them with an id.
+                Call::consume_l1_message { .. } => Ok(()),
+                _ => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
             }
         }
     }
