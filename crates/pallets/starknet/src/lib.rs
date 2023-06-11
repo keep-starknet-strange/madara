@@ -779,6 +779,12 @@ pub mod pallet {
                     let mut tx = ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
+                        .and_provides(vec![transaction.sender_address, transaction.nonce])
+                        .longevity(64_u64)
+                        .propagate(true);
+                    // If the nonce is greater than zero, add a dependency between this transaction and the previous
+                    // one so that we don't get a nonce error.
+                    if transaction.nonce.0 > FieldElement::ZERO {
                         tx = tx.and_requires(vec![
                             transaction.sender_address,
                             Felt252Wrapper(transaction.nonce.0 - FieldElement::ONE),
