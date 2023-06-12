@@ -13,10 +13,8 @@ use super::constants::{ACCOUNT_PRIVATE_KEY, K};
 
 pub fn get_contract_class(resource_path: &str) -> ContractClass {
     let cargo_dir = String::from(env!("CARGO_MANIFEST_DIR"));
-    let full_path = cargo_dir + "/../../../resources/" + resource_path;
-    println!("full_path: {}", full_path);
+    let full_path = cargo_dir + "/../../../cairo-contracts/build/" + resource_path;
     let full_path: PathBuf = [full_path].iter().collect();
-    println!("Present working directory of exe {}", env::current_dir().unwrap().display());
     let raw_contract_class = fs::read_to_string(full_path).unwrap();
     serde_json::from_str(&raw_contract_class).unwrap()
 }

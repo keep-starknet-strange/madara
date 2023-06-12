@@ -1,11 +1,11 @@
-POST http://0.0.0.0:9933
+POST {{RPC_URL}}
 Content-Type: application/json
 {
     "jsonrpc": "2.0",
     "method": "starknet_getNonce",
     "params": [
-        "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "latest"
+        "latest",
+        "0x0000000000000000000000000000000000000000000000000000000000000001"
     ],
     "id":1
 }
@@ -13,4 +13,4 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.error" not exists
-jsonpath "$.result" matches /^[0-9]+$/
+jsonpath "$.result" matches /^0x[A-Fa-f0-9]+$/

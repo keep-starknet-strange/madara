@@ -36,6 +36,8 @@ pub enum StarknetRpcApiError {
     InternalServerError = 500,
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions = 38,
+    #[error("Unimplemented method")]
+    UnimplementedMethod = 501,
 }
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {

@@ -16,6 +16,7 @@ use log::{error, info};
 use mc_rpc_core::utils::{
     get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
 };
+use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::execution::types::Felt252Wrapper;
@@ -121,35 +122,9 @@ where
                 .client
                 .hash(UniqueSaturatedInto::unique_saturated_into(n))
                 .map_err(|e| format!("Failed to retrieve the hash of block number '{n}': {e}"))?,
-            BlockId::Tag(t) => match t {
-                BlockTag::Latest => Some(self.client.info().best_hash),
-                BlockTag::Pending => None,
-            },
+            BlockId::Tag(_) => Some(self.client.info().best_hash),
         }
         .ok_or("Failed to retrieve the substrate block id".to_string())
-    }
-
-    /// Helper function to convert the chain_id from a felt to an ascii string. Ex:
-    /// 0x534e5f474f45524c49 => SN_GOERLI
-    ///
-    /// # Argument
-    ///
-    /// * `hash` - The block hash to get the chain_id from.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if it can't retrieve the chain id or can't convert it to an ascii string.
-    fn chain_id_str(&self, hash: B::Hash) -> RpcResult<String> {
-        let chain_id = self.client.runtime_api().chain_id(hash).map_err(|_| {
-            error!("fetch runtime chain id failed");
-            StarknetRpcApiError::InternalServerError
-        })?;
-        Ok(std::str::from_utf8(&chain_id.0.to_bytes_be())
-            .map_err(|_| {
-                error!("Couldn't convert chain id to string");
-                Into::<jsonrpsee::core::Error>::into(StarknetRpcApiError::InternalServerError)
-            })?
-            .to_string())
     }
 
     /// Helper function to get the substrate block number from a Starknet block id
@@ -314,12 +289,7 @@ where
     }
 
     /// get the storage at a given address and key and at a given block
-    fn get_storage_at(
-        &self,
-        contract_address: FieldElement,
-        key: FieldElement,
-        block_id: BlockId,
-    ) -> RpcResult<FieldElement> {
+    fn get_storage_at(&self, contract_address: FieldElement, key: FieldElement, block_id: BlockId) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -327,23 +297,21 @@ where
 
         let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.into();
-        let hex_key = key.into();
 
-        let value = runtime_api
-            .get_storage_at(substrate_block_hash, hex_address, hex_key)
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to get storage from contract: {:#?}", e);
+        let value = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .get_storage_by_storage_key(substrate_block_hash, hex_address, key)
+            .ok_or_else(|| {
+                error!("Failed to retrieve storage at '{contract_address}' and '{key}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
+
         let value = FieldElement::from_byte_slice_be(&<[u8; 32]>::from(value)).map_err(|e| {
             error!("Failed to get storage from contract: {:#?}", e);
             StarknetRpcApiError::InternalServerError
         })?;
-        Ok(value)
+        Ok(Felt(value))
     }
 
     fn call(&self, request: FunctionCall, block_id: BlockId) -> RpcResult<Vec<String>> {
@@ -370,7 +338,7 @@ where
     }
 
     /// Get the contract class at a given contract address for a given block id
-    fn get_class_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<ContractClass> {
+    fn get_class_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<ContractClass> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -404,7 +372,7 @@ where
     /// # Returns
     ///
     /// * `class_hash` - The class hash of the given contract
-    fn get_class_hash_at(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
+    fn get_class_hash_at(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -418,7 +386,7 @@ where
                 error!("Failed to retrieve contract class hash at '{contract_address}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
-        Ok(class_hash.into())
+        Ok(Felt(class_hash.into()))
     }
 
     // Implementation of the `syncing` RPC Endpoint.
@@ -532,7 +500,7 @@ where
     }
 
     /// Get the nonce associated with the given address at the given block
-    fn get_nonce(&self, contract_address: FieldElement, block_id: BlockId) -> RpcResult<FieldElement> {
+    fn get_nonce(&self, block_id: BlockId, contract_address: FieldElement) -> RpcResult<Felt> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -552,17 +520,15 @@ where
             StarknetRpcApiError::ContractNotFound
         })?;
 
-        Ok(nonce)
+        Ok(Felt(nonce))
     }
 
     /// Returns the chain id.
-    fn chain_id(&self) -> RpcResult<String> {
-        let hash = self.client.info().best_hash;
-        let chain_id = self.client.runtime_api().chain_id(hash).map_err(|_| {
-            error!("fetch runtime chain id failed");
-            StarknetRpcApiError::InternalServerError
-        })?;
-        Ok(format!("0x{:x}", chain_id.0))
+    fn chain_id(&self) -> RpcResult<Felt> {
+        let best_block_hash = self.client.info().best_hash;
+
+        let chain_id = self.overrides.for_block_hash(self.client.as_ref(), best_block_hash).chain_id(best_block_hash);
+        Ok(Felt(chain_id.ok_or(StarknetRpcApiError::InternalServerError)?.into()))
     }
 
     /// Add an Invoke Transaction to invoke a contract function
@@ -580,8 +546,10 @@ where
     ) -> RpcResult<InvokeTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
+        let chain_id =
+            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-        let transaction: MPTransaction = invoke_tx.from_invoke(&self.chain_id_str(best_block_hash)?);
+        let transaction: MPTransaction = invoke_tx.from_invoke(&chain_id);
         let extrinsic = self
             .client
             .runtime_api()
@@ -620,17 +588,18 @@ where
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<DeployAccountTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
+        let chain_id =
+            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
         let deploy_account_transaction = to_deploy_account_tx(deploy_account_transaction).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction =
-            deploy_account_transaction.from_deploy(&self.chain_id_str(best_block_hash)?).map_err(|e| {
-                error!("{e}");
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&chain_id).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
 
         let extrinsic = self
             .client
@@ -675,10 +644,11 @@ where
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
         })?;
-
         let best_block_hash = self.client.info().best_hash;
+        let chain_id =
+            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-        let tx = to_tx(request, &self.chain_id_str(best_block_hash)?)?;
+        let tx = to_tx(request, &chain_id)?;
         let (actual_fee, gas_usage) = self
             .client
             .runtime_api()
@@ -749,7 +719,7 @@ where
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        todo!("Not implemented")
+        Err(StarknetRpcApiError::UnimplementedMethod.into())
     }
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
@@ -844,13 +814,15 @@ where
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
+        let chain_id =
+            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
         let declare_tx = to_declare_tx(declare_transaction).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let transaction: MPTransaction = declare_tx.from_declare(&self.chain_id_str(best_block_hash)?);
+        let transaction: MPTransaction = declare_tx.from_declare(&chain_id);
         let extrinsic = self
             .client
             .runtime_api()

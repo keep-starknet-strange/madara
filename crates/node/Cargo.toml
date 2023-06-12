@@ -48,7 +48,6 @@ sp-inherents = { workspace = true }
 sp-keyring = { workspace = true }
 sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
-pallet-transaction-payment = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
 sc-network-sync = { workspace = true }
 
@@ -62,9 +61,8 @@ sp-block-builder = { workspace = true }
 # Substrate client dependencies
 sc-rpc-api = { workspace = true }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
-sc-basic-authorship = { workspace = true }
 # Substrate frame dependencies
-pallet-transaction-payment-rpc = { workspace = true }
+# no substrate frame pallet dependencies for now
 
 # Substrate tools dependencies
 substrate-frame-rpc-system = { workspace = true }
@@ -73,13 +71,14 @@ frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 
 # Starknet
-madara-runtime = { path = "../runtime" }
-mc-db = { path = "../client/db" }
-mc-rpc = { path = "../client/rpc" }
-mc-storage = { path = "../client/storage" }
-mc-mapping-sync = { path = "../client/mapping-sync" }
-pallet-starknet = { path = "../pallets/starknet" }
+madara-runtime = { workspace = true }
+mc-db = { workspace = true }
+mc-rpc = { workspace = true }
+mc-storage = { workspace = true }
+mc-mapping-sync = { workspace = true }
+pallet-starknet = { workspace = true }
 mp-starknet = { workspace = true }
+mc-block-proposer = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
 starknet-core = { workspace = true }

@@ -1,4 +1,4 @@
-POST http://0.0.0.0:9933
+POST {{RPC_URL}}
 Content-Type: application/json
 {
     "jsonrpc": "2.0",
@@ -10,4 +10,4 @@ Content-Type: application/json
 HTTP 200
 [Asserts]
 jsonpath "$.error" not exists
-jsonpath "$.result" == "23448594291968334"
+jsonpath "$.result" == "0x534e5f474f45524c49"

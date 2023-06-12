@@ -11,11 +11,9 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
-pub use pallet_balances::Call as BalancesCall;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
-use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_runtime::generic;
 use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
@@ -39,6 +37,7 @@ impl pallet_starknet::Config for Runtime {
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
+    type TransactionLongevity = TransactionLongevity;
 }
 
 /// --------------------------------------
@@ -88,7 +87,7 @@ impl frame_system::Config for Runtime {
     /// What to do if an account is fully reaped from the system.
     type OnKilledAccount = ();
     /// The data to be stored in an account.
-    type AccountData = pallet_balances::AccountData<Balance>;
+    type AccountData = ();
     /// Weight information for the extrinsics of this pallet.
     type SystemWeightInfo = ();
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
@@ -144,36 +143,6 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
-/// Provides interaction with balances and accounts.
-/// TODO: Comment and explain the rationale behind the configuration items.
-impl pallet_balances::Config for Runtime {
-    type MaxLocks = ConstU32<50>;
-    type MaxReserves = ();
-    type ReserveIdentifier = [u8; 8];
-    /// The type for recording an account's balance.
-    type Balance = Balance;
-    /// The ubiquitous event type.
-    type RuntimeEvent = RuntimeEvent;
-    type DustRemoval = ();
-    type ExistentialDeposit = ConstU128<EXISTENTIAL_DEPOSIT>;
-    type AccountStore = System;
-    type WeightInfo = pallet_balances::weights::SubstrateWeight<Runtime>;
-    type FreezeIdentifier = ();
-    type MaxFreezes = ();
-    type HoldIdentifier = ();
-    type MaxHolds = ();
-}
-
-/// Provides the logic needed to handle transaction fees
-impl pallet_transaction_payment::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-    type OperationalFeeMultiplier = ConstU8<5>;
-    type WeightToFee = IdentityFee<Balance>;
-    type LengthToFee = IdentityFee<Balance>;
-    type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
-}
-
 /// Allows executing privileged functions.
 /// Right now we use it to configure the fee token address for the Starknet pallet.
 impl pallet_sudo::Config for Runtime {
@@ -184,15 +153,7 @@ impl pallet_sudo::Config for Runtime {
 
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
-}
-
-/// A stateless module with helpers for dispatch management which does no re-authentication.
-/// We use this to enable batch dispatches.
-impl pallet_utility::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeCall = RuntimeCall;
-    type WeightInfo = ();
-    type PalletsOrigin = OriginCaller;
+    pub const TransactionLongevity: u64 = u64::MAX;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

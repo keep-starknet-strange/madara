@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "cairo-contracts"
+version = "0.1.0"
+description = "Cairo contract for madara end-to-end testing"
+authors = ["Clément Walter <clement0walter@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "utils" }]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.10"
+cairo-lang = "^0.11"
+starknet-py = "^0.16"
+openzeppelin-cairo-contracts = "^0.6.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.10.0"
+isort = "^5.10.1"
+ipykernel = "^6.23.1"
+python-dotenv = "^0.21.0"
+starknet-devnet = "0.5.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

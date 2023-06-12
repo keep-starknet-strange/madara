@@ -18,7 +18,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 # Madara runtime
 pallet-starknet = { workspace = true, default-features = true }
-madara-runtime = { path = "../../runtime" }
+madara-runtime = { workspace = true, default-features = true }
 # Madara client
 mc-rpc-core = { workspace = true }
 mc-db = { workspace = true }
@@ -38,12 +38,17 @@ sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
 # Starknet
 starknet_api = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = ["testing"] }
+blockifier = { workspace = true, default-features = false, features = [
+	"testing",
+] }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
 # Others
 hex = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, default-features = true, features = ["server", "macros"] }
+jsonrpsee = { workspace = true, default-features = true, features = [
+	"server",
+	"macros",
+] }
 log = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }

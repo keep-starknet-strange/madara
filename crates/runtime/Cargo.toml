@@ -3,8 +3,8 @@ name = "madara-runtime"
 version = "0.1.0-alpha"
 description = "Madara runtime."
 authors = [
-	"Abdelhamid Bakhta <@abdelhamidbakhta>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Abdelhamid Bakhta <@abdelhamidbakhta>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -17,7 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
-	"derive",
+  "derive",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 
@@ -31,15 +31,12 @@ sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
 
 pallet-aura = { workspace = true }
-pallet-balances = { workspace = true }
-pallet-utility = { workspace = true }
 frame-support = { workspace = true }
 pallet-grandpa = { workspace = true }
 pallet-sudo = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 pallet-timestamp = { workspace = true }
-pallet-transaction-payment = { workspace = true }
 frame-executive = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
@@ -47,7 +44,6 @@ sp-std = { workspace = true }
 
 # Used for the node RPCs
 frame-system-rpc-runtime-api = { workspace = true }
-pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 
 # Used for runtime benchmarking
 frame-benchmarking = { workspace = true, optional = true }
@@ -64,68 +60,59 @@ substrate-wasm-builder = { workspace = true }
 
 [features]
 std = [
-	# Madara pallets
-	"pallet-starknet/std",
-	# Frame dependencies
-	"frame-try-runtime?/std",
-	"frame-system-benchmarking?/std",
-	"frame-benchmarking?/std",
-	"frame-executive/std",
-	"frame-support/std",
-	"frame-system-rpc-runtime-api/std",
-	"frame-system/std",
-	"frame-try-runtime/std",
-	# Frame pallets dependencies
-	"pallet-aura/std",
-	"pallet-balances/std",
-	"pallet-grandpa/std",
-	"pallet-sudo/std",
-	"pallet-timestamp/std",
-	"pallet-transaction-payment-rpc-runtime-api/std",
-	"pallet-transaction-payment/std",
-	"pallet-utility/std",
-	# Substrate primitives dependencies
-	"sp-api/std",
-	"sp-block-builder/std",
-	"sp-consensus-aura/std",
-	"sp-core/std",
-	"sp-inherents/std",
-	"sp-offchain/std",
-	"sp-runtime/std",
-	"sp-session/std",
-	"sp-std/std",
-	"sp-transaction-pool/std",
-	"sp-version/std",
-	# 3rd party dependencies
-	"scale-codec/std",
-	"scale-info/std",
+  # Madara pallets
+  "pallet-starknet/std",
+  # Frame dependencies
+  "frame-try-runtime?/std",
+  "frame-system-benchmarking?/std",
+  "frame-benchmarking?/std",
+  "frame-executive/std",
+  "frame-support/std",
+  "frame-system-rpc-runtime-api/std",
+  "frame-system/std",
+  "frame-try-runtime/std",
+  # Frame pallets dependencies
+  "pallet-aura/std",
+  "pallet-grandpa/std",
+  "pallet-sudo/std",
+  "pallet-timestamp/std",
+  # Substrate primitives dependencies
+  "sp-api/std",
+  "sp-block-builder/std",
+  "sp-consensus-aura/std",
+  "sp-core/std",
+  "sp-inherents/std",
+  "sp-offchain/std",
+  "sp-runtime/std",
+  "sp-session/std",
+  "sp-std/std",
+  "sp-transaction-pool/std",
+  "sp-version/std",
+  # 3rd party dependencies
+  "scale-codec/std",
+  "scale-info/std",
 ]
 try-runtime = [
-	"pallet-timestamp/try-runtime",
-	"pallet-transaction-payment/try-runtime",
-	"frame-try-runtime/try-runtime",
-	"frame-executive/try-runtime",
-	"frame-system/try-runtime",
-	"frame-support/try-runtime",
-	"pallet-aura/try-runtime",
-	"pallet-balances/try-runtime",
-	"pallet-grandpa/try-runtime",
-	"pallet-sudo/try-runtime",
-	"pallet-utility/try-runtime",
-	# Madara pallets
-	"pallet-starknet/try-runtime",
+  "pallet-timestamp/try-runtime",
+  "frame-try-runtime/try-runtime",
+  "frame-executive/try-runtime",
+  "frame-system/try-runtime",
+  "frame-support/try-runtime",
+  "pallet-aura/try-runtime",
+  "pallet-grandpa/try-runtime",
+  "pallet-sudo/try-runtime",
+  # Madara pallets
+  "pallet-starknet/try-runtime",
 ]
 default = ["std"]
 runtime-benchmarks = [
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system-benchmarking/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"pallet-grandpa/runtime-benchmarks",
-	"pallet-timestamp/runtime-benchmarks",
-	"pallet-utility/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
-	# Madara pallets
-	"pallet-starknet/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+  "pallet-grandpa/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  # Madara pallets
+  "pallet-starknet/runtime-benchmarks",
 ]

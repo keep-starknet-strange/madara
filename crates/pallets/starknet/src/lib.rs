@@ -71,7 +71,7 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
-use frame_support::traits::Time;
+use frame_support::traits::UnixTime;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
@@ -103,7 +103,7 @@ pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 // TODO: don't use a const for this but a real sequencer address for block header
 // FIXME https://github.com/keep-starknet-strange/madara/issues/243
 pub const SEQUENCER_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2];
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
@@ -139,13 +139,19 @@ pub mod pallet {
         /// The hashing function to use.
         type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         /// The time idk what.
-        type TimestampProvider: Time;
+        type TimestampProvider: UnixTime;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
         /// multiple pallets send unsigned transactions.
         #[pallet::constant]
         type UnsignedPriority: Get<TransactionPriority>;
+        /// A configuration for longevity of transactions.
+        ///
+        /// This is exposed so that it can be tuned for particular runtime to
+        /// set how long transactions are kept in the mempool.
+        #[pallet::constant]
+        type TransactionLongevity: Get<TransactionLongevity>;
     }
 
     /// The Starknet pallet hooks.
@@ -200,6 +206,9 @@ pub mod pallet {
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
 
     /// Current building block's events.
+    // TODO: This is redundant information but more performant
+    // than removing this and computing events from the tx reciepts.
+    // More info: https://github.com/keep-starknet-strange/madara/pull/561
     #[pallet::storage]
     #[pallet::getter(fn pending_events)]
     pub(super) type PendingEvents<T: Config> =
@@ -748,8 +757,9 @@ pub mod pallet {
                     Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        // This is a transaction identifier for substrate
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
@@ -758,8 +768,9 @@ pub mod pallet {
                     Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        // This is a transaction identifier for substrate
                         .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
@@ -772,19 +783,35 @@ pub mod pallet {
                     // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        // This is a transaction identifier for substrate
                         .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
-                        .longevity(64_u64)
+                        .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
+                // Message consumptions don't go through an account contract so no need to identify them with an id.
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(64_u64)
+                    .longevity(T::TransactionLongevity::get())
                     .propagate(true)
                     .build(),
                 _ => InvalidTransaction::Call.into(),
             }
+        }
+
+        /// From substrate documentation:
+        /// Validate the call right before dispatch.
+        /// This method should be used to prevent transactions already in the pool
+        /// (i.e. passing validate_unsigned) from being included in blocks in case
+        /// they became invalid since being added to the pool.
+        ///
+        /// In the default implementation of pre_dispatch for the ValidateUnsigned trait,
+        /// this function calls the validate_unsigned function in order to verify validity
+        /// before dispatch. In our case, since transaction was already validated in
+        /// `validate_unsigned` we can just return Ok.
+        fn pre_dispatch(_call: &Self::Call) -> Result<(), TransactionValidityError> {
+            Ok(())
         }
     }
 }
@@ -882,7 +909,7 @@ impl<T: Config> Pallet<T> {
     /// The current block timestamp.
     #[inline(always)]
     pub fn block_timestamp() -> u64 {
-        T::TimestampProvider::now().unique_saturated_into()
+        T::TimestampProvider::now().as_secs()
     }
 
     /// Get the number of transactions in the block.

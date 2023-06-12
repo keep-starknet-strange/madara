@@ -10,7 +10,7 @@ use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
 use crate::Event;
 
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("erc20/erc20.json");
+    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("ERC20.json");
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             ],
             data: bounded_vec!(
                 sender_account, // From
-                Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000002")
+                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                     .unwrap(), // Sequencer address
                 Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b660")
                     .unwrap(), // Amount low
@@ -204,7 +204,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             ],
             data: bounded_vec!(
                 sender_account,                                  // From
-                Felt252Wrapper::from_hex_be("0x2").unwrap(),     // Sequencer address
+                Felt252Wrapper::from_hex_be("0xdead").unwrap(),  // Sequencer address
                 Felt252Wrapper::from_hex_be("0x1e618").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                            // Amount high
             ),
