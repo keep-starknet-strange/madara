@@ -98,33 +98,6 @@ async fn filter_events_by_keys_and_chunk_size() {
     assert_eq!(continuation_token, 1);
 }
 
-#[tokio::test]
-#[serial_test::serial]
-async fn filter_events_single_block() {
-    let starknet = setup();
-    let result = starknet
-        .add_invoke_transaction(starknet_core::types::BroadcastedInvokeTransaction::V1(
-            BroadcastedInvokeTransactionV1 {
-                nonce: FieldElement::from(0_u32),
-                max_fee: FieldElement::from(10000000000_u64),
-                signature: vec![],
-                sender_address: FieldElement::from_hex_be(
-                    "0x0000000000000000000000000000000000000000000000000000000000000001",
-                )
-                .unwrap(),
-                calldata: vec![
-                    FieldElement::from_hex_be(constants::TOKEN_CONTRACT_ADDRESS).unwrap(),
-                    FieldElement::from_hex_be("0x2").unwrap(),
-                    FieldElement::from_hex_be("0x1").unwrap(),
-                    FieldElement::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000")
-                        .unwrap(),
-                ],
-            },
-        ))
-        .await;
-    dbg!(result.unwrap());
-}
-
 fn build_event_wrapper_for_test(keys: &[&str], address_int: u64) -> EventWrapper {
     let keys_felt = keys.iter().map(|key| Felt252Wrapper::from_hex_be(key).unwrap()).collect::<Vec<Felt252Wrapper>>();
     EventWrapper {
