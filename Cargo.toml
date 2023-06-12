@@ -93,8 +93,6 @@ pallet-sudo = { default-features = false, git = "https://github.com/paritytech/s
 pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
-# Substrate Test Utils
-substrate-test-runtime-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
