@@ -1,9 +1,65 @@
 use std::iter::Skip;
 use std::vec::IntoIter;
 
+use log::error;
+use mc_rpc_core::utils::get_block_by_block_hash;
+use mp_starknet::block::Block;
 use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::traits::hash::HasherT;
+use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::EventWrapper;
+use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
+use sc_client_api::backend::{Backend, StorageProvider};
+use sp_api::ProvideRuntimeApi;
+use sp_blockchain::HeaderBackend;
+use sp_runtime::traits::Block as BlockT;
+use starknet_core::types::BlockId;
 use starknet_ff::FieldElement;
+
+use crate::errors::StarknetRpcApiError;
+use crate::Starknet;
+
+impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
+where
+    B: BlockT,
+    C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+    BE: Backend<B>,
+    H: HasherT + ThreadSafeCopy,
+{
+    /// Helper function to get Starknet block details
+    ///
+    /// # Arguments
+    ///
+    /// * `block_id` - The Starknet block id
+    ///
+    /// # Returns
+    ///
+    /// * `(block_events: Vec<EventWrapper>, block: Block)` - A tuple of the block events in
+    ///   block_id and an instance of Block
+    pub fn get_block_events(&self, block_id: u64) -> Result<(Vec<EventWrapper>, Block), StarknetRpcApiError> {
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(BlockId::Number(block_id)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Failed to retrieve block");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let block_events = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .events(substrate_block_hash)
+            .unwrap_or_else(|| {
+                dbg!("No events found in block {}", block_id);
+                Vec::new()
+            });
+        Ok((block_events, block))
+    }
+}
 
 /// Helper function to get filter events using address and keys
 

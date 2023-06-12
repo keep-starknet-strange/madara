@@ -23,13 +23,10 @@ use mc_rpc_core::utils::{
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
-use mp_starknet::block::Block;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
-use mp_starknet::transaction::types::{
-    EventWrapper, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
-};
+use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -155,38 +152,6 @@ where
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
         u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
-    }
-
-    /// Helper function to get Starknet block details
-    ///
-    /// # Arguments
-    ///
-    /// * `block_id` - The Starknet block id
-    ///
-    /// # Returns
-    ///
-    /// * `(block_events: Vec<EventWrapper>, block: Block)` - A tuple of the block events in
-    ///   block_id and an instance of Block
-    fn get_block_events(&self, block_id: u64) -> Result<(Vec<EventWrapper>, Block), StarknetRpcApiError> {
-        let substrate_block_hash =
-            self.substrate_block_hash_from_starknet_block(BlockId::Number(block_id)).map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-            error!("Failed to retrieve block");
-            StarknetRpcApiError::BlockNotFound
-        })?;
-        let block_events = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .events(substrate_block_hash)
-            .unwrap_or_else(|| {
-                dbg!("No events found in block {}", block_id);
-                Vec::new()
-            });
-        Ok((block_events, block))
     }
 
     /// Helper function to filter Starknet evetomnts provided a RPC event filter
