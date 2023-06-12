@@ -3,6 +3,10 @@ pub mod ethereum;
 
 use async_trait::async_trait;
 
+/// In the short term we will use the lambda service to submit the OS execution trace
+pub const TESTNET_SHARP_ADDRESS: &str = "https://testnet.provingservice.io";
+pub const STEP_LIMIT: u32 = 1_000_000;
+
 #[async_trait]
 pub trait DataAvailability {
     /// Publish data to Ethereum.
