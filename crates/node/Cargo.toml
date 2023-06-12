@@ -84,10 +84,6 @@ blockifier = { workspace = true }
 hex = { workspace = true }
 starknet-core = { workspace = true }
 
-# Testing
-tokio = "1.28.2"
-serial_test = "2.0.0" # to run rpc tests sequentially, else all tests try to call rpc methods at the same time and we get lock errors
-
 # CLI-specific dependencies
 try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
@@ -95,9 +91,6 @@ serde_json = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
-
-[dev-dependencies]
-sc-service = { workspace = true, features = ["test-helpers"] }
 
 [features]
 default = []
