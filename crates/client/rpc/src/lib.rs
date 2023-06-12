@@ -530,7 +530,6 @@ where
         &self,
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
-        dbg!(&invoke_transaction);
         let best_block_hash = self.client.info().best_hash;
         let invoke_tx = to_invoke_tx(invoke_transaction)?;
         let chain_id =
@@ -549,8 +548,6 @@ where
                 error!("Failed to convert transaction: {:?}", e);
                 StarknetRpcApiError::ClassHashNotFound
             })?;
-
-        dbg!(transaction.clone());
 
         self.pool.submit_one(&SPBlockId::hash(self.client.info().best_hash), TX_SOURCE, extrinsic).await.map_err(
             |e| {
