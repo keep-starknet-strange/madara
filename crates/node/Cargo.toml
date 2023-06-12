@@ -96,6 +96,9 @@ serde_json = { workspace = true }
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
 
+[dev-dependencies]
+sc-service = { workspace = true, features = ["test-helpers"] }
+
 [features]
 default = []
 # Dependencies that are only required if runtime benchmarking should be build.

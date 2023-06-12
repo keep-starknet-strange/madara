@@ -1,20 +1,27 @@
+use madara_runtime::opaque::Block;
+use madara_runtime::{AccountId, Hash, Index};
 use mc_rpc::{Starknet, StarknetRpcApiServer};
 use mc_storage::overrides_handle;
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_cli::SubstrateCli;
-use sc_client_api::BlockBackend;
-use sc_service::{Arc, WarpSyncParams};
+use sc_client_api::{Backend, BlockBackend, StorageProvider};
+use sc_executor::NativeElseWasmExecutor;
+use sc_service::{Arc, LocalCallExecutor, WarpSyncParams};
+use sc_transaction_pool::{BasicPool, FullChainApi};
+use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
-use sp_blockchain::HeaderBackend;
+use sp_block_builder::BlockBuilder;
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_core::bounded_vec;
-use sp_runtime::BoundedVec;
+use sp_runtime::traits::{BlakeTwo256, Block as BlockT, Header as HeaderT};
+use sp_runtime::{BoundedVec, OpaqueExtrinsic};
 use starknet_core::types::{BroadcastedInvokeTransactionV1, FieldElement};
 
 use crate::cli::Cli;
 use crate::constants;
-use crate::service::{build_manual_seal_import_queue, new_partial};
+use crate::service::{build_manual_seal_import_queue, new_partial, ExecutorDispatch};
 
 #[tokio::test]
 #[serial_test::serial]
@@ -108,81 +115,48 @@ fn build_event_wrapper_for_test(keys: &[&str], address_int: u64) -> EventWrapper
     }
 }
 
-fn setup<T>() -> Starknet<
-    sp_runtime::generic::Block<
-        sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-        sp_runtime::OpaqueExtrinsic,
-    >,
-    T,
+fn setup<BE>() -> Starknet<
+    sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
+    BE,
     sc_service::client::Client<
         sc_client_db::Backend<
-            sp_runtime::generic::Block<
-                sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                sp_runtime::OpaqueExtrinsic,
-            >,
+            sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
         >,
-        sc_service::LocalCallExecutor<
-            sp_runtime::generic::Block<
-                sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                sp_runtime::OpaqueExtrinsic,
-            >,
+        LocalCallExecutor<
+            sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
             sc_client_db::Backend<
-                sp_runtime::generic::Block<
-                    sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                    sp_runtime::OpaqueExtrinsic,
-                >,
+                sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
             >,
-            sc_executor::NativeElseWasmExecutor<crate::service::ExecutorDispatch>,
+            NativeElseWasmExecutor<ExecutorDispatch>,
         >,
-        sp_runtime::generic::Block<
-            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-            sp_runtime::OpaqueExtrinsic,
-        >,
+        sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
         madara_runtime::RuntimeApi,
     >,
-    sc_transaction_pool::BasicPool<
-        sc_transaction_pool::FullChainApi<
+    BasicPool<
+        FullChainApi<
             sc_service::client::Client<
                 sc_client_db::Backend<
-                    sp_runtime::generic::Block<
-                        sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                        sp_runtime::OpaqueExtrinsic,
-                    >,
+                    sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
                 >,
-                sc_service::LocalCallExecutor<
-                    sp_runtime::generic::Block<
-                        sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                        sp_runtime::OpaqueExtrinsic,
-                    >,
+                LocalCallExecutor<
+                    sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
                     sc_client_db::Backend<
-                        sp_runtime::generic::Block<
-                            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                            sp_runtime::OpaqueExtrinsic,
-                        >,
+                        sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
                     >,
-                    sc_executor::NativeElseWasmExecutor<crate::service::ExecutorDispatch>,
+                    NativeElseWasmExecutor<ExecutorDispatch>,
                 >,
-                sp_runtime::generic::Block<
-                    sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                    sp_runtime::OpaqueExtrinsic,
-                >,
+                sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
                 madara_runtime::RuntimeApi,
             >,
-            sp_runtime::generic::Block<
-                sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-                sp_runtime::OpaqueExtrinsic,
-            >,
+            sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
         >,
-        sp_runtime::generic::Block<
-            sp_runtime::generic::Header<u32, sp_runtime::traits::BlakeTwo256>,
-            sp_runtime::OpaqueExtrinsic,
-        >,
+        sp_runtime::generic::Block<sp_runtime::generic::Header<u32, BlakeTwo256>, OpaqueExtrinsic>,
     >,
     mp_starknet::crypto::hash::Hasher,
 > {
     let cli = Cli::from_iter(["--dev", "--sealing=instant"].iter());
 
-    let config = cli.create_configuration(&cli.run, tokio::runtime::Handle::try_current().unwrap()).unwrap();
+    let config = cli.create_configuration(&cli.run.run_cmd, tokio::runtime::Handle::try_current().unwrap()).unwrap();
 
     let build_import_queue = build_manual_seal_import_queue;
 
