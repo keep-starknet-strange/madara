@@ -54,5 +54,5 @@ serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-rstest = { workspace = true, default-features = true }
+rstest = { workspace = true }
 pretty_assertions = { workspace = true }
