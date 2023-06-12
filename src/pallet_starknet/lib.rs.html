@@ -1110,6 +1110,24 @@
 <a href="#1110" id="1110">1110</a>
 <a href="#1111" id="1111">1111</a>
 <a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1869,7 +1887,8 @@
                     Pallet::&lt;T&gt;::validate_tx(invoke_transaction, TxType::Invoke)<span class="question-mark">?</span>;
                     ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                        .and_provides((transaction.sender_address, transaction.nonce))
+                        <span class="comment">// This is a transaction identifier for substrate
+                        </span>.and_provides((transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
                         .propagate(<span class="bool-val">true</span>)
                         .build()
@@ -1879,7 +1898,8 @@
                     Pallet::&lt;T&gt;::validate_tx(declare_transaction, TxType::Declare)<span class="question-mark">?</span>;
                     ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                        .and_provides((transaction.sender_address, transaction.nonce))
+                        <span class="comment">// This is a transaction identifier for substrate
+                        </span>.and_provides((transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
                         .propagate(<span class="bool-val">true</span>)
                         .build()
@@ -1893,12 +1913,14 @@
                     <span class="comment">// Pallet::&lt;T&gt;::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     </span>ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                         .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
-                        .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
+                        <span class="comment">// This is a transaction identifier for substrate
+                        </span>.and_provides((deploy_account_transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
                         .propagate(<span class="bool-val">true</span>)
                         .build()
                 }
-                Call::consume_l1_message { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
+                <span class="comment">// Message consumptions don&#39;t go through an account contract so no need to identify them with an id.
+                </span>Call::consume_l1_message { transaction } =&gt; ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
                     .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
                     .longevity(T::TransactionLongevity::get())
@@ -1906,6 +1928,20 @@
                     .build(),
                 <span class="kw">_ </span>=&gt; InvalidTransaction::Call.into(),
             }
+        }
+
+        <span class="doccomment">/// From substrate documentation:
+        /// Validate the call right before dispatch.
+        /// This method should be used to prevent transactions already in the pool
+        /// (i.e. passing validate_unsigned) from being included in blocks in case
+        /// they became invalid since being added to the pool.
+        ///
+        /// In the default implementation of pre_dispatch for the ValidateUnsigned trait,
+        /// this function calls the validate_unsigned function in order to verify validity
+        /// before dispatch. In our case, since transaction was already validated in
+        /// `validate_unsigned` we can just return Ok.
+        </span><span class="kw">fn </span>pre_dispatch(_call: <span class="kw-2">&amp;</span><span class="self">Self</span>::Call) -&gt; <span class="prelude-ty">Result</span>&lt;(), TransactionValidityError&gt; {
+            <span class="prelude-val">Ok</span>(())
         }
     }
 }
