@@ -786,7 +786,8 @@ pub mod pallet {
                         // This is a transaction identifier for substrate
                         .and_provides(vec![deploy_account_transaction.sender_address, transaction.nonce])
                         .longevity(64_u64)
-                        .propagate(true).build()
+                        .propagate(true)
+                        .build()
                 }
                 Call::consume_l1_message { transaction } => {
                     // Message consumptions don't go through an account contract so no need to identify them with an id.
