@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686128916151,
+  "lastUpdate": 1686587463705,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -2000,6 +2000,42 @@ window.BENCHMARK_DATA = {
             "value": 205.66666666666666,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3621\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "70894690+LucasLvy@users.noreply.github.com",
+            "name": "Lucas @ StarkWare",
+            "username": "LucasLvy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a81609459db888213c467b6192ac1ca29a8d2604",
+          "message": "fix(validate): add dependency to previous tx (#538)\n\nCo-authored-by: Gregory Edison <gregory.edison1993@gmail.com>",
+          "timestamp": "2023-06-12T18:28:03+02:00",
+          "tree_id": "79bff3145513fdcbfb6329f5fe0c7edd065bb899",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/a81609459db888213c467b6192ac1ca29a8d2604"
+        },
+        "date": 1686587463156,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 417.5,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 69.58333333333333,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
