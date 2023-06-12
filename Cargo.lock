@@ -4311,7 +4311,6 @@ dependencies = [
  "pallet-starknet",
  "sc-cli",
  "sc-client-api",
- "sc-client-db",
  "sc-consensus",
  "sc-consensus-aura",
  "sc-consensus-grandpa",
