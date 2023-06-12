@@ -154,7 +154,7 @@ where
         u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
     }
 
-    /// Helper function to filter Starknet evetomnts provided a RPC event filter
+    /// Helper function to filter Starknet events provided a RPC event filter
     ///
     /// # Arguments
     ///
