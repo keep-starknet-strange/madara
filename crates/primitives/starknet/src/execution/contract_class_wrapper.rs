@@ -30,7 +30,7 @@ fn serialize_program_wrapper<S: Serializer>(v: &ProgramWrapper, serializer: S) -
     v.serialize(serializer)
 }
 
-/// Contract Class type wrapper.
+/// [ContractClass] type wrapper.
 #[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ContractClassWrapper {
@@ -75,6 +75,7 @@ impl From<ContractClass> for ContractClassWrapper {
 /// SCALE trait.
 impl MaxEncodedLen for ContractClassWrapper {
     fn max_encoded_len() -> usize {
+        // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
         20971520
     }
 }
@@ -84,25 +85,11 @@ impl MaxEncodedLen for ContractClassWrapper {
 #[derive(Clone, Debug, PartialEq, Eq, Default, Constructor)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct EntrypointMapWrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
-#[derive(Clone, Debug, PartialEq, Eq, Default, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-struct TupleTemp(EntryPointTypeWrapper, Vec<EntryPointWrapper>);
-
-impl From<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> for TupleTemp {
-    fn from(value: (EntryPointTypeWrapper, Vec<EntryPointWrapper>)) -> Self {
-        Self(value.0, value.1)
-    }
-}
-impl From<TupleTemp> for (EntryPointTypeWrapper, Vec<EntryPointWrapper>) {
-    fn from(value: TupleTemp) -> Self {
-        (value.0, value.1)
-    }
-}
 
 /// SCALE trait.
 impl Encode for EntrypointMapWrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
-        let val: Vec<TupleTemp> = self.0.clone().into_iter().map(|val| val.into()).collect();
+        let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> = self.0.clone().into_iter().collect();
         dest.write(&Encode::encode(&val));
     }
 }
@@ -119,7 +106,7 @@ impl Decode for EntrypointMapWrapper {
 impl TypeInfo for EntrypointMapWrapper {
     type Identity = Self;
 
-    // The type info is saying that the field element must be seen as an
+    // The type info is saying that the EntryPointByType must be seen as an
     // array of bytes.
     fn type_info() -> Type {
         Type::builder()
@@ -201,7 +188,7 @@ impl Decode for ProgramWrapper {
 impl TypeInfo for ProgramWrapper {
     type Identity = Self;
 
-    // The type info is saying that the field element must be seen as an
+    // The type info is saying that the `ProgramWrapper` must be seen as an
     // array of bytes.
     fn type_info() -> Type {
         Type::builder()
