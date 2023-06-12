@@ -4,9 +4,9 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::mem;
 
-use blockifier::execution::contract_class::{deserialize_program, ContractClass};
+use blockifier::execution::contract_class::ContractClass;
 use cairo_vm::felt::Felt252;
-use cairo_vm::serde::deserialize_program::{parse_program, ProgramJson, ReferenceManager};
+use cairo_vm::serde::deserialize_program::{parse_program, parse_program_json, ProgramJson, ReferenceManager};
 use cairo_vm::types::program::{Program, SharedProgramData};
 use derive_more::Constructor;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -21,7 +21,7 @@ use crate::scale_info::{Path, Type, TypeInfo};
 /// Max number of entrypoints types (EXTERNAL/L1_HANDLER/CONSTRUCTOR)
 /// Converts the program type from SN API into a Cairo VM-compatible type.
 pub fn deserialize_program_wrapper<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ProgramWrapper, D::Error> {
-    Ok(deserialize_program(deserializer)?.into())
+    Ok(ProgramJson::deserialize(deserializer)?.into())
 }
 /// Helper function to serialize a [ProgramWrapper]. This function uses the [Serialize] function
 /// from [ProgramJson]
@@ -165,6 +165,11 @@ impl From<ProgramWrapper> for ProgramJson {
         parse_program(value.into())
     }
 }
+impl From<ProgramJson> for ProgramWrapper {
+    fn from(value: ProgramJson) -> Self {
+        parse_program_json(value, None).unwrap().into()
+    }
+}
 
 /// SCALE trait.
 impl Encode for ProgramWrapper {
@@ -207,7 +212,6 @@ impl TypeInfo for ProgramWrapper {
 
 #[cfg(test)]
 mod tests {
-
     use blockifier::execution::contract_class::ContractClass;
 
     use super::*;
@@ -220,9 +224,9 @@ mod tests {
     fn test_serialize_deserialize_contract_class() {
         let contract_class: ContractClassWrapper =
             get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
-        let contract_class_serialized = serde_json::to_string(&contract_class).unwrap();
+        let contract_class_serialized = serde_json::to_vec(&contract_class).unwrap();
         let contract_class_deserialized: ContractClassWrapper =
-            serde_json::from_str(&contract_class_serialized).unwrap();
+            serde_json::from_slice(&contract_class_serialized).unwrap();
 
         assert_eq!(contract_class, contract_class_deserialized);
     }
