@@ -218,6 +218,12 @@ fn testnet_genesis(
     let nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
     let nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
+    // UDC CONTRACT
+    let udc_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/UniversalDeployer.json")).try_into().unwrap();
+    let udc_class_hash = Felt252Wrapper::from_hex_be(UDC_CLASS_HASH).unwrap();
+    let udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
+
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
@@ -245,6 +251,7 @@ fn testnet_genesis(
                 (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
                 (argent_account_address, argent_account_class_hash),
+                (udc_contract_address, udc_class_hash),
             ],
             contract_classes: vec![
                 (no_validate_account_class_hash, no_validate_account_class),
@@ -254,6 +261,7 @@ fn testnet_genesis(
                 (token_class_hash, erc20_class.clone()),
                 (fee_token_class_hash, erc20_class),
                 (nft_class_hash, erc721_class),
+                (udc_class_hash, udc_class),
             ],
             storage: vec![
                 (

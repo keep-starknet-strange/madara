@@ -11,5 +11,7 @@ pub const ERC20_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591
 pub const ERC20_CLASS_HASH: &str = "0x10000";
 pub const ERC721_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02";
 pub const ERC721_CLASS_HASH: &str = "0x80000";
+pub const UDC_CONTRACT_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
+pub const UDC_CLASS_HASH: &str = "0x90000";
 
 pub const PUBLIC_KEY: &str = "0x03b8268ca24c43fa43cf8200ec43bd7c508a92bc318c25a83bc031b48233804d";

@@ -38,8 +38,10 @@ import {
   TEST_CONTRACT_ADDRESS,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
+  UDC_CONTRACT_ADDRESS,
 } from "../constants";
 import { Block, InvokeTransaction } from "./types";
+import { numberToHex } from "@polkadot/util";
 
 chai.use(deepEqualInAnyOrder);
 chai.use(chaiAsPromised);
@@ -522,6 +524,54 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       expect(toHex(balance)).to.be.equal("0x123");
+    });
+
+    it("should deploy ERC20 via UDC", async function () {
+      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        keyPair
+      );
+
+      const calldata = [
+        numberToHex(1, 256), // Token Name
+        numberToHex(1, 256), // Token Symbol
+        numberToHex(18, 256), // Token Decimals
+        numberToHex(42, 256), // Initial Supply
+        "0x0000000000000000000000000000000000000000000000000000000000000000", // Initial Supply Cont { since u256 }
+        "0xdeadbeef", // Recipient
+      ];
+
+      const deployedContractAddress = hash.calculateContractAddressFromHash(
+        SALT,
+        TOKEN_CLASS_HASH,
+        calldata,
+        0
+      );
+
+      await account.execute(
+        {
+          contractAddress: UDC_CONTRACT_ADDRESS,
+          entrypoint: "deployContract",
+          calldata: [TOKEN_CLASS_HASH, SALT, "0x0", "0x6", ...calldata],
+        },
+        undefined,
+        {
+          nonce: ARGENT_CONTRACT_NONCE.value,
+          maxFee: "123456",
+        }
+      );
+      ARGENT_CONTRACT_NONCE.value += 1;
+      await jumpBlocks(context, 1);
+
+      // ERC20_balances(0xdeadbeef).low = 0x4c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016
+      const balance = await providerRPC.getStorageAt(
+        deployedContractAddress,
+        "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
+        "latest"
+      );
+      expect(toHex(balance)).to.be.equal("0x2a");
     });
   });
 
