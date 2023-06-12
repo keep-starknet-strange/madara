@@ -27,7 +27,7 @@ fn build_test_case() -> Vec<TestCase<'static>> {
     let event4 = build_event_wrapper_for_test(&["0x1"], 4);
     let event5 = build_event_wrapper_for_test(&["0x1", "", "0x3"], 3);
 
-    let events = vec![event1.clone(), event2.clone(), event3.clone(), event4.clone(), event5.clone()];
+    let events = vec![event1.clone(), event2.clone(), event3, event4.clone(), event5.clone()];
     vec![
         TestCase {
             _name: "filter events by keys",
@@ -80,12 +80,12 @@ fn build_test_case() -> Vec<TestCase<'static>> {
             filter_keys: vec![vec![FieldElement::from(1_u32)]],
             filter_address: None,
             max_results: None,
-            expected_events: vec![event1.clone(), event2.clone(), event4.clone(), event5.clone()],
+            expected_events: vec![event1, event2, event4, event5],
             expected_continuation_token: 5,
         },
         TestCase {
             _name: "filter events where filter_keys.len() > event.keys.len()",
-            events: events.clone(),
+            events,
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![], vec![], vec![]],
             filter_address: None,
             max_results: None,
