@@ -33,9 +33,6 @@ sp-api = { workspace = true, default-features = true }
 sc-transaction-pool-api = { workspace = true }
 sp-arithmetic = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
-sc-service = { workspace = true, default-features = true }
-sc-transaction-pool = { workspace = true }
-sc-network = { workspace = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
