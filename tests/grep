@@ -1,6 +1,0 @@
-
-> ts-tests@1.0.0 test
-> echo 'WARNING Make sure to use node >= 20 otherwise it will not run' && mocha --parallel -r ts-node/register 'tests/**/test-*.ts' -- -j 4 should deploy ERC20 via UDC
-
-WARNING Make sure to use node >= 20 otherwise it will not run
-
