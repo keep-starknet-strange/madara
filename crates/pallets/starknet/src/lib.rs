@@ -753,6 +753,8 @@ pub mod pallet {
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
                 Call::invoke { transaction } => {
+                    let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
+                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
@@ -762,6 +764,8 @@ pub mod pallet {
                         .build()
                 }
                 Call::declare { transaction } => {
+                    let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
+                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
@@ -771,10 +775,12 @@ pub mod pallet {
                         .build()
                 }
                 Call::deploy_account { transaction } => {
+                    // don't validate deploy txs for now
                     let deploy_account_transaction = transaction
                         .clone()
                         .from_deploy(&Self::chain_id_str())
                         .map_err(|_| TransactionValidityError::Unknown(UnknownTransaction::CannotLookup))?;
+                    // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
@@ -804,26 +810,10 @@ pub mod pallet {
         ///
         /// In the default implementation of pre_dispatch for the ValidateUnsigned trait,
         /// this function calls the validate_unsigned function in order to verify validity
-        /// before dispatch. In our case, we validate that the transaction is valid for
-        /// the current block by calling `Transaction::validate_tx`.
-        fn pre_dispatch(call: &Self::Call) -> Result<(), TransactionValidityError> {
-            match call {
-                Call::invoke { transaction } => {
-                    let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
-                    Ok(())
-                }
-                Call::declare { transaction } => {
-                    let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
-                    Ok(())
-                }
-                // don't validate deploy txs for now
-                Call::deploy_account { .. } => Ok(()),
-                // Message consumptions don't go through an account contract so no need to identify them with an id.
-                Call::consume_l1_message { .. } => Ok(()),
-                _ => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
-            }
+        /// before dispatch. In our case, since transaction was already validated in
+        /// `validate_unsigned` we can just return Ok.
+        fn pre_dispatch(_call: &Self::Call) -> Result<(), TransactionValidityError> {
+            Ok(())
         }
     }
 }

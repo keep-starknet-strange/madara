@@ -22,4 +22,4 @@ scenarios:
     flow:
       - loop:
           - function: "executeERC20Transfer"
-        count: 20000
+        count: 10000
