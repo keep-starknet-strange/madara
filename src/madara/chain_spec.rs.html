@@ -295,6 +295,14 @@
 <a href="#295" id="295">295</a>
 <a href="#296" id="296">296</a>
 <a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{
     AccountId, AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
@@ -515,6 +523,12 @@
     <span class="kw">let </span>nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
     <span class="kw">let </span>nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
+    <span class="comment">// UDC CONTRACT
+    </span><span class="kw">let </span>udc_class: ContractClassWrapper =
+        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../cairo-contracts/build/UniversalDeployer.json&quot;</span>)).try_into().unwrap();
+    <span class="kw">let </span>udc_class_hash = Felt252Wrapper::from_hex_be(UDC_CLASS_HASH).unwrap();
+    <span class="kw">let </span>udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
+
     <span class="kw">let </span>public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
     <span class="kw">let </span>chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
@@ -542,6 +556,7 @@
                 (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
                 (argent_account_address, argent_account_class_hash),
+                (udc_contract_address, udc_class_hash),
             ],
             contract_classes: <span class="macro">vec!</span>[
                 (no_validate_account_class_hash, no_validate_account_class),
@@ -551,6 +566,7 @@
                 (token_class_hash, erc20_class.clone()),
                 (fee_token_class_hash, erc20_class),
                 (nft_class_hash, erc721_class),
+                (udc_class_hash, udc_class),
             ],
             storage: <span class="macro">vec!</span>[
                 (
