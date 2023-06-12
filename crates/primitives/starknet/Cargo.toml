@@ -46,7 +46,7 @@ thiserror-no-std = { workspace = true }
 derive_more = { workspace = true, features = ["constructor"] }
 lazy_static = { workspace = true }
 # anyhow = { workspace = true }
-ethers = { version = "2.0.7"}
+ethers = { version = "2.0.7", default-features = false }
 async-trait = { version = "0.1.68" }
 
 [dev-dependencies]
