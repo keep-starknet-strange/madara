@@ -1,15 +1,16 @@
 use alloc::string::String;
 use alloc::sync::Arc;
-use alloc::vec;
 use alloc::vec::Vec;
+use alloc::{format, vec};
 use core::mem;
 
 use blockifier::execution::contract_class::ContractClass;
 use cairo_vm::felt::Felt252;
 use cairo_vm::serde::deserialize_program::{parse_program, parse_program_json, ProgramJson, ReferenceManager};
+use cairo_vm::types::errors::program_errors::ProgramError;
 use cairo_vm::types::program::{Program, SharedProgramData};
 use derive_more::Constructor;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
 
@@ -18,10 +19,13 @@ use crate::alloc::string::ToString;
 use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
 use crate::scale_info::build::Fields;
 use crate::scale_info::{Path, Type, TypeInfo};
-/// Max number of entrypoints types (EXTERNAL/L1_HANDLER/CONSTRUCTOR)
-/// Converts the program type from SN API into a Cairo VM-compatible type.
+
+/// Helper function to deserialize from [&[u8]] to [ProgramWrapper]. This function uses the
+/// [Deserialize] function from [ProgramJson]
 pub fn deserialize_program_wrapper<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ProgramWrapper, D::Error> {
-    Ok(ProgramJson::deserialize(deserializer)?.into())
+    ProgramJson::deserialize(deserializer)?
+        .try_into()
+        .map_err(|e| de::Error::custom(format!("couldn't convert programjson to program wrapper {e:}")))
 }
 /// Helper function to serialize a [ProgramWrapper]. This function uses the [Serialize] function
 /// from [ProgramJson]
@@ -30,7 +34,8 @@ fn serialize_program_wrapper<S: Serializer>(v: &ProgramWrapper, serializer: S) -
     v.serialize(serializer)
 }
 
-/// [ContractClass] type wrapper.
+/// [ContractClass] type equivalent. This is not really a wrapper it's more of a copy where we
+/// implement the substrate necessary traits.
 #[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct ContractClassWrapper {
@@ -50,6 +55,7 @@ impl From<ContractClassWrapper> for ContractClass {
     fn from(value: ContractClassWrapper) -> Self {
         Self {
             program: value.program.into(),
+            // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
             entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.0.iter().clone().map(
                 |(entrypoint_type, entrypoints)| {
                     (entrypoint_type.clone().into(), entrypoints.clone().into_iter().map(|val| val.into()).collect())
@@ -72,7 +78,7 @@ impl From<ContractClass> for ContractClassWrapper {
         }
     }
 }
-/// SCALE trait.
+
 impl MaxEncodedLen for ContractClassWrapper {
     fn max_encoded_len() -> usize {
         // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
@@ -89,6 +95,10 @@ pub struct EntrypointMapWrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPoin
 /// SCALE trait.
 impl Encode for EntrypointMapWrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        // Convert the EntrypointMapWrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> to be
+        // able to use the Encode trait from this type. We implemented it for EntryPointWrapper, derived it
+        // for EntryPointTypeWrapper so we can use it for Vec<(EntryPointTypeWrapper,
+        // Vec<EntryPointWrapper>)>.
         let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> = self.0.clone().into_iter().collect();
         dest.write(&Encode::encode(&val));
     }
@@ -96,6 +106,10 @@ impl Encode for EntrypointMapWrapper {
 /// SCALE trait.
 impl Decode for EntrypointMapWrapper {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        // Convert the EntrypointMapWrapper to Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> to be
+        // able to use the Decode trait from this type. We implemented it for EntryPointWrapper, derived it
+        // for EntryPointTypeWrapper so we can use it for Vec<(EntryPointTypeWrapper,
+        // Vec<EntryPointWrapper>)>.
         let val: Vec<(EntryPointTypeWrapper, Vec<EntryPointWrapper>)> =
             Decode::decode(input).map_err(|_| Error::from("Can't get EntrypointMap from input buffer."))?;
         Ok(EntrypointMapWrapper(HashMap::from_iter(val.into_iter())))
@@ -152,16 +166,21 @@ impl From<ProgramWrapper> for ProgramJson {
         parse_program(value.into())
     }
 }
-impl From<ProgramJson> for ProgramWrapper {
-    fn from(value: ProgramJson) -> Self {
-        parse_program_json(value, None).unwrap().into()
+impl TryFrom<ProgramJson> for ProgramWrapper {
+    fn try_from(value: ProgramJson) -> Result<ProgramWrapper, ProgramError> {
+        Ok(parse_program_json(value, None)?.into())
     }
+
+    type Error = ProgramError;
 }
 
 /// SCALE trait.
 impl Encode for ProgramWrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        // Get the program to bytes.
         let program_bytes = &Into::<Program>::into(self.clone()).to_bytes();
+        // Get the program bytes length to be able to decode it. We convert it to u128 to have a fix bytes
+        // size so when we decode it we know that the first 16 bytes correspond to the program encoded size.
         let program_len = program_bytes.len() as u128;
         assert_eq!(program_len.to_be_bytes().len(), 16);
 
@@ -173,11 +192,16 @@ impl Encode for ProgramWrapper {
 /// SCALE trait.
 impl Decode for ProgramWrapper {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        // Get the program encoded length. We encoded the bytes length as u128 to be sure that the 16 first
+        // bytes would be its length.
         let mut buf: [u8; 16] = [0; 16];
         input.read(&mut buf)?;
         let size = u128::from_be_bytes(buf);
+        // Create a buffer of the size of the program.
         let mut program_buf = vec![0u8; size as usize];
+        // Fill it with the program.
         input.read(program_buf.as_mut_slice())?;
+        // Convert the program to bytes.
         let program = Program::from_bytes(&program_buf, None)
             .map_err(|e| Error::from("Can't get Program from input buffer.").chain(e.to_string()))?;
         Ok(program.into())

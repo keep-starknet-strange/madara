@@ -26,7 +26,7 @@ pub enum EntryPointTypeWrapper {
     /// A constructor entry point.
     #[cfg_attr(feature = "std", serde(rename = "CONSTRUCTOR"))]
     Constructor,
-    /// An external4 entry point.
+    /// An external entry point.
     #[cfg_attr(feature = "std", serde(rename = "EXTERNAL"))]
     #[default]
     External,
@@ -71,6 +71,7 @@ impl Encode for EntryPointWrapper {
 impl Decode for EntryPointWrapper {
     fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
         let mut selector = [0u8; 32];
+        // Use this because usize can be of different byte size.
         let mut offset = [0u8; core::mem::size_of::<usize>()];
         input.read(&mut selector)?;
         input.read(&mut offset)?;

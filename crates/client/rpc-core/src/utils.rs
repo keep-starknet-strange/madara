@@ -175,7 +175,8 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
     }
 }
 
-/// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
+/// Returns a [HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>] from
+/// [LegacyEntryPointsByType]
 fn to_hash_map_entrypoints(entries: LegacyEntryPointsByType) -> HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>> {
     let mut entry_points_by_type = HashMap::default();
 
@@ -185,6 +186,8 @@ fn to_hash_map_entrypoints(entries: LegacyEntryPointsByType) -> HashMap<EntryPoi
     entry_points_by_type
 }
 
+/// Returns a [Result<LegacyEntryPointsByType>] (blockifier type) from a [EntrypointMapWrapper]
+/// (internal type)
 fn to_legacy_entry_points_by_type(entries: &EntrypointMapWrapper) -> Result<LegacyEntryPointsByType> {
     let constructor = entries.0
         .get(&EntryPointTypeWrapper::Constructor).ok_or(anyhow!("Missing constructor entry point"))? // TODO: change to StarknetError
@@ -211,9 +214,8 @@ fn to_legacy_entry_points_by_type(entries: &EntrypointMapWrapper) -> Result<Lega
     Ok(LegacyEntryPointsByType { constructor, external, l1_handler })
 }
 
-/// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
+/// Returns a [Vec<EntryPointWrapper>] from a [Vec<LegacyContractEntryPoint>]
 fn get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> Vec<EntryPointWrapper> {
-    // We can unwrap safely as we already checked the length of the vectors
     entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()
 }
 /// Returns the current Starknet block from the block header's digest
