@@ -205,6 +205,7 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/makluganteng"><img src="https://avatars.githubusercontent.com/u/74396818?v=4?s=100" width="100px;" alt="V.O.T"/><br /><sub><b>V.O.T</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=makluganteng" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/MdTeach"><img src="https://avatars.githubusercontent.com/u/19630321?v=4?s=100" width="100px;" alt="Abishek Bashyal"/><br /><sub><b>Abishek Bashyal</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=MdTeach" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/kariy"><img src="https://avatars.githubusercontent.com/u/26515232?v=4?s=100" width="100px;" alt="Ammar Arif"/><br /><sub><b>Ammar Arif</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=kariy" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lambda-0x"><img src="https://avatars.githubusercontent.com/u/87354252?v=4?s=100" width="100px;" alt="lambda-0x"/><br /><sub><b>lambda-0x</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=lambda-0x" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
