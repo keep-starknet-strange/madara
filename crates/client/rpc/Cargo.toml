@@ -52,3 +52,7 @@ jsonrpsee = { workspace = true, default-features = true, features = [
 log = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true, default-features = true }
+pretty_assertions = { workspace = true }
