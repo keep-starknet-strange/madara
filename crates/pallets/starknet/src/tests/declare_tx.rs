@@ -346,6 +346,6 @@ fn test_verify_tx_longevity() {
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::declare { transaction });
 
-        assert!(validate_result.unwrap().longevity == 64);
+        assert!(validate_result.unwrap().longevity == TransactionLongevity::get());
     });
 }
