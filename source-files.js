@@ -4,7 +4,7 @@ var sourcesIndex = JSON.parse('{\
 "mc_block_proposer":["",[],["lib.rs"]],\
 "mc_db":["",[["db_opening_utils",[],["mod.rs","parity_db_adapter.rs"]]],["lib.rs","mapping_db.rs","meta_db.rs"]],\
 "mc_mapping_sync":["",[],["lib.rs","sync_blocks.rs"]],\
-"mc_rpc":["",[],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","types.rs"]],\
+"mc_rpc":["",[["events",[],["mod.rs"]]],["constants.rs","errors.rs","lib.rs","madara_backend_client.rs","types.rs"]],\
 "mc_rpc_core":["",[],["lib.rs","utils.rs"]],\
 "mc_storage":["",[["overrides",[],["mod.rs","schema_v1_override.rs"]]],["lib.rs"]],\
 "mp_digest_log":["",[],["error.rs","lib.rs"]],\

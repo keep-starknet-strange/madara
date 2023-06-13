@@ -844,105 +844,13 @@
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
-<a href="#847" id="847">847</a>
-<a href="#848" id="848">848</a>
-<a href="#849" id="849">849</a>
-<a href="#850" id="850">850</a>
-<a href="#851" id="851">851</a>
-<a href="#852" id="852">852</a>
-<a href="#853" id="853">853</a>
-<a href="#854" id="854">854</a>
-<a href="#855" id="855">855</a>
-<a href="#856" id="856">856</a>
-<a href="#857" id="857">857</a>
-<a href="#858" id="858">858</a>
-<a href="#859" id="859">859</a>
-<a href="#860" id="860">860</a>
-<a href="#861" id="861">861</a>
-<a href="#862" id="862">862</a>
-<a href="#863" id="863">863</a>
-<a href="#864" id="864">864</a>
-<a href="#865" id="865">865</a>
-<a href="#866" id="866">866</a>
-<a href="#867" id="867">867</a>
-<a href="#868" id="868">868</a>
-<a href="#869" id="869">869</a>
-<a href="#870" id="870">870</a>
-<a href="#871" id="871">871</a>
-<a href="#872" id="872">872</a>
-<a href="#873" id="873">873</a>
-<a href="#874" id="874">874</a>
-<a href="#875" id="875">875</a>
-<a href="#876" id="876">876</a>
-<a href="#877" id="877">877</a>
-<a href="#878" id="878">878</a>
-<a href="#879" id="879">879</a>
-<a href="#880" id="880">880</a>
-<a href="#881" id="881">881</a>
-<a href="#882" id="882">882</a>
-<a href="#883" id="883">883</a>
-<a href="#884" id="884">884</a>
-<a href="#885" id="885">885</a>
-<a href="#886" id="886">886</a>
-<a href="#887" id="887">887</a>
-<a href="#888" id="888">888</a>
-<a href="#889" id="889">889</a>
-<a href="#890" id="890">890</a>
-<a href="#891" id="891">891</a>
-<a href="#892" id="892">892</a>
-<a href="#893" id="893">893</a>
-<a href="#894" id="894">894</a>
-<a href="#895" id="895">895</a>
-<a href="#896" id="896">896</a>
-<a href="#897" id="897">897</a>
-<a href="#898" id="898">898</a>
-<a href="#899" id="899">899</a>
-<a href="#900" id="900">900</a>
-<a href="#901" id="901">901</a>
-<a href="#902" id="902">902</a>
-<a href="#903" id="903">903</a>
-<a href="#904" id="904">904</a>
-<a href="#905" id="905">905</a>
-<a href="#906" id="906">906</a>
-<a href="#907" id="907">907</a>
-<a href="#908" id="908">908</a>
-<a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-<a href="#913" id="913">913</a>
-<a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
-<a href="#916" id="916">916</a>
-<a href="#917" id="917">917</a>
-<a href="#918" id="918">918</a>
-<a href="#919" id="919">919</a>
-<a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
-<a href="#922" id="922">922</a>
-<a href="#923" id="923">923</a>
-<a href="#924" id="924">924</a>
-<a href="#925" id="925">925</a>
-<a href="#926" id="926">926</a>
-<a href="#927" id="927">927</a>
-<a href="#928" id="928">928</a>
-<a href="#929" id="929">929</a>
-<a href="#930" id="930">930</a>
-<a href="#931" id="931">931</a>
-<a href="#932" id="932">932</a>
-<a href="#933" id="933">933</a>
-<a href="#934" id="934">934</a>
-<a href="#935" id="935">935</a>
-<a href="#936" id="936">936</a>
-<a href="#937" id="937">937</a>
-<a href="#938" id="938">938</a>
-<a href="#939" id="939">939</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
 
 </span><span class="kw">mod </span>constants;
 <span class="kw">mod </span>errors;
+<span class="kw">mod </span>events;
 <span class="kw">mod </span>madara_backend_client;
 <span class="kw">mod </span>types;
 
@@ -951,7 +859,7 @@
 
 <span class="kw">use </span>errors::StarknetRpcApiError;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
-<span class="kw">use </span>log::{error, info};
+<span class="kw">use </span>log::error;
 <span class="kw">use </span>mc_rpc_core::utils::{
     get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
 };
@@ -1087,100 +995,6 @@
             .ok_or(<span class="string">&quot;Failed to retrieve the substrate block number&quot;</span>.to_string())<span class="question-mark">?</span>;
 
         u64::try_from(block.header().block_number).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>))
-    }
-
-    <span class="doccomment">/// Helper function to filter Starknet events provided a RPC event filter
-    ///
-    /// # Arguments
-    ///
-    /// * `filter` - The RPC event filter
-    ///
-    /// # Returns
-    ///
-    /// * `EventsPage` - The filtered events with continuation token
-    </span><span class="kw">fn </span>filter_events(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: RpcEventFilter) -&gt; RpcResult&lt;EventsPage&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>filtered_events = <span class="macro">vec!</span>[];
-        <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0</span>;
-
-        <span class="comment">// get filter values
-        </span><span class="kw">let </span><span class="kw-2">mut </span>current_block = filter.from_block;
-        <span class="kw">let </span>to_block = filter.to_block;
-        <span class="kw">let </span>from_address = filter.from_address;
-        <span class="kw">let </span>keys = filter.keys;
-        <span class="kw">let </span><span class="kw-2">mut </span>continuation_token = filter.continuation_token;
-        <span class="kw">let </span>chunk_size = filter.chunk_size;
-
-        <span class="comment">// Iterate on block range
-        </span><span class="kw">while </span>current_block &lt;= to_block {
-            <span class="kw">let </span>substrate_block_hash =
-                <span class="self">self</span>.substrate_block_hash_from_starknet_block(BlockId::Number(current_block)).map_err(|e| {
-                    <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
-                    StarknetRpcApiError::BlockNotFound
-                })<span class="question-mark">?</span>;
-
-            <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to retrieve block&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>;
-
-            <span class="kw">let </span>block_hash = block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into();
-            <span class="kw">let </span>block_number = block.header().block_number.try_into().map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>;
-
-            <span class="kw">let </span>block_events = <span class="self">self
-                </span>.overrides
-                .for_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
-                .events(substrate_block_hash)
-                .unwrap_or_else(|| {
-                    <span class="macro">info!</span>(<span class="string">&quot;No events found in block {}&quot;</span>, current_block);
-                    Vec::new()
-                });
-            <span class="kw">let </span>block_events_len = block_events.len();
-            <span class="comment">// if block_events length &lt; continuation_token, keep going and reduce the pagination
-            </span><span class="kw">if </span>block_events_len &lt; continuation_token {
-                continuation_token -= block_events_len;
-                index += block_events_len;
-                current_block += <span class="number">1</span>;
-                <span class="kw">continue</span>;
-            }
-
-            <span class="kw">let </span>block_events = block_events.into_iter().skip(continuation_token);
-            <span class="comment">// Kept in order to calculate continuation token.
-            </span><span class="kw">let </span>block_events_len = block_events_len - continuation_token;
-            <span class="kw">let </span>index_before_loop = index;
-
-            <span class="comment">// Iterate on block events.
-            </span><span class="kw">for </span>event <span class="kw">in </span>block_events {
-                <span class="kw">let </span>match_from_address = from_address.map_or(<span class="bool-val">true</span>, |add| add == event.from_address);
-                <span class="comment">// Based on https://github.com/starkware-libs/papyrus
-                </span><span class="kw">let </span>match_keys = keys
-                    .iter()
-                    .enumerate()
-                    .all(|(i, keys)| event.keys.len() &gt; i &amp;&amp; (keys.is_empty() || keys.contains(<span class="kw-2">&amp;</span>event.keys[i].into())));
-
-                <span class="kw">if </span>match_from_address &amp;&amp; match_keys {
-                    filtered_events.push(EmittedEvent {
-                        from_address: event.from_address.into(),
-                        keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
-                        data: event.data.clone().into_iter().map(|data| data.into()).collect(),
-                        block_hash,
-                        block_number,
-                        transaction_hash: event.transaction_hash.into(),
-                    });
-                }
-                index += <span class="number">1</span>;
-                <span class="kw">if </span>filtered_events.len() == chunk_size <span class="kw">as </span>usize {
-                    <span class="kw">let </span>token =
-                        <span class="kw">if </span>index - index_before_loop &lt; block_events_len { <span class="prelude-val">Some</span>((index).to_string()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(EventsPage { events: filtered_events, continuation_token: token });
-                }
-            }
-            current_block += <span class="number">1</span>;
-            continuation_token = <span class="number">0</span>;
-        }
-        <span class="prelude-val">Ok</span>(EventsPage { events: filtered_events, continuation_token: <span class="prelude-val">None </span>})
     }
 }
 
