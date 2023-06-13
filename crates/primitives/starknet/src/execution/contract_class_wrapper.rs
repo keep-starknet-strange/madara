@@ -20,18 +20,24 @@ use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
 use crate::scale_info::build::Fields;
 use crate::scale_info::{Path, Type, TypeInfo};
 
-/// Helper function to deserialize from [&[u8]] to [ProgramWrapper]. This function uses the
-/// [Deserialize] function from [ProgramJson]
-pub fn deserialize_program_wrapper<'de, D: Deserializer<'de>>(deserializer: D) -> Result<ProgramWrapper, D::Error> {
-    ProgramJson::deserialize(deserializer)?
-        .try_into()
-        .map_err(|e| de::Error::custom(format!("couldn't convert programjson to program wrapper {e:}")))
+impl Serialize for ProgramWrapper {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let program_json: ProgramJson = self.clone().into();
+        program_json.serialize(serializer)
+    }
 }
-/// Helper function to serialize a [ProgramWrapper]. This function uses the [Serialize] function
-/// from [ProgramJson]
-fn serialize_program_wrapper<S: Serializer>(v: &ProgramWrapper, serializer: S) -> Result<S::Ok, S::Error> {
-    let v: ProgramJson = v.clone().into();
-    v.serialize(serializer)
+impl<'de> Deserialize<'de> for ProgramWrapper {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        ProgramJson::deserialize(deserializer)?
+            .try_into()
+            .map_err(|e| de::Error::custom(format!("couldn't convert programjson to program wrapper {e:}")))
+    }
 }
 
 /// [ContractClass] type equivalent. This is not really a wrapper it's more of a copy where we
@@ -41,14 +47,15 @@ fn serialize_program_wrapper<S: Serializer>(v: &ProgramWrapper, serializer: S) -
 pub struct ContractClassWrapper {
     /// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
     /// we implement the necessary traits.)
-    #[cfg_attr(
-        feature = "std",
-        serde(deserialize_with = "deserialize_program_wrapper", serialize_with = "serialize_program_wrapper")
-    )]
     pub program: ProgramWrapper,
     /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
     /// copy of the type but we implement the necessary traits.)
     pub entry_points_by_type: EntrypointMapWrapper,
+}
+
+impl ContractClassWrapper {
+    // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
+    const MAX_CONTRACT_BYTE_SIZE: usize = 20971520;
 }
 
 impl From<ContractClassWrapper> for ContractClass {
@@ -82,7 +89,7 @@ impl From<ContractClass> for ContractClassWrapper {
 impl MaxEncodedLen for ContractClassWrapper {
     fn max_encoded_len() -> usize {
         // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
-        20971520
+        Self::MAX_CONTRACT_BYTE_SIZE
     }
 }
 
