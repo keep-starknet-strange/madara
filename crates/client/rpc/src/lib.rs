@@ -27,6 +27,7 @@ use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
+use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
@@ -47,11 +48,12 @@ use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
-pub struct Starknet<B: BlockT, BE, C, P, H> {
+pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
     client: Arc<C>,
     backend: Arc<mc_db::Backend<B>>,
     overrides: Arc<OverrideHandle<B>>,
     pool: Arc<P>,
+    graph: Arc<Pool<A>>,
     sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
     hasher: Arc<H>,
@@ -69,21 +71,23 @@ pub struct Starknet<B: BlockT, BE, C, P, H> {
 //
 // # Returns
 // * `Self` - The actual Starknet struct
-impl<B: BlockT, BE, C, P, H> Starknet<B, BE, C, P, H> {
+#[allow(clippy::too_many_arguments)]
+impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
     pub fn new(
         client: Arc<C>,
         backend: Arc<mc_db::Backend<B>>,
         overrides: Arc<OverrideHandle<B>>,
         pool: Arc<P>,
+        graph: Arc<Pool<A>>,
         sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
         hasher: Arc<H>,
     ) -> Self {
-        Self { client, backend, overrides, pool, sync_service, starting_block, hasher, _marker: PhantomData }
+        Self { client, backend, overrides, pool, graph, sync_service, starting_block, hasher, _marker: PhantomData }
     }
 }
 
-impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
+impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + 'static,
@@ -93,7 +97,7 @@ where
     }
 }
 
-impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
+impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
@@ -157,8 +161,9 @@ const TX_SOURCE: TransactionSource = TransactionSource::External;
 
 #[async_trait]
 #[allow(unused_variables)]
-impl<B, BE, C, P, H> StarknetRpcApiServer for Starknet<B, BE, C, P, H>
+impl<A, B, BE, C, P, H> StarknetRpcApiServer for Starknet<A, B, BE, C, P, H>
 where
+    A: ChainApi<Block = B> + 'static,
     B: BlockT,
     P: TransactionPool<Block = B> + 'static,
     BE: Backend<B> + 'static,
@@ -633,8 +638,16 @@ where
     async fn pending_transactions(&self) -> RpcResult<Vec<Transaction>> {
         let substrate_block_hash = self.client.info().best_hash;
 
-        let transactions: Vec<<B as BlockT>::Extrinsic> =
-            self.pool.ready().map(|tx| tx.data().clone()).collect::<Vec<<B as BlockT>::Extrinsic>>();
+        let mut transactions = vec![];
+
+        let mut transactions_ready: Vec<<B as BlockT>::Extrinsic> =
+            self.graph.validated_pool().ready().map(|tx| tx.data().clone()).collect();
+
+        let mut transactions_future: Vec<<B as BlockT>::Extrinsic> =
+            self.graph.validated_pool().futures().into_iter().map(|tx| tx.1).collect();
+
+        transactions.append(&mut transactions_ready);
+        transactions.append(&mut transactions_future);
 
         let api = self.client.runtime_api();
 
