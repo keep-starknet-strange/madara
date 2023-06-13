@@ -363,11 +363,11 @@
             runner.sync_run(|config| cmd.run::&lt;Block&gt;(<span class="kw-2">&amp;</span>config))
         }
         <span class="prelude-val">None </span>=&gt; {
-            <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
-            cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara/p2p-key.ed25519&quot;</span>).into());
-            cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara&quot;</span>).into());
             <span class="kw">if </span>cli.run.testnet.is_some() {
+                <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                    <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara/p2p-key.ed25519&quot;</span>).into());
+                cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara&quot;</span>).into());
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(Testnet::Sharingan) = cli.run.testnet {
                     cli.run.run_cmd.shared_params.chain =
                         <span class="prelude-val">Some</span>(home_path + <span class="string">&quot;/.madara/chain-specs/testnet-sharingan-raw.json&quot;</span>);

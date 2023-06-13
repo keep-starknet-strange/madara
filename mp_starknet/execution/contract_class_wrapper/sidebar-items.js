@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ContractClassFromWrapperError"],"struct":["ContractClassWrapper"]};
+window.SIDEBAR_ITEMS = {"struct":["ContractClassWrapper","EntrypointMapWrapper","ProgramWrapper"]};

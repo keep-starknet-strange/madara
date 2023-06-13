@@ -129,16 +129,8 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
-<a href="#132" id="132">132</a>
-<a href="#133" id="133">133</a>
-<a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
-<a href="#137" id="137">137</a>
-<a href="#138" id="138">138</a>
-<a href="#139" id="139">139</a>
-<a href="#140" id="140">140</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_core::ConstU32;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
 <span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
@@ -149,6 +141,7 @@
 <span class="kw">use </span>starknet_ff::{FieldElement, FromByteArrayError};
 <span class="kw">use </span>thiserror_no_std::Error;
 
+<span class="kw">use </span><span class="kw">crate</span>::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
 <span class="doccomment">/// Max number of entrypoints.
 </span><span class="kw">pub type </span>MaxEntryPoints = ConstU32&lt;<span class="number">4294967295</span>&gt;;
 
@@ -157,25 +150,19 @@
 
 <span class="doccomment">/// Enum that represents all the entrypoints types.
 </span><span class="attr">#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-    PartialOrd,
-    Ord,
-    Hash,
+    Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, MaxEncodedLen, PartialOrd, Ord, Hash,
 )]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(Serialize, Deserialize))]
 </span><span class="kw">pub enum </span>EntryPointTypeWrapper {
-    <span class="doccomment">/// Constructor.
+    <span class="doccomment">/// A constructor entry point.
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, serde(rename = <span class="string">&quot;CONSTRUCTOR&quot;</span>))]
     </span>Constructor,
-    <span class="doccomment">/// External.
+    <span class="doccomment">/// An external entry point.
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, serde(rename = <span class="string">&quot;EXTERNAL&quot;</span>))]
+    #[default]
     </span>External,
-    <span class="doccomment">/// L1 Handler.
+    <span class="doccomment">/// An L1 handler entry point.
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, serde(rename = <span class="string">&quot;L1_HANDLER&quot;</span>))]
     </span>L1Handler,
 }
 
@@ -201,31 +188,29 @@
 }
 
 <span class="doccomment">/// Representation of a Starknet Entry Point.
-</span><span class="attr">#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-    PartialOrd,
-    Ord,
-)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
-</span><span class="kw">pub struct </span>EntryPointWrapper {
-    <span class="doccomment">/// The entrypoint offset
-    </span><span class="kw">pub </span>offset: u128,
-    <span class="doccomment">/// The entrypoint selector
-    </span><span class="kw">pub </span>selector: [u8; <span class="number">32</span>],
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(Serialize, Deserialize))]
+</span><span class="kw">pub struct </span>EntryPointWrapper(EntryPoint);
+<span class="doccomment">/// SCALE trait.
+</span><span class="kw">impl </span>Encode <span class="kw">for </span>EntryPointWrapper {
+    <span class="kw">fn </span>encode_to&lt;T: Output + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, dest: <span class="kw-2">&amp;mut </span>T) {
+        dest.write(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.selector.<span class="number">0.0</span>);
+        dest.write(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>.offset.<span class="number">0</span>.to_be_bytes());
+    }
 }
+<span class="doccomment">/// SCALE trait.
+</span><span class="kw">impl </span>Decode <span class="kw">for </span>EntryPointWrapper {
+    <span class="kw">fn </span>decode&lt;I: Input&gt;(input: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>selector = [<span class="number">0u8</span>; <span class="number">32</span>];
+        <span class="comment">// Use this because usize can be of different byte size.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>offset = [<span class="number">0u8</span>; core::mem::size_of::&lt;usize&gt;()];
+        input.read(<span class="kw-2">&amp;mut </span>selector)<span class="question-mark">?</span>;
+        input.read(<span class="kw-2">&amp;mut </span>offset)<span class="question-mark">?</span>;
 
-<span class="comment">// Regular implementation.
-</span><span class="kw">impl </span>EntryPointWrapper {
-    <span class="doccomment">/// Creates a new instance of an entrypoint.
-    </span><span class="kw">pub fn </span>new(selector: [u8; <span class="number">32</span>], offset: u128) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ selector, offset }
+        <span class="prelude-val">Ok</span>(EntryPointWrapper(EntryPoint {
+            selector: EntryPointSelector(StarkFelt(selector)),
+            offset: EntryPointOffset(usize::from_be_bytes(offset)),
+        }))
     }
 }
 
@@ -233,25 +218,22 @@
 
 </span><span class="kw">impl </span>From&lt;EntryPoint&gt; <span class="kw">for </span>EntryPointWrapper {
     <span class="kw">fn </span>from(entry_point: EntryPoint) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ selector: entry_point.selector.<span class="number">0.0</span>, offset: entry_point.offset.<span class="number">0 </span><span class="kw">as </span>u128 }
+        <span class="self">Self</span>(entry_point)
     }
 }
 
 <span class="kw">impl </span>From&lt;EntryPointWrapper&gt; <span class="kw">for </span>EntryPoint {
     <span class="kw">fn </span>from(entry_point: EntryPointWrapper) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            selector: EntryPointSelector(StarkFelt(entry_point.selector)),
-            offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
-        }
-    }
+        entry_point.<span class="number">0
+    </span>}
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">impl </span>From&lt;LegacyContractEntryPoint&gt; <span class="kw">for </span>EntryPointWrapper {
     <span class="kw">fn </span>from(value: LegacyContractEntryPoint) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>selector = value.selector.to_bytes_be();
-        <span class="kw">let </span>offset = value.offset.into();
-        <span class="self">Self </span>{ selector, offset }
+        <span class="kw">let </span>selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
+        <span class="kw">let </span>offset = EntryPointOffset(value.offset <span class="kw">as </span>usize);
+        <span class="self">Self</span>(EntryPoint { selector, offset })
     }
 }
 
@@ -259,8 +241,8 @@
 </span><span class="kw">impl </span>TryFrom&lt;EntryPointWrapper&gt; <span class="kw">for </span>LegacyContractEntryPoint {
     <span class="kw">type </span>Error = FromByteArrayError;
     <span class="kw">fn </span>try_from(value: EntryPointWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>selector = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>value.selector)<span class="question-mark">?</span>;
-        <span class="kw">let </span>offset = value.offset <span class="kw">as </span>u64;
+        <span class="kw">let </span>selector = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>value.<span class="number">0</span>.selector.<span class="number">0.0</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>offset = value.<span class="number">0</span>.offset.<span class="number">0 </span><span class="kw">as </span>u64;
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ selector, offset })
     }
 }

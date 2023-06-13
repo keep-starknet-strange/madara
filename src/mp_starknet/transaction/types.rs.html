@@ -934,7 +934,7 @@
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Deserialize))]
 </span><span class="kw">pub struct </span>DeclareTransaction {
     <span class="doccomment">/// Transaction version.
     </span><span class="kw">pub </span>version: u8,
@@ -1159,7 +1159,7 @@
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Deserialize))]
 </span><span class="kw">pub struct </span>Transaction {
     <span class="doccomment">/// The type of the transaction.
     </span><span class="kw">pub </span>tx_type: TxType,

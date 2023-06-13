@@ -229,10 +229,7 @@
 <a href="#229" id="229">229</a>
 <a href="#230" id="230">230</a>
 <a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
+</pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
@@ -243,12 +240,12 @@
 <span class="kw">use </span>mp_digest_log::find_starknet_block;
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span>mp_starknet::execution::types::{
-    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
+    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, EntrypointMapWrapper, Felt252Wrapper,
 };
 <span class="kw">use </span>mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 <span class="kw">use </span>sp_api::HeaderT;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
-<span class="kw">use </span>sp_runtime::{BoundedBTreeMap, BoundedVec};
+<span class="kw">use </span>sp_runtime::BoundedVec;
 <span class="kw">use </span>starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
@@ -256,11 +253,10 @@
 };
 
 <span class="doccomment">/// Returns a `ContractClass` from a `ContractClassWrapper`
-</span><span class="kw">pub fn </span>to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
-    <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>_contract_class_wrapped.entry_points_by_type.into())<span class="question-mark">?</span>;
+</span><span class="kw">pub fn </span>to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
+    <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>contract_class_wrapped.entry_points_by_type)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>program: Program =
-        _contract_class_wrapped.program.try_into().map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;Contract Class conversion failed.&quot;</span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>program: Program = contract_class_wrapped.program.into();
     <span class="kw">let </span>compressed_program = compress_and_encode_base64(<span class="kw-2">&amp;</span>program.to_bytes())<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
@@ -398,11 +394,10 @@
                 max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
                 signature,
                 contract_class: ContractClassWrapper {
-                    program: program.try_into().map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;Failed to convert program to program wrapper&quot;</span>))<span class="question-mark">?</span>,
-                    entry_points_by_type: BoundedBTreeMap::try_from(to_btree_map_entrypoints(
+                    program: program.into(),
+                    entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
                         declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                    ))
-                    .unwrap(),
+                    )),
                 },
                 compiled_class_hash: Felt252Wrapper::ZERO, <span class="comment">// TODO: compute class hash
             </span>})
@@ -411,12 +406,10 @@
     }
 }
 
-<span class="doccomment">/// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
-</span><span class="kw">fn </span>to_btree_map_entrypoints(
-    entries: LegacyEntryPointsByType,
-) -&gt; BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type: BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt; =
-        BTreeMap::new();
+<span class="doccomment">/// Returns a [HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt;] from
+/// [LegacyEntryPointsByType]
+</span><span class="kw">fn </span>to_hash_map_entrypoints(entries: LegacyEntryPointsByType) -&gt; HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type = HashMap::default();
 
     entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, get_entrypoint_value(entries.constructor));
     entry_points_by_type.insert(EntryPointTypeWrapper::External, get_entrypoint_value(entries.external));
@@ -424,24 +417,26 @@
     entry_points_by_type
 }
 
-<span class="kw">fn </span>to_legacy_entry_points_by_type(
-    entries: <span class="kw-2">&amp;</span>BTreeMap&lt;EntryPointTypeWrapper, BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt;&gt;,
-) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
-    <span class="kw">let </span>constructor = entries
-        .get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::Constructor).ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing constructor entry point&quot;</span>))<span class="question-mark">? </span><span class="comment">// TODO: change to StarknetError
+<span class="doccomment">/// Returns a [Result&lt;LegacyEntryPointsByType&gt;] (blockifier type) from a [EntrypointMapWrapper]
+/// (internal type)
+</span><span class="kw">fn </span>to_legacy_entry_points_by_type(entries: <span class="kw-2">&amp;</span>EntrypointMapWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
+    <span class="kw">let </span>constructor = entries.<span class="number">0
+        </span>.get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::Constructor).ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing constructor entry point&quot;</span>))<span class="question-mark">? </span><span class="comment">// TODO: change to StarknetError
         </span>.iter()
         .map(|e| (e.clone()).try_into())
         .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>external = entries
-        .get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::External)
+        .<span class="number">0
+        </span>.get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::External)
         .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing external entry point&quot;</span>))<span class="question-mark">?
         </span>.iter()
         .map(|e| (e.clone()).try_into())
         .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>l1_handler = entries
-        .get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::L1Handler)
+        .<span class="number">0
+        </span>.get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::L1Handler)
         .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing l1 handler entry point&quot;</span>))<span class="question-mark">?
         </span>.iter()
         .map(|e| (e.clone()).try_into())
@@ -450,10 +445,9 @@
     <span class="prelude-val">Ok</span>(LegacyEntryPointsByType { constructor, external, l1_handler })
 }
 
-<span class="doccomment">/// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
-</span><span class="kw">fn </span>get_entrypoint_value(entries: Vec&lt;LegacyContractEntryPoint&gt;) -&gt; BoundedVec&lt;EntryPointWrapper, MaxEntryPoints&gt; {
-    <span class="comment">// We can unwrap safely as we already checked the length of the vectors
-    </span>BoundedVec::try_from(entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()).unwrap()
+<span class="doccomment">/// Returns a [Vec&lt;EntryPointWrapper&gt;] from a [Vec&lt;LegacyContractEntryPoint&gt;]
+</span><span class="kw">fn </span>get_entrypoint_value(entries: Vec&lt;LegacyContractEntryPoint&gt;) -&gt; Vec&lt;EntryPointWrapper&gt; {
+    entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
 }
 <span class="doccomment">/// Returns the current Starknet block from the block header&#39;s digest
 </span><span class="kw">pub fn </span>get_block_by_block_hash&lt;B, C&gt;(client: <span class="kw-2">&amp;</span>C, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash) -&gt; <span class="prelude-ty">Option</span>&lt;StarknetBlock&gt;
