@@ -122,6 +122,8 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
+    use starknet_crypto::FieldElement;
+
     use super::*;
 
     #[pallet::pallet]
@@ -753,26 +755,45 @@ pub mod pallet {
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
             match call {
                 Call::invoke { transaction } => {
+                    let nonce = Pallet::<T>::nonce(transaction.sender_address);
                     let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
                     Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
-                    ValidTransaction::with_tag_prefix("starknet")
+
+                    let mut tx = ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
                         .and_provides((transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
-                        .propagate(true)
-                        .build()
+                        .propagate(true);
+
+                    if Into::<U256>::into(transaction.nonce) > nonce {
+                        tx = tx.and_requires((
+                            transaction.sender_address,
+                            Felt252Wrapper(transaction.nonce.0 - FieldElement::ONE),
+                        ));
+                    }
+
+                    tx.build()
                 }
                 Call::declare { transaction } => {
+                    let nonce = Pallet::<T>::nonce(transaction.sender_address);
                     let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
                     Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
-                    ValidTransaction::with_tag_prefix("starknet")
+                    let mut tx = ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                         // This is a transaction identifier for substrate
                         .and_provides((transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
-                        .propagate(true)
-                        .build()
+                        .propagate(true);
+
+                    if Into::<U256>::into(transaction.nonce) > nonce {
+                        tx = tx.and_requires((
+                            transaction.sender_address,
+                            Felt252Wrapper(transaction.nonce.0 - FieldElement::ONE),
+                        ));
+                    }
+
+                    tx.build()
                 }
                 Call::deploy_account { transaction } => {
                     // don't validate deploy txs for now
@@ -789,7 +810,6 @@ pub mod pallet {
                         .propagate(true)
                         .build()
                 }
-                // Message consumptions don't go through an account contract so no need to identify them with an id.
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))

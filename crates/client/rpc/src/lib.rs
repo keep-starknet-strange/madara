@@ -644,7 +644,7 @@ where
             self.graph.validated_pool().ready().map(|tx| tx.data().clone()).collect();
 
         let mut transactions_future: Vec<<B as BlockT>::Extrinsic> =
-            self.graph.validated_pool().futures().into_iter().map(|tx| tx.1).collect();
+            self.graph.validated_pool().futures().into_iter().map(|(_hash, extrinsic)| extrinsic).collect();
 
         transactions.append(&mut transactions_ready);
         transactions.append(&mut transactions_future);
