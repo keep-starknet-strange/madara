@@ -85,12 +85,30 @@ fn build_test_case() -> Vec<TestCase<'static>> {
         },
         TestCase {
             _name: "filter events where filter_keys.len() > event.keys.len()",
-            events,
+            events: events.clone(),
             filter_keys: vec![vec![FieldElement::from(1_u32)], vec![], vec![], vec![]],
             filter_address: None,
             max_results: None,
             expected_events: vec![],
             expected_continuation_token: 5,
+        },
+        TestCase {
+            _name: "filter events without any filters",
+            events: events.clone(),
+            filter_keys: vec![],
+            filter_address: None,
+            max_results: None,
+            expected_events: events,
+            expected_continuation_token: 5,
+        },
+        TestCase {
+            _name: "filter events without any events",
+            events: vec![],
+            filter_keys: vec![vec![FieldElement::from(1_u32)], vec![], vec![], vec![]],
+            filter_address: None,
+            max_results: None,
+            expected_events: vec![],
+            expected_continuation_token: 0,
         },
     ]
 }
@@ -103,6 +121,8 @@ fn build_test_case() -> Vec<TestCase<'static>> {
 #[case::filter_max_results_not_met(build_test_case()[4].clone())]
 #[case::filter_keys_less_than_actual(build_test_case()[5].clone())]
 #[case::filter_keys_more_than_actual(build_test_case()[6].clone())]
+#[case::filter_with_no_filters(build_test_case()[7].clone())]
+#[case::filter_with_no_events(build_test_case()[8].clone())]
 fn filter_events_by_test_case(#[case] params: TestCase) {
     let (filtered_events, continuation_token) = filter_events_by_params(
         params.events.into_iter().skip(0),
