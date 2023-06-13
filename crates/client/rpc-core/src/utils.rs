@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
@@ -9,12 +9,12 @@ use frame_support::inherent::BlockT;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{
-    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, Felt252Wrapper, MaxEntryPoints,
+    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, EntrypointMapWrapper, Felt252Wrapper,
 };
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_api::HeaderT;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::{BoundedBTreeMap, BoundedVec};
+use sp_runtime::BoundedVec;
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
@@ -22,11 +22,10 @@ use starknet_core::types::{
 };
 
 /// Returns a `ContractClass` from a `ContractClassWrapper`
-pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
-    let entry_points_by_type = to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
+pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
+    let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class_wrapped.entry_points_by_type)?;
 
-    let program: Program =
-        _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
+    let program: Program = contract_class_wrapped.program.into();
     let compressed_program = compress_and_encode_base64(&program.to_bytes())?;
 
     Ok(ContractClass::Legacy(CompressedLegacyContractClass {
@@ -164,11 +163,10 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
                 max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
                 signature,
                 contract_class: ContractClassWrapper {
-                    program: program.try_into().map_err(|_| anyhow!("Failed to convert program to program wrapper"))?,
-                    entry_points_by_type: BoundedBTreeMap::try_from(to_btree_map_entrypoints(
+                    program: program.into(),
+                    entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
                         declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                    ))
-                    .unwrap(),
+                    )),
                 },
                 compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
             })
@@ -177,12 +175,10 @@ pub fn to_declare_tx(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransac
     }
 }
 
-/// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
-fn to_btree_map_entrypoints(
-    entries: LegacyEntryPointsByType,
-) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
-    let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
-        BTreeMap::new();
+/// Returns a [HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>] from
+/// [LegacyEntryPointsByType]
+fn to_hash_map_entrypoints(entries: LegacyEntryPointsByType) -> HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>> {
+    let mut entry_points_by_type = HashMap::default();
 
     entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, get_entrypoint_value(entries.constructor));
     entry_points_by_type.insert(EntryPointTypeWrapper::External, get_entrypoint_value(entries.external));
@@ -190,16 +186,17 @@ fn to_btree_map_entrypoints(
     entry_points_by_type
 }
 
-fn to_legacy_entry_points_by_type(
-    entries: &BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>>,
-) -> Result<LegacyEntryPointsByType> {
-    let constructor = entries
+/// Returns a [Result<LegacyEntryPointsByType>] (blockifier type) from a [EntrypointMapWrapper]
+/// (internal type)
+fn to_legacy_entry_points_by_type(entries: &EntrypointMapWrapper) -> Result<LegacyEntryPointsByType> {
+    let constructor = entries.0
         .get(&EntryPointTypeWrapper::Constructor).ok_or(anyhow!("Missing constructor entry point"))? // TODO: change to StarknetError
         .iter()
         .map(|e| (e.clone()).try_into())
         .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
 
     let external = entries
+        .0
         .get(&EntryPointTypeWrapper::External)
         .ok_or(anyhow!("Missing external entry point"))?
         .iter()
@@ -207,6 +204,7 @@ fn to_legacy_entry_points_by_type(
         .collect::<Result<Vec<LegacyContractEntryPoint>, FromByteArrayError>>()?;
 
     let l1_handler = entries
+        .0
         .get(&EntryPointTypeWrapper::L1Handler)
         .ok_or(anyhow!("Missing l1 handler entry point"))?
         .iter()
@@ -216,10 +214,9 @@ fn to_legacy_entry_points_by_type(
     Ok(LegacyEntryPointsByType { constructor, external, l1_handler })
 }
 
-/// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
-fn get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> BoundedVec<EntryPointWrapper, MaxEntryPoints> {
-    // We can unwrap safely as we already checked the length of the vectors
-    BoundedVec::try_from(entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()).unwrap()
+/// Returns a [Vec<EntryPointWrapper>] from a [Vec<LegacyContractEntryPoint>]
+fn get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> Vec<EntryPointWrapper> {
+    entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()
 }
 /// Returns the current Starknet block from the block header's digest
 pub fn get_block_by_block_hash<B, C>(client: &C, block_hash: <B as BlockT>::Hash) -> Option<StarknetBlock>

@@ -170,11 +170,11 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-            cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
-            cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
             if cli.run.testnet.is_some() {
+                let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                    Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
+                cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
                     cli.run.run_cmd.shared_params.chain =
                         Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
