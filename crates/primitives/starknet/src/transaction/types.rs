@@ -169,7 +169,7 @@ impl From<TxType> for TransactionType {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "std", derive(serde::Deserialize))]
 pub struct DeclareTransaction {
     /// Transaction version.
     pub version: u8,
@@ -394,7 +394,7 @@ impl InvokeTransaction {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "std", derive(serde::Deserialize))]
 pub struct Transaction {
     /// The type of the transaction.
     pub tx_type: TxType,
