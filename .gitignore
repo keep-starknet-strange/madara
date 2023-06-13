@@ -29,3 +29,6 @@ cairo_venv
 # emacs
 .dir-locals.el
 **/*.emacs
+
+#vs-code
+.vscode
