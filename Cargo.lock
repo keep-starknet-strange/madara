@@ -4703,7 +4703,6 @@ dependencies = [
 name = "mp-starknet"
 version = "0.1.0-alpha"
 dependencies = [
- "anyhow",
  "bitvec 0.17.4",
  "blockifier",
  "cairo-vm",

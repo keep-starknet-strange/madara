@@ -3,8 +3,6 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
-#[cfg(feature = "std")]
-use anyhow::{anyhow, Result};
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
@@ -15,7 +13,6 @@ use cairo_vm::types::program::Program;
 use flate2::read::GzDecoder;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
-use sp_runtime::BoundedBTreeMap;
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
@@ -41,10 +38,11 @@ use crate::crypto::commitment::{
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{
-    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, Felt252WrapperError,
+    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntrypointMapWrapper, Felt252Wrapper,
+    Felt252WrapperError,
 };
 #[cfg(feature = "std")]
-use crate::transaction::utils::to_btree_map_entrypoints;
+use crate::transaction::utils::to_hash_map_entrypoints;
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -119,6 +117,41 @@ pub enum TransactionValidationErrorWrapper {
 impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
     fn from(error: EntryPointExecutionError) -> Self {
         Self::TransactionValidationError(TransactionExecutionError::from(error))
+    }
+}
+
+/// Wrapper type for broadcasted transaction conversion errors.
+#[derive(Debug, Error)]
+pub enum BroadcastedTransactionConversionErrorWrapper {
+    /// Failed to decompress the contract class program
+    #[error("Failed to decompress the contract class program")]
+    ContractClassProgramDecompressionError,
+    /// Failed to deserialize the contract class program
+    #[error("Failed to deserialize the contract class program")]
+    ContractClassProgramDeserializationError,
+    /// Failed to convert signature
+    #[error("Failed to convert signature")]
+    SignatureConversionError,
+    /// Failed to convert calldata
+    #[error("Failed to convert calldata")]
+    CalldataConversionError,
+    /// Failed to convert program to program wrapper"
+    #[error("Failed to convert program to program wrapper")]
+    ProgramConversionError,
+    /// Failed to bound signatures Vec<H256> by MaxArraySize
+    #[error("failed to bound signatures Vec<H256> by MaxArraySize")]
+    SignatureBoundError,
+    /// Failed to bound calldata Vec<U256> by MaxCalldataSize
+    #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
+    CalldataBoundError,
+    /// Starknet Error
+    #[error(transparent)]
+    StarknetError(StarknetError),
+}
+
+impl From<StarknetError> for BroadcastedTransactionConversionErrorWrapper {
+    fn from(error: StarknetError) -> Self {
+        BroadcastedTransactionConversionErrorWrapper::StarknetError(error)
     }
 }
 
@@ -221,10 +254,9 @@ impl DeclareTransaction {
     }
 }
 
-#[cfg(feature = "std")]
 impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
-    type Error = anyhow::Error;
-    fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction> {
+    type Error = BroadcastedTransactionConversionErrorWrapper;
+    fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
         match tx {
             BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
                 let signature = declare_tx_v1
@@ -233,19 +265,21 @@ impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
                     .map(|f| (*f).into())
                     .collect::<Vec<Felt252Wrapper>>()
                     .try_into()
-                    .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
+                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
 
                 // Create a GzipDecoder to decompress the bytes
                 let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
 
                 // Read the decompressed bytes into a Vec<u8>
                 let mut decompressed_bytes = Vec::new();
-                std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
-                    .map_err(|_| anyhow!("Failed to decompress the contract class program"))?;
+                std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).map_err(|_| {
+                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
+                })?;
 
                 // Deserialize it then
-                let program: Program = Program::from_bytes(&decompressed_bytes, None)
-                    .map_err(|_| anyhow!("Failed to deserialize the contract class program"))?;
+                let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
+                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
+                })?;
 
                 Ok(DeclareTransaction {
                     version: 1_u8,
@@ -256,11 +290,10 @@ impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
                     contract_class: ContractClassWrapper {
                         program: program
                             .try_into()
-                            .map_err(|_| anyhow!("Failed to convert program to program wrapper"))?,
-                        entry_points_by_type: BoundedBTreeMap::try_from(to_btree_map_entrypoints(
+                            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
+                        entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
                             declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        ))
-                        .unwrap(),
+                        )),
                     },
                     compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
                 })
@@ -441,10 +474,9 @@ impl InvokeTransaction {
     }
 }
 
-#[cfg(feature = "std")]
 impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
-    type Error = anyhow::Error;
-    fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction> {
+    type Error = BroadcastedTransactionConversionErrorWrapper;
+    fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
         match tx {
             BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
             BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
@@ -452,14 +484,14 @@ impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
                 signature: BoundedVec::try_from(
                     invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                 )
-                .map_err(|e| anyhow!("failed to convert signature: {:?}", e))?,
+                .map_err(|e| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
 
                 sender_address: invoke_tx_v1.sender_address.into(),
                 nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
                 calldata: BoundedVec::try_from(
                     invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                 )
-                .map_err(|e| anyhow!("failed to convert calldata: {:?}", e))?,
+                .map_err(|e| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
                 max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
             }),
         }
@@ -518,10 +550,9 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
     }
 }
 
-#[cfg(feature = "std")]
 impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
-    type Error = anyhow::Error;
-    fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction> {
+    type Error = BroadcastedTransactionConversionErrorWrapper;
+    fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction, Self::Error> {
         let contract_address_salt = tx.contract_address_salt.into();
 
         let account_class_hash = tx.class_hash;
@@ -532,7 +563,7 @@ impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
             .map(|f| (*f).into())
             .collect::<Vec<Felt252Wrapper>>()
             .try_into()
-            .map_err(|_| anyhow!("failed to bound signatures Vec<H256> by MaxArraySize"))?;
+            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
 
         let calldata = tx
             .constructor_calldata
@@ -540,7 +571,7 @@ impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
             .map(|f| (*f).into())
             .collect::<Vec<Felt252Wrapper>>()
             .try_into()
-            .map_err(|_| anyhow!("failed to bound calldata Vec<U256> by MaxCalldataSize"))?;
+            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
 
         let nonce = Felt252Wrapper::from(tx.nonce);
         let max_fee = Felt252Wrapper::from(tx.max_fee);

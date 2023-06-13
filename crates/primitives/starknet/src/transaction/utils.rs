@@ -1,19 +1,18 @@
-use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
-
-use frame_support::BoundedVec;
 #[cfg(feature = "std")]
+use std::collections::HashMap;
+
 use starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
 
-use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper, MaxEntryPoints};
+use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};
 
-/// Returns a btree map of entry point types to entrypoint from deprecated entry point by type
+/// Returns a [HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>] from
+/// [LegacyEntryPointsByType]
 #[cfg(feature = "std")]
-pub fn to_btree_map_entrypoints(
+pub fn to_hash_map_entrypoints(
     entries: LegacyEntryPointsByType,
-) -> BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> {
-    let mut entry_points_by_type: BTreeMap<EntryPointTypeWrapper, BoundedVec<EntryPointWrapper, MaxEntryPoints>> =
-        BTreeMap::new();
+) -> HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>> {
+    let mut entry_points_by_type = HashMap::default();
 
     entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, get_entrypoint_value(entries.constructor));
     entry_points_by_type.insert(EntryPointTypeWrapper::External, get_entrypoint_value(entries.external));
@@ -21,9 +20,8 @@ pub fn to_btree_map_entrypoints(
     entry_points_by_type
 }
 
-/// Returns a bounded vector of `EntryPointWrapper` from a vector of LegacyContractEntryPoint
+/// Returns a [Vec<EntryPointWrapper>] from a [Vec<LegacyContractEntryPoint>]
 #[cfg(feature = "std")]
-fn get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> BoundedVec<EntryPointWrapper, MaxEntryPoints> {
-    // We can unwrap safely as we already checked the length of the vectors
-    BoundedVec::try_from(entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()).unwrap()
+fn get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> Vec<EntryPointWrapper> {
+    entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::<Vec<_>>()
 }

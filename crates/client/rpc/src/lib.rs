@@ -14,9 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{
-    get_block_by_block_hash, to_rpc_contract_class, to_tx,
-};
+use mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
