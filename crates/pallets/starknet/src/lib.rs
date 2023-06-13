@@ -71,7 +71,7 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
-use frame_support::traits::UnixTime;
+use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
@@ -139,7 +139,7 @@ pub mod pallet {
         /// The hashing function to use.
         type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         /// The time idk what.
-        type TimestampProvider: UnixTime;
+        type TimestampProvider: Time;
         /// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -902,14 +902,15 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    /// Get the current block timestamp.
+    /// Get the current block timestamp in seconds.
     ///
     /// # Returns
     ///
-    /// The current block timestamp.
+    /// The current block timestamp in seconds.
     #[inline(always)]
     pub fn block_timestamp() -> u64 {
-        T::TimestampProvider::now().as_secs()
+        let timestamp_in_millisecond: u64 = T::TimestampProvider::now().unique_saturated_into();
+        timestamp_in_millisecond / 1000
     }
 
     /// Get the number of transactions in the block.
