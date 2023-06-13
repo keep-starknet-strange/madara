@@ -71,13 +71,13 @@ fn sync_genesis_block<B: BlockT, C, H>(
     hasher: &H,
 ) -> Result<(), String>
 where
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C: HeaderBackend<B>,
+    B: BlockT,
     H: HasherT + ThreadSafeCopy,
 {
     let substrate_block_hash = header.hash();
 
-    let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
+    let block = get_block_by_block_hash(client, substrate_block_hash).ok_or("Block not found")?;
     let block_hash = block.header().hash(*hasher);
     let mapping_commitment = mc_db::MappingCommitment::<B> {
         block_hash: substrate_block_hash,

@@ -20,10 +20,6 @@ use crate::types::NonceWrapper;
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
-        /// Returns the current block hash.
-        fn current_block_hash() -> Felt252Wrapper;
-        /// Returns the current block.
-        fn current_block() -> mp_starknet::block::Block;
         /// Returns the nonce associated with the given address in the given block
         fn nonce(contract_address: ContractAddressWrapper) -> NonceWrapper;
         /// Returns the events associated with the given block
