@@ -711,7 +711,7 @@ describeDevMadara("Starknet RPC", (context) => {
       await account.declare(
         {
           classHash:
-            "0x92d5e5e82d6eaaef47a8ba076f0ea0989d2c5aeb84d74d8ade33fe773cbf67",
+            "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
           contract: ERC20_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
@@ -719,11 +719,8 @@ describeDevMadara("Starknet RPC", (context) => {
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
-      const contractClassExpected: RPC.ContractClass = JSON.parse(
-        ERC20_CONTRACT
-      ) as RPC.ContractClass;
       const contractClassActual = await providerRPC.getClass(
-        "0x92d5e5e82d6eaaef47a8ba076f0ea0989d2c5aeb84d74d8ade33fe773cbf67",
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
         "latest"
       );
       // TODO compare the program as well
