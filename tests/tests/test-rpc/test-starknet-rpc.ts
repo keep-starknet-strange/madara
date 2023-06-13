@@ -868,7 +868,7 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should return transactions from the ready and future queues", async function () {
-      const transactionOffset = 1_000;
+      const transactionNonceOffset = 1_000;
       // ready transaction
       await rpcTransfer(
         providerRPC,
@@ -877,10 +877,10 @@ describeDevMadara("Starknet RPC", (context) => {
         MINT_AMOUNT
       );
       // future transaction
-      // add a high number to the nonce to make sure the transaction is not ready
+      // add a high number to the nonce to make sure the transaction is added to the future queue
       await rpcTransfer(
         providerRPC,
-        { value: ARGENT_CONTRACT_NONCE.value + transactionOffset },
+        { value: ARGENT_CONTRACT_NONCE.value + transactionNonceOffset },
         ARGENT_CONTRACT_ADDRESS,
         MINT_AMOUNT
       );
@@ -902,7 +902,7 @@ describeDevMadara("Starknet RPC", (context) => {
       });
       expect(txs[1]).to.include({
         type: "INVOKE",
-        nonce: toHex(ARGENT_CONTRACT_NONCE.value + transactionOffset),
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value + transactionNonceOffset),
       });
 
       await jumpBlocks(context, 10);
