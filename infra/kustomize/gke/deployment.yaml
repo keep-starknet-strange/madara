@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sharingan
+  name: sharingan
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sharingan
+  template:
+    metadata:
+      labels:
+        app: sharingan
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: sharingan
+          image: ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4
+          imagePullPolicy: Always
+          args:
+            - --bootnodes=/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE
+            - --chain=/chain-specs/testnet-sharingan-raw.json
+            - --name=sharingan-sequencer-cartridge
+            - --charlie
+            - --validator
+            - --force-authoring
+            - --rpc-cors=all
+            - --rpc-external
+            - --rpc-methods=unsafe
+          env:
+            - name: CARGO_HOME
+              value: /var/www/madara/.cargo
+          ports:
+            - containerPort: 9933
+              name: http-rpc
+              protocol: TCP
+            - containerPort: 9944
+              name: http-ws
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/ssl
+              name: ssl
+            - name: sharingan-data
+              mountPath: /chain-data
+          resources:
+            requests:
+              memory: 64Gi
+              cpu: "10"
+        - name: sharingan-proxy
+          image: gcr.io/c7e-prod/nginx-reverse:v0.0.15
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+      serviceAccountName: default
+      volumes:
+        - hostPath:
+            path: /etc/ssl
+          name: ssl
+        - name: sharingan-data
+          persistentVolumeClaim:
+            claimName: sharingan-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sharingan-data
+spec:
+  storageClassName: premium-rwo
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
