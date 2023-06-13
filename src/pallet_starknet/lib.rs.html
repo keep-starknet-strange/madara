@@ -1128,6 +1128,7 @@
 <a href="#1128" id="1128">1128</a>
 <a href="#1129" id="1129">1129</a>
 <a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1201,7 +1202,7 @@
 <span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 <span class="kw">use </span>blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
-<span class="kw">use </span>frame_support::traits::UnixTime;
+<span class="kw">use </span>frame_support::traits::Time;
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
 <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
@@ -1269,7 +1270,7 @@
         <span class="doccomment">/// The hashing function to use.
         </span><span class="kw">type </span>SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         <span class="doccomment">/// The time idk what.
-        </span><span class="kw">type </span>TimestampProvider: UnixTime;
+        </span><span class="kw">type </span>TimestampProvider: Time;
         <span class="doccomment">/// A configuration for base priority of unsigned transactions.
         ///
         /// This is exposed so that it can be tuned for particular runtime, when
@@ -2032,15 +2033,16 @@
         }
     }
 
-    <span class="doccomment">/// Get the current block timestamp.
+    <span class="doccomment">/// Get the current block timestamp in seconds.
     ///
     /// # Returns
     ///
-    /// The current block timestamp.
+    /// The current block timestamp in seconds.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>block_timestamp() -&gt; u64 {
-        T::TimestampProvider::now().as_secs()
-    }
+        <span class="kw">let </span>timestamp_in_millisecond: u64 = T::TimestampProvider::now().unique_saturated_into();
+        timestamp_in_millisecond / <span class="number">1000
+    </span>}
 
     <span class="doccomment">/// Get the number of transactions in the block.
     </span><span class="attr">#[inline(always)]
