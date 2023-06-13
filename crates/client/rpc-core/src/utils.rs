@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
@@ -7,13 +5,13 @@ use cairo_vm::types::program::Program;
 use frame_support::inherent::BlockT;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::types::{
-    ContractClassWrapper, EntryPointTypeWrapper, EntryPointWrapper, EntrypointMapWrapper, Felt252Wrapper,
+use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper};
+use mp_starknet::transaction::types::{
+    BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
+    Transaction,
 };
-use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_api::HeaderT;
 use sp_blockchain::HeaderBackend;
-use sp_runtime::BoundedVec;
 use starknet_core::types::{
     BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
     LegacyEntryPointsByType,
@@ -61,7 +59,10 @@ pub(crate) fn encode_base64(data: &[u8]) -> String {
 /// # Returns
 ///
 /// * `Transaction` - The converted transaction
-pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transaction> {
+pub fn to_tx(
+    request: BroadcastedTransaction,
+    chain_id: &str,
+) -> Result<Transaction, BroadcastedTransactionConversionErrorWrapper> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => {
             InvokeTransaction::try_from(invoke_tx).map(|inner| inner.from_invoke(chain_id))
@@ -70,8 +71,11 @@ pub fn to_tx(request: BroadcastedTransaction, chain_id: &str) -> Result<Transact
             DeclareTransaction::try_from(declare_tx).map(|inner| inner.from_declare(chain_id))
         }
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            DeployAccountTransaction::try_from(deploy_account_tx)
-                .and_then(|inner| inner.from_deploy(chain_id).map_err(|e| anyhow!(e)))
+            DeployAccountTransaction::try_from(deploy_account_tx).and_then(|inner| {
+                inner
+                    .from_deploy(chain_id)
+                    .map_err(BroadcastedTransactionConversionErrorWrapper::TransactionConversionError)
+            })
         }
     }
 }

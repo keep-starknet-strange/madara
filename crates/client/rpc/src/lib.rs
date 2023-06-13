@@ -453,7 +453,10 @@ where
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
-        let invoke_tx = InvokeTransaction::try_from(invoke_transaction)?;
+        let invoke_tx = InvokeTransaction::try_from(invoke_transaction).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
         let chain_id =
             Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
@@ -557,7 +560,10 @@ where
         let chain_id =
             Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-        let tx = to_tx(request, &chain_id)?;
+        let tx = to_tx(request, &chain_id).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
         let (actual_fee, gas_usage) = self
             .client
             .runtime_api()

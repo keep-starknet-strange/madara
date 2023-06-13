@@ -2,6 +2,7 @@ use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use std::collections::HashMap;
 
+#[cfg(feature = "std")]
 use starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
 
 use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};

@@ -121,6 +121,7 @@ impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
 }
 
 /// Wrapper type for broadcasted transaction conversion errors.
+#[cfg(feature = "std")]
 #[derive(Debug, Error)]
 pub enum BroadcastedTransactionConversionErrorWrapper {
     /// Failed to decompress the contract class program
@@ -146,13 +147,10 @@ pub enum BroadcastedTransactionConversionErrorWrapper {
     CalldataBoundError,
     /// Starknet Error
     #[error(transparent)]
-    StarknetError(StarknetError),
-}
-
-impl From<StarknetError> for BroadcastedTransactionConversionErrorWrapper {
-    fn from(error: StarknetError) -> Self {
-        BroadcastedTransactionConversionErrorWrapper::StarknetError(error)
-    }
+    StarknetError(#[from] StarknetError),
+    /// Failed to convert transaction
+    #[error(transparent)]
+    TransactionConversionError(#[from] TransactionConversionError),
 }
 
 /// Different tx types.
@@ -254,6 +252,7 @@ impl DeclareTransaction {
     }
 }
 
+#[cfg(feature = "std")]
 impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
     type Error = BroadcastedTransactionConversionErrorWrapper;
     fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
@@ -474,6 +473,7 @@ impl InvokeTransaction {
     }
 }
 
+#[cfg(feature = "std")]
 impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
     type Error = BroadcastedTransactionConversionErrorWrapper;
     fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
@@ -484,14 +484,14 @@ impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
                 signature: BoundedVec::try_from(
                     invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                 )
-                .map_err(|e| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
 
                 sender_address: invoke_tx_v1.sender_address.into(),
                 nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
                 calldata: BoundedVec::try_from(
                     invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                 )
-                .map_err(|e| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
                 max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
             }),
         }
@@ -550,6 +550,7 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
     }
 }
 
+#[cfg(feature = "std")]
 impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
     type Error = BroadcastedTransactionConversionErrorWrapper;
     fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction, Self::Error> {
