@@ -27,23 +27,24 @@ use madara_runtime as runtime;
 use runtime::{AccountId, Balance, BalancesCall, SystemCall};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
+use sc_executor::NativeElseWasmExecutor;
 use sp_core::{Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::{OpaqueExtrinsic, SaturatedConversion};
 
-use crate::service::FullClient;
+use crate::service::{ExecutorDispatch, FullClient};
 
 /// Generates extrinsics for the `benchmark overhead` command.
 ///
 /// Note: Should only be used for benchmarking.
 pub struct RemarkBuilder {
-    client: Arc<FullClient>,
+    client: Arc<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>,
 }
 
 impl RemarkBuilder {
     /// Creates a new [`Self`] from the given client.
-    pub fn new(client: Arc<FullClient>) -> Self {
+    pub fn new(client: Arc<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>) -> Self {
         Self { client }
     }
 }
@@ -71,14 +72,18 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
 ///
 /// Note: Should only be used for benchmarking.
 pub struct TransferKeepAliveBuilder {
-    client: Arc<FullClient>,
+    client: Arc<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>,
     dest: AccountId,
     value: Balance,
 }
 
 impl TransferKeepAliveBuilder {
     /// Creates a new [`Self`] from the given client.
-    pub fn new(client: Arc<FullClient>, dest: AccountId, value: Balance) -> Self {
+    pub fn new(
+        client: Arc<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>,
+        dest: AccountId,
+        value: Balance,
+    ) -> Self {
         Self { client, dest, value }
     }
 }
@@ -110,7 +115,7 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
 ///
 /// Note: Should only be used for benchmarking.
 pub fn create_benchmark_extrinsic(
-    client: &FullClient,
+    client: &FullClient<NativeElseWasmExecutor<ExecutorDispatch>>,
     sender: sp_core::sr25519::Pair,
     call: runtime::RuntimeCall,
     nonce: u32,

@@ -1,11 +1,13 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
+use sc_client_api::HeaderBackend;
 use sp_keyring::Sr25519Keyring;
+use sp_runtime::generic::Era;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, service};
+use crate::{chain_spec, rpc, service};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -177,6 +179,79 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(cmd)?;
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
+        Some(Subcommand::Simnode(cmd)) => {
+            let runner = cli.create_runner(&cmd.run.normalize())?;
+            let config = runner.config();
+            // here we use simnode's custom executor
+            let executor = sc_simnode::Executor::new(
+                config.wasm_method,
+                config.default_heap_pages,
+                config.max_runtime_instances,
+                None,
+                config.runtime_cache_size,
+            );
+            // pass the custom executor along
+            let components = service::new_partial::<_, _>(config, service::build_aura_grandpa_import_queue, executor)?;
+
+            let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+
+            let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
+                sc_service::build_network(sc_service::BuildNetworkParams {
+                    config: &config,
+                    net_config,
+                    client: components.client.clone(),
+                    transaction_pool: components.transaction_pool.clone(),
+                    spawn_handle: components.task_manager.spawn_handle(),
+                    import_queue: components.import_queue,
+                    block_announce_validator_builder: None,
+                    warp_sync_params: None,
+                })?;
+
+            let starting_block = components.client.info().best_number;
+            let overrides = mc_storage::overrides_handle(components.client.clone());
+            let starknet_rpc_params = rpc::StarknetDeps {
+                client: components.client.clone(),
+                madara_backend: components.other.3.clone(),
+                overrides,
+                sync_service: sync_service.clone(),
+                starting_block,
+            };
+
+            let rpc_extensions_builder = {
+                let client = components.client.clone();
+                let pool = components.transaction_pool.clone();
+
+                Box::new(move |deny_unsafe, _| {
+                    let deps = crate::rpc::FullDeps {
+                        client: client.clone(),
+                        pool: pool.clone(),
+                        deny_unsafe,
+                        starknet: starknet_rpc_params.clone(),
+                        command_sink: None,
+                    };
+                    crate::rpc::create_full(deps).map_err(Into::into)
+                })
+            };
+
+            runner.run_node_until_exit(move |config| async move {
+                let client = components.client.clone();
+                let pool = components.transaction_pool.clone();
+                // start simnode's subsystems
+                let task_manager =
+                    sc_simnode::aura::start_simnode::<RuntimeInfo, _, _, _, _, _>(sc_simnode::SimnodeParams {
+                        components,
+                        config,
+                        // you'll want this to be set to true so simnode creates
+                        // blocks for every transaction that enters the tx pool.
+                        // For special cases where you want to manually send
+                        // RPC requests before blocks are created, set this to false.
+                        instant: true,
+                        rpc_builder: rpc_extensions_builder,
+                    })
+                    .await?;
+                Ok(task_manager)
+            })
+        }
         None => {
             let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
@@ -197,5 +272,34 @@ pub fn run() -> sc_cli::Result<()> {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
             })
         }
+    }
+}
+
+pub struct RuntimeInfo;
+
+impl sc_simnode::ChainInfo for RuntimeInfo {
+    // make sure you pass the opaque::Block here
+    type Block = madara_runtime::opaque::Block;
+    // the runtime type
+    type Runtime = madara_runtime::Runtime;
+    // the runtime api
+    type RuntimeApi = madara_runtime::RuntimeApi;
+    // [`SignedExtra`] for your runtime
+    type SignedExtras = madara_runtime::SignedExtra;
+
+    // Initialize the [`SignedExtra`] for your runtime, you'll notice I'm calling a pallet method here
+    // in order to read from the runtime storage. This is possible becase this method is called in
+    // an externalities provided environment. So feel free to read your runtime storage.
+    fn signed_extras(from: <Self::Runtime as frame_system::pallet::Config>::AccountId) -> Self::SignedExtras {
+        let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(from);
+        (
+            frame_system::CheckNonZeroSender::<Self::Runtime>::new(),
+            frame_system::CheckSpecVersion::<Self::Runtime>::new(),
+            frame_system::CheckTxVersion::<Self::Runtime>::new(),
+            frame_system::CheckGenesis::<Self::Runtime>::new(),
+            frame_system::CheckEra::<Self::Runtime>::from(Era::Immortal),
+            frame_system::CheckNonce::<Self::Runtime>::from(nonce),
+            frame_system::CheckWeight::<Self::Runtime>::new(),
+        )
     }
 }

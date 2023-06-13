@@ -387,4 +387,51 @@ impl_runtime_apis! {
             Executive::try_execute_block(block, state_root_check, select).expect("execute-block failed")
         }
     }
+
+    impl<RuntimeCall, AccountId>
+        simnode_runtime_api::CreateTransactionApi<Block, RuntimeCall, AccountId> for Runtime
+    where
+        RuntimeCall: scale_codec::Codec,
+        Block: sp_runtime::traits::Block,
+        AccountId: scale_codec::Codec
+            + scale_codec::EncodeLike<sp_runtime::AccountId32>
+            + Into<sp_runtime::AccountId32>
+            + Clone
+            + PartialEq
+            + scale_info::TypeInfo
+            + core::fmt::Debug,
+    {
+        fn create_transaction(account: AccountId, call: RuntimeCall) -> Vec<u8> {
+            // just some imports we'll need.
+            use scale_codec::Encode;
+            use sp_core::sr25519;
+            use sp_runtime::{generic::Era, traits::{ AccountIdLookup, StaticLookup }, MultiSignature};
+            // let's fetch the account nonce from frame_system as we need to have a valid nonce for this extrinsic to be valid
+            let nonce = frame_system::Pallet::<Runtime>::account_nonce(account.clone());
+            // here we define the signed extras, this will be different depending on your runtime requirements
+            // make this matches the [`SignedExtra`] type you've defined in your runtime
+            let extra = (
+                frame_system::CheckNonZeroSender::<Runtime>::new(),
+                frame_system::CheckSpecVersion::<Runtime>::new(),
+                frame_system::CheckTxVersion::<Runtime>::new(),
+                frame_system::CheckGenesis::<Runtime>::new(),
+                frame_system::CheckEra::<Runtime>::from(Era::Immortal),
+                frame_system::CheckNonce::<Runtime>::from(nonce),
+                frame_system::CheckWeight::<Runtime>::new(),
+            );
+
+            // pallet_transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+            // most runtimes use the multi-signature type so they can support all kinds of signature schemes
+            // notice that this signature is empty.
+            let signature = MultiSignature::from(sr25519::Signature([0_u8; 64]));
+            // converts the AccountId to the Address type the runtime expects.
+            let address = AccountIdLookup::unlookup(account.into());
+            // constructs the "signed" extrinsic
+            let ext =
+                generic::UncheckedExtrinsic::<Address, RuntimeCall, Signature, SignedExtra>::new_signed(
+                    call, address, signature, extra,
+                );
+            ext.encode()
+        }
+    }
 }

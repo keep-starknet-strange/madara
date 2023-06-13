@@ -18,12 +18,14 @@ use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
+use sc_executor::RuntimeVersionOf;
 use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool::FullPool;
 use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_core::traits::CodeExecutor;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 
@@ -51,7 +53,7 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     }
 }
 
-pub(crate) type FullClient = sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
+pub(crate) type FullClient<E> = sc_service::TFullClient<Block, RuntimeApi, E>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 
@@ -59,19 +61,20 @@ type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
 type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor<Client, Block>>;
 
 #[allow(clippy::type_complexity)]
-pub fn new_partial<BIQ>(
+pub fn new_partial<BIQ, E>(
     config: &Configuration,
     build_import_queue: BIQ,
+    executor: E,
 ) -> Result<
     sc_service::PartialComponents<
-        FullClient,
+        FullClient<E>,
         FullBackend,
         FullSelectChain,
-        sc_consensus::DefaultImportQueue<Block, FullClient>,
-        sc_transaction_pool::FullPool<Block, FullClient>,
+        sc_consensus::DefaultImportQueue<Block, FullClient<E>>,
+        sc_transaction_pool::FullPool<Block, FullClient<E>>,
         (
-            BoxBlockImport<FullClient>,
-            sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
+            BoxBlockImport<FullClient<E>>,
+            sc_consensus_grandpa::LinkHalf<Block, FullClient<E>, FullSelectChain>,
             Option<Telemetry>,
             Arc<MadaraBackend>,
         ),
@@ -79,16 +82,15 @@ pub fn new_partial<BIQ>(
     ServiceError,
 >
 where
-    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
-    RuntimeApi: Send + Sync + 'static,
     BIQ: FnOnce(
-        Arc<FullClient>,
+        Arc<FullClient<E>>,
         &Configuration,
         &TaskManager,
         Option<TelemetryHandle>,
-        GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+        GrandpaBlockImport<FullBackend, Block, FullClient<E>, FullSelectChain>,
         Arc<MadaraBackend>,
-    ) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>,
+    ) -> Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>,
+    E: CodeExecutor + RuntimeVersionOf + 'static,
 {
     let telemetry = config
         .telemetry_endpoints
@@ -100,8 +102,6 @@ where
             Ok((worker, telemetry))
         })
         .transpose()?;
-
-    let executor = sc_service::new_native_or_wasm_executor(config);
 
     let (client, backend, keystore_container, task_manager) = sc_service::new_full_parts::<Block, RuntimeApi, _>(
         config,
@@ -158,17 +158,16 @@ where
 }
 
 /// Build the import queue for the template runtime (aura + grandpa).
-pub fn build_aura_grandpa_import_queue(
-    client: Arc<FullClient>,
+pub fn build_aura_grandpa_import_queue<E>(
+    client: Arc<FullClient<E>>,
     config: &Configuration,
     task_manager: &TaskManager,
     telemetry: Option<TelemetryHandle>,
-    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient<E>, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+) -> Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>
 where
-    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
-    RuntimeApi: Send + Sync + 'static,
+    E: CodeExecutor + RuntimeVersionOf + 'static,
 {
     let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
     let create_inherent_data_providers = move |_, ()| async move {
@@ -198,17 +197,16 @@ where
 }
 
 /// Build the import queue for the template runtime (manual seal).
-pub fn build_manual_seal_import_queue(
-    client: Arc<FullClient>,
+pub fn build_manual_seal_import_queue<E>(
+    client: Arc<FullClient<E>>,
     config: &Configuration,
     task_manager: &TaskManager,
     _telemetry: Option<TelemetryHandle>,
-    _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+    _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient<E>, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient>, BoxBlockImport<FullClient>), ServiceError>
+) -> Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>
 where
-    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
-    RuntimeApi: Send + Sync + 'static,
+    E: CodeExecutor + RuntimeVersionOf + 'static,
 {
     Ok((
         sc_consensus_manual_seal::import_queue(
@@ -222,6 +220,12 @@ where
 
 /// Builds a new service for a full client.
 pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+    let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
+        config.wasm_method,
+        config.default_heap_pages,
+        config.max_runtime_instances,
+        config.runtime_cache_size,
+    );
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -234,7 +238,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         select_chain,
         transaction_pool,
         other: (block_import, grandpa_link, mut telemetry, madara_backend),
-    } = new_partial(&config, build_import_queue)?;
+    } = new_partial(&config, build_import_queue, executor)?;
 
     let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 
@@ -457,19 +461,15 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
 #[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
     sealing: Sealing,
-    client: Arc<FullClient>,
-    transaction_pool: Arc<FullPool<Block, FullClient>>,
+    client: Arc<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>,
+    transaction_pool: Arc<FullPool<Block, FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>>,
     select_chain: FullSelectChain,
-    block_import: BoxBlockImport<FullClient>,
+    block_import: BoxBlockImport<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
     telemetry: Option<&Telemetry>,
     commands_stream: mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>,
-) -> Result<(), ServiceError>
-where
-    RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
-    RuntimeApi: Send + Sync + 'static,
-{
+) -> Result<(), ServiceError> {
     let proposer_factory = sc_basic_authorship::ProposerFactory::new(
         task_manager.spawn_handle(),
         client.clone(),
@@ -544,7 +544,7 @@ where
 
 type ChainOpsResult = Result<
     (
-        Arc<FullClient>,
+        Arc<FullClient<NativeElseWasmExecutor<ExecutorDispatch>>>,
         Arc<FullBackend>,
         BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
         TaskManager,
@@ -554,8 +554,14 @@ type ChainOpsResult = Result<
 >;
 
 pub fn new_chain_ops(mut config: &mut Configuration) -> ChainOpsResult {
+    let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
+        config.wasm_method,
+        config.default_heap_pages,
+        config.max_runtime_instances,
+        config.runtime_cache_size,
+    );
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
-        new_partial::<_>(config, build_aura_grandpa_import_queue)?;
+        new_partial::<_, _>(config, build_aura_grandpa_import_queue, executor)?;
     Ok((client, backend, import_queue, task_manager, other.3))
 }

@@ -15,10 +15,14 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 # Madara primitives
 mp-starknet = { workspace = true, default-features = false }
-mp-digest-log = { workspace = true, default-features = false }
+mp-digest-log = { workspace = true }
 
-starknet-crypto = { workspace = true, default-features = false, features = ["alloc"] }
-blockifier = { workspace = true, default-features = false, features = ["testing"] }
+starknet-crypto = { workspace = true, default-features = false, features = [
+	"alloc",
+] }
+blockifier = { workspace = true, default-features = false, features = [
+	"testing",
+] }
 starknet_api = { workspace = true, default-features = false }
 
 # Substrate frame
@@ -36,7 +40,9 @@ sp-std = { workspace = true }
 # Other third party dependencies
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-scale-codec = { package = "parity-scale-codec", workspace = true, features = ["derive"] }
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+	"derive",
+] }
 scale-info = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 hex = { workspace = true }
@@ -62,6 +68,7 @@ std = [
 	"pallet-timestamp/std",
 	# Madara
 	"mp-starknet/std",
+	"mp-digest-log/std",
 	# Starknet
 	"starknet-crypto/std",
 	"blockifier/std",

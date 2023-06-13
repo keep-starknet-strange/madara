@@ -56,6 +56,9 @@ pallet-starknet = { workspace = true }
 # Madara Primitives
 mp-starknet = { workspace = true, default-features = false }
 
+# This enables the Simnode RPC
+simnode-runtime-api = { workspace = true, default-features = false }
+
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
 
@@ -93,6 +96,8 @@ std = [
 	# 3rd party dependencies
 	"scale-codec/std",
 	"scale-info/std",
+	# Simnode RPC
+	"simnode-runtime-api/std",
 ]
 try-runtime = [
 	"pallet-timestamp/try-runtime",

@@ -80,4 +80,7 @@ pub enum Subcommand {
 
     /// Db meta columns information.
     ChainInfo(sc_cli::ChainInfoCmd),
+
+    /// Runs the node with signature verification overrides and manual seal.
+    Simnode(sc_simnode::cli::SimnodeCli),
 }

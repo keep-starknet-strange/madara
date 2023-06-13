@@ -92,11 +92,15 @@ pallet-sudo = { default-features = false, git = "https://github.com/paritytech/s
 pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
+# Enables the Simnode
+simnode-runtime-api = { default-features = false, git = "https://github.com/shamb0/sc-simnode", branch = "shamb0/move-polkadot-v0.9.43" }
+sc-simnode = { git = "https://github.com/shamb0/sc-simnode", branch = "shamb0/move-polkadot-v0.9.43" }
+
 # Madara pallets
 pallet-starknet = { path = "crates/pallets/starknet", default-features = false }
 
 # Madara primtitives
-mp-starknet = { path = "crates/primitives/starknet", default-features = false}
+mp-starknet = { path = "crates/primitives/starknet", default-features = false }
 mp-digest-log = { path = "crates/primitives/digest-log", default-features = false }
 
 # Madara client
@@ -138,4 +142,4 @@ serde_with = "2.3.3"
 bitvec = { version = "0.17.4", default-features = false }
 thiserror = "1.0.40"
 thiserror-no-std = "2.0.2"
-derive_more = { version = "0.99.17", default-features = false }
+derive_more = { version = "0.99.17", default-features = false }                               # This enables the Simnode RPC
