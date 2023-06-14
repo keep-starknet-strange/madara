@@ -24,7 +24,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use madara_runtime as runtime;
-use runtime::{AccountId, Balance, BalancesCall, SystemCall};
+use runtime::SystemCall;
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sc_executor::NativeElseWasmExecutor;

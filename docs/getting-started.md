@@ -163,7 +163,7 @@ cargo run --release -- --dev
 Execute hurl tests sequentially:
 
 ```bash
-hurl --test examples/rpc/**/*.hurl
+hurl --variables-file examples/rpc/hurl.config  --test examples/rpc/**/*.hurl
 ```
 
 The output should be similar to the image provided:

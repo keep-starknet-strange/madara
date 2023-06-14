@@ -49,7 +49,7 @@ hex = { workspace = true }
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
-pretty_assertions = "1.3.0"
+pretty_assertions = { workspace = true }
 test-case = "3.1.0"
 lazy_static = "1.4.0"
 hexlit = "0.5.5"

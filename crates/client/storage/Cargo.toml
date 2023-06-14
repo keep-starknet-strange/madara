@@ -4,8 +4,8 @@ name = "mc-storage"
 version = "0.1.0"
 description = "Starknet storage compatibility layer for Substrate."
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -17,7 +17,7 @@ repository = "https://github.com/keep-starknet-strange/madara"
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 mp-starknet = { workspace = true, default-features = true }
-madara-runtime = { path = "../../runtime" }
+madara-runtime = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
 sp-runtime = { workspace = true, default-features = true }
 sp-storage = { workspace = true, default-features = true }

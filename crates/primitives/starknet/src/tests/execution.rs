@@ -1,22 +1,21 @@
-use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
+use std::collections::HashMap;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
-use sp_runtime::BoundedBTreeMap;
+use hex::FromHex;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
-use starknet_api::deprecated_contract_class::EntryPointType;
+use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 
 use crate::block::Block;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
+use crate::execution::contract_class_wrapper::{ContractClassWrapper, EntrypointMapWrapper, ProgramWrapper};
 use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
-use crate::execution::program_wrapper::ProgramWrapper;
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::tests::utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 
@@ -136,42 +135,31 @@ fn test_contract_class_wrapper_try_from_contract_class() {
 	}
 }"#;
     let contract_class: ContractClass = serde_json::from_str(json_content).unwrap();
-    let contract_class_wrapper: ContractClassWrapper = contract_class.try_into().unwrap();
-
-    let mut entrypoints = BTreeMap::new();
-    let iter: Vec<(EntryPointTypeWrapper, bounded_vec::BoundedVec<EntryPointWrapper, sp_core::ConstU32<4294967295>>)> = vec![
-        (
-            EntryPointTypeWrapper::Constructor,
-            bounded_vec![EntryPointWrapper {
-                offset: 0x147,
-                selector: Felt252Wrapper::from_hex_be(
-                    "0x028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194"
-                )
-                .unwrap()
-                .into(),
-            }],
-        ),
-        (
-            EntryPointTypeWrapper::External,
-            bounded_vec![EntryPointWrapper {
-                offset: 0x16e,
-                selector: Felt252Wrapper::from_hex_be(
-                    "0x00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588"
-                )
-                .unwrap()
-                .into(),
-            }],
-        ),
-        (EntryPointTypeWrapper::L1Handler, bounded_vec![]),
-    ];
-
-    for (entrypoint_type, entrypoint_wrappers) in iter.iter() {
-        entrypoints.insert(entrypoint_type.clone(), entrypoint_wrappers.clone());
-    }
+    let contract_class_wrapper: ContractClassWrapper = contract_class.into();
+    let mut expected_entrypoints = <HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>>::new();
+    expected_entrypoints.insert(
+        EntryPointTypeWrapper::External,
+        vec![EntryPointWrapper::from(EntryPoint {
+            offset: EntryPointOffset(0x16e),
+            selector: EntryPointSelector(StarkFelt(
+                <[u8; 32]>::from_hex("00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(),
+            )),
+        })],
+    );
+    expected_entrypoints.insert(
+        EntryPointTypeWrapper::Constructor,
+        vec![EntryPointWrapper::from(EntryPoint {
+            offset: EntryPointOffset(0x147),
+            selector: EntryPointSelector(StarkFelt(
+                <[u8; 32]>::from_hex("028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194").unwrap(),
+            )),
+        })],
+    );
+    expected_entrypoints.insert(EntryPointTypeWrapper::L1Handler, vec![]);
 
     let expected_contract_class_wrapper = ContractClassWrapper {
-        entry_points_by_type: BoundedBTreeMap::try_from(entrypoints).unwrap(),
         program: ProgramWrapper::default(),
+        entry_points_by_type: EntrypointMapWrapper(expected_entrypoints),
     };
 
     pretty_assertions::assert_eq!(contract_class_wrapper, expected_contract_class_wrapper);

@@ -3,8 +3,8 @@ name = "madara-runtime"
 version = "0.1.0-alpha"
 description = "Madara runtime."
 authors = [
-	"Abdelhamid Bakhta <@abdelhamidbakhta>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Abdelhamid Bakhta <@abdelhamidbakhta>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -17,7 +17,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
-	"derive",
+  "derive",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 
@@ -31,7 +31,6 @@ sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
 
 pallet-aura = { workspace = true }
-pallet-balances = { workspace = true }
 frame-support = { workspace = true }
 pallet-grandpa = { workspace = true }
 pallet-sudo = { workspace = true }
@@ -100,28 +99,26 @@ std = [
 	"simnode-runtime-api/std",
 ]
 try-runtime = [
-	"pallet-timestamp/try-runtime",
-	"frame-try-runtime/try-runtime",
-	"frame-executive/try-runtime",
-	"frame-system/try-runtime",
-	"frame-support/try-runtime",
-	"pallet-aura/try-runtime",
-	"pallet-balances/try-runtime",
-	"pallet-grandpa/try-runtime",
-	"pallet-sudo/try-runtime",
-	# Madara pallets
-	"pallet-starknet/try-runtime",
+  "pallet-timestamp/try-runtime",
+  "frame-try-runtime/try-runtime",
+  "frame-executive/try-runtime",
+  "frame-system/try-runtime",
+  "frame-support/try-runtime",
+  "pallet-aura/try-runtime",
+  "pallet-grandpa/try-runtime",
+  "pallet-sudo/try-runtime",
+  # Madara pallets
+  "pallet-starknet/try-runtime",
 ]
 default = ["std"]
 runtime-benchmarks = [
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system-benchmarking/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"pallet-grandpa/runtime-benchmarks",
-	"pallet-timestamp/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
-	# Madara pallets
-	"pallet-starknet/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+  "pallet-grandpa/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+  # Madara pallets
+  "pallet-starknet/runtime-benchmarks",
 ]

@@ -6,7 +6,7 @@ const {
   declare,
   deploy,
   transfer,
-} = require("../../tests/build/util/starknet");
+} = require("../../tests/build/tests/util/starknet");
 
 module.exports = {
   rpcMethods,

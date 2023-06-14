@@ -757,6 +757,7 @@ pub mod pallet {
                     Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        // This is a transaction identifier for substrate
                         .and_provides((transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
                         .propagate(true)
@@ -767,6 +768,7 @@ pub mod pallet {
                     Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        // This is a transaction identifier for substrate
                         .and_provides((transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
                         .propagate(true)
@@ -781,11 +783,13 @@ pub mod pallet {
                     // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
                     ValidTransaction::with_tag_prefix("starknet")
                         .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+                        // This is a transaction identifier for substrate
                         .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
                         .longevity(T::TransactionLongevity::get())
                         .propagate(true)
                         .build()
                 }
+                // Message consumptions don't go through an account contract so no need to identify them with an id.
                 Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
                     .and_provides((transaction.sender_address, transaction.nonce))
@@ -794,6 +798,20 @@ pub mod pallet {
                     .build(),
                 _ => InvalidTransaction::Call.into(),
             }
+        }
+
+        /// From substrate documentation:
+        /// Validate the call right before dispatch.
+        /// This method should be used to prevent transactions already in the pool
+        /// (i.e. passing validate_unsigned) from being included in blocks in case
+        /// they became invalid since being added to the pool.
+        ///
+        /// In the default implementation of pre_dispatch for the ValidateUnsigned trait,
+        /// this function calls the validate_unsigned function in order to verify validity
+        /// before dispatch. In our case, since transaction was already validated in
+        /// `validate_unsigned` we can just return Ok.
+        fn pre_dispatch(_call: &Self::Call) -> Result<(), TransactionValidityError> {
+            Ok(())
         }
     }
 }
@@ -884,14 +902,15 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    /// Get the current block timestamp.
+    /// Get the current block timestamp in seconds.
     ///
     /// # Returns
     ///
-    /// The current block timestamp.
+    /// The current block timestamp in seconds.
     #[inline(always)]
     pub fn block_timestamp() -> u64 {
-        T::TimestampProvider::now().unique_saturated_into()
+        let timestamp_in_millisecond: u64 = T::TimestampProvider::now().unique_saturated_into();
+        timestamp_in_millisecond / 1000
     }
 
     /// Get the number of transactions in the block.

@@ -2,10 +2,11 @@ import "@keep-starknet-strange/madara-api-augment";
 import { type ApiPromise } from "@polkadot/api";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
-import { stringify, u8aWrapBytes } from "@polkadot/util";
-import erc20Json from "../contracts/compiled/erc20.json";
+import { numberToHex, stringify, u8aWrapBytes } from "@polkadot/util";
+import { hash } from "starknet";
+import erc20Json from "../../cairo-contracts/build/ERC20.json";
+import { NFT_CONTRACT_ADDRESS, UDC_CONTRACT_ADDRESS } from "../tests/constants";
 import { numberToU832Bytes } from "./utils";
-import { NFT_CONTRACT_ADDRESS } from "../tests/constants";
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
 ): Promise<void> {
@@ -298,22 +299,20 @@ export function batchTransfer(
 
 export function mintERC721(
   api: ApiPromise,
-  contractAddress: string,
+  senderAddress: string,
   recipientAddress: string,
   tokenID: string,
   nonce?: number
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
-
-  // Initialize contract
   const tx_mint = {
     version: 1, // version of the transaction
     signature: [], // leave empty for now, will be filled in when signing the transaction
-    sender_address: contractAddress, // address of the sender contract
+    sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [
-      NFT_CONTRACT_ADDRESS, // CONTRACT ADDRESS
-      "0x02f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354", // SELECTOR (transfer)
+      NFT_CONTRACT_ADDRESS,
+      "0x" + hash.getSelectorFromName("mint").slice(2).padStart(64, "0"),
       "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
       recipientAddress,
       tokenID,
@@ -321,6 +320,43 @@ export function mintERC721(
     ],
   };
 
-  const extrisinc_mint = api.tx.starknet.invoke(tx_mint);
-  return extrisinc_mint;
+  return api.tx.starknet.invoke(tx_mint);
+}
+
+// deploy ERC20 contract via UDC
+export function deployTokenContractUDC(
+  api: ApiPromise,
+  contractAddress: string,
+  classHash: string,
+  salt: string,
+  unique: boolean,
+  nonce?: number
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
+  // Initialize contract
+
+  // Initialize contract
+  const tx_udc_deploy = {
+    version: 1, // version of the transaction
+    signature: [], // leave empty for now, will be filled in when signing the transaction
+    sender_address: contractAddress, // address of the sender contract
+    nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
+    calldata: [
+      UDC_CONTRACT_ADDRESS, // CONTRACT ADDRESS
+      "0x01987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d", // SELECTOR (deployContract)
+      numberToHex(10, 256), // CALLDATA SIZE
+      classHash,
+      salt,
+      unique ? numberToHex(1, 256) : numberToHex(0, 256),
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0x000000000000000000000000000000000000000000000000000000000000000A", // Name
+      "0x000000000000000000000000000000000000000000000000000000000000000B", // Symbol
+      "0x0000000000000000000000000000000000000000000000000000000000000002", // Decimals
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply low
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply high
+      "0x0000000000000000000000000000000000000000000000000000000000001111", // recipient
+    ],
+  };
+
+  const extrisinc_udc_deploy = api.tx.starknet.invoke(tx_udc_deploy);
+  return extrisinc_udc_deploy;
 }

@@ -1,8 +1,7 @@
 import "@keep-starknet-strange/madara-api-augment";
-import chaiAsPromised from "chai-as-promised";
 import chai, { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
-import fs from "fs";
 import {
   Account,
   LibraryError,
@@ -11,10 +10,16 @@ import {
   ec,
   hash,
   validateAndParseAddress,
-  RPC,
 } from "starknet";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
+import {
+  cleanHex,
+  rpcTransfer,
+  starknetKeccak,
+  toBN,
+  toHex,
+} from "../../util/utils";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
@@ -22,6 +27,7 @@ import {
   ARGENT_CONTRACT_ADDRESS,
   ARGENT_PROXY_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
+  ERC20_CONTRACT,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   SALT,
@@ -29,19 +35,13 @@ import {
   SIGNER_PRIVATE,
   SIGNER_PUBLIC,
   TEST_CONTRACT,
+  TEST_CONTRACT_ADDRESS,
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
+  UDC_CONTRACT_ADDRESS,
 } from "../constants";
-import {
-  toHex,
-  toBN,
-  rpcTransfer,
-  starknetKeccak,
-  cleanHex,
-} from "../../util/utils";
 import { Block, InvokeTransaction } from "./types";
-import testJson from "../../contracts/compiled/test.json";
-import erc20Json from "../../contracts/compiled/erc20.json";
+import { numberToHex } from "@polkadot/util";
 
 chai.use(deepEqualInAnyOrder);
 chai.use(chaiAsPromised);
@@ -159,7 +159,7 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should return calldata on return_result entrypoint", async function () {
       const call = await providerRPC.callContract(
         {
-          contractAddress: TEST_CONTRACT,
+          contractAddress: TEST_CONTRACT_ADDRESS,
           entrypoint: "return_result",
           calldata: ["0x19"],
         },
@@ -172,7 +172,7 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should raise with invalid entrypoint", async () => {
       const callResult = providerRPC.callContract(
         {
-          contractAddress: TEST_CONTRACT,
+          contractAddress: TEST_CONTRACT_ADDRESS,
           entrypoint: "return_result_WRONG",
           calldata: ["0x19"],
         },
@@ -187,13 +187,13 @@ describeDevMadara("Starknet RPC", (context) => {
   describe("getClassAt", async () => {
     it("should not be undefined", async function () {
       const contract_class = await providerRPC.getClassAt(
-        TEST_CONTRACT,
+        TEST_CONTRACT_ADDRESS,
         "latest"
       );
 
       expect(contract_class).to.not.be.undefined;
       expect(contract_class.entry_points_by_type).to.deep.equal(
-        testJson.entry_points_by_type
+        TEST_CONTRACT.entry_points_by_type
       );
     });
   });
@@ -211,7 +211,7 @@ describeDevMadara("Starknet RPC", (context) => {
       );
 
       const test_contract_class_hash = await providerRPC.getClassHashAt(
-        TEST_CONTRACT,
+        TEST_CONTRACT_ADDRESS,
         "latest"
       );
 
@@ -223,7 +223,10 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("should raise with invalid block id", async () => {
       // Invalid block id
-      const classHash = providerRPC.getClassHashAt(TEST_CONTRACT, "0x123");
+      const classHash = providerRPC.getClassHashAt(
+        TEST_CONTRACT_ADDRESS,
+        "0x123"
+      );
       await expect(classHash)
         .to.eventually.be.rejectedWith("24: Block not found")
         .and.be.an.instanceOf(LibraryError);
@@ -270,15 +273,14 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("getClass", async () => {
-    it("should not be undefined", async function () {
+    it("should return ERC_20 contract at class 0x10000", async function () {
       const contract_class = await providerRPC.getClass(
         TOKEN_CLASS_HASH,
         "latest"
       );
 
-      expect(contract_class).to.not.be.undefined;
       expect(contract_class.entry_points_by_type).to.deep.equal(
-        erc20Json.entry_points_by_type
+        ERC20_CONTRACT.entry_points_by_type
       );
     });
   });
@@ -523,6 +525,54 @@ describeDevMadara("Starknet RPC", (context) => {
       );
       expect(toHex(balance)).to.be.equal("0x123");
     });
+
+    it("should deploy ERC20 via UDC", async function () {
+      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        keyPair
+      );
+
+      const calldata = [
+        numberToHex(1, 256), // Token Name
+        numberToHex(1, 256), // Token Symbol
+        numberToHex(18, 256), // Token Decimals
+        numberToHex(42, 256), // Initial Supply
+        "0x0000000000000000000000000000000000000000000000000000000000000000", // Initial Supply Cont { since u256 }
+        "0xdeadbeef", // Recipient
+      ];
+
+      const deployedContractAddress = hash.calculateContractAddressFromHash(
+        SALT,
+        TOKEN_CLASS_HASH,
+        calldata,
+        0
+      );
+
+      await account.execute(
+        {
+          contractAddress: UDC_CONTRACT_ADDRESS,
+          entrypoint: "deployContract",
+          calldata: [TOKEN_CLASS_HASH, SALT, "0x0", "0x6", ...calldata],
+        },
+        undefined,
+        {
+          nonce: ARGENT_CONTRACT_NONCE.value,
+          maxFee: "123456",
+        }
+      );
+      ARGENT_CONTRACT_NONCE.value += 1;
+      await jumpBlocks(context, 1);
+
+      // ERC20_balances(0xdeadbeef).low = 0x4c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016
+      const balance = await providerRPC.getStorageAt(
+        deployedContractAddress,
+        "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
+        "latest"
+      );
+      expect(toHex(balance)).to.be.equal("0x2a");
+    });
   });
 
   describe("addDeployAccountTransaction", async () => {
@@ -597,7 +647,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const tx = {
         contractAddress: ACCOUNT_CONTRACT,
         calldata: [
-          TEST_CONTRACT,
+          TEST_CONTRACT_ADDRESS,
           "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
           "0x0",
         ],
@@ -651,35 +701,27 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("addDeclareTransaction", async () => {
-    it("should return hash starting with 0x", async function () {
+    it("should set class at given class hash", async function () {
       const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-
-      const contract = fs
-        .readFileSync("./contracts/compiled/erc20.json")
-        .toString();
-
       await account.declare(
         {
           classHash: "0",
-          contract,
+          contract: ERC20_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
-      const contractClassExpected: RPC.ContractClass = JSON.parse(
-        contract
-      ) as RPC.ContractClass;
       const contractClassActual = await providerRPC.getClass("0", "latest");
-      // TODO compare the program as well
+
       expect(contractClassActual.entry_points_by_type).to.deep.equal(
-        contractClassExpected.entry_points_by_type
+        ERC20_CONTRACT.entry_points_by_type
       );
     });
   });
@@ -727,14 +769,10 @@ describeDevMadara("Starknet RPC", (context) => {
         keyPair
       );
 
-      const contract = fs
-        .readFileSync("./contracts/compiled/erc20.json")
-        .toString();
-
       await account.declare(
         {
           classHash: "0",
-          contract,
+          contract: ERC20_CONTRACT,
         },
         { nonce, version: 1, maxFee: "123456" }
       );

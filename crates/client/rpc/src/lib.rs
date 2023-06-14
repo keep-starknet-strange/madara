@@ -4,6 +4,7 @@
 
 mod constants;
 mod errors;
+mod events;
 mod madara_backend_client;
 mod types;
 
@@ -12,7 +13,7 @@ use std::sync::Arc;
 
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
-use log::{error, info};
+use log::error;
 use mc_rpc_core::utils::{
     get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
 };
@@ -148,100 +149,6 @@ where
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
         u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
-    }
-
-    /// Helper function to filter Starknet events provided a RPC event filter
-    ///
-    /// # Arguments
-    ///
-    /// * `filter` - The RPC event filter
-    ///
-    /// # Returns
-    ///
-    /// * `EventsPage` - The filtered events with continuation token
-    fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPage> {
-        let mut filtered_events = vec![];
-        let mut index = 0;
-
-        // get filter values
-        let mut current_block = filter.from_block;
-        let to_block = filter.to_block;
-        let from_address = filter.from_address;
-        let keys = filter.keys;
-        let mut continuation_token = filter.continuation_token;
-        let chunk_size = filter.chunk_size;
-
-        // Iterate on block range
-        while current_block <= to_block {
-            let substrate_block_hash =
-                self.substrate_block_hash_from_starknet_block(BlockId::Number(current_block)).map_err(|e| {
-                    error!("'{e}'");
-                    StarknetRpcApiError::BlockNotFound
-                })?;
-
-            let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-                error!("Failed to retrieve block");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-            let block_hash = block.header().hash(*self.hasher).into();
-            let block_number = block.header().block_number.try_into().map_err(|e| {
-                error!("Failed to convert block number to u64: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-            let block_events = self
-                .overrides
-                .for_block_hash(self.client.as_ref(), substrate_block_hash)
-                .events(substrate_block_hash)
-                .unwrap_or_else(|| {
-                    info!("No events found in block {}", current_block);
-                    Vec::new()
-                });
-            let block_events_len = block_events.len();
-            // if block_events length < continuation_token, keep going and reduce the pagination
-            if block_events_len < continuation_token {
-                continuation_token -= block_events_len;
-                index += block_events_len;
-                current_block += 1;
-                continue;
-            }
-
-            let block_events = block_events.into_iter().skip(continuation_token);
-            // Kept in order to calculate continuation token.
-            let block_events_len = block_events_len - continuation_token;
-            let index_before_loop = index;
-
-            // Iterate on block events.
-            for event in block_events {
-                let match_from_address = from_address.map_or(true, |add| add == event.from_address);
-                // Based on https://github.com/starkware-libs/papyrus
-                let match_keys = keys
-                    .iter()
-                    .enumerate()
-                    .all(|(i, keys)| event.keys.len() > i && (keys.is_empty() || keys.contains(&event.keys[i].into())));
-
-                if match_from_address && match_keys {
-                    filtered_events.push(EmittedEvent {
-                        from_address: event.from_address.into(),
-                        keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
-                        data: event.data.clone().into_iter().map(|data| data.into()).collect(),
-                        block_hash,
-                        block_number,
-                        transaction_hash: event.transaction_hash.into(),
-                    });
-                }
-                index += 1;
-                if filtered_events.len() == chunk_size as usize {
-                    let token =
-                        if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
-                    return Ok(EventsPage { events: filtered_events, continuation_token: token });
-                }
-            }
-            current_block += 1;
-            continuation_token = 0;
-        }
-        Ok(EventsPage { events: filtered_events, continuation_token: None })
     }
 }
 
