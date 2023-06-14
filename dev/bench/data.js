@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686754780341,
+  "lastUpdate": 1686754782615,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -826,6 +826,42 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 91,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "58019353+dbejarano820@users.noreply.github.com",
+            "name": "Daniel Bejarano",
+            "username": "dbejarano820"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a183ad6dad04d76dbb895319ce5c16cb36e00523",
+          "message": "broadcast transaction conversions refactor (#597)\n\nCo-authored-by: Lucas @ StarkWare <70894690+LucasLvy@users.noreply.github.com>",
+          "timestamp": "2023-06-14T16:56:30+02:00",
+          "tree_id": "0e3e382be2dc7712cf4aea024f6b3ca0c64766be",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/a183ad6dad04d76dbb895319ce5c16cb36e00523"
+        },
+        "date": 1686754779788,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 546.75,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 91.125,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
