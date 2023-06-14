@@ -441,21 +441,11 @@ pub mod pallet {
                 }) => {
                     log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -534,21 +524,11 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -622,21 +602,11 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -1125,5 +1095,22 @@ impl<T: Config> Pallet<T> {
     /// Returns the hasher used by the runtime.
     pub fn get_system_hash() -> T::SystemHash {
         T::SystemHash::hasher()
+    }
+
+    pub fn emit_events_for_calls(
+        tx_hash: TransactionHash,
+        execute_call_info: Option<CallInfo>,
+        fee_transfer_call_info: Option<CallInfo>,
+    ) -> Result<Vec<StarknetEventType>, Error<T>> {
+        let events = match (execute_call_info, fee_transfer_call_info) {
+            (Some(mut exec), Some(mut fee)) => {
+                let mut events = Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                events.append(&mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?);
+                events
+            }
+            (_, Some(mut fee)) => Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+            _ => Vec::default(),
+        };
+        Ok(events)
     }
 }
