@@ -866,6 +866,60 @@ describeDevMadara("Starknet RPC", (context) => {
 
       await jumpBlocks(context, 10);
     });
+
+    it("should return transactions from the ready and future queues", async function () {
+      const transactionNonceOffset = 1_000;
+      // ready transaction
+      await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      );
+      // future transaction
+      // add a high number to the nonce to make sure the transaction is added to the future queue
+      await rpcTransfer(
+        providerRPC,
+        { value: ARGENT_CONTRACT_NONCE.value + transactionNonceOffset },
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      );
+
+      // the pendingExtrinsics endpoint returns only the ready transactions
+      // (https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L153)
+      const readyExtrinsics =
+        await context.polkadotApi.rpc.author.pendingExtrinsics();
+      const readyTxs = readyExtrinsics.map((pending) => {
+        const obj: any = pending.toHuman();
+        return {
+          type: obj.method.method.toUpperCase(),
+          nonce: toHex(obj.method.args.transaction.nonce),
+        };
+      });
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const txs: InvokeTransaction[] =
+        await providerRPC.getPendingTransactions();
+
+      expect(readyExtrinsics.length).to.be.equal(1);
+      expect(txs.length).to.be.equal(2);
+
+      expect(readyTxs[0]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value - 1),
+      });
+      expect(txs[0]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value - 1),
+      });
+      expect(txs[1]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value + transactionNonceOffset),
+      });
+
+      await jumpBlocks(context, 10);
+    });
   });
 
   describe("getTransactionByHash", () => {
