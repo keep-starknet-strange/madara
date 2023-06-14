@@ -77,7 +77,7 @@ where
 {
     let substrate_block_hash = header.hash();
 
-    let block = get_block_by_block_hash(client, substrate_block_hash).ok_or("Block not found")?;
+    let block = find_starknet_block(header.digest()).ok_or("Block not found")?;
     let block_hash = block.header().hash(*hasher);
     let mapping_commitment = mc_db::MappingCommitment::<B> {
         block_hash: substrate_block_hash,
