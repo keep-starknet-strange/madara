@@ -164,29 +164,7 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
-<a href="#168" id="168">168</a>
-<a href="#169" id="169">169</a>
-<a href="#170" id="170">170</a>
-<a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
-<a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-</pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
-
-<span class="kw">use </span>blockifier::block_context::BlockContext;
+</pre><pre class="rust"><code><span class="kw">use </span>blockifier::block_context::BlockContext;
 <span class="kw">use </span>scale_codec::Encode;
 <span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
@@ -292,25 +270,7 @@
     <span class="doccomment">/// Compute the hash of the header.
     </span><span class="attr">#[must_use]
     </span><span class="kw">pub fn </span>hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hasher: H) -&gt; Felt252Wrapper {
-        &lt;H <span class="kw">as </span>HasherT&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.get_bytes())
-    }
-
-    <span class="doccomment">/// Returns bytes representation of the header.
-    </span><span class="kw">pub fn </span>get_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; vec::Vec&lt;u8&gt; {
-        <span class="macro">vec!</span>[
-            <span class="self">self</span>.block_number.encode(),
-            <span class="self">self</span>.global_state_root.encode(),
-            <span class="self">self</span>.sequencer_address.encode(),
-            <span class="self">self</span>.block_timestamp.encode(),
-            <span class="self">self</span>.transaction_count.encode(),
-            <span class="self">self</span>.transaction_commitment.encode(),
-            <span class="self">self</span>.event_count.encode(),
-            <span class="self">self</span>.event_commitment.encode(),
-            <span class="macro">vec!</span>[<span class="number">0</span>],
-            <span class="macro">vec!</span>[<span class="number">0</span>],
-            <span class="self">self</span>.parent_block_hash.encode(),
-        ]
-        .concat()
+        &lt;H <span class="kw">as </span>HasherT&gt;::hash(<span class="kw-2">&amp;</span>hasher, <span class="kw-2">&amp;</span><span class="self">self</span>.block_number.encode())
     }
 }
 
@@ -344,7 +304,7 @@
 
     <span class="kw">let </span>hasher = <span class="kw">crate</span>::crypto::hash::pedersen::PedersenHasher::default();
 
-    <span class="kw">let </span>expected_hash = hasher.hash(<span class="kw-2">&amp;</span>header.get_bytes());
+    <span class="kw">let </span>expected_hash = hasher.hash(<span class="kw-2">&amp;</span>block_number.encode());
 
     <span class="macro">assert_eq!</span>(header.hash(hasher), expected_hash);
 }
