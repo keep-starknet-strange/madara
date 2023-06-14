@@ -708,7 +708,7 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-      let classHash =
+      const classHash =
         "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       const res = await account.declare(
         {
@@ -768,7 +768,7 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-      let classHash =
+      const classHash =
         "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       await account.declare(
         {
