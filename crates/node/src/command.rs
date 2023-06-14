@@ -2,7 +2,6 @@ use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE
 use madara_runtime::Block;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 use sc_executor_common::wasm_runtime::{HeapAllocStrategy, DEFAULT_HEAP_ALLOC_STRATEGY};
-use sp_keyring::Sr25519Keyring;
 use sp_runtime::generic::Era;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};

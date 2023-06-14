@@ -476,7 +476,7 @@ fn run_manual_seal_authorship(
     prometheus_registry: Option<&Registry>,
     commands_stream: mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>,
 ) -> Result<(), ServiceError> {
-    let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+    let proposer_factory = ProposerFactory::new(
         task_manager.spawn_handle(),
         client.clone(),
         transaction_pool.clone(),
