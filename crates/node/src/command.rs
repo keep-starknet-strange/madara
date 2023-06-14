@@ -206,19 +206,29 @@ pub fn run() -> sc_cli::Result<()> {
                 })
             };
 
-            let sim_components: sc_service::PartialComponents<_, _, _, _, _, (_, _, _)> =
-                sc_service::PartialComponents {
-                    client: components.client,
-                    backend: components.backend,
-                    task_manager: components.task_manager,
-                    import_queue: components.import_queue,
-                    keystore_container: components.keystore_container,
-                    select_chain: components.select_chain,
-                    transaction_pool: components.transaction_pool,
-                    other: (components.other.0, components.other.2, components.other.1),
+            runner.run_node_until_exit(move |config| async move {
+                let sc_service::PartialComponents {
+                    client,
+                    backend,
+                    task_manager,
+                    keystore_container,
+                    select_chain,
+                    import_queue,
+                    transaction_pool,
+                    other,
+                } = components;
+
+                let sim_components = sc_service::PartialComponents {
+                    client,
+                    backend,
+                    task_manager,
+                    import_queue,
+                    keystore_container,
+                    select_chain,
+                    transaction_pool,
+                    other: (other.0, other.2, other.1),
                 };
 
-            runner.run_node_until_exit(move |config| async move {
                 // start simnode's subsystems
                 let task_manager =
                     sc_simnode::aura::start_simnode::<RuntimeInfo, _, _, _, _, _>(sc_simnode::SimnodeParams {
