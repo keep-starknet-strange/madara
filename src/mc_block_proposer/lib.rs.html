@@ -413,6 +413,62 @@
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Block proposer implementation.
 //! This crate implements the [`sp_consensus::Proposer`] trait.
 //! It is used to build blocks for the block authoring node.
@@ -632,8 +688,11 @@
             <span class="string">&quot;madara-block-proposer&quot;</span>,
             <span class="prelude-val">None</span>,
             Box::pin(<span class="kw">async move </span>{
-                <span class="comment">// leave some time for evaluation and block finalization (33%)
-                </span><span class="kw">let </span>deadline = (<span class="self">self</span>.now)() + max_duration - max_duration / <span class="number">3</span>;
+                <span class="comment">// Leave some time for evaluation and block finalization (20%)
+                // and some time for block production (80%).
+                // We need to benchmark and tune this value.
+                // Open question: should we make this configurable?
+                </span><span class="kw">let </span>deadline = (<span class="self">self</span>.now)() + max_duration - max_duration / <span class="number">5</span>;
                 <span class="kw">let </span>res = <span class="self">self</span>.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).<span class="kw">await</span>;
                 <span class="kw">if </span>tx.send(res).is_err() {
                     <span class="macro">trace!</span>(<span class="string">&quot;Could not send block production result to proposer!&quot;</span>);
@@ -659,18 +718,63 @@
     C::Api: ApiExt&lt;Block, StateBackend = backend::StateBackendFor&lt;B, Block&gt;&gt; + BlockBuilderApi&lt;Block&gt;,
     PR: ProofRecording,
 {
-    <span class="kw">async fn </span>propose_with(
+    <span class="doccomment">/// Propose a new block.
+    ///
+    /// # Arguments
+    /// * `inherents` - The inherents to include in the block.
+    /// * `inherent_digests` - The inherent digests to include in the block.
+    /// * `deadline` - The deadline for proposing the block.
+    /// * `block_size_limit` - The maximum size of the block in bytes.
+    ///
+    ///
+    /// The function follows these general steps:
+    /// 1. Starts a timer to measure the total time it takes to create the proposal.
+    /// 2. Initializes a new block at the parent hash with the given inherent digests.
+    /// 3. Iterates over the inherents and pushes them into the block builder. Handles any potential
+    /// errors.
+    /// 4. Sets up the soft deadline and starts the block timer.
+    /// 5. Gets an iterator over the pending transactions and iterates over them.
+    /// 6. Checks the deadline and handles the case when the deadline is reached.
+    /// 7. Checks the block size limit and handles cases where transactions would cause the block to
+    /// exceed the limit.
+    /// 8. Attempts to push the transaction into the block and handles any
+    /// potential errors.
+    /// 9. If the block size limit was reached without adding any transaction,
+    /// it logs a warning.
+    /// 10. Removes invalid transactions from the pool.
+    /// 11. Builds the block and updates the metrics.
+    /// 12. Converts the storage proof to the required format.
+    /// 13. Measures the total time it took to create the proposal and updates the corresponding
+    /// metric.
+    /// 14. Returns a new `Proposal` with the block, proof, and storage changes.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - The block cannot be created at the parent hash.
+    /// - Any of the inherents cannot be pushed into the block builder.
+    /// - The block cannot be built.
+    /// - The storage proof cannot be converted into the required format.
+    </span><span class="kw">async fn </span>propose_with(
         <span class="self">self</span>,
         inherent_data: InherentData,
         inherent_digests: Digest,
         deadline: time::Instant,
         block_size_limit: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Proposal&lt;Block, backend::TransactionFor&lt;B, Block&gt;, PR::Proof&gt;, sp_blockchain::Error&gt; {
-        <span class="kw">let </span>propose_with_start = time::Instant::now();
-        <span class="kw">let </span><span class="kw-2">mut </span>block_builder = <span class="self">self</span>.client.new_block_at(<span class="self">self</span>.parent_hash, inherent_digests, PR::ENABLED)<span class="question-mark">?</span>;
-        <span class="kw">let </span>inherents = block_builder.create_inherents(inherent_data)<span class="question-mark">?</span>;
+        <span class="comment">// Start time for the proposal
+        // This is used later to measure how long the proposal took.
+        </span><span class="kw">let </span>propose_with_start = time::Instant::now();
 
-        <span class="kw">for </span>inherent <span class="kw">in </span>inherents {
+        <span class="comment">// Initialize a new block at the parent hash with the given inherent digests.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>block_builder = <span class="self">self</span>.client.new_block_at(<span class="self">self</span>.parent_hash, inherent_digests, PR::ENABLED)<span class="question-mark">?</span>;
+
+        <span class="comment">// Create the inherents from the `inherent_data`.
+        </span><span class="kw">let </span>inherents = block_builder.create_inherents(inherent_data)<span class="question-mark">?</span>;
+
+        <span class="comment">// Iterate over each inherent and try to push it into the block builder.
+        // Handle errors depending on the type of the error.
+        </span><span class="kw">for </span>inherent <span class="kw">in </span>inherents {
             <span class="kw">match </span>block_builder.push(inherent) {
                 <span class="prelude-val">Err</span>(ApplyExtrinsicFailed(Validity(e))) <span class="kw">if </span>e.exhausted_resources() =&gt; {
                     <span class="macro">warn!</span>(<span class="string">&quot;⚠️  Dropping non-mandatory inherent from overweight block.&quot;</span>)
@@ -686,17 +790,21 @@
             }
         }
 
-        <span class="comment">// proceed with transactions
-        // We calculate soft deadline used only in case we start skipping transactions.
+        <span class="comment">// Calculate the soft deadline. This deadline is used when we start skipping transactions.
         </span><span class="kw">let </span>now = (<span class="self">self</span>.now)();
         <span class="kw">let </span>left = deadline.saturating_duration_since(now);
         <span class="kw">let </span>left_micros: u64 = left.as_micros().saturated_into();
         <span class="kw">let </span>soft_deadline = now + time::Duration::from_micros(<span class="self">self</span>.soft_deadline_percent.mul_floor(left_micros));
-        <span class="kw">let </span>block_timer = time::Instant::now();
+
+        <span class="comment">// Start the block timer and initialize other variables used in the following loop.
+        </span><span class="kw">let </span>block_timer = time::Instant::now();
         <span class="kw">let </span><span class="kw-2">mut </span>skipped = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>unqueue_invalid = Vec::new();
 
-        <span class="kw">let </span><span class="kw-2">mut </span>t1 = <span class="self">self</span>.transaction_pool.ready_at(<span class="self">self</span>.parent_number).fuse();
+        <span class="comment">// Initialize the iterators over the pending transactions.
+        // If the pool is not ready at the parent number within a deadline, log a warning and get all ready
+        // transactions.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>t1 = <span class="self">self</span>.transaction_pool.ready_at(<span class="self">self</span>.parent_number).fuse();
         <span class="kw">let </span><span class="kw-2">mut </span>t2 = futures_timer::Delay::new(deadline.saturating_duration_since((<span class="self">self</span>.now)()) / <span class="number">8</span>).fuse();
 
         <span class="kw">let </span><span class="kw-2">mut </span>pending_iterator = <span class="macro">select! </span>{
@@ -711,14 +819,16 @@
             },
         };
 
-        <span class="kw">let </span>block_size_limit = block_size_limit.unwrap_or(<span class="self">self</span>.default_block_size_limit);
+        <span class="comment">// Get the block size limit or use the default block size limit if none was given.
+        </span><span class="kw">let </span>block_size_limit = block_size_limit.unwrap_or(<span class="self">self</span>.default_block_size_limit);
 
         <span class="macro">debug!</span>(<span class="string">&quot;Attempting to push transactions from the pool.&quot;</span>);
         <span class="macro">debug!</span>(<span class="string">&quot;Pool status: {:?}&quot;</span>, <span class="self">self</span>.transaction_pool.status());
         <span class="kw">let </span><span class="kw-2">mut </span>transaction_pushed = <span class="bool-val">false</span>;
 
         <span class="kw">let </span>end_reason = <span class="kw">loop </span>{
-            <span class="kw">let </span>pending_tx = <span class="kw">if let </span><span class="prelude-val">Some</span>(pending_tx) = pending_iterator.next() {
+            <span class="comment">// Handle each pending transaction in the loop.
+            </span><span class="kw">let </span>pending_tx = <span class="kw">if let </span><span class="prelude-val">Some</span>(pending_tx) = pending_iterator.next() {
                 pending_tx
             } <span class="kw">else </span>{
                 <span class="kw">break </span>EndProposingReason::NoMoreTransactions;
@@ -792,13 +902,14 @@
             <span class="macro">warn!</span>(<span class="string">&quot;Hit block size limit of `{}` without including any transaction!&quot;</span>, block_size_limit,);
         }
 
-        <span class="self">self</span>.transaction_pool.remove_invalid(<span class="kw-2">&amp;</span>unqueue_invalid);
+        <span class="comment">// Remove invalid transactions from the pool.
+        </span><span class="self">self</span>.transaction_pool.remove_invalid(<span class="kw-2">&amp;</span>unqueue_invalid);
 
-        <span class="comment">// FIXME: use custom implementation of block builder and remove storage proof computation
-        // Issue: https://github.com/keep-starknet-strange/madara/issues/606
+        <span class="comment">// Build the block, extract the storage changes and the storage proof.
         </span><span class="kw">let </span>(block, storage_changes, proof) = block_builder.build()<span class="question-mark">?</span>.into_inner();
 
-        <span class="self">self</span>.metrics.report(|metrics| {
+        <span class="comment">// Update the metrics with the number of transactions and the time it took to construct the block.
+        </span><span class="self">self</span>.metrics.report(|metrics| {
             metrics.number_of_transactions.set(block.extrinsics().len() <span class="kw">as </span>u64);
             metrics.block_constructed.observe(block_timer.elapsed().as_secs_f64());
 
@@ -814,18 +925,19 @@
             block.extrinsics().len(),
         );
 
-        <span class="comment">// TODO: try to remove completely the storage proof computation and see if it breaks anything
-        // Issue: https://github.com/keep-starknet-strange/madara/issues/606
+        <span class="comment">// Convert the storage proof to the required format.
         </span><span class="kw">let </span>proof = PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>propose_with_end = time::Instant::now();
+        <span class="comment">// Measure the total time it took to create the proposal and update the corresponding metric.
+        </span><span class="kw">let </span>propose_with_end = time::Instant::now();
         <span class="self">self</span>.metrics.report(|metrics| {
             metrics
                 .create_block_proposal_time
                 .observe(propose_with_end.saturating_duration_since(propose_with_start).as_secs_f64());
         });
 
-        <span class="prelude-val">Ok</span>(Proposal { block, proof, storage_changes })
+        <span class="comment">// Return a new `Proposal` with the block, proof, and storage changes.
+        </span><span class="prelude-val">Ok</span>(Proposal { block, proof, storage_changes })
     }
 }
 </code></pre></div>
