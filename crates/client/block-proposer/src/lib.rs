@@ -217,8 +217,11 @@ where
             "madara-block-proposer",
             None,
             Box::pin(async move {
-                // leave some time for evaluation and block finalization (33%)
-                let deadline = (self.now)() + max_duration - max_duration / 3;
+                // Leave some time for evaluation and block finalization (20%)
+                // and some time for block production (80%).
+                // We need to benchmark and tune this value.
+                // Open question: should we make this configurable?
+                let deadline = (self.now)() + max_duration - max_duration / 5;
                 let res = self.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).await;
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");
@@ -244,6 +247,43 @@ where
     C::Api: ApiExt<Block, StateBackend = backend::StateBackendFor<B, Block>> + BlockBuilderApi<Block>,
     PR: ProofRecording,
 {
+    /// Propose a new block.
+    ///
+    /// # Arguments
+    /// * `inherents` - The inherents to include in the block.
+    /// * `inherent_digests` - The inherent digests to include in the block.
+    /// * `deadline` - The deadline for proposing the block.
+    /// * `block_size_limit` - The maximum size of the block in bytes.
+    ///
+    ///
+    /// The function follows these general steps:
+    /// 1. Starts a timer to measure the total time it takes to create the proposal.
+    /// 2. Initializes a new block at the parent hash with the given inherent digests.
+    /// 3. Iterates over the inherents and pushes them into the block builder. Handles any potential
+    /// errors.
+    /// 4. Sets up the soft deadline and starts the block timer.
+    /// 5. Gets an iterator over the pending transactions and iterates over them.
+    /// 6. Checks the deadline and handles the case when the deadline is reached.
+    /// 7. Checks the block size limit and handles cases where transactions would cause the block to
+    /// exceed the limit.
+    /// 8. Attempts to push the transaction into the block and handles any
+    /// potential errors.
+    /// 9. If the block size limit was reached without adding any transaction,
+    /// it logs a warning.
+    /// 10. Removes invalid transactions from the pool.
+    /// 11. Builds the block and updates the metrics.
+    /// 12. Converts the storage proof to the required format.
+    /// 13. Measures the total time it took to create the proposal and updates the corresponding
+    /// metric.
+    /// 14. Returns a new `Proposal` with the block, proof, and storage changes.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if:
+    /// - The block cannot be created at the parent hash.
+    /// - Any of the inherents cannot be pushed into the block builder.
+    /// - The block cannot be built.
+    /// - The storage proof cannot be converted into the required format.
     async fn propose_with(
         self,
         inherent_data: InherentData,
@@ -251,10 +291,18 @@ where
         deadline: time::Instant,
         block_size_limit: Option<usize>,
     ) -> Result<Proposal<Block, backend::TransactionFor<B, Block>, PR::Proof>, sp_blockchain::Error> {
+        // Start time for the proposal
+        // This is used later to measure how long the proposal took.
         let propose_with_start = time::Instant::now();
+
+        // Initialize a new block at the parent hash with the given inherent digests.
         let mut block_builder = self.client.new_block_at(self.parent_hash, inherent_digests, PR::ENABLED)?;
+
+        // Create the inherents from the `inherent_data`.
         let inherents = block_builder.create_inherents(inherent_data)?;
 
+        // Iterate over each inherent and try to push it into the block builder.
+        // Handle errors depending on the type of the error.
         for inherent in inherents {
             match block_builder.push(inherent) {
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
@@ -271,16 +319,20 @@ where
             }
         }
 
-        // proceed with transactions
-        // We calculate soft deadline used only in case we start skipping transactions.
+        // Calculate the soft deadline. This deadline is used when we start skipping transactions.
         let now = (self.now)();
         let left = deadline.saturating_duration_since(now);
         let left_micros: u64 = left.as_micros().saturated_into();
         let soft_deadline = now + time::Duration::from_micros(self.soft_deadline_percent.mul_floor(left_micros));
+
+        // Start the block timer and initialize other variables used in the following loop.
         let block_timer = time::Instant::now();
         let mut skipped = 0;
         let mut unqueue_invalid = Vec::new();
 
+        // Initialize the iterators over the pending transactions.
+        // If the pool is not ready at the parent number within a deadline, log a warning and get all ready
+        // transactions.
         let mut t1 = self.transaction_pool.ready_at(self.parent_number).fuse();
         let mut t2 = futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8).fuse();
 
@@ -296,6 +348,7 @@ where
             },
         };
 
+        // Get the block size limit or use the default block size limit if none was given.
         let block_size_limit = block_size_limit.unwrap_or(self.default_block_size_limit);
 
         debug!("Attempting to push transactions from the pool.");
@@ -303,6 +356,7 @@ where
         let mut transaction_pushed = false;
 
         let end_reason = loop {
+            // Handle each pending transaction in the loop.
             let pending_tx = if let Some(pending_tx) = pending_iterator.next() {
                 pending_tx
             } else {
@@ -377,12 +431,13 @@ where
             warn!("Hit block size limit of `{}` without including any transaction!", block_size_limit,);
         }
 
+        // Remove invalid transactions from the pool.
         self.transaction_pool.remove_invalid(&unqueue_invalid);
 
-        // FIXME: use custom implementation of block builder and remove storage proof computation
-        // Issue: https://github.com/keep-starknet-strange/madara/issues/606
+        // Build the block, extract the storage changes and the storage proof.
         let (block, storage_changes, proof) = block_builder.build()?.into_inner();
 
+        // Update the metrics with the number of transactions and the time it took to construct the block.
         self.metrics.report(|metrics| {
             metrics.number_of_transactions.set(block.extrinsics().len() as u64);
             metrics.block_constructed.observe(block_timer.elapsed().as_secs_f64());
@@ -399,10 +454,10 @@ where
             block.extrinsics().len(),
         );
 
-        // TODO: try to remove completely the storage proof computation and see if it breaks anything
-        // Issue: https://github.com/keep-starknet-strange/madara/issues/606
+        // Convert the storage proof to the required format.
         let proof = PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
 
+        // Measure the total time it took to create the proposal and update the corresponding metric.
         let propose_with_end = time::Instant::now();
         self.metrics.report(|metrics| {
             metrics
@@ -410,6 +465,7 @@ where
                 .observe(propose_with_end.saturating_duration_since(propose_with_start).as_secs_f64());
         });
 
+        // Return a new `Proposal` with the block, proof, and storage changes.
         Ok(Proposal { block, proof, storage_changes })
     }
 }
