@@ -105,10 +105,7 @@ where
             let index_before_loop = index;
 
             let block_hash = block.header().hash(*self.hasher).into();
-            let block_number = block.header().block_number.try_into().map_err(|e| {
-                error!("Failed to convert block number to u64: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?;
+            let block_number = block.header().block_number;
 
             let (new_filtered_events, continuation_index) = filter_events_by_params(
                 block_events,

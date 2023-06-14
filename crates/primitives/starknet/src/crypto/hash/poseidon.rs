@@ -1,4 +1,6 @@
 //! Poseidon hash module.
+use alloc::vec::Vec;
+
 use poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
 use poseidon_hash::hash_sw8;
 use poseidon_hash::parameters::sw8::GF;
@@ -20,6 +22,22 @@ impl HasherT for PoseidonHasher {
     /// The hash of the data.
     fn hash(&self, data: &[u8]) -> Felt252Wrapper {
         let input = felts_from_u8s::<GF>(data);
+        let binding = u8s_from_felts(&hash_sw8(&input));
+        let result = binding.as_slice();
+        result.try_into().unwrap() // TODO: remove unwrap
+    }
+
+    /// Hashes a slice of field elements using the Poseido hash function.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to hash.
+    ///
+    /// # Returns
+    ///
+    /// The hash of the data.
+    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
+        let input = felts_from_u8s::<GF>(&data.iter().flat_map(|x| x.0.to_bytes_be()).collect::<Vec<u8>>());
         let binding = u8s_from_felts(&hash_sw8(&input));
         let result = binding.as_slice();
         result.try_into().unwrap() // TODO: remove unwrap
