@@ -342,18 +342,18 @@ export function deployTokenContractUDC(
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [
       UDC_CONTRACT_ADDRESS, // CONTRACT ADDRESS
-      "0x01987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d", // SELECTOR (transfer)
+      "0x01987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d", // SELECTOR (deployContract)
       numberToHex(10, 256), // CALLDATA SIZE
       classHash,
       salt,
-      unique ? numberToHex(0, 256) : numberToHex(1, 256),
+      unique ? numberToHex(1, 256) : numberToHex(0, 256),
       "0x0000000000000000000000000000000000000000000000000000000000000006",
-      numberToHex(1, 256), // Token Name
-      numberToHex(1, 256), // Token Symbol
-      numberToHex(18, 256), // Token Decimals
-      numberToHex(42, 256), // Initial Supply
-      "0x0000000000000000000000000000000000000000000000000000000000000000", // Initial Supply Cont { since u256 }
-      contractAddress, // recipient address
+      "0x000000000000000000000000000000000000000000000000000000000000000A", // Name
+      "0x000000000000000000000000000000000000000000000000000000000000000B", // Symbol
+      "0x0000000000000000000000000000000000000000000000000000000000000002", // Decimals
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply low
+      "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply high
+      "0x0000000000000000000000000000000000000000000000000000000000001111", // recipient
     ],
   };
 
