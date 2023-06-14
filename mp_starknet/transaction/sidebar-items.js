@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["constants","types"],"struct":["EventBuilder"]};
+window.SIDEBAR_ITEMS = {"mod":["constants","types","utils"],"struct":["EventBuilder"]};

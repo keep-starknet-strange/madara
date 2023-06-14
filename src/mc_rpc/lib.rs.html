@@ -844,6 +844,14 @@
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -860,16 +868,17 @@
 <span class="kw">use </span>errors::StarknetRpcApiError;
 <span class="kw">use </span>jsonrpsee::core::{async_trait, RpcResult};
 <span class="kw">use </span>log::error;
-<span class="kw">use </span>mc_rpc_core::utils::{
-    get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
-};
+<span class="kw">use </span>mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
 <span class="kw">use </span>mc_rpc_core::Felt;
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
 <span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
-<span class="kw">use </span>mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction <span class="kw">as </span>MPTransaction, TxType};
+<span class="kw">use </span>mp_starknet::transaction::types::{
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError,
+    Transaction <span class="kw">as </span>MPTransaction, TxType,
+};
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
@@ -1298,7 +1307,10 @@
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -&gt; RpcResult&lt;InvokeTransactionResult&gt; {
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
-        <span class="kw">let </span>invoke_tx = to_invoke_tx(invoke_transaction)<span class="question-mark">?</span>;
+        <span class="kw">let </span>invoke_tx = InvokeTransaction::try_from(invoke_transaction).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
         <span class="kw">let </span>chain_id =
             Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>).from_utf8().map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
 
@@ -1344,10 +1356,11 @@
         <span class="kw">let </span>chain_id =
             Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>).from_utf8().map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>deploy_account_transaction = to_deploy_account_tx(deploy_account_transaction).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>deploy_account_transaction =
+            DeployAccountTransaction::try_from(deploy_account_transaction).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+                StarknetRpcApiError::InternalServerError
+            })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>transaction: MPTransaction = deploy_account_transaction.from_deploy(<span class="kw-2">&amp;</span>chain_id).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
@@ -1401,7 +1414,10 @@
         <span class="kw">let </span>chain_id =
             Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>).from_utf8().map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>tx = to_tx(request, <span class="kw-2">&amp;</span>chain_id)<span class="question-mark">?</span>;
+        <span class="kw">let </span>tx = to_tx(request, <span class="kw-2">&amp;</span>chain_id).map_err(|e| {
+            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
+            StarknetRpcApiError::InternalServerError
+        })<span class="question-mark">?</span>;
         <span class="kw">let </span>(actual_fee, gas_usage) = <span class="self">self
             </span>.client
             .runtime_api()
@@ -1570,7 +1586,7 @@
         <span class="kw">let </span>chain_id =
             Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>).from_utf8().map_err(|<span class="kw">_</span>| StarknetRpcApiError::InternalServerError)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>declare_tx = to_declare_tx(declare_transaction).map_err(|e| {
+        <span class="kw">let </span>declare_tx = DeclareTransaction::try_from(declare_transaction).map_err(|e| {
             <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
