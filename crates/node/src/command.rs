@@ -1,13 +1,13 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
-use sc_client_api::HeaderBackend;
+use sc_executor_common::wasm_runtime::{HeapAllocStrategy, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sp_keyring::Sr25519Keyring;
 use sp_runtime::generic::Era;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, rpc, service};
+use crate::{chain_spec, service};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -182,40 +182,21 @@ pub fn run() -> sc_cli::Result<()> {
         Some(Subcommand::Simnode(cmd)) => {
             let runner = cli.create_runner(&cmd.run.normalize())?;
             let config = runner.config();
-            // here we use simnode's custom executor
-            let executor = sc_simnode::Executor::new(
-                config.wasm_method,
-                config.default_heap_pages,
-                config.max_runtime_instances,
-                None,
-                config.runtime_cache_size,
-            );
+
+            let heap_pages = config
+                .default_heap_pages
+                .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static { extra_pages: h as _ });
+
+            let executor = sc_simnode::Executor::builder()
+                .with_execution_method(config.wasm_method)
+                .with_onchain_heap_alloc_strategy(heap_pages)
+                .with_offchain_heap_alloc_strategy(heap_pages)
+                .with_max_runtime_instances(config.max_runtime_instances)
+                .with_runtime_cache_size(config.runtime_cache_size)
+                .build();
+
             // pass the custom executor along
             let components = service::new_partial::<_, _>(config, service::build_aura_grandpa_import_queue, executor)?;
-
-            let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
-
-            let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
-                sc_service::build_network(sc_service::BuildNetworkParams {
-                    config: &config,
-                    net_config,
-                    client: components.client.clone(),
-                    transaction_pool: components.transaction_pool.clone(),
-                    spawn_handle: components.task_manager.spawn_handle(),
-                    import_queue: components.import_queue,
-                    block_announce_validator_builder: None,
-                    warp_sync_params: None,
-                })?;
-
-            let starting_block = components.client.info().best_number;
-            let overrides = mc_storage::overrides_handle(components.client.clone());
-            let starknet_rpc_params = rpc::StarknetDeps {
-                client: components.client.clone(),
-                madara_backend: components.other.3.clone(),
-                overrides,
-                sync_service: sync_service.clone(),
-                starting_block,
-            };
 
             let rpc_extensions_builder = {
                 let client = components.client.clone();
@@ -226,20 +207,30 @@ pub fn run() -> sc_cli::Result<()> {
                         client: client.clone(),
                         pool: pool.clone(),
                         deny_unsafe,
-                        starknet: starknet_rpc_params.clone(),
+                        starknet: None,
                         command_sink: None,
                     };
                     crate::rpc::create_full(deps).map_err(Into::into)
                 })
             };
 
+            let sim_components: sc_service::PartialComponents<_, _, _, _, _, (_, _, _)> =
+                sc_service::PartialComponents {
+                    client: components.client,
+                    backend: components.backend,
+                    task_manager: components.task_manager,
+                    import_queue: components.import_queue,
+                    keystore_container: components.keystore_container,
+                    select_chain: components.select_chain,
+                    transaction_pool: components.transaction_pool,
+                    other: (components.other.0, components.other.2, components.other.1),
+                };
+
             runner.run_node_until_exit(move |config| async move {
-                let client = components.client.clone();
-                let pool = components.transaction_pool.clone();
                 // start simnode's subsystems
                 let task_manager =
                     sc_simnode::aura::start_simnode::<RuntimeInfo, _, _, _, _, _>(sc_simnode::SimnodeParams {
-                        components,
+                        components: sim_components,
                         config,
                         // you'll want this to be set to true so simnode creates
                         // blocks for every transaction that enters the tx pool.

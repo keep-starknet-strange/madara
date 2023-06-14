@@ -73,6 +73,7 @@ sc-basic-authorship = { git = "https://github.com/paritytech/substrate", branch 
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+sc-executor-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-telemetry = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }

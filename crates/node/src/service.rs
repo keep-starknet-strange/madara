@@ -18,12 +18,13 @@ use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
-use sc_executor::RuntimeVersionOf;
+use sc_executor::{RuntimeVersionOf, WasmExecutor};
+use sc_executor_common::wasm_runtime::{HeapAllocStrategy, DEFAULT_HEAP_ALLOC_STRATEGY};
 use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool::FullPool;
-use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
+use sp_api::{ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_core::traits::CodeExecutor;
 use sp_runtime::traits::BlakeTwo256;
@@ -220,12 +221,20 @@ where
 
 /// Builds a new service for a full client.
 pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
-    let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
-        config.wasm_method,
-        config.default_heap_pages,
-        config.max_runtime_instances,
-        config.runtime_cache_size,
+    let heap_pages = config
+        .default_heap_pages
+        .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static { extra_pages: h as _ });
+
+    let executor = NativeElseWasmExecutor::new_with_wasm_executor(
+        WasmExecutor::builder()
+            .with_execution_method(config.wasm_method)
+            .with_onchain_heap_alloc_strategy(heap_pages)
+            .with_offchain_heap_alloc_strategy(heap_pages)
+            .with_max_runtime_instances(config.max_runtime_instances)
+            .with_runtime_cache_size(config.runtime_cache_size)
+            .build(),
     );
+
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -307,7 +316,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
                 client: client.clone(),
                 pool: pool.clone(),
                 deny_unsafe,
-                starknet: starknet_rpc_params.clone(),
+                starknet: Some(starknet_rpc_params.clone()),
                 command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
             };
             crate::rpc::create_full(deps).map_err(Into::into)
@@ -554,12 +563,20 @@ type ChainOpsResult = Result<
 >;
 
 pub fn new_chain_ops(mut config: &mut Configuration) -> ChainOpsResult {
-    let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
-        config.wasm_method,
-        config.default_heap_pages,
-        config.max_runtime_instances,
-        config.runtime_cache_size,
+    let heap_pages = config
+        .default_heap_pages
+        .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static { extra_pages: h as _ });
+
+    let executor = NativeElseWasmExecutor::new_with_wasm_executor(
+        WasmExecutor::builder()
+            .with_execution_method(config.wasm_method)
+            .with_onchain_heap_alloc_strategy(heap_pages)
+            .with_offchain_heap_alloc_strategy(heap_pages)
+            .with_max_runtime_instances(config.max_runtime_instances)
+            .with_runtime_cache_size(config.runtime_cache_size)
+            .build(),
     );
+
     config.keystore = sc_service::config::KeystoreConfig::InMemory;
     let sc_service::PartialComponents { client, backend, import_queue, task_manager, other, .. } =
         new_partial::<_, _>(config, build_aura_grandpa_import_queue, executor)?;
