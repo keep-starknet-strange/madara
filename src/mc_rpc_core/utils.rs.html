@@ -114,11 +114,6 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
-<a href="#119" id="119">119</a>
-<a href="#120" id="120">120</a>
-<a href="#121" id="121">121</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
 <span class="kw">use </span>base64::Engine;
@@ -204,27 +199,22 @@
 <span class="doccomment">/// Returns a [Result&lt;LegacyEntryPointsByType&gt;] (blockifier type) from a [EntrypointMapWrapper]
 /// (internal type)
 </span><span class="kw">fn </span>to_legacy_entry_points_by_type(entries: <span class="kw-2">&amp;</span>EntrypointMapWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
-    <span class="kw">let </span>constructor = entries.<span class="number">0
-        </span>.get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::Constructor).ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing constructor entry point&quot;</span>))<span class="question-mark">? </span><span class="comment">// TODO: change to StarknetError
-        </span>.iter()
-        .map(|e| (e.clone()).try_into())
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
+    <span class="kw">fn </span>collect_entry_points(
+        entries: <span class="kw-2">&amp;</span>EntrypointMapWrapper,
+        entry_point_type: EntryPointTypeWrapper,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;&gt; {
+        <span class="prelude-val">Ok</span>(entries
+            .<span class="number">0
+            </span>.get(<span class="kw-2">&amp;</span>entry_point_type)
+            .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing {:?} entry point&quot;</span>, entry_point_type))<span class="question-mark">?
+            </span>.iter()
+            .map(|e| (e.clone()).try_into())
+            .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>)
+    }
 
-    <span class="kw">let </span>external = entries
-        .<span class="number">0
-        </span>.get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::External)
-        .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing external entry point&quot;</span>))<span class="question-mark">?
-        </span>.iter()
-        .map(|e| (e.clone()).try_into())
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>l1_handler = entries
-        .<span class="number">0
-        </span>.get(<span class="kw-2">&amp;</span>EntryPointTypeWrapper::L1Handler)
-        .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing l1 handler entry point&quot;</span>))<span class="question-mark">?
-        </span>.iter()
-        .map(|e| (e.clone()).try_into())
-        .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>;
+    <span class="kw">let </span>constructor = collect_entry_points(entries, EntryPointTypeWrapper::Constructor)<span class="question-mark">?</span>;
+    <span class="kw">let </span>external = collect_entry_points(entries, EntryPointTypeWrapper::External)<span class="question-mark">?</span>;
+    <span class="kw">let </span>l1_handler = collect_entry_points(entries, EntryPointTypeWrapper::L1Handler)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(LegacyEntryPointsByType { constructor, external, l1_handler })
 }
