@@ -746,7 +746,6 @@ where
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        println!("{:?}", declare_tx.compiled_class_hash);
         let transaction: MPTransaction = declare_tx.clone().from_declare(&chain_id);
         let extrinsic = self
             .client

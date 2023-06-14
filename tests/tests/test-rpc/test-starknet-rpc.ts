@@ -278,7 +278,7 @@ describeDevMadara("Starknet RPC", (context) => {
         TOKEN_CLASS_HASH,
         "latest"
       );
-
+      // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
@@ -708,10 +708,11 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-      await account.declare(
+      let classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+      const res = await account.declare(
         {
-          classHash:
-            "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
+          classHash: classHash,
           contract: ERC20_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
@@ -720,13 +721,14 @@ describeDevMadara("Starknet RPC", (context) => {
       await jumpBlocks(context, 1);
 
       const contractClassActual = await providerRPC.getClass(
-        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4",
+        classHash,
         "latest"
       );
       // TODO compare the program as well
       expect(contractClassActual.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      expect(res.class_hash).to.be.eq(classHash);
     });
   });
 
@@ -761,25 +763,19 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("should return all starknet declare transactions", async function () {
       const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-
-      const nonce = await providerRPC.getNonceForAddress(
-        ARGENT_CONTRACT_ADDRESS,
-        "latest"
-      );
-
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-
+      let classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       await account.declare(
         {
-          classHash:
-            "0x92d5e5e82d6eaaef47a8ba076f0ea0989d2c5aeb84d74d8ade33fe773cbf67",
+          classHash: classHash,
           contract: ERC20_CONTRACT,
         },
-        { nonce, version: 1, maxFee: "123456" }
+        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
 
       const txs = await providerRPC.getPendingTransactions();
