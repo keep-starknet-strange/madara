@@ -1,4 +1,6 @@
 //! Poseidon hash module.
+use alloc::vec::Vec;
+
 use poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
 use poseidon_hash::hash_sw8;
 use poseidon_hash::parameters::sw8::GF;
