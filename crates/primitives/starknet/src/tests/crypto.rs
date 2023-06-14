@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use frame_support::bounded_vec;
 use sp_core::H256;
+use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{
@@ -16,6 +17,7 @@ use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, No
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
+use crate::tests::utils::PEDERSEN_ZERO_HASH;
 use crate::traits::hash::{CryptoHasherT, HasherT};
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
@@ -244,5 +246,23 @@ fn test_binary_node_implementations() {
         "BinaryNode { hash: None, height: 0, left: RefCell { value: Leaf(FieldElement { inner: \
          0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: RefCell { value: \
          Leaf(FieldElement { inner: 0x0000000000000000000000000000000000000000000000000000000000000003 }) } }"
+    );
+}
+
+#[test]
+fn test_pedersen_hash_elements_zero() {
+    let elements = vec![Felt252Wrapper::ZERO, Felt252Wrapper::ONE];
+
+    let expected_hash = compute_hash_on_elements(&[FieldElement::ZERO, FieldElement::ONE]);
+    assert_eq!(PedersenHasher::default().hash_elements(&elements), expected_hash.into());
+}
+
+#[test]
+fn test_pedersen_hash_elements_empty() {
+    let elements = vec![];
+
+    assert_eq!(
+        PedersenHasher::default().hash_elements(&elements),
+        Felt252Wrapper::from_hex_be(PEDERSEN_ZERO_HASH).unwrap()
     );
 }

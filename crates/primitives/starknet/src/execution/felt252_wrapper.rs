@@ -131,6 +131,13 @@ impl From<u64> for Felt252Wrapper {
     }
 }
 
+/// [`u8`] to [`Felt252Wrapper`].
+impl From<u8> for Felt252Wrapper {
+    fn from(value: u8) -> Self {
+        Self(FieldElement::from(value))
+    }
+}
+
 /// [`u128`] to [`Felt252Wrapper`].
 impl From<u128> for Felt252Wrapper {
     fn from(value: u128) -> Self {
