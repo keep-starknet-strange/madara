@@ -1,12 +1,11 @@
 use core::convert::TryFrom;
 
 use frame_support::BoundedVec;
-use sp_core::{Encode, U256};
+use sp_core::U256;
 
 use crate::block::{Block, BlockTransactionReceipts, Header, MaxTransactions};
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
-use crate::traits::hash::HasherT;
 use crate::transaction::types::{MaxArraySize, Transaction, TransactionReceiptWrapper, TxType};
 
 fn generate_dummy_header() -> Header {
