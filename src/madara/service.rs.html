@@ -555,6 +555,8 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -854,11 +856,13 @@
     <span class="kw">let </span>rpc_extensions_builder = {
         <span class="kw">let </span>client = client.clone();
         <span class="kw">let </span>pool = transaction_pool.clone();
+        <span class="kw">let </span>graph = transaction_pool.pool().clone();
 
         Box::new(<span class="kw">move </span>|deny_unsafe, <span class="kw">_</span>| {
             <span class="kw">let </span>deps = <span class="kw">crate</span>::rpc::FullDeps {
                 client: client.clone(),
                 pool: pool.clone(),
+                graph: graph.clone(),
                 deny_unsafe,
                 starknet: starknet_rpc_params.clone(),
                 command_sink: <span class="kw">if </span>sealing.is_some() { <span class="prelude-val">Some</span>(command_sink.clone()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>},

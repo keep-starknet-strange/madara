@@ -852,6 +852,19 @@
 <a href="#852" id="852">852</a>
 <a href="#853" id="853">853</a>
 <a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -882,6 +895,7 @@
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
+<span class="kw">use </span>sc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;
@@ -902,11 +916,12 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::RpcEventFilter;
 
 <span class="doccomment">/// A Starknet RPC server for Madara
-</span><span class="kw">pub struct </span>Starknet&lt;B: BlockT, BE, C, P, H&gt; {
+</span><span class="kw">pub struct </span>Starknet&lt;A: ChainApi, B: BlockT, BE, C, P, H&gt; {
     client: Arc&lt;C&gt;,
     backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
     overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
     pool: Arc&lt;P&gt;,
+    graph: Arc&lt;Pool&lt;A&gt;&gt;,
     sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
     starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
     hasher: Arc&lt;H&gt;,
@@ -924,21 +939,23 @@
 //
 // # Returns
 // * `Self` - The actual Starknet struct
-</span><span class="kw">impl</span>&lt;B: BlockT, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt; {
+</span><span class="attr">#[allow(clippy::too_many_arguments)]
+</span><span class="kw">impl</span>&lt;A: ChainApi, B: BlockT, BE, C, P, H&gt; Starknet&lt;A, B, BE, C, P, H&gt; {
     <span class="kw">pub fn </span>new(
         client: Arc&lt;C&gt;,
         backend: Arc&lt;mc_db::Backend&lt;B&gt;&gt;,
         overrides: Arc&lt;OverrideHandle&lt;B&gt;&gt;,
         pool: Arc&lt;P&gt;,
+        graph: Arc&lt;Pool&lt;A&gt;&gt;,
         sync_service: Arc&lt;SyncingService&lt;B&gt;&gt;,
         starting_block: &lt;&lt;B&gt;::Header <span class="kw">as </span>HeaderT&gt;::Number,
         hasher: Arc&lt;H&gt;,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ client, backend, overrides, pool, sync_service, starting_block, hasher, _marker: PhantomData }
+        <span class="self">Self </span>{ client, backend, overrides, pool, graph, sync_service, starting_block, hasher, _marker: PhantomData }
     }
 }
 
-<span class="kw">impl</span>&lt;B, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt;
+<span class="kw">impl</span>&lt;A: ChainApi, B, BE, C, P, H&gt; Starknet&lt;A, B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
@@ -948,7 +965,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;B, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt;
+<span class="kw">impl</span>&lt;A: ChainApi, B, BE, C, P, H&gt; Starknet&lt;A, B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
@@ -1012,9 +1029,10 @@
 
 <span class="attr">#[async_trait]
 #[allow(unused_variables)]
-</span><span class="kw">impl</span>&lt;B, BE, C, P, H&gt; StarknetRpcApiServer <span class="kw">for </span>Starknet&lt;B, BE, C, P, H&gt;
+</span><span class="kw">impl</span>&lt;A, B, BE, C, P, H&gt; StarknetRpcApiServer <span class="kw">for </span>Starknet&lt;A, B, BE, C, P, H&gt;
 <span class="kw">where
-    </span>B: BlockT,
+    </span>A: ChainApi&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
+    B: BlockT,
     P: TransactionPool&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
     BE: Backend&lt;B&gt; + <span class="lifetime">&#39;static</span>,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
@@ -1495,8 +1513,16 @@
     </span><span class="kw">async fn </span>pending_transactions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RpcResult&lt;Vec&lt;Transaction&gt;&gt; {
         <span class="kw">let </span>substrate_block_hash = <span class="self">self</span>.client.info().best_hash;
 
-        <span class="kw">let </span>transactions: Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt; =
-            <span class="self">self</span>.pool.ready().map(|tx| tx.data().clone()).collect::&lt;Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;&gt;();
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions = <span class="macro">vec!</span>[];
+
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions_ready: Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt; =
+            <span class="self">self</span>.graph.validated_pool().ready().map(|tx| tx.data().clone()).collect();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>transactions_future: Vec&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic&gt; =
+            <span class="self">self</span>.graph.validated_pool().futures().into_iter().map(|(_hash, extrinsic)| extrinsic).collect();
+
+        transactions.append(<span class="kw-2">&amp;mut </span>transactions_ready);
+        transactions.append(<span class="kw-2">&amp;mut </span>transactions_future);
 
         <span class="kw">let </span>api = <span class="self">self</span>.client.runtime_api();
 

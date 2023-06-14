@@ -185,6 +185,7 @@
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
 </pre><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
@@ -201,6 +202,7 @@
 <span class="kw">use </span>mp_starknet::transaction::types::EventWrapper;
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
+<span class="kw">use </span>sc_transaction_pool::ChainApi;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;
@@ -211,7 +213,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::types::RpcEventFilter;
 <span class="kw">use crate</span>::{EmittedEvent, Starknet};
 
-<span class="kw">impl</span>&lt;B, BE, C, P, H&gt; Starknet&lt;B, BE, C, P, H&gt;
+<span class="kw">impl</span>&lt;A: ChainApi, B, BE, C, P, H&gt; Starknet&lt;A, B, BE, C, P, H&gt;
 <span class="kw">where
     </span>B: BlockT,
     C: HeaderBackend&lt;B&gt; + StorageProvider&lt;B, BE&gt; + <span class="lifetime">&#39;static</span>,
