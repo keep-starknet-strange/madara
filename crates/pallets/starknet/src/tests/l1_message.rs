@@ -1,6 +1,6 @@
 use frame_support::assert_err;
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
-use mp_starknet::transaction::types::DeclareTransaction;
+use mp_starknet::transaction::types::{DeclareTransaction, Transaction, TxType};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
 
@@ -38,7 +38,7 @@ fn test_verify_tx_longevity() {
         System::set_block_number(0);
         run_to_block(2);
 
-        let transaction = crate::Transaction::default();
+        let transaction = Transaction { tx_type: TxType::L1Handler, ..Transaction::default() };
 
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::consume_l1_message { transaction });

@@ -753,71 +753,34 @@ pub mod pallet {
             // determine an absolute priority. For now we use that for the benchmark (lowest nonce goes first)
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
-            match call {
-                Call::invoke { transaction } => {
-                    let nonce = Pallet::<T>::nonce(transaction.sender_address);
-                    let invoke_transaction = transaction.clone().from_invoke(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(invoke_transaction, TxType::Invoke)?;
 
-                    let mut tx = ValidTransaction::with_tag_prefix("starknet")
-                        .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                        // This is a transaction identifier for substrate
-                        .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(T::TransactionLongevity::get())
-                        .propagate(true);
+            let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
-                    if Into::<U256>::into(transaction.nonce) > nonce {
-                        tx = tx.and_requires((
-                            transaction.sender_address,
-                            Felt252Wrapper(transaction.nonce.0 - FieldElement::ONE),
-                        ));
+            let transaction_type = transaction.tx_type.clone();
+            let transaction_nonce = transaction.nonce;
+            let sender_address = transaction.sender_address;
+
+            let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
+                .priority(u64::MAX - (TryInto::<u64>::try_into(transaction_nonce)).unwrap())
+                .and_provides((sender_address, transaction_nonce))
+                .longevity(T::TransactionLongevity::get())
+                .propagate(true);
+
+            match transaction_type {
+                TxType::Invoke | TxType::Declare => {
+                    // validate the transaction
+                    Self::validate_tx(transaction, transaction_type)?;
+                    // add the requires tag
+                    let sender_nonce = Pallet::<T>::nonce(sender_address);
+                    if Into::<U256>::into(transaction_nonce) > sender_nonce {
+                        valid_transaction_builder = valid_transaction_builder
+                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
                     }
-
-                    tx.build()
                 }
-                Call::declare { transaction } => {
-                    let nonce = Pallet::<T>::nonce(transaction.sender_address);
-                    let declare_transaction = transaction.clone().from_declare(&Self::chain_id_str());
-                    Pallet::<T>::validate_tx(declare_transaction, TxType::Declare)?;
-                    let mut tx = ValidTransaction::with_tag_prefix("starknet")
-                        .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                        // This is a transaction identifier for substrate
-                        .and_provides((transaction.sender_address, transaction.nonce))
-                        .longevity(T::TransactionLongevity::get())
-                        .propagate(true);
+                _ => (),
+            };
 
-                    if Into::<U256>::into(transaction.nonce) > nonce {
-                        tx = tx.and_requires((
-                            transaction.sender_address,
-                            Felt252Wrapper(transaction.nonce.0 - FieldElement::ONE),
-                        ));
-                    }
-
-                    tx.build()
-                }
-                Call::deploy_account { transaction } => {
-                    // don't validate deploy txs for now
-                    let deploy_account_transaction = transaction
-                        .clone()
-                        .from_deploy(&Self::chain_id_str())
-                        .map_err(|_| TransactionValidityError::Unknown(UnknownTransaction::CannotLookup))?;
-                    // Pallet::<T>::validate_tx(deploy_account_transaction, TxType::DeployAccount)?;
-                    ValidTransaction::with_tag_prefix("starknet")
-                        .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                        // This is a transaction identifier for substrate
-                        .and_provides((deploy_account_transaction.sender_address, transaction.nonce))
-                        .longevity(T::TransactionLongevity::get())
-                        .propagate(true)
-                        .build()
-                }
-                Call::consume_l1_message { transaction } => ValidTransaction::with_tag_prefix("starknet")
-                    .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
-                    .and_provides((transaction.sender_address, transaction.nonce))
-                    .longevity(T::TransactionLongevity::get())
-                    .propagate(true)
-                    .build(),
-                _ => InvalidTransaction::Call.into(),
-            }
+            valid_transaction_builder.build()
         }
 
         /// From substrate documentation:
@@ -838,6 +801,25 @@ pub mod pallet {
 
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
+    /// Returns the transaction for the Call
+    ///
+    /// # Arguments
+    ///
+    /// * `call` - The call to get the sender address for
+    ///
+    /// # Returns
+    ///
+    /// The transaction
+    fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
+        match call {
+            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(&Self::chain_id_str())),
+            Call::<T>::declare { transaction } => Ok(transaction.from_declare(&Self::chain_id_str())),
+            Call::<T>::deploy_account { transaction } => transaction.from_deploy(&Self::chain_id_str()).map_err(|_| ()),
+            Call::<T>::consume_l1_message { transaction } => Ok(transaction),
+            _ => Err(()),
+        }
+    }
+
     /// Validates transaction and returns substrate error if any.
     ///
     /// # Arguments
@@ -852,9 +834,12 @@ impl<T: Config> Pallet<T> {
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
         let mut execution_resources = ExecutionResources::default();
         let block_context = Self::get_block_context();
-        transaction
-            .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
-            .map_err(|_err| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
+        transaction.validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type).map_err(
+            |_err| {
+                log::info!("{:?}", _err);
+                TransactionValidityError::Invalid(InvalidTransaction::BadProof)
+            },
+        )?;
 
         Ok(())
     }
