@@ -1127,10 +1127,6 @@
 <a href="#1127" id="1127">1127</a>
 <a href="#1128" id="1128">1128</a>
 <a href="#1129" id="1129">1129</a>
-<a href="#1130" id="1130">1130</a>
-<a href="#1131" id="1131">1131</a>
-<a href="#1132" id="1132">1132</a>
-<a href="#1133" id="1133">1133</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1298,9 +1294,9 @@
         <span class="doccomment">/// The block is being finalized.
         </span><span class="kw">fn </span>on_finalize(_n: T::BlockNumber) {
             <span class="comment">// Create a new Starknet block and store it.
-            </span>&lt;Pallet&lt;T&gt;&gt;::store_block(U256::from(UniqueSaturatedInto::&lt;u128&gt;::unique_saturated_into(
+            </span>&lt;Pallet&lt;T&gt;&gt;::store_block(UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(
                 frame_system::Pallet::&lt;T&gt;::block_number(),
-            )));
+            ));
         }
 
         <span class="doccomment">/// The block is being initialized. Implement to have something happen.
@@ -1358,7 +1354,7 @@
     /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>block_hash)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, U256, Felt252Wrapper, ValueQuery&gt;;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>BlockHash&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, u64, Felt252Wrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet contract address to the contract&#39;s class hash.
     /// Safe to use `Identity` as the key is already a hash.
@@ -1447,7 +1443,7 @@
     <span class="attr">#[pallet::genesis_build]
     </span><span class="kw">impl</span>&lt;T: Config&gt; GenesisBuild&lt;T&gt; <span class="kw">for </span>GenesisConfig&lt;T&gt; {
         <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-            &lt;Pallet&lt;T&gt;&gt;::store_block(U256::zero());
+            &lt;Pallet&lt;T&gt;&gt;::store_block(<span class="number">0</span>);
             frame_support::storage::unhashed::put::&lt;StarknetStorageSchemaVersion&gt;(
                 PALLET_STARKNET_SCHEMA,
                 <span class="kw-2">&amp;</span>StarknetStorageSchemaVersion::V1,
@@ -2029,12 +2025,8 @@
     ///
     /// The block hash of the parent (previous) block or 0 if the current block is 0.
     </span><span class="attr">#[inline(always)]
-    </span><span class="kw">pub fn </span>parent_block_hash(current_block_number: <span class="kw-2">&amp;</span>U256) -&gt; Felt252Wrapper {
-        <span class="kw">if </span>current_block_number == <span class="kw-2">&amp;</span>U256::zero() {
-            Felt252Wrapper::ZERO
-        } <span class="kw">else </span>{
-            <span class="self">Self</span>::block_hash(current_block_number - <span class="number">1</span>)
-        }
+    </span><span class="kw">pub fn </span>parent_block_hash(current_block_number: <span class="kw-2">&amp;</span>u64) -&gt; Felt252Wrapper {
+        <span class="kw">if </span>current_block_number == <span class="kw-2">&amp;</span><span class="number">0 </span>{ Felt252Wrapper::ZERO } <span class="kw">else </span>{ <span class="self">Self</span>::block_hash(current_block_number - <span class="number">1</span>) }
     }
 
     <span class="doccomment">/// Get the current block timestamp in seconds.
@@ -2117,7 +2109,7 @@
     /// # Arguments
     ///
     /// * `block_number` - The block number.
-    </span><span class="kw">fn </span>store_block(block_number: U256) {
+    </span><span class="kw">fn </span>store_block(block_number: u64) {
         <span class="comment">// TODO: Use actual values.
         </span><span class="kw">let </span>parent_block_hash = <span class="self">Self</span>::parent_block_hash(<span class="kw-2">&amp;</span>block_number);
         <span class="kw">let </span>pending = <span class="self">Self</span>::pending();

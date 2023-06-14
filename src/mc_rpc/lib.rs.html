@@ -859,12 +859,6 @@
 <a href="#859" id="859">859</a>
 <a href="#860" id="860">860</a>
 <a href="#861" id="861">861</a>
-<a href="#862" id="862">862</a>
-<a href="#863" id="863">863</a>
-<a href="#864" id="864">864</a>
-<a href="#865" id="865">865</a>
-<a href="#866" id="866">866</a>
-<a href="#867" id="867">867</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1020,7 +1014,7 @@
         <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash)
             .ok_or(<span class="string">&quot;Failed to retrieve the substrate block number&quot;</span>.to_string())<span class="question-mark">?</span>;
 
-        u64::try_from(block.header().block_number).map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>))
+        <span class="prelude-val">Ok</span>(block.header().block_number)
     }
 }
 
@@ -1271,7 +1265,7 @@
             </span>status: BlockStatus::AcceptedOnL2,
             block_hash: blockhash.into(),
             parent_hash: parent_blockhash.into(),
-            block_number: block.header().block_number.as_u64(),
+            block_number: block.header().block_number,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -1482,10 +1476,7 @@
             </span>status: BlockStatus::AcceptedOnL2,
             block_hash: block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
-            block_number: block.header().block_number.try_into().map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>,
+            block_number: block.header().block_number,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -1711,10 +1702,7 @@
             get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
         <span class="kw">let </span>block_header = block.header();
         <span class="kw">let </span>block_hash = block_header.hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into();
-        <span class="kw">let </span>block_number = u64::try_from(block_header.block_number).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>);
-            StarknetRpcApiError::TxnHashNotFound
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>block_number = block_header.block_number;
 
         <span class="kw">let </span>find_receipt = block
             .transaction_receipts()

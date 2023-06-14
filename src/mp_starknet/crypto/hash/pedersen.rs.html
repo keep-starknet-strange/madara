@@ -59,6 +59,27 @@
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Pedersen hash module.
 </span><span class="kw">use </span>starknet_crypto::{pedersen_hash, FieldElement};
 
@@ -82,6 +103,27 @@
         // TODO: have proper error handling and think about how to hash efficiently big chunks of data.
         </span><span class="kw">let </span>field_element = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>data[..<span class="number">31</span>]).unwrap();
         Felt252Wrapper(pedersen_hash(<span class="kw-2">&amp;</span>FieldElement::ZERO, <span class="kw-2">&amp;</span>field_element))
+    }
+
+    <span class="doccomment">/// Hashes a slice of field elements using the Pedersen hash function.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to hash.
+    ///
+    /// # Returns
+    ///
+    /// The hash of the data.
+    </span><span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+        <span class="kw">let </span><span class="kw-2">mut </span>hash = FieldElement::ZERO;
+        <span class="kw">for </span>element <span class="kw">in </span>data {
+            hash = pedersen_hash(<span class="kw-2">&amp;</span>hash, <span class="kw-2">&amp;</span>element.<span class="number">0</span>);
+        }
+
+        <span class="kw">let </span>data_len = Felt252Wrapper::from(data.len() <span class="kw">as </span>u64);
+        hash = pedersen_hash(<span class="kw-2">&amp;</span>hash, <span class="kw-2">&amp;</span>data_len.<span class="number">0</span>);
+
+        Felt252Wrapper(hash)
     }
 }
 

@@ -446,6 +446,13 @@
 <a href="#446" id="446">446</a>
 <a href="#447" id="447">447</a>
 <a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
 </pre><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -575,6 +582,13 @@
 <span class="doccomment">/// [`u64`] to [`Felt252Wrapper`].
 </span><span class="kw">impl </span>From&lt;u64&gt; <span class="kw">for </span>Felt252Wrapper {
     <span class="kw">fn </span>from(value: u64) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(FieldElement::from(value))
+    }
+}
+
+<span class="doccomment">/// [`u8`] to [`Felt252Wrapper`].
+</span><span class="kw">impl </span>From&lt;u8&gt; <span class="kw">for </span>Felt252Wrapper {
+    <span class="kw">fn </span>from(value: u8) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>(FieldElement::from(value))
     }
 }

@@ -183,9 +183,6 @@
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
 </pre><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
@@ -293,10 +290,7 @@
             <span class="kw">let </span>index_before_loop = index;
 
             <span class="kw">let </span>block_hash = block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into();
-            <span class="kw">let </span>block_number = block.header().block_number.try_into().map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert block number to u64: {e}&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>;
+            <span class="kw">let </span>block_number = block.header().block_number;
 
             <span class="kw">let </span>(new_filtered_events, continuation_index) = filter_events_by_params(
                 block_events,

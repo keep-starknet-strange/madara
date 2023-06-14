@@ -61,6 +61,13 @@
 <a href="#61" id="61">61</a>
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the hash functions used in the StarkNet protocol.
 </span><span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
@@ -87,6 +94,13 @@
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Pedersen(p) =&gt; p.hash(data),
             <span class="self">Self</span>::Poseidon(p) =&gt; p.hash(data),
+        }
+    }
+
+    <span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Pedersen(p) =&gt; p.hash_elements(data),
+            <span class="self">Self</span>::Poseidon(p) =&gt; p.hash_elements(data),
         }
     }
 }
