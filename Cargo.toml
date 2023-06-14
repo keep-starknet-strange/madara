@@ -19,7 +19,6 @@ authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
 
-
 [workspace.dependencies]
 # Substrate frame dependencies
 frame-executive = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
@@ -57,9 +56,7 @@ sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "
 sp-trie = { version = "7.0.0", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 # Substrate client dependencies
-sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", features = [
-  "rocksdb",
-] }
+sc-client-db = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", features = ["rocksdb"] }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-network-common = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-network-sync = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
@@ -122,13 +119,9 @@ cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-supp
 starknet-crypto = { version = "0.5.1", default-features = false }
 starknet-core = { version = "0.3.0", default-features = false }
 starknet-ff = { version = "0.3.3", default-features = false }
-poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
-  "alloc",
-] }
+poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = ["alloc"] }
 blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
-starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
-  "testing",
-], default-features = false }
+starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = ["testing"], default-features = false }
 # Other third party dependencies
 anyhow = "1.0.71"
 base64 = "0.21.2"
