@@ -1,0 +1,72 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: sharingan-cert
+  annotations:
+    cnrm.cloud.google.com/project-id: c7e-prod
+spec:
+  domains:
+    - sharingan.cartridge.gg
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeAddress
+metadata:
+  name: sharingan-ingress
+  annotations:
+    cnrm.cloud.google.com/project-id: c7e-prod
+spec:
+  location: global
+---
+apiVersion: dns.cnrm.cloud.google.com/v1beta1
+kind: DNSRecordSet
+metadata:
+  name: c7e-sharingan-a-record
+spec:
+  name: sharingan.cartridge.gg.
+  type: A
+  ttl: 300
+  managedZoneRef:
+    external: c7e-zone
+  rrdatas:
+    - "34.107.184.37"
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: sharingan-ingress-security-config
+spec:
+  redirectToHttps:
+    enabled: true
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: sharingan
+spec:
+  timeoutSec: 86400
+  customRequestHeaders:
+    headers:
+      - X-Client-RTT-Msec:{client_rtt_msec}
+      - X-Client-City-Lat-Long:{client_city_lat_long}
+      - X-Client-City:{client_city}
+      - X-Client-Region:{client_region}
+  healthCheck:
+    type: HTTP
+    requestPath: /
+    port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sharingan-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: sharingan-cert
+    kubernetes.io/ingress.global-static-ip-name: sharingan-ingress
+    networking.gke.io/v1beta1.FrontendConfig: sharingan-ingress-security-config
+spec:
+  defaultBackend:
+    service:
+      name: sharingan-neg
+      port:
+        number: 80
