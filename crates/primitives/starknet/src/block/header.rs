@@ -1,5 +1,3 @@
-use alloc::vec;
-
 use blockifier::block_context::BlockContext;
 use scale_codec::Encode;
 use sp_core::U256;
@@ -106,25 +104,7 @@ impl Header {
     /// Compute the hash of the header.
     #[must_use]
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
-        <H as HasherT>::hash(&hasher, &self.get_bytes())
-    }
-
-    /// Returns bytes representation of the header.
-    pub fn get_bytes(&self) -> vec::Vec<u8> {
-        vec![
-            self.block_number.encode(),
-            self.global_state_root.encode(),
-            self.sequencer_address.encode(),
-            self.block_timestamp.encode(),
-            self.transaction_count.encode(),
-            self.transaction_commitment.encode(),
-            self.event_count.encode(),
-            self.event_commitment.encode(),
-            vec![0],
-            vec![0],
-            self.parent_block_hash.encode(),
-        ]
-        .concat()
+        <H as HasherT>::hash(&hasher, &self.block_number.encode())
     }
 }
 
@@ -158,7 +138,7 @@ fn test_header_hash() {
 
     let hasher = crate::crypto::hash::pedersen::PedersenHasher::default();
 
-    let expected_hash = hasher.hash(&header.get_bytes());
+    let expected_hash = hasher.hash(&block_number.encode());
 
     assert_eq!(header.hash(hasher), expected_hash);
 }
