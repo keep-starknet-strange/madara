@@ -3,6 +3,8 @@
 pub mod constants;
 /// Types related to transactions.
 pub mod types;
+/// Functions related to transaction conversions
+pub mod utils;
 
 use alloc::string::{String, ToString};
 use alloc::vec;

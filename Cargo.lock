@@ -4707,6 +4707,7 @@ dependencies = [
  "blockifier",
  "cairo-vm",
  "derive_more",
+ "flate2",
  "frame-support",
  "hex",
  "lazy_static",

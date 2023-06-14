@@ -14,16 +14,17 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{
-    get_block_by_block_hash, to_declare_tx, to_deploy_account_tx, to_invoke_tx, to_rpc_contract_class, to_tx,
-};
+use mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
-use mp_starknet::transaction::types::{RPCTransactionConversionError, Transaction as MPTransaction, TxType};
+use mp_starknet::transaction::types::{
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError,
+    Transaction as MPTransaction, TxType,
+};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
@@ -452,7 +453,10 @@ where
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
-        let invoke_tx = to_invoke_tx(invoke_transaction)?;
+        let invoke_tx = InvokeTransaction::try_from(invoke_transaction).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
         let chain_id =
             Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
@@ -498,10 +502,11 @@ where
         let chain_id =
             Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-        let deploy_account_transaction = to_deploy_account_tx(deploy_account_transaction).map_err(|e| {
-            error!("{e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
+        let deploy_account_transaction =
+            DeployAccountTransaction::try_from(deploy_account_transaction).map_err(|e| {
+                error!("{e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
 
         let transaction: MPTransaction = deploy_account_transaction.from_deploy(&chain_id).map_err(|e| {
             error!("{e}");
@@ -555,7 +560,10 @@ where
         let chain_id =
             Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-        let tx = to_tx(request, &chain_id)?;
+        let tx = to_tx(request, &chain_id).map_err(|e| {
+            error!("{e}");
+            StarknetRpcApiError::InternalServerError
+        })?;
         let (actual_fee, gas_usage) = self
             .client
             .runtime_api()
@@ -724,7 +732,7 @@ where
         let chain_id =
             Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
 
-        let declare_tx = to_declare_tx(declare_transaction).map_err(|e| {
+        let declare_tx = DeclareTransaction::try_from(declare_transaction).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
