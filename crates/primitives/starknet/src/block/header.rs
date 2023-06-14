@@ -1,3 +1,5 @@
+use alloc::vec;
+
 use blockifier::block_context::BlockContext;
 use scale_codec::Encode;
 use sp_core::U256;
@@ -108,7 +110,7 @@ impl Header {
     }
 
     /// Returns bytes representation of the header.
-    pub fn get_bytes(&self) -> Vec<u8> {
+    pub fn get_bytes(&self) -> vec::Vec<u8> {
         vec![
             self.block_number.encode(),
             self.global_state_root.encode(),
