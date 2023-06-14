@@ -1,7 +1,4 @@
-use alloc::vec;
-
 use blockifier::block_context::BlockContext;
-use scale_codec::Encode;
 use sp_core::U256;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -106,30 +103,35 @@ impl Header {
     /// Compute the hash of the header.
     #[must_use]
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
-        <H as HasherT>::hash(&hasher, &self.get_bytes())
-    }
+        let protocol_version = if let Some(protocol_version) = self.protocol_version {
+            protocol_version.into()
+        } else {
+            Felt252Wrapper::ZERO
+        };
 
-    /// Returns bytes representation of the header.
-    pub fn get_bytes(&self) -> vec::Vec<u8> {
-        vec![
-            self.block_number.encode(),
-            self.global_state_root.encode(),
-            self.sequencer_address.encode(),
-            self.block_timestamp.encode(),
-            self.transaction_count.encode(),
-            self.transaction_commitment.encode(),
-            self.event_count.encode(),
-            self.event_commitment.encode(),
-            vec![0],
-            vec![0],
-            self.parent_block_hash.encode(),
-        ]
-        .concat()
+        let data: &[Felt252Wrapper] = &[
+            self.block_number.try_into().unwrap(), // TODO: remove unwrap
+            self.global_state_root,
+            self.sequencer_address,
+            self.block_timestamp.into(),
+            self.transaction_count.into(),
+            self.transaction_commitment,
+            self.event_count.into(),
+            self.event_commitment,
+            protocol_version,
+            Felt252Wrapper::ZERO,
+            self.parent_block_hash,
+        ];
+
+        <H as HasherT>::hash_elements(&hasher, data)
     }
 }
 
 #[test]
 fn test_header_hash() {
+    use starknet_core::crypto::compute_hash_on_elements;
+    use starknet_ff::FieldElement;
+
     let parent_block_hash = Felt252Wrapper::try_from(&[1; 32]).unwrap();
     let block_number = U256::from(42);
     let global_state_root = Felt252Wrapper::from(12345_u128);
@@ -158,9 +160,21 @@ fn test_header_hash() {
 
     let hasher = crate::crypto::hash::pedersen::PedersenHasher::default();
 
-    let expected_hash = hasher.hash(&header.get_bytes());
+    let expected_hash = compute_hash_on_elements(&[
+        FieldElement::from(42_u32),
+        global_state_root.0,
+        sequencer_address.0,
+        FieldElement::from(1620037184_u32),
+        FieldElement::from(2_u32),
+        transaction_commitment.0,
+        FieldElement::from(1_u32),
+        event_commitment.0,
+        FieldElement::from(protocol_version.unwrap()),
+        FieldElement::ZERO,
+        parent_block_hash.0,
+    ]);
 
-    assert_eq!(header.hash(hasher), expected_hash);
+    assert_eq!(header.hash(hasher), Felt252Wrapper(expected_hash));
 }
 
 #[test]
