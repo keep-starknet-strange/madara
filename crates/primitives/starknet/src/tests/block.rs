@@ -11,7 +11,7 @@ use crate::transaction::types::{MaxArraySize, Transaction, TransactionReceiptWra
 fn generate_dummy_header() -> Header {
     Header::new(
         Felt252Wrapper::ONE,
-        U256::from(1),
+        1,
         Felt252Wrapper::TWO,
         ContractAddressWrapper::default(),
         42,

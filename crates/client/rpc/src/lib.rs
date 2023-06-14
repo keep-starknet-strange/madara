@@ -153,7 +153,7 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
-        u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
+        Ok(block.header().block_number)
     }
 }
 
@@ -404,7 +404,7 @@ where
             status: BlockStatus::AcceptedOnL2,
             block_hash: blockhash.into(),
             parent_hash: parent_blockhash.into(),
-            block_number: block.header().block_number.as_u64(),
+            block_number: block.header().block_number,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -615,10 +615,7 @@ where
             status: BlockStatus::AcceptedOnL2,
             block_hash: block.header().hash(*self.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
-            block_number: block.header().block_number.try_into().map_err(|e| {
-                error!("Failed to convert block number to u64: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
+            block_number: block.header().block_number,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -844,10 +841,7 @@ where
             get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_header = block.header();
         let block_hash = block_header.hash(*self.hasher).into();
-        let block_number = u64::try_from(block_header.block_number).map_err(|e| {
-            error!("Failed to convert block number to u64: {e}");
-            StarknetRpcApiError::TxnHashNotFound
-        })?;
+        let block_number = block_header.block_number;
 
         let find_receipt = block
             .transaction_receipts()

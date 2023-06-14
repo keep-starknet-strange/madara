@@ -25,7 +25,7 @@ pub struct Header {
     /// The hash of this block’s parent.
     pub parent_block_hash: Felt252Wrapper,
     /// The number (height) of this block.
-    pub block_number: U256,
+    pub block_number: u64,
     /// The state commitment after this block.
     pub global_state_root: Felt252Wrapper,
     /// The Starknet address of the sequencer who created this block.
@@ -52,7 +52,7 @@ impl Header {
     #[must_use]
     pub fn new(
         parent_block_hash: Felt252Wrapper,
-        block_number: U256,
+        block_number: u64,
         global_state_root: Felt252Wrapper,
         sequencer_address: ContractAddressWrapper,
         block_timestamp: u64,
@@ -88,7 +88,7 @@ impl Header {
 
         BlockContext {
             chain_id,
-            block_number: BlockNumber(self.block_number.as_u64()),
+            block_number: BlockNumber(self.block_number),
             block_timestamp: BlockTimestamp(self.block_timestamp),
             sequencer_address,
             vm_resource_fee_cost: HashMap::default(),
@@ -103,14 +103,10 @@ impl Header {
     /// Compute the hash of the header.
     #[must_use]
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
-        let protocol_version = if let Some(protocol_version) = self.protocol_version {
-            protocol_version.into()
-        } else {
-            Felt252Wrapper::ZERO
-        };
+        let protocol_version = self.protocol_version.unwrap_or_default().into();
 
         let data: &[Felt252Wrapper] = &[
-            self.block_number.try_into().unwrap(), // TODO: remove unwrap
+            self.block_number.into(), // TODO: remove unwrap
             self.global_state_root,
             self.sequencer_address,
             self.block_timestamp.into(),
@@ -133,7 +129,7 @@ fn test_header_hash() {
     use starknet_ff::FieldElement;
 
     let parent_block_hash = Felt252Wrapper::try_from(&[1; 32]).unwrap();
-    let block_number = U256::from(42);
+    let block_number = 42;
     let global_state_root = Felt252Wrapper::from(12345_u128);
     let sequencer_address = Felt252Wrapper::try_from(&[2; 32]).unwrap();
     let block_timestamp = 1620037184;
@@ -181,7 +177,7 @@ fn test_header_hash() {
 fn test_to_block_context() {
     let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
     // Create a block header.
-    let block_header = Header { block_number: 1.into(), block_timestamp: 1, sequencer_address, ..Default::default() };
+    let block_header = Header { block_number: 1, block_timestamp: 1, sequencer_address, ..Default::default() };
     // Create a fee token address.
     let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
     // Create a chain id.
