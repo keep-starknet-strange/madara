@@ -14,40 +14,46 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Madara primitives
-mp-digest-log = { workspace = true }
-mp-starknet = { workspace = true, default-features = false }
+mp-starknet = { workspace = true }
+mp-digest-log = { workspace = true  }
 
-blockifier = { workspace = true, default-features = false, features = ["testing"] }
-starknet-crypto = { workspace = true, default-features = false, features = ["alloc"] }
+starknet-crypto = { workspace = true, default-features = false, features = [
+  "alloc",
+] }
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }
 starknet_api = { workspace = true, default-features = false }
 
 # Substrate frame
-frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-sp-api = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
 # Substrate primitives
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
+sp-api = { workspace = true }
 sp-std = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
-hex = { workspace = true }
-log = { workspace = true }
-scale-codec = { package = "parity-scale-codec", workspace = true, features = ["derive"] }
-scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+scale-codec = { package = "parity-scale-codec", workspace = true, features = [
+  "derive",
+] }
+scale-info = { workspace = true, features = ["derive"] }
+log = { workspace = true }
+hex = { workspace = true }
 
 [dev-dependencies]
-hexlit = "0.5.5"
-lazy_static = "1.4.0"
 pallet-timestamp = { workspace = true }
 pretty_assertions = { workspace = true }
-starknet-core = { workspace = true, default-features = false }
 test-case = "3.1.0"
+lazy_static = "1.4.0"
+hexlit = "0.5.5"
+starknet-core = { workspace = true, default-features = false }
 
 [features]
 default = ["std"]

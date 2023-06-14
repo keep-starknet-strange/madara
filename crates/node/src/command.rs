@@ -271,7 +271,7 @@ impl sc_simnode::ChainInfo for RuntimeInfo {
     type SignedExtras = madara_runtime::SignedExtra;
 
     // Initialize the [`SignedExtra`] for your runtime, you'll notice I'm calling a pallet method here
-    // in order to read from the runtime storage. This is possible becase this method is called in
+    // in order to read from the runtime storage. This is possible because this method is called in
     // an externalities provided environment. So feel free to read your runtime storage.
     fn signed_extras(from: <Self::Runtime as frame_system::pallet::Config>::AccountId) -> Self::SignedExtras {
         let nonce = frame_system::Pallet::<Self::Runtime>::account_nonce(from);
