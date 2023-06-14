@@ -887,15 +887,28 @@ describeDevMadara("Starknet RPC", (context) => {
 
       // the pendingExtrinsics endpoint returns only the ready transactions
       // (https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L153)
-      const pendings = await context.polkadotApi.rpc.author.pendingExtrinsics();
+      const readyExtrinsics =
+        await context.polkadotApi.rpc.author.pendingExtrinsics();
+      const readyTxs = readyExtrinsics.map((pending) => {
+        const obj: any = pending.toHuman();
+        return {
+          type: obj.method.method.toUpperCase(),
+          nonce: toHex(obj.method.args.transaction.nonce),
+        };
+      });
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const txs: InvokeTransaction[] =
         await providerRPC.getPendingTransactions();
 
-      expect(pendings.length).to.be.equal(1);
+      expect(readyExtrinsics.length).to.be.equal(1);
       expect(txs.length).to.be.equal(2);
 
+      expect(readyTxs[0]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value - 1),
+      });
       expect(txs[0]).to.include({
         type: "INVOKE",
         nonce: toHex(ARGENT_CONTRACT_NONCE.value - 1),
