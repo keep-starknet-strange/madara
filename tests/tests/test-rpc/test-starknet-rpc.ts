@@ -259,8 +259,8 @@ describeDevMadara("Starknet RPC", (context) => {
         current_block["block_number"]
       );
 
-      // the starknet block hash for number 0 starts with "0x49ee" with this test setup
-      expect(status["starting_block_hash"]).to.contain("0x49ee");
+      // the starknet block hash for number 0 starts with "0x31eb" with this test setup
+      expect(status["starting_block_hash"]).to.contain("0x31eb");
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(status["current_block_hash"]).to.be.equal(

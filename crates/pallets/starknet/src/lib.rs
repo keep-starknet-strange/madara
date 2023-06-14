@@ -165,9 +165,9 @@ pub mod pallet {
         /// The block is being finalized.
         fn on_finalize(_n: T::BlockNumber) {
             // Create a new Starknet block and store it.
-            <Pallet<T>>::store_block(U256::from(UniqueSaturatedInto::<u128>::unique_saturated_into(
+            <Pallet<T>>::store_block(UniqueSaturatedInto::<u64>::unique_saturated_into(
                 frame_system::Pallet::<T>::block_number(),
-            )));
+            ));
         }
 
         /// The block is being initialized. Implement to have something happen.
@@ -225,7 +225,7 @@ pub mod pallet {
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn block_hash)]
-    pub(super) type BlockHash<T: Config> = StorageMap<_, Identity, U256, Felt252Wrapper, ValueQuery>;
+    pub(super) type BlockHash<T: Config> = StorageMap<_, Identity, u64, Felt252Wrapper, ValueQuery>;
 
     /// Mapping from Starknet contract address to the contract's class hash.
     /// Safe to use `Identity` as the key is already a hash.
@@ -314,7 +314,7 @@ pub mod pallet {
     #[pallet::genesis_build]
     impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
         fn build(&self) {
-            <Pallet<T>>::store_block(U256::zero());
+            <Pallet<T>>::store_block(0);
             frame_support::storage::unhashed::put::<StarknetStorageSchemaVersion>(
                 PALLET_STARKNET_SCHEMA,
                 &StarknetStorageSchemaVersion::V1,
@@ -441,21 +441,11 @@ pub mod pallet {
                 }) => {
                     log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -534,21 +524,11 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -622,21 +602,11 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -896,12 +866,8 @@ impl<T: Config> Pallet<T> {
     ///
     /// The block hash of the parent (previous) block or 0 if the current block is 0.
     #[inline(always)]
-    pub fn parent_block_hash(current_block_number: &U256) -> Felt252Wrapper {
-        if current_block_number == &U256::zero() {
-            Felt252Wrapper::ZERO
-        } else {
-            Self::block_hash(current_block_number - 1)
-        }
+    pub fn parent_block_hash(current_block_number: &u64) -> Felt252Wrapper {
+        if current_block_number == &0 { Felt252Wrapper::ZERO } else { Self::block_hash(current_block_number - 1) }
     }
 
     /// Get the current block timestamp in seconds.
@@ -984,7 +950,7 @@ impl<T: Config> Pallet<T> {
     /// # Arguments
     ///
     /// * `block_number` - The block number.
-    fn store_block(block_number: U256) {
+    fn store_block(block_number: u64) {
         // TODO: Use actual values.
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
@@ -1129,5 +1095,22 @@ impl<T: Config> Pallet<T> {
     /// Returns the hasher used by the runtime.
     pub fn get_system_hash() -> T::SystemHash {
         T::SystemHash::hasher()
+    }
+
+    pub fn emit_events_for_calls(
+        tx_hash: TransactionHash,
+        execute_call_info: Option<CallInfo>,
+        fee_transfer_call_info: Option<CallInfo>,
+    ) -> Result<Vec<StarknetEventType>, Error<T>> {
+        let events = match (execute_call_info, fee_transfer_call_info) {
+            (Some(mut exec), Some(mut fee)) => {
+                let mut events = Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                events.append(&mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?);
+                events
+            }
+            (_, Some(mut fee)) => Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+            _ => Vec::default(),
+        };
+        Ok(events)
     }
 }
