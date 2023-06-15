@@ -23,9 +23,9 @@ cargo run --release -- --dev
 `--dev`: enforces a development environment needed to make testing easier for
 your node. If you're running this without `--dev`, make sure to add
 
-1.  `--rpc-cors="*"` or `--rpc-cors="<backend_origin>"` to allow the backend to
+1. `--rpc-cors="*"` or `--rpc-cors="<backend_origin>"` to allow the backend to
     communicate with your node
-2.  `--force-authoring` if you're the only node on your chain. This flag forces
+2. `--force-authoring` if you're the only node on your chain. This flag forces
     Madara to create blocks even if they are no peers.
 
 ### Faucet backend and frontend
@@ -49,7 +49,7 @@ If you see these containers, congrats, your faucet is now running 🎉
 
 ### Interacting with your faucet
 
-1. Go to http://localhost:3000
+1. Go to <http://localhost:3000>
 2. Enter your wallet address
 3. Click Get Tokens
 4. Done!
