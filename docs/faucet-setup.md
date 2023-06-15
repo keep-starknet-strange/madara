@@ -24,9 +24,9 @@ cargo run --release -- --dev
 your node. If you're running this without `--dev`, make sure to add
 
 1. `--rpc-cors="*"` or `--rpc-cors="<backend_origin>"` to allow the backend to
-    communicate with your node
+   communicate with your node
 2. `--force-authoring` if you're the only node on your chain. This flag forces
-    Madara to create blocks even if they are no peers.
+   Madara to create blocks even if they are no peers.
 
 ### Faucet backend and frontend
 
