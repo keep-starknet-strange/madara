@@ -29,5 +29,4 @@ impl<T: CryptoHasherT> StateCommitment<T> {
             hash.into()
         }
     }
-
 }

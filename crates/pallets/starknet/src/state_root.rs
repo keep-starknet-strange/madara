@@ -2,7 +2,8 @@
 
 use core::marker::PhantomData;
 
-use mp_starknet::{execution::types::Felt252Wrapper, traits::hash::CryptoHasherT};
+use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::traits::hash::CryptoHasherT;
 use sp_core::Get;
 
 use crate::Config;
@@ -14,6 +15,6 @@ impl<T: Config> Get<Felt252Wrapper> for IntermediateStateRoot<T> {
     /// # Returns
     /// * `Felt252Wrapper` - The intermediate state root.
     fn get() -> Felt252Wrapper {
-		Felt252Wrapper::ONE
+        Felt252Wrapper::ONE
     }
 }

@@ -157,12 +157,14 @@ pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> 
 /// # Returns
 ///
 /// The hash of the class commitment tree leaf.
-pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(compiled_class_hash: Felt252Wrapper) -> ClassCommitmentLeafHash {
-	let contract_class_hash_version = Felt252Wrapper::try_from("CONTRACT_CLASS_LEAF_V0".as_bytes()).unwrap(); // Unwrap safu
+pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(
+    compiled_class_hash: Felt252Wrapper,
+) -> ClassCommitmentLeafHash {
+    let contract_class_hash_version = Felt252Wrapper::try_from("CONTRACT_CLASS_LEAF_V0".as_bytes()).unwrap(); // Unwrap safu
 
-	let hash = <T>::compute_hash_on_elements(&[contract_class_hash_version.0, compiled_class_hash.0]);
+    let hash = <T>::compute_hash_on_elements(&[contract_class_hash_version.0, compiled_class_hash.0]);
 
-	hash.into()
+    hash.into()
 }
 
 /// Calculate class commitment tree root hash value.
@@ -177,14 +179,13 @@ pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(compiled_class_has
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the classes.
-pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(classes: &[ContractClassWrapper]) -> H256 {
-	let mut tree = StateCommitmentTree::<T>::default();
-	classes.iter().for_each(|class| {
-		let class_hash = class.class_hash();
-		let final_hash = calculate_class_commitment_leaf_hash::<T>(class_hash);
-		tree.set(class_hash.0, final_hash.0);
-	});
-	H256::from_slice(&tree.commit().to_bytes_be())
+pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes: &[Felt252Wrapper]) -> H256 {
+    let mut tree = StateCommitmentTree::<T>::default();
+    class_hashes.iter().for_each(|class_hash| {
+        let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
+        tree.set(class_hash.0, final_hash.0);
+    });
+    H256::from_slice(&tree.commit().to_bytes_be())
 }
 
 /// Compute the combined hash of the transaction hash and the signature.
