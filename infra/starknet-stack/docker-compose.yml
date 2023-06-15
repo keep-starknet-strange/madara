@@ -30,7 +30,7 @@ services:
       - starkcet-back
     networks:
       - faucet
-      
+
   starkcet-back:
     image: ghcr.io/zizou0x/starkcet-backend:latest
     environment:
