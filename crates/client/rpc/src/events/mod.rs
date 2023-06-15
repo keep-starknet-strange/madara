@@ -14,6 +14,7 @@ use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
+use sc_transaction_pool::ChainApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::Block as BlockT;
@@ -24,7 +25,7 @@ use crate::errors::StarknetRpcApiError;
 use crate::types::RpcEventFilter;
 use crate::{EmittedEvent, Starknet};
 
-impl<B, BE, C, P, H> Starknet<B, BE, C, P, H>
+impl<A: ChainApi, B, BE, C, P, H> Starknet<A, B, BE, C, P, H>
 where
     B: BlockT,
     C: HeaderBackend<B> + StorageProvider<B, BE> + 'static,
@@ -104,10 +105,7 @@ where
             let index_before_loop = index;
 
             let block_hash = block.header().hash(*self.hasher).into();
-            let block_number = block.header().block_number.try_into().map_err(|e| {
-                error!("Failed to convert block number to u64: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?;
+            let block_number = block.header().block_number;
 
             let (new_filtered_events, continuation_index) = filter_events_by_params(
                 block_events,

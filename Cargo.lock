@@ -4498,6 +4498,7 @@ dependencies = [
  "rstest",
  "sc-client-api",
  "sc-network-sync",
+ "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde_json",
  "sp-api",
@@ -4703,7 +4704,6 @@ dependencies = [
  "mp-starknet",
  "parity-scale-codec",
  "sp-runtime",
- "thiserror-no-std",
 ]
 
 [[package]]
@@ -4714,6 +4714,7 @@ dependencies = [
  "blockifier",
  "cairo-vm",
  "derive_more",
+ "flate2",
  "frame-support",
  "hex",
  "lazy_static",

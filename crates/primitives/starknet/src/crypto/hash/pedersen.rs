@@ -22,6 +22,27 @@ impl HasherT for PedersenHasher {
         let field_element = FieldElement::from_byte_slice_be(&data[..31]).unwrap();
         Felt252Wrapper(pedersen_hash(&FieldElement::ZERO, &field_element))
     }
+
+    /// Hashes a slice of field elements using the Pedersen hash function.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The data to hash.
+    ///
+    /// # Returns
+    ///
+    /// The hash of the data.
+    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
+        let mut hash = FieldElement::ZERO;
+        for element in data {
+            hash = pedersen_hash(&hash, &element.0);
+        }
+
+        let data_len = Felt252Wrapper::from(data.len() as u64);
+        hash = pedersen_hash(&hash, &data_len.0);
+
+        Felt252Wrapper(hash)
+    }
 }
 
 impl DefaultHasher for PedersenHasher {

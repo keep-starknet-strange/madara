@@ -45,8 +45,9 @@ scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.96", default-features = false }
 thiserror-no-std = { workspace = true }
-# anyhow = { workspace = true }
-
+derive_more = { workspace = true, features = ["constructor"] }
+lazy_static = { workspace = true }
+flate2 = { workspace = true, optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
@@ -57,6 +58,7 @@ pretty_assertions = { workspace = true }
 [features]
 default = ["std"]
 std = [
+  "flate2",
   "scale-codec/std",
   "scale-info/std",
   "bitvec/std",

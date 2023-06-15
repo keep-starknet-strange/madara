@@ -10,8 +10,9 @@ use mp_starknet::transaction::types::{
 };
 use sp_core::H256;
 use sp_runtime::traits::ValidateUnsigned;
-use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError};
+use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
 use starknet_core::utils::get_selector_from_name;
+use starknet_crypto::FieldElement;
 
 use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use super::mock::*;
@@ -70,8 +71,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         let tx = Message {
@@ -133,8 +133,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
@@ -436,5 +435,58 @@ fn test_verify_tx_longevity() {
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::invoke { transaction });
 
         assert!(validate_result.unwrap().longevity == TransactionLongevity::get());
+    });
+}
+
+#[test]
+fn test_verify_no_require_tag() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
+        let transaction: InvokeTransaction =
+            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone() },
+        );
+
+        let valid_transaction_expected = ValidTransaction::with_tag_prefix("starknet")
+            .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+            .and_provides((transaction.sender_address, transaction.nonce))
+            .longevity(TransactionLongevity::get())
+            .propagate(true)
+            .build();
+
+        assert_eq!(validate_result.unwrap(), valid_transaction_expected.unwrap())
+    });
+}
+
+#[test]
+fn test_verify_require_tag() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_nonce.json");
+        let transaction: InvokeTransaction =
+            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+
+        let validate_result = Starknet::validate_unsigned(
+            TransactionSource::InBlock,
+            &crate::Call::invoke { transaction: transaction.clone() },
+        );
+
+        let valid_transaction_expected = ValidTransaction::with_tag_prefix("starknet")
+            .priority(u64::MAX - (TryInto::<u64>::try_into(transaction.nonce)).unwrap())
+            .and_provides((transaction.sender_address, transaction.nonce))
+            .longevity(TransactionLongevity::get())
+            .propagate(true)
+            .and_requires((transaction.sender_address, Felt252Wrapper(transaction.nonce.0 - FieldElement::ONE)))
+            .build();
+
+        assert_eq!(validate_result.unwrap(), valid_transaction_expected.unwrap())
     });
 }

@@ -259,8 +259,8 @@ describeDevMadara("Starknet RPC", (context) => {
         current_block["block_number"]
       );
 
-      // the starknet block hash for number 0 starts with "0x49ee" with this test setup
-      expect(status["starting_block_hash"]).to.contain("0x49ee");
+      // the starknet block hash for number 0 starts with "0x31eb" with this test setup
+      expect(status["starting_block_hash"]).to.contain("0x31eb");
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(status["current_block_hash"]).to.be.equal(
@@ -278,7 +278,8 @@ describeDevMadara("Starknet RPC", (context) => {
         TOKEN_CLASS_HASH,
         "latest"
       );
-
+      // https://github.com/keep-starknet-strange/madara/issues/652
+      // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
@@ -708,9 +709,11 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-      await account.declare(
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+      const res = await account.declare(
         {
-          classHash: "0",
+          classHash: classHash,
           contract: ERC20_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
@@ -718,11 +721,15 @@ describeDevMadara("Starknet RPC", (context) => {
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
-      const contractClassActual = await providerRPC.getClass("0", "latest");
-
+      const contractClassActual = await providerRPC.getClass(
+        classHash,
+        "latest"
+      );
+      // TODO compare the program as well
       expect(contractClassActual.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      expect(res.class_hash).to.be.eq(classHash);
     });
   });
 
@@ -757,24 +764,19 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("should return all starknet declare transactions", async function () {
       const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-
-      const nonce = await providerRPC.getNonceForAddress(
-        ARGENT_CONTRACT_ADDRESS,
-        "latest"
-      );
-
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       await account.declare(
         {
-          classHash: "0",
+          classHash: classHash,
           contract: ERC20_CONTRACT,
         },
-        { nonce, version: 1, maxFee: "123456" }
+        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
 
       const txs = await providerRPC.getPendingTransactions();
@@ -863,6 +865,60 @@ describeDevMadara("Starknet RPC", (context) => {
         "type",
         "version",
       ]);
+
+      await jumpBlocks(context, 10);
+    });
+
+    it("should return transactions from the ready and future queues", async function () {
+      const transactionNonceOffset = 1_000;
+      // ready transaction
+      await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      );
+      // future transaction
+      // add a high number to the nonce to make sure the transaction is added to the future queue
+      await rpcTransfer(
+        providerRPC,
+        { value: ARGENT_CONTRACT_NONCE.value + transactionNonceOffset },
+        ARGENT_CONTRACT_ADDRESS,
+        MINT_AMOUNT
+      );
+
+      // the pendingExtrinsics endpoint returns only the ready transactions
+      // (https://github.com/paritytech/substrate/blob/master/client/rpc/src/author/mod.rs#L153)
+      const readyExtrinsics =
+        await context.polkadotApi.rpc.author.pendingExtrinsics();
+      const readyTxs = readyExtrinsics.map((pending) => {
+        const obj: any = pending.toHuman();
+        return {
+          type: obj.method.method.toUpperCase(),
+          nonce: toHex(obj.method.args.transaction.nonce),
+        };
+      });
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const txs: InvokeTransaction[] =
+        await providerRPC.getPendingTransactions();
+
+      expect(readyExtrinsics.length).to.be.equal(1);
+      expect(txs.length).to.be.equal(2);
+
+      expect(readyTxs[0]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value - 1),
+      });
+      expect(txs[0]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value - 1),
+      });
+      expect(txs[1]).to.include({
+        type: "INVOKE",
+        nonce: toHex(ARGENT_CONTRACT_NONCE.value + transactionNonceOffset),
+      });
 
       await jumpBlocks(context, 10);
     });
