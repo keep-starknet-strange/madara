@@ -39,7 +39,7 @@
     "test": "echo 'WARNING Make sure to use node >= 20 otherwise it will not run' && mocha --parallel -r ts-node/register 'tests/**/test-*.ts' -- -j 4",
     "test-seq": "mocha -r ts-node/register 'tests/**/test-*.ts'",
     "watch": "npm-watch",
-    "build": "npx tsc && cp -r contracts build/",
+    "build": "npx tsc",
     "build-clean": "rm -r node_modules && npm i && npm run build",
     "lint": "npx prettier --write . && npx eslint --fix .",
     "lint-check": "npx prettier --check . && npx eslint .",
