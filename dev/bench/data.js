@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686811170845,
+  "lastUpdate": 1686816376396,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -1258,6 +1258,42 @@ window.BENCHMARK_DATA = {
           {
             "name": "Average TPS",
             "value": 91.20833333333333,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "Artevolve@yahoo.com",
+            "name": "0xevolve",
+            "username": "EvolveArt"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "84a1acf1dea9f054e9ac44d3339b6d5527e4b211",
+          "message": "fix: compute class hash in `addDeclareTransaction` rpc 🔨 (#542)\n\nCo-authored-by: Lucas @ StarkWare <70894690+LucasLvy@users.noreply.github.com>\r\nCo-authored-by: LucasLvy <lucaslevy10@gmail.com>",
+          "timestamp": "2023-06-15T10:03:06+02:00",
+          "tree_id": "62d8a7a825c84d841a69ea07f0a99d208d0d249b",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/84a1acf1dea9f054e9ac44d3339b6d5527e4b211"
+        },
+        "date": 1686816375859,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 545,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 90.83333333333333,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
