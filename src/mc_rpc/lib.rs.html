@@ -859,6 +859,8 @@
 <a href="#859" id="859">859</a>
 <a href="#860" id="860">860</a>
 <a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1607,8 +1609,7 @@
             <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>transaction: MPTransaction = declare_tx.from_declare(<span class="kw-2">&amp;</span>chain_id);
+        <span class="kw">let </span>transaction: MPTransaction = declare_tx.clone().from_declare(<span class="kw-2">&amp;</span>chain_id);
         <span class="kw">let </span>extrinsic = <span class="self">self
             </span>.client
             .runtime_api()
@@ -1627,7 +1628,10 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
+        <span class="prelude-val">Ok</span>(DeclareTransactionResult {
+            transaction_hash: transaction.hash.into(),
+            class_hash: declare_tx.compiled_class_hash.into(),
+        })
     }
 
     <span class="doccomment">/// Returns a transaction details from it&#39;s hash.

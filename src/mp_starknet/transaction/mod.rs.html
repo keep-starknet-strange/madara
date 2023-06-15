@@ -749,13 +749,6 @@
 <a href="#749" id="749">749</a>
 <a href="#750" id="750">750</a>
 <a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
-<a href="#753" id="753">753</a>
-<a href="#754" id="754">754</a>
-<a href="#755" id="755">755</a>
-<a href="#756" id="756">756</a>
-<a href="#757" id="757">757</a>
-<a href="#758" id="758">758</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -1468,17 +1461,10 @@
     ///
     /// * `AccountTransactionContext` - The context of the transaction
     </span><span class="kw">fn </span>get_declare_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>DeclareTransaction) -&gt; AccountTransactionContext {
-        <span class="comment">// TODO: use lib implem once this PR is merged: https://github.com/starkware-libs/starknet-api/pull/49
-        </span><span class="kw">let </span>version = <span class="kw">match </span>tx {
-            DeclareTransaction::V0(<span class="kw">_</span>) =&gt; TransactionVersion(StarkFelt::from(<span class="number">0</span>)),
-            DeclareTransaction::V1(<span class="kw">_</span>) =&gt; TransactionVersion(StarkFelt::from(<span class="number">1</span>)),
-            DeclareTransaction::V2(<span class="kw">_</span>) =&gt; TransactionVersion(StarkFelt::from(<span class="number">2</span>)),
-        };
-
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version,
+            version: tx.version(),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),

@@ -917,6 +917,40 @@
 <a href="#917" id="917">917</a>
 <a href="#918" id="918">918</a>
 <a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -937,6 +971,12 @@
 <span class="kw">use </span>starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 <span class="kw">use </span>starknet_api::StarknetApiError;
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>starknet_core::types::contract::legacy::{
+    LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
+};
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">use </span>starknet_core::types::contract::ComputeClassHashError;
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">use </span>starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction, DeclareTransactionReceipt <span class="kw">as </span>RPCDeclareTransactionReceipt,
@@ -946,6 +986,7 @@
     InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction, InvokeTransactionReceipt <span class="kw">as </span>RPCInvokeTransactionReceipt,
     InvokeTransactionV0 <span class="kw">as </span>RPCInvokeTransactionV0, InvokeTransactionV1 <span class="kw">as </span>RPCInvokeTransactionV1,
     L1HandlerTransaction <span class="kw">as </span>RPCL1HandlerTransaction, L1HandlerTransactionReceipt <span class="kw">as </span>RPCL1HandlerTransactionReceipt,
+    LegacyContractEntryPoint, LegacyEntryPointsByType,
     MaybePendingTransactionReceipt <span class="kw">as </span>RPCMaybePendingTransactionReceipt, StarknetError, Transaction <span class="kw">as </span>RPCTransaction,
     TransactionReceipt <span class="kw">as </span>RPCTransactionReceipt, TransactionStatus <span class="kw">as </span>RPCTransactionStatus,
 };
@@ -1070,6 +1111,9 @@
     <span class="doccomment">/// Failed to convert transaction
     </span><span class="attr">#[error(transparent)]
     </span>TransactionConversionError(<span class="attr">#[from] </span>TransactionConversionError),
+    <span class="doccomment">/// Failed to compute the contract class hash.
+    </span><span class="attr">#[error(transparent)]
+    </span>ClassHashComputationError(<span class="attr">#[from] </span>ComputeClassHashError),
 }
 
 <span class="doccomment">/// Different tx types.
@@ -1172,6 +1216,19 @@
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">fn </span>to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -&gt; RawLegacyEntryPoints {
+    RawLegacyEntryPoints {
+        constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
+        external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
+        l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">fn </span>to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -&gt; RawLegacyEntryPoint {
+    RawLegacyEntryPoint { offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset), selector: entry_point.selector }
+}
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">impl </span>TryFrom&lt;BroadcastedDeclareTransaction&gt; <span class="kw">for </span>DeclareTransaction {
     <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
     <span class="kw">fn </span>try_from(tx: BroadcastedDeclareTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
@@ -1198,6 +1255,17 @@
                 </span><span class="kw">let </span>program: Program = Program::from_bytes(<span class="kw-2">&amp;</span>decompressed_bytes, <span class="prelude-val">None</span>).map_err(|<span class="kw">_</span>| {
                     BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
                 })<span class="question-mark">?</span>;
+                <span class="kw">let </span>legacy_contract_class = LegacyContractClass {
+                    program: serde_json::from_slice(decompressed_bytes.as_slice())
+                        .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
+                    abi: <span class="kw">match </span>declare_tx_v1.contract_class.abi.as_ref() {
+                        <span class="prelude-val">Some</span>(abi) =&gt; abi.iter().cloned().map(|entry| entry.into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+                        <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
+                    },
+                    entry_points_by_type: to_raw_legacy_entry_points(
+                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                    ),
+                };
 
                 <span class="prelude-val">Ok</span>(DeclareTransaction {
                     version: <span class="number">1_u8</span>,
@@ -1213,8 +1281,8 @@
                             declare_tx_v1.contract_class.entry_points_by_type.clone(),
                         )),
                     },
-                    compiled_class_hash: Felt252Wrapper::ZERO, <span class="comment">// TODO: compute class hash
-                </span>})
+                    compiled_class_hash: legacy_contract_class.class_hash()<span class="question-mark">?</span>.into(),
+                })
             }
             BroadcastedDeclareTransaction::V2(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
         }
@@ -1275,7 +1343,7 @@
         <span class="prelude-val">Ok</span>(Transaction {
             tx_type: TxType::DeployAccount,
             version: <span class="self">self</span>.version,
-            hash: calculate_deploy_account_tx_hash(<span class="self">self</span>.clone(), chain_id, sender_address.into()),
+            hash: calculate_deploy_account_tx_hash(<span class="self">self</span>.clone(), chain_id, sender_address),
             signature: <span class="self">self</span>.signature,
             sender_address,
             nonce: <span class="self">self</span>.nonce,

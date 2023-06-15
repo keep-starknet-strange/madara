@@ -377,7 +377,7 @@
 /// * `transaction` - The invoke transaction to get the hash of.
 </span><span class="kw">pub fn </span>calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address.into(),
+        transaction.sender_address,
         transaction.calldata.as_slice(),
         transaction.max_fee,
         transaction.nonce,
@@ -394,7 +394,7 @@
 /// * `transaction` - The declare transaction to get the hash of.
 </span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
-        transaction.sender_address.into(),
+        transaction.sender_address,
         <span class="kw-2">&amp;</span>[transaction.compiled_class_hash],
         transaction.max_fee,
         transaction.nonce,
@@ -412,7 +412,7 @@
 </span><span class="kw">pub fn </span>calculate_deploy_account_tx_hash(
     transaction: DeployAccountTransaction,
     chain_id: <span class="kw-2">&amp;</span>str,
-    address: [u8; <span class="number">32</span>],
+    address: Felt252Wrapper,
 ) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         address,
@@ -427,7 +427,7 @@
 
 <span class="doccomment">/// Computes the transaction hash using a hash function of type T
 </span><span class="kw">pub fn </span>calculate_transaction_hash_common&lt;T&gt;(
-    sender_address: [u8; <span class="number">32</span>],
+    sender_address: Felt252Wrapper,
     calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
     max_fee: Felt252Wrapper,
     nonce: Felt252Wrapper,
@@ -439,7 +439,7 @@
     </span>T: CryptoHasherT,
 {
     <span class="comment">// All the values are validated before going through this function so it&#39;s safe to unwrap.
-    </span><span class="kw">let </span>sender_address = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>sender_address).unwrap();
+    </span><span class="kw">let </span>sender_address = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>sender_address.into()).unwrap();
     <span class="kw">let </span>calldata_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(
         <span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from(val)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
