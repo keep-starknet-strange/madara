@@ -52,6 +52,40 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
     }
 }
 
+/// A Patricia Merkle tree with height 251 used to compute transaction and event commitments.
+///
+/// According to the [documentation](https://docs.starknet.io/docs/Blocks/header/#block-header)
+/// the commitment trees are of height 251, because the key used is a Field Element.
+///
+/// The tree height is 251 in our case since our set operation takes Fieldelement index values.
+struct StateCommitmentTree<T: CryptoHasherT> {
+    tree: MerkleTree<T>,
+}
+
+impl<T: CryptoHasherT> Default for StateCommitmentTree<T> {
+    fn default() -> Self {
+        Self { tree: MerkleTree::empty() }
+    }
+}
+
+impl<T: CryptoHasherT> StateCommitmentTree<T> {
+    /// Sets the value of a key in the merkle tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index of the value to set.
+    /// * `value` - The value to set.
+    pub fn set(&mut self, index: FieldElement, value: FieldElement) {
+        let key = index.to_bytes_be();
+        self.tree.set(&BitVec::from(key.to_vec()), value)
+    }
+
+    /// Get the merkle root of the tree.
+    pub fn commit(self) -> FieldElement {
+        self.tree.commit()
+    }
+}
+
 /// Calculate the transaction commitment, the event commitment and the event count.
 ///
 /// # Arguments
@@ -144,10 +178,11 @@ pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(compiled_class_has
 ///
 /// The merkle root of the merkle tree built from the classes.
 pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(classes: &[ContractClassWrapper]) -> H256 {
-	let mut tree = CommitmentTree::<T>::default();
+	let mut tree = StateCommitmentTree::<T>::default();
 	classes.iter().for_each(|class| {
-		let final_hash = calculate_class_commitment_leaf_hash::<T>(class.);
-		tree.set(class.hash.0, final_hash.0);
+		let class_hash = class.class_hash();
+		let final_hash = calculate_class_commitment_leaf_hash::<T>(class_hash);
+		tree.set(class_hash.0, final_hash.0);
 	});
 	H256::from_slice(&tree.commit().to_bytes_be())
 }

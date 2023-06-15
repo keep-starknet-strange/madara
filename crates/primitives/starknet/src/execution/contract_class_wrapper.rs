@@ -15,6 +15,7 @@ use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
 
 use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
+use super::felt252_wrapper::Felt252Wrapper;
 use crate::alloc::string::ToString;
 use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
 use crate::scale_info::build::Fields;
@@ -56,6 +57,10 @@ pub struct ContractClassWrapper {
 impl ContractClassWrapper {
     // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
     const MAX_CONTRACT_BYTE_SIZE: usize = 20971520;
+
+	pub fn class_hash(&self) -> Felt252Wrapper {
+		Felt252Wrapper::ONE
+	}
 }
 
 impl From<ContractClassWrapper> for ContractClass {
