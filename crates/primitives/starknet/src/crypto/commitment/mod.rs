@@ -186,13 +186,13 @@ pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the classes.
-pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes: &[Felt252Wrapper]) -> H256 {
+pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes: &[Felt252Wrapper]) -> Felt252Wrapper {
     let mut tree = StateCommitmentTree::<T>::default();
     class_hashes.iter().for_each(|class_hash| {
         let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
         tree.set(class_hash.0, final_hash.0);
     });
-    H256::from_slice(&tree.commit().to_bytes_be())
+    tree.commit().into()
 }
 
 /// Calculates the contract state hash from its preimage.
