@@ -379,7 +379,9 @@ fn test_event_wrapper_builder_with_event_content() {
 
 #[test]
 fn test_try_into_deploy_account_transaction() {
-    fn helper(
+    // This helper methods either returns result of `TryInto::try_into()` and expected result or the
+    // error incase `TryInto::try_into()` fails
+    fn get_try_into_and_expected_value(
         array_size: usize,
         calldata_size: usize,
     ) -> Result<(DeployAccountTransaction, DeployAccountTransaction), BroadcastedTransactionConversionErrorWrapper>
@@ -402,7 +404,7 @@ fn test_try_into_deploy_account_transaction() {
         let expected_signature = bounded_vec![Felt252Wrapper::default(); array_size];
         let expected_calldata = bounded_vec![Felt252Wrapper::default(); calldata_size];
 
-        let expect_output = DeployAccountTransaction {
+        let expected_output = DeployAccountTransaction {
             version: 1_u8,
             calldata: expected_calldata,
             signature: expected_signature,
@@ -412,13 +414,13 @@ fn test_try_into_deploy_account_transaction() {
             max_fee: Felt252Wrapper::from(FieldElement::default()),
         };
 
-        Ok((output, expect_output))
+        Ok((output, expected_output))
     }
 
-    let zero_len = helper(0, 0).expect("shouldn't fail");
+    let zero_len = get_try_into_and_expected_value(0, 0).expect("failed to bound signature or calldata");
     pretty_assertions::assert_eq!(zero_len.0, zero_len.1);
 
-    let one_len = helper(1, 1).expect("shouldn't fail");
+    let one_len = get_try_into_and_expected_value(1, 1).expect("failed to bound signature or calldata");
     pretty_assertions::assert_eq!(one_len.0, one_len.1);
 
     // Cannot run this tests because currently `MaxArraySize` and `MaxCalldataSize` is very large
