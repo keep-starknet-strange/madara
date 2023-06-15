@@ -302,7 +302,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
                 let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
                     BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
                 })?;
-                let legacy_program = LegacyContractClass {
+                let legacy_contract_class = LegacyContractClass {
                     program: serde_json::from_slice(decompressed_bytes.as_slice())
                         .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
                     abi: match declare_tx_v1.contract_class.abi.as_ref() {
@@ -328,7 +328,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
                             declare_tx_v1.contract_class.entry_points_by_type.clone(),
                         )),
                     },
-                    compiled_class_hash: legacy_program.class_hash()?.into(),
+                    compiled_class_hash: legacy_contract_class.class_hash()?.into(),
                 })
             }
             BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),

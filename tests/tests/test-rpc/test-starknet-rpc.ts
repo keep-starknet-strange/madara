@@ -278,6 +278,7 @@ describeDevMadara("Starknet RPC", (context) => {
         TOKEN_CLASS_HASH,
         "latest"
       );
+      // https://github.com/keep-starknet-strange/madara/issues/652
       // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
