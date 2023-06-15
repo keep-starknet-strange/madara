@@ -35,6 +35,7 @@ starknet_api = { workspace = true, default-features = false }
 # Other third party dependencies
 bitvec = { workspace = true, features = ["alloc"] }
 derive_more = { workspace = true, features = ["constructor"] }
+flate2 = { workspace = true, optional = true }
 hex = { version = "0.4.3", default-features = false }
 lazy_static = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
@@ -45,7 +46,6 @@ scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.96", default-features = false }
 thiserror-no-std = { workspace = true }
-flate2 = { workspace = true, optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
