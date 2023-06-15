@@ -78,6 +78,7 @@ jobs:
         run: |-
           cd tests
           npm run test
+
   toml-lint:
     runs-on: ubuntu-latest
     steps:
