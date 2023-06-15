@@ -1,13 +1,14 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
+use bitvec::prelude::Msb0;
+use bitvec::slice::BitSlice;
 use bitvec::vec::BitVec;
 use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
-use super::merkle_patricia_tree::merkle_tree::MerkleTree;
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
+use super::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 use crate::transaction::types::{
@@ -83,6 +84,12 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
     /// Get the merkle root of the tree.
     pub fn commit(self) -> FieldElement {
         self.tree.commit()
+    }
+
+    #[allow(dead_code)]
+    /// Generates a proof for `key`. See [`MerkleTree::get_proof`].
+    pub fn get_proof(&self, key: &BitSlice<Msb0, u8>) -> Vec<ProofNode> {
+        self.tree.get_proof(key)
     }
 }
 
@@ -186,6 +193,33 @@ pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes:
         tree.set(class_hash.0, final_hash.0);
     });
     H256::from_slice(&tree.commit().to_bytes_be())
+}
+
+/// Calculates the contract state hash from its preimage.
+///
+/// # Arguments
+///
+/// * `hash` - The hash of the contract definition.
+/// * `root` - The root of root of another Merkle-Patricia tree of height 251 that is constructed
+///   from the contract’s storage.
+/// * `nonce` - The current nonce of the contract.
+///
+/// # Returns
+///
+/// The contract state hash.
+pub fn calculate_contract_state_hash<T: CryptoHasherT>(
+    hash: Felt252Wrapper,
+    root: Felt252Wrapper,
+    nonce: Felt252Wrapper,
+) -> Felt252Wrapper {
+    const CONTRACT_STATE_HASH_VERSION: Felt252Wrapper = Felt252Wrapper::ZERO;
+
+    // The contract state hash is defined as H(H(H(hash, root), nonce), CONTRACT_STATE_HASH_VERSION)
+    let hash = <T>::compute_hash_on_elements(&[hash.0, root.0, nonce.0, CONTRACT_STATE_HASH_VERSION.0]);
+
+    // Compare this with the HashChain construction used in the contract_hash: the number of
+    // elements is not hashed to this hash, and this is supposed to be different.
+    hash.into()
 }
 
 /// Compute the combined hash of the transaction hash and the signature.
