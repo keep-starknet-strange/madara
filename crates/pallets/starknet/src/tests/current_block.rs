@@ -1,7 +1,6 @@
 use frame_support::debug;
 use mp_starknet::block::Header as StarknetHeader;
 use mp_starknet::execution::types::Felt252Wrapper;
-use sp_core::U256;
 
 use super::mock::*;
 use crate::SEQUENCER_ADDRESS;
@@ -16,9 +15,9 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
 
         let expected_current_block = StarknetHeader {
             block_timestamp: 12,
-            block_number: U256::from(2),
+            block_number: 2,
             parent_block_hash: Felt252Wrapper::from_hex_be(
-                "0x01243efd82a868d20c15c273d185467feb4addc129fb767353fa684e186d3f98",
+                "0x01d7c361d0138547bb97a38b9fd7209896ff5a6e0592e83282d95fd3530f5449",
             )
             .unwrap(),
             transaction_count: 1,
