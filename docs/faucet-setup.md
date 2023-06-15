@@ -92,7 +92,7 @@ Things to keep in mind:
 import * as starknet from "starknet";
 
 const eth_address =
-  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01";
+  "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 const provider = new starknet.RpcProvider({
   nodeUrl: "http://localhost:9944",
 });
