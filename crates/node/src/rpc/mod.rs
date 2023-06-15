@@ -33,7 +33,7 @@ pub struct FullDeps<C, P> {
     /// Manual seal command sink
     pub command_sink: Option<mpsc::Sender<EngineCommand<Hash>>>,
     /// Starknet dependencies
-    pub starknet: Option<StarknetDeps<C, Block>>,
+    pub starknet: StarknetDeps<C, Block>,
 }
 
 /// Instantiate all full RPC extensions.
@@ -59,20 +59,19 @@ where
     let hasher = client.runtime_api().get_hasher(client.info().best_hash)?.into();
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
-    if let Some(starknet_params) = starknet_params {
-        module.merge(
-            Starknet::new(
-                client,
-                starknet_params.madara_backend,
-                starknet_params.overrides,
-                pool,
-                starknet_params.sync_service,
-                starknet_params.starting_block,
-                hasher,
-            )
-            .into_rpc(),
-        )?;
-    }
+
+    module.merge(
+        Starknet::new(
+            client,
+            starknet_params.madara_backend,
+            starknet_params.overrides,
+            pool,
+            starknet_params.sync_service,
+            starknet_params.starting_block,
+            hasher,
+        )
+        .into_rpc(),
+    )?;
 
     if let Some(command_sink) = command_sink {
         module.merge(

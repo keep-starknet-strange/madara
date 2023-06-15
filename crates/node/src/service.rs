@@ -61,6 +61,8 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
 type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor<Client, Block>>;
 
+type ImportQueueResult<E> = Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>;
+
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ, E>(
     config: &Configuration,
@@ -166,7 +168,7 @@ pub fn build_aura_grandpa_import_queue<E>(
     telemetry: Option<TelemetryHandle>,
     grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient<E>, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>
+) -> ImportQueueResult<E>
 where
     E: CodeExecutor + RuntimeVersionOf + 'static,
 {
@@ -205,7 +207,7 @@ pub fn build_manual_seal_import_queue<E>(
     _telemetry: Option<TelemetryHandle>,
     _grandpa_block_import: GrandpaBlockImport<FullBackend, Block, FullClient<E>, FullSelectChain>,
     _madara_backend: Arc<MadaraBackend>,
-) -> Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>
+) -> ImportQueueResult<E>
 where
     E: CodeExecutor + RuntimeVersionOf + 'static,
 {
@@ -303,7 +305,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         client: client.clone(),
         madara_backend: madara_backend.clone(),
         overrides,
-        sync_service: sync_service.clone(),
+        sync_service: Some(sync_service.clone()),
         starting_block,
     };
 
@@ -316,7 +318,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
                 client: client.clone(),
                 pool: pool.clone(),
                 deny_unsafe,
-                starknet: Some(starknet_rpc_params.clone()),
+                starknet: starknet_rpc_params.clone(),
                 command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
             };
             crate::rpc::create_full(deps).map_err(Into::into)

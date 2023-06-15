@@ -1,12 +1,14 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
+use mc_storage::overrides_handle;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 use sc_executor_common::wasm_runtime::{HeapAllocStrategy, DEFAULT_HEAP_ALLOC_STRATEGY};
+use sp_blockchain::HeaderBackend;
 use sp_runtime::generic::Era;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, service};
+use crate::{chain_spec, rpc, service};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -187,26 +189,8 @@ pub fn run() -> sc_cli::Result<()> {
                 .with_runtime_cache_size(config.runtime_cache_size)
                 .build();
 
-            // pass the custom executor along
-            let components = service::new_partial::<_, _>(config, service::build_aura_grandpa_import_queue, executor)?;
-
-            let rpc_extensions_builder = {
-                let client = components.client.clone();
-                let pool = components.transaction_pool.clone();
-
-                Box::new(move |deny_unsafe, _| {
-                    let deps = crate::rpc::FullDeps {
-                        client: client.clone(),
-                        pool: pool.clone(),
-                        deny_unsafe,
-                        starknet: None,
-                        command_sink: None,
-                    };
-                    crate::rpc::create_full(deps).map_err(Into::into)
-                })
-            };
-
             runner.run_node_until_exit(move |config| async move {
+                // pass the custom executor along
                 let sc_service::PartialComponents {
                     client,
                     backend,
@@ -215,8 +199,35 @@ pub fn run() -> sc_cli::Result<()> {
                     select_chain,
                     import_queue,
                     transaction_pool,
-                    other,
-                } = components;
+                    other: (block_import, grandpa_link, telemetry, madara_backend),
+                } = service::new_partial::<_, _>(&config, service::build_aura_grandpa_import_queue, executor)?;
+
+                let overrides = overrides_handle(client.clone());
+                let starting_block = client.info().best_number;
+
+                let starknet_rpc_params = rpc::StarknetDeps {
+                    client: client.clone(),
+                    madara_backend: madara_backend.clone(),
+                    overrides,
+                    sync_service: None,
+                    starting_block,
+                };
+
+                let rpc_extensions_builder = {
+                    let client = client.clone();
+                    let pool = transaction_pool.clone();
+
+                    Box::new(move |deny_unsafe, _| {
+                        let deps = rpc::FullDeps {
+                            client: client.clone(),
+                            pool: pool.clone(),
+                            deny_unsafe,
+                            starknet: starknet_rpc_params.clone(),
+                            command_sink: None,
+                        };
+                        crate::rpc::create_full(deps).map_err(Into::into)
+                    })
+                };
 
                 let sim_components = sc_service::PartialComponents {
                     client,
@@ -226,7 +237,7 @@ pub fn run() -> sc_cli::Result<()> {
                     keystore_container,
                     select_chain,
                     transaction_pool,
-                    other: (other.0, other.2, other.1),
+                    other: (block_import, telemetry, grandpa_link),
                 };
 
                 // start simnode's subsystems
