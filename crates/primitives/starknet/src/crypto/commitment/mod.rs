@@ -7,11 +7,15 @@ use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
+use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
 };
+
+/// Hash of the leaf of the ClassCommitment tree
+pub type ClassCommitmentLeafHash = Felt252Wrapper;
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -106,6 +110,46 @@ pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> 
         tree.set(id as u64, final_hash);
     });
     H256::from_slice(&tree.commit().to_bytes_be())
+}
+
+/// Calculate class commitment tree leaf hash value.
+///
+/// See: <https://docs.starknet.io/documentation/architecture_and_concepts/State/starknet-state/#classes_tree>
+///
+/// # Arguments
+///
+/// * `compiled_class_hash` - The hash of the compiled class.
+///
+/// # Returns
+///
+/// The hash of the class commitment tree leaf.
+pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(compiled_class_hash: Felt252Wrapper) -> ClassCommitmentLeafHash {
+	let contract_class_hash_version = Felt252Wrapper::try_from("CONTRACT_CLASS_LEAF_V0".as_bytes()).unwrap(); // Unwrap safu
+
+	let hash = <T>::compute_hash_on_elements(&[contract_class_hash_version.0, compiled_class_hash.0]);
+
+	hash.into()
+}
+
+/// Calculate class commitment tree root hash value.
+///
+/// The classes tree encodes the information about the existing classes in the state of Starknet.
+/// It maps (Cairo 1.0) class hashes to their compiled class hashes
+///
+/// # Arguments
+///
+/// * `classes` - The classes to get the root from.
+///
+/// # Returns
+///
+/// The merkle root of the merkle tree built from the classes.
+pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(classes: &[ContractClassWrapper]) -> H256 {
+	let mut tree = CommitmentTree::<T>::default();
+	classes.iter().for_each(|class| {
+		let final_hash = calculate_class_commitment_leaf_hash::<T>(class.);
+		tree.set(class.hash.0, final_hash.0);
+	});
+	H256::from_slice(&tree.commit().to_bytes_be())
 }
 
 /// Compute the combined hash of the transaction hash and the signature.
