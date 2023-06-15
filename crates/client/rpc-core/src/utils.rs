@@ -17,7 +17,7 @@ use starknet_core::types::{
 
 /// Returns a [`ContractClass`] from a [`ContractClassWrapper`]
 pub fn to_rpc_contract_class(_contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
-    let entry_points_by_type = to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type.into())?;
+    let entry_points_by_type = to_legacy_entry_points_by_type(&_contract_class_wrapped.entry_points_by_type)?;
 
     let program: Program =
         _contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;

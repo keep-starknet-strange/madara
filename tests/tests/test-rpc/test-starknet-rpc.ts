@@ -1,7 +1,6 @@
 import "@keep-starknet-strange/madara-api-augment";
 import chaiAsPromised from "chai-as-promised";
 import chai, { expect } from "chai";
-import chaiAsPromised from "chai-as-promised";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import {
   Account,
