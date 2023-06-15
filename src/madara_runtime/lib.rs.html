@@ -678,7 +678,7 @@
         }
 
         <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt; {
-            <span class="kw">let </span>chain_id  = <span class="kw-2">&amp;</span>Starknet::chain_id_str();
+            <span class="kw">let </span>chain_id  = Starknet::chain_id();
 
             xts.into_iter().filter_map(|xt| <span class="kw">match </span>xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) =&gt; <span class="prelude-val">Some</span>(transaction.from_invoke(chain_id)),

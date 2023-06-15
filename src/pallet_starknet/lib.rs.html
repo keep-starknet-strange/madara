@@ -1543,8 +1543,8 @@
 
             <span class="comment">// Get current block context
             </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
-            <span class="kw">let </span>transaction: Transaction = transaction.from_invoke(<span class="kw-2">&amp;</span>chain_id);
+            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+            <span class="kw">let </span>transaction: Transaction = transaction.from_invoke(chain_id);
             <span class="kw">let </span>call_info =
                 transaction.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, TxType::Invoke, <span class="prelude-val">None</span>);
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
@@ -1602,9 +1602,9 @@
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
+            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
 
-            <span class="kw">let </span>transaction: Transaction = transaction.from_declare(<span class="kw-2">&amp;</span>chain_id);
+            <span class="kw">let </span>transaction: Transaction = transaction.from_declare(chain_id);
             <span class="comment">// Check that contract class is not None
             </span><span class="kw">let </span>contract_class = transaction.contract_class.clone().ok_or(Error::&lt;T&gt;::ContractClassMustBeSpecified)<span class="question-mark">?</span>;
 
@@ -1688,9 +1688,9 @@
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
+            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
             <span class="kw">let </span>transaction: Transaction =
-                transaction.from_deploy(<span class="kw-2">&amp;</span>chain_id).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionConversionError)<span class="question-mark">?</span>;
+                transaction.from_deploy(chain_id).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionConversionError)<span class="question-mark">?</span>;
 
             <span class="comment">// Check if contract is deployed
             </span><span class="macro">ensure!</span>(
@@ -1898,9 +1898,9 @@
     /// The transaction
     </span><span class="kw">fn </span>get_call_transaction(call: Call&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, ()&gt; {
         <span class="kw">match </span>call {
-            Call::&lt;T&gt;::invoke { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_invoke(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id_str())),
-            Call::&lt;T&gt;::declare { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_declare(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id_str())),
-            Call::&lt;T&gt;::deploy_account { transaction } =&gt; transaction.from_deploy(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id_str()).map_err(|<span class="kw">_</span>| ()),
+            Call::&lt;T&gt;::invoke { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_invoke(<span class="self">Self</span>::chain_id())),
+            Call::&lt;T&gt;::declare { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_declare(<span class="self">Self</span>::chain_id())),
+            Call::&lt;T&gt;::deploy_account { transaction } =&gt; transaction.from_deploy(<span class="self">Self</span>::chain_id()).map_err(|<span class="kw">_</span>| ()),
             Call::&lt;T&gt;::consume_l1_message { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
         }

@@ -1192,7 +1192,7 @@
 
 <span class="kw">impl </span>DeclareTransaction {
     <span class="doccomment">/// converts the transaction to a [Transaction] object
-    </span><span class="kw">pub fn </span>from_declare(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Transaction {
+    </span><span class="kw">pub fn </span>from_declare(<span class="self">self</span>, chain_id: Felt252Wrapper) -&gt; Transaction {
         Transaction {
             tx_type: TxType::Declare,
             version: <span class="self">self</span>.version,
@@ -1321,7 +1321,7 @@
 
 <span class="kw">impl </span>DeployAccountTransaction {
     <span class="doccomment">/// converts the transaction to a [Transaction] object
-    </span><span class="kw">pub fn </span>from_deploy(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, TransactionConversionError&gt; {
+    </span><span class="kw">pub fn </span>from_deploy(<span class="self">self</span>, chain_id: Felt252Wrapper) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, TransactionConversionError&gt; {
         <span class="kw">let </span>salt_as_felt: StarkFelt = StarkFelt(<span class="self">self</span>.salt.into());
         <span class="kw">let </span>stark_felt_vec: Vec&lt;StarkFelt&gt; = <span class="self">self</span>.calldata.clone()
             .into_inner()
@@ -1437,7 +1437,7 @@
 
 <span class="kw">impl </span>InvokeTransaction {
     <span class="doccomment">/// converts the transaction to a [Transaction] object
-    </span><span class="kw">pub fn </span>from_invoke(<span class="self">self</span>, chain_id: <span class="kw-2">&amp;</span>str) -&gt; Transaction {
+    </span><span class="kw">pub fn </span>from_invoke(<span class="self">self</span>, chain_id: Felt252Wrapper) -&gt; Transaction {
         Transaction {
             tx_type: TxType::Invoke,
             version: <span class="self">self</span>.version,

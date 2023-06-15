@@ -114,6 +114,8 @@
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
 <span class="kw">use </span>base64::Engine;
@@ -121,7 +123,9 @@
 <span class="kw">use </span>frame_support::inherent::BlockT;
 <span class="kw">use </span>mp_digest_log::find_starknet_block;
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
-<span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{
+    ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper, Felt252Wrapper,
+};
 <span class="kw">use </span>mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
@@ -177,7 +181,7 @@
 /// * `Transaction` - The converted transaction
 </span><span class="kw">pub fn </span>to_tx(
     request: BroadcastedTransaction,
-    chain_id: <span class="kw-2">&amp;</span>str,
+    chain_id: Felt252Wrapper,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, BroadcastedTransactionConversionErrorWrapper&gt; {
     <span class="kw">match </span>request {
         BroadcastedTransaction::Invoke(invoke_tx) =&gt; {
