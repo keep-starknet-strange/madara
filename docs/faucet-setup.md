@@ -1,4 +1,4 @@
-# Madara Faucet
+## Madara Faucet
 
 You can have a custom faucet for your app chains!
 
