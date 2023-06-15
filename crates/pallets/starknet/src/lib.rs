@@ -427,8 +427,8 @@ pub mod pallet {
 
             // Get current block context
             let block_context = Self::get_block_context();
-            let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_invoke(&chain_id);
+            let chain_id = Self::chain_id();
+            let transaction: Transaction = transaction.from_invoke(chain_id);
             let call_info =
                 transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
             let receipt = match call_info {
@@ -486,9 +486,9 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let chain_id = Self::chain_id_str();
+            let chain_id = Self::chain_id();
 
-            let transaction: Transaction = transaction.from_declare(&chain_id);
+            let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
             let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
@@ -572,9 +572,9 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let chain_id = Self::chain_id_str();
+            let chain_id = Self::chain_id();
             let transaction: Transaction =
-                transaction.from_deploy(&chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
+                transaction.from_deploy(chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
 
             // Check if contract is deployed
             ensure!(
@@ -782,9 +782,9 @@ impl<T: Config> Pallet<T> {
     /// The transaction
     fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
         match call {
-            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(&Self::chain_id_str())),
-            Call::<T>::declare { transaction } => Ok(transaction.from_declare(&Self::chain_id_str())),
-            Call::<T>::deploy_account { transaction } => transaction.from_deploy(&Self::chain_id_str()).map_err(|_| ()),
+            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(Self::chain_id())),
+            Call::<T>::declare { transaction } => Ok(transaction.from_declare(Self::chain_id())),
+            Call::<T>::deploy_account { transaction } => transaction.from_deploy(Self::chain_id()).map_err(|_| ()),
             Call::<T>::consume_l1_message { transaction } => Ok(transaction),
             _ => Err(()),
         }

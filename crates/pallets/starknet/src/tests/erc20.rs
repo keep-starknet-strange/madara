@@ -44,8 +44,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(deploy_transaction.clone(), chain_id);
 
         let expected_erc20_address =
@@ -126,8 +125,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transfer_transaction.clone(), chain_id);
 
         // Also asserts that the deployment has been saved.

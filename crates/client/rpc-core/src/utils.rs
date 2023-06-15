@@ -5,7 +5,9 @@ use cairo_vm::types::program::Program;
 use frame_support::inherent::BlockT;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper};
+use mp_starknet::execution::types::{
+    ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper, Felt252Wrapper,
+};
 use mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
@@ -61,7 +63,7 @@ pub(crate) fn encode_base64(data: &[u8]) -> String {
 /// * `Transaction` - The converted transaction
 pub fn to_tx(
     request: BroadcastedTransaction,
-    chain_id: &str,
+    chain_id: Felt252Wrapper,
 ) -> Result<Transaction, BroadcastedTransactionConversionErrorWrapper> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => {

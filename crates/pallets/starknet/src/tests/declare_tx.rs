@@ -122,8 +122,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
             signature: bounded_vec!(),
         };
 
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_declare_tx_hash(transaction.clone(), chain_id);
         transaction.signature = sign_message_hash(transaction_hash);
 
@@ -197,8 +196,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
             signature: bounded_vec!(),
         };
 
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_declare_tx_hash(transaction.clone(), chain_id);
         transaction.signature = sign_message_hash(transaction_hash);
 
@@ -272,8 +270,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
             signature: bounded_vec!(),
         };
 
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_declare_tx_hash(transaction.clone(), chain_id);
         transaction.signature = sign_message_hash(transaction_hash);
 
