@@ -16,14 +16,14 @@ repository = "https://github.com/keep-starknet-strange/madara"
 futures = { workspace = true, default-features = true }
 futures-timer = "3.0.2"
 log = { workspace = true, default-features = true }
-sc-client-api = { workspace = true }
-sp-api = { workspace = true }
-sp-core = { workspace = true }
-sp-blockchain = { workspace = true }
-sp-runtime = { workspace = true }
-mp-digest-log = { workspace = true }
-mc-storage = { workspace = true }
 mc-db = { workspace = true }
+mc-rpc-core = { workspace = true }
+mc-storage = { workspace = true }
+mp-digest-log = { workspace = true }
 mp-starknet = { workspace = true }
 pallet-starknet = { workspace = true }
-mc-rpc-core = { workspace = true }
+sc-client-api = { workspace = true }
+sp-api = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }

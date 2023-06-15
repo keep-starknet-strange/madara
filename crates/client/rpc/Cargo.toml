@@ -3,8 +3,8 @@ name = "mc-rpc"
 version = "0.1.0"
 description = "Starknet RPC compatibility layer for Substrate"
 authors = [
-	"Timothée Delabrouille <https://github.com/tdelabro>",
-	"Substrate DevHub <https://github.com/substrate-developer-hub>",
+  "Timothée Delabrouille <https://github.com/tdelabro>",
+  "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
 edition = "2021"
@@ -17,37 +17,37 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Madara runtime
-pallet-starknet = { workspace = true, default-features = true }
 madara-runtime = { workspace = true, default-features = true }
+pallet-starknet = { workspace = true, default-features = true }
 # Madara client
-mc-rpc-core = { workspace = true }
 mc-db = { workspace = true }
+mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
 mp-starknet = { workspace = true }
 # Substate primitives
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-sp-runtime = { workspace = true, default-features = true }
-sp-core = { workspace = true, default-features = true }
-sp-api = { workspace = true, default-features = true }
 sc-transaction-pool-api = { workspace = true }
+sp-api = { workspace = true, default-features = true }
 sp-arithmetic = { workspace = true, default-features = true }
 sp-blockchain = { workspace = true, default-features = true }
+sp-core = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = true }
 # Substrate client
 sc-client-api = { workspace = true, default-features = true }
 sc-network-sync = { workspace = true }
 # Starknet
-starknet_api = { workspace = true, default-features = false }
 blockifier = { workspace = true, default-features = false, features = [
-	"testing",
+  "testing",
 ] }
 starknet-core = { workspace = true }
 starknet-ff = { workspace = true }
+starknet_api = { workspace = true, default-features = false }
 # Others
 hex = { workspace = true, default-features = true }
 jsonrpsee = { workspace = true, default-features = true, features = [
-	"server",
-	"macros",
+  "server",
+  "macros",
 ] }
 log = { workspace = true, default-features = true }
 serde_json = { workspace = true, default-features = true }
@@ -56,3 +56,8 @@ thiserror = { workspace = true }
 [dev-dependencies]
 rstest = { workspace = true }
 pretty_assertions = { workspace = true }
+
+[dev-dependencies.cargo-husky]
+version = "1.5.0"
+default-features = false
+features = ["user-hooks"]
