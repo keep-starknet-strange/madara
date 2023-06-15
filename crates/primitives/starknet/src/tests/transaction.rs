@@ -380,7 +380,7 @@ fn test_event_wrapper_builder_with_event_content() {
 #[test]
 fn test_try_into_deploy_account_transaction() {
     // This helper methods either returns result of `TryInto::try_into()` and expected result or the
-    // error incase `TryInto::try_into()` fails
+    // error in case `TryInto::try_into()` fails
     fn get_try_into_and_expected_value(
         array_size: usize,
         calldata_size: usize,
