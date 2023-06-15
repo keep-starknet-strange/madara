@@ -3,7 +3,6 @@
 use core::marker::PhantomData;
 
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::traits::hash::CryptoHasherT;
 use sp_core::Get;
 
 use crate::Config;

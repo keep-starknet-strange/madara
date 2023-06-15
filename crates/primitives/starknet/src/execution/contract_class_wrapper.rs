@@ -58,6 +58,7 @@ impl ContractClassWrapper {
     // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
     const MAX_CONTRACT_BYTE_SIZE: usize = 20971520;
 
+    /// Computes the hash of the contract class.
     pub fn class_hash(&self) -> Felt252Wrapper {
         Felt252Wrapper::ONE
     }
