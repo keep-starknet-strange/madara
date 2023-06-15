@@ -53,7 +53,7 @@ pub mod transaction_validation;
 pub mod types;
 
 /// Everything needed to run the pallet offchain workers
-mod offchain_worker;
+pub mod offchain_worker;
 
 #[cfg(test)]
 mod tests;
@@ -72,6 +72,7 @@ use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
+use frame_system::offchain::SubmitTransaction;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
@@ -189,6 +190,12 @@ pub mod pallet {
         fn offchain_worker(n: T::BlockNumber) {
             log!(info, "Running offchain worker at block {:?}.", n);
 
+            // Fetch the gas price from L1.
+            match Self::fetch_gas_price_and_send_raw_unsigned(n) {
+                Ok(_) => log!(info, "Successfully fetched L1 gas price"),
+                Err(err) => log!(error, "Failed to fetch L1 gas price: {:?}", err),
+            }
+
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
                 Err(err) => match err {
@@ -279,6 +286,11 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn seq_addr_update)]
     pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
+
+    /// Current L1 gas price
+    #[pallet::storage]
+    #[pallet::getter(fn gas_price_l1)]
+    pub(super) type GasPriceL1<T: Config> = StorageValue<_, u128, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -684,7 +696,29 @@ pub mod pallet {
 
             Ok(())
         }
+
+        /// Set L1 gas price.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `gas_price` - The value of the gas price.
+        ///
+        /// # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        #[pallet::call_index(6)]
+        #[pallet::weight({0})]
+        pub fn submit_gas_price_unsigned(origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
+            // Only root can set the gas price.
+            ensure_root(origin)?;
+            // Update the gas price.
+            GasPriceL1::<T>::set(gas_price);
+            Ok(())
+        }
     }
+
+        
 
     #[pallet::inherent]
     impl<T: Config> ProvideInherent for Pallet<T> {
@@ -771,6 +805,21 @@ pub mod pallet {
 
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
+    /// A helper function to fetch the L1 gas price and send a raw unsigned transaction.
+    pub fn fetch_gas_price_and_send_raw_unsigned(block_number: T::BlockNumber) -> Result<(), &'static str> {
+        let price = Self::fetch_gas_price().map_err(|_| "Failed to fetch price")?;
+
+        // Received price is wrapped into a call to `submit_price_unsigned` public function of this
+        // pallet. This means that the transaction, when executed, will simply call that function
+        // passing `price` as an argument.
+        let call = Call::submit_gas_price_unsigned { gas_price: price };
+
+        SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
+            .map_err(|()| "Unable to submit unsigned transaction.")?;
+
+        Ok(())
+    }
+
     /// Returns the transaction for the Call
     ///
     /// # Arguments
@@ -827,8 +876,8 @@ impl<T: Config> Pallet<T> {
         let chain_id = Self::chain_id_str();
 
         let vm_resource_fee_cost = HashMap::default();
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
-        let gas_price = 10;
+
+        let gas_price = Self::gas_price_l1();
         BlockContext {
             block_number: BlockNumber(block_number),
             block_timestamp: BlockTimestamp(block_timestamp),

@@ -18,8 +18,10 @@ pub enum OffchainWorkerError {
     SerdeError,
     ToBytesError(Utf8Error),
     ConsumeMessageError(DispatchError),
+    GasPriceNotSetError(DispatchError),
     ToTransactionError,
     U256ConversionError,
+    StringConversionError,
     HexDecodeError,
     EmptyData,
     NoLastKnownEthBlock,
@@ -34,6 +36,14 @@ pub enum OffchainWorkerError {
 pub struct EthGetBlockByNumberResponse {
     /// Object that contains the block number.
     pub result: NumberRes,
+}
+
+/// Struct that represents the response fields that we need of the eth node for
+/// `eth_gasPrice`.
+#[derive(Deserialize, Encode, Decode, Default, Debug)]
+pub struct EthGasPriceResponse {
+    /// Object that contains the gas price.
+    pub result: String,
 }
 
 impl TryFrom<EthGetBlockByNumberResponse> for u64 {

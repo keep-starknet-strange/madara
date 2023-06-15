@@ -16,6 +16,8 @@ use crate::{Config, Pallet, ETHEREUM_EXECUTION_RPC};
 pub const LAST_FINALIZED_BLOCK_QUERY: &str =
     r#"{"jsonrpc": "2.0", "method": "eth_getBlockByNumber", "params": ["finalized", true], "id": 0}"#;
 
+pub const LAST_GAS_PRICE_QUERY: &str = r#"{"jsonrpc": "2.0", "method": "eth_gasPrice", "params": [], "id": 1}"#;
+
 impl<T: Config> Pallet<T> {
     /// Fetches L1 messages and execute them.
     /// This function is called by the offchain worker.
@@ -43,6 +45,15 @@ impl<T: Config> Pallet<T> {
             })?;
         }
         Ok(())
+    }
+
+    /// Fetches L1 gas price and return the result in gwei.
+    pub(crate) fn fetch_gas_price() -> Result<u128, OffchainWorkerError> {
+        let raw_body = query_eth(LAST_GAS_PRICE_QUERY)?;
+        let res: EthGasPriceResponse = from_slice(&raw_body).map_err(|_| OffchainWorkerError::SerdeError)?;
+        let gas_price = res.result.parse::<u128>().map_err(|_| OffchainWorkerError::StringConversionError)?;
+        // divide by 10^9 to get the gas price in gwei
+        Ok(gas_price / 1_000_000_000)
     }
 }
 
