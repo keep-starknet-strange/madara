@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686824540287,
+  "lastUpdate": 1686840636395,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -1404,6 +1404,42 @@ window.BENCHMARK_DATA = {
             "value": 91.45833333333333,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3598\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45264458+abdelhamidbakhta@users.noreply.github.com",
+            "name": "Abdel @ StarkWare",
+            "username": "abdelhamidbakhta"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d095b02dd2ba84e9d60781bfb90b82462fb056e",
+          "message": "⚡️ remove unnecessary conversion between `chain_id` string representation and felt wrapper (#655)",
+          "timestamp": "2023-06-15T16:47:27+02:00",
+          "tree_id": "ddda669dfc000a76c9adb67cf38041ef59f06df7",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/0d095b02dd2ba84e9d60781bfb90b82462fb056e"
+        },
+        "date": 1686840635820,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 551,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 91.83333333333333,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
