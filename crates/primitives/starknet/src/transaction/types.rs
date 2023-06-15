@@ -239,7 +239,7 @@ pub struct DeclareTransaction {
 
 impl DeclareTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_declare(self, chain_id: &str) -> Transaction {
+    pub fn from_declare(self, chain_id: Felt252Wrapper) -> Transaction {
         Transaction {
             tx_type: TxType::Declare,
             version: self.version,
@@ -368,7 +368,7 @@ pub struct DeployAccountTransaction {
 
 impl DeployAccountTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self, chain_id: &str) -> Result<Transaction, TransactionConversionError> {
+    pub fn from_deploy(self, chain_id: Felt252Wrapper) -> Result<Transaction, TransactionConversionError> {
         let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
         let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
             .into_inner()
@@ -484,7 +484,7 @@ impl From<Transaction> for InvokeTransaction {
 
 impl InvokeTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_invoke(self, chain_id: &str) -> Transaction {
+    pub fn from_invoke(self, chain_id: Felt252Wrapper) -> Transaction {
         Transaction {
             tx_type: TxType::Invoke,
             version: self.version,
