@@ -1,7 +1,7 @@
 # Taplo
 
-[Taplo](https://github.com/tamasfe/taplo) is a TOML validator and formatter. It provides a command-line
-interface (CLI) for working with TOML files.
+[Taplo](https://github.com/tamasfe/taplo) is a TOML validator and formatter. It
+provides a command-line interface (CLI) for working with TOML files.
 
 ## Installation
 
@@ -39,9 +39,11 @@ To format all TOML files in your project, use the following command:
 npx @taplo/cli fmt --config taplo.toml
 ```
 
-This command will automatically format the TOML files, ensuring consistent and readable formatting.
+This command will automatically format the TOML files, ensuring consistent and
+readable formatting.
 
 ### Configuration
 
-Taplo allows you to customize the formatting rules by adding configuration options. You can find the available options
-and how to use them [here](https://taplo.tamasfe.dev/configuration/formatter-options.html).
+Taplo allows you to customize the formatting rules by adding configuration
+options. You can find the available options and how to use them
+[here](https://taplo.tamasfe.dev/configuration/formatter-options.html).
