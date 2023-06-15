@@ -84,7 +84,7 @@ hex = { workspace = true }
 starknet-core = { workspace = true }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", rev = "51b2f0e" }
 
 serde_json = { workspace = true }
 
