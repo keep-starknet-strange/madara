@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1686774744741,
+  "lastUpdate": 1686811168354,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -1188,6 +1188,42 @@ window.BENCHMARK_DATA = {
             "value": 91.33333333333333,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3603\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "95699312+apoorvsadana@users.noreply.github.com",
+            "name": "apoorvsadana",
+            "username": "apoorvsadana"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dd3f2c1fdca3e83b7fa73684013e1326225df401",
+          "message": "bugfix: starkcet faucet not working (#647)\n\nCo-authored-by: apoorveth <95699312+apoorveth@users.noreply.github.com>",
+          "timestamp": "2023-06-15T08:36:15+02:00",
+          "tree_id": "b001b275b803247668cf2ec523dafee02cc9ecc5",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/dd3f2c1fdca3e83b7fa73684013e1326225df401"
+        },
+        "date": 1686811167805,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 547.25,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 91.20833333333333,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
