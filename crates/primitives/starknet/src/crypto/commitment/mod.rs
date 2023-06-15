@@ -181,7 +181,7 @@ where
 /// * `transaction` - The invoke transaction to get the hash of.
 pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: &str) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
-        transaction.sender_address.into(),
+        transaction.sender_address,
         transaction.calldata.as_slice(),
         transaction.max_fee,
         transaction.nonce,
@@ -198,7 +198,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: &str) 
 /// * `transaction` - The declare transaction to get the hash of.
 pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
-        transaction.sender_address.into(),
+        transaction.sender_address,
         &[transaction.compiled_class_hash],
         transaction.max_fee,
         transaction.nonce,
@@ -216,7 +216,7 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str
 pub fn calculate_deploy_account_tx_hash(
     transaction: DeployAccountTransaction,
     chain_id: &str,
-    address: [u8; 32],
+    address: Felt252Wrapper,
 ) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         address,
@@ -231,7 +231,7 @@ pub fn calculate_deploy_account_tx_hash(
 
 /// Computes the transaction hash using a hash function of type T
 pub fn calculate_transaction_hash_common<T>(
-    sender_address: [u8; 32],
+    sender_address: Felt252Wrapper,
     calldata: &[Felt252Wrapper],
     max_fee: Felt252Wrapper,
     nonce: Felt252Wrapper,
@@ -243,7 +243,7 @@ where
     T: CryptoHasherT,
 {
     // All the values are validated before going through this function so it's safe to unwrap.
-    let sender_address = FieldElement::from_bytes_be(&sender_address).unwrap();
+    let sender_address = FieldElement::from_bytes_be(&sender_address.into()).unwrap();
     let calldata_hash = <T as CryptoHasherT>::compute_hash_on_elements(
         &calldata.iter().map(|&val| FieldElement::from(val)).collect::<Vec<FieldElement>>(),
     );

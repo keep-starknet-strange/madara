@@ -746,8 +746,7 @@ where
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
-
-        let transaction: MPTransaction = declare_tx.from_declare(&chain_id);
+        let transaction: MPTransaction = declare_tx.clone().from_declare(&chain_id);
         let extrinsic = self
             .client
             .runtime_api()
@@ -766,7 +765,10 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
+        Ok(DeclareTransactionResult {
+            transaction_hash: transaction.hash.into(),
+            class_hash: declare_tx.compiled_class_hash.into(),
+        })
     }
 
     /// Returns a transaction details from it's hash.
