@@ -53,7 +53,7 @@ pub mod transaction_validation;
 pub mod types;
 
 /// Everything needed to run the pallet offchain workers
-pub mod offchain_worker;
+mod offchain_worker;
 
 #[cfg(test)]
 mod tests;
@@ -808,7 +808,13 @@ pub mod pallet {
 impl<T: Config> Pallet<T> {
     /// A helper function to fetch the L1 gas price and send a raw unsigned transaction.
     pub fn fetch_gas_price_and_send_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
-        let price = Self::fetch_gas_price().map_err(|_| "Failed to fetch price")?;
+        let price = match Self::fetch_gas_price() {
+            Ok(price) => price,
+            Err(err) => {
+                log!(error, "Failed rpc call to fetch gasprice: {:?}", err);
+                return Err("Failed rpc call to fetch gasprice.");
+            }
+        };
 
         // Received price is wrapped into a call to `submit_price_unsigned` public function of this
         // pallet. This means that the transaction, when executed, will simply call that function

@@ -49,6 +49,9 @@ impl<T: Config> Pallet<T> {
 
     /// Fetches L1 gas price and return the result in gwei.
     pub(crate) fn fetch_gas_price() -> Result<u128, OffchainWorkerError> {
+        log::info!("Fetching gas price from Ethereum node");
+        let rpc = get_eth_rpc_url()?;
+        log::info!("Using RPC: {}", rpc);
         let raw_body = query_eth(LAST_GAS_PRICE_QUERY)?;
         let res: EthGasPriceResponse = from_slice(&raw_body).map_err(|_| OffchainWorkerError::SerdeError)?;
         let gas_price = res.result.parse::<u128>().map_err(|_| OffchainWorkerError::StringConversionError)?;
