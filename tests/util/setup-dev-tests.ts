@@ -6,11 +6,7 @@ import { type ChildProcess } from "child_process";
 
 import { createAndFinalizeBlock } from "./block";
 import { DEBUG_MODE, SPAWNING_TIME } from "./constants";
-import {
-  startMadaraDevNode,
-  startMadaraForkedNode,
-  type RuntimeChain,
-} from "./dev-node";
+import { startMadaraDevNode, startMadaraForkedNode } from "./dev-node";
 import { providePolkadotApi } from "./providers";
 import { extractError, type ExtrinsicCreation } from "./substrate-rpc";
 
@@ -77,8 +73,6 @@ interface InternalDevTestContext extends DevTestContext {
 export function describeDevMadara(
   title: string,
   cb: (context: DevTestContext) => void,
-  runtime: RuntimeChain = "madara",
-  withWasm = false,
   forkedMode?: boolean
 ) {
   describe(title, function () {
@@ -98,7 +92,7 @@ export function describeDevMadara(
       const init = forkedMode
         ? await startMadaraForkedNode(9933)
         : !DEBUG_MODE
-        ? await startMadaraDevNode(withWasm, runtime)
+        ? await startMadaraDevNode()
         : {
             runningNode: null,
             p2pPort: 19931,

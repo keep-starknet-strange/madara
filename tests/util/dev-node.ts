@@ -8,7 +8,6 @@ import {
   DISPLAY_LOG,
   MADARA_LOG,
   SPAWNING_TIME,
-  WASM_RUNTIME_OVERRIDES,
 } from "./constants";
 
 import debugFactory from "debug";
@@ -50,11 +49,7 @@ let nodeStarted = false;
 
 // This will start a madara dev node, only 1 at a time (check every 100ms).
 // This will prevent race condition on the findAvailablePorts which uses the PID of the process
-export async function startMadaraDevNode(
-  withWasm?: boolean,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  runtime: RuntimeChain = "madara"
-): Promise<{
+export async function startMadaraDevNode(): Promise<{
   p2pPort: number;
   rpcPort: number;
   runningNode: ChildProcess;
@@ -68,15 +63,8 @@ export async function startMadaraDevNode(
   nodeStarted = true;
   const { p2pPort, rpcPort } = await findAvailablePorts();
 
-  // Explicitly disable wasm execution
-  withWasm = false;
-
   const cmd = BINARY_PATH;
   const args = [
-    withWasm ? "--execution=Wasm" : "--execution=Native", // Faster execution using native
-    process.env.FORCE_COMPILED_WASM
-      ? "--wasm-execution=compiled"
-      : "--wasm-execution=interpreted-i-know-what-i-do",
     "--no-telemetry",
     "--reserved-only",
     "--no-grandpa",
@@ -94,11 +82,7 @@ export async function startMadaraDevNode(
     "--tmp",
     "--rpc-methods=unsafe",
   ];
-  if (WASM_RUNTIME_OVERRIDES != "") {
-    args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
-    // For tracing tests now we require to enable archive block pruning.
-    args.push("--blocks-pruning=archive");
-  }
+
   debug(`Starting dev node: --port=${p2pPort} --rpc-port=${rpcPort}`);
 
   const onProcessExit = function () {
