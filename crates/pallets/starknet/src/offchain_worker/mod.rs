@@ -66,7 +66,7 @@ impl<T: Config> Pallet<T> {
 }
 
 /// Returns Ethereum RPC URL from Storage
-fn get_eth_rpc_url() -> Result<String, OffchainWorkerError> {
+pub fn get_eth_rpc_url() -> Result<String, OffchainWorkerError> {
     let eth_execution_rpc_url = StorageValueRef::persistent(ETHEREUM_EXECUTION_RPC)
         .get::<Vec<u8>>()
         .map_err(|_| OffchainWorkerError::GetStorageFailed)?

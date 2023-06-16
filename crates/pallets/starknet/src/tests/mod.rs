@@ -8,6 +8,8 @@ mod l1_message;
 mod query_tx;
 mod sequencer_address;
 
+mod offchain_worker;
+
 mod constants;
 mod mock;
 mod utils;
