@@ -26,6 +26,13 @@ impl HasherT for Hasher {
             Self::Poseidon(p) => p.hash(data),
         }
     }
+
+    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
+        match self {
+            Self::Pedersen(p) => p.hash_elements(data),
+            Self::Poseidon(p) => p.hash_elements(data),
+        }
+    }
 }
 
 /// Implement the `From` trait for the `Hasher` enum.

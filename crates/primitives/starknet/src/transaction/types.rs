@@ -18,6 +18,12 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
+use starknet_core::types::contract::legacy::{
+    LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
+};
+#[cfg(feature = "std")]
+use starknet_core::types::contract::ComputeClassHashError;
+#[cfg(feature = "std")]
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
     DeclareTransaction as RPCDeclareTransaction, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
@@ -27,6 +33,7 @@ use starknet_core::types::{
     InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
     InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
     L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
+    LegacyContractEntryPoint, LegacyEntryPointsByType,
     MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError, Transaction as RPCTransaction,
     TransactionReceipt as RPCTransactionReceipt, TransactionStatus as RPCTransactionStatus,
 };
@@ -46,7 +53,11 @@ use crate::transaction::utils::to_hash_map_entrypoints;
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
+#[cfg(not(test))]
 pub type MaxArraySize = ConstU32<10000>;
+
+#[cfg(test)]
+pub type MaxArraySize = ConstU32<100>;
 
 /// Wrapper type for transaction execution result.
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;
@@ -151,6 +162,9 @@ pub enum BroadcastedTransactionConversionErrorWrapper {
     /// Failed to convert transaction
     #[error(transparent)]
     TransactionConversionError(#[from] TransactionConversionError),
+    /// Failed to compute the contract class hash.
+    #[error(transparent)]
+    ClassHashComputationError(#[from] ComputeClassHashError),
 }
 
 /// Different tx types.
@@ -229,7 +243,7 @@ pub struct DeclareTransaction {
 
 impl DeclareTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_declare(self, chain_id: &str) -> Transaction {
+    pub fn from_declare(self, chain_id: Felt252Wrapper) -> Transaction {
         Transaction {
             tx_type: TxType::Declare,
             version: self.version,
@@ -252,6 +266,19 @@ impl DeclareTransaction {
     }
 }
 
+#[cfg(feature = "std")]
+fn to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -> RawLegacyEntryPoints {
+    RawLegacyEntryPoints {
+        constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
+        external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
+        l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
+    }
+}
+
+#[cfg(feature = "std")]
+fn to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -> RawLegacyEntryPoint {
+    RawLegacyEntryPoint { offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset), selector: entry_point.selector }
+}
 #[cfg(feature = "std")]
 impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
     type Error = BroadcastedTransactionConversionErrorWrapper;
@@ -279,6 +306,17 @@ impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
                 let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
                     BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
                 })?;
+                let legacy_contract_class = LegacyContractClass {
+                    program: serde_json::from_slice(decompressed_bytes.as_slice())
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
+                    abi: match declare_tx_v1.contract_class.abi.as_ref() {
+                        Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
+                        None => vec![],
+                    },
+                    entry_points_by_type: to_raw_legacy_entry_points(
+                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                    ),
+                };
 
                 Ok(DeclareTransaction {
                     version: 1_u8,
@@ -294,7 +332,7 @@ impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
                             declare_tx_v1.contract_class.entry_points_by_type.clone(),
                         )),
                     },
-                    compiled_class_hash: Felt252Wrapper::ZERO, // TODO: compute class hash
+                    compiled_class_hash: legacy_contract_class.class_hash()?.into(),
                 })
             }
             BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
@@ -334,7 +372,7 @@ pub struct DeployAccountTransaction {
 
 impl DeployAccountTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self, chain_id: &str) -> Result<Transaction, TransactionConversionError> {
+    pub fn from_deploy(self, chain_id: Felt252Wrapper) -> Result<Transaction, TransactionConversionError> {
         let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
         let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
             .into_inner()
@@ -356,7 +394,7 @@ impl DeployAccountTransaction {
         Ok(Transaction {
             tx_type: TxType::DeployAccount,
             version: self.version,
-            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id, sender_address.into()),
+            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id, sender_address),
             signature: self.signature,
             sender_address,
             nonce: self.nonce,
@@ -450,7 +488,7 @@ impl From<Transaction> for InvokeTransaction {
 
 impl InvokeTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_invoke(self, chain_id: &str) -> Transaction {
+    pub fn from_invoke(self, chain_id: Felt252Wrapper) -> Transaction {
         Transaction {
             tx_type: TxType::Invoke,
             version: self.version,

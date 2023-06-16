@@ -19,8 +19,8 @@ use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
 
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Copy)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+//#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {
@@ -127,6 +127,13 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
 /// [`u64`] to [`Felt252Wrapper`].
 impl From<u64> for Felt252Wrapper {
     fn from(value: u64) -> Self {
+        Self(FieldElement::from(value))
+    }
+}
+
+/// [`u8`] to [`Felt252Wrapper`].
+impl From<u8> for Felt252Wrapper {
+    fn from(value: u8) -> Self {
         Self(FieldElement::from(value))
     }
 }

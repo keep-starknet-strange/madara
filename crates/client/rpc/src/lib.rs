@@ -153,7 +153,7 @@ where
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash)
             .ok_or("Failed to retrieve the substrate block number".to_string())?;
 
-        u64::try_from(block.header().block_number).map_err(|e| format!("Failed to convert block number to u64: {e}"))
+        Ok(block.header().block_number)
     }
 }
 
@@ -404,7 +404,7 @@ where
             status: BlockStatus::AcceptedOnL2,
             block_hash: blockhash.into(),
             parent_hash: parent_blockhash.into(),
-            block_number: block.header().block_number.as_u64(),
+            block_number: block.header().block_number,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -462,10 +462,9 @@ where
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        let chain_id =
-            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction: MPTransaction = invoke_tx.from_invoke(&chain_id);
+        let transaction: MPTransaction = invoke_tx.from_invoke(chain_id);
         let extrinsic = self
             .client
             .runtime_api()
@@ -504,8 +503,7 @@ where
         deploy_account_transaction: BroadcastedDeployAccountTransaction,
     ) -> RpcResult<DeployAccountTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
-        let chain_id =
-            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let deploy_account_transaction =
             DeployAccountTransaction::try_from(deploy_account_transaction).map_err(|e| {
@@ -513,7 +511,7 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.from_deploy(&chain_id).map_err(|e| {
+        let transaction: MPTransaction = deploy_account_transaction.from_deploy(chain_id).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
@@ -562,10 +560,9 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
         let best_block_hash = self.client.info().best_hash;
-        let chain_id =
-            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let tx = to_tx(request, &chain_id).map_err(|e| {
+        let tx = to_tx(request, chain_id).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
@@ -615,10 +612,7 @@ where
             status: BlockStatus::AcceptedOnL2,
             block_hash: block.header().hash(*self.hasher).into(),
             parent_hash: block.header().parent_block_hash.into(),
-            block_number: block.header().block_number.try_into().map_err(|e| {
-                error!("Failed to convert block number to u64: {e}");
-                StarknetRpcApiError::BlockNotFound
-            })?,
+            block_number: block.header().block_number,
             new_root: block.header().global_state_root.into(),
             timestamp: block.header().block_timestamp,
             sequencer_address: block.header().sequencer_address.into(),
@@ -742,15 +736,13 @@ where
         declare_transaction: BroadcastedDeclareTransaction,
     ) -> RpcResult<DeclareTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
-        let chain_id =
-            Felt252Wrapper(self.chain_id()?.0).from_utf8().map_err(|_| StarknetRpcApiError::InternalServerError)?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let declare_tx = DeclareTransaction::try_from(declare_transaction).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
-
-        let transaction: MPTransaction = declare_tx.from_declare(&chain_id);
+        let transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
         let extrinsic = self
             .client
             .runtime_api()
@@ -769,7 +761,10 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        Ok(DeclareTransactionResult { transaction_hash: transaction.hash.into(), class_hash: FieldElement::ZERO })
+        Ok(DeclareTransactionResult {
+            transaction_hash: transaction.hash.into(),
+            class_hash: declare_tx.compiled_class_hash.into(),
+        })
     }
 
     /// Returns a transaction details from it's hash.
@@ -844,10 +839,7 @@ where
             get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
         let block_header = block.header();
         let block_hash = block_header.hash(*self.hasher).into();
-        let block_number = u64::try_from(block_header.block_number).map_err(|e| {
-            error!("Failed to convert block number to u64: {e}");
-            StarknetRpcApiError::TxnHashNotFound
-        })?;
+        let block_number = block_header.block_number;
 
         let find_receipt = block
             .transaction_receipts()

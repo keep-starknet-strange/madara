@@ -1,18 +1,17 @@
 use core::convert::TryFrom;
 
 use frame_support::BoundedVec;
-use sp_core::{Encode, U256};
+use sp_core::U256;
 
 use crate::block::{Block, BlockTransactionReceipts, Header, MaxTransactions};
 use crate::crypto::hash::pedersen::PedersenHasher;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
-use crate::traits::hash::HasherT;
 use crate::transaction::types::{MaxArraySize, Transaction, TransactionReceiptWrapper, TxType};
 
 fn generate_dummy_header() -> Header {
     Header::new(
         Felt252Wrapper::ONE,
-        U256::from(1),
+        1,
         Felt252Wrapper::TWO,
         ContractAddressWrapper::default(),
         42,
@@ -63,7 +62,9 @@ fn generate_dummy_transactions() -> BoundedVec<Transaction, MaxTransactions> {
 fn test_header_hash() {
     let header = generate_dummy_header();
     let hasher = PedersenHasher::default();
-    let expected_hash = hasher.hash(&U256::from(1).encode());
+
+    let expected_hash =
+        Felt252Wrapper::from_hex_be("0x029da584545c7f3ebdb0c6aca74f0fba99156b1e31e9524c70b42776e50efda6").unwrap();
 
     assert_eq!(header.hash(hasher), expected_hash);
 }

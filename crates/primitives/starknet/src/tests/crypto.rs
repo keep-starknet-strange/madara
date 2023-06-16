@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use frame_support::bounded_vec;
 use sp_core::H256;
+use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{
@@ -16,6 +17,7 @@ use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, No
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
+use crate::tests::utils::PEDERSEN_ZERO_HASH;
 use crate::traits::hash::{CryptoHasherT, HasherT};
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
@@ -27,7 +29,7 @@ fn test_deploy_account_tx_hash() {
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x050a9c8ed9d8053fc3cf6704b95c1b368cf9a110ff72b87b760db832155b7022").unwrap();
 
-    let chain_id = "SN_GOERLI";
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
 
     let transaction = DeployAccountTransaction {
         version: 1,
@@ -38,7 +40,7 @@ fn test_deploy_account_tx_hash() {
         account_class_hash: Felt252Wrapper::THREE,
         max_fee: Felt252Wrapper::ONE,
     };
-    let address = FieldElement::from(19911991_u64).to_bytes_be();
+    let address = Felt252Wrapper::from(19911991_u64);
 
     assert_eq!(calculate_deploy_account_tx_hash(transaction, chain_id, address), expected_tx_hash);
 }
@@ -49,7 +51,7 @@ fn test_declare_tx_hash() {
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x077f205d4855199564663dc9810c1edfcf97573393033dedc3f12dac740aac13").unwrap();
 
-    let chain_id = "SN_GOERLI";
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
 
     let transaction = DeclareTransaction {
         version: 1,
@@ -69,7 +71,7 @@ fn test_invoke_tx_hash() {
     let expected_tx_hash =
         Felt252Wrapper::from_hex_be("0x062633b1f3d64708df3d0d44706b388f841ed4534346be6ad60336c8eb2f4b3e").unwrap();
 
-    let chain_id = "SN_GOERLI";
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
 
     let transaction = InvokeTransaction {
         version: 1,
@@ -244,5 +246,23 @@ fn test_binary_node_implementations() {
         "BinaryNode { hash: None, height: 0, left: RefCell { value: Leaf(FieldElement { inner: \
          0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: RefCell { value: \
          Leaf(FieldElement { inner: 0x0000000000000000000000000000000000000000000000000000000000000003 }) } }"
+    );
+}
+
+#[test]
+fn test_pedersen_hash_elements_zero() {
+    let elements = vec![Felt252Wrapper::ZERO, Felt252Wrapper::ONE];
+
+    let expected_hash = compute_hash_on_elements(&[FieldElement::ZERO, FieldElement::ONE]);
+    assert_eq!(PedersenHasher::default().hash_elements(&elements), expected_hash.into());
+}
+
+#[test]
+fn test_pedersen_hash_elements_empty() {
+    let elements = vec![];
+
+    assert_eq!(
+        PedersenHasher::default().hash_elements(&elements),
+        Felt252Wrapper::from_hex_be(PEDERSEN_ZERO_HASH).unwrap()
     );
 }
