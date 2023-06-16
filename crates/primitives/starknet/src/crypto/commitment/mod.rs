@@ -4,7 +4,6 @@ use alloc::vec::Vec;
 use bitvec::prelude::Msb0;
 use bitvec::slice::BitSlice;
 use bitvec::vec::BitVec;
-use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
@@ -44,7 +43,7 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
     /// * `value` - The value to set.
     pub fn set(&mut self, index: u64, value: FieldElement) {
         let key = index.to_be_bytes();
-        self.tree.set(&BitVec::from(key.to_vec()), Felt252Wrapper(value))
+        self.tree.set(&BitVec::from_vec(key.to_vec()), Felt252Wrapper(value))
     }
 
     /// Get the merkle root of the tree.
@@ -81,7 +80,7 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
     /// * `value` - The value to set.
     pub fn set(&mut self, index: Felt252Wrapper, value: Felt252Wrapper) {
         let key: [u8; 32] = index.into();
-        self.tree.set(&BitVec::from(key.to_vec()), value)
+        self.tree.set(&BitVec::from_vec(key.to_vec()), value)
     }
 
     /// Get the merkle root of the tree.
@@ -91,7 +90,7 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
 
     #[allow(dead_code)]
     /// Generates a proof for `key`. See [`MerkleTree::get_proof`].
-    pub fn get_proof(&self, key: &BitSlice<Msb0, u8>) -> Vec<ProofNode> {
+    pub fn get_proof(&self, key: &BitSlice<u8, Msb0>) -> Vec<ProofNode> {
         self.tree.get_proof(key)
     }
 }

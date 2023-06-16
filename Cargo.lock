@@ -661,22 +661,12 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitvec"
-version = "0.17.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41262f11d771fd4a61aa3ce019fca363b4b6c282fca9da2a31186d3965a47a5c"
-dependencies = [
- "either",
- "radium 0.3.0",
-]
-
-[[package]]
-name = "bitvec"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1bc2832c24239b0141d5674bb9174f9d68a8b5b3f2753311927c172ca46f7e9c"
 dependencies = [
  "funty",
- "radium 0.7.0",
+ "radium",
  "tap",
  "wyz",
 ]
@@ -917,7 +907,7 @@ source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#c42035d
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
- "bitvec 1.0.1",
+ "bitvec",
  "cairo-felt",
  "cairo-take_until_unbalanced",
  "generic-array 0.14.7",
@@ -4747,7 +4737,7 @@ dependencies = [
 name = "mp-starknet"
 version = "0.1.0-alpha"
 dependencies = [
- "bitvec 0.17.4",
+ "bitvec",
  "blockifier",
  "cairo-vm",
  "derive_more",
@@ -5071,7 +5061,7 @@ name = "num-prime"
 version = "0.4.3"
 source = "git+https://github.com/tdelabro/num-prime.git?branch=no_std-support#70bfd81292929d694cadff82f43ba223df9225f1"
 dependencies = [
- "bitvec 1.0.1",
+ "bitvec",
  "either",
  "lru 0.7.8",
  "num-bigint 0.4.3",
@@ -5379,7 +5369,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ddb756ca205bd108aee3c62c6d3c994e1df84a59b9d6d4a5ea42ee1fd5a9a28"
 dependencies = [
  "arrayvec 0.7.2",
- "bitvec 1.0.1",
+ "bitvec",
  "byte-slice-cast",
  "bytes",
  "impl-trait-for-tuples",
@@ -6058,12 +6048,6 @@ checksum = "1b9ab9c7eadfd8df19006f1cf1a4aed13540ed5cbc047010ece5826e10825488"
 dependencies = [
  "proc-macro2",
 ]
-
-[[package]]
-name = "radium"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "def50a86306165861203e7f84ecffbbdfdea79f0e51039b33de1e952358c47ac"
 
 [[package]]
 name = "radium"
@@ -7620,7 +7604,7 @@ version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b569c32c806ec3abdf3b5869fb8bf1e0d275a7c1c9b0b05603d9464632649edf"
 dependencies = [
- "bitvec 1.0.1",
+ "bitvec",
  "cfg-if",
  "derive_more",
  "parity-scale-codec",

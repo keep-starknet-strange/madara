@@ -58,7 +58,7 @@ pub struct EdgeNode {
     /// The starting height of this node in the tree.
     pub height: u64,
     /// The path this edge takes.
-    pub path: BitVec<Msb0, u8>,
+    pub path: BitVec<u8, Msb0>,
     /// The child of this node.
     pub child: Rc<RefCell<Node>>,
 }
@@ -121,7 +121,7 @@ impl BinaryNode {
     /// # Returns
     ///
     /// The direction of the key.
-    pub fn direction(&self, key: &BitSlice<Msb0, u8>) -> Direction {
+    pub fn direction(&self, key: &BitSlice<u8, Msb0>) -> Direction {
         key[self.height as usize].into()
     }
 
@@ -231,7 +231,7 @@ impl EdgeNode {
     /// # Arguments
     ///
     /// * `key` - The key to check if the path matches with the edge node.
-    pub fn path_matches(&self, key: &BitSlice<Msb0, u8>) -> bool {
+    pub fn path_matches(&self, key: &BitSlice<u8, Msb0>) -> bool {
         self.path == key[(self.height as usize)..(self.height + self.path.len() as u64) as usize]
     }
 
@@ -242,7 +242,7 @@ impl EdgeNode {
     /// # Arguments
     ///
     /// * `key` - The key to get the common path from.
-    pub fn common_path(&self, key: &BitSlice<Msb0, u8>) -> &BitSlice<Msb0, u8> {
+    pub fn common_path(&self, key: &BitSlice<u8, Msb0>) -> &BitSlice<u8, Msb0> {
         let key_path = key.iter().skip(self.height as usize);
         let common_length = key_path.zip(self.path.iter()).take_while(|(a, b)| a == b).count();
 

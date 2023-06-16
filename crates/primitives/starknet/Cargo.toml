@@ -39,6 +39,7 @@ hex = { version = "0.4.3", default-features = false }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
   "max-encoded-len",
+  "bit-vec",
 ] }
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }

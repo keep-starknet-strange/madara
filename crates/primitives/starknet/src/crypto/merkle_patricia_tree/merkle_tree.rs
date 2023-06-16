@@ -33,7 +33,7 @@ impl From<&BinaryNode> for ProofNode {
 #[derive(Debug, PartialEq, Eq)]
 pub struct EdgeProofNode {
     /// Path of the node.
-    pub path: BitVec<Msb0, u8>,
+    pub path: BitVec<u8, Msb0>,
     /// Hash of the child node.
     pub child_hash: Felt252Wrapper,
 }
@@ -143,7 +143,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     ///
     /// * `key` - The key to set.
     /// * `value` - The value to set.
-    pub fn set(&mut self, key: &BitSlice<Msb0, u8>, value: Felt252Wrapper) {
+    pub fn set(&mut self, key: &BitSlice<u8, Msb0>, value: Felt252Wrapper) {
         if value == Felt252Wrapper::ZERO {
             return self.delete_leaf(key);
         }
@@ -184,9 +184,9 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         let child_height = branch_height + 1;
 
                         // Path from binary node to new leaf
-                        let new_path = key[(child_height as usize)..].to_vec();
+                        let new_path = key[(child_height as usize)..].to_bitvec();
                         // Path from binary node to existing child
-                        let old_path = edge.path[common.len() + 1..].to_vec();
+                        let old_path = edge.path[common.len() + 1..].to_bitvec();
 
                         // The new leaf branch of the binary node.
                         // (this may be edge -> leaf, or just leaf depending).
@@ -231,7 +231,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                             Node::Edge(EdgeNode {
                                 hash: None,
                                 height: edge.height,
-                                path: common.to_vec(),
+                                path: common.to_bitvec(),
                                 child: Rc::new(RefCell::new(branch)),
                             })
                         }
@@ -254,7 +254,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                 let edge = Node::Edge(EdgeNode {
                     hash: None,
                     height: 0,
-                    path: key.to_vec(),
+                    path: key.to_bitvec(),
                     child: Rc::new(RefCell::new(leaf)),
                 });
 
@@ -271,7 +271,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Arguments
     ///
     /// * `key` - The key to delete.
-    fn delete_leaf(&mut self, key: &BitSlice<Msb0, u8>) {
+    fn delete_leaf(&mut self, key: &BitSlice<u8, Msb0>) {
         // Algorithm explanation:
         //
         // The leaf's parent node is either an edge, or a binary node.
@@ -350,7 +350,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Returns
     ///
     /// The value of the key.
-    pub fn get(&self, key: &BitSlice<Msb0, u8>) -> Option<Felt252Wrapper> {
+    pub fn get(&self, key: &BitSlice<u8, Msb0>) -> Option<Felt252Wrapper> {
         self.traverse(key).last().and_then(|node| match &*node.borrow() {
             Node::Leaf(value) if !value.eq(&Felt252Wrapper::ZERO) => Some(*value),
             _ => None,
@@ -376,7 +376,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Returns
     ///
     /// The merkle proof and all the child nodes hashes.
-    pub fn get_proof(&self, key: &BitSlice<Msb0, u8>) -> Vec<ProofNode> {
+    pub fn get_proof(&self, key: &BitSlice<u8, Msb0>) -> Vec<ProofNode> {
         let mut nodes = self.traverse(key);
 
         // Return an empty list if tree is empty.
@@ -421,7 +421,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Returns
     ///
     /// The list of nodes along the path.
-    fn traverse(&self, dst: &BitSlice<Msb0, u8>) -> Vec<Rc<RefCell<Node>>> {
+    fn traverse(&self, dst: &BitSlice<u8, Msb0>) -> Vec<Rc<RefCell<Node>>> {
         if self.root.borrow().is_empty() {
             return Vec::new();
         }
@@ -477,7 +477,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         };
 
         if let Some(child_edge) = resolved_child.as_edge().cloned() {
-            parent.path.extend_from_slice(&child_edge.path);
+            parent.path.extend_from_bitslice(&child_edge.path);
             parent.child = child_edge.child;
         }
     }
