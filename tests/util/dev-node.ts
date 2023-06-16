@@ -68,9 +68,8 @@ export async function startMadaraDevNode(
   nodeStarted = true;
   const { p2pPort, rpcPort } = await findAvailablePorts();
 
-  if (process.env.FORCE_WASM_EXECUTION == "true") {
-    withWasm = true;
-  }
+  // Explicitly disable wasm execution
+  withWasm = false;
 
   const cmd = BINARY_PATH;
   const args = [
