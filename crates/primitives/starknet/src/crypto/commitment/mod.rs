@@ -249,7 +249,7 @@ where
 /// # Argument
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
-pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: &str) -> Felt252Wrapper {
+pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address,
         transaction.calldata.as_slice(),
@@ -266,7 +266,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: &str) 
 /// # Argument
 ///
 /// * `transaction` - The declare transaction to get the hash of.
-pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str) -> Felt252Wrapper {
+pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address,
         &[transaction.compiled_class_hash],
@@ -285,7 +285,7 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: &str
 /// * `transaction` - The deploy account transaction to get the hash of.
 pub fn calculate_deploy_account_tx_hash(
     transaction: DeployAccountTransaction,
-    chain_id: &str,
+    chain_id: Felt252Wrapper,
     address: Felt252Wrapper,
 ) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
@@ -307,7 +307,7 @@ pub fn calculate_transaction_hash_common<T>(
     nonce: Felt252Wrapper,
     version: u8,
     tx_prefix: &[u8],
-    chain_id: &str,
+    chain_id: Felt252Wrapper,
 ) -> Felt252Wrapper
 where
     T: CryptoHasherT,
@@ -322,8 +322,6 @@ where
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
 
-    let chain_id = FieldElement::from_byte_slice_be(chain_id.as_bytes()).unwrap();
-
     let tx_hash = <T as CryptoHasherT>::compute_hash_on_elements(&vec![
         tx_prefix,
         version,
@@ -331,7 +329,7 @@ where
         FieldElement::ZERO,
         calldata_hash,
         max_fee,
-        chain_id,
+        chain_id.0,
         nonce,
     ]);
 
