@@ -18,7 +18,11 @@ use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::block::Block as StarknetBlock;
 
 /// Max number of calldata / tx.
+#[cfg(not(test))]
 pub type MaxCalldataSize = ConstU32<{ u32::MAX }>;
+
+#[cfg(test)]
+pub type MaxCalldataSize = ConstU32<100>;
 
 /// Representation of a Starknet Call Entry Point.
 #[derive(

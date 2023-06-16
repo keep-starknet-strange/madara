@@ -1,6 +1,6 @@
 import "@keep-starknet-strange/madara-api-augment";
-import chai, { expect } from "chai";
 import chaiAsPromised from "chai-as-promised";
+import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import {
   Account,
@@ -10,7 +10,13 @@ import {
   ec,
   hash,
   validateAndParseAddress,
+  RPC,
+  stark,
+  json,
+  encode,
+  CompressedProgram,
 } from "starknet";
+import { ungzip } from "pako";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import {
@@ -42,6 +48,22 @@ import {
 } from "../constants";
 import { Block, InvokeTransaction } from "./types";
 import { numberToHex } from "@polkadot/util";
+
+function atobUniversal(a: string): Uint8Array {
+  return encode.IS_BROWSER
+    ? stringToArrayBuffer(atob(a))
+    : Buffer.from(a, "base64");
+}
+function stringToArrayBuffer(s: string): Uint8Array {
+  return Uint8Array.from(s, (c) => c.charCodeAt(0));
+}
+function decompressProgram(base64: CompressedProgram) {
+  if (Array.isArray(base64)) return base64;
+  const decompressed = encode.arrayBufferToString(
+    ungzip(atobUniversal(base64))
+  );
+  return json.parse(decompressed);
+}
 
 chai.use(deepEqualInAnyOrder);
 chai.use(chaiAsPromised);
@@ -278,10 +300,17 @@ describeDevMadara("Starknet RPC", (context) => {
         TOKEN_CLASS_HASH,
         "latest"
       );
-
+      // https://github.com/keep-starknet-strange/madara/issues/652
+      // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      const program = json.parse(
+        encode.arrayBufferToString(decompressProgram(contract_class.program))
+      );
+      // starknet js parses the values in the identifiers as negative numbers (maybe it's in madara).
+      // FIXME: https://github.com/keep-starknet-strange/madara/issues/664
+      // expect(program).to.deep.equal(ERC20_CONTRACT.program);
     });
   });
 
@@ -708,9 +737,11 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-      await account.declare(
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+      const res = await account.declare(
         {
-          classHash: "0",
+          classHash: classHash,
           contract: ERC20_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
@@ -718,11 +749,18 @@ describeDevMadara("Starknet RPC", (context) => {
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
-      const contractClassActual = await providerRPC.getClass("0", "latest");
-
+      const contractClassActual = await providerRPC.getClass(
+        classHash,
+        "latest"
+      );
       expect(contractClassActual.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      // TODO compare the program as well
+      // expect(contractClassActual.program).to.be.equal(
+      //   stark.compressProgram(ERC20_CONTRACT.program)
+      // );
+      expect(res.class_hash).to.be.eq(classHash);
     });
   });
 
@@ -757,24 +795,19 @@ describeDevMadara("Starknet RPC", (context) => {
 
     it("should return all starknet declare transactions", async function () {
       const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-
-      const nonce = await providerRPC.getNonceForAddress(
-        ARGENT_CONTRACT_ADDRESS,
-        "latest"
-      );
-
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
-
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       await account.declare(
         {
-          classHash: "0",
+          classHash: classHash,
           contract: ERC20_CONTRACT,
         },
-        { nonce, version: 1, maxFee: "123456" }
+        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
 
       const txs = await providerRPC.getPendingTransactions();

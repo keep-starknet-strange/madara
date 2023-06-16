@@ -67,7 +67,6 @@ construct_runtime!(
         Timestamp: pallet_timestamp,
         Aura: pallet_aura,
         Grandpa: pallet_grandpa,
-        Sudo: pallet_sudo,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
     }
@@ -290,7 +289,7 @@ impl_runtime_apis! {
         }
 
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
-            let chain_id  = &Starknet::chain_id_str();
+            let chain_id  = Starknet::chain_id();
 
             xts.into_iter().filter_map(|xt| match xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),

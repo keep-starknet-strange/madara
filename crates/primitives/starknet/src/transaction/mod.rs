@@ -710,17 +710,10 @@ impl Transaction {
     ///
     /// * `AccountTransactionContext` - The context of the transaction
     fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
-        // TODO: use lib implem once this PR is merged: https://github.com/starkware-libs/starknet-api/pull/49
-        let version = match tx {
-            DeclareTransaction::V0(_) => TransactionVersion(StarkFelt::from(0)),
-            DeclareTransaction::V1(_) => TransactionVersion(StarkFelt::from(1)),
-            DeclareTransaction::V2(_) => TransactionVersion(StarkFelt::from(2)),
-        };
-
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version,
+            version: tx.version(),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),

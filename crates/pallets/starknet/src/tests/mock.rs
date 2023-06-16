@@ -141,6 +141,16 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
     let token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap();
     let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
+    // SINGLE/MULTIPLE EVENT EMITTING CONTRACT
+    let single_event_emitting_class = get_contract_class("emit_single_event.json");
+    let single_event_emitting_contract_class_hash = Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CLASS_HASH).unwrap();
+    let single_event_emitting_contract_address =
+        Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap();
+    let multiple_event_emitting_class = get_contract_class("emit_multiple_events_across_contracts.json");
+    let multiple_event_emitting_class_hash = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CLASS_HASH).unwrap();
+    let multiple_event_emitting_contract_address =
+        Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
+
     pallet_starknet::GenesisConfig::<MockRuntime> {
         contracts: vec![
             (test_contract_address, test_contract_class_hash),
@@ -153,6 +163,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (no_validate_address, no_validate_class_hash),
             (inner_call_account_address, inner_call_account_class_hash),
             (fee_token_address, token_class_hash),
+            (single_event_emitting_contract_address, single_event_emitting_contract_class_hash),
+            (multiple_event_emitting_contract_address, multiple_event_emitting_class_hash),
         ],
         contract_classes: vec![
             (test_contract_class_hash, ContractClassWrapper::try_from(test_contract_class).unwrap()),
@@ -165,6 +177,14 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (no_validate_class_hash, ContractClassWrapper::try_from(no_validate_class).unwrap()),
             (inner_call_account_class_hash, ContractClassWrapper::try_from(inner_call_account_class).unwrap()),
             (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
+            (
+                single_event_emitting_contract_class_hash,
+                ContractClassWrapper::try_from(single_event_emitting_class).unwrap(),
+            ),
+            (
+                multiple_event_emitting_class_hash,
+                ContractClassWrapper::try_from(multiple_event_emitting_class).unwrap(),
+            ),
         ],
         fee_token_address,
         storage: vec![
@@ -220,6 +240,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
                 get_storage_key(&braavos_account_address, "Account_signers", &[Felt252Wrapper::ZERO], 0),
                 Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
             ),
+            (
+                get_storage_key(&multiple_event_emitting_contract_address, "external_contract_addr", &[], 0),
+                Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap(),
+            ),
         ],
         chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
         ..Default::default()
@@ -235,11 +259,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// # Arguments
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
-    let deployer_origin = RuntimeOrigin::none();
     for b in System::block_number()..=n {
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
-        Starknet::ping(deployer_origin.clone()).unwrap();
         Starknet::on_finalize(b);
     }
 }
@@ -344,7 +366,6 @@ pub fn calculate_contract_address(
 /// Returns the chain id used by the mock runtime.
 /// # Returns
 /// The chain id of the mock runtime.
-pub fn get_chain_id() -> String {
-    let chain_id = Starknet::chain_id().0.to_bytes_be();
-    std::str::from_utf8(&chain_id[..]).unwrap().to_string()
+pub fn get_chain_id() -> Felt252Wrapper {
+    Starknet::chain_id()
 }

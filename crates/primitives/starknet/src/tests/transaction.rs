@@ -11,12 +11,15 @@ use starknet_api::transaction::{
     Event, EventContent, EventData, EventKey, Fee, InvokeTransactionOutput, TransactionHash, TransactionOutput,
     TransactionReceipt,
 };
+use starknet_core::types::BroadcastedDeployAccountTransaction;
+use starknet_ff::FieldElement;
 
 use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCalldataSize};
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
-    EventError, EventWrapper, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
+    BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper, MaxArraySize,
+    Transaction, TransactionReceiptWrapper, TxType,
 };
 
 #[test]
@@ -372,4 +375,69 @@ fn test_event_wrapper_builder_with_event_content() {
     };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);
+}
+
+#[test]
+fn test_try_into_deploy_account_transaction() {
+    use sp_core::Get;
+
+    let zero_len = get_try_into_and_expected_value(0, 0).expect("failed to bound signature or calldata");
+    pretty_assertions::assert_eq!(zero_len.0, zero_len.1);
+
+    let one_len = get_try_into_and_expected_value(1, 1).expect("failed to bound signature or calldata");
+    pretty_assertions::assert_eq!(one_len.0, one_len.1);
+
+    let max_array_size: u32 = MaxArraySize::get();
+    let max_array_size: usize = max_array_size.try_into().unwrap();
+
+    let max_calldata_size: u32 = MaxCalldataSize::get();
+    let max_calldata_size: usize = max_calldata_size.try_into().unwrap();
+
+    let max_len = get_try_into_and_expected_value(max_array_size, max_calldata_size)
+        .expect("Expected to work because its within bound limit");
+
+    pretty_assertions::assert_eq!(max_len.0, max_len.1);
+
+    let array_outbound = get_try_into_and_expected_value(max_array_size + 1, max_calldata_size);
+    assert!(matches!(array_outbound.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureBoundError));
+
+    let calldata_outbound = get_try_into_and_expected_value(max_array_size, max_calldata_size + 1);
+    assert!(matches!(calldata_outbound.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataBoundError));
+}
+
+// This helper methods either returns result of `TryInto::try_into()` and expected result or the
+// error in case `TryInto::try_into()` fails
+fn get_try_into_and_expected_value(
+    array_size: usize,
+    calldata_size: usize,
+) -> Result<(DeployAccountTransaction, DeployAccountTransaction), BroadcastedTransactionConversionErrorWrapper> {
+    let signature: Vec<FieldElement> = vec![FieldElement::default(); array_size];
+    let constructor_calldata: Vec<FieldElement> = vec![FieldElement::default(); calldata_size];
+
+    let input = BroadcastedDeployAccountTransaction {
+        signature,
+        constructor_calldata,
+        // `FieldElement` can be trivially converted to `Felt252Wrapper` so no need to test them
+        max_fee: FieldElement::default(),
+        nonce: FieldElement::default(),
+        contract_address_salt: FieldElement::default(),
+        class_hash: FieldElement::default(),
+    };
+
+    let output: DeployAccountTransaction = input.try_into()?;
+
+    let expected_signature = bounded_vec![Felt252Wrapper::default(); array_size];
+    let expected_calldata = bounded_vec![Felt252Wrapper::default(); calldata_size];
+
+    let expected_output = DeployAccountTransaction {
+        version: 1_u8,
+        calldata: expected_calldata,
+        signature: expected_signature,
+        nonce: FieldElement::default().into(),
+        salt: FieldElement::default().into(),
+        account_class_hash: FieldElement::default().into(),
+        max_fee: FieldElement::default().into(),
+    };
+
+    Ok((output, expected_output))
 }

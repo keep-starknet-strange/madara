@@ -11,6 +11,7 @@ use sp_std::sync::Arc;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::{StateDiff, StorageKey};
+use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
@@ -101,7 +102,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         let contract_address: ContractAddressWrapper = contract_address.0.0.into();
         let current_nonce = Pallet::<T>::nonce(contract_address);
 
-        crate::Nonces::<T>::insert(contract_address, current_nonce + 1);
+        crate::Nonces::<T>::insert(contract_address, Felt252Wrapper(current_nonce.0 + FieldElement::ONE));
 
         Ok(())
     }

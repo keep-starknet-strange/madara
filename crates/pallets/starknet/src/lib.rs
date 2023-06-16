@@ -86,7 +86,6 @@ use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ContractAddress};
@@ -297,7 +296,7 @@ pub mod pallet {
         pub chain_id: Felt252Wrapper,
     }
 
-    #[cfg(feature = "std")]
+    /// `Default` impl required by `pallet::GenesisBuild`.
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
@@ -387,22 +386,6 @@ pub mod pallet {
     /// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
-        /// Ping the pallet to check if it is alive.
-        #[pallet::call_index(0)]
-        #[pallet::weight({0})]
-        pub fn ping(origin: OriginFor<T>) -> DispatchResult {
-            ensure_none(origin)?;
-            Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
-                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
-            PendingEvents::<T>::try_append(StarknetEventType::default())
-                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
-            PendingEvents::<T>::try_append(StarknetEventType::default())
-                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
-            log!(info, "Keep Starknet Strange!");
-            Self::deposit_event(Event::KeepStarknetStrange);
-            Ok(())
-        }
-
         /// The invoke transaction is the main transaction type used to invoke contract functions in
         /// Starknet.
         /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.
@@ -414,10 +397,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        ///
-        /// # TODO
-        /// * Compute weight
-        #[pallet::call_index(1)]
+        #[pallet::call_index(0)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -427,8 +407,8 @@ pub mod pallet {
 
             // Get current block context
             let block_context = Self::get_block_context();
-            let chain_id = Self::chain_id_str();
-            let transaction: Transaction = transaction.from_invoke(&chain_id);
+            let chain_id = Self::chain_id();
+            let transaction: Transaction = transaction.from_invoke(chain_id);
             let call_info =
                 transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
             let receipt = match call_info {
@@ -441,21 +421,11 @@ pub mod pallet {
                 }) => {
                     log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -487,18 +457,15 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        ///
-        /// # TODO
-        /// * Compute weight
-        #[pallet::call_index(2)]
+        #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let chain_id = Self::chain_id_str();
+            let chain_id = Self::chain_id();
 
-            let transaction: Transaction = transaction.from_declare(&chain_id);
+            let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
             let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
@@ -534,21 +501,11 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -583,18 +540,15 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        ///
-        /// # TODO
-        /// * Compute weight
-        #[pallet::call_index(3)]
+        #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let chain_id = Self::chain_id_str();
+            let chain_id = Self::chain_id();
             let transaction: Transaction =
-                transaction.from_deploy(&chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
+                transaction.from_deploy(chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
 
             // Check if contract is deployed
             ensure!(
@@ -622,21 +576,11 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let tx_hash = TransactionHash(transaction.hash.into());
-                    let events = match (execute_call_info, fee_transfer_call_info) {
-                        (Some(mut exec), Some(mut fee)) => {
-                            let mut events =
-                                Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                            events.append(
-                                &mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
-                            );
-                            events
-                        }
-                        (_, Some(mut fee)) => {
-                            Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?
-                        }
-                        _ => Vec::default(),
-                    };
+                    let events = Self::emit_events_for_calls(
+                        TransactionHash(transaction.hash.into()),
+                        execute_call_info,
+                        fee_transfer_call_info,
+                    )?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -673,7 +617,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(4)]
+        #[pallet::call_index(3)]
         #[pallet::weight({0})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -702,39 +646,6 @@ pub mod pallet {
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            Ok(())
-        }
-
-        /// Set the value of the fee token address.
-        ///
-        /// # Arguments
-        ///
-        /// * `origin` - The origin of the transaction.
-        /// * `fee_token_address` - The value of the fee token address.
-        ///
-        /// # Returns
-        ///
-        /// * `DispatchResult` - The result of the transaction.
-        ///
-        /// # TODO
-        /// * Add some limitations on how often this can be called.
-        #[pallet::call_index(5)]
-        #[pallet::weight({0})]
-        pub fn set_fee_token_address(
-            origin: OriginFor<T>,
-            fee_token_address: ContractAddressWrapper,
-        ) -> DispatchResult {
-            // Only root can set the fee token address.
-            ensure_root(origin)?;
-            // Get current fee token address.
-            let current_fee_token_address = Self::fee_token_address();
-            // Update the fee token address.
-            FeeTokenAddress::<T>::put(fee_token_address);
-            // Emit event.
-            Self::deposit_event(Event::FeeTokenAddressChanged {
-                old_fee_token_address: current_fee_token_address,
-                new_fee_token_address: fee_token_address,
-            });
             Ok(())
         }
     }
@@ -772,7 +683,7 @@ pub mod pallet {
                     Self::validate_tx(transaction, transaction_type)?;
                     // add the requires tag
                     let sender_nonce = Pallet::<T>::nonce(sender_address);
-                    if Into::<U256>::into(transaction_nonce) > sender_nonce {
+                    if transaction_nonce.0 > sender_nonce.0 {
                         valid_transaction_builder = valid_transaction_builder
                             .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
                     }
@@ -812,9 +723,9 @@ impl<T: Config> Pallet<T> {
     /// The transaction
     fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
         match call {
-            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(&Self::chain_id_str())),
-            Call::<T>::declare { transaction } => Ok(transaction.from_declare(&Self::chain_id_str())),
-            Call::<T>::deploy_account { transaction } => transaction.from_deploy(&Self::chain_id_str()).map_err(|_| ()),
+            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(Self::chain_id())),
+            Call::<T>::declare { transaction } => Ok(transaction.from_declare(Self::chain_id())),
+            Call::<T>::deploy_account { transaction } => transaction.from_deploy(Self::chain_id()).map_err(|_| ()),
             Call::<T>::consume_l1_message { transaction } => Ok(transaction),
             _ => Err(()),
         }
@@ -831,9 +742,9 @@ impl<T: Config> Pallet<T> {
     ///
     /// Returns an error if transaction validation fails.
     fn validate_tx(transaction: Transaction, tx_type: TxType) -> Result<(), TransactionValidityError> {
+        let block_context = Self::get_block_context();
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
         let mut execution_resources = ExecutionResources::default();
-        let block_context = Self::get_block_context();
         transaction
             .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
             .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
@@ -1125,5 +1036,22 @@ impl<T: Config> Pallet<T> {
     /// Returns the hasher used by the runtime.
     pub fn get_system_hash() -> T::SystemHash {
         T::SystemHash::hasher()
+    }
+
+    pub fn emit_events_for_calls(
+        tx_hash: TransactionHash,
+        execute_call_info: Option<CallInfo>,
+        fee_transfer_call_info: Option<CallInfo>,
+    ) -> Result<Vec<StarknetEventType>, Error<T>> {
+        let events = match (execute_call_info, fee_transfer_call_info) {
+            (Some(mut exec), Some(mut fee)) => {
+                let mut events = Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
+                events.append(&mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?);
+                events
+            }
+            (_, Some(mut fee)) => Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+            _ => Vec::default(),
+        };
+        Ok(events)
     }
 }
