@@ -53,7 +53,11 @@ use crate::transaction::utils::to_hash_map_entrypoints;
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
+#[cfg(not(test))]
 pub type MaxArraySize = ConstU32<10000>;
+
+#[cfg(test)]
+pub type MaxArraySize = ConstU32<100>;
 
 /// Wrapper type for transaction execution result.
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;
