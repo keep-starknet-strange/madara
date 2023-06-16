@@ -64,7 +64,9 @@ pub enum ProofNode {
 /// states.
 ///
 /// For more information on how this functions internally, see [here](super::merkle_tree).
-#[derive(Debug, Clone)]
+#[derive(
+    Debug, Clone, PartialEq, scale_codec::MaxEncodedLen, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode,
+)]
 pub struct MerkleTree<H: CryptoHasherT> {
     root: Rc<RefCell<Node>>,
     _hasher: PhantomData<H>,

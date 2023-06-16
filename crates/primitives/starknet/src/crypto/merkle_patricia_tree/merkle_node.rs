@@ -10,33 +10,37 @@ use core::cell::RefCell;
 use bitvec::order::Msb0;
 use bitvec::prelude::BitVec;
 use bitvec::slice::BitSlice;
-use starknet_crypto::FieldElement;
 
+use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 
 /// A node in a Binary Merkle-Patricia Tree graph.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(
+    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
+)]
 pub enum Node {
     /// A node that has not been fetched from storage yet.
     ///
     /// As such, all we know is its hash.
-    Unresolved(FieldElement),
+    Unresolved(Felt252Wrapper),
     /// A branch node with exactly two children.
     Binary(BinaryNode),
     /// Describes a path connecting two other nodes.
     Edge(EdgeNode),
     /// A leaf node that contains a value.
-    Leaf(FieldElement),
+    Leaf(Felt252Wrapper),
 }
 
 /// Describes the [Node::Binary] variant.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(
+    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
+)]
 pub struct BinaryNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
-    pub hash: Option<FieldElement>,
+    pub hash: Option<Felt252Wrapper>,
     /// The height of this node in the tree.
-    pub height: usize,
+    pub height: u64,
     /// [Left](Direction::Left) child.
     pub left: Rc<RefCell<Node>>,
     /// [Right](Direction::Right) child.
@@ -44,13 +48,15 @@ pub struct BinaryNode {
 }
 
 /// Node that is an edge.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(
+    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
+)]
 pub struct EdgeNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
-    pub hash: Option<FieldElement>,
+    pub hash: Option<Felt252Wrapper>,
     /// The starting height of this node in the tree.
-    pub height: usize,
+    pub height: u64,
     /// The path this edge takes.
     pub path: BitVec<Msb0, u8>,
     /// The child of this node.
@@ -116,7 +122,7 @@ impl BinaryNode {
     ///
     /// The direction of the key.
     pub fn direction(&self, key: &BitSlice<Msb0, u8>) -> Direction {
-        key[self.height].into()
+        key[self.height as usize].into()
     }
 
     /// Returns the [Left] or [Right] child.
@@ -159,7 +165,7 @@ impl BinaryNode {
             None => unreachable!("subtrees have to be committed first"),
         };
 
-        self.hash = Some(H::hash(left, right));
+        self.hash = Some(Felt252Wrapper(H::hash(left.0, right.0)));
     }
 }
 
@@ -177,12 +183,12 @@ impl Node {
     }
 
     /// Returns true if the node represents an empty node -- this is defined as a node
-    /// with the [FieldElement::ZERO].
+    /// with the [Felt252Wrapper::ZERO].
     ///
     /// This can occur for the root node in an empty graph.
     pub fn is_empty(&self) -> bool {
         match self {
-            Node::Unresolved(hash) => hash == &FieldElement::ZERO,
+            Node::Unresolved(hash) => hash == &Felt252Wrapper::ZERO,
             _ => false,
         }
     }
@@ -209,7 +215,7 @@ impl Node {
     }
 
     /// Get the hash of a node.
-    pub fn hash(&self) -> Option<FieldElement> {
+    pub fn hash(&self) -> Option<Felt252Wrapper> {
         match self {
             Node::Unresolved(hash) => Some(*hash),
             Node::Binary(binary) => binary.hash,
@@ -226,7 +232,7 @@ impl EdgeNode {
     ///
     /// * `key` - The key to check if the path matches with the edge node.
     pub fn path_matches(&self, key: &BitSlice<Msb0, u8>) -> bool {
-        self.path == key[self.height..self.height + self.path.len()]
+        self.path == key[(self.height as usize)..(self.height + self.path.len() as u64) as usize]
     }
 
     /// Returns the common bit prefix between the edge node's path and the given key.
@@ -237,7 +243,7 @@ impl EdgeNode {
     ///
     /// * `key` - The key to get the common path from.
     pub fn common_path(&self, key: &BitSlice<Msb0, u8>) -> &BitSlice<Msb0, u8> {
-        let key_path = key.iter().skip(self.height);
+        let key_path = key.iter().skip(self.height as usize);
         let common_length = key_path.zip(self.path.iter()).take_while(|(a, b)| a == b).count();
 
         &self.path[..common_length]
@@ -261,13 +267,13 @@ impl EdgeNode {
         let mut temp_path = self.path.clone();
         temp_path.force_align();
 
-        let path = FieldElement::from_byte_slice_be(&temp_path.into_vec()).unwrap();
+        let path = Felt252Wrapper::try_from(temp_path.into_vec().as_slice()).unwrap();
         let mut length = [0; 32];
         // Safe as len() is guaranteed to be <= 251
         length[31] = self.path.len() as u8;
 
-        let length = FieldElement::from_byte_slice_be(&length).unwrap();
-        let hash = H::hash(child, path) + length;
+        let length = Felt252Wrapper::try_from(&length).unwrap();
+        let hash = Felt252Wrapper(H::hash(child.0, path.0) + length.0);
         self.hash = Some(hash);
     }
 }

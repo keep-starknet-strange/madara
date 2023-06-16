@@ -125,6 +125,7 @@ pub mod pallet {
     use starknet_crypto::FieldElement;
 
     use super::*;
+    use crate::types::StateCommitments;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -206,6 +207,13 @@ pub mod pallet {
     #[pallet::getter(fn pending)]
     pub(super) type Pending<T: Config> =
         StorageValue<_, BoundedVec<(Transaction, TransactionReceiptWrapper), MaxTransactions>, ValueQuery>;
+
+    /// The Starknet pallet storage items.
+    /// STORAGE
+    /// Current building block's transactions.
+    #[pallet::storage]
+    #[pallet::getter(fn state)]
+    pub(super) type State<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
 
     /// Current building block's events.
     // TODO: This is redundant information but more performant
@@ -955,7 +963,8 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root = Felt252Wrapper::ZERO;
+        let global_state_root = <T::StateRoot>::get();
+
         // TODO: use the real sequencer address (our own address)
         // FIXME #243
         let sequencer_address = SEQUENCER_ADDRESS;
