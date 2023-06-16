@@ -45,7 +45,7 @@ jobs:
           cd ../benchmarking
           npm i
       - name: Build madara in release mode
-        run: cargo build --workspace --release
+        run: SKIP_WASM_BUILD=1 cargo build --workspace --release
       - name: Run benchmark
         run: |
           cd benchmarking
