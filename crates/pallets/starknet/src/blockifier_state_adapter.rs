@@ -35,8 +35,8 @@ where
     fn count_state_changes(&self) -> (usize, usize, usize) {
         let keys = self.storage_update.keys();
 
-		// TODO: update state root here
-		let mut tree = crate::State::<T>::get().storage_commitment;
+        // TODO: update state root here
+        let mut tree = crate::State::<T>::get().storage_commitment;
 
         let n_contract_updated = BTreeSet::from_iter(keys.clone().map(|&(contract_address, _)| contract_address)).len();
         (n_contract_updated, keys.len(), self.class_hash_update)
@@ -145,7 +145,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 
-		// Update classes tree
+        // Update classes tree
         let mut tree = crate::State::<T>::get().class_commitment;
         let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
         tree.set(class_hash, final_hash);
