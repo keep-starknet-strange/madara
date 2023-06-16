@@ -146,6 +146,10 @@
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::sync::Arc;
 
@@ -166,7 +170,11 @@
 <span class="kw">use </span><span class="kw">crate</span>::block::Block <span class="kw">as </span>StarknetBlock;
 
 <span class="doccomment">/// Max number of calldata / tx.
+</span><span class="attr">#[cfg(not(test))]
 </span><span class="kw">pub type </span>MaxCalldataSize = ConstU32&lt;{ u32::MAX }&gt;;
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">pub type </span>MaxCalldataSize = ConstU32&lt;<span class="number">100</span>&gt;;
 
 <span class="doccomment">/// Representation of a Starknet Call Entry Point.
 </span><span class="attr">#[derive(

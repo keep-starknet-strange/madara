@@ -951,6 +951,10 @@
 <a href="#951" id="951">951</a>
 <a href="#952" id="952">952</a>
 <a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1006,7 +1010,11 @@
 
 <span class="doccomment">/// Max size of arrays.
 /// TODO: add real value (#250)
+</span><span class="attr">#[cfg(not(test))]
 </span><span class="kw">pub type </span>MaxArraySize = ConstU32&lt;<span class="number">10000</span>&gt;;
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">pub type </span>MaxArraySize = ConstU32&lt;<span class="number">100</span>&gt;;
 
 <span class="doccomment">/// Wrapper type for transaction execution result.
 </span><span class="kw">pub type </span>TransactionExecutionResultWrapper&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, TransactionExecutionErrorWrapper&gt;;
