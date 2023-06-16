@@ -4,8 +4,9 @@
 //! For more information about how these Starknet trees are structured, see
 //! [`MerkleTree`](super::merkle_tree::MerkleTree).
 
+use alloc::boxed::Box;
 use alloc::rc::Rc;
-use core::cell::RefCell;
+use core::borrow::BorrowMut;
 
 use bitvec::order::Msb0;
 use bitvec::prelude::BitVec;
@@ -38,9 +39,9 @@ pub struct BinaryNode {
     /// The height of this node in the tree.
     pub height: u64,
     /// [Left](Direction::Left) child.
-    pub left: Rc<RefCell<Node>>,
+    pub left: Rc<Box<Node>>,
     /// [Right](Direction::Right) child.
-    pub right: Rc<RefCell<Node>>,
+    pub right: Rc<Box<Node>>,
 }
 
 /// Node that is an edge.
@@ -54,7 +55,7 @@ pub struct EdgeNode {
     /// The path this edge takes.
     pub path: BitVec<u8, Msb0>,
     /// The child of this node.
-    pub child: Rc<RefCell<Node>>,
+    pub child: Rc<Box<Node>>,
 }
 
 /// Describes the direction a child of a [BinaryNode] may have.
@@ -131,7 +132,7 @@ impl BinaryNode {
     /// # Returns
     ///
     /// The child in the specified direction.
-    pub fn get_child(&self, direction: Direction) -> Rc<RefCell<Node>> {
+    pub fn get_child(&self, direction: Direction) -> Rc<Box<Node>> {
         match direction {
             Direction::Left => self.left.clone(),
             Direction::Right => self.right.clone(),
@@ -149,12 +150,12 @@ impl BinaryNode {
             return;
         }
 
-        let left = match self.left.borrow().hash() {
+        let left = match self.left.hash() {
             Some(hash) => hash,
             None => unreachable!("subtrees have to be committed first"),
         };
 
-        let right = match self.right.borrow().hash() {
+        let right = match self.right.hash() {
             Some(hash) => hash,
             None => unreachable!("subtrees have to be committed first"),
         };
@@ -174,6 +175,10 @@ impl Node {
             Node::Edge(inner) => inner.hash = None,
             _ => {}
         }
+    }
+    /// Swaps the inner value of the node with a new value, returning the old value.
+    pub fn swap(&mut self, mut other: &Self) {
+        core::mem::swap(&mut *self.borrow_mut(), &mut *other.borrow_mut())
     }
 
     /// Returns true if the node represents an empty node -- this is defined as a node
@@ -254,7 +259,7 @@ impl EdgeNode {
             return;
         }
 
-        let child = match self.child.borrow().hash() {
+        let child = match self.child.hash() {
             Some(hash) => hash,
             None => unreachable!("subtree has to be committed before"),
         };
