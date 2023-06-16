@@ -22,7 +22,8 @@ starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
 starknet-ff = { workspace = true, default-features = false, features = [
-  "alloc", "serde",
+  "alloc",
+  "serde",
 ] }
 starknet-core = { workspace = true, optional = true }
 poseidon_hash = { workspace = true, default-features = false }

@@ -297,7 +297,7 @@ pub mod pallet {
         pub chain_id: Felt252Wrapper,
     }
 
-    //#[cfg(feature = "std")]
+    /// `Default` impl required by `pallet::GenesisBuild`.
     impl<T: Config> Default for GenesisConfig<T> {
         fn default() -> Self {
             Self {
