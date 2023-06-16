@@ -40,17 +40,7 @@ pub struct DeployAccountTransactionOutput {
 }
 
 /// State Commitments
-#[derive(
-    Default,
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct StateCommitments {
     /// Storage Commitment
     pub storage_commitment: StateCommitmentTree<PedersenHasher>,

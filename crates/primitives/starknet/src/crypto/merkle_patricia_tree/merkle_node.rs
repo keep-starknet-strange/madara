@@ -15,9 +15,7 @@ use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 
 /// A node in a Binary Merkle-Patricia Tree graph.
-#[derive(
-    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
-)]
+#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub enum Node {
     /// A node that has not been fetched from storage yet.
     ///
@@ -32,9 +30,7 @@ pub enum Node {
 }
 
 /// Describes the [Node::Binary] variant.
-#[derive(
-    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
-)]
+#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct BinaryNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -48,9 +44,7 @@ pub struct BinaryNode {
 }
 
 /// Node that is an edge.
-#[derive(
-    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
-)]
+#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct EdgeNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.

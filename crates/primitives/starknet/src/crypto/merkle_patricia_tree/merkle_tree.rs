@@ -12,7 +12,7 @@ use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 
 /// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 pub struct BinaryProofNode {
     /// Left hash.
     pub left_hash: Felt252Wrapper,
@@ -30,7 +30,7 @@ impl From<&BinaryNode> for ProofNode {
 }
 
 /// Ligthtweight representation of [EdgeNode]. Only holds its path and its child's hash.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 pub struct EdgeProofNode {
     /// Path of the node.
     pub path: BitVec<u8, Msb0>,
@@ -50,7 +50,7 @@ impl From<&EdgeNode> for ProofNode {
 /// [ProofNode] s are lightweight versions of their `Node` counterpart.
 /// They only consist of [BinaryProofNode] and [EdgeProofNode] because `Leaf`
 /// and `Unresolved` nodes should not appear in a proof.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 pub enum ProofNode {
     /// Binary node.
     Binary(BinaryProofNode),
@@ -64,9 +64,7 @@ pub enum ProofNode {
 /// states.
 ///
 /// For more information on how this functions internally, see [here](super::merkle_tree).
-#[derive(
-    Debug, Clone, PartialEq, scale_codec::MaxEncodedLen, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode,
-)]
+#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 pub struct MerkleTree<H: CryptoHasherT> {
     root: Rc<RefCell<Node>>,
     _hasher: PhantomData<H>,

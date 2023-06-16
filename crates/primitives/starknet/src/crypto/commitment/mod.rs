@@ -58,9 +58,7 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
 /// the commitment trees are of height 251, because the key used is a Field Element.
 ///
 /// The tree height is 251 in our case since our set operation takes Fieldelement index values.
-#[derive(
-    Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo, scale_codec::MaxEncodedLen,
-)]
+#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct StateCommitmentTree<T: CryptoHasherT> {
     tree: MerkleTree<T>,
 }
