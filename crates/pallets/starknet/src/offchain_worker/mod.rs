@@ -25,13 +25,18 @@ impl<T: Config> Pallet<T> {
     /// # Returns
     /// The result of the offchain worker execution.
     pub(crate) fn process_l1_messages() -> Result<(), OffchainWorkerError> {
-        // Get the last known block from storage.
-        let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
         // Query L1 for the last finalized block.
+        log::info!("Fetching last finalized block from Ethereum node");
+        let rpc = get_eth_rpc_url()?;
+        log::info!("Using RPC: {}", rpc);
         let raw_body = query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
         let last_finalized_block: u64 = from_slice::<EthGetBlockByNumberResponse>(&raw_body)
             .map_err(|_| OffchainWorkerError::SerdeError)?
             .try_into()?;
+
+        // Get the last known block from storage.
+        let last_known_eth_block = Self::last_known_eth_block().ok_or(OffchainWorkerError::NoLastKnownEthBlock)?;
+
         // Check if there are new messages to be processed.
         if last_finalized_block > last_known_eth_block {
             // Read the new messages from L1.
