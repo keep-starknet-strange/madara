@@ -94,9 +94,10 @@ use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::{EventContent, TransactionHash};
+use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
-use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
+use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StateCommitments, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -122,10 +123,7 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
-    use starknet_crypto::FieldElement;
-
     use super::*;
-    use crate::types::StateCommitments;
 
     #[pallet::pallet]
     pub struct Pallet<T>(_);
@@ -212,6 +210,7 @@ pub mod pallet {
     /// STORAGE
     /// Current building block's transactions.
     #[pallet::storage]
+    #[pallet::unbounded]
     #[pallet::getter(fn state)]
     pub(super) type State<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
 
