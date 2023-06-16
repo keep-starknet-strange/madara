@@ -276,38 +276,8 @@
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
-<a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a>
-<a href="#282" id="282">282</a>
-<a href="#283" id="283">283</a>
-<a href="#284" id="284">284</a>
-<a href="#285" id="285">285</a>
-<a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a>
-<a href="#288" id="288">288</a>
-<a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a>
-<a href="#291" id="291">291</a>
-<a href="#292" id="292">292</a>
-<a href="#293" id="293">293</a>
-<a href="#294" id="294">294</a>
-<a href="#295" id="295">295</a>
-<a href="#296" id="296">296</a>
-<a href="#297" id="297">297</a>
-<a href="#298" id="298">298</a>
-<a href="#299" id="299">299</a>
-<a href="#300" id="300">300</a>
-<a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>madara_runtime::{
-    AccountId, AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    WASM_BINARY,
-};
+<span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
 <span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span>pallet_starknet::types::ContractStorageKeyWrapper;
 <span class="kw">use </span>sc_service::ChainType;
@@ -315,8 +285,7 @@
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
 <span class="kw">use </span>sp_consensus_grandpa::AuthorityId <span class="kw">as </span>GrandpaId;
 <span class="kw">use </span>sp_core::storage::Storage;
-<span class="kw">use </span>sp_core::{sr25519, Pair, Public, H256};
-<span class="kw">use </span>sp_runtime::traits::{IdentifyAccount, Verify};
+<span class="kw">use </span>sp_core::{Pair, Public, H256};
 <span class="kw">use </span>sp_state_machine::BasicExternalities;
 <span class="kw">use </span>starknet_core::types::FieldElement;
 <span class="kw">use </span>starknet_core::utils::get_storage_var_address;
@@ -325,10 +294,7 @@
 
 <span class="kw">pub const </span>ACCOUNT_PUBLIC_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2&quot;</span>;
 
-<span class="comment">// The URL for the telemetry server.
-// const STAGING_TELEMETRY_URL: &amp;str = &quot;wss://telemetry.polkadot.io/submit/&quot;;
-
-</span><span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+<span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 </span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;GenesisConfig&gt;;
 
 <span class="doccomment">/// Specialized `ChainSpec` for development.
@@ -364,16 +330,6 @@
     TPublic::Pair::from_string(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;//{seed}&quot;</span>), <span class="prelude-val">None</span>).expect(<span class="string">&quot;static values are valid; qed&quot;</span>).public()
 }
 
-<span class="kw">type </span>AccountPublic = &lt;Signature <span class="kw">as </span>Verify&gt;::Signer;
-
-<span class="doccomment">/// Generate an account ID from seed.
-</span><span class="kw">pub fn </span>get_account_id_from_seed&lt;TPublic: Public&gt;(seed: <span class="kw-2">&amp;</span>str) -&gt; AccountId
-<span class="kw">where
-    </span>AccountPublic: From&lt;&lt;TPublic::Pair <span class="kw">as </span>Pair&gt;::Public&gt;,
-{
-    AccountPublic::from(get_from_seed::&lt;TPublic&gt;(seed)).into_account()
-}
-
 <span class="doccomment">/// Generate an Aura authority key.
 </span><span class="kw">pub fn </span>authority_keys_from_seed(s: <span class="kw-2">&amp;</span>str) -&gt; (AuraId, GrandpaId) {
     (get_from_seed::&lt;AuraId&gt;(s), get_from_seed::&lt;GrandpaId&gt;(s))
@@ -394,8 +350,6 @@
                     wasm_binary,
                     <span class="comment">// Initial PoA authorities
                     </span><span class="macro">vec!</span>[authority_keys_from_seed(<span class="string">&quot;Alice&quot;</span>)],
-                    <span class="comment">// Sudo account
-                    </span>get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
                     <span class="bool-val">true</span>,
                 ),
                 enable_manual_seal,
@@ -436,8 +390,6 @@
                     authority_keys_from_seed(<span class="string">&quot;Eve&quot;</span>),
                     authority_keys_from_seed(<span class="string">&quot;Ferdie&quot;</span>),
                 ],
-                <span class="comment">// Sudo account
-                </span>get_account_id_from_seed::&lt;sr25519::Public&gt;(<span class="string">&quot;Alice&quot;</span>),
                 <span class="bool-val">true</span>,
             )
         },
@@ -483,7 +435,6 @@
 </span><span class="kw">fn </span>testnet_genesis(
     wasm_binary: <span class="kw-2">&amp;</span>[u8],
     initial_authorities: Vec&lt;(AuraId, GrandpaId)&gt;,
-    root_key: AccountId,
     _enable_println: bool,
 ) -&gt; GenesisConfig {
     <span class="comment">// ACCOUNT CONTRACT
@@ -541,11 +492,6 @@
         </span>aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">0</span>.clone())).collect() },
         <span class="comment">// Deterministic finality mechanism used for block finalization
         </span>grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.<span class="number">1</span>.clone(), <span class="number">1</span>)).collect() },
-        <span class="comment">// Allows executing privileged functions
-        </span>sudo: SudoConfig {
-            <span class="comment">// Assign network admin rights.
-            </span>key: <span class="prelude-val">Some</span>(root_key),
-        },
         <span class="doccomment">/// Starknet Genesis configuration.
         </span>starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: <span class="macro">vec!</span>[
