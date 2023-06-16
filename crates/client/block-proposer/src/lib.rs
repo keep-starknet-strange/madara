@@ -225,6 +225,16 @@ where
                 let res = self.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).await;
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");
+                } else {
+                    // init another storage layer for: fact storage
+                    // can use mapping sync
+                    // program output
+                    // send StarkNet OS Proof PoC
+                    // fact fetching context
+                    // we need to run the OS and get the `cairo_pie`
+                    // CairoRunner.new(layout: "starknet_with_keccak")
+                    
+                    println!("BEN: SUCCESSSS");
                 }
             }),
         );

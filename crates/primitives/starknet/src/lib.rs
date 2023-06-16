@@ -42,9 +42,6 @@ pub mod execution;
 /// Starknet Fees related functionality.
 pub mod fees;
 
-/// Data availability related functionality.
-pub mod data_availability;
-
 /// Tests.
 #[cfg(test)]
 pub mod tests;
