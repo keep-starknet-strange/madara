@@ -86,7 +86,6 @@ use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-use sp_core::U256;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use starknet_api::api_core::{ChainId, ContractAddress};
@@ -742,7 +741,7 @@ pub mod pallet {
                     Self::validate_tx(transaction, transaction_type)?;
                     // add the requires tag
                     let sender_nonce = Pallet::<T>::nonce(sender_address);
-                    if Into::<U256>::into(transaction_nonce) > sender_nonce {
+                    if transaction_nonce.0 > sender_nonce.0 {
                         valid_transaction_builder = valid_transaction_builder
                             .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
                     }
