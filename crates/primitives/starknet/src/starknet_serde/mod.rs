@@ -300,7 +300,7 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
         };
 
         // Create EventWrapper with validated and converted fields
-        Ok(Self { keys, data, from_address, transaction_hash })
+        Ok(Self { keys, data, from_address, EventContext {} })
     }
 }
 

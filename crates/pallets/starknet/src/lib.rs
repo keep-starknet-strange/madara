@@ -1058,7 +1058,7 @@ impl<T: Config> Pallet<T> {
         let sn_event = StarknetEventType::builder()
             .with_event_content(event.clone())
             .with_from_address(from_address)
-            .with_transaction_hash(tx_hash)
+            .with_event_context(tx_hash)
             .build()?;
         Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
 

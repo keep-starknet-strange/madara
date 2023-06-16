@@ -15,7 +15,7 @@ use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
+use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee, TransactionHash};
 use starknet_api::StarknetApiError;
 #[cfg(feature = "std")]
 use starknet_core::types::contract::legacy::{
@@ -871,8 +871,8 @@ pub struct EventWrapper {
     pub data: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
-    /// The hash of the transaction that emitted the event
-    pub transaction_hash: Felt252Wrapper,
+    // Context for the event, currently only the transaction hash.
+    pub context: EventContext,
 }
 
 #[cfg(feature = "std")]
@@ -884,6 +884,18 @@ impl From<EventWrapper> for RPCEvent {
             data: value.data.iter().map(|d| (*d).into()).collect(),
         }
     }
+}
+
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub struct EventContext {
+    pub transaction_hash: TransactionHash,
 }
 
 /// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
