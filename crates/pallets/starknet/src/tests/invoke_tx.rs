@@ -14,7 +14,7 @@ use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityErr
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
-use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, TEST_CONTRACT_ADDRESS};
+use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS, TEST_CONTRACT_ADDRESS};
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::message::Message;
@@ -71,8 +71,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         let tx = Message {
@@ -134,8 +133,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
         let transaction: InvokeTransaction =
             transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
@@ -200,6 +198,67 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         };
         let receipt = &pending.get(0).unwrap().1;
         pretty_assertions::assert_eq!(*receipt, expected_receipt);
+    });
+}
+
+#[test]
+#[ignore]
+fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(0);
+        run_to_block(2);
+
+        let emit_contract_address = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
+
+        let sender_account = get_account_address(AccountType::NoValidate);
+
+        let emit_internal_selector = Felt252Wrapper::from(get_selector_from_name("emit_internal").unwrap());
+        let emit_external_selector = Felt252Wrapper::from(get_selector_from_name("emit_external").unwrap());
+
+        let emit_internal_event_transaction = InvokeTransaction {
+            version: 1,
+            sender_address: sender_account,
+            calldata: bounded_vec![
+                emit_contract_address, // Token address
+                emit_internal_selector,
+                Felt252Wrapper::ZERO, // Calldata len
+            ],
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+            signature: bounded_vec!(),
+        };
+
+        let none_origin = RuntimeOrigin::none();
+
+        Starknet::invoke(none_origin, emit_internal_event_transaction).expect("emit internal event transaction failed");
+
+        let pending = Starknet::pending();
+        let one_receipt = &pending.get(0).unwrap().1;
+
+        // fee event plus our own expected event is two events
+        assert!(one_receipt.events.len() == 2, "Internal event should emit");
+
+        let do_two_event_transaction = InvokeTransaction {
+            version: 1,
+            sender_address: sender_account,
+            calldata: bounded_vec![
+                emit_contract_address, // Token address
+                emit_external_selector,
+                Felt252Wrapper::ZERO, // Calldata len
+            ],
+            nonce: Felt252Wrapper::ONE,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+            signature: bounded_vec!(),
+        };
+
+        let none_origin = RuntimeOrigin::none();
+
+        Starknet::invoke(none_origin, do_two_event_transaction).expect("emit external transaction failed");
+
+        let pending = Starknet::pending();
+        let two_receipt = &pending.get(1).unwrap().1;
+        // fee event plus our own expected event is two events
+        assert!(two_receipt.events.len() == 2, "External event should emit");
     });
 }
 

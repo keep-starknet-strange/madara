@@ -5,7 +5,7 @@ Content-Type: application/json
     "method":"starknet_call",
     "params": [
         {
-            "contract_address": "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01",
+            "contract_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
             "entry_point_selector": "0x2e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e",
             "calldata": ["0x0000000000000000000000000000000000000000000000000000000000000002"]
         },

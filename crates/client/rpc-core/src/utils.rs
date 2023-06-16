@@ -2,15 +2,16 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
 use cairo_vm::types::program::Program;
-use frame_support::inherent::BlockT;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::types::{ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper};
+use mp_starknet::execution::types::{
+    ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper, Felt252Wrapper,
+};
 use mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
 };
-use sp_api::HeaderT;
+use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
 use starknet_core::types::{
     BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
@@ -61,7 +62,7 @@ pub(crate) fn encode_base64(data: &[u8]) -> String {
 /// * `Transaction` - The converted transaction
 pub fn to_tx(
     request: BroadcastedTransaction,
-    chain_id: &str,
+    chain_id: Felt252Wrapper,
 ) -> Result<Transaction, BroadcastedTransactionConversionErrorWrapper> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => {

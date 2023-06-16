@@ -19,19 +19,31 @@ pub type EntryPointExecutionResultWrapper<T> = Result<T, EntryPointExecutionErro
 
 /// Enum that represents all the entrypoints types.
 #[derive(
-    Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, MaxEncodedLen, PartialOrd, Ord, Hash,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    Default,
+    Encode,
+    Decode,
+    scale_info::TypeInfo,
+    MaxEncodedLen,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
 )]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum EntryPointTypeWrapper {
     /// A constructor entry point.
-    #[cfg_attr(feature = "std", serde(rename = "CONSTRUCTOR"))]
+    #[serde(rename = "CONSTRUCTOR")]
     Constructor,
     /// An external entry point.
-    #[cfg_attr(feature = "std", serde(rename = "EXTERNAL"))]
+    #[serde(rename = "EXTERNAL")]
     #[default]
     External,
     /// An L1 handler entry point.
-    #[cfg_attr(feature = "std", serde(rename = "L1_HANDLER"))]
+    #[serde(rename = "L1_HANDLER")]
     L1Handler,
 }
 
@@ -57,8 +69,7 @@ impl From<EntryPointTypeWrapper> for EntryPointType {
 }
 
 /// Representation of a Starknet Entry Point.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct EntryPointWrapper(EntryPoint);
 /// SCALE trait.
 impl Encode for EntryPointWrapper {

@@ -53,7 +53,11 @@ use crate::transaction::utils::to_hash_map_entrypoints;
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
+#[cfg(not(test))]
 pub type MaxArraySize = ConstU32<10000>;
+
+#[cfg(test)]
+pub type MaxArraySize = ConstU32<100>;
 
 /// Wrapper type for transaction execution result.
 pub type TransactionExecutionResultWrapper<T> = Result<T, TransactionExecutionErrorWrapper>;
@@ -239,7 +243,7 @@ pub struct DeclareTransaction {
 
 impl DeclareTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_declare(self, chain_id: &str) -> Transaction {
+    pub fn from_declare(self, chain_id: Felt252Wrapper) -> Transaction {
         Transaction {
             tx_type: TxType::Declare,
             version: self.version,
@@ -368,7 +372,7 @@ pub struct DeployAccountTransaction {
 
 impl DeployAccountTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self, chain_id: &str) -> Result<Transaction, TransactionConversionError> {
+    pub fn from_deploy(self, chain_id: Felt252Wrapper) -> Result<Transaction, TransactionConversionError> {
         let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
         let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
             .into_inner()
@@ -484,7 +488,7 @@ impl From<Transaction> for InvokeTransaction {
 
 impl InvokeTransaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_invoke(self, chain_id: &str) -> Transaction {
+    pub fn from_invoke(self, chain_id: Felt252Wrapper) -> Transaction {
         Transaction {
             tx_type: TxType::Invoke,
             version: self.version,
