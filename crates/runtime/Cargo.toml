@@ -33,7 +33,6 @@ sp-version = { workspace = true }
 pallet-aura = { workspace = true }
 frame-support = { workspace = true }
 pallet-grandpa = { workspace = true }
-pallet-sudo = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 pallet-timestamp = { workspace = true }
@@ -74,7 +73,6 @@ std = [
   # Frame pallets dependencies
   "pallet-aura/std",
   "pallet-grandpa/std",
-  "pallet-sudo/std",
   "pallet-timestamp/std",
   # Substrate primitives dependencies
   "sp-api/std",
@@ -100,7 +98,6 @@ try-runtime = [
   "frame-support/try-runtime",
   "pallet-aura/try-runtime",
   "pallet-grandpa/try-runtime",
-  "pallet-sudo/try-runtime",
   # Madara pallets
   "pallet-starknet/try-runtime",
 ]

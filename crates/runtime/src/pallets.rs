@@ -145,14 +145,6 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
-/// Allows executing privileged functions.
-/// Right now we use it to configure the fee token address for the Starknet pallet.
-impl pallet_sudo::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeCall = RuntimeCall;
-    type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
-}
-
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
