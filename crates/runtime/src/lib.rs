@@ -111,11 +111,6 @@ mod benches {
     );
 }
 
-impl frame_system::offchain::SigningTypes for Runtime {
-    type Public = <Signature as traits::Verify>::Signer;
-    type Signature = Signature;
-}
-
 impl<C> frame_system::offchain::SendTransactionTypes<C> for Runtime
 where
     RuntimeCall: From<C>,

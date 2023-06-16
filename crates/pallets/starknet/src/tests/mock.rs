@@ -89,6 +89,14 @@ impl pallet_starknet::Config for MockRuntime {
     type ValidateMaxNSteps = ValidateMaxNSteps;
 }
 
+impl<C> frame_system::offchain::SendTransactionTypes<C> for MockRuntime
+where
+    RuntimeCall: From<C>,
+{
+    type Extrinsic = UncheckedExtrinsic;
+    type OverarchingCall = RuntimeCall;
+}
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();

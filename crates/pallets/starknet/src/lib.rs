@@ -119,6 +119,7 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
+    use frame_system::offchain::SendTransactionTypes;
     use starknet_crypto::FieldElement;
 
     use super::*;
@@ -130,7 +131,7 @@ pub mod pallet {
     /// We're coupling the starknet pallet to the tx payment pallet to be able to override the fee
     /// mechanism and comply with starknet which uses an ER20 as fee token
     #[pallet::config]
-    pub trait Config: frame_system::Config {
+    pub trait Config: SendTransactionTypes<Call<Self>> + frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// How Starknet state root is calculated.
@@ -806,7 +807,7 @@ pub mod pallet {
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
     /// A helper function to fetch the L1 gas price and send a raw unsigned transaction.
-    pub fn fetch_gas_price_and_send_raw_unsigned(block_number: T::BlockNumber) -> Result<(), &'static str> {
+    pub fn fetch_gas_price_and_send_raw_unsigned(_block_number: T::BlockNumber) -> Result<(), &'static str> {
         let price = Self::fetch_gas_price().map_err(|_| "Failed to fetch price")?;
 
         // Received price is wrapped into a call to `submit_price_unsigned` public function of this
