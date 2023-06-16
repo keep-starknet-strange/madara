@@ -121,10 +121,13 @@ fn test_merkle_tree() {
     let event_com = calculate_event_commitment::<PedersenHasher>(&events);
     // The values we test ours against are computed from the sequencer test.
     assert_eq!(
-        H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02").unwrap(),
+        Felt252Wrapper::from_hex_be("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02").unwrap(),
         event_com
     );
-    assert_eq!(H256::from_str("0x054c0fddf3aaf1ca03271712b323822647b66042ccc418ba1d7fb852aebfd2da").unwrap(), tx_com);
+    assert_eq!(
+        Felt252Wrapper::from_hex_be("0x054c0fddf3aaf1ca03271712b323822647b66042ccc418ba1d7fb852aebfd2da").unwrap(),
+        tx_com
+    );
 }
 
 #[test]
@@ -182,18 +185,18 @@ impl CryptoHasherT for TestCryptoHasher {
 #[test]
 fn test_binary_node_functions() {
     let binary_node = BinaryNode {
-        hash: Some(FieldElement::from(1_u32)),
+        hash: Some(Felt252Wrapper::from(1_u32)),
         height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
+        left: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
+        right: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
     };
 
-    let unresolved_node = Node::Unresolved(FieldElement::from(6_u32));
+    let unresolved_node = Node::Unresolved(Felt252Wrapper::from(6_u32));
 
-    assert_eq!(binary_node.get_child(Direction::Left).borrow().hash(), Some(FieldElement::from(2_u32)));
-    assert_eq!(binary_node.get_child(Direction::Right).borrow().hash(), Some(FieldElement::from(3_u32)));
+    assert_eq!(binary_node.get_child(Direction::Left).borrow().hash(), Some(Felt252Wrapper::from(2_u32)));
+    assert_eq!(binary_node.get_child(Direction::Right).borrow().hash(), Some(Felt252Wrapper::from(3_u32)));
 
-    assert_eq!(binary_node.hash, Some(FieldElement::from(1_u32)));
+    assert_eq!(binary_node.hash, Some(Felt252Wrapper::from(1_u32)));
 
     assert!(!unresolved_node.is_empty());
     assert!(!unresolved_node.is_binary());
@@ -213,12 +216,12 @@ fn test_binary_node_calculate_hash() {
     let mut binary_node = BinaryNode {
         hash: None,
         height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
+        left: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
+        right: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
     };
 
     binary_node.calculate_hash::<TestCryptoHasher>();
-    assert_eq!(binary_node.hash, Some(FieldElement::from(5_u32)));
+    assert_eq!(binary_node.hash, Some(Felt252Wrapper::from(5_u32)));
 }
 
 #[test]
@@ -226,8 +229,8 @@ fn test_binary_node_implementations() {
     let test_node = BinaryNode {
         hash: None,
         height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
+        left: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
+        right: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
     };
 
     // Test Display trait implementation

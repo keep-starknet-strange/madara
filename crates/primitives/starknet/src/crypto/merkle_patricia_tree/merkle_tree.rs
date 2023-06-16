@@ -6,18 +6,18 @@ use core::iter::once;
 use core::marker::PhantomData;
 
 use bitvec::prelude::{BitSlice, BitVec, Msb0};
-use starknet_crypto::FieldElement;
 
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node};
+use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 
 /// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
 #[derive(Debug, PartialEq, Eq)]
 pub struct BinaryProofNode {
     /// Left hash.
-    pub left_hash: FieldElement,
+    pub left_hash: Felt252Wrapper,
     /// Right hash.
-    pub right_hash: FieldElement,
+    pub right_hash: Felt252Wrapper,
 }
 
 impl From<&BinaryNode> for ProofNode {
@@ -35,7 +35,7 @@ pub struct EdgeProofNode {
     /// Path of the node.
     pub path: BitVec<Msb0, u8>,
     /// Hash of the child node.
-    pub child_hash: FieldElement,
+    pub child_hash: Felt252Wrapper,
 }
 
 impl From<&EdgeNode> for ProofNode {
@@ -76,25 +76,25 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// Less visible initialization for `MerkleTree<T>` as the main entry points should be
     /// [`MerkleTree::<RcNodeStorage>::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.
-    fn new(root: FieldElement) -> Self {
+    fn new(root: Felt252Wrapper) -> Self {
         let root_node = Rc::new(RefCell::new(Node::Unresolved(root)));
         Self { root: root_node, _hasher: PhantomData }
     }
 
     /// Empty tree.
     pub fn empty() -> Self {
-        Self::new(FieldElement::ZERO)
+        Self::new(Felt252Wrapper::ZERO)
     }
 
     /// Persists all changes to storage and returns the new root hash.
     ///
     /// Note that the root is reference counted in storage. Committing the
     /// same tree again will therefore increment the count again.
-    pub fn commit(mut self) -> FieldElement {
+    pub fn commit(mut self) -> Felt252Wrapper {
         self.commit_mut()
     }
     /// Return the state root.
-    pub fn commit_mut(&mut self) -> FieldElement {
+    pub fn commit_mut(&mut self) -> Felt252Wrapper {
         // Go through tree, collect dirty nodes, calculate their hashes and
         // persist them. Take care to increment ref counts of child nodes. So in order
         // to do this correctly, will have to start back-to-front.
@@ -137,14 +137,14 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         }
     }
 
-    /// Sets the value of a key. To delete a key, set the value to [FieldElement::ZERO].
+    /// Sets the value of a key. To delete a key, set the value to [Felt252Wrapper::ZERO].
     ///
     /// # Arguments
     ///
     /// * `key` - The key to set.
     /// * `value` - The value to set.
-    pub fn set(&mut self, key: &BitSlice<Msb0, u8>, value: FieldElement) {
-        if value == FieldElement::ZERO {
+    pub fn set(&mut self, key: &BitSlice<Msb0, u8>, value: Felt252Wrapper) {
+        if value == Felt252Wrapper::ZERO {
             return self.delete_leaf(key);
         }
 
@@ -179,12 +179,12 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         let common = edge.common_path(key);
 
                         // Height of the binary node
-                        let branch_height = edge.height + common.len();
+                        let branch_height = edge.height as usize + common.len();
                         // Height of the binary node's children
                         let child_height = branch_height + 1;
 
                         // Path from binary node to new leaf
-                        let new_path = key[child_height..].to_vec();
+                        let new_path = key[(child_height as usize)..].to_vec();
                         // Path from binary node to existing child
                         let old_path = edge.path[common.len() + 1..].to_vec();
 
@@ -196,7 +196,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         } else {
                             let new_edge = Node::Edge(EdgeNode {
                                 hash: None,
-                                height: child_height,
+                                height: child_height as u64,
                                 path: new_path,
                                 child: Rc::new(RefCell::new(new_leaf)),
                             });
@@ -209,7 +209,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         } else {
                             let old_edge = Node::Edge(EdgeNode {
                                 hash: None,
-                                height: child_height,
+                                height: child_height as u64,
                                 path: old_path,
                                 child: edge.child.clone(),
                             });
@@ -222,7 +222,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                             Direction::Right => (old, new),
                         };
 
-                        let branch = Node::Binary(BinaryNode { hash: None, height: branch_height, left, right });
+                        let branch = Node::Binary(BinaryNode { hash: None, height: branch_height as u64, left, right });
 
                         // We may require an edge leading to the binary node.
                         if common.is_empty() {
@@ -266,7 +266,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// Deletes a leaf node from the tree.
     ///
     /// This is not an external facing API; the functionality is instead accessed by calling
-    /// [`MerkleTree::set`] with value set to [`FieldElement::ZERO`].
+    /// [`MerkleTree::set`] with value set to [`Felt252Wrapper::ZERO`].
     ///
     /// # Arguments
     ///
@@ -328,7 +328,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
             None => {
                 // We reached the root without a hitting binary node. The new tree
                 // must therefore be empty.
-                self.root = Rc::new(RefCell::new(Node::Unresolved(FieldElement::ZERO)));
+                self.root = Rc::new(RefCell::new(Node::Unresolved(Felt252Wrapper::ZERO)));
                 return;
             }
         };
@@ -350,9 +350,9 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Returns
     ///
     /// The value of the key.
-    pub fn get(&self, key: &BitSlice<Msb0, u8>) -> Option<FieldElement> {
+    pub fn get(&self, key: &BitSlice<Msb0, u8>) -> Option<Felt252Wrapper> {
         self.traverse(key).last().and_then(|node| match &*node.borrow() {
-            Node::Leaf(value) if !value.eq(&FieldElement::ZERO) => Some(*value),
+            Node::Leaf(value) if !value.eq(&Felt252Wrapper::ZERO) => Some(*value),
             _ => None,
         })
     }

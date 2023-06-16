@@ -44,11 +44,11 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
     /// * `value` - The value to set.
     pub fn set(&mut self, index: u64, value: FieldElement) {
         let key = index.to_be_bytes();
-        self.tree.set(&BitVec::from(key.to_vec()), value)
+        self.tree.set(&BitVec::from(key.to_vec()), Felt252Wrapper(value))
     }
 
     /// Get the merkle root of the tree.
-    pub fn commit(self) -> FieldElement {
+    pub fn commit(self) -> Felt252Wrapper {
         self.tree.commit()
     }
 }
@@ -79,13 +79,13 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
     ///
     /// * `index` - The index of the value to set.
     /// * `value` - The value to set.
-    pub fn set(&mut self, index: FieldElement, value: FieldElement) {
-        let key = index.to_bytes_be();
+    pub fn set(&mut self, index: Felt252Wrapper, value: Felt252Wrapper) {
+        let key: [u8; 32] = index.into();
         self.tree.set(&BitVec::from(key.to_vec()), value)
     }
 
     /// Get the merkle root of the tree.
-    pub fn commit(self) -> FieldElement {
+    pub fn commit(self) -> Felt252Wrapper {
         self.tree.commit()
     }
 
@@ -105,7 +105,10 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-pub fn calculate_commitments<T: CryptoHasherT>(transactions: &[Transaction], events: &[EventWrapper]) -> (H256, H256) {
+pub fn calculate_commitments<T: CryptoHasherT>(
+    transactions: &[Transaction],
+    events: &[EventWrapper],
+) -> (Felt252Wrapper, Felt252Wrapper) {
     (calculate_transaction_commitment::<T>(transactions), calculate_event_commitment::<T>(events))
 }
 
@@ -122,7 +125,7 @@ pub fn calculate_commitments<T: CryptoHasherT>(transactions: &[Transaction], eve
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transaction]) -> H256 {
+pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transaction]) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<T>::default();
 
     transactions.iter().enumerate().for_each(|(idx, tx)| {
@@ -130,7 +133,7 @@ pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transa
         let final_hash = calculate_transaction_hash_with_signature::<T>(tx);
         tree.set(idx, final_hash);
     });
-    H256::from_slice(&tree.commit().to_bytes_be())
+    tree.commit()
 }
 
 /// Calculate transaction commitment hash value.
@@ -147,13 +150,13 @@ pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transa
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> H256 {
+pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<T>::default();
     events.iter().enumerate().for_each(|(id, event)| {
         let final_hash = calculate_event_hash::<T>(event);
         tree.set(id as u64, final_hash);
     });
-    H256::from_slice(&tree.commit().to_bytes_be())
+    tree.commit()
 }
 
 /// Calculate class commitment tree leaf hash value.
@@ -193,7 +196,7 @@ pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes:
     let mut tree = StateCommitmentTree::<T>::default();
     class_hashes.iter().for_each(|class_hash| {
         let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
-        tree.set(class_hash.0, final_hash.0);
+        tree.set(*class_hash, final_hash);
     });
     tree.commit().into()
 }
