@@ -2,7 +2,6 @@ use alloc::sync::Arc;
 use std::collections::HashMap;
 
 use blockifier::abi::abi_utils::selector_from_name;
-use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
@@ -134,8 +133,7 @@ fn test_contract_class_wrapper_try_from_contract_class() {
     "attributes": []
 	}
 }"#;
-    let contract_class: ContractClass = serde_json::from_str(json_content).unwrap();
-    let contract_class_wrapper: ContractClassWrapper = contract_class.into();
+    let contract_class_wrapper: ContractClassWrapper = serde_json::from_str(json_content).unwrap();
     let mut expected_entrypoints = <HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>>::new();
     expected_entrypoints.insert(
         EntryPointTypeWrapper::External,
@@ -156,9 +154,13 @@ fn test_contract_class_wrapper_try_from_contract_class() {
         })],
     );
     expected_entrypoints.insert(EntryPointTypeWrapper::L1Handler, vec![]);
-
+    let program_wrapper = ProgramWrapper {
+        compiler_version: "0.10.3".to_string(),
+        main_scope: "__main__".to_string(),
+        ..ProgramWrapper::default()
+    };
     let expected_contract_class_wrapper = ContractClassWrapper {
-        program: ProgramWrapper::default(),
+        program: program_wrapper,
         entry_points_by_type: EntrypointMapWrapper(expected_entrypoints),
     };
 
