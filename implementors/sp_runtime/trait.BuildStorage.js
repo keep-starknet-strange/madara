@@ -1,4 +1,4 @@
 (function() {var implementors = {
 "madara":[["impl BuildStorage for <a class=\"struct\" href=\"madara/chain_spec/struct.DevGenesisExt.html\" title=\"struct madara::chain_spec::DevGenesisExt\">DevGenesisExt</a>"]],
-"madara_runtime":[["impl <a class=\"trait\" href=\"madara_runtime/trait.BuildStorage.html\" title=\"trait madara_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"madara_runtime/struct.GenesisConfig.html\" title=\"struct madara_runtime::GenesisConfig\">GenesisConfig</a>"]]
+"madara_runtime":[["impl <a class=\"trait\" href=\"madara_runtime/trait.BuildStorage.html\" title=\"trait madara_runtime::BuildStorage\">BuildStorage</a> for <a class=\"struct\" href=\"madara_runtime/struct.RuntimeGenesisConfig.html\" title=\"struct madara_runtime::RuntimeGenesisConfig\">RuntimeGenesisConfig</a>"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

@@ -474,8 +474,8 @@
 <span class="kw">use </span>thiserror_no_std::Error;
 
 <span class="doccomment">///
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Copy)]
-#[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+</span><span class="comment">//#[cfg_attr(feature = &quot;std&quot;, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>Felt252Wrapper(<span class="kw">pub </span>FieldElement);
 
 <span class="kw">impl </span>Felt252Wrapper {

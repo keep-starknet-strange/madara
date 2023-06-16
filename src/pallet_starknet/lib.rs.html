@@ -1413,7 +1413,7 @@
         </span><span class="kw">pub </span>chain_id: Felt252Wrapper,
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    <span class="doccomment">/// `Default` impl required by `pallet::GenesisBuild`.
     </span><span class="kw">impl</span>&lt;T: Config&gt; Default <span class="kw">for </span>GenesisConfig&lt;T&gt; {
         <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
             <span class="self">Self </span>{

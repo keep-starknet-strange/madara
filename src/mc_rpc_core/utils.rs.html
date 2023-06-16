@@ -115,12 +115,10 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>base64::engine::general_purpose;
 <span class="kw">use </span>base64::Engine;
 <span class="kw">use </span>cairo_vm::types::program::Program;
-<span class="kw">use </span>frame_support::inherent::BlockT;
 <span class="kw">use </span>mp_digest_log::find_starknet_block;
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
 <span class="kw">use </span>mp_starknet::execution::types::{
@@ -130,7 +128,7 @@
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
 };
-<span class="kw">use </span>sp_api::HeaderT;
+<span class="kw">use </span>sp_api::{BlockT, HeaderT};
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>starknet_core::types::{
     BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
