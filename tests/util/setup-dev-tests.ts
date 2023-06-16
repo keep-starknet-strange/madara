@@ -78,7 +78,7 @@ export function describeDevMadara(
   title: string,
   cb: (context: DevTestContext) => void,
   runtime: RuntimeChain = "madara",
-  withWasm?: boolean,
+  withWasm = false,
   forkedMode?: boolean
 ) {
   describe(title, function () {
