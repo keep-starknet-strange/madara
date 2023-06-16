@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use base64::engine::general_purpose;
 use base64::Engine;
 use cairo_vm::types::program::Program;
-use frame_support::inherent::BlockT;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::{
@@ -12,7 +11,7 @@ use mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
 };
-use sp_api::HeaderT;
+use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
 use starknet_core::types::{
     BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,

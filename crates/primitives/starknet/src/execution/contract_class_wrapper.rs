@@ -43,8 +43,7 @@ impl<'de> Deserialize<'de> for ProgramWrapper {
 
 /// [ContractClass] type equivalent. This is not really a wrapper it's more of a copy where we
 /// implement the substrate necessary traits.
-#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode, Serialize, Deserialize)]
 pub struct ContractClassWrapper {
     /// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
     /// we implement the necessary traits.)
@@ -101,8 +100,7 @@ impl MaxEncodedLen for ContractClassWrapper {
 
 /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
 /// copy of the type but we implement the necessary traits.)
-#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor, Serialize, Deserialize)]
 pub struct EntrypointMapWrapper(pub HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>);
 
 /// SCALE trait.
