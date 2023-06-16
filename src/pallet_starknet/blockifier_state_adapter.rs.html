@@ -132,6 +132,7 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -145,6 +146,7 @@
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::{StateDiff, StorageKey};
+<span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 <span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
@@ -235,7 +237,7 @@
         <span class="kw">let </span>contract_address: ContractAddressWrapper = contract_address.<span class="number">0.0</span>.into();
         <span class="kw">let </span>current_nonce = Pallet::&lt;T&gt;::nonce(contract_address);
 
-        <span class="kw">crate</span>::Nonces::&lt;T&gt;::insert(contract_address, current_nonce + <span class="number">1</span>);
+        <span class="kw">crate</span>::Nonces::&lt;T&gt;::insert(contract_address, Felt252Wrapper(current_nonce.<span class="number">0 </span>+ FieldElement::ONE));
 
         <span class="prelude-val">Ok</span>(())
     }

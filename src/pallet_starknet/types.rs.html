@@ -38,12 +38,12 @@
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet pallet custom types.
 </span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-<span class="kw">use </span>sp_core::{ConstU32, U256};
+<span class="kw">use </span>sp_core::ConstU32;
 <span class="kw">use </span>starknet_api::api_core::ClassHash;
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
 <span class="doccomment">/// Nonce of a Starknet transaction.
-</span><span class="kw">pub type </span>NonceWrapper = U256;
+</span><span class="kw">pub type </span>NonceWrapper = Felt252Wrapper;
 <span class="doccomment">/// Storage Key
 </span><span class="kw">pub type </span>StorageKeyWrapper = Felt252Wrapper;
 <span class="doccomment">/// Contract Storage Key

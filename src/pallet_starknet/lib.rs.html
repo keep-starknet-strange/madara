@@ -1055,7 +1055,6 @@
 <a href="#1055" id="1055">1055</a>
 <a href="#1056" id="1056">1056</a>
 <a href="#1057" id="1057">1057</a>
-<a href="#1058" id="1058">1058</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1144,7 +1143,6 @@
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper <span class="kw">as </span>StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-<span class="kw">use </span>sp_core::U256;
 <span class="kw">use </span>sp_runtime::traits::UniqueSaturatedInto;
 <span class="kw">use </span>sp_runtime::DigestItem;
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
@@ -1742,7 +1740,7 @@
                     </span><span class="self">Self</span>::validate_tx(transaction, transaction_type)<span class="question-mark">?</span>;
                     <span class="comment">// add the requires tag
                     </span><span class="kw">let </span>sender_nonce = Pallet::&lt;T&gt;::nonce(sender_address);
-                    <span class="kw">if </span>Into::&lt;U256&gt;::into(transaction_nonce) &gt; sender_nonce {
+                    <span class="kw">if </span>transaction_nonce.<span class="number">0 </span>&gt; sender_nonce.<span class="number">0 </span>{
                         valid_transaction_builder = valid_transaction_builder
                             .and_requires((sender_address, Felt252Wrapper(transaction_nonce.<span class="number">0 </span>- FieldElement::ONE)));
                     }
