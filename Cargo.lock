@@ -4410,7 +4410,6 @@ dependencies = [
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
- "pallet-sudo",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -5317,21 +5316,6 @@ dependencies = [
  "starknet-crypto 0.5.1",
  "starknet_api",
  "test-case",
-]
-
-[[package]]
-name = "pallet-sudo"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?rev=51b2f0e#51b2f0ed6af8dd4facb18f1a489e192fd0673f7b"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
