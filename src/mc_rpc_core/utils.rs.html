@@ -103,21 +103,7 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
-<a href="#107" id="107">107</a>
-<a href="#108" id="108">108</a>
-<a href="#109" id="109">109</a>
-<a href="#110" id="110">110</a>
-<a href="#111" id="111">111</a>
-<a href="#112" id="112">112</a>
-<a href="#113" id="113">113</a>
-<a href="#114" id="114">114</a>
-<a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>base64::engine::general_purpose;
-<span class="kw">use </span>base64::Engine;
 <span class="kw">use </span>cairo_vm::types::program::Program;
 <span class="kw">use </span>mp_digest_log::find_starknet_block;
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
@@ -135,24 +121,19 @@
     LegacyEntryPointsByType,
 };
 
-<span class="doccomment">/// Returns a `ContractClass` from a `ContractClassWrapper`
+<span class="doccomment">/// Returns a [`ContractClass`] from a [`ContractClassWrapper`]
 </span><span class="kw">pub fn </span>to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
     <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>contract_class_wrapped.entry_points_by_type)<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>program: Program = contract_class_wrapped.program.into();
-    <span class="kw">let </span>compressed_program = compress_and_encode_base64(<span class="kw-2">&amp;</span>program.to_bytes())<span class="question-mark">?</span>;
+    <span class="kw">let </span>program: Program =
+        contract_class_wrapped.program.try_into().map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;Contract Class conversion failed.&quot;</span>))<span class="question-mark">?</span>;
+    <span class="kw">let </span>compressed_program = compress(<span class="kw-2">&amp;</span>program.to_bytes())<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
-        program: compressed_program.as_bytes().to_vec(),
+        program: compressed_program,
         entry_points_by_type,
         abi: <span class="prelude-val">None</span>, <span class="comment">// TODO: add ABI
     </span>}))
-}
-
-<span class="doccomment">/// Returns a base64 encoded and compressed string of the input bytes
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>compress_and_encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
-    <span class="kw">let </span>data_compressed = compress(data)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(encode_base64(<span class="kw-2">&amp;</span>data_compressed))
 }
 
 <span class="doccomment">/// Returns a compressed vector of bytes
@@ -160,11 +141,6 @@
     <span class="kw">let </span><span class="kw-2">mut </span>gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(<span class="kw-2">&amp;mut </span>gzip_encoder, data)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(gzip_encoder.finish()<span class="question-mark">?</span>)
-}
-
-<span class="doccomment">/// Returns a base64 encoded string of the input bytes
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>encode_base64(data: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
-    general_purpose::STANDARD.encode(data)
 }
 
 <span class="doccomment">/// Converts a broadcasted transaction to a transaction
