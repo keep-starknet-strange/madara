@@ -1,8 +1,5 @@
 use blockifier::execution::contract_class::ContractClass;
-use madara_runtime::{
-    AccountId, AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Signature, SudoConfig, SystemConfig,
-    WASM_BINARY,
-};
+use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
@@ -10,8 +7,7 @@ use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
-use sp_core::{sr25519, Pair, Public, H256};
-use sp_runtime::traits::{IdentifyAccount, Verify};
+use sp_core::{Pair, Public, H256};
 use sp_state_machine::BasicExternalities;
 use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
@@ -19,9 +15,6 @@ use starknet_core::utils::get_storage_var_address;
 use super::constants::*;
 
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
-
-// The URL for the telemetry server.
-// const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -59,16 +52,6 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
     TPublic::Pair::from_string(&format!("//{seed}"), None).expect("static values are valid; qed").public()
 }
 
-type AccountPublic = <Signature as Verify>::Signer;
-
-/// Generate an account ID from seed.
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-    AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-    AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
-}
-
 /// Generate an Aura authority key.
 pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
@@ -89,8 +72,6 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
                     wasm_binary,
                     // Initial PoA authorities
                     vec![authority_keys_from_seed("Alice")],
-                    // Sudo account
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
                     true,
                 ),
                 enable_manual_seal,
@@ -131,8 +112,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                     authority_keys_from_seed("Eve"),
                     authority_keys_from_seed("Ferdie"),
                 ],
-                // Sudo account
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
                 true,
             )
         },
@@ -178,7 +157,6 @@ pub fn get_storage_key(
 fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
-    root_key: AccountId,
     _enable_println: bool,
 ) -> GenesisConfig {
     // ACCOUNT CONTRACT
@@ -236,11 +214,6 @@ fn testnet_genesis(
         aura: AuraConfig { authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect() },
         // Deterministic finality mechanism used for block finalization
         grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
-        // Allows executing privileged functions
-        sudo: SudoConfig {
-            // Assign network admin rights.
-            key: Some(root_key),
-        },
         /// Starknet Genesis configuration.
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
