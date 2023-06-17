@@ -202,7 +202,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 }
 
 #[test]
-#[ignore]
 fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
