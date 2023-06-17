@@ -1,9 +1,8 @@
+use alloc::boxed::Box;
 use alloc::rc::Rc;
-use core::cell::RefCell;
 use std::str::FromStr;
 
 use frame_support::bounded_vec;
-use sp_core::H256;
 use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::FieldElement;
 
@@ -187,14 +186,14 @@ fn test_binary_node_functions() {
     let binary_node = BinaryNode {
         hash: Some(Felt252Wrapper::from(1_u32)),
         height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
+        left: Rc::new(Box::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
+        right: Rc::new(Box::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
     };
 
     let unresolved_node = Node::Unresolved(Felt252Wrapper::from(6_u32));
 
-    assert_eq!(binary_node.get_child(Direction::Left).borrow().hash(), Some(Felt252Wrapper::from(2_u32)));
-    assert_eq!(binary_node.get_child(Direction::Right).borrow().hash(), Some(Felt252Wrapper::from(3_u32)));
+    assert_eq!(binary_node.get_child(Direction::Left).hash(), Some(Felt252Wrapper::from(2_u32)));
+    assert_eq!(binary_node.get_child(Direction::Right).hash(), Some(Felt252Wrapper::from(3_u32)));
 
     assert_eq!(binary_node.hash, Some(Felt252Wrapper::from(1_u32)));
 
@@ -216,8 +215,8 @@ fn test_binary_node_calculate_hash() {
     let mut binary_node = BinaryNode {
         hash: None,
         height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
+        left: Rc::new(Box::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
+        right: Rc::new(Box::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
     };
 
     binary_node.calculate_hash::<TestCryptoHasher>();
@@ -229,16 +228,16 @@ fn test_binary_node_implementations() {
     let test_node = BinaryNode {
         hash: None,
         height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
+        left: Rc::new(Box::new(Node::Leaf(Felt252Wrapper::from(2_u32)))),
+        right: Rc::new(Box::new(Node::Leaf(Felt252Wrapper::from(3_u32)))),
     };
 
     // Test Display trait implementation
     let node_string = format!("{:?}", test_node);
     assert_eq!(
         node_string,
-        "BinaryNode { hash: None, height: 0, left: RefCell { value: Leaf(FieldElement { inner: \
-         0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: RefCell { value: \
+        "BinaryNode { hash: None, height: 0, left: Box { value: Leaf(FieldElement { inner: \
+         0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: Box { value: \
          Leaf(FieldElement { inner: 0x0000000000000000000000000000000000000000000000000000000000000003 }) } }"
     );
 
@@ -246,8 +245,8 @@ fn test_binary_node_implementations() {
     let debug_string = format!("{:?}", test_node);
     assert_eq!(
         debug_string,
-        "BinaryNode { hash: None, height: 0, left: RefCell { value: Leaf(FieldElement { inner: \
-         0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: RefCell { value: \
+        "BinaryNode { hash: None, height: 0, left: Box { value: Leaf(FieldElement { inner: \
+         0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: Box { value: \
          Leaf(FieldElement { inner: 0x0000000000000000000000000000000000000000000000000000000000000003 }) } }"
     );
 }
