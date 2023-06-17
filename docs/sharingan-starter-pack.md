@@ -138,23 +138,22 @@ To participate to Sharingan, there are few considerations to have in mind:
 
 3. Resources: to participate to Sharingan testnet as a fullnode, the hardware
    requirements are low and it will depend on how much you will query your
-   fullnode.  
+   fullnode.
 
-   But basically, you can spin up a node with `2 vCPU` and `2GB RAM`, and
-   Madara will run smoothly. We recommend `4GB RAM` as the
-   initial synchronization of the blocks is more intensive,
-   and can almost reach `2GB RAM`. Also if you have your node running
-   a large amount of time the RAM will grow. A restart refreshes the RAM
-   usage to `~500MB`.
+   But basically, you can spin up a node with `2 vCPU` and `2GB RAM`, and Madara
+   will run smoothly. We recommend `4GB RAM` as the initial synchronization of
+   the blocks is more intensive, and can almost reach `2GB RAM`. Also if you
+   have your node running a large amount of time the RAM will grow. A restart
+   refreshes the RAM usage to `~500MB`.
 
-   When Madara is on idle state, synchronizing the blocks at the head
-   of the chain, it uses around `500MB/700MB RAM` and very few CPUs.  
-   
-   Tested with `AMD EPYC 7000 series ~2.1GHz` and `Intel Xeon 3.3GHz`,
-   with 2 vCPU for the minimum configuration.  
-   
-   If you are on AWS, `t2.medium` is a very good setup for a regular use
-   if the instance is dedicated to Sharingan.
+   When Madara is on idle state, synchronizing the blocks at the head of the
+   chain, it uses around `500MB/700MB RAM` and very few CPUs.
+
+   Tested with `AMD EPYC 7000 series ~2.1GHz` and `Intel Xeon 3.3GHz`, with 2
+   vCPU for the minimum configuration.
+
+   If you are on AWS, `t2.medium` is a very good setup for a regular use if the
+   instance is dedicated to Sharingan.
 
 To participate to Sharingan as a fullnode, you have two options:
 
