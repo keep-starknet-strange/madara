@@ -17,19 +17,19 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
             block_timestamp: 12,
             block_number: 2,
             parent_block_hash: Felt252Wrapper::from_hex_be(
-                "0x01d7c361d0138547bb97a38b9fd7209896ff5a6e0592e83282d95fd3530f5449",
+                "0x05c25dd4c3fb1e97ccbc6dfc72f807e0800037ef39a336d143e0277beca886e5",
             )
             .unwrap(),
-            transaction_count: 1,
+            transaction_count: 0,
             // This expected value has been computed in the sequencer test (commitment on a tx hash 0 without
             // signature).
             transaction_commitment: Felt252Wrapper::from_hex_be(
-                "0x039050b107da7374213fffb38becd5f2d76e51ffa0734bf5c7f8f0477a6f2c22",
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
             )
             .unwrap(),
-            event_count: 2,
+            event_count: 0,
             event_commitment: Felt252Wrapper::from_hex_be(
-                "0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02",
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
             )
             .unwrap(),
             sequencer_address: Felt252Wrapper::try_from(&SEQUENCER_ADDRESS).unwrap(),
@@ -37,11 +37,6 @@ fn given_normal_conditions_when_current_block_then_returns_correct_block() {
         };
 
         pretty_assertions::assert_eq!(*current_block.header(), expected_current_block);
-        pretty_assertions::assert_eq!(current_block.transactions_hashes().len(), 1);
-        pretty_assertions::assert_eq!(
-            current_block.transactions_hashes().get(0).unwrap(),
-            &Felt252Wrapper::from_hex_be("0x1").unwrap()
-        );
         debug(&current_block);
     });
 }

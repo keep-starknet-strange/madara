@@ -67,7 +67,6 @@ construct_runtime!(
         Timestamp: pallet_timestamp,
         Aura: pallet_aura,
         Grandpa: pallet_grandpa,
-        Sudo: pallet_sudo,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
     }

@@ -136,6 +136,25 @@ To participate to Sharingan, there are few considerations to have in mind:
    in substrate, as it includes what we call the runtime, where we define how
    transactions are processed within the nodes.
 
+3. Resources: to participate to Sharingan testnet as a fullnode, the hardware
+   requirements are low and it will depend on how much you will query your
+   fullnode.
+
+   But basically, you can spin up a node with `2 vCPU` and `2GB RAM`, and Madara
+   will run smoothly. We recommend `4GB RAM` as the initial synchronization of
+   the blocks is more intensive, and can almost reach `2GB RAM`. Also if you
+   have your node running a large amount of time the RAM will grow. A restart
+   refreshes the RAM usage to `~500MB`.
+
+   When Madara is on idle state, synchronizing the blocks at the head of the
+   chain, it uses around `500MB/700MB RAM` and very few CPUs.
+
+   Tested with `AMD EPYC 7000 series ~2.1GHz` and `Intel Xeon 3.3GHz`, with 2
+   vCPU for the minimum configuration.
+
+   If you are on AWS, `t2.medium` is a very good setup for a regular use if the
+   instance is dedicated to Sharingan.
+
 To participate to Sharingan as a fullnode, you have two options:
 
 ### Easy way: docker image
@@ -156,7 +175,10 @@ specs, please proceed to the following:
    chain specs file, and another one for the storage of the chain data.
 
 ```bash
-sudo docker run -v /tmp:/data \
+sudo docker run -t -d \
+                --name sharingan-fullnode \
+                --network host \
+                -v /tmp:/data \
                 -v /path/to/madara/infra/chain-specs/:/chain-specs \
                 ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4 \
                 --chain /chain-specs/testnet-sharingan-raw.json \

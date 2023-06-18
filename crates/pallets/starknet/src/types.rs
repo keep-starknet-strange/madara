@@ -4,12 +4,12 @@ use mp_starknet::crypto::commitment::StateCommitmentTree;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::crypto::hash::poseidon::PoseidonHasher;
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-use sp_core::{ConstU32, U256};
+use sp_core::ConstU32;
 use starknet_api::api_core::ClassHash;
 use starknet_api::stdlib::collections::HashMap;
 
 /// Nonce of a Starknet transaction.
-pub type NonceWrapper = U256;
+pub type NonceWrapper = Felt252Wrapper;
 /// Storage Key
 pub type StorageKeyWrapper = Felt252Wrapper;
 /// Contract Storage Key
