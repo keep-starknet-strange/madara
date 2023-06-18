@@ -110,16 +110,14 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
         let contract_address: ContractAddressWrapper = contract_address.0.0.into();
         let current_nonce = Pallet::<T>::nonce(contract_address);
+        let new_nonce = Felt252Wrapper(current_nonce.0 + FieldElement::ONE);
 
-        crate::Nonces::<T>::insert(contract_address, Felt252Wrapper(current_nonce.0 + FieldElement::ONE));
+        crate::Nonces::<T>::insert(contract_address, new_nonce);
 
         // Update contracts tree
         let mut tree = crate::State::<T>::get().storage_commitment;
-        let hash = calculate_contract_state_hash::<T::SystemHash>(
-            Felt252Wrapper::ZERO,
-            Felt252Wrapper::ZERO,
-            Felt252Wrapper::try_from(current_nonce + 1).unwrap(),
-        );
+        let hash =
+            calculate_contract_state_hash::<T::SystemHash>(Felt252Wrapper::ZERO, Felt252Wrapper::ZERO, new_nonce);
         tree.set(contract_address, hash);
 
         Ok(())
