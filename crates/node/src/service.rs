@@ -12,8 +12,8 @@ use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
+use mp_starknet::sequencer_address::{InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
-use mp_starknet::sequencer_address::InherentDataProvider as SeqAddrInherentDataProvider;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
@@ -24,8 +24,8 @@ use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool::FullPool;
-use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_api::offchain::OffchainStorage;
+use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
@@ -36,12 +36,6 @@ use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
 // Our native executor instance.
 pub struct ExecutorDispatch;
-
-pub const SEQUENCER_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
-
-pub const TEST_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 178];
 
 impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     /// Only enable the benchmarking host functions when we actually want to benchmark.
@@ -180,16 +174,14 @@ where
     RuntimeApi: Send + Sync + 'static,
 {
     let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-    
+
     let create_inherent_data_providers = move |_, ()| async move {
         let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
         let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
             *timestamp,
             slot_duration,
         );
-        let sequencer_address = SeqAddrInherentDataProvider::from_other_const();
-        log::info!("Sequencer address in build aura is: {:?}", &sequencer_address);
-        Ok((slot, timestamp, sequencer_address))
+        Ok((slot, timestamp))
     };
 
     let import_queue =
@@ -387,43 +379,31 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
-        // let ocw_storage = backend.offchain_storage();
-        // let prefix = &STORAGE_PREFIX;
-        // let key: &[u8] = b"starknet::seq_addr";
-        // log::info!("Storage is {:?}.", ocw_storage.clone().unwrap().get(prefix, key));
-        // let submitted_address = match ocw_storage {
-        //     Some(storage_val) => { SeqAddrInherentDataProvider::from_vec(storage_val.get(prefix, key).unwrap_or_default()) },
-        //     None => { SeqAddrInherentDataProvider::from_const() },
-        // };
-
-        //let ocw_storage_cloned = ocw_storage.clone();
-        let offchain_storage = backend.offchain_storage().clone();
         let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(StartAuraParams {
             slot_duration,
             client,
             select_chain,
             block_import,
             proposer_factory,
-            create_inherent_data_providers: move |_, ()| async move {
-                let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-                log::info!("TIMESTAMP: {:?}", &timestamp.timestamp());
-                let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                    *timestamp,
-                    slot_duration,
-                );
-                //log::info!("SLOT: {:?}", &slot.slot());
-                let ocw_storage = offchain_storage.clone();
-                let prefix = &STORAGE_PREFIX;
-                let key: &[u8] = b"starknet::seq_addr";
-                log::info!("Storage is {:?}.", ocw_storage.clone().unwrap().get(prefix, key));
-                // let submitted_address = match ocw_storage {
-                //     Some(storage_val) => { SeqAddrInherentDataProvider::from_vec(storage_val.get(prefix, key).unwrap_or_default()) },
-                //     None => { SeqAddrInherentDataProvider::from_const() },
-                // };
-                // let sequencer_address = submitted_address.clone();
-                let sequencer_address = SeqAddrInherentDataProvider::from_vec(ocw_storage.clone().unwrap().get(prefix, key).unwrap_or_default());
+            create_inherent_data_providers: move |_, ()| {
+                let offchain_storage = backend.offchain_storage().clone();
+                async move {
+                    let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
-                Ok((slot, timestamp, sequencer_address))
+                    let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                        *timestamp,
+                        slot_duration,
+                    );
+
+                    let ocw_storage = offchain_storage.clone();
+                    let prefix = &STORAGE_PREFIX;
+                    let key: &[u8] = b"starknet::seq_addr";
+                    let sequencer_address = SeqAddrInherentDataProvider::from_vec(
+                        ocw_storage.unwrap().get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
+                    );
+
+                    Ok((slot, timestamp, sequencer_address))
+                }
             },
             force_authoring,
             backoff_authoring_blocks,
@@ -539,10 +519,8 @@ where
     }
 
     let create_inherent_data_providers = move |_, ()| async move {
-        let sequencer_address = SeqAddrInherentDataProvider::from_const();
-        log::info!("Sequencer address in manual seal is: {:?}", &sequencer_address);
         let timestamp = MockTimestampInherentDataProvider;
-        Ok((timestamp, sequencer_address))
+        Ok(timestamp)
     };
 
     let manual_seal = match sealing {

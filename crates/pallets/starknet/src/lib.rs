@@ -80,7 +80,7 @@ use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
 };
-use mp_starknet::sequencer_address::{InherentError, InherentType, INHERENT_IDENTIFIER};
+use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, InherentError, InherentType, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
@@ -102,11 +102,6 @@ use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
-
-// TODO: don't use a const for this but a real sequencer address for block header
-// FIXME https://github.com/keep-starknet-strange/madara/issues/243
-pub const SEQUENCER_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
@@ -193,9 +188,11 @@ pub mod pallet {
 
             let addr = StorageValueRef::persistent(b"starknet::seq_addr");
 
-            if let Ok(Some(address)) = addr.get::<[u8;32]>() {
+            if let Ok(Some(address)) = addr.get::<[u8; 32]>() {
                 log::info!("Current set sequencer address: {:?}", address);
                 ()
+            } else {
+                log::info!("Sequencer address not set");
             }
 
             match Self::process_l1_messages() {
@@ -285,13 +282,13 @@ pub mod pallet {
     pub(super) type ChainId<T: Config> = StorageValue<_, Felt252Wrapper, ValueQuery>;
 
     /// Current sequencer address.
-	#[pallet::storage]
-	#[pallet::getter(fn sequencer_address)]
-	pub type SequencerAddress<T: Config> = StorageValue<_, [u8; 32], ValueQuery>;
+    #[pallet::storage]
+    #[pallet::getter(fn sequencer_address)]
+    pub type SequencerAddress<T: Config> = StorageValue<_, [u8; 32], ValueQuery>;
 
     /// Ensure the sequencer address was updated for this block.
-	#[pallet::storage]
-	pub(super) type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
+    #[pallet::storage]
+    pub(super) type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -408,20 +405,20 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         /// Set the current block author's sequencer address.
-		///
-		/// This call should be invoked exactly once per block. It will panic at the finalization
-		/// phase, if this call hasn't been invoked by that time.
-		///
-		/// The dispatch origin for this call must be `Inherent`.
-		#[pallet::call_index(0)]
-		#[pallet::weight((0, DispatchClass::Mandatory))]
-		pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
-			ensure_none(origin)?;
-			assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
-			SequencerAddress::<T>::put(addr);
-			SeqAddrUpdate::<T>::put(true);
-			Ok(())
-		}
+        ///
+        /// This call should be invoked exactly once per block. It will panic at the finalization
+        /// phase, if this call hasn't been invoked by that time.
+        ///
+        /// The dispatch origin for this call must be `Inherent`.
+        #[pallet::call_index(0)]
+        #[pallet::weight((0, DispatchClass::Mandatory))]
+        pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
+            ensure_none(origin)?;
+            assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+            SequencerAddress::<T>::put(addr);
+            SeqAddrUpdate::<T>::put(true);
+            Ok(())
+        }
 
         /// Ping the pallet to check if it is alive.
         #[pallet::call_index(1)]
@@ -746,31 +743,27 @@ pub mod pallet {
     }
 
     #[pallet::inherent]
-	impl<T: Config> ProvideInherent for Pallet<T> {
-		type Call = Call<T>;
-		type Error = InherentError;
-		const INHERENT_IDENTIFIER: InherentIdentifier = INHERENT_IDENTIFIER;
+    impl<T: Config> ProvideInherent for Pallet<T> {
+        type Call = Call<T>;
+        type Error = InherentError;
+        const INHERENT_IDENTIFIER: InherentIdentifier = INHERENT_IDENTIFIER;
 
-		fn create_inherent(data: &InherentData) -> Option<Self::Call> {
-			let inherent_data = data
-				.get_data::<InherentType>(&INHERENT_IDENTIFIER)
-				.expect("Sequencer address inherent data not correctly encoded")
-				.expect("Sequencer address must be provided");
-			Some(Call::set_sequencer_address { addr: inherent_data.into() })
-		}
+        fn create_inherent(data: &InherentData) -> Option<Self::Call> {
+            let inherent_data = data
+                .get_data::<InherentType>(&INHERENT_IDENTIFIER)
+                .expect("Sequencer address inherent data not correctly encoded")
+                .expect("Sequencer address must be provided");
+            Some(Call::set_sequencer_address { addr: inherent_data.into() })
+        }
 
-		fn check_inherent(
-			_call: &Self::Call,
-			_data: &InherentData,
-		) -> result::Result<(), Self::Error> {
-			Ok(())
-		}
+        fn check_inherent(_call: &Self::Call, _data: &InherentData) -> result::Result<(), Self::Error> {
+            Ok(())
+        }
 
-		fn is_inherent(call: &Self::Call) -> bool {
-			matches!(call, Call::set_sequencer_address { .. })
-		}
-	}
-
+        fn is_inherent(call: &Self::Call) -> bool {
+            matches!(call, Call::set_sequencer_address { .. })
+        }
+    }
 
     #[pallet::validate_unsigned]
     impl<T: Config> ValidateUnsigned for Pallet<T> {
