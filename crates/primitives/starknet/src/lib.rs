@@ -41,6 +41,10 @@ pub mod execution;
 
 /// Starknet Fees related functionality.
 pub mod fees;
+
+/// Sequencer address inherent data.
+pub mod sequencer_address;
+
 /// Tests.
 #[cfg(test)]
 pub mod tests;

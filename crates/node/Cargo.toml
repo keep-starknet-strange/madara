@@ -46,6 +46,7 @@ sp-runtime = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-inherents = { workspace = true }
 sp-keyring = { workspace = true }
+sp-offchain = { workspace = true }
 sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
@@ -54,7 +55,7 @@ sc-network-sync = { workspace = true }
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
 
-# Substrate primtiives dependencies
+# Substrate primtives dependencies
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-block-builder = { workspace = true }

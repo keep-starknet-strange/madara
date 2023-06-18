@@ -36,6 +36,7 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-api = { workspace = true }
 sp-std = { workspace = true }
+sp-inherents = { workspace = true }
 # Frame pallets
 
 # Other third party dependencies
@@ -67,6 +68,7 @@ std = [
   "frame-benchmarking?/std",
   "scale-info/std",
   "pallet-timestamp/std",
+  "sp-inherents/std",
   # Madara
   "mp-starknet/std",
   # Starknet
