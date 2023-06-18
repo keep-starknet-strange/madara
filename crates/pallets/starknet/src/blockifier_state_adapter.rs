@@ -116,7 +116,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         // Update contracts tree
         let mut tree = crate::State::<T>::get().storage_commitment;
-        let class_hash = crate::ContractClassHashes::<T>::get(contract_address).unwrap();
+        let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
         let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, Felt252Wrapper::ZERO, new_nonce);
         tree.set(contract_address, hash);
 
