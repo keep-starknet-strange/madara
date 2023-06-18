@@ -80,7 +80,7 @@ use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
 };
-use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, InherentError, InherentType, INHERENT_IDENTIFIER};
+use mp_starknet::sequencer_address::{InherentError, InherentType, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
@@ -420,22 +420,6 @@ pub mod pallet {
             Ok(())
         }
 
-        /// Ping the pallet to check if it is alive.
-        #[pallet::call_index(1)]
-        #[pallet::weight({0})]
-        pub fn ping(origin: OriginFor<T>) -> DispatchResult {
-            ensure_none(origin)?;
-            Pending::<T>::try_append((Transaction::default(), TransactionReceiptWrapper::default()))
-                .map_err(|_| Error::<T>::TooManyPendingTransactions)?;
-            PendingEvents::<T>::try_append(StarknetEventType::default())
-                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
-            PendingEvents::<T>::try_append(StarknetEventType::default())
-                .map_err(|_| Error::<T>::TooManyPendingEvents)?;
-            log!(info, "Keep Starknet Strange!");
-            Self::deposit_event(Event::KeepStarknetStrange);
-            Ok(())
-        }
-
         /// The invoke transaction is the main transaction type used to invoke contract functions in
         /// Starknet.
         /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.
@@ -450,7 +434,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(2)]
+        #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -513,7 +497,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(3)]
+        #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -599,7 +583,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(4)]
+        #[pallet::call_index(3)]
         #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -676,7 +660,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(5)]
+        #[pallet::call_index(4)]
         #[pallet::weight({0})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -721,7 +705,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Add some limitations on how often this can be called.
-        #[pallet::call_index(6)]
+        #[pallet::call_index(5)]
         #[pallet::weight({0})]
         pub fn set_fee_token_address(
             origin: OriginFor<T>,
