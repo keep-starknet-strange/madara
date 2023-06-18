@@ -40,10 +40,13 @@ pub struct DeployAccountTransactionOutput {
 }
 
 /// State Commitments
+/// TODO: Make hashers configurable in runtime config
 #[derive(Default, Clone, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct StateCommitments {
     /// Storage Commitment
     pub storage_commitment: StateCommitmentTree<PedersenHasher>,
     /// Class Commitment
     pub class_commitment: StateCommitmentTree<PoseidonHasher>,
+    /// State Commitment
+    pub state_commitment: StateCommitmentTree<PedersenHasher>,
 }
