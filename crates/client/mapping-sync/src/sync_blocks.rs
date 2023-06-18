@@ -1,5 +1,5 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
-use mp_digest_log::FindLogError;
+use mp_digest_log::{find_starknet_block, FindLogError};
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -65,7 +65,7 @@ where
 }
 
 fn sync_genesis_block<B: BlockT, C, H>(
-    client: &C,
+    _client: &C,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
     hasher: &H,
@@ -77,7 +77,7 @@ where
 {
     let substrate_block_hash = header.hash();
 
-    let block = find_starknet_block(header.digest()).ok_or("Block not found")?;
+    let block = find_starknet_block(header.digest()).map_err(|e| format!("Block not found {:?}", e))?;
     let block_hash = block.header().hash(*hasher);
     let mapping_commitment = mc_db::MappingCommitment::<B> {
         block_hash: substrate_block_hash,
