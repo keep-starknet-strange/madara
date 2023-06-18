@@ -4517,9 +4517,12 @@ dependencies = [
  "mc-rpc",
  "mc-storage",
  "mp-starknet",
+ "num-traits",
  "pallet-starknet",
+ "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
+ "sc-client-db",
  "sc-consensus",
  "sc-consensus-aura",
  "sc-consensus-grandpa",
@@ -4537,17 +4540,22 @@ dependencies = [
  "sc-transaction-pool-api",
  "serde",
  "serde_json",
+ "simnode-runtime-api",
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
+ "sp-consensus",
  "sp-consensus-aura",
  "sp-consensus-grandpa",
  "sp-core",
  "sp-inherents",
  "sp-keyring",
+ "sp-offchain",
  "sp-runtime",
+ "sp-session",
  "sp-state-machine",
  "sp-timestamp",
+ "sp-transaction-pool",
  "sp-trie",
  "starknet-core",
  "substrate-build-script-utils",
@@ -7968,7 +7976,7 @@ dependencies = [
 [[package]]
 name = "sc-simnode"
 version = "0.1.0"
-source = "git+https://github.com/shamb0/sc-simnode?branch=shamb0/move-polkadot-v0.9.43#a80f6ef7a0b91e8a8bbc4571a0e2194e92033022"
+source = "git+https://github.com/shamb0/sc-simnode?branch=shamb0/move-polkadot-v0.9.43#e489ba5cf282acb1403c7f6bf1bd78b133a91750"
 dependencies = [
  "async-trait",
  "clap",
@@ -8602,7 +8610,7 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/shamb0/sc-simnode?branch=shamb0/move-polkadot-v0.9.43#a80f6ef7a0b91e8a8bbc4571a0e2194e92033022"
+source = "git+https://github.com/shamb0/sc-simnode?branch=shamb0/move-polkadot-v0.9.43#e489ba5cf282acb1403c7f6bf1bd78b133a91750"
 dependencies = [
  "parity-scale-codec",
  "sp-api",

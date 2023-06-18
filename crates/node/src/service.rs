@@ -63,27 +63,26 @@ type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor
 
 type ImportQueueResult<E> = Result<(BasicImportQueue<FullClient<E>>, BoxBlockImport<FullClient<E>>), ServiceError>;
 
+pub(crate) type NewPartialComponents<E> = sc_service::PartialComponents<
+    FullClient<E>,
+    FullBackend,
+    FullSelectChain,
+    sc_consensus::DefaultImportQueue<Block, FullClient<E>>,
+    sc_transaction_pool::FullPool<Block, FullClient<E>>,
+    (
+        BoxBlockImport<FullClient<E>>,
+        sc_consensus_grandpa::LinkHalf<Block, FullClient<E>, FullSelectChain>,
+        Option<Telemetry>,
+        Arc<MadaraBackend>,
+    ),
+>;
+
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ, E>(
     config: &Configuration,
     build_import_queue: BIQ,
     executor: E,
-) -> Result<
-    sc_service::PartialComponents<
-        FullClient<E>,
-        FullBackend,
-        FullSelectChain,
-        sc_consensus::DefaultImportQueue<Block, FullClient<E>>,
-        sc_transaction_pool::FullPool<Block, FullClient<E>>,
-        (
-            BoxBlockImport<FullClient<E>>,
-            sc_consensus_grandpa::LinkHalf<Block, FullClient<E>, FullSelectChain>,
-            Option<Telemetry>,
-            Arc<MadaraBackend>,
-        ),
-    >,
-    ServiceError,
->
+) -> Result<NewPartialComponents<E>, ServiceError>
 where
     BIQ: FnOnce(
         Arc<FullClient<E>>,
@@ -305,7 +304,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         client: client.clone(),
         madara_backend: madara_backend.clone(),
         overrides,
-        sync_service: Some(sync_service.clone()),
+        sync_service: sync_service.clone(),
         starting_block,
     };
 

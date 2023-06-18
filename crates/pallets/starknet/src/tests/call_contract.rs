@@ -20,19 +20,17 @@ fn given_call_contract_call_works() {
         // Deploy ERC20 contract
         let constructor_calldata: BoundedVec<Felt252Wrapper, ConstU32<{ u32::MAX }>> = bounded_vec![
             sender_account, // Simple contract address
-            Felt252Wrapper::from_hex_be("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8")
-                .unwrap(), // deploy_contract selector
-            Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000009")
-                .unwrap(), // Calldata len
+            Felt252Wrapper::from_hex_be("0x02730079d734ee55315f4f141eaed376bddd8c2133523d223a344c5604e0f7f8").unwrap(), // deploy_contract selector
+            Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000009").unwrap(), // Calldata len
             Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap(), // Class hash
-            Felt252Wrapper::ONE, // Contract address salt
-            Felt252Wrapper::from_hex_be("0x6").unwrap(), // Constructor_calldata_len
-            Felt252Wrapper::from_hex_be("0xA").unwrap(), // Name
-            Felt252Wrapper::from_hex_be("0x1").unwrap(), // Symbol
-            Felt252Wrapper::from_hex_be("0x2").unwrap(), // Decimals
+            Felt252Wrapper::ONE,                                             // Contract address salt
+            Felt252Wrapper::from_hex_be("0x6").unwrap(),                     // Constructor_calldata_len
+            Felt252Wrapper::from_hex_be("0xA").unwrap(),                     // Name
+            Felt252Wrapper::from_hex_be("0x1").unwrap(),                     // Symbol
+            Felt252Wrapper::from_hex_be("0x2").unwrap(),                     // Decimals
             Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply low
             Felt252Wrapper::from_hex_be("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF").unwrap(), // Initial supply high
-            sender_account  // recipient
+            sender_account                                                   // recipient
         ];
 
         let deploy_transaction = InvokeTransaction {

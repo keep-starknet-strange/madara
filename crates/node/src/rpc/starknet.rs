@@ -15,7 +15,7 @@ pub struct StarknetDeps<C, B: BlockT> {
     /// Starknet data access overrides.
     pub overrides: Arc<OverrideHandle<B>>,
     /// The Substrate client sync service.
-    pub sync_service: Option<Arc<SyncingService<B>>>,
+    pub sync_service: Arc<SyncingService<B>>,
     /// The starting block for the syncing.
     pub starting_block: <<B>::Header as HeaderT>::Number,
 }

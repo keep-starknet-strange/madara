@@ -1,14 +1,11 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
-use mc_storage::overrides_handle;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
-use sc_executor_common::wasm_runtime::{HeapAllocStrategy, DEFAULT_HEAP_ALLOC_STRATEGY};
-use sp_blockchain::HeaderBackend;
 use sp_runtime::generic::Era;
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, rpc, service};
+use crate::{chain_spec, madara_simnode, service};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -175,86 +172,10 @@ pub fn run() -> sc_cli::Result<()> {
         }
         Some(Subcommand::Simnode(cmd)) => {
             let runner = cli.create_runner(&cmd.run.normalize())?;
-            let config = runner.config();
-
-            let heap_pages = config
-                .default_heap_pages
-                .map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static { extra_pages: h as _ });
-
-            let executor = sc_simnode::Executor::builder()
-                .with_execution_method(config.wasm_method)
-                .with_onchain_heap_alloc_strategy(heap_pages)
-                .with_offchain_heap_alloc_strategy(heap_pages)
-                .with_max_runtime_instances(config.max_runtime_instances)
-                .with_runtime_cache_size(config.runtime_cache_size)
-                .build();
 
             runner.run_node_until_exit(move |config| async move {
-                // pass the custom executor along
-                let sc_service::PartialComponents {
-                    client,
-                    backend,
-                    task_manager,
-                    keystore_container,
-                    select_chain,
-                    import_queue,
-                    transaction_pool,
-                    other: (block_import, grandpa_link, telemetry, madara_backend),
-                } = service::new_partial::<_, _>(&config, service::build_aura_grandpa_import_queue, executor)?;
-
-                let overrides = overrides_handle(client.clone());
-                let starting_block = client.info().best_number;
-
-                let starknet_rpc_params = rpc::StarknetDeps {
-                    client: client.clone(),
-                    madara_backend: madara_backend.clone(),
-                    overrides,
-                    sync_service: None,
-                    starting_block,
-                };
-
-                let rpc_extensions_builder = {
-                    let client = client.clone();
-                    let pool = transaction_pool.clone();
-                    let graph = transaction_pool.pool().clone();
-
-                    Box::new(move |deny_unsafe, _| {
-                        let deps = rpc::FullDeps {
-                            client: client.clone(),
-                            pool: pool.clone(),
-                            graph: graph.clone(),
-                            deny_unsafe,
-                            starknet: starknet_rpc_params.clone(),
-                            command_sink: None,
-                        };
-                        crate::rpc::create_full(deps).map_err(Into::into)
-                    })
-                };
-
-                let sim_components = sc_service::PartialComponents {
-                    client,
-                    backend,
-                    task_manager,
-                    import_queue,
-                    keystore_container,
-                    select_chain,
-                    transaction_pool,
-                    other: (block_import, telemetry, grandpa_link),
-                };
-
                 // start simnode's subsystems
-                let task_manager =
-                    sc_simnode::aura::start_simnode::<RuntimeInfo, _, _, _, _, _>(sc_simnode::SimnodeParams {
-                        components: sim_components,
-                        config,
-                        // you'll want this to be set to true so simnode creates
-                        // blocks for every transaction that enters the tx pool.
-                        // For special cases where you want to manually send
-                        // RPC requests before blocks are created, set this to false.
-                        instant: true,
-                        rpc_builder: rpc_extensions_builder,
-                    })
-                    .await?;
+                let task_manager = madara_simnode::start_simnode(config).await?;
                 Ok(task_manager)
             })
         }

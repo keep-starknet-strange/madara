@@ -25,6 +25,7 @@ log = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 serde = { workspace = true }
+num-traits = { workspace = true }
 
 sc-cli = { workspace = true }
 sp-core = { workspace = true }
@@ -51,6 +52,8 @@ sp-state-machine = { workspace = true }
 frame-system = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
 sc-network-sync = { workspace = true }
+sc-client-db = { workspace = true }
+sc-basic-authorship = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
@@ -59,6 +62,11 @@ jsonrpsee = { workspace = true, features = ["server"] }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-block-builder = { workspace = true }
+sp-transaction-pool = { workspace = true }
+sp-consensus = { workspace = true }
+sp-offchain = { workspace = true }
+sp-session = { workspace = true }
+
 # Substrate client dependencies
 sc-rpc-api = { workspace = true }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
@@ -91,6 +99,7 @@ serde_json = { workspace = true }
 
 # This enables the Simnode RPC
 sc-simnode = { workspace = true, features = ["aura"] }
+simnode-runtime-api = { workspace = true }
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }

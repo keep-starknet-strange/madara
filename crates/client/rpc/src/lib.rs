@@ -55,7 +55,7 @@ pub struct Starknet<A: ChainApi, B: BlockT, BE, C, P, H> {
     overrides: Arc<OverrideHandle<B>>,
     pool: Arc<P>,
     graph: Arc<Pool<A>>,
-    sync_service: Option<Arc<SyncingService<B>>>,
+    sync_service: Arc<SyncingService<B>>,
     starting_block: <<B>::Header as HeaderT>::Number,
     hasher: Arc<H>,
     _marker: PhantomData<(B, BE)>,
@@ -80,7 +80,7 @@ impl<A: ChainApi, B: BlockT, BE, C, P, H> Starknet<A, B, BE, C, P, H> {
         overrides: Arc<OverrideHandle<B>>,
         pool: Arc<P>,
         graph: Arc<Pool<A>>,
-        sync_service: Option<Arc<SyncingService<B>>>,
+        sync_service: Arc<SyncingService<B>>,
         starting_block: <<B>::Header as HeaderT>::Number,
         hasher: Arc<H>,
     ) -> Self {
@@ -309,65 +309,58 @@ where
     // * `Syncing` - An Enum that can be a `mc_rpc_core::SyncStatus` struct or a `Boolean`.
     async fn syncing(&self) -> RpcResult<SyncStatusType> {
         // obtain best seen (highest) block number
-        if let Some(sync_service) = &self.sync_service {
-            match sync_service.best_seen_block().await {
-                Ok(best_seen_block) => {
-                    let best_number = self.client.info().best_number;
-                    let highest_number = best_seen_block.unwrap_or(best_number);
+        match self.sync_service.best_seen_block().await {
+            Ok(best_seen_block) => {
+                let best_number = self.client.info().best_number;
+                let highest_number = best_seen_block.unwrap_or(best_number);
 
-                    // get a starknet block from the starting substrate block number
-                    let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
-                        self.client.as_ref(),
-                        self.starting_block,
-                    );
+                // get a starknet block from the starting substrate block number
+                let starting_block = madara_backend_client::starknet_block_from_substrate_hash(
+                    self.client.as_ref(),
+                    self.starting_block,
+                );
 
-                    // get a starknet block from the current substrate block number
-                    let current_block =
-                        madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), best_number);
+                // get a starknet block from the current substrate block number
+                let current_block =
+                    madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), best_number);
 
-                    // get a starknet block from the highest substrate block number
-                    let highest_block =
-                        madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), highest_number);
+                // get a starknet block from the highest substrate block number
+                let highest_block =
+                    madara_backend_client::starknet_block_from_substrate_hash(self.client.as_ref(), highest_number);
 
-                    if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
-                        // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
-                        let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
-                        let starting_block_hash = starting_block?.header().hash(*self.hasher).0;
+                if starting_block.is_ok() && current_block.is_ok() && highest_block.is_ok() {
+                    // Convert block numbers and hashes to the respective type required by the `syncing` endpoint.
+                    let starting_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(self.starting_block);
+                    let starting_block_hash = starting_block?.header().hash(*self.hasher).0;
 
-                        let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
-                        let current_block_hash = current_block?.header().hash(*self.hasher).0;
+                    let current_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(best_number);
+                    let current_block_hash = current_block?.header().hash(*self.hasher).0;
 
-                        let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
-                        let highest_block_hash = highest_block?.header().hash(*self.hasher).0;
+                    let highest_block_num = UniqueSaturatedInto::<u64>::unique_saturated_into(highest_number);
+                    let highest_block_hash = highest_block?.header().hash(*self.hasher).0;
 
-                        // Build the `SyncStatus` struct with the respective syn information
-                        Ok(SyncStatusType::Syncing(SyncStatus {
-                            starting_block_num,
-                            starting_block_hash,
-                            current_block_num,
-                            current_block_hash,
-                            highest_block_num,
-                            highest_block_hash,
-                        }))
-                    } else {
-                        // If there was an error when getting a starknet block, then we return `false`,
-                        // as per the endpoint specification
-                        log::error!("Failed to load Starknet block");
-                        Ok(SyncStatusType::NotSyncing)
-                    }
-                }
-                Err(_) => {
+                    // Build the `SyncStatus` struct with the respective syn information
+                    Ok(SyncStatusType::Syncing(SyncStatus {
+                        starting_block_num,
+                        starting_block_hash,
+                        current_block_num,
+                        current_block_hash,
+                        highest_block_num,
+                        highest_block_hash,
+                    }))
+                } else {
                     // If there was an error when getting a starknet block, then we return `false`,
                     // as per the endpoint specification
-                    log::error!("`SyncingEngine` shut down");
+                    log::error!("Failed to load Starknet block");
                     Ok(SyncStatusType::NotSyncing)
                 }
             }
-        } else {
-            // Under the simnode execution context, network services are not active and the SyncingEngine is
-            // shut down.
-            log::error!("Under the simnode execution context, `SyncingEngine` is shut down");
-            Ok(SyncStatusType::NotSyncing)
+            Err(_) => {
+                // If there was an error when getting a starknet block, then we return `false`,
+                // as per the endpoint specification
+                log::error!("`SyncingEngine` shut down");
+                Ok(SyncStatusType::NotSyncing)
+            }
         }
     }
 
