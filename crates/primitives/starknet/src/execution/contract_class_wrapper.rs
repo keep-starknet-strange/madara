@@ -154,12 +154,13 @@ pub struct ProgramWrapper {
 
 impl From<Program> for ProgramWrapper {
     fn from(value: Program) -> Self {
+        // Defaulting to the latest compiler version if none is configured.
+        let compiler_version = option_env!("COMPILER_VERSION").unwrap_or("0.11.2");
         Self {
             shared_program_data: value.shared_program_data,
             constants: value.constants,
             reference_manager: value.reference_manager,
-            // Defaulting to the latest compiler version.
-            compiler_version: "0.11.2".to_string(),
+            compiler_version: compiler_version.to_string(),
             main_scope: "__main__".to_string(),
         }
     }
