@@ -217,11 +217,11 @@ where
             "madara-block-proposer",
             None,
             Box::pin(async move {
-                // Leave some time for evaluation and block finalization (20%)
-                // and some time for block production (80%).
+                // Leave some time for evaluation and block finalization (33%)
+                // and some time for block production (66%).
                 // We need to benchmark and tune this value.
                 // Open question: should we make this configurable?
-                let deadline = (self.now)() + max_duration - max_duration / 5;
+                let deadline = (self.now)() + max_duration - max_duration / 3;
                 let res = self.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).await;
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");
