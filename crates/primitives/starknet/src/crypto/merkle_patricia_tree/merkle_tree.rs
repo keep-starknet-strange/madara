@@ -239,7 +239,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         let child_height = branch_height + 1;
 
                         // Path from binary node to new leaf
-                        let new_path = key[(child_height as usize)..].to_bitvec();
+                        let new_path = key[child_height..].to_bitvec();
                         // Path from binary node to existing child
                         let old_path = edge.path[common.len() + 1..].to_bitvec();
 
@@ -269,7 +269,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                                 hash: None,
                                 height: child_height as u64,
                                 path: old_path,
-                                child: edge.child.clone(),
+                                child: edge.child,
                             });
                             nodes.insert(self.latest_node_id.next(), old_edge);
                             self.latest_node_id
@@ -499,7 +499,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
             return Vec::new();
         }
 
-        let mut current = self.root.clone();
+        let mut current = self.root;
         #[allow(unused_variables)]
         let mut height = 0;
         let mut nodes = Vec::new();
@@ -511,16 +511,16 @@ impl<H: CryptoHasherT> MerkleTree<H> {
             let next = match current_tmp {
                 Unresolved(_hash) => panic!("Resolve is useless"),
                 Binary(binary) => {
-                    nodes.push(current.clone());
+                    nodes.push(current);
                     let next = binary.direction(dst);
                     let next = binary.get_child(next);
                     height += 1;
                     next
                 }
                 Edge(edge) if edge.path_matches(dst) => {
-                    nodes.push(current.clone());
+                    nodes.push(current);
                     height += edge.path.len();
-                    edge.child.clone()
+                    edge.child
                 }
                 Leaf(_) | Edge(_) => {
                     nodes.push(current);
