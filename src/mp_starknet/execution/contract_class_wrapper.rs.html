@@ -281,6 +281,7 @@
 <a href="#281" id="281">281</a>
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec::Vec;
@@ -437,12 +438,13 @@
 
 <span class="kw">impl </span>From&lt;Program&gt; <span class="kw">for </span>ProgramWrapper {
     <span class="kw">fn </span>from(value: Program) -&gt; <span class="self">Self </span>{
+        <span class="comment">// Defaulting to the latest compiler version if none is configured.
+        </span><span class="kw">let </span>compiler_version = <span class="macro">option_env!</span>(<span class="string">&quot;COMPILER_VERSION&quot;</span>).unwrap_or(<span class="string">&quot;0.11.2&quot;</span>);
         <span class="self">Self </span>{
             shared_program_data: value.shared_program_data,
             constants: value.constants,
             reference_manager: value.reference_manager,
-            <span class="comment">// Defaulting to the latest compiler version.
-            </span>compiler_version: <span class="string">&quot;0.11.2&quot;</span>.to_string(),
+            compiler_version: compiler_version.to_string(),
             main_scope: <span class="string">&quot;__main__&quot;</span>.to_string(),
         }
     }
