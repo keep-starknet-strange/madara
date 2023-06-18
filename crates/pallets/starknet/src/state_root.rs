@@ -2,7 +2,6 @@
 
 use core::marker::PhantomData;
 
-use mp_starknet::crypto::commitment::{calculate_class_commitment_tree_root_hash, calculate_contract_state_hash};
 use mp_starknet::crypto::state::StateCommitment;
 use mp_starknet::execution::types::Felt252Wrapper;
 use sp_core::Get;
@@ -16,7 +15,7 @@ impl<T: Config> Get<Felt252Wrapper> for IntermediateStateRoot<T> {
     /// * `Felt252Wrapper` - The intermediate state root.
     fn get() -> Felt252Wrapper {
         // Get commitmment trees.
-        let commitments = crate::State::<T>::get();
+        let mut commitments = crate::State::<T>::get();
 
         // Compute the final state root
         let global_state_root = StateCommitment::<T::SystemHash>::calculate(

@@ -1,16 +1,59 @@
 //! This is a gigantic copy pasta from <https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree> Thanks to the equilibrium team and whoever else contributed for the code.
-use alloc::boxed::Box;
-use alloc::rc::Rc;
 use alloc::vec::Vec;
-use core::borrow::BorrowMut;
+use core::borrow::Borrow;
 use core::iter::once;
 use core::marker::PhantomData;
 
 use bitvec::prelude::{BitSlice, BitVec, Msb0};
+use derive_more::Constructor;
+use scale_codec::{Decode, Encode, Error, Input, Output};
+use scale_info::build::Fields;
+use scale_info::{Path, Type, TypeInfo};
+use starknet_api::stdlib::collections::HashMap;
 
-use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node};
+use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
+
+/// Wrapper type for a [HashMap<NodeId, Node>] object. (It's not really a wrapper it's a
+/// copy of the type but we implement the necessary traits.)
+#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor)]
+pub struct NodesMapping(pub HashMap<NodeId, Node>);
+
+/// SCALE trait.
+impl Encode for NodesMapping {
+    fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        // Convert the NodesMapping to Vec<(NodeId, Node)> to be
+        // able to use the Encode trait from this type. We implemented it for NodeId, derived it
+        // for Node so we can use it for Vec<(NodeId, Node)>.
+        let val: Vec<(NodeId, Node)> = self.0.clone().into_iter().collect();
+        dest.write(&Encode::encode(&val));
+    }
+}
+/// SCALE trait.
+impl Decode for NodesMapping {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        // Convert the NodesMapping to Vec<(NodeId, Node)> to be
+        // able to use the Decode trait from this type. We implemented it for NodeId, derived it
+        // for Node so we can use it for Vec<(NodeId, Node)>.
+        let val: Vec<(NodeId, Node)> =
+            Decode::decode(input).map_err(|_| Error::from("Can't get NodesMapping from input buffer."))?;
+        Ok(NodesMapping(HashMap::from_iter(val.into_iter())))
+    }
+}
+
+/// SCALE trait.
+impl TypeInfo for NodesMapping {
+    type Identity = Self;
+
+    // The type info is saying that the NodesMapping must be seen as an
+    // array of bytes.
+    fn type_info() -> Type {
+        Type::builder()
+            .path(Path::new("NodesMapping", module_path!()))
+            .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("NodesMapping")))
+    }
+}
 
 /// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
 #[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
@@ -19,15 +62,6 @@ pub struct BinaryProofNode {
     pub left_hash: Felt252Wrapper,
     /// Right hash.
     pub right_hash: Felt252Wrapper,
-}
-
-impl From<&BinaryNode> for ProofNode {
-    fn from(bin: &BinaryNode) -> Self {
-        Self::Binary(BinaryProofNode {
-            left_hash: bin.left.hash().expect("Node should be committed"),
-            right_hash: bin.right.hash().expect("Node should be committed"),
-        })
-    }
 }
 
 /// Ligthtweight representation of [EdgeNode]. Only holds its path and its child's hash.
@@ -39,12 +73,18 @@ pub struct EdgeProofNode {
     pub child_hash: Felt252Wrapper,
 }
 
-impl From<&EdgeNode> for ProofNode {
-    fn from(edge: &EdgeNode) -> Self {
-        Self::Edge(EdgeProofNode {
+fn get_proof_node(node: &Node, nodes: &HashMap<NodeId, Node>) -> ProofNode {
+    match node {
+        Node::Binary(bin) => ProofNode::Binary(BinaryProofNode {
+            left_hash: nodes.get(&bin.left).unwrap().hash().expect("Node should be committed"),
+            right_hash: nodes.get(&bin.right).unwrap().hash().expect("Node should be committed"),
+        }),
+        Node::Edge(edge) => ProofNode::Edge(EdgeProofNode {
             path: edge.path.clone(),
-            child_hash: edge.child.hash().expect("Node should be committed"),
-        })
+            child_hash: nodes.get(&edge.child).unwrap().hash().expect("Node should be committed"),
+        }),
+        Node::Leaf(_) => panic!("Leaf nodes should not appear in a proof"),
+        Node::Unresolved(_) => panic!("Unresolved nodes should not appear in a proof"),
     }
 }
 
@@ -67,7 +107,9 @@ pub enum ProofNode {
 /// For more information on how this functions internally, see [here](super::merkle_node).
 #[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 pub struct MerkleTree<H: CryptoHasherT> {
-    root: Rc<Box<Node>>,
+    root: NodeId,
+    nodes: NodesMapping,
+    latest_node_id: NodeId,
     _hasher: PhantomData<H>,
 }
 
@@ -76,8 +118,12 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// [`MerkleTree::<RcNodeStorage>::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.
     fn new(root: Felt252Wrapper) -> Self {
-        let root_node = Rc::new(Box::new(Node::Unresolved(root)));
-        Self { root: root_node, _hasher: PhantomData }
+        let root_node = Node::Unresolved(root);
+        let mut nodes_mapping: HashMap<NodeId, Node> = HashMap::new();
+        let root_id = NodeId(0); // Assign the appropriate initial node ID here
+        nodes_mapping.insert(root_id, root_node);
+
+        Self { root: root_id, nodes: NodesMapping(nodes_mapping), latest_node_id: root_id, _hasher: PhantomData }
     }
 
     /// Empty tree.
@@ -89,17 +135,20 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     ///
     /// Note that the root is reference counted in storage. Committing the
     /// same tree again will therefore increment the count again.
-    pub fn commit(mut self) -> Felt252Wrapper {
+    pub fn commit(&mut self) -> Felt252Wrapper {
         self.commit_mut()
     }
+
     /// Return the state root.
     pub fn commit_mut(&mut self) -> Felt252Wrapper {
-        // Go through tree, collect dirty nodes, calculate their hashes and
-        // persist them. Take care to increment ref counts of child nodes. So in order
-        // to do this correctly, will have to start back-to-front.
-        Self::commit_subtree(&mut self.root.borrow_mut());
-        // unwrap is safe as `commit_subtree` will set the hash.
-        self.root.hash().unwrap()
+        // Go through the tree, collect dirty nodes, calculate their hashes, and
+        // persist them. Take care to increment ref counts of child nodes. Start from
+        // the root and traverse the tree.
+        self.commit_subtree(&self.root.clone(), &mut self.nodes.0.clone());
+
+        // Unwrap is safe as `commit_subtree` will set the hash.
+        let root_hash = self.nodes.0.get(&self.root).unwrap().hash().unwrap();
+        root_hash
     }
 
     /// Persists any changes in this subtree to storage.
@@ -113,8 +162,9 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Arguments
     ///
     /// * `node` - The top node from the subtree to commit.
-    fn commit_subtree(node: &mut Node) {
+    fn commit_subtree(&mut self, node_id: &NodeId, nodes: &mut HashMap<NodeId, Node>) {
         use Node::*;
+        let node = nodes.get_mut(node_id).unwrap();
         match node {
             Unresolved(_) => { /* Unresolved nodes are already persisted. */ }
             Leaf(_) => { /* storage wouldn't persist these even if we asked. */ }
@@ -122,18 +172,21 @@ impl<H: CryptoHasherT> MerkleTree<H> {
             Edge(edge) if edge.hash.is_some() => { /* not dirty, already persisted */ }
 
             Binary(binary) => {
-                Self::commit_subtree(&mut binary.left.borrow_mut());
-                Self::commit_subtree(&mut binary.right.borrow_mut());
+                self.commit_subtree(&binary.left, &mut self.nodes.0.clone());
+                self.commit_subtree(&binary.right, &mut self.nodes.0.clone());
                 // This will succeed as `commit_subtree` will set the child hashes.
-                binary.calculate_hash::<H>();
+                binary.calculate_hash::<H>(&self.nodes.0);
             }
 
             Edge(edge) => {
-                Self::commit_subtree(&mut edge.child.borrow_mut());
+                self.commit_subtree(&edge.child, &mut self.nodes.0.clone());
                 // This will succeed as `commit_subtree` will set the child's hash.
-                edge.calculate_hash::<H>();
+                edge.calculate_hash::<H>(&self.nodes.0);
             }
         }
+
+        // Update internal nodes mapping
+        self.nodes.0 = nodes.clone();
     }
 
     /// Sets the value of a key. To delete a key, set the value to [Felt252Wrapper::ZERO].
@@ -143,6 +196,8 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// * `key` - The key to set.
     /// * `value` - The value to set.
     pub fn set(&mut self, key: &BitSlice<u8, Msb0>, value: Felt252Wrapper) {
+        let mut nodes = self.nodes.0.clone();
+
         if value == Felt252Wrapper::ZERO {
             return self.delete_leaf(key);
         }
@@ -151,7 +206,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         // of all nodes along the path to the leaf.
         let path = self.traverse(key);
         for node in &path {
-            node.borrow_mut().mark_dirty();
+            nodes.get_mut(node).unwrap().mark_dirty();
         }
 
         // There are three possibilities.
@@ -173,7 +228,8 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         use Node::*;
         match path.last() {
             Some(node) => {
-                let updated: Node = match **node.as_ref() {
+                let match_node = self.nodes.0.get(node).unwrap();
+                let updated: Node = match match_node {
                     Edge(edge) => {
                         let common = edge.common_path(key);
 
@@ -190,16 +246,19 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         // The new leaf branch of the binary node.
                         // (this may be edge -> leaf, or just leaf depending).
                         let new_leaf = Node::Leaf(value);
+                        nodes.insert(self.latest_node_id.next(), new_leaf);
+
                         let new = if new_path.is_empty() {
-                            Rc::new(Box::new(new_leaf))
+                            self.latest_node_id
                         } else {
                             let new_edge = Node::Edge(EdgeNode {
                                 hash: None,
                                 height: child_height as u64,
                                 path: new_path,
-                                child: Rc::new(Box::new(new_leaf)),
+                                child: self.latest_node_id,
                             });
-                            Rc::new(Box::new(new_edge))
+                            nodes.insert(self.latest_node_id.next(), new_edge);
+                            self.latest_node_id
                         };
 
                         // The existing child branch of the binary node.
@@ -212,7 +271,8 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                                 path: old_path,
                                 child: edge.child.clone(),
                             });
-                            Rc::new(Box::new(old_edge))
+                            nodes.insert(self.latest_node_id.next(), old_edge);
+                            self.latest_node_id
                         };
 
                         let new_direction = Direction::from(key[branch_height]);
@@ -222,27 +282,36 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         };
 
                         let branch = Node::Binary(BinaryNode { hash: None, height: branch_height as u64, left, right });
+                        nodes.insert(self.latest_node_id.next(), branch.clone());
 
                         // We may require an edge leading to the binary node.
                         if common.is_empty() {
                             branch
                         } else {
-                            Node::Edge(EdgeNode {
+                            let edge = Node::Edge(EdgeNode {
                                 hash: None,
                                 height: edge.height,
                                 path: common.to_bitvec(),
-                                child: Rc::new(Box::new(branch)),
-                            })
+                                child: self.latest_node_id,
+                            });
+                            nodes.insert(self.latest_node_id.next(), edge.clone());
+                            edge
                         }
                     }
                     // Leaf exists, we replace its value.
-                    Leaf(_) => Node::Leaf(value),
+                    Leaf(_) => {
+                        let leaf = Node::Leaf(value);
+                        nodes.insert(self.latest_node_id.next(), leaf.clone());
+                        leaf
+                    }
                     Unresolved(_) | Binary(_) => {
                         unreachable!("The end of a traversion cannot be unresolved or binary")
                     }
                 };
 
-                node.swap(&Box::new(updated));
+                // node.swap(&Box::new(updated));
+                nodes.insert(*node, updated);
+                nodes.insert(self.latest_node_id, self.nodes.0.get(node).unwrap().clone());
             }
             None => {
                 // Getting no travel nodes implies that the tree is empty.
@@ -250,16 +319,17 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                 // Create a new leaf node with the value, and the root becomes
                 // an edge node connecting to the leaf.
                 let leaf = Node::Leaf(value);
-                let edge = Node::Edge(EdgeNode {
-                    hash: None,
-                    height: 0,
-                    path: key.to_bitvec(),
-                    child: Rc::new(Box::new(leaf)),
-                });
+                nodes.insert(self.latest_node_id.next(), leaf);
+                let edge =
+                    Node::Edge(EdgeNode { hash: None, height: 0, path: key.to_bitvec(), child: self.latest_node_id });
+                nodes.insert(self.latest_node_id.next(), edge);
 
-                self.root = Rc::new(Box::new(edge));
+                self.root = self.latest_node_id;
             }
         }
+
+        // Updates self nodes mapping
+        self.nodes.0 = nodes;
     }
 
     /// Deletes a leaf node from the tree.
@@ -271,6 +341,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     ///
     /// * `key` - The key to delete.
     fn delete_leaf(&mut self, key: &BitSlice<u8, Msb0>) {
+        let mut nodes = self.nodes.0.clone();
         // Algorithm explanation:
         //
         // The leaf's parent node is either an edge, or a binary node.
@@ -288,7 +359,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
 
         // Do nothing if the leaf does not exist.
         match path.last() {
-            Some(node) => match **node.as_ref() {
+            Some(node) => match nodes.get(node).unwrap() {
                 Node::Leaf(_) => {}
                 _ => return,
             },
@@ -296,23 +367,24 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         }
 
         // All hashes along the path will become invalid (if they aren't deleted).
-        for mut node in &path {
-            node.borrow_mut().mark_dirty();
+        for node in &path {
+            nodes.get_mut(node).unwrap().mark_dirty();
         }
 
         // Go backwards until we hit a branch node.
-        let mut node_iter = path.into_iter().rev().skip_while(|node| !node.is_binary());
+        let mut node_iter = path.into_iter().rev().skip_while(|node| !self.nodes.0.get(node).unwrap().is_binary());
 
         match node_iter.next() {
-            Some(mut node) => {
+            Some(node) => {
                 let new_edge = {
+                    let node = nodes.get_mut(&node).unwrap();
                     // This node must be a binary node due to the iteration condition.
                     let binary = node.as_binary().cloned().unwrap();
                     // Create an edge node to replace the old binary node
                     // i.e. with the remaining child (note the direction invert),
                     //      and a path of just a single bit.
                     let direction = binary.direction(key).invert();
-                    let child = binary.get_child(direction);
+                    let child = binary.get_child(direction.clone());
                     let path = once(bool::from(direction)).collect::<BitVec<_, _>>();
                     let mut edge = EdgeNode { hash: None, height: binary.height, path, child };
 
@@ -322,20 +394,22 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                     edge
                 };
                 // Replace the old binary node with the new edge node.
-                node.swap(&Box::new(Node::Edge(new_edge)));
+                // node.swap(&Box::new(Node::Edge(new_edge)));
+                nodes.insert(node, Node::Edge(new_edge));
+                nodes.insert(self.latest_node_id, nodes.get(&node).unwrap().clone());
             }
             None => {
                 // We reached the root without a hitting binary node. The new tree
                 // must therefore be empty.
-                self.root = Rc::new(Box::new(Node::Unresolved(Felt252Wrapper::ZERO)));
+                self.root = NodeId(0);
                 return;
             }
         };
 
         // Check the parent of the new edge. If it is also an edge, then they must merge.
-        if let Some(mut node) = node_iter.next() {
-            if let Node::Edge(edge) = &mut *node.as_mut() {
-                self.merge_edges(&mut edge);
+        if let Some(node) = node_iter.next() {
+            if let Node::Edge(edge) = nodes.get_mut(&node).unwrap() {
+                self.merge_edges(edge);
             }
         }
     }
@@ -350,8 +424,8 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     ///
     /// The value of the key.
     pub fn get(&self, key: &BitSlice<u8, Msb0>) -> Option<Felt252Wrapper> {
-        self.traverse(key).last().and_then(|node| match **node.as_ref() {
-            Node::Leaf(value) if !value.eq(&Felt252Wrapper::ZERO) => Some(value),
+        self.traverse(key).last().and_then(|node| match self.nodes.0.get(node).unwrap() {
+            Node::Leaf(value) if !value.eq(&Felt252Wrapper::ZERO) => Some(*value),
             _ => None,
         })
     }
@@ -386,15 +460,15 @@ impl<H: CryptoHasherT> MerkleTree<H> {
 
         // A leaf node is redundant data as the information for it is already contained in the previous
         // node.
-        if matches!(**node.as_ref(), Node::Leaf(_)) {
+        if matches!(self.nodes.0.get(node).unwrap(), Node::Leaf(_)) {
             nodes.pop();
         }
 
         nodes
             .iter()
-            .map(|node| match **node.as_ref() {
-                Node::Binary(bin) => ProofNode::from(&bin),
-                Node::Edge(edge) => ProofNode::from(&edge),
+            .map(|node| match self.nodes.0.get(node).unwrap() {
+                Node::Binary(bin) => get_proof_node(&Node::Binary(bin.clone()), &self.nodes.0),
+                Node::Edge(edge) => get_proof_node(&Node::Edge(edge.clone()), &self.nodes.0),
                 _ => unreachable!(),
             })
             .collect()
@@ -420,8 +494,8 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Returns
     ///
     /// The list of nodes along the path.
-    fn traverse(&self, dst: &BitSlice<u8, Msb0>) -> Vec<Rc<Box<Node>>> {
-        if self.root.is_empty() {
+    fn traverse(&self, dst: &BitSlice<u8, Msb0>) -> Vec<NodeId> {
+        if self.nodes.0.get(&self.root).unwrap().is_empty() {
             return Vec::new();
         }
 
@@ -432,9 +506,9 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         loop {
             use Node::*;
 
-            let current_tmp = current.as_ref().clone();
+            let current_tmp = self.nodes.0.get(&current).unwrap().clone();
 
-            let next = match *current_tmp {
+            let next = match current_tmp {
                 Unresolved(_hash) => panic!("Resolve is useless"),
                 Binary(binary) => {
                     nodes.push(current.clone());
@@ -470,7 +544,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     ///
     /// * `parent` - The parent node to merge the child with.
     fn merge_edges(&self, parent: &mut EdgeNode) {
-        let resolved_child = match **parent.child.as_ref() {
+        let resolved_child = match self.nodes.0.get(&parent.child).unwrap().borrow() {
             Node::Unresolved(_hash) => panic!("Resolve is useless"),
             other => other.clone(),
         };

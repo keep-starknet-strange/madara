@@ -19,7 +19,7 @@ use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
 
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy, serde::Serialize, serde::Deserialize)]
 //#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Felt252Wrapper(pub FieldElement);
 

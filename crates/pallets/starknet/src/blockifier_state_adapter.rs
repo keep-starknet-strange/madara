@@ -36,7 +36,7 @@ where
         let keys = self.storage_update.keys();
 
         // TODO: update state root here
-        let mut tree = crate::State::<T>::get().storage_commitment;
+        let _tree = crate::State::<T>::get().storage_commitment;
 
         let n_contract_updated = BTreeSet::from_iter(keys.clone().map(|&(contract_address, _)| contract_address)).len();
         (n_contract_updated, keys.len(), self.class_hash_update)
@@ -114,7 +114,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         // Update contracts tree
         let mut tree = crate::State::<T>::get().storage_commitment;
-        let hash = calculate_contract_state_hash(
+        let hash = calculate_contract_state_hash::<T::SystemHash>(
             Felt252Wrapper::ZERO,
             Felt252Wrapper::ZERO,
             Felt252Wrapper::try_from(current_nonce + 1).unwrap(),
@@ -133,7 +133,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         // Update classes tree
         let mut tree = crate::State::<T>::get().class_commitment;
-        let final_hash = calculate_class_commitment_leaf_hash::<T>(Felt252Wrapper::ZERO);
+        let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(Felt252Wrapper::ZERO);
         tree.set(class_hash, final_hash);
 
         Ok(())
@@ -147,7 +147,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         // Update classes tree
         let mut tree = crate::State::<T>::get().class_commitment;
-        let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
+        let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(class_hash);
         tree.set(class_hash, final_hash);
 
         Ok(())

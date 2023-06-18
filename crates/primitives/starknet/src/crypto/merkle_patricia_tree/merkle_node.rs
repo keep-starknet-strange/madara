@@ -4,19 +4,29 @@
 //! For more information about how these Starknet trees are structured, see
 //! [`MerkleTree`](super::merkle_tree::MerkleTree).
 
-use alloc::boxed::Box;
-use alloc::rc::Rc;
-use core::borrow::BorrowMut;
-
 use bitvec::order::Msb0;
 use bitvec::prelude::BitVec;
 use bitvec::slice::BitSlice;
+use scale_codec::{Decode, Encode};
+use starknet_api::stdlib::collections::HashMap;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 
+/// Id of a Node within the tree
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+pub struct NodeId(pub u64);
+
+impl NodeId {
+    /// Mutates the given NodeId to be the next one and returns it.
+    pub fn next(&mut self) -> NodeId {
+        self.0 += 1;
+        NodeId(self.0)
+    }
+}
+
 /// A node in a Binary Merkle-Patricia Tree graph.
-#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
 pub enum Node {
     /// A node that has not been fetched from storage yet.
     ///
@@ -31,7 +41,7 @@ pub enum Node {
 }
 
 /// Describes the [Node::Binary] variant.
-#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
 pub struct BinaryNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -39,13 +49,13 @@ pub struct BinaryNode {
     /// The height of this node in the tree.
     pub height: u64,
     /// [Left](Direction::Left) child.
-    pub left: Rc<Box<Node>>,
+    pub left: NodeId,
     /// [Right](Direction::Right) child.
-    pub right: Rc<Box<Node>>,
+    pub right: NodeId,
 }
 
 /// Node that is an edge.
-#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
 pub struct EdgeNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
@@ -55,13 +65,13 @@ pub struct EdgeNode {
     /// The path this edge takes.
     pub path: BitVec<u8, Msb0>,
     /// The child of this node.
-    pub child: Rc<Box<Node>>,
+    pub child: NodeId,
 }
 
 /// Describes the direction a child of a [BinaryNode] may have.
 ///
 /// Binary nodes have two children, one left and one right.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
 pub enum Direction {
     /// Left direction.
     Left,
@@ -132,7 +142,7 @@ impl BinaryNode {
     /// # Returns
     ///
     /// The child in the specified direction.
-    pub fn get_child(&self, direction: Direction) -> Rc<Box<Node>> {
+    pub fn get_child(&self, direction: Direction) -> NodeId {
         match direction {
             Direction::Left => self.left.clone(),
             Direction::Right => self.right.clone(),
@@ -145,19 +155,25 @@ impl BinaryNode {
     ///
     /// If either child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self) {
+    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
         if self.hash.is_some() {
             return;
         }
 
-        let left = match self.left.hash() {
-            Some(hash) => hash,
-            None => unreachable!("subtrees have to be committed first"),
+        let left = match nodes.get(&self.left) {
+            Some(node) => match node.hash() {
+                Some(hash) => hash,
+                None => unreachable!("subtrees have to be committed first"),
+            },
+            None => unreachable!("left child not found"),
         };
 
-        let right = match self.right.hash() {
-            Some(hash) => hash,
-            None => unreachable!("subtrees have to be committed first"),
+        let right = match nodes.get(&self.right) {
+            Some(node) => match node.hash() {
+                Some(hash) => hash,
+                None => unreachable!("subtrees have to be committed first"),
+            },
+            None => unreachable!("right child not found"),
         };
 
         self.hash = Some(Felt252Wrapper(H::hash(left.0, right.0)));
@@ -175,10 +191,6 @@ impl Node {
             Node::Edge(inner) => inner.hash = None,
             _ => {}
         }
-    }
-    /// Swaps the inner value of the node with a new value, returning the old value.
-    pub fn swap(&mut self, mut other: &Self) {
-        core::mem::swap(&mut *self.borrow_mut(), &mut *other.borrow_mut())
     }
 
     /// Returns true if the node represents an empty node -- this is defined as a node
@@ -254,15 +266,19 @@ impl EdgeNode {
     ///
     /// If the child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self) {
+    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
         if self.hash.is_some() {
             return;
         }
 
-        let child = match self.child.hash() {
-            Some(hash) => hash,
-            None => unreachable!("subtree has to be committed before"),
+        let child = match nodes.get(&self.child) {
+            Some(node) => match node.hash() {
+                Some(hash) => hash,
+                None => unreachable!("subtree has to be committed before"),
+            },
+            None => unreachable!("child node not found"),
         };
+
         let mut temp_path = self.path.clone();
         temp_path.force_align();
 
