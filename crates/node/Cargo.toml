@@ -55,7 +55,7 @@ sp-trie = { workspace = true, features = ["default"] }
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
 
-# Substrate primtives dependencies
+# Substrate primitives dependencies
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-blockchain = { workspace = true }

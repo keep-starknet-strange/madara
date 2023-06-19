@@ -27,9 +27,9 @@ pub enum InherentError {
 
 #[cfg(feature = "std")]
 impl std::fmt::Display for InherentError {
-	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-		write!(f, "Inherent decoding error")
-	}
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Inherent decoding error")
+    }
 }
 
 impl IsFatalError for InherentError {
@@ -109,8 +109,6 @@ impl sp_inherents::InherentDataProvider for InherentDataProvider {
         identifier: &InherentIdentifier,
         error: &[u8],
     ) -> Option<Result<(), sp_inherents::Error>> {
-        Some(Err(sp_inherents::Error::Application(Box::from(InherentError::try_from(
-			identifier, error,
-		)?))))
+        Some(Err(sp_inherents::Error::Application(Box::from(InherentError::try_from(identifier, error)?))))
     }
 }
