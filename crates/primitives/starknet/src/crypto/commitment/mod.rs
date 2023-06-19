@@ -195,7 +195,7 @@ pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes:
         let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
         tree.set(*class_hash, final_hash);
     });
-    tree.commit().into()
+    tree.commit()
 }
 
 /// Calculates the contract state hash from its preimage.

@@ -19,7 +19,7 @@ pub struct NodeId(pub u64);
 
 impl NodeId {
     /// Mutates the given NodeId to be the next one and returns it.
-    pub fn next(&mut self) -> NodeId {
+    pub fn next_id(&mut self) -> NodeId {
         self.0 += 1;
         NodeId(self.0)
     }
@@ -144,8 +144,8 @@ impl BinaryNode {
     /// The child in the specified direction.
     pub fn get_child(&self, direction: Direction) -> NodeId {
         match direction {
-            Direction::Left => self.left.clone(),
-            Direction::Right => self.right.clone(),
+            Direction::Left => self.left,
+            Direction::Right => self.right,
         }
     }
 

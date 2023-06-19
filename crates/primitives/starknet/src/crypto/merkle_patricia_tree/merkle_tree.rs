@@ -246,7 +246,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         // The new leaf branch of the binary node.
                         // (this may be edge -> leaf, or just leaf depending).
                         let new_leaf = Node::Leaf(value);
-                        nodes.insert(self.latest_node_id.next(), new_leaf);
+                        nodes.insert(self.latest_node_id.next_id(), new_leaf);
 
                         let new = if new_path.is_empty() {
                             self.latest_node_id
@@ -257,13 +257,13 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                                 path: new_path,
                                 child: self.latest_node_id,
                             });
-                            nodes.insert(self.latest_node_id.next(), new_edge);
+                            nodes.insert(self.latest_node_id.next_id(), new_edge);
                             self.latest_node_id
                         };
 
                         // The existing child branch of the binary node.
                         let old = if old_path.is_empty() {
-                            edge.child.clone()
+                            edge.child
                         } else {
                             let old_edge = Node::Edge(EdgeNode {
                                 hash: None,
@@ -271,7 +271,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                                 path: old_path,
                                 child: edge.child,
                             });
-                            nodes.insert(self.latest_node_id.next(), old_edge);
+                            nodes.insert(self.latest_node_id.next_id(), old_edge);
                             self.latest_node_id
                         };
 
@@ -282,7 +282,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                         };
 
                         let branch = Node::Binary(BinaryNode { hash: None, height: branch_height as u64, left, right });
-                        nodes.insert(self.latest_node_id.next(), branch.clone());
+                        nodes.insert(self.latest_node_id.next_id(), branch.clone());
 
                         // We may require an edge leading to the binary node.
                         if common.is_empty() {
@@ -294,14 +294,14 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                                 path: common.to_bitvec(),
                                 child: self.latest_node_id,
                             });
-                            nodes.insert(self.latest_node_id.next(), edge.clone());
+                            nodes.insert(self.latest_node_id.next_id(), edge.clone());
                             edge
                         }
                     }
                     // Leaf exists, we replace its value.
                     Leaf(_) => {
                         let leaf = Node::Leaf(value);
-                        nodes.insert(self.latest_node_id.next(), leaf.clone());
+                        nodes.insert(self.latest_node_id.next_id(), leaf.clone());
                         leaf
                     }
                     Unresolved(_) | Binary(_) => {
@@ -319,10 +319,10 @@ impl<H: CryptoHasherT> MerkleTree<H> {
                 // Create a new leaf node with the value, and the root becomes
                 // an edge node connecting to the leaf.
                 let leaf = Node::Leaf(value);
-                nodes.insert(self.latest_node_id.next(), leaf);
+                nodes.insert(self.latest_node_id.next_id(), leaf);
                 let edge =
                     Node::Edge(EdgeNode { hash: None, height: 0, path: key.to_bitvec(), child: self.latest_node_id });
-                nodes.insert(self.latest_node_id.next(), edge);
+                nodes.insert(self.latest_node_id.next_id(), edge);
 
                 self.root = self.latest_node_id;
             }
