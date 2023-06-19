@@ -85,7 +85,7 @@ sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", rev = "
 # Substrate build & tools dependencies
 substrate-build-script-utils = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
-prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", branch = "master" }
+prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.10.0-dev", git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
 
 # Substrate Frame pallet
 pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
