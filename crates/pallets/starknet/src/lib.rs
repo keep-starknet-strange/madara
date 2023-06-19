@@ -87,7 +87,6 @@ use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-use sp_core::U256;
 use sp_runtime::offchain::storage::StorageValueRef;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;

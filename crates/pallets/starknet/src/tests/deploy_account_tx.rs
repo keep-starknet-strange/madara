@@ -1,5 +1,6 @@
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
@@ -7,11 +8,12 @@ use sp_runtime::transaction_validity::TransactionSource;
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::tests::constants::ACCOUNT_PUBLIC_KEY;
-use crate::{Error, Event, StorageView};
+use crate::{Error, Event, SequencerAddress, StorageView};
 
 #[test]
 fn given_contract_run_deploy_account_tx_works() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
         let none_origin = RuntimeOrigin::none();
@@ -66,6 +68,7 @@ fn given_contract_run_deploy_account_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_tx_twice_fails() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
@@ -165,6 +168,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 #[test]
 fn given_contract_run_deploy_account_openzeppelin_tx_works() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
 
@@ -246,6 +250,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
 #[test]
 fn given_contract_run_deploy_account_argent_tx_works() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
 
@@ -328,6 +333,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
 #[test]
 fn given_contract_run_deploy_account_braavos_tx_works() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
 

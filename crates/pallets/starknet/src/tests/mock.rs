@@ -13,6 +13,7 @@ use starknet_api::StarknetApiError;
 use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
 use {crate as pallet_starknet, frame_system as system};
+use crate::SeqAddrUpdate;
 
 use super::constants::*;
 use super::utils::get_contract_class;
@@ -266,6 +267,7 @@ pub(crate) fn run_to_block(n: u64) {
     for b in System::block_number()..=n {
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
+        SeqAddrUpdate::<MockRuntime>::put(true);
         Starknet::on_finalize(b);
     }
 }

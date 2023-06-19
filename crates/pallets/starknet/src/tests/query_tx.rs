@@ -1,11 +1,14 @@
 use frame_support::assert_ok;
+use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use mp_starknet::starknet_serde::transaction_from_json;
 
 use super::mock::*;
+use crate::SequencerAddress;
 
 #[test]
 fn estimates_tx_fee_successfully() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
 
@@ -21,6 +24,7 @@ fn estimates_tx_fee_successfully() {
 #[test]
 fn estimate_does_not_add_to_pending() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
 
