@@ -153,7 +153,7 @@ pub mod pallet {
         #[pallet::constant]
         type TransactionLongevity: Get<TransactionLongevity>;
         /// A bool to enable/disable State Root computation
-        /// As this is a very time-consuming process we prefered to let it optional for now
+        /// As this is a very time-consuming process we preferred to let it optional for now
         /// Not every application needs it but if you need to use it you can enable it
         type EnableStateRoot: Get<bool>;
         #[pallet::constant]
