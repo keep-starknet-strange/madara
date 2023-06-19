@@ -277,7 +277,7 @@
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+<span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
 <span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span>pallet_starknet::types::ContractStorageKeyWrapper;
 <span class="kw">use </span>sc_service::ChainType;
@@ -295,7 +295,7 @@
 <span class="kw">pub const </span>ACCOUNT_PUBLIC_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2&quot;</span>;
 
 <span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-</span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;GenesisConfig&gt;;
+</span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;RuntimeGenesisConfig&gt;;
 
 <span class="doccomment">/// Specialized `ChainSpec` for development.
 </span><span class="kw">pub type </span>DevChainSpec = sc_service::GenericChainSpec&lt;DevGenesisExt&gt;;
@@ -307,7 +307,7 @@
 </span><span class="attr">#[derive(Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>DevGenesisExt {
     <span class="doccomment">/// Genesis config.
-    </span>genesis_config: GenesisConfig,
+    </span>genesis_config: RuntimeGenesisConfig,
     <span class="doccomment">/// The flag that if enable manual-seal mode.
     </span>enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;,
 }
@@ -436,7 +436,7 @@
     wasm_binary: <span class="kw-2">&amp;</span>[u8],
     initial_authorities: Vec&lt;(AuraId, GrandpaId)&gt;,
     _enable_println: bool,
-) -&gt; GenesisConfig {
+) -&gt; RuntimeGenesisConfig {
     <span class="comment">// ACCOUNT CONTRACT
     </span><span class="kw">let </span>no_validate_account_class =
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../cairo-contracts/build/NoValidateAccount.json&quot;</span>)).try_into().unwrap();
@@ -483,7 +483,7 @@
     <span class="kw">let </span>public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
     <span class="kw">let </span>chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
-    GenesisConfig {
+    RuntimeGenesisConfig {
         system: SystemConfig {
             <span class="comment">// Add Wasm runtime to storage.
             </span>code: wasm_binary.to_vec(),
