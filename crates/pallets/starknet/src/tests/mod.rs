@@ -1,6 +1,5 @@
 mod account_helper;
 mod call_contract;
-mod current_block;
 mod declare_tx;
 mod deploy_account_tx;
 mod erc20;

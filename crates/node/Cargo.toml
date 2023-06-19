@@ -21,46 +21,46 @@ name = "madara"
 
 [dependencies]
 async-trait = "0.1"
-log = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
+log = { workspace = true }
 serde = { workspace = true }
 
+frame-system = { workspace = true }
 sc-cli = { workspace = true }
-sp-core = { workspace = true }
+sc-client-api = { workspace = true }
+sc-consensus = { workspace = true }
+sc-consensus-aura = { workspace = true }
+sc-consensus-grandpa = { workspace = true }
+sc-consensus-manual-seal = { workspace = true }
 sc-executor = { workspace = true }
+sc-keystore = { workspace = true }
+sc-network = { workspace = true }
+sc-network-sync = { workspace = true }
 sc-service = { workspace = true }
 sc-telemetry = { workspace = true }
-sc-keystore = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
-sc-consensus-aura = { workspace = true }
 sp-consensus-aura = { workspace = true }
-sc-consensus-manual-seal = { workspace = true }
-sc-consensus = { workspace = true }
-sc-consensus-grandpa = { workspace = true }
 sp-consensus-grandpa = { workspace = true }
-sc-client-api = { workspace = true }
-sc-network = { workspace = true }
-sp-runtime = { workspace = true }
-sp-timestamp = { workspace = true }
+sp-core = { workspace = true }
 sp-inherents = { workspace = true }
 sp-keyring = { workspace = true }
+sp-runtime = { workspace = true }
 sp-state-machine = { workspace = true }
-frame-system = { workspace = true }
+sp-timestamp = { workspace = true }
 sp-trie = { workspace = true, features = ["default"] }
-sc-network-sync = { workspace = true }
 
 # These dependencies are used for the node template's RPCs
 jsonrpsee = { workspace = true, features = ["server"] }
 
 # Substrate primtiives dependencies
 sp-api = { workspace = true }
-sp-blockchain = { workspace = true }
 sp-block-builder = { workspace = true }
+sp-blockchain = { workspace = true }
 # Substrate client dependencies
-sc-rpc-api = { workspace = true }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
+sc-rpc-api = { workspace = true }
 # Substrate frame dependencies
 # no substrate frame pallet dependencies for now
 
@@ -71,20 +71,20 @@ frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 
 # Starknet
-madara-runtime = { workspace = true }
-mc-db = { workspace = true }
-mc-rpc = { workspace = true }
-mc-storage = { workspace = true }
-mc-mapping-sync = { workspace = true }
-pallet-starknet = { workspace = true }
-mp-starknet = { workspace = true }
-mc-block-proposer = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
+madara-runtime = { workspace = true }
+mc-block-proposer = { workspace = true }
+mc-db = { workspace = true }
+mc-mapping-sync = { workspace = true }
+mc-rpc = { workspace = true }
+mc-storage = { workspace = true }
+mp-starknet = { workspace = true }
+pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }
 
 # CLI-specific dependencies
-try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", rev = "51b2f0e" }
+try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
 
 serde_json = { workspace = true }
 

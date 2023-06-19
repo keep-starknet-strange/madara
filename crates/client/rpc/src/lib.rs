@@ -115,7 +115,7 @@ where
         Ok(block.header().hash(*self.hasher).into())
     }
 
-    /// Returns the substrate block corresponding to the given Starknet block id
+    /// Returns the substrate block hash corresponding to the given Starknet block id
     fn substrate_block_hash_from_starknet_block(&self, block_id: BlockId) -> Result<B::Hash, String> {
         match block_id {
             BlockId::Hash(h) => madara_backend_client::load_hash(

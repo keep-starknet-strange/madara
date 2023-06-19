@@ -2,7 +2,7 @@ use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use frame_support::{bounded_vec, BoundedVec};
-use sp_core::U256;
+use sp_core::{TypedGet, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockHash, BlockNumber};
 use starknet_api::hash::{StarkFelt, StarkHash};
@@ -11,15 +11,18 @@ use starknet_api::transaction::{
     Event, EventContent, EventData, EventKey, Fee, InvokeTransactionOutput, TransactionHash, TransactionOutput,
     TransactionReceipt,
 };
-use starknet_core::types::BroadcastedDeployAccountTransaction;
+use starknet_core::types::{
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV0,
+    BroadcastedInvokeTransactionV1, StarknetError,
+};
 use starknet_ff::FieldElement;
 
 use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCalldataSize};
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
-    BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper, MaxArraySize,
-    Transaction, TransactionReceiptWrapper, TxType,
+    BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper,
+    InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
 };
 
 #[test]
@@ -379,8 +382,6 @@ fn test_event_wrapper_builder_with_event_content() {
 
 #[test]
 fn test_try_into_deploy_account_transaction() {
-    use sp_core::Get;
-
     let zero_len = get_try_into_and_expected_value(0, 0).expect("failed to bound signature or calldata");
     pretty_assertions::assert_eq!(zero_len.0, zero_len.1);
 
@@ -403,6 +404,91 @@ fn test_try_into_deploy_account_transaction() {
 
     let calldata_outbound = get_try_into_and_expected_value(max_array_size, max_calldata_size + 1);
     assert!(matches!(calldata_outbound.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataBoundError));
+}
+
+#[test]
+fn test_try_invoke_txn_from_broadcasted_invoke_txn_v0() {
+    let broadcasted_invoke_txn_v0 = BroadcastedInvokeTransactionV0 {
+        max_fee: FieldElement::default(),
+        signature: vec![FieldElement::default()],
+        nonce: FieldElement::default(),
+        contract_address: FieldElement::default(),
+        entry_point_selector: FieldElement::default(),
+        calldata: vec![FieldElement::default()],
+    };
+
+    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V0(broadcasted_invoke_txn_v0);
+    let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
+
+    assert!(invoke_txn.is_err());
+    assert!(matches!(
+        invoke_txn.unwrap_err(),
+        BroadcastedTransactionConversionErrorWrapper::StarknetError(StarknetError::FailedToReceiveTransaction)
+    ))
+}
+
+#[test]
+fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1() {
+    let broadcasted_invoke_txn_v1 = BroadcastedInvokeTransactionV1 {
+        max_fee: FieldElement::default(),
+        nonce: FieldElement::default(),
+        sender_address: FieldElement::default(),
+        signature: vec![FieldElement::default()],
+        calldata: vec![FieldElement::default()],
+    };
+
+    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
+    let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn).unwrap();
+
+    let expected_sig: BoundedVec<Felt252Wrapper, MaxArraySize> =
+        BoundedVec::try_from(vec![Felt252Wrapper::from(FieldElement::default())]).unwrap();
+    let expected_calldata: BoundedVec<Felt252Wrapper, MaxArraySize> =
+        BoundedVec::try_from(vec![Felt252Wrapper::from(FieldElement::default())]).unwrap();
+
+    pretty_assertions::assert_eq!(invoke_txn.version, 1_u8);
+    pretty_assertions::assert_eq!(invoke_txn.sender_address, Felt252Wrapper::from(FieldElement::default()));
+    pretty_assertions::assert_eq!(invoke_txn.calldata, expected_calldata);
+    pretty_assertions::assert_eq!(invoke_txn.nonce, Felt252Wrapper::from(FieldElement::default()));
+    pretty_assertions::assert_eq!(invoke_txn.signature, expected_sig);
+    pretty_assertions::assert_eq!(invoke_txn.max_fee, Felt252Wrapper::from(FieldElement::default()));
+}
+
+#[test]
+fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_sig_size() {
+    let signature_size_maxed = vec![FieldElement::default(); MaxArraySize::get() as usize + 1];
+
+    let broadcasted_invoke_txn_v1 = BroadcastedInvokeTransactionV1 {
+        max_fee: FieldElement::default(),
+        nonce: FieldElement::default(),
+        sender_address: FieldElement::default(),
+        signature: signature_size_maxed,
+        calldata: vec![FieldElement::default()],
+    };
+
+    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
+    let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
+
+    assert!(invoke_txn.is_err());
+    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureConversionError))
+}
+
+#[test]
+fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
+    let calldata_size_maxed = vec![FieldElement::default(); MaxCalldataSize::get() as usize + 1];
+
+    let broadcasted_invoke_txn_v1 = BroadcastedInvokeTransactionV1 {
+        max_fee: FieldElement::default(),
+        nonce: FieldElement::default(),
+        sender_address: FieldElement::default(),
+        signature: vec![FieldElement::default()],
+        calldata: calldata_size_maxed,
+    };
+
+    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
+    let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
+
+    assert!(invoke_txn.is_err());
+    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataConversionError))
 }
 
 // This helper methods either returns result of `TryInto::try_into()` and expected result or the

@@ -3,7 +3,7 @@
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin, HashBuiltin
 
 @event
-func do_event1() {
+func external() {
 }
 @constructor
 func constructor{
@@ -16,6 +16,6 @@ func constructor{
 
 @external
 func emit_external{ syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() {
-    do_event1.emit();
+    external.emit();
     return ();
 }
