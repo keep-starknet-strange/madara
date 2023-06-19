@@ -74,6 +74,7 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
+    pub const EnableStateRoot: bool = false;
 }
 
 impl pallet_starknet::Config for MockRuntime {
@@ -85,6 +86,7 @@ impl pallet_starknet::Config for MockRuntime {
     type TransactionLongevity = TransactionLongevity;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
+    type EnableStateRoot = EnableStateRoot;
 }
 
 // Build genesis storage according to the mock runtime.
