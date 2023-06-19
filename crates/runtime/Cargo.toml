@@ -32,7 +32,6 @@ sp-version = { workspace = true }
 
 frame-executive = { workspace = true }
 frame-support = { workspace = true }
-pallet-grandpa = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 pallet-aura = { workspace = true }
