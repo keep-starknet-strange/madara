@@ -1,0 +1,14 @@
+[package]
+name = "madara-integration-tests"
+version = "0.1.0-alpha"
+edition = "2021"
+authors = ["shamb0 <@shamb0>"]
+
+[dependencies]
+anyhow = "1.0.70"
+subxt = { git = "https://github.com/polytope-labs/subxt", branch = "master" }
+codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false, features = ["derive"] }
+futures = "0.3.28"
+sp-core = { version = "20.0.0", features = ["full_crypto"] }
+sp-keyring = { version = "23.0.0" }
+tokio = { version = "1.27.0", features = ["macros"] }
