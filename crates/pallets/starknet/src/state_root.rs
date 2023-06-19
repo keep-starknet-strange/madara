@@ -23,11 +23,9 @@ impl<T: Config> Get<Felt252Wrapper> for IntermediateStateRoot<T> {
         let mut commitments = crate::State::<T>::get();
 
         // Compute the final state root
-        let global_state_root = StateCommitment::<T::SystemHash>::calculate(
+        StateCommitment::<T::SystemHash>::calculate(
             commitments.storage_commitment.commit(),
             commitments.class_commitment.commit(),
-        );
-
-        global_state_root
+        )
     }
 }
