@@ -36,7 +36,6 @@ frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
 pallet-aura = { workspace = true }
 pallet-grandpa = { workspace = true }
-pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
