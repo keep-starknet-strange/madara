@@ -1055,6 +1055,7 @@
 <a href="#1055" id="1055">1055</a>
 <a href="#1056" id="1056">1056</a>
 <a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1210,6 +1211,10 @@
         /// set how long transactions are kept in the mempool.
         </span><span class="attr">#[pallet::constant]
         </span><span class="kw">type </span>TransactionLongevity: Get&lt;TransactionLongevity&gt;;
+        <span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>InvokeTxMaxNSteps: Get&lt;u32&gt;;
+        <span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>ValidateMaxNSteps: Get&lt;u32&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -1821,9 +1826,6 @@
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
         <span class="kw">let </span>sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
         <span class="kw">let </span>vm_resource_fee_cost = HashMap::default();
-        <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/545
-        </span><span class="kw">let </span>invoke_tx_max_n_steps = <span class="number">1000000</span>;
-        <span class="kw">let </span>validate_max_n_steps = <span class="number">1000000</span>;
         <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         </span><span class="kw">let </span>gas_price = <span class="number">10</span>;
         BlockContext {
@@ -1833,8 +1835,8 @@
             sequencer_address,
             fee_token_address,
             vm_resource_fee_cost,
-            invoke_tx_max_n_steps,
-            validate_max_n_steps,
+            invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
+            validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
         }
     }

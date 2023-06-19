@@ -161,6 +161,10 @@
 <a href="#161" id="161">161</a>
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
@@ -202,6 +206,8 @@
     <span class="kw">type </span>TimestampProvider = Timestamp;
     <span class="kw">type </span>UnsignedPriority = UnsignedPriority;
     <span class="kw">type </span>TransactionLongevity = TransactionLongevity;
+    <span class="kw">type </span>InvokeTxMaxNSteps = InvokeTxMaxNSteps;
+    <span class="kw">type </span>ValidateMaxNSteps = ValidateMaxNSteps;
 }
 
 <span class="doccomment">/// --------------------------------------
@@ -311,6 +317,8 @@
 <span class="macro">parameter_types! </span>{
     <span class="kw">pub const </span>UnsignedPriority: u64 = <span class="number">1 </span>&lt;&lt; <span class="number">20</span>;
     <span class="kw">pub const </span>TransactionLongevity: u64 = u64::MAX;
+    <span class="kw">pub const </span>InvokeTxMaxNSteps: u32 = <span class="number">1_000_000</span>;
+    <span class="kw">pub const </span>ValidateMaxNSteps: u32 = <span class="number">1_000_000</span>;
 }
 
 <span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.
