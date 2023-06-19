@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687182212389,
+  "lastUpdate": 1687186276364,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -2412,6 +2412,42 @@ window.BENCHMARK_DATA = {
             "value": 86.70833333333333,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "51800892+ApereLieZ@users.noreply.github.com",
+            "name": "yivanov",
+            "username": "ApereLieZ"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6ccd8023202451b2eefad4b678e1cd3b48c013dc",
+          "message": "dev: Use taplo to format TOML files of the project (#642)\n\nCo-authored-by: 0xevolve <Artevolve@yahoo.com>",
+          "timestamp": "2023-06-19T16:48:05+02:00",
+          "tree_id": "2bf1e2ef308e8cfa0cc83485c2e5cb56186a9b15",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/6ccd8023202451b2eefad4b678e1cd3b48c013dc"
+        },
+        "date": 1687186275775,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 519.75,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3619\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 86.625,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3619\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
