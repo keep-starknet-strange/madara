@@ -1029,8 +1029,6 @@
 <a href="#1029" id="1029">1029</a>
 <a href="#1030" id="1030">1030</a>
 <a href="#1031" id="1031">1031</a>
-<a href="#1032" id="1032">1032</a>
-<a href="#1033" id="1033">1033</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1978,13 +1976,11 @@
         }
 
         <span class="kw">for </span>inner_call <span class="kw">in </span><span class="kw-2">&amp;mut </span>call_info.inner_calls {
-            inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-            <span class="kw">for </span>ordered_event <span class="kw">in </span><span class="kw-2">&amp;</span>inner_call.execution.events {
-                <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, inner_call.call.storage_address, tx_hash)<span class="question-mark">?</span>;
-                events.push(event_type);
+            <span class="kw">let </span>inner_events = <span class="self">Self</span>::emit_events(inner_call, tx_hash)<span class="question-mark">?</span>;
+            <span class="kw">if </span>!inner_events.is_empty() {
+                events.extend(inner_events);
             }
         }
-
         <span class="prelude-val">Ok</span>(events)
     }
 
