@@ -78,3 +78,11 @@ jobs:
         run: |-
           cd tests
           npm run test
+
+  toml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout toml files
+        uses: actions/checkout@v3
+      - name: Run toml check
+        run: npx @taplo/cli fmt --config ./taplo/taplo.toml --check
