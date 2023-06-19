@@ -37,7 +37,8 @@ fn given_contract_declare_tx_works_once_not_twice() {
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
         // TODO: Uncomment once we have ABI support
         // assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash), erc20_class);
-        //assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::ClassHashAlreadyDeclared);
+        // assert_err!(Starknet::declare(none_origin, transaction),
+        // Error::<MockRuntime>::ClassHashAlreadyDeclared);
     });
 }
 

@@ -13,11 +13,11 @@ use starknet_api::StarknetApiError;
 use starknet_core::types::FieldElement;
 use starknet_core::utils::get_storage_var_address;
 use {crate as pallet_starknet, frame_system as system};
-use crate::SeqAddrUpdate;
 
 use super::constants::*;
 use super::utils::get_contract_class;
 use crate::types::ContractStorageKeyWrapper;
+use crate::SeqAddrUpdate;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
