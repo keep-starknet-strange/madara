@@ -18,7 +18,7 @@ use {crate as pallet_starknet, frame_system as system};
 use super::constants::*;
 use super::utils::get_contract_class;
 use crate::types::ContractStorageKeyWrapper;
-use crate::SequencerAddress;
+use crate::{SeqAddrUpdate, SequencerAddress};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -266,6 +266,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
     for b in System::block_number()..=n {
+        SeqAddrUpdate::<MockRuntime>::put(true);
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
         Starknet::on_finalize(b);
@@ -274,6 +275,7 @@ pub(crate) fn run_to_block(n: u64) {
 
 /// Setup initial block and sequencer address for unit tests.
 pub(crate) fn basic_test_setup(n: u64) {
+    SeqAddrUpdate::<MockRuntime>::put(true);
     SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
     System::set_block_number(0);
     run_to_block(n);

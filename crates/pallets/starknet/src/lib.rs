@@ -163,7 +163,10 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
-        fn on_finalize(_n: T::BlockNumber) {
+        fn on_finalize(n: T::BlockNumber) {
+            if UniqueSaturatedInto::<u64>::unique_saturated_into(n) >= 1 {
+                assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
+            }
             // Create a new Starknet block and store it.
             <Pallet<T>>::store_block(UniqueSaturatedInto::<u64>::unique_saturated_into(
                 frame_system::Pallet::<T>::block_number(),
@@ -272,6 +275,11 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn sequencer_address)]
     pub type SequencerAddress<T: Config> = StorageValue<_, [u8; 32], ValueQuery>;
+
+    /// Ensure the sequencer address was updated for this block.
+    #[pallet::storage]
+    #[pallet::getter(fn seq_addr_update)]
+    pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -397,7 +405,9 @@ pub mod pallet {
         #[pallet::weight((0, DispatchClass::Mandatory))]
         pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
             ensure_none(origin)?;
+            assert!(!SeqAddrUpdate::<T>::exists(), "Sequncer address can be updated only once in the block");
             SequencerAddress::<T>::put(addr);
+            SeqAddrUpdate::<T>::put(true);
             Ok(())
         }
 
