@@ -388,7 +388,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             block_import,
             proposer_factory,
             create_inherent_data_providers: move |_, ()| {
-                let offchain_storage = backend.offchain_storage().clone();
+                let offchain_storage = backend.offchain_storage();
                 async move {
                     let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
