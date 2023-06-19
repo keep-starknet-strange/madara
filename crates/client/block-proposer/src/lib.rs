@@ -43,6 +43,8 @@ pub const DEFAULT_BLOCK_SIZE_LIMIT: usize = 4 * 1024 * 1024 + 512;
 /// transactions which exhaust resources, we will conclude that the block is full.
 const DEFAULT_SOFT_DEADLINE_PERCENT: Percent = Percent::from_percent(80);
 
+const LOG_TARGET: &str = "block-proposer";
+
 /// [`Proposer`] factory.
 pub struct ProposerFactory<A, B, C, PR> {
     spawn_handle: Box<dyn SpawnNamed>,
@@ -291,55 +293,109 @@ where
         deadline: time::Instant,
         block_size_limit: Option<usize>,
     ) -> Result<Proposal<Block, backend::TransactionFor<B, Block>, PR::Proof>, sp_blockchain::Error> {
-        // Start time for the proposal
-        // This is used later to measure how long the proposal took.
-        let propose_with_start = time::Instant::now();
+        // Start the timer to measure the total time it takes to create the proposal.
+        let propose_with_timer = time::Instant::now();
 
-        // Initialize a new block at the parent hash with the given inherent digests.
+        // Initialize a new block builder at the parent hash with the given inherent digests.
         let mut block_builder = self.client.new_block_at(self.parent_hash, inherent_digests, PR::ENABLED)?;
 
-        // Create the inherents from the `inherent_data`.
-        let inherents = block_builder.create_inherents(inherent_data)?;
+        self.apply_inherents(&mut block_builder, inherent_data)?;
 
-        // Iterate over each inherent and try to push it into the block builder.
-        // Handle errors depending on the type of the error.
+        let block_timer = time::Instant::now();
+
+        // Apply transactions and record the reason why we stopped.
+        let end_reason = self.apply_extrinsics(&mut block_builder, deadline, block_size_limit).await?;
+
+        // Build the block.
+        let (block, storage_changes, proof) = block_builder.build()?.into_inner();
+
+        // Measure the total time it took to build the block.
+        let block_took = block_timer.elapsed();
+
+        // Convert the storage proof into the required format.
+        let proof = PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
+
+        // Print the summary of the proposal.
+        self.print_summary(&block, end_reason, block_took, propose_with_timer.elapsed());
+        Ok(Proposal { block, proof, storage_changes })
+    }
+
+    /// Apply all inherents to the block.
+    /// This function will return an error if any of the inherents cannot be pushed into the block
+    /// builder. It will also update the metrics.
+    /// # Arguments
+    /// * `block_builder` - The block builder to push the inherents into.
+    /// * `inherent_data` - The inherents to push into the block builder.
+    /// # Returns
+    /// This function will return `Ok(())` if all inherents were pushed into the block builder.
+    /// # Errors
+    /// This function will return an error if any of the inherents cannot be pushed into the block
+    /// builder.
+    fn apply_inherents(
+        &self,
+        block_builder: &mut sc_block_builder::BlockBuilder<'_, Block, C, B>,
+        inherent_data: InherentData,
+    ) -> Result<(), sp_blockchain::Error> {
+        let create_inherents_start = time::Instant::now();
+        let inherents = block_builder.create_inherents(inherent_data)?;
+        let create_inherents_end = time::Instant::now();
+
+        self.metrics.report(|metrics| {
+            metrics
+                .create_inherents_time
+                .observe(create_inherents_end.saturating_duration_since(create_inherents_start).as_secs_f64());
+        });
+
         for inherent in inherents {
             match block_builder.push(inherent) {
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
-                    warn!("⚠️  Dropping non-mandatory inherent from overweight block.")
+                    warn!(target: LOG_TARGET, "⚠️  Dropping non-mandatory inherent from overweight block.")
                 }
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.was_mandatory() => {
                     error!("❌️ Mandatory inherent extrinsic returned error. Block cannot be produced.");
                     return Err(ApplyExtrinsicFailed(Validity(e)));
                 }
                 Err(e) => {
-                    warn!("❗️ Inherent extrinsic returned unexpected error: {}. Dropping.", e);
+                    warn!(target: LOG_TARGET, "❗️ Inherent extrinsic returned unexpected error: {}. Dropping.", e);
                 }
                 Ok(_) => {}
             }
         }
+        Ok(())
+    }
 
-        // Calculate the soft deadline. This deadline is used when we start skipping transactions.
+    /// Apply as many extrinsics as possible to the block.
+    /// This function will return an error if the block cannot be built.
+    /// # Arguments
+    /// * `block_builder` - The block builder to push the extrinsics into.
+    /// * `deadline` - The deadline to stop applying extrinsics.
+    /// * `block_size_limit` - The maximum size of the block.
+    /// # Returns
+    /// The reason why we stopped applying extrinsics.
+    /// # Errors
+    /// This function will return an error if the block cannot be built.
+    async fn apply_extrinsics(
+        &self,
+        block_builder: &mut sc_block_builder::BlockBuilder<'_, Block, C, B>,
+        deadline: time::Instant,
+        block_size_limit: Option<usize>,
+    ) -> Result<EndProposingReason, sp_blockchain::Error> {
+        // proceed with transactions
+        // We calculate soft deadline used only in case we start skipping transactions.
         let now = (self.now)();
         let left = deadline.saturating_duration_since(now);
         let left_micros: u64 = left.as_micros().saturated_into();
         let soft_deadline = now + time::Duration::from_micros(self.soft_deadline_percent.mul_floor(left_micros));
-
-        // Start the block timer and initialize other variables used in the following loop.
-        let block_timer = time::Instant::now();
         let mut skipped = 0;
         let mut unqueue_invalid = Vec::new();
 
-        // Initialize the iterators over the pending transactions.
-        // If the pool is not ready at the parent number within a deadline, log a warning and get all ready
-        // transactions.
         let mut t1 = self.transaction_pool.ready_at(self.parent_number).fuse();
         let mut t2 = futures_timer::Delay::new(deadline.saturating_duration_since((self.now)()) / 8).fuse();
 
         let mut pending_iterator = select! {
             res = t1 => res,
             _ = t2 => {
-                log::warn!(
+                warn!(target: LOG_TARGET,
                     "Timeout fired waiting for transaction pool at block #{}. \
                     Proceeding with production.",
                     self.parent_number,
@@ -348,15 +404,13 @@ where
             },
         };
 
-        // Get the block size limit or use the default block size limit if none was given.
         let block_size_limit = block_size_limit.unwrap_or(self.default_block_size_limit);
 
-        debug!("Attempting to push transactions from the pool.");
-        debug!("Pool status: {:?}", self.transaction_pool.status());
+        debug!(target: LOG_TARGET, "Attempting to push transactions from the pool.");
+        debug!(target: LOG_TARGET, "Pool status: {:?}", self.transaction_pool.status());
         let mut transaction_pushed = false;
 
         let end_reason = loop {
-            // Handle each pending transaction in the loop.
             let pending_tx = if let Some(pending_tx) = pending_iterator.next() {
                 pending_tx
             } else {
@@ -365,7 +419,10 @@ where
 
             let now = (self.now)();
             if now > deadline {
-                debug!("Consensus deadline reached when pushing block transactions, proceeding with proposing.");
+                debug!(
+                    target: LOG_TARGET,
+                    "Consensus deadline reached when pushing block transactions, proceeding with proposing."
+                );
                 break EndProposingReason::HitDeadline;
             }
 
@@ -378,6 +435,7 @@ where
                 if skipped < MAX_SKIPPED_TRANSACTIONS {
                     skipped += 1;
                     debug!(
+                        target: LOG_TARGET,
                         "Transaction would overflow the block size limit, but will try {} more transactions before \
                          quitting.",
                         MAX_SKIPPED_TRANSACTIONS - skipped,
@@ -385,87 +443,96 @@ where
                     continue;
                 } else if now < soft_deadline {
                     debug!(
+                        target: LOG_TARGET,
                         "Transaction would overflow the block size limit, but we still have time before the soft \
                          deadline, so we will try a bit more."
                     );
                     continue;
                 } else {
-                    debug!("Reached block size limit, proceeding with proposing.");
+                    debug!(target: LOG_TARGET, "Reached block size limit, proceeding with proposing.");
                     break EndProposingReason::HitBlockSizeLimit;
                 }
             }
 
-            trace!("[{:?}] Pushing to the block.", pending_tx_hash);
-            match sc_block_builder::BlockBuilder::push(&mut block_builder, pending_tx_data) {
+            trace!(target: LOG_TARGET, "[{:?}] Pushing to the block.", pending_tx_hash);
+            match sc_block_builder::BlockBuilder::push(block_builder, pending_tx_data) {
                 Ok(()) => {
                     transaction_pushed = true;
-                    debug!("[{:?}] Pushed to the block.", pending_tx_hash);
+                    debug!(target: LOG_TARGET, "[{:?}] Pushed to the block.", pending_tx_hash);
                 }
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
                     pending_iterator.report_invalid(&pending_tx);
                     if skipped < MAX_SKIPPED_TRANSACTIONS {
                         skipped += 1;
                         debug!(
+                            target: LOG_TARGET,
                             "Block seems full, but will try {} more transactions before quitting.",
                             MAX_SKIPPED_TRANSACTIONS - skipped,
                         );
                     } else if (self.now)() < soft_deadline {
                         debug!(
+                            target: LOG_TARGET,
                             "Block seems full, but we still have time before the soft deadline, so we will try a bit \
                              more before quitting."
                         );
                     } else {
-                        debug!("Reached block weight limit, proceeding with proposing.");
+                        debug!(target: LOG_TARGET, "Reached block weight limit, proceeding with proposing.");
                         break EndProposingReason::HitBlockWeightLimit;
                     }
                 }
                 Err(e) => {
                     pending_iterator.report_invalid(&pending_tx);
-                    debug!("[{:?}] Invalid transaction: {}", pending_tx_hash, e);
+                    debug!(target: LOG_TARGET, "[{:?}] Invalid transaction: {}", pending_tx_hash, e);
                     unqueue_invalid.push(pending_tx_hash);
                 }
             }
         };
 
         if matches!(end_reason, EndProposingReason::HitBlockSizeLimit) && !transaction_pushed {
-            warn!("Hit block size limit of `{}` without including any transaction!", block_size_limit,);
+            warn!(
+                target: LOG_TARGET,
+                "Hit block size limit of `{}` without including any transaction!", block_size_limit,
+            );
         }
 
-        // Remove invalid transactions from the pool.
         self.transaction_pool.remove_invalid(&unqueue_invalid);
+        Ok(end_reason)
+    }
 
-        // Build the block, extract the storage changes and the storage proof.
-        let (block, storage_changes, proof) = block_builder.build()?.into_inner();
-
-        // Update the metrics with the number of transactions and the time it took to construct the block.
+    /// Prints a summary and does telemetry + metrics.
+    /// This is called after the block is created.
+    /// # Arguments
+    /// * `block` - The block that was created.
+    /// * `end_reason` - The reason why we stopped adding transactions to the block.
+    /// * `block_took` - The time it took to create the block.
+    /// * `propose_with_took` - The time it took to propose the block.
+    fn print_summary(
+        &self,
+        block: &Block,
+        end_reason: EndProposingReason,
+        block_took: time::Duration,
+        propose_with_took: time::Duration,
+    ) {
+        let extrinsics = block.extrinsics();
         self.metrics.report(|metrics| {
-            metrics.number_of_transactions.set(block.extrinsics().len() as u64);
-            metrics.block_constructed.observe(block_timer.elapsed().as_secs_f64());
-
+            metrics.number_of_transactions.set(extrinsics.len() as u64);
+            metrics.block_constructed.observe(block_took.as_secs_f64());
             metrics.report_end_proposing_reason(end_reason);
+            metrics.create_block_proposal_time.observe(propose_with_took.as_secs_f64());
         });
+
+        let extrinsics_summary = if extrinsics.is_empty() {
+            "no extrinsics".to_string()
+        } else {
+            format!("extrinsics ({})", extrinsics.len(),)
+        };
 
         info!(
-            "🥷 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; extrinsics ({})]",
+            "🥷 Prepared block for proposing at {} ({} ms) [hash: {:?}; parent_hash: {}; {extrinsics_summary}",
             block.header().number(),
-            block_timer.elapsed().as_millis(),
+            block_took.as_millis(),
             block.header().hash(),
             block.header().parent_hash(),
-            block.extrinsics().len(),
         );
-
-        // Convert the storage proof to the required format.
-        let proof = PR::into_proof(proof).map_err(|e| sp_blockchain::Error::Application(Box::new(e)))?;
-
-        // Measure the total time it took to create the proposal and update the corresponding metric.
-        let propose_with_end = time::Instant::now();
-        self.metrics.report(|metrics| {
-            metrics
-                .create_block_proposal_time
-                .observe(propose_with_end.saturating_duration_since(propose_with_start).as_secs_f64());
-        });
-
-        // Return a new `Proposal` with the block, proof, and storage changes.
-        Ok(Proposal { block, proof, storage_changes })
     }
 }
