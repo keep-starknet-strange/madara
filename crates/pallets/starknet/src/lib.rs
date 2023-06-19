@@ -219,11 +219,6 @@ pub mod pallet {
     pub(super) type PendingEvents<T: Config> =
         StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
 
-    /// The current Starknet block.
-    #[pallet::storage]
-    #[pallet::getter(fn current_block)]
-    pub(super) type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock, ValueQuery>;
-
     /// Mapping for block number and hashes.
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
@@ -782,15 +777,6 @@ impl<T: Config> Pallet<T> {
             gas_price,
         }
     }
-    /// Get current block hash.
-    ///
-    /// # Returns
-    ///
-    /// The current block hash.
-    #[inline(always)]
-    pub fn current_block_hash() -> Felt252Wrapper {
-        Self::current_block().header().hash(T::SystemHash::hasher())
-    }
 
     /// convert chain_id
     #[inline(always)]
@@ -841,10 +827,8 @@ impl<T: Config> Pallet<T> {
         function_selector: Felt252Wrapper,
         calldata: Vec<Felt252Wrapper>,
     ) -> Result<Vec<Felt252Wrapper>, DispatchError> {
-        // Get current block
-        let block = Self::current_block();
-        // Get fee token address
-        let fee_token_address = Self::fee_token_address();
+        // Get current block context
+        let block_context = Self::get_block_context();
         // Get class hash
         let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
@@ -857,14 +841,7 @@ impl<T: Config> Pallet<T> {
             ContractAddressWrapper::default(),
         );
 
-        let chain_id = Self::chain_id_str();
-
-        match entrypoint.execute(
-            &mut BlockifierStateAdapter::<T>::default(),
-            block,
-            fee_token_address,
-            ChainId(chain_id),
-        ) {
+        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
@@ -938,8 +915,6 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(transactions).unwrap(),
             BoundedVec::try_from(receipts).unwrap(),
         );
-        // Save the current block.
-        CurrentBlock::<T>::put(block.clone());
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);

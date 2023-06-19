@@ -157,10 +157,6 @@ use sp_runtime::DispatchError;
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
-        /// Returns the current block hash.
-        fn current_block_hash() -> Felt252Wrapper;
-        /// Returns the current block.
-        fn current_block() -> mp_starknet::block::Block;
         /// Returns a `Call` response.
         fn call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec<Felt252Wrapper>) -> Result<Vec<Felt252Wrapper>, DispatchError>;
         /// Your new function.
@@ -175,12 +171,6 @@ sp_api::decl_runtime_apis! {
 // crates/runtime/src/lib.rs
 
 impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
-      fn current_block_hash() -> Felt252Wrapper {
-          Starknet::current_block_hash()
-      }
-      fn current_block() -> mp_starknet::block::Block {
-          Starknet::current_block()
-      }
 
       fn call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec<Felt252Wrapper>) -> Result<Vec<Felt252Wrapper>, DispatchError> {
           Starknet::call_contract(address, function_selector, calldata)
