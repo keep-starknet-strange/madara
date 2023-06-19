@@ -15,6 +15,7 @@ mod mapping_db;
 pub use mapping_db::MappingCommitment;
 mod db_opening_utils;
 mod meta_db;
+mod fact_db;
 
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
@@ -22,6 +23,7 @@ use std::sync::{Arc, Mutex};
 
 use mapping_db::MappingDb;
 use meta_db::MetaDb;
+use fact_db::FactDb;
 use sc_client_db::DatabaseSource;
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
@@ -36,12 +38,13 @@ struct DatabaseSettings {
 }
 
 pub(crate) mod columns {
-    pub const NUM_COLUMNS: u32 = 4;
+    pub const NUM_COLUMNS: u32 = 5;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
     pub const TRANSACTION_MAPPING: u32 = 2;
     pub const SYNCED_MAPPING: u32 = 3;
+    pub const FACT: u32 = 4;
 }
 
 pub mod static_keys {
@@ -56,6 +59,7 @@ pub mod static_keys {
 pub struct Backend<B: BlockT> {
     meta: Arc<MetaDb<B>>,
     mapping: Arc<MappingDb<B>>,
+    fact: Arc<FactDb<B>>,
 }
 
 /// Returns the Starknet database directory.
@@ -92,6 +96,7 @@ impl<B: BlockT> Backend<B> {
         Ok(Self {
             mapping: Arc::new(MappingDb { db: db.clone(), write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
+            fact: Arc::new(FactDb { db: db.clone(), _marker: PhantomData }),
         })
     }
 
@@ -103,5 +108,10 @@ impl<B: BlockT> Backend<B> {
     /// Return the meta database manager
     pub fn meta(&self) -> &Arc<MetaDb<B>> {
         &self.meta
+    }
+
+    /// Return the fact database manager
+    pub fn fact(&self) -> &Arc<FactDb<B>> {
+        &self.fact
     }
 }

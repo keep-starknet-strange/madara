@@ -225,16 +225,6 @@ where
                 let res = self.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).await;
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");
-                } else {
-                    // init another storage layer for: fact storage
-                    // can use mapping sync
-                    // program output
-                    // send StarkNet OS Proof PoC
-                    // fact fetching context
-                    // we need to run the OS and get the `cairo_pie`
-                    // CairoRunner.new(layout: "starknet_with_keccak")
-                    
-                    println!("BEN: SUCCESSSS");
                 }
             }),
         );
@@ -314,6 +304,7 @@ where
         // Iterate over each inherent and try to push it into the block builder.
         // Handle errors depending on the type of the error.
         for inherent in inherents {
+            println!("BEN: {:?}", inherent);
             match block_builder.push(inherent) {
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
                     warn!("⚠️  Dropping non-mandatory inherent from overweight block.")
