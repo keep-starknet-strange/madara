@@ -54,10 +54,6 @@
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
-<a href="#57" id="57">57</a>
-<a href="#58" id="58">58</a>
-<a href="#59" id="59">59</a>
-<a href="#60" id="60">60</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -80,10 +76,6 @@
 
 <span class="macro">sp_api::decl_runtime_apis! </span>{
     <span class="kw">pub trait </span>StarknetRuntimeApi {
-        <span class="doccomment">/// Returns the current block hash.
-        </span><span class="kw">fn </span>current_block_hash() -&gt; Felt252Wrapper;
-        <span class="doccomment">/// Returns the current block.
-        </span><span class="kw">fn </span>current_block() -&gt; mp_starknet::block::Block;
         <span class="doccomment">/// Returns the nonce associated with the given address in the given block
         </span><span class="kw">fn </span>nonce(contract_address: ContractAddressWrapper) -&gt; NonceWrapper;
         <span class="doccomment">/// Returns the events associated with the given block

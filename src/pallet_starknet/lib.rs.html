@@ -1031,31 +1031,6 @@
 <a href="#1031" id="1031">1031</a>
 <a href="#1032" id="1032">1032</a>
 <a href="#1033" id="1033">1033</a>
-<a href="#1034" id="1034">1034</a>
-<a href="#1035" id="1035">1035</a>
-<a href="#1036" id="1036">1036</a>
-<a href="#1037" id="1037">1037</a>
-<a href="#1038" id="1038">1038</a>
-<a href="#1039" id="1039">1039</a>
-<a href="#1040" id="1040">1040</a>
-<a href="#1041" id="1041">1041</a>
-<a href="#1042" id="1042">1042</a>
-<a href="#1043" id="1043">1043</a>
-<a href="#1044" id="1044">1044</a>
-<a href="#1045" id="1045">1045</a>
-<a href="#1046" id="1046">1046</a>
-<a href="#1047" id="1047">1047</a>
-<a href="#1048" id="1048">1048</a>
-<a href="#1049" id="1049">1049</a>
-<a href="#1050" id="1050">1050</a>
-<a href="#1051" id="1051">1051</a>
-<a href="#1052" id="1052">1052</a>
-<a href="#1053" id="1053">1053</a>
-<a href="#1054" id="1054">1054</a>
-<a href="#1055" id="1055">1055</a>
-<a href="#1056" id="1056">1056</a>
-<a href="#1057" id="1057">1057</a>
-<a href="#1058" id="1058">1058</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1276,11 +1251,6 @@
     #[pallet::getter(<span class="kw">fn </span>pending_events)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>PendingEvents&lt;T: Config&gt; =
         StorageValue&lt;<span class="kw">_</span>, BoundedVec&lt;StarknetEventType, MaxTransactions&gt;, ValueQuery&gt;;
-
-    <span class="doccomment">/// The current Starknet block.
-    </span><span class="attr">#[pallet::storage]
-    #[pallet::getter(<span class="kw">fn </span>current_block)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CurrentBlock&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, StarknetBlock, ValueQuery&gt;;
 
     <span class="doccomment">/// Mapping for block number and hashes.
     /// Safe to use `Identity` as the key is already a hash.
@@ -1840,15 +1810,6 @@
             gas_price,
         }
     }
-    <span class="doccomment">/// Get current block hash.
-    ///
-    /// # Returns
-    ///
-    /// The current block hash.
-    </span><span class="attr">#[inline(always)]
-    </span><span class="kw">pub fn </span>current_block_hash() -&gt; Felt252Wrapper {
-        <span class="self">Self</span>::current_block().header().hash(T::SystemHash::hasher())
-    }
 
     <span class="doccomment">/// convert chain_id
     </span><span class="attr">#[inline(always)]
@@ -1899,10 +1860,8 @@
         function_selector: Felt252Wrapper,
         calldata: Vec&lt;Felt252Wrapper&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Felt252Wrapper&gt;, DispatchError&gt; {
-        <span class="comment">// Get current block
-        </span><span class="kw">let </span>block = <span class="self">Self</span>::current_block();
-        <span class="comment">// Get fee token address
-        </span><span class="kw">let </span>fee_token_address = <span class="self">Self</span>::fee_token_address();
+        <span class="comment">// Get current block context
+        </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="comment">// Get class hash
         </span><span class="kw">let </span>class_hash = ContractClassHashes::&lt;T&gt;::try_get(address).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ContractNotFound)<span class="question-mark">?</span>;
 
@@ -1915,14 +1874,7 @@
             ContractAddressWrapper::default(),
         );
 
-        <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
-
-        <span class="kw">match </span>entrypoint.execute(
-            <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
-            block,
-            fee_token_address,
-            ChainId(chain_id),
-        ) {
+        <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
                 <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
                 <span class="kw">let </span>result = v.execution.retdata.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect();
@@ -1996,8 +1948,6 @@
             </span>BoundedVec::try_from(transactions).unwrap(),
             BoundedVec::try_from(receipts).unwrap(),
         );
-        <span class="comment">// Save the current block.
-        </span>CurrentBlock::&lt;T&gt;::put(block.clone());
         <span class="comment">// Save the block number &lt;&gt; hash mapping.
         </span><span class="kw">let </span>blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::&lt;T&gt;::insert(block_number, blockhash);
