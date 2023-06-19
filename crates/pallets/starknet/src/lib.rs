@@ -87,7 +87,7 @@ use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-use sp_runtime::traits::UniqueSaturatedInto;
+use sp_runtime::traits::{SaturatedConversion, UniqueSaturatedInto};
 use sp_runtime::DigestItem;
 use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
@@ -163,8 +163,10 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
-        fn on_finalize(_n: T::BlockNumber) {
-            assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
+        fn on_finalize(n: T::BlockNumber) {
+            if n.saturated_into::<u64>() >= 1 {
+                assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
+            }
             // Create a new Starknet block and store it.
             <Pallet<T>>::store_block(UniqueSaturatedInto::<u64>::unique_saturated_into(
                 frame_system::Pallet::<T>::block_number(),
