@@ -893,7 +893,7 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.3.0-rc1"
-source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#c42035dc11fe0d8faa2a564a4660ba0c580653ba"
+source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#e4b1e0b0abac8f2bf24a0144c2a87cb861139f5b"
 dependencies = [
  "lazy_static",
  "num-bigint 0.4.3",
@@ -905,7 +905,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.24.2-rc1"
-source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#c42035dc11fe0d8faa2a564a4660ba0c580653ba"
+source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#e4b1e0b0abac8f2bf24a0144c2a87cb861139f5b"
 dependencies = [
  "nom",
 ]
@@ -913,7 +913,7 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.3.0-rc1"
-source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#c42035dc11fe0d8faa2a564a4660ba0c580653ba"
+source = "git+https://github.com/tdelabro/cairo-rs?branch=no_std-support#e4b1e0b0abac8f2bf24a0144c2a87cb861139f5b"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.2",
@@ -4410,7 +4410,6 @@ dependencies = [
  "pallet-aura",
  "pallet-grandpa",
  "pallet-starknet",
- "pallet-sudo",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -4560,7 +4559,6 @@ name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64 0.21.2",
  "cairo-vm",
  "flate2",
  "frame-support",
@@ -5317,21 +5315,6 @@ dependencies = [
  "starknet-crypto 0.5.1",
  "starknet_api",
  "test-case",
-]
-
-[[package]]
-name = "pallet-sudo"
-version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?rev=51b2f0e#51b2f0ed6af8dd4facb18f1a489e192fd0673f7b"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -6098,7 +6081,7 @@ dependencies = [
 [[package]]
 name = "rand"
 version = "0.9.0"
-source = "git+https://github.com/rust-random/rand#51d27a979585db733569c6ee5c954ee283f4ae4d"
+source = "git+https://github.com/rust-random/rand#0c4c6c02d818ec7ec6a9d7458297ca3993e4c2fe"
 dependencies = [
  "rand_core 0.7.0",
 ]
@@ -6144,7 +6127,7 @@ dependencies = [
 [[package]]
 name = "rand_core"
 version = "0.7.0"
-source = "git+https://github.com/rust-random/rand#51d27a979585db733569c6ee5c954ee283f4ae4d"
+source = "git+https://github.com/rust-random/rand#0c4c6c02d818ec7ec6a9d7458297ca3993e4c2fe"
 
 [[package]]
 name = "rand_hc"
@@ -9839,7 +9822,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

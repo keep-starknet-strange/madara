@@ -72,6 +72,8 @@ impl system::Config for MockRuntime {
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
+    pub const InvokeTxMaxNSteps: u32 = 1_000_000;
+    pub const ValidateMaxNSteps: u32 = 1_000_000;
 }
 
 impl pallet_starknet::Config for MockRuntime {
@@ -81,6 +83,8 @@ impl pallet_starknet::Config for MockRuntime {
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
+    type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
+    type ValidateMaxNSteps = ValidateMaxNSteps;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -259,11 +263,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// # Arguments
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
-    let deployer_origin = RuntimeOrigin::none();
     for b in System::block_number()..=n {
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
-        Starknet::ping(deployer_origin.clone()).unwrap();
         Starknet::on_finalize(b);
     }
 }

@@ -89,7 +89,6 @@ prometheus-endpoint = { package = "substrate-prometheus-endpoint", version = "0.
 
 # Substrate Frame pallet
 pallet-aura = { default-features = false, git = "https://github.com/paritytech/substrate", rev = "51b2f0e" }
-pallet-sudo = { default-features = false, git = "https://github.com/paritytech/substrate", rev = "51b2f0e" }
 pallet-grandpa = { default-features = false, git = "https://github.com/paritytech/substrate", rev = "51b2f0e" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", rev = "51b2f0e" }
 
@@ -126,7 +125,6 @@ starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_
 ], default-features = false }
 # Other third party dependencies
 anyhow = "1.0.71"
-base64 = "0.21.2"
 flate2 = "1.0.26"
 scale-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 scale-info = { version = "2.6.0", default-features = false }

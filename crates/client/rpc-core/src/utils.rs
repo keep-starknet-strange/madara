@@ -1,6 +1,4 @@
 use anyhow::{anyhow, Result};
-use base64::engine::general_purpose;
-use base64::Engine;
 use cairo_vm::types::program::Program;
 use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
@@ -18,24 +16,19 @@ use starknet_core::types::{
     LegacyEntryPointsByType,
 };
 
-/// Returns a `ContractClass` from a `ContractClassWrapper`
+/// Returns a [`ContractClass`] from a [`ContractClassWrapper`]
 pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Result<ContractClass> {
     let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class_wrapped.entry_points_by_type)?;
 
-    let program: Program = contract_class_wrapped.program.into();
-    let compressed_program = compress_and_encode_base64(&program.to_bytes())?;
+    let program: Program =
+        contract_class_wrapped.program.try_into().map_err(|_| anyhow!("Contract Class conversion failed."))?;
+    let compressed_program = compress(&program.to_bytes())?;
 
     Ok(ContractClass::Legacy(CompressedLegacyContractClass {
-        program: compressed_program.as_bytes().to_vec(),
+        program: compressed_program,
         entry_points_by_type,
         abi: None, // TODO: add ABI
     }))
-}
-
-/// Returns a base64 encoded and compressed string of the input bytes
-pub(crate) fn compress_and_encode_base64(data: &[u8]) -> Result<String> {
-    let data_compressed = compress(data)?;
-    Ok(encode_base64(&data_compressed))
 }
 
 /// Returns a compressed vector of bytes
@@ -43,11 +36,6 @@ pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut gzip_encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::fast());
     serde_json::to_writer(&mut gzip_encoder, data)?;
     Ok(gzip_encoder.finish()?)
-}
-
-/// Returns a base64 encoded string of the input bytes
-pub(crate) fn encode_base64(data: &[u8]) -> String {
-    general_purpose::STANDARD.encode(data)
 }
 
 /// Converts a broadcasted transaction to a transaction

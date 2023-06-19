@@ -67,7 +67,6 @@ construct_runtime!(
         Timestamp: pallet_timestamp,
         Aura: pallet_aura,
         Grandpa: pallet_grandpa,
-        Sudo: pallet_sudo,
         // Include Starknet pallet.
         Starknet: pallet_starknet,
     }
@@ -237,13 +236,6 @@ impl_runtime_apis! {
     }
 
     impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
-        fn current_block_hash() -> Felt252Wrapper {
-            Starknet::current_block_hash()
-        }
-
-        fn current_block() -> mp_starknet::block::Block {
-            Starknet::current_block()
-        }
 
         fn get_storage_at(address: ContractAddressWrapper, key: StorageKeyWrapper) -> Result<Felt252Wrapper, DispatchError> {
             Starknet::get_storage_at(address, key)

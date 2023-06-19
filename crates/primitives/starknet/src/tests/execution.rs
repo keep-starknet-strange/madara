@@ -2,17 +2,17 @@ use alloc::sync::Arc;
 use std::collections::HashMap;
 
 use blockifier::abi::abi_utils::selector_from_name;
-use blockifier::execution::contract_class::ContractClass;
+use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
+use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 
-use crate::block::Block;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::contract_class_wrapper::{ContractClassWrapper, EntrypointMapWrapper, ProgramWrapper};
 use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
@@ -28,8 +28,6 @@ fn test_call_entry_point_execute_works() {
     let selector = selector_from_name("return_result").0.into();
     let calldata = bounded_vec![42_u128.into()];
 
-    let chain_id = ChainId("0x1".to_string());
-
     let entrypoint = CallEntryPointWrapper::new(
         Some(class_hash),
         EntryPointTypeWrapper::External,
@@ -39,9 +37,19 @@ fn test_call_entry_point_execute_works() {
         ContractAddressWrapper::default(),
     );
 
-    let block = Block::create_for_testing();
+    let block_context = BlockContext {
+        chain_id: ChainId("0x1".to_string()),
+        block_number: BlockNumber(0),
+        block_timestamp: BlockTimestamp(0),
+        sequencer_address: ContractAddress::default(),
+        fee_token_address: ContractAddress::default(),
+        vm_resource_fee_cost: HashMap::default(),
+        gas_price: 0,
+        invoke_tx_max_n_steps: 0,
+        validate_max_n_steps: 0,
+    };
 
-    assert_ok!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO, chain_id));
+    assert_ok!(entrypoint.execute(&mut test_state, block_context));
 }
 
 #[test]
@@ -61,11 +69,19 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
         ContractAddressWrapper::default(),
     );
 
-    let block = Block::create_for_testing();
+    let block_context = BlockContext {
+        chain_id: ChainId("0x1".to_string()),
+        block_number: BlockNumber(0),
+        block_timestamp: BlockTimestamp(0),
+        sequencer_address: ContractAddress::default(),
+        fee_token_address: ContractAddress::default(),
+        vm_resource_fee_cost: HashMap::default(),
+        gas_price: 0,
+        invoke_tx_max_n_steps: 0,
+        validate_max_n_steps: 0,
+    };
 
-    let chain_id = ChainId("0x1".to_string());
-
-    assert!(entrypoint.execute(&mut test_state, block, Felt252Wrapper::ZERO, chain_id).is_err());
+    assert!(entrypoint.execute(&mut test_state, block_context).is_err());
 }
 
 #[test]
@@ -134,8 +150,7 @@ fn test_contract_class_wrapper_try_from_contract_class() {
     "attributes": []
 	}
 }"#;
-    let contract_class: ContractClass = serde_json::from_str(json_content).unwrap();
-    let contract_class_wrapper: ContractClassWrapper = contract_class.into();
+    let contract_class_wrapper: ContractClassWrapper = serde_json::from_str(json_content).unwrap();
     let mut expected_entrypoints = <HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>>::new();
     expected_entrypoints.insert(
         EntryPointTypeWrapper::External,
@@ -156,9 +171,13 @@ fn test_contract_class_wrapper_try_from_contract_class() {
         })],
     );
     expected_entrypoints.insert(EntryPointTypeWrapper::L1Handler, vec![]);
-
+    let program_wrapper = ProgramWrapper {
+        compiler_version: "0.10.3".to_string(),
+        main_scope: "__main__".to_string(),
+        ..ProgramWrapper::default()
+    };
     let expected_contract_class_wrapper = ContractClassWrapper {
-        program: ProgramWrapper::default(),
+        program: program_wrapper,
         entry_points_by_type: EntrypointMapWrapper(expected_entrypoints),
     };
 

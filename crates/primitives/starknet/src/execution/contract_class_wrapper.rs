@@ -6,7 +6,9 @@ use core::mem;
 
 use blockifier::execution::contract_class::ContractClass;
 use cairo_vm::felt::Felt252;
-use cairo_vm::serde::deserialize_program::{parse_program, parse_program_json, ProgramJson, ReferenceManager};
+use cairo_vm::serde::deserialize_program::{
+    deserialize_program_json, parse_program, parse_program_json, ProgramJson, ReferenceManager,
+};
 use cairo_vm::types::errors::program_errors::ProgramError;
 use cairo_vm::types::program::{Program, SharedProgramData};
 use derive_more::Constructor;
@@ -144,14 +146,22 @@ pub struct ProgramWrapper {
     pub constants: HashMap<String, Felt252>,
     /// All the references of the program.
     pub reference_manager: ReferenceManager,
+    /// The version of the compiler used to compile the program.
+    pub compiler_version: String,
+    /// The main scope of the program.
+    pub main_scope: String,
 }
 
 impl From<Program> for ProgramWrapper {
     fn from(value: Program) -> Self {
+        // Defaulting to the latest compiler version if none is configured.
+        let compiler_version = option_env!("COMPILER_VERSION").unwrap_or("0.11.2");
         Self {
             shared_program_data: value.shared_program_data,
             constants: value.constants,
             reference_manager: value.reference_manager,
+            compiler_version: compiler_version.to_string(),
+            main_scope: "__main__".to_string(),
         }
     }
 }
@@ -168,12 +178,23 @@ impl From<ProgramWrapper> for Program {
 
 impl From<ProgramWrapper> for ProgramJson {
     fn from(value: ProgramWrapper) -> Self {
-        parse_program(value.into())
+        let main_scope = value.main_scope.clone();
+        let compiler_version = value.compiler_version.clone();
+        let mut program = parse_program(value.into());
+        program.main_scope = main_scope;
+        program.compiler_version = compiler_version;
+        program
     }
 }
+
 impl TryFrom<ProgramJson> for ProgramWrapper {
     fn try_from(value: ProgramJson) -> Result<ProgramWrapper, ProgramError> {
-        Ok(parse_program_json(value, None)?.into())
+        let main_scope = value.main_scope.clone();
+        let compiler_version = value.compiler_version.clone();
+        let mut program: ProgramWrapper = parse_program_json(value, None)?.into();
+        program.main_scope = main_scope;
+        program.compiler_version = compiler_version;
+        Ok(program)
     }
 
     type Error = ProgramError;
@@ -182,15 +203,17 @@ impl TryFrom<ProgramJson> for ProgramWrapper {
 /// SCALE trait.
 impl Encode for ProgramWrapper {
     fn encode_to<T: Output + ?Sized>(&self, dest: &mut T) {
+        let program_bytes: ProgramJson = self.clone().into();
+        // The serialization is well tested so it shouldn't panic. Also this is just adding the unwrap in
+        // this function instead of the VM.
+        let program_bytes = serde_json::to_vec(&program_bytes).unwrap();
         // Get the program to bytes.
-        let program_bytes = &Into::<Program>::into(self.clone()).to_bytes();
         // Get the program bytes length to be able to decode it. We convert it to u128 to have a fix bytes
         // size so when we decode it we know that the first 16 bytes correspond to the program encoded size.
         let program_len = program_bytes.len() as u128;
-        assert_eq!(program_len.to_be_bytes().len(), 16);
 
         dest.write(&program_len.to_be_bytes());
-        dest.write(program_bytes);
+        dest.write(&program_bytes);
     }
 }
 
@@ -207,9 +230,12 @@ impl Decode for ProgramWrapper {
         // Fill it with the program.
         input.read(program_buf.as_mut_slice())?;
         // Convert the program to bytes.
-        let program = Program::from_bytes(&program_buf, None)
+        let program = deserialize_program_json(&program_buf)
             .map_err(|e| Error::from("Can't get Program from input buffer.").chain(e.to_string()))?;
-        Ok(program.into())
+        let program: ProgramWrapper = program
+            .try_into()
+            .map_err(|e: ProgramError| Error::from("Can't convert ProgramJson to Program.").chain(e.to_string()))?;
+        Ok(program)
     }
 }
 
@@ -239,12 +265,13 @@ mod tests {
     #[test]
     fn test_serialize_deserialize_contract_class() {
         let contract_class: ContractClassWrapper =
-            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
+            serde_json::from_slice(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"))
+                .unwrap();
         let contract_class_serialized = serde_json::to_vec(&contract_class).unwrap();
         let contract_class_deserialized: ContractClassWrapper =
             serde_json::from_slice(&contract_class_serialized).unwrap();
 
-        assert_eq!(contract_class, contract_class_deserialized);
+        pretty_assertions::assert_eq!(contract_class, contract_class_deserialized);
     }
 
     #[test]
@@ -252,6 +279,6 @@ mod tests {
         let contract_class: ContractClassWrapper =
             get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
         let encoded = contract_class.encode();
-        assert_eq!(contract_class, ContractClassWrapper::decode(&mut &encoded[..]).unwrap())
+        pretty_assertions::assert_eq!(contract_class, ContractClassWrapper::decode(&mut &encoded[..]).unwrap())
     }
 }
