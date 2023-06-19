@@ -1,5 +1,5 @@
 use blockifier::execution::contract_class::ContractClass;
-use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
@@ -17,7 +17,7 @@ use super::constants::*;
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Specialized `ChainSpec` for development.
 pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
@@ -29,7 +29,7 @@ pub const CHAIN_ID_STARKNET_TESTNET: u128 = 0x534e5f474f45524c49;
 #[derive(Serialize, Deserialize)]
 pub struct DevGenesisExt {
     /// Genesis config.
-    genesis_config: GenesisConfig,
+    genesis_config: RuntimeGenesisConfig,
     /// The flag that if enable manual-seal mode.
     enable_manual_seal: Option<bool>,
 }
@@ -158,7 +158,7 @@ fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
-) -> GenesisConfig {
+) -> RuntimeGenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
@@ -205,7 +205,7 @@ fn testnet_genesis(
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
-    GenesisConfig {
+    RuntimeGenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
