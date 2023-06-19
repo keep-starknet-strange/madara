@@ -84,7 +84,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 from_address: sender_account,
                 transaction_hash
             }),
-            events[events.len() - 2].event.clone().try_into().unwrap(),
+            events[events.len() - 3].event.clone().try_into().unwrap(),
         );
         let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
             keys: bounded_vec![

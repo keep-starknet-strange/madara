@@ -202,7 +202,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 }
 
 #[test]
-#[ignore]
 fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);
@@ -214,6 +213,9 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 
         let emit_internal_selector = Felt252Wrapper::from(get_selector_from_name("emit_internal").unwrap());
         let emit_external_selector = Felt252Wrapper::from(get_selector_from_name("emit_external").unwrap());
+
+        let expected_emitted_internal_event_hash = get_selector_from_name("internal").unwrap();
+        let expected_emitted_external_event_hash = get_selector_from_name("external").unwrap();
 
         let emit_internal_event_transaction = InvokeTransaction {
             version: 1,
@@ -235,8 +237,10 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
         let pending = Starknet::pending();
         let one_receipt = &pending.get(0).unwrap().1;
 
-        // fee event plus our own expected event is two events
-        assert!(one_receipt.events.len() == 2, "Internal event should emit");
+        match one_receipt.events.get(0).and_then(|event| event.keys.get(0)) {
+            Some(first_key) => assert_eq!(first_key.0, expected_emitted_internal_event_hash),
+            None => panic!("no internal event!"),
+        }
 
         let do_two_event_transaction = InvokeTransaction {
             version: 1,
@@ -257,8 +261,11 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 
         let pending = Starknet::pending();
         let two_receipt = &pending.get(1).unwrap().1;
-        // fee event plus our own expected event is two events
-        assert!(two_receipt.events.len() == 2, "External event should emit");
+
+        match two_receipt.events.get(0).and_then(|event| event.keys.get(0)) {
+            Some(first_key) => assert_eq!(first_key.0, expected_emitted_external_event_hash),
+            None => panic!("no external event!"),
+        }
     });
 }
 
