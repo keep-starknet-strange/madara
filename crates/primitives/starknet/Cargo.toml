@@ -29,6 +29,7 @@ starknet-crypto = { workspace = true, default-features = false, features = [
 ] }
 starknet-ff = { workspace = true, default-features = false, features = [
   "alloc",
+  "serde",
 ] }
 starknet_api = { workspace = true, default-features = false }
 

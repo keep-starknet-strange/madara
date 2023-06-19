@@ -1,12 +1,12 @@
 //! Starknet pallet custom types.
 use blockifier::execution::contract_class::ContractClass;
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
-use sp_core::{ConstU32, U256};
+use sp_core::ConstU32;
 use starknet_api::api_core::ClassHash;
 use starknet_api::stdlib::collections::HashMap;
 
 /// Nonce of a Starknet transaction.
-pub type NonceWrapper = U256;
+pub type NonceWrapper = Felt252Wrapper;
 /// Storage Key
 pub type StorageKeyWrapper = Felt252Wrapper;
 /// Contract Storage Key

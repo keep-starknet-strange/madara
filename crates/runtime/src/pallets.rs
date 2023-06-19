@@ -2,6 +2,7 @@
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
 
+use frame_support::traits::ConstBool;
 pub use frame_support::traits::{
     ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
@@ -38,6 +39,8 @@ impl pallet_starknet::Config for Runtime {
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
+    type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
+    type ValidateMaxNSteps = ValidateMaxNSteps;
 }
 
 /// --------------------------------------
@@ -114,6 +117,7 @@ impl pallet_aura::Config for Runtime {
     type AuthorityId = AuraId;
     type DisabledValidators = ();
     type MaxAuthorities = ConstU32<32>;
+    type AllowMultipleBlocksPerSlot = ConstBool<true>;
 }
 
 /// Deterministic finality mechanism used for block finalization.
@@ -143,17 +147,11 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
-/// Allows executing privileged functions.
-/// Right now we use it to configure the fee token address for the Starknet pallet.
-impl pallet_sudo::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeCall = RuntimeCall;
-    type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
-}
-
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
+    pub const InvokeTxMaxNSteps: u32 = 1_000_000;
+    pub const ValidateMaxNSteps: u32 = 1_000_000;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

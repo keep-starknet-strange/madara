@@ -45,6 +45,12 @@ to build the node without launching it:
 cargo build --release
 ```
 
+You can optionally specify the compiler version for the build:
+
+```sh
+COMPILER_VERSION=0.12.0 cargo build --release
+```
+
 ### Using Nix (optional, only for degens)
 
 Install [nix](https://nixos.org/) and optionally
