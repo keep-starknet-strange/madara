@@ -39,6 +39,7 @@ impl pallet_starknet::Config for Runtime {
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
+    type EnableStateRoot = ConstBool<false>;
 }
 
 /// --------------------------------------

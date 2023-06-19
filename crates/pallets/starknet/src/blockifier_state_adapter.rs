@@ -8,6 +8,7 @@ use blockifier::state::state_api::{State, StateReader, StateResult};
 use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::state::StateChanges;
+use sp_core::Get;
 use sp_std::sync::Arc;
 use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
@@ -99,18 +100,21 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         crate::StorageView::<T>::insert(contract_storage_key, value);
 
-        // Update contracts trie
-        let mut tree = crate::State::<T>::get().storage_commitment;
-        let nonce = Pallet::<T>::nonce(contract_address);
-        let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update contracts trie
+            let mut tree = crate::State::<T>::get().storage_commitment;
+            let nonce = Pallet::<T>::nonce(contract_address);
+            let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
 
-        // Update storage trie
-        let mut state_tree = crate::State::<T>::get().state_commitment;
-        state_tree.set(key, value);
-        let state_root = state_tree.commit();
+            // Update storage trie
+            let mut state_tree = crate::State::<T>::get().state_commitment;
+            state_tree.set(key, value);
+            let state_root = state_tree.commit();
 
-        let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
-        tree.set(contract_address, hash);
+            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
+            tree.set(contract_address, hash);
+        }
     }
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
@@ -120,11 +124,14 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         crate::Nonces::<T>::insert(contract_address, new_nonce);
 
-        // Update contracts trie
-        let mut tree = crate::State::<T>::get().storage_commitment;
-        let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
-        let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, Felt252Wrapper::ZERO, new_nonce);
-        tree.set(contract_address, hash);
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update contracts trie
+            let mut tree = crate::State::<T>::get().storage_commitment;
+            let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
+            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, Felt252Wrapper::ZERO, new_nonce);
+            tree.set(contract_address, hash);
+        }
 
         Ok(())
     }
@@ -136,10 +143,13 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         crate::ContractClassHashes::<T>::insert(contract_address, class_hash);
 
-        // Update classes trie
-        let mut tree = crate::State::<T>::get().class_commitment;
-        let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(Felt252Wrapper::ZERO);
-        tree.set(class_hash, final_hash);
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update classes trie
+            let mut tree = crate::State::<T>::get().class_commitment;
+            let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(Felt252Wrapper::ZERO);
+            tree.set(class_hash, final_hash);
+        }
 
         Ok(())
     }
@@ -150,10 +160,13 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 
-        // Update classes trie
-        let mut tree = crate::State::<T>::get().class_commitment;
-        let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(class_hash);
-        tree.set(class_hash, final_hash);
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update classes trie
+            let mut tree = crate::State::<T>::get().class_commitment;
+            let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(class_hash);
+            tree.set(class_hash, final_hash);
+        }
 
         Ok(())
     }

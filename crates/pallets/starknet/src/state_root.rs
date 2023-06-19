@@ -14,6 +14,11 @@ impl<T: Config> Get<Felt252Wrapper> for IntermediateStateRoot<T> {
     /// # Returns
     /// * `Felt252Wrapper` - The intermediate state root.
     fn get() -> Felt252Wrapper {
+        // If state root is disabled, return one.
+        if !T::EnableStateRoot::get() {
+            return Felt252Wrapper::ONE;
+        }
+
         // Get commitmment trees.
         let mut commitments = crate::State::<T>::get();
 
