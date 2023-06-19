@@ -14,6 +14,7 @@ where
     C: HeaderBackend<B> + 'static,
 {
     let substrate_hashes = backend.mapping().block_hash(&hash)?;
+    log::info!("load_hash: substrate_hashes: {:?}", substrate_hashes);
 
     if let Some(substrate_hashes) = substrate_hashes {
         for substrate_hash in substrate_hashes {

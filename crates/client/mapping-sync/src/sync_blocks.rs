@@ -77,7 +77,11 @@ where
 {
     let substrate_block_hash = header.hash();
 
-    let block = find_starknet_block(header.digest()).map_err(|e| format!("Block not found {:?}", e))?;
+    let block = match find_starknet_block(header.digest()) {
+        Ok(block) => block,
+        Err(FindLogError::NotLog) => return backend.mapping().write_none(substrate_block_hash),
+        Err(FindLogError::MultipleLogs) => return Err("Multiple logs found".to_string()),
+    };
     let block_hash = block.header().hash(*hasher);
     let mapping_commitment = mc_db::MappingCommitment::<B> {
         block_hash: substrate_block_hash,
