@@ -153,6 +153,10 @@ pub mod pallet {
         /// set how long transactions are kept in the mempool.
         #[pallet::constant]
         type TransactionLongevity: Get<TransactionLongevity>;
+        #[pallet::constant]
+        type InvokeTxMaxNSteps: Get<u32>;
+        #[pallet::constant]
+        type ValidateMaxNSteps: Get<u32>;
     }
 
     /// The Starknet pallet hooks.
@@ -764,9 +768,6 @@ impl<T: Config> Pallet<T> {
         let chain_id = Self::chain_id_str();
         let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
         let vm_resource_fee_cost = HashMap::default();
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/545
-        let invoke_tx_max_n_steps = 1000000;
-        let validate_max_n_steps = 1000000;
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
         BlockContext {
@@ -776,8 +777,8 @@ impl<T: Config> Pallet<T> {
             sequencer_address,
             fee_token_address,
             vm_resource_fee_cost,
-            invoke_tx_max_n_steps,
-            validate_max_n_steps,
+            invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
+            validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
         }
     }

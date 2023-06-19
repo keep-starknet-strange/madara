@@ -39,6 +39,8 @@ impl pallet_starknet::Config for Runtime {
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
+    type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
+    type ValidateMaxNSteps = ValidateMaxNSteps;
 }
 
 /// --------------------------------------
@@ -148,6 +150,8 @@ impl pallet_timestamp::Config for Runtime {
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
+    pub const InvokeTxMaxNSteps: u32 = 1_000_000;
+    pub const ValidateMaxNSteps: u32 = 1_000_000;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.
