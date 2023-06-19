@@ -22,3 +22,8 @@ pub type Index = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
+
+/// The maximum amount of steps allowed for an invoke transaction. (?)
+pub type InvokeTxMaxNSteps = u32;
+/// The maximum amount of steps allowed for validation. (?)
+pub type ValidateMaxNSteps = u32;
