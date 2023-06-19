@@ -4363,6 +4363,7 @@ dependencies = [
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
+ "mc-transaction-pool",
  "mp-starknet",
  "pallet-starknet",
  "sc-cli",
@@ -4378,7 +4379,6 @@ dependencies = [
  "sc-rpc-api",
  "sc-service",
  "sc-telemetry",
- "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde",
  "serde_json",
@@ -4541,13 +4541,13 @@ dependencies = [
  "mc-db",
  "mc-rpc-core",
  "mc-storage",
+ "mc-transaction-pool",
  "mp-starknet",
  "pallet-starknet",
  "pretty_assertions",
  "rstest",
  "sc-client-api",
  "sc-network-sync",
- "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde_json",
  "sp-api",
@@ -4602,6 +4602,31 @@ dependencies = [
  "sp-runtime",
  "sp-storage",
  "starknet-core",
+]
+
+[[package]]
+name = "mc-transaction-pool"
+version = "4.0.0-dev"
+dependencies = [
+ "async-trait",
+ "futures",
+ "futures-timer",
+ "linked-hash-map",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "sc-client-api",
+ "sc-transaction-pool-api",
+ "sc-utils",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-tracing",
+ "sp-transaction-pool",
+ "substrate-prometheus-endpoint",
+ "thiserror",
 ]
 
 [[package]]
