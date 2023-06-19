@@ -80,7 +80,7 @@ use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
 };
-use mp_starknet::sequencer_address::{InherentError, InherentType, INHERENT_IDENTIFIER};
+use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
@@ -675,7 +675,7 @@ pub mod pallet {
             let inherent_data = data
                 .get_data::<InherentType>(&INHERENT_IDENTIFIER)
                 .expect("Sequencer address inherent data not correctly encoded")
-                .expect("Sequencer address must be provided");
+                .unwrap_or(DEFAULT_SEQUENCER_ADDRESS);
             Some(Call::set_sequencer_address { addr: inherent_data })
         }
 
