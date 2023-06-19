@@ -18,7 +18,7 @@ use {crate as pallet_starknet, frame_system as system};
 use super::constants::*;
 use super::utils::get_contract_class;
 use crate::types::ContractStorageKeyWrapper;
-use crate::{SeqAddrUpdate, SequencerAddress};
+use crate::SequencerAddress;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -268,7 +268,6 @@ pub(crate) fn run_to_block(n: u64) {
     for b in System::block_number()..=n {
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
-        SeqAddrUpdate::<MockRuntime>::put(true);
         Starknet::on_finalize(b);
     }
 }
