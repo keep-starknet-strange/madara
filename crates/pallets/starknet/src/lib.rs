@@ -683,7 +683,7 @@ pub mod pallet {
                 .get_data::<InherentType>(&INHERENT_IDENTIFIER)
                 .expect("Sequencer address inherent data not correctly encoded")
                 .expect("Sequencer address must be provided");
-            Some(Call::set_sequencer_address { addr: inherent_data.into() })
+            Some(Call::set_sequencer_address { addr: inherent_data })
         }
 
         fn check_inherent(_call: &Self::Call, _data: &InherentData) -> result::Result<(), Self::Error> {
