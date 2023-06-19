@@ -534,12 +534,12 @@ fn test_try_into_declare_transaction_v1_bad_gzip() {
     let mut compressed_contract_class = get_compressed_legacy_contract_class();
 
     // Manually change some bytes so its no longer a valid gzip
-    compressed_contract_class.program.get_mut(0).map(|value| {
+    if let Some(value) = compressed_contract_class.program.get_mut(0) {
         *value = 1;
-    });
-    compressed_contract_class.program.get_mut(1).map(|value| {
-        *value = 2;
-    });
+    }
+    if let Some(value) = compressed_contract_class.program.get_mut(1) {
+        *value = 1;
+    }
 
     let txn = BroadcastedDeclareTransactionV1 {
         max_fee: FieldElement::default(),
