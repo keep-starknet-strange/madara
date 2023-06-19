@@ -30,13 +30,13 @@ sp-session = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
 
-pallet-aura = { workspace = true }
+frame-executive = { workspace = true }
 frame-support = { workspace = true }
-pallet-grandpa = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { workspace = true, optional = true }
+pallet-aura = { workspace = true }
+pallet-grandpa = { workspace = true }
 pallet-timestamp = { workspace = true }
-frame-executive = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }

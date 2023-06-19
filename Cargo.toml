@@ -19,7 +19,6 @@ authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 edition = "2021"
 repository = "https://github.com/keep-starknet-strange/madara/"
 
-
 [workspace.dependencies]
 # Substrate frame dependencies
 frame-executive = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8", default-features = false }

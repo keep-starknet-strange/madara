@@ -14,10 +14,16 @@ targets = ["x86_64-unknown-linux-gnu"]
 # Substrate
 frame-support = { workspace = true }
 sp-core = { workspace = true }
-sp-std = { workspace = true }
 sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 # Starknet
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }
+cairo-vm = { workspace = true }
+poseidon_hash = { workspace = true, default-features = false }
+starknet-core = { workspace = true, optional = true }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
@@ -25,17 +31,14 @@ starknet-ff = { workspace = true, default-features = false, features = [
   "alloc",
   "serde",
 ] }
-starknet-core = { workspace = true, optional = true }
-poseidon_hash = { workspace = true, default-features = false }
-blockifier = { workspace = true, default-features = false, features = [
-  "testing",
-] }
 starknet_api = { workspace = true, default-features = false }
-cairo-vm = { workspace = true }
 
 # Other third party dependencies
 bitvec = { workspace = true, features = ["alloc"] }
+derive_more = { workspace = true, features = ["constructor"] }
+flate2 = { workspace = true, optional = true }
 hex = { version = "0.4.3", default-features = false }
+lazy_static = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
   "max-encoded-len",
@@ -44,9 +47,6 @@ scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.96", default-features = false }
 thiserror-no-std = { workspace = true }
-derive_more = { workspace = true, features = ["constructor"] }
-lazy_static = { workspace = true }
-flate2 = { workspace = true, optional = true }
 
 [dev-dependencies]
 rand = "0.8.5"
