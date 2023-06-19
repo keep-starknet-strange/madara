@@ -114,6 +114,11 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
             tree.set(contract_address, hash);
+
+            crate::State::<T>::mutate(|state| {
+                state.storage_commitment = tree;
+                state.state_commitment = state_tree;
+            })
         }
     }
 
@@ -131,6 +136,10 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
             let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, Felt252Wrapper::ZERO, new_nonce);
             tree.set(contract_address, hash);
+
+            crate::State::<T>::mutate(|state| {
+                state.storage_commitment = tree;
+            })
         }
 
         Ok(())
@@ -149,6 +158,10 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
             let mut tree = crate::State::<T>::get().class_commitment;
             let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(Felt252Wrapper::ZERO);
             tree.set(class_hash, final_hash);
+
+            crate::State::<T>::mutate(|state| {
+                state.class_commitment = tree;
+            })
         }
 
         Ok(())
@@ -166,6 +179,10 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
             let mut tree = crate::State::<T>::get().class_commitment;
             let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(class_hash);
             tree.set(class_hash, final_hash);
+
+            crate::State::<T>::mutate(|state| {
+                state.class_commitment = tree;
+            })
         }
 
         Ok(())
