@@ -171,7 +171,7 @@ sp_api::decl_runtime_apis! {
 // crates/runtime/src/lib.rs
 
 impl pallet_starknet::runtime_api::StarknetRuntimeApi<Block> for Runtime {
-      
+
       fn call(address: ContractAddressWrapper, function_selector: Felt252Wrapper, calldata: Vec<Felt252Wrapper>) -> Result<Vec<Felt252Wrapper>, DispatchError> {
           Starknet::call_contract(address, function_selector, calldata)
       }
