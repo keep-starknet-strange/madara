@@ -1,20 +1,16 @@
 use frame_support::{assert_ok, bounded_vec};
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use mp_starknet::transaction::types::InvokeTransaction;
 use sp_core::ConstU32;
 use sp_runtime::BoundedVec;
 
 use super::constants::TOKEN_CONTRACT_CLASS_HASH;
 use super::mock::*;
-use crate::SequencerAddress;
 
 #[test]
 fn given_call_contract_call_works() {
     new_test_ext().execute_with(|| {
-        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
-        System::set_block_number(0);
-        run_to_block(1);
+        basic_test_setup(1);
 
         let origin = RuntimeOrigin::none();
         let sender_account = get_account_address(AccountType::NoValidate);

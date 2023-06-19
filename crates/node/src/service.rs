@@ -12,7 +12,7 @@ use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
-use mp_starknet::sequencer_address::{InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS};
+use mp_starknet::sequencer_address::{InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
@@ -397,7 +397,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
 
                     let ocw_storage = offchain_storage.clone();
                     let prefix = &STORAGE_PREFIX;
-                    let key: &[u8] = b"starknet::seq_addr";
+                    let key = SEQ_ADDR_STORAGE_KEY;
                     let sequencer_address = SeqAddrInherentDataProvider::from_vec(
                         ocw_storage.unwrap().get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
                     );

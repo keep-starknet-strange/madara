@@ -2,13 +2,12 @@ use frame_support::{assert_ok, bounded_vec};
 use lazy_static::lazy_static;
 use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
-use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 
 use super::mock::*;
 use super::utils::get_contract_class_wrapper;
 use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
-use crate::{Event, SequencerAddress};
+use crate::Event;
 
 lazy_static! {
     static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("ERC20.json");
@@ -17,9 +16,7 @@ lazy_static! {
 #[test]
 fn given_erc20_transfer_when_invoke_then_it_works() {
     new_test_ext().execute_with(|| {
-        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
-        System::set_block_number(0);
-        run_to_block(1);
+        basic_test_setup(1);
         let origin = RuntimeOrigin::none();
         let sender_account = get_account_address(AccountType::NoValidate);
         // ERC20 is already declared for the fees.

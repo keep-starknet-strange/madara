@@ -1,5 +1,8 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+
 use scale_codec::{Decode, Encode};
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError};
+use thiserror_no_std::Error;
 
 /// The identifier for the `sequencer_address` inherent.
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"seqaddr0";
@@ -8,14 +11,25 @@ pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"seqaddr0";
 pub const DEFAULT_SEQUENCER_ADDRESS: [u8; 32] =
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
 
+/// The storage key for the sequencer address value.
+pub const SEQ_ADDR_STORAGE_KEY: &[u8] = b"starknet::seq_addr";
+
 /// The inherent type for the sequencer address.
 pub type InherentType = [u8; 32];
 
-#[derive(Decode, Encode, sp_runtime::RuntimeDebug)]
+#[derive(Encode, sp_runtime::RuntimeDebug)]
+#[cfg_attr(feature = "std", derive(Decode, Error))]
 /// Error types when working with the sequencer address.
 pub enum InherentError {
     /// Submitted address must be `[u8; 32]`.
     WrongAddressFormat,
+}
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for InherentError {
+	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+		write!(f, "Inherent decoding error")
+	}
 }
 
 impl IsFatalError for InherentError {
@@ -26,8 +40,8 @@ impl IsFatalError for InherentError {
     }
 }
 
+#[cfg(feature = "std")]
 impl InherentError {
-    #[cfg(feature = "std")]
     /// Try to create an instance ouf of the given identifier and data.
     pub fn try_from(id: &InherentIdentifier, mut data: &[u8]) -> Option<Self> {
         if id == &INHERENT_IDENTIFIER { <InherentError as Decode>::decode(&mut data).ok() } else { None }
@@ -92,9 +106,11 @@ impl sp_inherents::InherentDataProvider for InherentDataProvider {
 
     async fn try_handle_error(
         &self,
-        _identifier: &InherentIdentifier,
-        _error: &[u8],
+        identifier: &InherentIdentifier,
+        error: &[u8],
     ) -> Option<Result<(), sp_inherents::Error>> {
-        None
+        Some(Err(sp_inherents::Error::Application(Box::from(InherentError::try_from(
+			identifier, error,
+		)?))))
     }
 }

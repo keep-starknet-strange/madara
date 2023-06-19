@@ -87,7 +87,6 @@ use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
-use sp_runtime::offchain::storage::StorageValueRef;
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
 use sp_std::result;
@@ -188,15 +187,6 @@ pub mod pallet {
         /// * `n` - The block number.
         fn offchain_worker(n: T::BlockNumber) {
             log!(info, "Running offchain worker at block {:?}.", n);
-
-            let addr = StorageValueRef::persistent(b"starknet::seq_addr");
-
-            if let Ok(Some(address)) = addr.get::<[u8; 32]>() {
-                log::info!("Current set sequencer address: {:?}", address);
-                ()
-            } else {
-                log::info!("Sequencer address not set");
-            }
 
             match Self::process_l1_messages() {
                 Ok(_) => log!(info, "Successfully executed L1 messages"),
@@ -932,7 +922,7 @@ impl<T: Config> Pallet<T> {
         let pending = Self::pending();
 
         let global_state_root = Felt252Wrapper::ZERO;
-        let sequencer_address = SequencerAddress::<T>::get();
+        let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
 
