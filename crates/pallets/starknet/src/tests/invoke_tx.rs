@@ -207,6 +207,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
     new_test_ext().execute_with(|| {
+        SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
         System::set_block_number(0);
         run_to_block(2);
 
