@@ -1000,13 +1000,11 @@ impl<T: Config> Pallet<T> {
         }
 
         for inner_call in &mut call_info.inner_calls {
-            inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-            for ordered_event in &inner_call.execution.events {
-                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address, tx_hash)?;
-                events.push(event_type);
+            let inner_events = Self::emit_events(inner_call, tx_hash)?;
+            if !inner_events.is_empty() {
+                events.extend(inner_events);
             }
         }
-
         Ok(events)
     }
 
