@@ -430,7 +430,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(0)]
+        #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -490,7 +490,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(1)]
+        #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -573,7 +573,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(2)]
+        #[pallet::call_index(3)]
         #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -650,7 +650,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(3)]
+        #[pallet::call_index(4)]
         #[pallet::weight({0})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -818,7 +818,7 @@ impl<T: Config> Pallet<T> {
         let fee_token_address =
             ContractAddress::try_from(StarkFelt::new(Self::fee_token_address().into()).unwrap()).unwrap();
         let chain_id = Self::chain_id_str();
-        let provided_seq_addr = SequencerAddress::<T>::get();
+        let provided_seq_addr = Self::sequencer_address();
         let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(provided_seq_addr)));
         let vm_resource_fee_cost = HashMap::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
