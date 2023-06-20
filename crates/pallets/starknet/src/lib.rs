@@ -698,24 +698,25 @@ pub mod pallet {
             Ok(())
         }
 
-    /// Set L1 gas price.
-    ///
-    /// # Arguments
-    ///
-    /// * `origin` - The origin of the transaction.
-    /// * `gas_price` - The value of the gas price.
-    ///
-    /// # Returns
-    ///
-    /// * `DispatchResult` - The result of the transaction.
-    #[pallet::call_index(6)]
-    #[pallet::weight({0})]
-    pub fn submit_gas_price_unsigned(origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
-        // Only root can set the gas price.
-        ensure_root(origin)?;
-        // Update the gas price.
-        GasPriceL1::<T>::set(gas_price);
-        Ok(())
+        /// Set L1 gas price.
+        ///
+        /// # Arguments
+        ///
+        /// * `origin` - The origin of the transaction.
+        /// * `gas_price` - The value of the gas price.
+        ///
+        /// # Returns
+        ///
+        /// * `DispatchResult` - The result of the transaction.
+        #[pallet::call_index(4)]
+        #[pallet::weight({0})]
+        pub fn submit_gas_price_unsigned(origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
+            // Only root can set the gas price.
+            ensure_root(origin)?;
+            // Update the gas price.
+            GasPriceL1::<T>::set(gas_price);
+            Ok(())
+        }
     }
     }
 
