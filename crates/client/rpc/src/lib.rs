@@ -742,6 +742,17 @@ where
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
+
+        let current_block_hash = self.client.info().best_hash;
+        let contract_class = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), current_block_hash)
+            .contract_class_by_class_hash(current_block_hash, declare_tx.compiled_class_hash);
+        if let Some(contract_class) = contract_class {
+            error!("Contract class already exists: {:?}", contract_class);
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+        }
+
         let transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
         let extrinsic = self
             .client
