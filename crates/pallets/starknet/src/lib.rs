@@ -407,7 +407,9 @@ pub mod pallet {
         #[pallet::weight((0, DispatchClass::Mandatory))]
         pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
             ensure_none(origin)?;
-            assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+            if UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number()) > 1 {
+                assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+            }
             SequencerAddress::<T>::put(addr);
             SeqAddrUpdate::<T>::put(true);
             Ok(())
