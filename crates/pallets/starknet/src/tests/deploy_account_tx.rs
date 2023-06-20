@@ -101,8 +101,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
 #[test]
 fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
         let account_class_hash = get_account_class_hash(AccountType::Argent);
         let transaction = DeployAccountTransaction {
@@ -125,8 +124,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
 #[test]
 fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -204,8 +202,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -285,8 +282,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -370,8 +366,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -411,8 +406,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 #[test]
 fn test_verify_tx_longevity() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";

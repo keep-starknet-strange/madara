@@ -252,6 +252,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             ),
         ],
         chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
+        seq_addr_updated: true,
         ..Default::default()
     }
     .assimilate_storage(&mut t)

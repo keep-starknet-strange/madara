@@ -273,6 +273,7 @@ fn testnet_genesis(
             fee_token_address,
             _phantom: Default::default(),
             chain_id,
+            seq_addr_updated: true,
         },
     }
 }

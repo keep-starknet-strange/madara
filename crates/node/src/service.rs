@@ -400,9 +400,15 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
                     let ocw_storage = offchain_storage.clone();
                     let prefix = &STORAGE_PREFIX;
                     let key = SEQ_ADDR_STORAGE_KEY;
-                    let sequencer_address = SeqAddrInherentDataProvider::from_vec(
-                        ocw_storage.unwrap().get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
-                    );
+
+                    let sequencer_address = if let Some(storage) = ocw_storage {
+                        SeqAddrInherentDataProvider::try_from(
+                            storage.get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
+                        )
+                        .unwrap_or_default()
+                    } else {
+                        SeqAddrInherentDataProvider::default()
+                    };
 
                     Ok((slot, timestamp, sequencer_address))
                 }

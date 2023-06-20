@@ -163,10 +163,9 @@ pub mod pallet {
     #[pallet::hooks]
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
-        fn on_finalize(n: T::BlockNumber) {
-            if UniqueSaturatedInto::<u64>::unique_saturated_into(n) >= 1 {
-                assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
-            }
+        fn on_finalize(_n: T::BlockNumber) {
+            assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
+
             // Create a new Starknet block and store it.
             <Pallet<T>>::store_block(UniqueSaturatedInto::<u64>::unique_saturated_into(
                 frame_system::Pallet::<T>::block_number(),
@@ -303,6 +302,7 @@ pub mod pallet {
         pub _phantom: PhantomData<T>,
         /// The chain id.
         pub chain_id: Felt252Wrapper,
+        pub seq_addr_updated: bool,
     }
 
     /// `Default` impl required by `pallet::GenesisBuild`.
@@ -315,6 +315,7 @@ pub mod pallet {
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
                 chain_id: Default::default(),
+                seq_addr_updated: true,
             }
         }
     }
@@ -344,6 +345,7 @@ pub mod pallet {
             FeeTokenAddress::<T>::set(self.fee_token_address);
             // Set the chain id from the genesis config.
             ChainId::<T>::put(self.chain_id);
+            SeqAddrUpdate::<T>::put(self.seq_addr_updated);
         }
     }
 
@@ -397,8 +399,8 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// Set the current block author's sequencer address.
         ///
-        /// This call should be invoked exactly once per block. It will panic at the finalization
-        /// phase, if this call hasn't been invoked by that time.
+        /// This call should be invoked exactly once per block. It will set a default value at
+        /// the finalization phase, if this call hasn't been invoked by that time.
         ///
         /// The dispatch origin for this call must be `Inherent`.
         #[pallet::call_index(0)]

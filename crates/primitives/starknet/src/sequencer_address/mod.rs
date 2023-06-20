@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::array::TryFromSliceError;
+
 use scale_codec::{Decode, Encode};
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError};
 use thiserror_no_std::Error;
@@ -17,19 +19,12 @@ pub const SEQ_ADDR_STORAGE_KEY: &[u8] = b"starknet::seq_addr";
 /// The inherent type for the sequencer address.
 pub type InherentType = [u8; 32];
 
-#[derive(Encode, sp_runtime::RuntimeDebug)]
-#[cfg_attr(feature = "std", derive(Decode, Error))]
+#[derive(Decode, Encode, Error, sp_runtime::RuntimeDebug)]
 /// Error types when working with the sequencer address.
 pub enum InherentError {
     /// Submitted address must be `[u8; 32]`.
+    #[error("Inherent decoding error")]
     WrongAddressFormat,
-}
-
-#[cfg(feature = "std")]
-impl std::fmt::Display for InherentError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Inherent decoding error")
-    }
 }
 
 impl IsFatalError for InherentError {
@@ -79,22 +74,29 @@ impl InherentDataProvider {
     pub fn sequencer_address(&self) -> InherentType {
         self.sequencer_address
     }
+}
 
-    /// Default address if sequencer address is not specified.
-    pub fn from_default() -> Self {
+#[cfg(feature = "std")]
+impl Default for InherentDataProvider {
+    fn default() -> InherentDataProvider {
         InherentDataProvider { sequencer_address: DEFAULT_SEQUENCER_ADDRESS }
     }
+}
 
-    /// Convert storage vector into `[u8; 32]`.
-    pub fn from_vec(storage_val: Vec<u8>) -> Self {
-        let addr: [u8; 32] = slice_to_arr(&storage_val);
-        InherentDataProvider { sequencer_address: addr }
+#[cfg(feature = "std")]
+impl TryFrom<Vec<u8>> for InherentDataProvider {
+    type Error = InherentError;
+    fn try_from(storage_val: Vec<u8>) -> Result<Self, InherentError> {
+        match slice_to_arr(&storage_val) {
+            Ok(addr) => Ok(InherentDataProvider { sequencer_address: addr }),
+            Err(_) => Err(InherentError::WrongAddressFormat),
+        }
     }
 }
 
 /// Helper function to convert storage value.
-pub fn slice_to_arr(slice: &[u8]) -> [u8; 32] {
-    slice.try_into().unwrap_or(DEFAULT_SEQUENCER_ADDRESS)
+fn slice_to_arr(slice: &[u8]) -> Result<[u8; 32], TryFromSliceError> {
+    slice.try_into()
 }
 
 #[cfg(feature = "std")]
