@@ -1,5 +1,3 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
 use core::array::TryFromSliceError;
 
 use scale_codec::{Decode, Encode};

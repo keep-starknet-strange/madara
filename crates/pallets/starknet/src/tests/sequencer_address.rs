@@ -37,7 +37,7 @@ fn sequencer_address_is_set_correctly() {
     });
     ext.persist_offchain_overlay();
     let offchain_db = ext.offchain_db();
-    assert_eq!(offchain_db.get(SEQ_ADDR_STORAGE_KEY), Some(GOOD_SEQUENCER_ADDRESS.to_vec()),);
+    assert_eq!(offchain_db.get(SEQ_ADDR_STORAGE_KEY), Some(GOOD_SEQUENCER_ADDRESS.to_vec()));
 }
 
 #[test]
@@ -45,6 +45,7 @@ fn sequencer_address_is_set_only_once_per_block() {
     let mut ext = new_test_ext();
     ext.execute_with(|| {
         basic_test_setup(0);
+        assert_eq!(Starknet::seq_addr_update(), false);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &DEFAULT_SEQUENCER_ADDRESS);
@@ -52,5 +53,17 @@ fn sequencer_address_is_set_only_once_per_block() {
     });
     ext.persist_offchain_overlay();
     let offchain_db = ext.offchain_db();
-    assert_eq!(offchain_db.get(SEQ_ADDR_STORAGE_KEY), Some(DEFAULT_SEQUENCER_ADDRESS.to_vec()),);
+    assert_eq!(offchain_db.get(SEQ_ADDR_STORAGE_KEY), Some(DEFAULT_SEQUENCER_ADDRESS.to_vec()));
+}
+
+#[test]
+fn sequencer_address_has_not_been_updated() {
+    let mut ext = new_test_ext();
+    ext.execute_with(|| {
+        basic_test_setup(0);
+        sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
+        assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
+        run_to_block(1);
+        assert_eq!(Starknet::seq_addr_update(), false);
+    });
 }
