@@ -857,6 +857,17 @@
 <a href="#857" id="857">857</a>
 <a href="#858" id="858">858</a>
 <a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1601,6 +1612,17 @@
             <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
+
+        <span class="kw">let </span>current_block_hash = <span class="self">self</span>.client.info().best_hash;
+        <span class="kw">let </span>contract_class = <span class="self">self
+            </span>.overrides
+            .for_block_hash(<span class="self">self</span>.client.as_ref(), current_block_hash)
+            .contract_class_by_class_hash(current_block_hash, declare_tx.compiled_class_hash);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(contract_class) = contract_class {
+            <span class="macro">error!</span>(<span class="string">&quot;Contract class already exists: {:?}&quot;</span>, contract_class);
+            <span class="kw">return </span><span class="prelude-val">Err</span>(StarknetRpcApiError::ClassAlreadyDeclared.into());
+        }
+
         <span class="kw">let </span>transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
         <span class="kw">let </span>extrinsic = <span class="self">self
             </span>.client
