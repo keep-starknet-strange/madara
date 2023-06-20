@@ -33,6 +33,7 @@ import {
   ARGENT_CONTRACT_ADDRESS,
   ARGENT_PROXY_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
+  ERC721_CONTRACT,
   ERC20_CONTRACT,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
@@ -737,6 +738,8 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
+      // the above command should be used at project root
       const classHash =
         "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       const res = await account.declare(
@@ -761,6 +764,30 @@ describeDevMadara("Starknet RPC", (context) => {
       //   stark.compressProgram(ERC20_CONTRACT.program)
       // );
       expect(res.class_hash).to.be.eq(classHash);
+    });
+
+    it("should fail to declare duplicate class", async function () {
+      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        keyPair
+      );
+
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
+      // the above command should be used at project root
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+
+      await expect(
+        account.declare(
+          {
+            classHash: classHash,
+            contract: ERC20_CONTRACT,
+          },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
+        )
+      ).to.be.rejectedWith("51: Class already declared");
     });
   });
 
@@ -800,12 +827,15 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
+
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC721.json
+      // the above command should be used at project root
       const classHash =
-        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+        "0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4";
       await account.declare(
         {
           classHash: classHash,
-          contract: ERC20_CONTRACT,
+          contract: ERC721_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
