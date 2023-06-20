@@ -555,6 +555,28 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -570,9 +592,12 @@
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
 <span class="kw">use </span>mc_transaction_pool::FullPool;
+<span class="kw">use </span>mp_starknet::sequencer_address::{
+    InherentDataProvider <span class="kw">as </span>SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
+};
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>prometheus_endpoint::Registry;
-<span class="kw">use </span>sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
+<span class="kw">use </span>sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 <span class="kw">use </span>sc_consensus::BasicQueue;
 <span class="kw">use </span>sc_consensus_aura::{SlotProportion, StartAuraParams};
 <span class="kw">use </span>sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
@@ -580,8 +605,10 @@
 <span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
 <span class="kw">use </span>sc_service::{Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
+<span class="kw">use </span>sp_api::offchain::OffchainStorage;
 <span class="kw">use </span>sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
+<span class="kw">use </span>sp_offchain::STORAGE_PREFIX;
 <span class="kw">use </span>sp_runtime::traits::BlakeTwo256;
 <span class="kw">use </span>sp_trie::PrefixedMemoryDB;
 
@@ -726,6 +753,7 @@
     RuntimeApi: Send + Sync + <span class="lifetime">&#39;static</span>,
 {
     <span class="kw">let </span>slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
+
     <span class="kw">let </span>create_inherent_data_providers = <span class="kw">move </span>|<span class="kw">_</span>, ()| <span class="kw">async move </span>{
         <span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
         <span class="kw">let </span>slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
@@ -892,7 +920,7 @@
             client.import_notification_stream(),
             Duration::new(<span class="number">6</span>, <span class="number">0</span>),
             client.clone(),
-            backend,
+            backend.clone(),
             madara_backend,
             <span class="number">3</span>,
             <span class="number">0</span>,
@@ -936,15 +964,31 @@
             select_chain,
             block_import,
             proposer_factory,
-            create_inherent_data_providers: <span class="kw">move </span>|<span class="kw">_</span>, ()| <span class="kw">async move </span>{
-                <span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+            create_inherent_data_providers: <span class="kw">move </span>|<span class="kw">_</span>, ()| {
+                <span class="kw">let </span>offchain_storage = backend.offchain_storage();
+                <span class="kw">async move </span>{
+                    <span class="kw">let </span>timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
-                <span class="kw">let </span>slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                    <span class="kw-2">*</span>timestamp,
-                    slot_duration,
-                );
+                    <span class="kw">let </span>slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                        <span class="kw-2">*</span>timestamp,
+                        slot_duration,
+                    );
 
-                <span class="prelude-val">Ok</span>((slot, timestamp))
+                    <span class="kw">let </span>ocw_storage = offchain_storage.clone();
+                    <span class="kw">let </span>prefix = <span class="kw-2">&amp;</span>STORAGE_PREFIX;
+                    <span class="kw">let </span>key = SEQ_ADDR_STORAGE_KEY;
+
+                    <span class="kw">let </span>sequencer_address = <span class="kw">if let </span><span class="prelude-val">Some</span>(storage) = ocw_storage {
+                        SeqAddrInherentDataProvider::try_from(
+                            storage.get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
+                        )
+                        .unwrap_or_default()
+                    } <span class="kw">else </span>{
+                        SeqAddrInherentDataProvider::default()
+                    };
+
+                    <span class="prelude-val">Ok</span>((slot, timestamp, sequencer_address))
+                }
             },
             force_authoring,
             backoff_authoring_blocks,
