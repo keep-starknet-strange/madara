@@ -3,7 +3,7 @@
     {
       "data": [],
       "keys": [],
-      "name": "do_event1",
+      "name": "external",
       "type": "event"
     },
     {
@@ -61,7 +61,7 @@
       "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffff2",
       "0x40137fff7fff8000",
       "0x480680017fff8000",
-      "0x10f91c83c47ec127b97cdd862f9ec996eb48b40b4d1d2dae9b5fd64cb1634a",
+      "0x3ee3b73373acd583a130924aad6dc38cfdc44ba0555ba94ce2ff63980ea0632",
       "0x4002800080007fff",
       "0x1104800180018000",
       "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffec",
@@ -241,79 +241,6 @@
         "type": "const",
         "value": 0
       },
-      "__main__.do_event1": {
-        "type": "namespace"
-      },
-      "__main__.do_event1.Args": {
-        "full_name": "__main__.do_event1.Args",
-        "members": {},
-        "size": 0,
-        "type": "struct"
-      },
-      "__main__.do_event1.ImplicitArgs": {
-        "full_name": "__main__.do_event1.ImplicitArgs",
-        "members": {},
-        "size": 0,
-        "type": "struct"
-      },
-      "__main__.do_event1.Return": {
-        "cairo_type": "()",
-        "type": "type_definition"
-      },
-      "__main__.do_event1.SELECTOR": {
-        "type": "const",
-        "value": 29988856632055298412303795652457436683110986130014099640161965809228407626
-      },
-      "__main__.do_event1.SIZEOF_LOCALS": {
-        "type": "const",
-        "value": 0
-      },
-      "__main__.do_event1.alloc": {
-        "destination": "starkware.cairo.common.alloc.alloc",
-        "type": "alias"
-      },
-      "__main__.do_event1.emit": {
-        "decorators": [],
-        "pc": 13,
-        "type": "function"
-      },
-      "__main__.do_event1.emit.Args": {
-        "full_name": "__main__.do_event1.emit.Args",
-        "members": {},
-        "size": 0,
-        "type": "struct"
-      },
-      "__main__.do_event1.emit.ImplicitArgs": {
-        "full_name": "__main__.do_event1.emit.ImplicitArgs",
-        "members": {
-          "range_check_ptr": {
-            "cairo_type": "felt",
-            "offset": 1
-          },
-          "syscall_ptr": {
-            "cairo_type": "felt*",
-            "offset": 0
-          }
-        },
-        "size": 2,
-        "type": "struct"
-      },
-      "__main__.do_event1.emit.Return": {
-        "cairo_type": "()",
-        "type": "type_definition"
-      },
-      "__main__.do_event1.emit.SIZEOF_LOCALS": {
-        "type": "const",
-        "value": 2
-      },
-      "__main__.do_event1.emit_event": {
-        "destination": "starkware.starknet.common.syscalls.emit_event",
-        "type": "alias"
-      },
-      "__main__.do_event1.memcpy": {
-        "destination": "starkware.cairo.common.memcpy.memcpy",
-        "type": "alias"
-      },
       "__main__.emit_external": {
         "decorators": [
           "external"
@@ -353,6 +280,79 @@
       "__main__.emit_external.SIZEOF_LOCALS": {
         "type": "const",
         "value": 0
+      },
+      "__main__.external": {
+        "type": "namespace"
+      },
+      "__main__.external.Args": {
+        "full_name": "__main__.external.Args",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "__main__.external.ImplicitArgs": {
+        "full_name": "__main__.external.ImplicitArgs",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "__main__.external.Return": {
+        "cairo_type": "()",
+        "type": "type_definition"
+      },
+      "__main__.external.SELECTOR": {
+        "type": "const",
+        "value": 1777858456411747835107640007348591706645250301017254275929729196551828014642
+      },
+      "__main__.external.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.external.alloc": {
+        "destination": "starkware.cairo.common.alloc.alloc",
+        "type": "alias"
+      },
+      "__main__.external.emit": {
+        "decorators": [],
+        "pc": 13,
+        "type": "function"
+      },
+      "__main__.external.emit.Args": {
+        "full_name": "__main__.external.emit.Args",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "__main__.external.emit.ImplicitArgs": {
+        "full_name": "__main__.external.emit.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "syscall_ptr": {
+            "cairo_type": "felt*",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "__main__.external.emit.Return": {
+        "cairo_type": "()",
+        "type": "type_definition"
+      },
+      "__main__.external.emit.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 2
+      },
+      "__main__.external.emit_event": {
+        "destination": "starkware.starknet.common.syscalls.emit_event",
+        "type": "alias"
+      },
+      "__main__.external.memcpy": {
+        "destination": "starkware.cairo.common.memcpy.memcpy",
+        "type": "alias"
       },
       "__wrappers__.constructor": {
         "decorators": [

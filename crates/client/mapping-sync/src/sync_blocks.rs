@@ -1,5 +1,5 @@
 use mc_rpc_core::utils::get_block_by_block_hash;
-use mp_digest_log::FindLogError;
+use mp_digest_log::{find_starknet_block, FindLogError};
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -65,19 +65,23 @@ where
 }
 
 fn sync_genesis_block<B: BlockT, C, H>(
-    client: &C,
+    _client: &C,
     backend: &mc_db::Backend<B>,
     header: &B::Header,
     hasher: &H,
 ) -> Result<(), String>
 where
-    C: ProvideRuntimeApi<B>,
-    C::Api: StarknetRuntimeApi<B>,
+    C: HeaderBackend<B>,
+    B: BlockT,
     H: HasherT + ThreadSafeCopy,
 {
     let substrate_block_hash = header.hash();
 
-    let block = client.runtime_api().current_block(substrate_block_hash).map_err(|e| format!("{:?}", e))?;
+    let block = match find_starknet_block(header.digest()) {
+        Ok(block) => block,
+        Err(FindLogError::NotLog) => return backend.mapping().write_none(substrate_block_hash),
+        Err(FindLogError::MultipleLogs) => return Err("Multiple logs found".to_string()),
+    };
     let block_hash = block.header().hash(*hasher);
     let mapping_commitment = mc_db::MappingCommitment::<B> {
         block_hash: substrate_block_hash,

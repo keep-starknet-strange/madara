@@ -153,6 +153,10 @@ pub mod pallet {
         /// set how long transactions are kept in the mempool.
         #[pallet::constant]
         type TransactionLongevity: Get<TransactionLongevity>;
+        #[pallet::constant]
+        type InvokeTxMaxNSteps: Get<u32>;
+        #[pallet::constant]
+        type ValidateMaxNSteps: Get<u32>;
     }
 
     /// The Starknet pallet hooks.
@@ -214,11 +218,6 @@ pub mod pallet {
     #[pallet::getter(fn pending_events)]
     pub(super) type PendingEvents<T: Config> =
         StorageValue<_, BoundedVec<StarknetEventType, MaxTransactions>, ValueQuery>;
-
-    /// The current Starknet block.
-    #[pallet::storage]
-    #[pallet::getter(fn current_block)]
-    pub(super) type CurrentBlock<T: Config> = StorageValue<_, StarknetBlock, ValueQuery>;
 
     /// Mapping for block number and hashes.
     /// Safe to use `Identity` as the key is already a hash.
@@ -764,9 +763,6 @@ impl<T: Config> Pallet<T> {
         let chain_id = Self::chain_id_str();
         let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
         let vm_resource_fee_cost = HashMap::default();
-        // FIXME: https://github.com/keep-starknet-strange/madara/issues/545
-        let invoke_tx_max_n_steps = 1000000;
-        let validate_max_n_steps = 1000000;
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
         BlockContext {
@@ -776,19 +772,10 @@ impl<T: Config> Pallet<T> {
             sequencer_address,
             fee_token_address,
             vm_resource_fee_cost,
-            invoke_tx_max_n_steps,
-            validate_max_n_steps,
+            invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
+            validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
         }
-    }
-    /// Get current block hash.
-    ///
-    /// # Returns
-    ///
-    /// The current block hash.
-    #[inline(always)]
-    pub fn current_block_hash() -> Felt252Wrapper {
-        Self::current_block().header().hash(T::SystemHash::hasher())
     }
 
     /// convert chain_id
@@ -840,10 +827,8 @@ impl<T: Config> Pallet<T> {
         function_selector: Felt252Wrapper,
         calldata: Vec<Felt252Wrapper>,
     ) -> Result<Vec<Felt252Wrapper>, DispatchError> {
-        // Get current block
-        let block = Self::current_block();
-        // Get fee token address
-        let fee_token_address = Self::fee_token_address();
+        // Get current block context
+        let block_context = Self::get_block_context();
         // Get class hash
         let class_hash = ContractClassHashes::<T>::try_get(address).map_err(|_| Error::<T>::ContractNotFound)?;
 
@@ -856,14 +841,7 @@ impl<T: Config> Pallet<T> {
             ContractAddressWrapper::default(),
         );
 
-        let chain_id = Self::chain_id_str();
-
-        match entrypoint.execute(
-            &mut BlockifierStateAdapter::<T>::default(),
-            block,
-            fee_token_address,
-            ChainId(chain_id),
-        ) {
+        match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
@@ -937,8 +915,6 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(transactions).unwrap(),
             BoundedVec::try_from(receipts).unwrap(),
         );
-        // Save the current block.
-        CurrentBlock::<T>::put(block.clone());
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);
@@ -969,13 +945,11 @@ impl<T: Config> Pallet<T> {
         }
 
         for inner_call in &mut call_info.inner_calls {
-            inner_call.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-            for ordered_event in &inner_call.execution.events {
-                let event_type = Self::emit_event(&ordered_event.event, inner_call.call.storage_address, tx_hash)?;
-                events.push(event_type);
+            let inner_events = Self::emit_events(inner_call, tx_hash)?;
+            if !inner_events.is_empty() {
+                events.extend(inner_events);
             }
         }
-
         Ok(events)
     }
 
