@@ -77,7 +77,7 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
     /// * `index` - The index of the value to set.
     /// * `value` - The value to set.
     pub fn set(&mut self, index: Felt252Wrapper, value: Felt252Wrapper) {
-        let key: [u8; 32] = index.into();
+        let key = &index.0.to_bytes_be()[..31];
         self.tree.set(&BitVec::from_vec(key.to_vec()), value)
     }
 
