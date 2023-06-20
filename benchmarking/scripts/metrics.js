@@ -1,6 +1,7 @@
 const { ApiPromise, WsProvider } = require("@polkadot/api");
 const fs = require("fs");
 const os = require("os");
+const { parseArgs } = require("util");
 
 const BLOCK_TIME = 6; // in seconds
 
@@ -29,6 +30,28 @@ function hostSpec() {
 }
 
 async function main() {
+  const {
+    values: { type },
+  } = parseArgs({
+    options: {
+      type: {
+        type: "string",
+      },
+    },
+  });
+
+  const erc20 = "erc20";
+  const erc721 = "erc721";
+
+  if (type !== erc20 && type !== erc721) {
+    throw new Error(
+      "Please provide a type with --type flag, e.g. --type erc20 or --type erc721, current type is: " +
+        type
+    );
+  }
+
+  const fileName = type == erc20 ? "metrics_erc20.json" : "metrics_erc721.json";
+
   const wsProvider = new WsProvider("ws://localhost:9944");
   const api = await ApiPromise.create({ provider: wsProvider });
 
@@ -51,15 +74,23 @@ async function main() {
 
   // Save avgExtrinsicsPerBlock to file reports/metrics.json
   fs.writeFileSync(
-    "reports/metrics.json",
+    `reports/${fileName}`,
     JSON.stringify([
       {
-        name: "Average Extrinsics per block",
+        name:
+          type === erc20
+            ? "Average Extrinsics per block"
+            : "Average Extrinsics per block (ERC721 mints)",
         unit: "extrinsics/block",
         value: avgExtrinsicsPerBlock,
         extra: hostSpec(),
       },
-      { name: "Average TPS", unit: "tps", value: avgTps, extra: hostSpec() },
+      {
+        name: type === erc20 ? "Average TPS" : "Average TPS (ERC721 mints)",
+        unit: "tps",
+        value: avgTps,
+        extra: hostSpec(),
+      },
     ])
   );
 

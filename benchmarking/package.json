@@ -9,14 +9,16 @@
     "test:execution": "artillery run -e local ./scripts/cairo-execution.yml --output reports/report.json",
     "test:storage": "artillery run -e local ./scripts/cairo-storage.yml --output reports/report-storage.json",
     "test:transfer": "artillery run -e local ./scripts/starknet-erc20.yml --output reports/report-transfer.json",
+    "test:erc721mint": "artillery run -e local ./scripts/starknet-erc721.yml --output reports/report-erc721mint.json",
     "report": "artillery report --output reports/report reports/report-transfer.json",
-    "metrics": "node scripts/metrics.js",
     "check": "node scripts/final-check.js",
-    "test": "npm run test:transfer && npm run metrics && npm run check",
+    "test:erc721-mint": "wait-on tcp:9944 && npm run test:erc721mint && node scripts/metrics.js --type erc721 && npm run check",
+    "test:erc20-transfer": "wait-on tcp:9944 && npm run test:transfer && node scripts/metrics.js --type erc20 && npm run check",
     "chain:dev": "../scripts/run_node.sh",
     "chain:dev-error": "../scripts/run_node.sh error",
-    "test:wait": "wait-on tcp:9944 && npm run test",
-    "test:ci": "concurrently -k --success 'command-1' 'npm run chain:dev-error' 'npm run test:wait'"
+    "test:ci:erc20": "concurrently -k --success 'command-1' 'npm run chain:dev-error' 'npm run test:erc20-transfer'",
+    "test:ci:erc721": "concurrently -k --success 'command-1' 'npm run chain:dev-error' 'npm run test:erc721-mint'",
+    "test:ci": "npm run test:ci:erc20 && npm run test:ci:erc721 && node ./scripts/combine-metrics.js"
   },
   "keywords": [
     "madara",
