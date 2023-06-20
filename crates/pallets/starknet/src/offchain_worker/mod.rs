@@ -26,9 +26,6 @@ impl<T: Config> Pallet<T> {
     /// The result of the offchain worker execution.
     pub(crate) fn process_l1_messages() -> Result<(), OffchainWorkerError> {
         // Query L1 for the last finalized block.
-        log::info!("Fetching last finalized block from Ethereum node");
-        let rpc = get_eth_rpc_url()?;
-        log::info!("Using RPC: {}", rpc);
         let raw_body = query_eth(LAST_FINALIZED_BLOCK_QUERY)?;
         let last_finalized_block: u64 = from_slice::<EthGetBlockByNumberResponse>(&raw_body)
             .map_err(|_| OffchainWorkerError::SerdeError)?
@@ -54,14 +51,16 @@ impl<T: Config> Pallet<T> {
 
     /// Fetches L1 gas price and return the result in gwei.
     pub(crate) fn fetch_gas_price() -> Result<u128, OffchainWorkerError> {
-        log::info!("Fetching gas price from Ethereum node");
-        let rpc = get_eth_rpc_url()?;
-        log::info!("Using RPC: {}", rpc);
         let raw_body = query_eth(LAST_GAS_PRICE_QUERY)?;
         let res: EthGasPriceResponse = from_slice(&raw_body).map_err(|_| OffchainWorkerError::SerdeError)?;
-        let gas_price = res.result.parse::<u128>().map_err(|_| OffchainWorkerError::StringConversionError)?;
-        // divide by 10^9 to get the gas price in gwei
-        Ok(gas_price / 1_000_000_000)
+        let gas_price = u128::from_str_radix(&res.result[2..], 16)
+            .map_err(|_| OffchainWorkerError::StringConversionError)?
+            / 1_000_000_000;
+        log::info!("Gas price in gwei: {}", gas_price);
+        let currentgas_price = Self::gas_price_l1();
+        log::info!("Current Gas price: {}", currentgas_price);
+
+        Ok(gas_price)
     }
 }
 

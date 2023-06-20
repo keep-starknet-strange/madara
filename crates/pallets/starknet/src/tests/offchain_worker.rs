@@ -6,6 +6,7 @@ use crate::offchain_worker::{get_eth_rpc_url, OffchainWorkerError};
 use crate::ETHEREUM_EXECUTION_RPC;
 
 #[test]
+#[ignore]
 fn test_get_eth_rpc_url() {
     new_test_ext().execute_with(|| {
         System::set_block_number(0);

@@ -760,6 +760,17 @@ pub mod pallet {
             // otherwise we have a nonce error and everything fails.
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
+            // Firstly let's check that we call the right function.
+            if let Call::submit_gas_price_unsigned { gas_price: new_gas_price } = call {
+                // We can only accept transactions with a priority lower than `UnsignedPriority`.
+                return ValidTransaction::with_tag_prefix("OffchainWorker")
+                    .priority(T::UnsignedPriority::get().saturating_add(0))
+                    .and_provides(new_gas_price)
+                    .longevity(10)
+                    .propagate(true)
+                    .build();
+            }
+
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
             let transaction_type = transaction.tx_type.clone();
