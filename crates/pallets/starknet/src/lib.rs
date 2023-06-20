@@ -713,8 +713,10 @@ pub mod pallet {
         pub fn submit_gas_price_unsigned(origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
             // Only root can set the gas price.
             ensure_root(origin)?;
+            log::info!("Setting gas price to {:?}", gas_price);
             // Update the gas price.
             GasPriceL1::<T>::set(gas_price);
+            log::info!("Gas price set to {:?}", gas_price);
             Ok(())
         }
     }
@@ -828,9 +830,9 @@ impl<T: Config> Pallet<T> {
             }
         };
 
-        // Received price is wrapped into a call to `submit_price_unsigned` public function of this
+        // Received price is wrapped into a call to `submit_gas_price_unsigned` public function of this
         // pallet. This means that the transaction, when executed, will simply call that function
-        // passing `price` as an argument.
+        // passing `gas_price` as an argument.
         let call = Call::submit_gas_price_unsigned { gas_price: price };
 
         SubmitTransaction::<T, Call<T>>::submit_unsigned_transaction(call.into())
