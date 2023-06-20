@@ -55,6 +55,9 @@ export const UDC_CLASS_HASH = "0x90000";
 export const ERC20_CONTRACT: CompiledContract = json.parse(
   fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
 );
+export const ERC721_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/ERC721.json").toString("ascii")
+);
 export const TEST_CONTRACT: CompiledContract = json.parse(
   fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")
 );
