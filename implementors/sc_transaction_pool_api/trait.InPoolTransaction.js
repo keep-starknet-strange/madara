@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"mc_transaction_pool":[["impl&lt;Hash, Extrinsic&gt; InPoolTransaction for <a class=\"struct\" href=\"mc_transaction_pool/struct.Transaction.html\" title=\"struct mc_transaction_pool::Transaction\">Transaction</a>&lt;Hash, Extrinsic&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

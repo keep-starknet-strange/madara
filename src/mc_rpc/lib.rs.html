@@ -888,6 +888,7 @@
 <span class="kw">use </span>mc_rpc_core::Felt;
 <span class="kw">pub use </span>mc_rpc_core::StarknetRpcApiServer;
 <span class="kw">use </span>mc_storage::OverrideHandle;
+<span class="kw">use </span>mc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
 <span class="kw">use </span>mp_starknet::traits::ThreadSafeCopy;
@@ -898,7 +899,6 @@
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
 <span class="kw">use </span>sc_network_sync::SyncingService;
-<span class="kw">use </span>sc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 <span class="kw">use </span>sp_api::{ApiError, ProvideRuntimeApi};
 <span class="kw">use </span>sp_arithmetic::traits::UniqueSaturatedInto;

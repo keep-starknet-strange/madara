@@ -103,11 +103,11 @@
 <span class="kw">use </span>jsonrpsee::RpcModule;
 <span class="kw">use </span>madara_runtime::opaque::Block;
 <span class="kw">use </span>madara_runtime::{AccountId, Hash, Index};
+<span class="kw">use </span>mc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>sc_client_api::{Backend, StorageProvider};
 <span class="kw">use </span>sc_consensus_manual_seal::rpc::EngineCommand;
 <span class="kw">pub use </span>sc_rpc_api::DenyUnsafe;
-<span class="kw">use </span>sc_transaction_pool::{ChainApi, Pool};
 <span class="kw">use </span>sc_transaction_pool_api::TransactionPool;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_block_builder::BlockBuilder;

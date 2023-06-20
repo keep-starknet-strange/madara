@@ -192,6 +192,7 @@
 <span class="kw">use </span>jsonrpsee::core::RpcResult;
 <span class="kw">use </span>log::error;
 <span class="kw">use </span>mc_rpc_core::utils::get_block_by_block_hash;
+<span class="kw">use </span>mc_transaction_pool::ChainApi;
 <span class="kw">use </span>mp_starknet::block::Block;
 <span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::traits::hash::HasherT;
@@ -199,7 +200,6 @@
 <span class="kw">use </span>mp_starknet::transaction::types::EventWrapper;
 <span class="kw">use </span>pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 <span class="kw">use </span>sc_client_api::backend::{Backend, StorageProvider};
-<span class="kw">use </span>sc_transaction_pool::ChainApi;
 <span class="kw">use </span>sp_api::ProvideRuntimeApi;
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
 <span class="kw">use </span>sp_runtime::traits::Block <span class="kw">as </span>BlockT;

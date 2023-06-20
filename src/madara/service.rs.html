@@ -555,8 +555,6 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -571,6 +569,7 @@
 <span class="kw">use </span>mc_block_proposer::ProposerFactory;
 <span class="kw">use </span>mc_mapping_sync::MappingSyncWorker;
 <span class="kw">use </span>mc_storage::overrides_handle;
+<span class="kw">use </span>mc_transaction_pool::FullPool;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
 <span class="kw">use </span>prometheus_endpoint::Registry;
 <span class="kw">use </span>sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
@@ -581,7 +580,6 @@
 <span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
 <span class="kw">use </span>sc_service::{Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
-<span class="kw">use </span>sc_transaction_pool::FullPool;
 <span class="kw">use </span>sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityPair <span class="kw">as </span>AuraPair;
 <span class="kw">use </span>sp_runtime::traits::BlakeTwo256;
@@ -627,7 +625,7 @@
         FullBackend,
         FullSelectChain,
         sc_consensus::DefaultImportQueue&lt;Block, FullClient&gt;,
-        sc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
+        mc_transaction_pool::FullPool&lt;Block, FullClient&gt;,
         (
             BoxBlockImport&lt;FullClient&gt;,
             sc_consensus_grandpa::LinkHalf&lt;Block, FullClient, FullSelectChain&gt;,
@@ -676,8 +674,8 @@
 
     <span class="kw">let </span>select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-    <span class="kw">let </span>transaction_pool = sc_transaction_pool::BasicPool::new_full(
-        config.transaction_pool.clone(),
+    <span class="kw">let </span>transaction_pool = mc_transaction_pool::BasicPool::new_full(
+        mc_transaction_pool::Options::from(config.transaction_pool.clone()),
         config.role.is_authority().into(),
         config.prometheus_registry(),
         task_manager.spawn_essential_handle(),
@@ -692,8 +690,6 @@
     )<span class="question-mark">?</span>;
 
     <span class="kw">let </span>madara_backend = Arc::new(MadaraBackend::open(<span class="kw-2">&amp;</span>config.database, <span class="kw-2">&amp;</span>db_config_dir(config))<span class="question-mark">?</span>);
-
-    <span class="kw">let </span>_slot_duration = sc_consensus_aura::slot_duration(<span class="kw-2">&amp;*</span>client)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>(import_queue, block_import) = build_import_queue(
         client.clone(),
