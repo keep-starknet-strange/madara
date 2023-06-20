@@ -45,7 +45,7 @@ fn sequencer_address_is_set_only_once_per_block() {
     let mut ext = new_test_ext();
     ext.execute_with(|| {
         basic_test_setup(0);
-        assert_eq!(Starknet::seq_addr_update(), false);
+        assert!(!Starknet::seq_addr_update());
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &DEFAULT_SEQUENCER_ADDRESS);
@@ -64,6 +64,6 @@ fn sequencer_address_has_not_been_updated() {
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
         assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
         run_to_block(1);
-        assert_eq!(Starknet::seq_addr_update(), false);
+        assert!(!Starknet::seq_addr_update());
     });
 }
