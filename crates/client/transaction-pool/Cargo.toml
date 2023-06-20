@@ -24,6 +24,7 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 prometheus-endpoint = { workspace = true }
 sc-client-api = { workspace = true }
+sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sc-utils = { workspace = true }
 sp-api = { workspace = true }

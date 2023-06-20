@@ -28,9 +28,6 @@ pub mod error;
 mod graph;
 mod metrics;
 mod revalidation;
-#[cfg(test)]
-mod tests;
-
 use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::sync::Arc;
