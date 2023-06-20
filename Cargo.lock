@@ -952,12 +952,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargo-husky"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
-
-[[package]]
 name = "cargo-platform"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4363,6 +4357,7 @@ dependencies = [
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
+ "mc-transaction-pool",
  "mp-starknet",
  "pallet-starknet",
  "sc-cli",
@@ -4378,7 +4373,6 @@ dependencies = [
  "sc-rpc-api",
  "sc-service",
  "sc-telemetry",
- "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde",
  "serde_json",
@@ -4532,7 +4526,6 @@ name = "mc-rpc"
 version = "0.1.0"
 dependencies = [
  "blockifier",
- "cargo-husky",
  "frame-support",
  "frame-system",
  "hex",
@@ -4542,13 +4535,13 @@ dependencies = [
  "mc-db",
  "mc-rpc-core",
  "mc-storage",
+ "mc-transaction-pool",
  "mp-starknet",
  "pallet-starknet",
  "pretty_assertions",
  "rstest",
  "sc-client-api",
  "sc-network-sync",
- "sc-transaction-pool",
  "sc-transaction-pool-api",
  "serde_json",
  "sp-api",
@@ -4603,6 +4596,32 @@ dependencies = [
  "sp-runtime",
  "sp-storage",
  "starknet-core",
+]
+
+[[package]]
+name = "mc-transaction-pool"
+version = "4.0.0-dev"
+dependencies = [
+ "async-trait",
+ "futures",
+ "futures-timer",
+ "linked-hash-map",
+ "log",
+ "parity-scale-codec",
+ "parking_lot 0.12.1",
+ "sc-client-api",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "sc-utils",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-tracing",
+ "sp-transaction-pool",
+ "substrate-prometheus-endpoint",
+ "thiserror",
 ]
 
 [[package]]
