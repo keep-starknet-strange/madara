@@ -19,7 +19,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.2.2" }
 futures = "0.3.21"
 futures-timer = "3.0.1"
-log = "0.4.17"
+log = "0.4.19"
 prometheus-endpoint = { workspace = true }
 sc-block-builder = { workspace = true }
 sc-client-api = { workspace = true }
