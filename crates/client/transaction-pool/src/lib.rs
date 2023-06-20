@@ -173,6 +173,7 @@ where
 
     /// Create new basic transaction pool with provided api and custom
     /// revalidation type.
+    #[allow(clippy::too_many_arguments)]
     pub fn with_revalidation_type(
         options: graph::Options,
         is_validator: IsValidator,

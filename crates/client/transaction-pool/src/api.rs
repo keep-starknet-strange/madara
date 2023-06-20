@@ -42,18 +42,20 @@ use crate::error::{self, Error};
 use crate::metrics::{ApiMetrics, ApiMetricsExt};
 use crate::{graph, LOG_TARGET};
 
+type PinBoxFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
+
 /// The transaction pool logic for full client.
 pub struct FullChainApi<Client, Block> {
     client: Arc<Client>,
     _marker: PhantomData<Block>,
     metrics: Option<Arc<ApiMetrics>>,
-    validation_pool: Arc<Mutex<mpsc::Sender<Pin<Box<dyn Future<Output = ()> + Send>>>>>,
+    validation_pool: Arc<Mutex<mpsc::Sender<PinBoxFuture>>>,
 }
 
 /// Spawn a validation task that will be used by the transaction pool to validate transactions.
 fn spawn_validation_pool_task(
     name: &'static str,
-    receiver: Arc<Mutex<mpsc::Receiver<Pin<Box<dyn Future<Output = ()> + Send>>>>>,
+    receiver: Arc<Mutex<mpsc::Receiver<PinBoxFuture>>>,
     spawner: &impl SpawnEssentialNamed,
 ) {
     spawner.spawn_essential_blocking(

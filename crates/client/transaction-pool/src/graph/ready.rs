@@ -31,6 +31,9 @@ use super::future::WaitingTransaction;
 use super::tracked_map::{self, TrackedMap};
 use crate::LOG_TARGET;
 
+type ArcTransaction<Hash, Ex> = Arc<Transaction<Hash, Ex>>;
+type ArcTransactions<Hash, Ex> = Vec<ArcTransaction<Hash, Ex>>;
+
 /// An in-pool transaction reference.
 ///
 /// Should be cheap to clone.
@@ -392,7 +395,7 @@ impl<Hash: hash::Hash + Member + Serialize, Ex> ReadyTransactions<Hash, Ex> {
     fn replace_previous(
         &mut self,
         tx: &Transaction<Hash, Ex>,
-    ) -> error::Result<(Vec<Arc<Transaction<Hash, Ex>>>, Vec<Hash>)> {
+    ) -> error::Result<(ArcTransactions<Hash, Ex>, Vec<Hash>)> {
         let (to_remove, unlocks) = {
             // check if we are replacing a transaction
             let replace_hashes =

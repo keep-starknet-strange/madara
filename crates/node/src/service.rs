@@ -134,8 +134,6 @@ where
 
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
 
-    let _slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-
     let (import_queue, block_import) = build_import_queue(
         client.clone(),
         config,
