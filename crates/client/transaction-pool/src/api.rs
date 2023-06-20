@@ -81,7 +81,7 @@ impl<Client, Block> FullChainApi<Client, Block> {
         prometheus: Option<&PrometheusRegistry>,
         spawner: &impl SpawnEssentialNamed,
     ) -> Self {
-        let metrics = 
+        let metrics =
             prometheus.map(ApiMetrics::register).and_then(|r| match r {
                 Err(err) => {
                     log::warn!(
@@ -89,10 +89,10 @@ impl<Client, Block> FullChainApi<Client, Block> {
                         "Failed to register transaction pool api prometheus metrics: {:?}",
                         err,
                     );
-                None
-            }
-            Ok(api) => Some(Arc::new(api)),
-        });
+                    None
+                }
+                Ok(api) => Some(Arc::new(api)),
+            });
 
         let (sender, receiver) = mpsc::channel(0);
 
