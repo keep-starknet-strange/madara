@@ -228,6 +228,9 @@ where
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");
                 }
+
+                // write DA facts to DB
+                // write PIE to DB
             }),
         );
 
@@ -347,7 +350,6 @@ where
         });
 
         for inherent in inherents {
-            println!("BEN: {:?}", inherent);
             match block_builder.push(inherent) {
                 Err(ApplyExtrinsicFailed(Validity(e))) if e.exhausted_resources() => {
                     warn!(target: LOG_TARGET, "⚠️  Dropping non-mandatory inherent from overweight block.")

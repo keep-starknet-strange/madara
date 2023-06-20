@@ -418,8 +418,6 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
-
                     let events = Self::emit_events_for_calls(
                         TransactionHash(transaction.hash.into()),
                         execute_call_info,

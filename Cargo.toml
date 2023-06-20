@@ -105,6 +105,7 @@ mc-storage = { path = "crates/client/storage" }
 mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
+mc-data-availability = { path = "crates/client/data-availability" }
 
 # Madara runtime
 madara-runtime = { path = "crates/runtime" }
