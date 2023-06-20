@@ -12,6 +12,7 @@ use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
+use mc_transaction_pool::FullPool;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
@@ -22,7 +23,6 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
-use sc_transaction_pool::FullPool;
 use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_runtime::traits::BlakeTwo256;
@@ -68,7 +68,7 @@ pub fn new_partial<BIQ>(
         FullBackend,
         FullSelectChain,
         sc_consensus::DefaultImportQueue<Block, FullClient>,
-        sc_transaction_pool::FullPool<Block, FullClient>,
+        mc_transaction_pool::FullPool<Block, FullClient>,
         (
             BoxBlockImport<FullClient>,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
@@ -117,8 +117,8 @@ where
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-        config.transaction_pool.clone(),
+    let transaction_pool = mc_transaction_pool::BasicPool::new_full(
+        mc_transaction_pool::Options::from(config.transaction_pool.clone()),
         config.role.is_authority().into(),
         config.prometheus_registry(),
         task_manager.spawn_essential_handle(),
@@ -133,8 +133,6 @@ where
     )?;
 
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
-
-    let _slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
     let (import_queue, block_import) = build_import_queue(
         client.clone(),

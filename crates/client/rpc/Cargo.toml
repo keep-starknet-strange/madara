@@ -23,11 +23,11 @@ pallet-starknet = { workspace = true, default-features = true }
 mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
 mc-storage = { workspace = true }
+mc-transaction-pool = { workspace = true }
 mp-starknet = { workspace = true }
 # Substate primitives
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
 sp-api = { workspace = true, default-features = true }
 sp-arithmetic = { workspace = true, default-features = true }
@@ -57,8 +57,3 @@ thiserror = { workspace = true }
 [dev-dependencies]
 rstest = { workspace = true }
 pretty_assertions = { workspace = true }
-
-[dev-dependencies.cargo-husky]
-version = "1.5.0"
-default-features = false
-features = ["user-hooks"]
