@@ -898,7 +898,11 @@ impl<T: Config> Pallet<T> {
 
         let vm_resource_fee_cost = HashMap::default();
 
-        let gas_price = Self::gas_price_l1();
+        let gas_price = match Self::gas_price_l1() {
+            0 => 10, // default gas price
+            gas_price => gas_price,
+        };
+
         BlockContext {
             block_number: BlockNumber(block_number),
             block_timestamp: BlockTimestamp(block_timestamp),
