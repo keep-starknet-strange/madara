@@ -4384,6 +4384,7 @@ dependencies = [
  "sp-core",
  "sp-inherents",
  "sp-keyring",
+ "sp-offchain",
  "sp-runtime",
  "sp-state-machine",
  "sp-timestamp",
@@ -4771,6 +4772,7 @@ dependencies = [
 name = "mp-starknet"
 version = "0.1.0-alpha"
 dependencies = [
+ "async-trait",
  "bitvec 0.17.4",
  "blockifier",
  "cairo-vm",
@@ -4787,6 +4789,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-core",
+ "sp-inherents",
  "sp-runtime",
  "sp-std",
  "starknet-core",
@@ -5334,6 +5337,7 @@ dependencies = [
  "serde_json",
  "sp-api",
  "sp-core",
+ "sp-inherents",
  "sp-io",
  "sp-runtime",
  "sp-std",

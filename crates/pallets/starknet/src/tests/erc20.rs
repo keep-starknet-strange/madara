@@ -16,8 +16,7 @@ lazy_static! {
 #[test]
 fn given_erc20_transfer_when_invoke_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(1);
+        basic_test_setup(1);
         let origin = RuntimeOrigin::none();
         let sender_account = get_account_address(AccountType::NoValidate);
         // ERC20 is already declared for the fees.

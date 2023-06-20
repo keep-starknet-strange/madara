@@ -3,6 +3,7 @@ use core::str::FromStr;
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
@@ -17,6 +18,7 @@ use {crate as pallet_starknet, frame_system as system};
 use super::constants::*;
 use super::utils::get_contract_class;
 use crate::types::ContractStorageKeyWrapper;
+use crate::{SeqAddrUpdate, SequencerAddress};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -250,6 +252,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             ),
         ],
         chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
+        seq_addr_updated: true,
         ..Default::default()
     }
     .assimilate_storage(&mut t)
@@ -264,10 +267,19 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
     for b in System::block_number()..=n {
+        SeqAddrUpdate::<MockRuntime>::put(true);
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
         Starknet::on_finalize(b);
     }
+}
+
+/// Setup initial block and sequencer address for unit tests.
+pub(crate) fn basic_test_setup(n: u64) {
+    SeqAddrUpdate::<MockRuntime>::put(true);
+    SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
+    System::set_block_number(0);
+    run_to_block(n);
 }
 
 /// Returns the storage key for a given storage name, keys and offset.
