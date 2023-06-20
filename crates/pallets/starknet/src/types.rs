@@ -2,7 +2,7 @@
 use blockifier::execution::contract_class::ContractClass;
 use mp_starknet::crypto::commitment::StateCommitmentTree;
 use mp_starknet::crypto::hash::pedersen::PedersenHasher;
-use mp_starknet::crypto::hash::poseidon::PoseidonHasher;
+// use mp_starknet::crypto::hash::poseidon::PoseidonHasher;
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use sp_core::ConstU32;
 use starknet_api::api_core::ClassHash;
@@ -46,7 +46,7 @@ pub struct StateCommitments {
     /// Storage Commitment
     pub storage_commitment: StateCommitmentTree<PedersenHasher>,
     /// Class Commitment
-    pub class_commitment: StateCommitmentTree<PoseidonHasher>,
+    pub class_commitment: StateCommitmentTree<PedersenHasher>,
     /// State Commitment
     pub state_commitment: StateCommitmentTree<PedersenHasher>,
 }
