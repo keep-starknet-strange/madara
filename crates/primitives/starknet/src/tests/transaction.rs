@@ -1,4 +1,5 @@
 use core::str::FromStr;
+use std::sync::Arc;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use frame_support::{bounded_vec, BoundedVec};
@@ -11,9 +12,12 @@ use starknet_api::transaction::{
     Event, EventContent, EventData, EventKey, Fee, InvokeTransactionOutput, TransactionHash, TransactionOutput,
     TransactionReceipt,
 };
+use starknet_core::types::contract::legacy::LegacyContractClass;
+use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{
+    BroadcastedDeclareTransaction, BroadcastedDeclareTransactionV1, BroadcastedDeclareTransactionV2,
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV0,
-    BroadcastedInvokeTransactionV1, StarknetError,
+    BroadcastedInvokeTransactionV1, CompressedLegacyContractClass, FlattenedSierraClass, StarknetError,
 };
 use starknet_ff::FieldElement;
 
@@ -21,8 +25,8 @@ use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCallda
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
-    BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper,
-    InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
+    BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, EventError,
+    EventWrapper, InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
 };
 
 #[test]
@@ -469,7 +473,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_sig_size() {
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
-    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureConversionError))
+    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureConversionError));
 }
 
 #[test]
@@ -488,7 +492,92 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
-    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataConversionError))
+    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataConversionError));
+}
+
+#[test]
+fn test_try_into_declare_transaction_v1_valid() {
+    let compressed_contract_class = get_compressed_legacy_contract_class();
+
+    let txn = BroadcastedDeclareTransactionV1 {
+        max_fee: FieldElement::default(),
+        signature: vec![FieldElement::default()],
+        nonce: FieldElement::default(),
+        contract_class: Arc::new(compressed_contract_class),
+        sender_address: FieldElement::default(),
+    };
+
+    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
+    let output_result: Result<DeclareTransaction, _> = input.try_into();
+    assert!(output_result.is_ok());
+}
+
+#[test]
+fn test_try_into_declare_transaction_v1_max_signature() {
+    let compressed_contract_class = get_compressed_legacy_contract_class();
+
+    let txn = BroadcastedDeclareTransactionV1 {
+        max_fee: FieldElement::default(),
+        signature: vec![FieldElement::default(); MaxArraySize::get() as usize + 1],
+        nonce: FieldElement::default(),
+        contract_class: Arc::new(compressed_contract_class),
+        sender_address: FieldElement::default(),
+    };
+
+    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
+    let output_result: Result<DeclareTransaction, _> = input.try_into();
+    assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureBoundError));
+}
+
+#[test]
+fn test_try_into_declare_transaction_v1_bad_gzip() {
+    let mut compressed_contract_class = get_compressed_legacy_contract_class();
+
+    // Manually change some bytes so its no longer a valid gzip
+    if let Some(value) = compressed_contract_class.program.get_mut(0) {
+        *value = 1;
+    }
+    if let Some(value) = compressed_contract_class.program.get_mut(1) {
+        *value = 1;
+    }
+
+    let txn = BroadcastedDeclareTransactionV1 {
+        max_fee: FieldElement::default(),
+        signature: vec![FieldElement::default()],
+        nonce: FieldElement::default(),
+        contract_class: Arc::new(compressed_contract_class),
+        sender_address: FieldElement::default(),
+    };
+
+    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
+    let output_result: Result<DeclareTransaction, _> = input.try_into();
+    assert!(matches!(
+        output_result.unwrap_err(),
+        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
+    ));
+}
+
+#[test]
+// TODO: this should be updated after support for v2 transaction is added
+fn test_try_into_declare_transaction_v2() {
+    let flattened_contract_class: FlattenedSierraClass = get_flattened_sierra_contract_class();
+
+    let txn = BroadcastedDeclareTransactionV2 {
+        max_fee: FieldElement::default(),
+        signature: vec![FieldElement::default()],
+        nonce: FieldElement::default(),
+        contract_class: Arc::new(flattened_contract_class),
+        sender_address: FieldElement::default(),
+        compiled_class_hash: FieldElement::default(),
+    };
+
+    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
+    let declare_txn = DeclareTransaction::try_from(input);
+
+    assert!(matches!(
+        declare_txn.unwrap_err(),
+        BroadcastedTransactionConversionErrorWrapper::StarknetError(StarknetError::FailedToReceiveTransaction)
+    ));
 }
 
 // This helper methods either returns result of `TryInto::try_into()` and expected result or the
@@ -526,4 +615,22 @@ fn get_try_into_and_expected_value(
     };
 
     Ok((output, expected_output))
+}
+
+fn get_compressed_legacy_contract_class() -> CompressedLegacyContractClass {
+    let contract_class_bytes = include_bytes!("../../../../../cairo-contracts/build/test.json");
+
+    let contract_class: LegacyContractClass = serde_json::from_slice(contract_class_bytes).unwrap();
+    let compressed_contract_class: CompressedLegacyContractClass = contract_class.compress().unwrap();
+
+    compressed_contract_class
+}
+
+fn get_flattened_sierra_contract_class() -> FlattenedSierraClass {
+    let contract_class_bytes = include_bytes!("../../../../../cairo-contracts/build/Example.sierra.json");
+
+    let contract_class: SierraClass = serde_json::from_slice(contract_class_bytes).unwrap();
+    let flattened_contract_class: FlattenedSierraClass = contract_class.flatten().unwrap();
+
+    flattened_contract_class
 }
