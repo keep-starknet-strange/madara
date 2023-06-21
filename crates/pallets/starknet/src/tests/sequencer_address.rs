@@ -1,6 +1,7 @@
 use frame_support::assert_ok;
 use frame_support::traits::Hooks;
 use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
+use starknet_crypto::FieldElement;
 
 use super::mock::*;
 
@@ -15,7 +16,10 @@ fn sequencer_address_is_set_to_default_when_not_provided() {
     let mut ext = new_test_ext();
     ext.execute_with(|| {
         basic_test_setup(0);
-        assert_eq!(Starknet::sequencer_address(), DEFAULT_SEQUENCER_ADDRESS);
+        assert_eq!(
+            Starknet::sequencer_address(),
+            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+        );
     });
 }
 
@@ -25,7 +29,10 @@ fn sequencer_address_is_set_to_default_when_provided_in_bad_format() {
     ext.execute_with(|| {
         basic_test_setup(0);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &BAD_SEQUENCER_ADDRESS);
-        assert_eq!(Starknet::sequencer_address(), DEFAULT_SEQUENCER_ADDRESS);
+        assert_eq!(
+            Starknet::sequencer_address(),
+            FieldElement::from_byte_slice_be(&DEFAULT_SEQUENCER_ADDRESS).unwrap().into()
+        );
     });
 }
 
@@ -35,7 +42,10 @@ fn sequencer_address_is_set_correctly() {
     ext.execute_with(|| {
         basic_test_setup(0);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
-        assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
+        assert_eq!(
+            Starknet::sequencer_address(),
+            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+        );
     });
     ext.persist_offchain_overlay();
     let offchain_db = ext.offchain_db();
@@ -49,9 +59,15 @@ fn sequencer_address_is_set_only_once_per_block() {
         basic_test_setup(0);
         assert!(!Starknet::seq_addr_update());
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
-        assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
+        assert_eq!(
+            Starknet::sequencer_address(),
+            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+        );
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &DEFAULT_SEQUENCER_ADDRESS);
-        assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
+        assert_eq!(
+            Starknet::sequencer_address(),
+            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+        );
     });
     ext.persist_offchain_overlay();
     let offchain_db = ext.offchain_db();
@@ -64,7 +80,10 @@ fn sequencer_address_has_not_been_updated() {
     ext.execute_with(|| {
         basic_test_setup(0);
         sp_io::offchain_index::set(SEQ_ADDR_STORAGE_KEY, &GOOD_SEQUENCER_ADDRESS);
-        assert_eq!(Starknet::sequencer_address(), GOOD_SEQUENCER_ADDRESS);
+        assert_eq!(
+            Starknet::sequencer_address(),
+            FieldElement::from_byte_slice_be(&GOOD_SEQUENCER_ADDRESS).unwrap().into()
+        );
         run_to_block(1);
         assert!(!Starknet::seq_addr_update());
     });

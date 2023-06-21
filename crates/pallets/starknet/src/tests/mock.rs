@@ -277,7 +277,8 @@ pub(crate) fn run_to_block(n: u64) {
 /// Setup initial block and sequencer address for unit tests.
 pub(crate) fn basic_test_setup(n: u64) {
     SeqAddrUpdate::<MockRuntime>::put(true);
-    SequencerAddress::<MockRuntime>::put(DEFAULT_SEQUENCER_ADDRESS);
+    let default_addr: Felt252Wrapper = FieldElement::from_byte_slice_be(&DEFAULT_SEQUENCER_ADDRESS).unwrap().into();
+    SequencerAddress::<MockRuntime>::put(default_addr);
     System::set_block_number(0);
     run_to_block(n);
 }
