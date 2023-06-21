@@ -710,13 +710,10 @@ pub mod pallet {
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(4)]
         #[pallet::weight({0})]
-        pub fn submit_gas_price_unsigned(origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
-            // Only root can set the gas price.
-            ensure_root(origin)?;
-            log::info!("Setting gas price to {:?}", gas_price);
+        pub fn submit_gas_price_unsigned(_origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
             // Update the gas price.
             GasPriceL1::<T>::set(gas_price);
-            log::info!("Gas price set to {:?}", gas_price);
+            log!(info, "gas price set to {:?}", gas_price);
             Ok(())
         }
     }
@@ -765,10 +762,10 @@ pub mod pallet {
             // Firstly let's check that we call the right function.
             if let Call::submit_gas_price_unsigned { gas_price: new_gas_price } = call {
                 // We can only accept transactions with a priority lower than `UnsignedPriority`.
-                return ValidTransaction::with_tag_prefix("OffchainWorker")
-                    .priority(T::UnsignedPriority::get().saturating_add(0))
+                return ValidTransaction::with_tag_prefix("starknet")
+                    .priority(u64::MAX)
                     .and_provides(new_gas_price)
-                    .longevity(10)
+                    .longevity(5)
                     .propagate(true)
                     .build();
             }
