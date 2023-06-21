@@ -708,7 +708,7 @@ pub mod pallet {
         /// # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(4)]
+        #[pallet::call_index(5)]
         #[pallet::weight({0})]
         pub fn submit_gas_price_unsigned(_origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
             // Update the gas price.
@@ -717,9 +717,6 @@ pub mod pallet {
             Ok(())
         }
     }
-    }
-
-        
 
     #[pallet::inherent]
     impl<T: Config> ProvideInherent for Pallet<T> {
