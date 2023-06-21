@@ -522,6 +522,20 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
+  describe("getStateUpdate", async () => {
+    it("should return state update", async function () {
+      return
+    });
+
+    it("should throw block not found error", async function () {
+      return
+    });
+
+    it("", async function () {
+      return
+    });
+  });
+
   describe("addInvokeTransaction", async () => {
     it("should invoke successfully", async function () {
       const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
