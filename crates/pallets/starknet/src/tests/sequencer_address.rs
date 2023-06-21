@@ -1,3 +1,4 @@
+use frame_support::assert_ok;
 use frame_support::traits::Hooks;
 use mp_starknet::sequencer_address::{DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY};
 
@@ -73,8 +74,6 @@ fn sequencer_address_has_not_been_updated() {
 fn on_finalize_hook_takes_storage_update() {
     let mut ext = new_test_ext();
     ext.execute_with(|| {
-        let none_origin = RuntimeOrigin::none();
-
         System::set_block_number(1);
         assert!(Starknet::seq_addr_update());
         Starknet::on_finalize(1);
@@ -94,7 +93,7 @@ fn inherent_updates_storage() {
         assert!(!Starknet::seq_addr_update());
 
         System::set_block_number(1);
-        Starknet::set_sequencer_address(none_origin, DEFAULT_SEQUENCER_ADDRESS);
+        assert_ok!(Starknet::set_sequencer_address(none_origin, DEFAULT_SEQUENCER_ADDRESS));
         assert!(Starknet::seq_addr_update());
     });
 }
