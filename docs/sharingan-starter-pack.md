@@ -2,15 +2,10 @@
 
 ## Network information
 
-- Release / tag:
-  https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-alpha.4
-- Docker image:
-  ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4
-  (https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
-- Bootnode:
-  /ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE
-- Dev explorer:
-  https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer
+- Release / tag: [v0.1.0-testnet-sharingan-beta](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta)
+- Docker image: [ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta](https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
+- Bootnode: `/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE`
+- [Dev explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer)
 
 ## Madara
 
@@ -78,7 +73,7 @@ block to the chain. As of today, Sharingan has the following known `sequencers`:
     <td>1</td>
     <td><code>alice</code></td>
     <td><code>52.7.206.208</code></td>
-    <td><code>--</code></td>
+    <td><code>12D3KooWK26CZBpWtwMaVQ6nXHrrXBkdXXx6CrBAU2KgLTqDNL6o</code></td>
     <td><code>9944</code></td>
   </tr>
   <tr>
@@ -86,7 +81,7 @@ block to the chain. As of today, Sharingan has the following known `sequencers`:
     <td>2</td>
     <td><code>bob</code></td>
     <td><code>44.195.161.82</code></td>
-    <td><code>--</code></td>
+    <td><code>12D3KooWMyrW5SvZ1WpcMLi7QdjXRQ36mUBg6RoaoABtPNMGVqXr</code></td>
     <td><code>9944</code></td>
   </tr>
   <tr>
@@ -102,7 +97,7 @@ block to the chain. As of today, Sharingan has the following known `sequencers`:
     <td>4</td>
     <td><code>dave</code></td>
     <td><code>65.108.65.148</code></td>
-    <td><code>12D3KooWL3H14Kw4GzuNZHrmNwPNNpEGpXveLN5NVgpH4zBfbUrK</code></td>
+    <td><code>--</code></td>
     <td><code>9944</code></td>
   </tr>
   <tr>
@@ -176,9 +171,9 @@ version of Sharingan. However, to ensure that you are using the correct chain
 specs, please proceed to the following:
 
 1. Download the
-   [source code](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-alpha.4)
+   [source code](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta)
    of the current version of Sharingan release (currently
-   `v0.1.0-testnet-sharingan-alpha.4`).
+   `v0.1.0-testnet-sharingan-beta`).
 
 2. Extract the archive, to later access the file of interest which is
    `madara/infra/chain-specs/testnet-sharingan-raw.json`.
@@ -206,7 +201,7 @@ your first time using docker. Alternatively, you can also run
 If you prefer having Madara compiled locally, you must:
 
 1. Clone [Madara repository](https://github.com/keep-starknet-strange/madara).
-2. Checkout on the tag `v0.1.0-testnet-sharingan-alpha.4`.
+2. Checkout on the tag `v0.1.0-testnet-sharingan-beta`.
 3. `cargo build --workspace --release` (you can check
    [this guide](https://github.com/keep-starknet-strange/madara/blob/main/docs/rpc-contribution.md)
    with some info about compiling Madara).
@@ -229,7 +224,7 @@ curl --header "Content-Type: application/json" \
     "params": [],
     "id": 1
 }' \
-http://your_ip:9933
+http://your_ip:9944
 ```
 
 You can then go to the
