@@ -2,9 +2,12 @@
 
 ## Network information
 
-- Release / tag: [v0.1.0-testnet-sharingan-beta](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta)
-- Docker image: [ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta](https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
-- Bootnode: `/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE`
+- Release / tag:
+  [v0.1.0-testnet-sharingan-beta](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta)
+- Docker image:
+  [ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta](https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
+- Bootnode:
+  `/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE`
 - [Dev explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer)
 
 ## Madara
@@ -175,10 +178,8 @@ specs, please proceed to the following:
    of the current version of Sharingan release (currently
    `v0.1.0-testnet-sharingan-beta`).
 
-2. Extract the archive, to later access the file of interest which is
-   `madara/infra/chain-specs/testnet-sharingan-raw.json`.
-
 2. Create a new docker volume (in case you don't have one yet).
+
 ```bash
 docker sharingan-volume
 ```
