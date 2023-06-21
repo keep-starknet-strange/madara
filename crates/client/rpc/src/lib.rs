@@ -41,8 +41,8 @@ use starknet_core::types::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
     FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateUpdate, StateDiff, SyncStatus, SyncStatusType, Transaction,
-    TransactionStatus,
+    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType,
+    Transaction, TransactionStatus,
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -614,7 +614,8 @@ where
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        let parent_block = get_block_by_block_hash(self.client.as_ref(), block.header().parent_block_hash).unwrap_or_default();
+        let parent_block =
+            get_block_by_block_hash(self.client.as_ref(), block.header().parent_block_hash).unwrap_or_default();
 
         Ok(StateUpdate {
             block_hash: block.header().hash(*self.hasher).into(),
