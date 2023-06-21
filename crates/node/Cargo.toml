@@ -89,6 +89,9 @@ try-runtime-cli = { optional = true, git = "https://github.com/paritytech/substr
 
 serde_json = { workspace = true }
 
+[dev-dependencies]
+cargo-husky = { workspace = true }
+
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
 

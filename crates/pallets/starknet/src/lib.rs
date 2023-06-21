@@ -407,7 +407,13 @@ pub mod pallet {
         #[pallet::weight((0, DispatchClass::Mandatory))]
         pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
             ensure_none(origin)?;
-            assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+            // The `SeqAddrUpdate` storage item is initialized to `true` in the genesis build. In
+            // block 1 we skip the storage update check, and the `on_finalize` hook
+            // updates the storage item to `false`. Initializing the storage item with
+            // `false` causes the `on_finalize` hook to panic.
+            if UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number()) > 1 {
+                assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+            }
             SequencerAddress::<T>::put(addr);
             SeqAddrUpdate::<T>::put(true);
             Ok(())
@@ -891,6 +897,7 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
+            Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
         );
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {

@@ -62,5 +62,5 @@ pub fn create_test_state() -> CachedState<DictStateReader> {
 pub fn get_contract_class(contract_path: &str) -> ContractClass {
     let path: PathBuf = [contract_path].iter().collect();
     let raw_contract_class = fs::read_to_string(path).unwrap();
-    serde_json::from_str(&raw_contract_class).unwrap()
+    ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap()) // TODO (Greg) handle V1
 }
