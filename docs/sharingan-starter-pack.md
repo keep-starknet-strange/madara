@@ -178,16 +178,19 @@ specs, please proceed to the following:
 2. Extract the archive, to later access the file of interest which is
    `madara/infra/chain-specs/testnet-sharingan-raw.json`.
 
+2. Create a new docker volume (in case you don't have one yet).
+```bash
+docker sharingan-volume
+```
+
 3. Running the docker container, where we will use 2 volumes. One to access the
    chain specs file, and another one for the storage of the chain data.
 
 ```bash
 docker run --rm -d \
     --name sharingan-fullnode \
-    --network host \
-    -v /tmp:/data \
-    -v /path/to/madara/infra/chain-specs/:/chain-specs \
-    ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4 \
+    -v sharingan-volume:/.madara \
+    ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta \
     --testnet sharingan
 ```
 
@@ -224,7 +227,7 @@ curl --header "Content-Type: application/json" \
     "params": [],
     "id": 1
 }' \
-http://your_ip:9944
+http://127.0.0.1:9944
 ```
 
 You can then go to the
@@ -246,7 +249,7 @@ coming soon for starkli).
 
 Currently, Madara is still under active development and it's recommended to
 regularly check the
-[Starknet features compatibility page of Madara](https://github.com/keep-starknet-strange/madara/blob/v0.1.0-testnet-sharingan-alpha.4/docs/starknet_features_compatibility.md).
+[Starknet features compatibility page of Madara](https://github.com/keep-starknet-strange/madara/blob/v0.1.0-testnet-sharingan-beta/docs/starknet_features_compatibility.md).
 
 In the current version, **please don't use** unsupported RPC endpoint as we are
 working on handling them.
