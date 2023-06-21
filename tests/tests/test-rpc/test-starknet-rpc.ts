@@ -10,8 +10,6 @@ import {
   ec,
   hash,
   validateAndParseAddress,
-  RPC,
-  stark,
   json,
   encode,
   CompressedProgram,
@@ -306,6 +304,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const program = json.parse(
         encode.arrayBufferToString(decompressProgram(contract_class.program))
       );
@@ -428,7 +427,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       // fees were paid du to the transfer in the previous test so the value should be < u128::MAX
-      expect(value).to.be.equal("0xfffffffffffffffffffffffffff98797");
+      expect(value).to.be.equal("0xfffffffffffffffffffffffffff97f4f");
     });
 
     it("should return 0 if the storage slot is not set", async function () {
@@ -953,6 +952,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const readyExtrinsics =
         await context.polkadotApi.rpc.author.pendingExtrinsics();
       const readyTxs = readyExtrinsics.map((pending) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const obj: any = pending.toHuman();
         return {
           type: obj.method.method.toUpperCase(),
@@ -1195,7 +1195,7 @@ describeDevMadara("Starknet RPC", (context) => {
         data: [
           ARGENT_CONTRACT_ADDRESS,
           SEQUENCER_ADDRESS,
-          "0x19e1a", // current fee perceived for the transfer
+          "0x1a02c", // current fee perceived for the transfer
           "0x0",
         ].map(cleanHex),
       });

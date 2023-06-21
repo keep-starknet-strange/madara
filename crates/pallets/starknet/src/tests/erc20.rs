@@ -94,7 +94,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 sender_account, // From
                 Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                     .unwrap(), // Sequencer address
-                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b660")
+                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b912")
                     .unwrap(), // Amount low
                 Felt252Wrapper::ZERO, // Amount high
             ),
@@ -202,7 +202,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             data: bounded_vec!(
                 sender_account,                                  // From
                 Felt252Wrapper::from_hex_be("0xdead").unwrap(),  // Sequencer address
-                Felt252Wrapper::from_hex_be("0x1e618").unwrap(), // Amount low
+                Felt252Wrapper::from_hex_be("0x1e82a").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                            // Amount high
             ),
             from_address: Starknet::fee_token_address(),
