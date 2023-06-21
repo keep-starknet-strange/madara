@@ -4,16 +4,16 @@ pub const LAMBDA_URL: &str = "https://testnet.provingservice.io";
 pub const LAMBDA_MAX_PIE_MB: u64 = 20 * 2**20;
 
 
-pub struct DataAvailabilityWorkere<B: BlockT, C, BE, H> {
+pub struct DataAvailabilityWorker<B: BlockT, C, BE, H> {
     client: Arc<C>,
     substrate_backend: Arc<BE>,
     madara_backend: Arc<mc_db::Backend<B>>,
 }
 
-impl<B: BlockT, C, BE, H> Unpin for DataAvailabilityWorkere<B, C, BE, H> {}
+impl<B: BlockT, C, BE, H> Unpin for DataAvailabilityWorker<B, C, BE, H> {}
 
 #[allow(clippy::too_many_arguments)]
-impl<B: BlockT, C, BE, H> DataAvailabilityWorkere<B, C, BE, H> {
+impl<B: BlockT, C, BE, H> DataAvailabilityWorker<B, C, BE, H> {
     pub fn new(
         client: Arc<C>,
         substrate_backend: Arc<BE>,
