@@ -8,6 +8,7 @@ use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
 use super::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
+use super::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 use crate::transaction::types::{
@@ -25,12 +26,12 @@ pub type ClassCommitmentLeafHash = Felt252Wrapper;
 ///
 /// The tree height is 64 in our case since our set operation takes u64 index values.
 struct CommitmentTree<T: CryptoHasherT> {
-    tree: MerkleTree<T>,
+    tree: RefMerkleTree<T>,
 }
 
 impl<T: CryptoHasherT> Default for CommitmentTree<T> {
     fn default() -> Self {
-        Self { tree: MerkleTree::empty() }
+        Self { tree: RefMerkleTree::empty() }
     }
 }
 
@@ -47,7 +48,7 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
     }
 
     /// Get the merkle root of the tree.
-    pub fn commit(&mut self) -> Felt252Wrapper {
+    pub fn commit(self) -> Felt252Wrapper {
         self.tree.commit()
     }
 }

@@ -83,7 +83,7 @@ fn test_invoke_tx_hash() {
 }
 
 #[test]
-fn test_merkle_tree() {
+fn test_ref_merkle_tree() {
     let txs = vec![
         Transaction {
             tx_type: TxType::Invoke,
