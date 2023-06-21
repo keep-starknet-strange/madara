@@ -58,7 +58,8 @@ fn test_invalid_format_for_h256() {
         "entrypoint_type": "External",
         "calldata": [],
         "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
+        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
+        "initial_gas": "0123"
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
@@ -77,7 +78,8 @@ fn test_invalid_format_for_h256() {
         "entrypoint_type": "External",
         "calldata": [],
         "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
+        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
+        "initial_gas": "0123"
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
@@ -99,7 +101,8 @@ fn test_invalid_format_for_address() {
         "entrypoint_type": "External",
         "calldata": [],
         "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
+        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
+        "initial_gas": "0123"
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
@@ -118,7 +121,8 @@ fn test_invalid_format_for_address() {
         "entrypoint_type": "External",
         "calldata": [],
         "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
+        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
+        "initial_gas": "0123"
       }
     }"#;
     let transaction = transaction_from_json(json_content, &[]);
@@ -139,7 +143,8 @@ fn test_missing_optional_field_no_error() {
         "entrypoint_type": "External",
         "calldata": [],
         "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
+        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
+        "initial_gas": "0123"
       }
     }"#;
 
@@ -161,7 +166,8 @@ fn test_wrong_entrypoint_type() {
         "entrypoint_type": "wrong type",
         "calldata": [],
         "storage_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
-        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77"
+        "caller_address": "02356b628D108863BAf8644c945d97bAD70190AF5957031f4852d00D0F690a77",
+        "initial_gas": "0123"
       }
     }"#;
 
