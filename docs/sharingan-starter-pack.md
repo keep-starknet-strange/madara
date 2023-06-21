@@ -137,7 +137,7 @@ To participate to Sharingan, there are few considerations to have in mind:
 
 1. The Madara code you will be running will need to expose two ports: one for
    the peer-to-peer communication, which is currently `30333`, and one for the
-   RPC mentioned earlier which is usually `9933`.
+   RPC mentioned earlier which is usually `9944`.
 
 2. Substrate is using `chain specs` to have all participating node being in sync
    on how to collaborate on the network. The chain specification is also special
