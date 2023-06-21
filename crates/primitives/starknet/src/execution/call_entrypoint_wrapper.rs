@@ -2,9 +2,12 @@ use alloc::format;
 use alloc::sync::Arc;
 
 use blockifier::block_context::BlockContext;
-use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
+use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
@@ -50,6 +53,8 @@ pub struct CallEntryPointWrapper {
     pub storage_address: ContractAddressWrapper,
     /// The caller address
     pub caller_address: ContractAddressWrapper,
+    /// The initial gas
+    pub initial_gas: Felt252Wrapper,
 }
 // Regular implementation.
 impl CallEntryPointWrapper {
@@ -61,8 +66,17 @@ impl CallEntryPointWrapper {
         calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
+        initial_gas: Felt252Wrapper,
     ) -> Self {
-        Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
+        Self {
+            class_hash,
+            entrypoint_type,
+            entrypoint_selector,
+            calldata,
+            storage_address,
+            caller_address,
+            initial_gas,
+        }
     }
 
     /// Executes an entry point.
@@ -86,11 +100,12 @@ impl CallEntryPointWrapper {
             self.clone().try_into().map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
 
         let execution_resources = &mut ExecutionResources::default();
-        let execution_context = &mut ExecutionContext::default();
         let account_context = AccountTransactionContext::default();
+        let max_steps = block_context.invoke_tx_max_n_steps;
+        let context = &mut EntryPointExecutionContext::new(block_context, account_context, max_steps);
 
         call_entry_point
-            .execute(state, execution_resources, execution_context, &block_context, &account_context)
+            .execute(state, execution_resources, context)
             .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution)
     }
 }
@@ -105,6 +120,7 @@ impl Default for CallEntryPointWrapper {
             calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
+            initial_gas: Felt252Wrapper::default(),
         }
     }
 }
@@ -140,6 +156,7 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             // starknet-lib is constantly breaking it's api
             // I hope it's nothing important ¯\_(ツ)_/¯
             code_address: None,
+            initial_gas: Felt252::from_bytes_be(&self.initial_gas.0.to_bytes_be()),
         };
 
         Ok(entrypoint)
