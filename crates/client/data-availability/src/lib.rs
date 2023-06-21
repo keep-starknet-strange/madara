@@ -1,19 +1,28 @@
+use std::pin::Pin;
+use std::sync::Arc;
+
+use futures::prelude::*;
+use futures::task::{Context, Poll};
+use sc_client_api::backend::{Backend, StorageProvider};
+use sp_blockchain::HeaderBackend;
+use sp_api::ProvideRuntimeApi;
+use pallet_starknet::runtime_api::StarknetRuntimeApi;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+
 pub const CAIRO_PIE_BASE64: &str = "UEsDBBQAAAAIAAAAIQBGGR6jGAEAAEsCAAANAAAAbWV0YWRhdGEuanNvbnWR3WqDQBCFX0W8zsX87M7O9lVCCDbZBqEa0RVCgu/e0aaYgL1bznwz5xx9lF1/vfRVU34Uj/Jc5coeeyfIHr0gEaojz87tCgTYFR5V1YMTYIwRgjoTN3F6ww1xGjyy/IPzG64Roo0c0yxGjcpeOARx3q6YyGbAziNoEGEMjM7WDrui/Bzr71y3w9yjvI65G3M5601Vt6aZi1Wum2RvFjQ3CqoilgnJ4sXAZApD9BAAwQsxQiD0zOijSIyGQCSbWA0NBAROcbK7fcrHr+44pEuT2rx80bo9p9tsZeOhvs+uMK0p/9hhgZ9pX/do3eNpXky3dBpzfW03bXDFw7Q0XX7uJgsri/R7OvfVa6L94VmqO21ecK+lph9QSwMEFAAAAAgAAAAhAEMqWVOVAAAAcAMAAAoAAABtZW1vcnkuYmlujZIxDsIwDEVtp6QULsHExCE69iDcI957sV6qlAq+UCphOz9Lhqf/HMVEnyjpVljzSEYY3NMCEPn1rYVUJotLjd4O3BJ4T5WXHW9u9PbgHux7z5VXHO9wmO9uchdwydfSFdyrbPuZby68W78X8zHKNac2J4c+MbkELtoXzBVyHfqiPWD0Ne2Lxv8r6Iu4jL5UTfEn+gZQSwMEFAAAAAgAAAAhAKwgWIQtAAAAMwAAABQAAABhZGRpdGlvbmFsX2RhdGEuanNvbqtWyi8tKSgtiU8qzcwpycxTslKoVipITE8tBrFqdRSUEktKijKTSkugIrW1AFBLAwQUAAAACAAAACEAIxC1mksAAABWAAAAGAAAAGV4ZWN1dGlvbl9yZXNvdXJjZXMuanNvbqtWSirNzCnJzIvPzCsuScxLTo1Pzi/NK0ktUrJSqFbKLy0pKC2Jh6oBChnX6igo5cUXl6QWFAO5FmBebmpuflFlfEZ+TipI0KAWAFBLAwQUAAAACAAAACEA2YDFkhYAAAAUAAAADAAAAHZlcnNpb24uanNvbqtWSk7MLMqPL8hMVbJSUDLUM1SqBQBQSwECFAMUAAAACAAAACEARhkeoxgBAABLAgAADQAAAAAAAAAAAAAAgAEAAAAAbWV0YWRhdGEuanNvblBLAQIUAxQAAAAIAAAAIQBDKllTlQAAAHADAAAKAAAAAAAAAAAAAACAAUMBAABtZW1vcnkuYmluUEsBAhQDFAAAAAgAAAAhAKwgWIQtAAAAMwAAABQAAAAAAAAAAAAAAIABAAIAAGFkZGl0aW9uYWxfZGF0YS5qc29uUEsBAhQDFAAAAAgAAAAhACMQtZpLAAAAVgAAABgAAAAAAAAAAAAAAIABXwIAAGV4ZWN1dGlvbl9yZXNvdXJjZXMuanNvblBLAQIUAxQAAAAIAAAAIQDZgMWSFgAAABQAAAAMAAAAAAAAAAAAAACAAeACAAB2ZXJzaW9uLmpzb25QSwUGAAAAAAUABQA1AQAAIAMAAAAA";
 pub const CAIRO_FACT: &str = "0x99f8c8b3efce1cb3b53ce44fd5e8339a1299be480cc6e4599d107f69666eb7bb";
 pub const LAMBDA_URL: &str = "https://testnet.provingservice.io";
-pub const LAMBDA_MAX_PIE_MB: u64 = 20 * 2**20;
-
-
-pub struct DataAvailabilityWorker<B: BlockT, C, BE, H> {
+// pub const LAMBDA_MAX_PIE_MB: u64 = 20 * 2**20;
+pub struct DataAvailabilityWorker<B: BlockT, C, BE> {
     client: Arc<C>,
     substrate_backend: Arc<BE>,
     madara_backend: Arc<mc_db::Backend<B>>,
 }
 
-impl<B: BlockT, C, BE, H> Unpin for DataAvailabilityWorker<B, C, BE, H> {}
+impl<B: BlockT, C, BE> Unpin for DataAvailabilityWorker<B, C, BE> {}
 
 #[allow(clippy::too_many_arguments)]
-impl<B: BlockT, C, BE, H> DataAvailabilityWorker<B, C, BE, H> {
+impl<B: BlockT, C, BE> DataAvailabilityWorker<B, C, BE> {
     pub fn new(
         client: Arc<C>,
         substrate_backend: Arc<BE>,
@@ -26,6 +35,23 @@ impl<B: BlockT, C, BE, H> DataAvailabilityWorker<B, C, BE, H> {
         }
     }
 }
+
+impl<B: BlockT, C, BE> Stream for DataAvailabilityWorker<B, C, BE>
+where
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B>,
+    C: HeaderBackend<B> + StorageProvider<B, BE>,
+    BE: Backend<B>,
+{
+    type Item = ();
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Option<()>> {
+        println!("TEST TEST TEST");
+
+        Poll::Pending
+    }
+}
+
 // Generate the Cairo PIE
 // class CairoPie:
 //     """
@@ -112,10 +138,6 @@ impl<B: BlockT, C, BE, H> DataAvailabilityWorker<B, C, BE, H> {
 //     Ok(())
 // }
 
-/// Publish data to Ethereum.
-/// # Arguments
-/// * `sender_id` - The sender id.
-/// * `data` - The data to publish.
 // async fn publish_data(&self, sender_id: &[u8], data: &[u8]) -> Result<(), &str> {
 //     self.check_data(data)?;
 //     // Send data to Ethereum.

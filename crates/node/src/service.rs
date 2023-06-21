@@ -10,6 +10,7 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
+use mc_data_availability::DataAvailabilityWorker;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -337,11 +338,22 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             client.import_notification_stream(),
             Duration::new(6, 0),
             client.clone(),
-            backend,
-            madara_backend,
+            backend.clone(),
+            madara_backend.clone(),
             3,
             0,
             hasher,
+        )
+        .for_each(|()| future::ready(())),
+    );
+
+    task_manager.spawn_essential_handle().spawn(
+        "data-availability-worker",
+        Some("madara"),
+        DataAvailabilityWorker::new(
+            client.clone(),
+            backend,
+            madara_backend,
         )
         .for_each(|()| future::ready(())),
     );

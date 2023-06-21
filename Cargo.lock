@@ -4359,6 +4359,7 @@ dependencies = [
  "log",
  "madara-runtime",
  "mc-block-proposer",
+ "mc-data-availability",
  "mc-db",
  "mc-mapping-sync",
  "mc-rpc",
@@ -4398,6 +4399,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "tokio",
  "try-runtime-cli",
 ]
 
@@ -4490,6 +4492,26 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "substrate-prometheus-endpoint",
+]
+
+[[package]]
+name = "mc-data-availability"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "log",
+ "mc-db",
+ "mc-rpc-core",
+ "mc-storage",
+ "mp-digest-log",
+ "mp-starknet",
+ "pallet-starknet",
+ "sc-client-api",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
