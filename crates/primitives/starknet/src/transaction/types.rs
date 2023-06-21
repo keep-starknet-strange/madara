@@ -258,6 +258,7 @@ impl DeclareTransaction {
                 BoundedVec::default(),
                 self.sender_address,
                 self.sender_address,
+                Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
             ),
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
@@ -405,6 +406,7 @@ impl DeployAccountTransaction {
                 self.calldata,
                 sender_address,
                 sender_address,
+                Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
             ),
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
@@ -503,6 +505,7 @@ impl InvokeTransaction {
                 self.calldata,
                 self.sender_address,
                 self.sender_address,
+                Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
             ),
             contract_class: None,
             contract_address_salt: None,
