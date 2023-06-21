@@ -1080,6 +1080,12 @@
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
 <a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1489,7 +1495,13 @@
         #[pallet::weight((<span class="number">0</span>, DispatchClass::Mandatory))]
         </span><span class="kw">pub fn </span>set_sequencer_address(origin: OriginFor&lt;T&gt;, addr: [u8; <span class="number">32</span>]) -&gt; DispatchResult {
             ensure_none(origin)<span class="question-mark">?</span>;
-            <span class="macro">assert!</span>(!SeqAddrUpdate::&lt;T&gt;::exists(), <span class="string">&quot;Sequencer address can be updated only once in the block&quot;</span>);
+            <span class="comment">// The `SeqAddrUpdate` storage item is initialized to `true` in the genesis build. In
+            // block 1 we skip the storage update check, and the `on_finalize` hook
+            // updates the storage item to `false`. Initializing the storage item with
+            // `false` causes the `on_finalize` hook to panic.
+            </span><span class="kw">if </span>UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(frame_system::Pallet::&lt;T&gt;::block_number()) &gt; <span class="number">1 </span>{
+                <span class="macro">assert!</span>(!SeqAddrUpdate::&lt;T&gt;::exists(), <span class="string">&quot;Sequencer address can be updated only once in the block&quot;</span>);
+            }
             SequencerAddress::&lt;T&gt;::put(addr);
             SeqAddrUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
             <span class="prelude-val">Ok</span>(())
