@@ -868,6 +868,9 @@
 <a href="#868" id="868">868</a>
 <a href="#869" id="869">869</a>
 <a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1335,25 +1338,11 @@
         <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
 
         <span class="kw">let </span>transaction: MPTransaction = invoke_tx.from_invoke(chain_id);
-        <span class="kw">let </span>extrinsic = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .convert_transaction(best_block_hash, transaction.clone(), TxType::Invoke)
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
-                StarknetRpcApiError::ClassHashNotFound
-            })<span class="question-mark">?
-            </span>.map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
-                StarknetRpcApiError::ClassHashNotFound
-            })<span class="question-mark">?</span>;
 
-        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(<span class="self">self</span>.client.info().best_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(
-            |e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
-                StarknetRpcApiError::ContractError
-            },
-        )<span class="question-mark">?</span>;
+        <span class="kw">let </span>extrinsic =
+            convert_transaction(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone(), TxType::Invoke).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        submit_extrinsic(<span class="self">self</span>.pool.clone(), best_block_hash, extrinsic).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(InvokeTransactionResult { transaction_hash: transaction.hash.into() })
     }
@@ -1386,23 +1375,11 @@
             StarknetRpcApiError::InternalServerError
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>extrinsic = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .convert_transaction(best_block_hash, transaction.clone(), TxType::DeployAccount)
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?
-            </span>.map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?</span>;
+        <span class="kw">let </span>extrinsic =
+            convert_transaction(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone(), TxType::DeployAccount)
+                .<span class="kw">await</span><span class="question-mark">?</span>;
 
-        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
+        submit_extrinsic(<span class="self">self</span>.pool.clone(), best_block_hash, extrinsic).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(DeployAccountTransactionResult {
             transaction_hash: transaction.hash.into(),
@@ -1624,23 +1601,11 @@
         }
 
         <span class="kw">let </span>transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
-        <span class="kw">let </span>extrinsic = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .convert_transaction(best_block_hash, transaction.clone(), TxType::Declare)
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?
-            </span>.map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
-                StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?</span>;
 
-        <span class="self">self</span>.pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
+        <span class="kw">let </span>extrinsic =
+            convert_transaction(<span class="self">self</span>.client.clone(), best_block_hash, transaction.clone(), TxType::Declare).<span class="kw">await</span><span class="question-mark">?</span>;
+
+        submit_extrinsic(<span class="self">self</span>.pool.clone(), best_block_hash, extrinsic).<span class="kw">await</span><span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(DeclareTransactionResult {
             transaction_hash: transaction.hash.into(),
@@ -1735,6 +1700,47 @@
         <span class="kw">match </span>find_receipt {
             <span class="prelude-val">Some</span>(receipt) =&gt; <span class="prelude-val">Ok</span>(receipt),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StarknetRpcApiError::TxnHashNotFound.into()),
+        }
+    }
+}
+
+<span class="kw">async fn </span>submit_extrinsic&lt;P, B&gt;(
+    pool: Arc&lt;P&gt;,
+    best_block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+    extrinsic: &lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic,
+) -&gt; <span class="prelude-ty">Result</span>&lt;&lt;P <span class="kw">as </span>TransactionPool&gt;::Hash, StarknetRpcApiError&gt;
+<span class="kw">where
+    </span>P: TransactionPool&lt;Block = B&gt; + <span class="lifetime">&#39;static</span>,
+    B: BlockT,
+    &lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic: Send + Sync + <span class="lifetime">&#39;static</span>,
+{
+    pool.submit_one(<span class="kw-2">&amp;</span>SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).<span class="kw">await</span>.map_err(|e| {
+        <span class="macro">error!</span>(<span class="string">&quot;Failed to submit extrinsic: {:?}&quot;</span>, e);
+        StarknetRpcApiError::InternalServerError
+    })
+}
+
+<span class="kw">async fn </span>convert_transaction&lt;C, B&gt;(
+    client: Arc&lt;C&gt;,
+    best_block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
+    transaction: MPTransaction,
+    tx_type: TxType,
+) -&gt; <span class="prelude-ty">Result</span>&lt;&lt;B <span class="kw">as </span>BlockT&gt;::Extrinsic, StarknetRpcApiError&gt;
+<span class="kw">where
+    </span>B: BlockT,
+    C: ProvideRuntimeApi&lt;B&gt;,
+    C::Api: StarknetRuntimeApi&lt;B&gt; + ConvertTransactionRuntimeApi&lt;B&gt;,
+{
+    <span class="kw">let </span>result = client.runtime_api().convert_transaction(best_block_hash, transaction, tx_type).map_err(|e| {
+        <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, e);
+        StarknetRpcApiError::InternalServerError
+    })<span class="question-mark">?</span>;
+
+    <span class="kw">match </span>result {
+        <span class="prelude-val">Ok</span>(extrinsic) =&gt; <span class="prelude-val">Ok</span>(extrinsic),
+        <span class="prelude-val">Err</span>(dispatch_error) =&gt; {
+            <span class="macro">error!</span>(<span class="string">&quot;Failed to convert transaction: {:?}&quot;</span>, dispatch_error);
+            <span class="prelude-val">Err</span>(StarknetRpcApiError::InternalServerError)
         }
     }
 }
