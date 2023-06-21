@@ -614,13 +614,13 @@ where
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        let parent_block =
-            get_block_by_block_hash(self.client.as_ref(), block.header().parent_block_hash).unwrap_or_default();
+        // let parent_block = get_block_by_block_hash(self.client.as_ref(), block.header().parent_block_hash).unwrap_or_default();
 
         Ok(StateUpdate {
             block_hash: block.header().hash(*self.hasher).into(),
             new_root: block.header().global_state_root.into(),
-            old_root: parent_block.header().global_state_root.into(),
+            // old_root: parent_block.header().global_state_root.into(),
+            old_root: block.header().global_state_root.into(),
             state_diff: StateDiff {
                 storage_diffs: Vec::new(),
                 deprecated_declared_classes: Vec::new(),
