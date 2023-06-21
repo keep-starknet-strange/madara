@@ -415,7 +415,8 @@ pub mod pallet {
             if UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number()) > 1 {
                 assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
             }
-            let addr = Felt252Wrapper::try_from(&addr).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
+
+            let addr = ContractAddressWrapper::try_from(&addr).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
             SequencerAddress::<T>::put(addr);
             SeqAddrUpdate::<T>::put(true);
             Ok(())
