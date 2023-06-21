@@ -6,6 +6,22 @@ use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
+fn copy_chain_spec() {
+    let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    src.push("chain-specs");
+    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+    let mut dst = std::path::PathBuf::from(home_path);
+    dst.push(".madara");
+    dst.push("chain-specs");
+    std::fs::create_dir_all(&dst).unwrap();
+    for file in std::fs::read_dir(src).unwrap() {
+        let file = file.unwrap();
+        let mut dst = dst.clone();
+        dst.push(file.file_name());
+        std::fs::copy(file.path(), dst).unwrap();
+    }
+}
+
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Substrate Node".into()
@@ -171,6 +187,8 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             if cli.run.testnet.is_some() {
+                copy_chain_spec();
+
                 let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
                     Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
