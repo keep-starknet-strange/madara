@@ -18,6 +18,7 @@ use mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
+use mc_transaction_pool::{ChainApi, Pool};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -28,7 +29,6 @@ use mp_starknet::transaction::types::{
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
-use sc_transaction_pool::{ChainApi, Pool};
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
 use sp_api::{ApiError, ProvideRuntimeApi};
 use sp_arithmetic::traits::UniqueSaturatedInto;
@@ -465,25 +465,11 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let transaction: MPTransaction = invoke_tx.from_invoke(chain_id);
-        let extrinsic = self
-            .client
-            .runtime_api()
-            .convert_transaction(best_block_hash, transaction.clone(), TxType::Invoke)
-            .map_err(|e| {
-                error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::ClassHashNotFound
-            })?
-            .map_err(|e| {
-                error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::ClassHashNotFound
-            })?;
 
-        self.pool.submit_one(&SPBlockId::hash(self.client.info().best_hash), TX_SOURCE, extrinsic).await.map_err(
-            |e| {
-                error!("Failed to submit extrinsic: {:?}", e);
-                StarknetRpcApiError::ContractError
-            },
-        )?;
+        let extrinsic =
+            convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::Invoke).await?;
+
+        submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
         Ok(InvokeTransactionResult { transaction_hash: transaction.hash.into() })
     }
@@ -516,23 +502,11 @@ where
             StarknetRpcApiError::InternalServerError
         })?;
 
-        let extrinsic = self
-            .client
-            .runtime_api()
-            .convert_transaction(best_block_hash, transaction.clone(), TxType::DeployAccount)
-            .map_err(|e| {
-                error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::InternalServerError
-            })?;
+        let extrinsic =
+            convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::DeployAccount)
+                .await?;
 
-        self.pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
-            error!("Failed to submit extrinsic: {:?}", e);
-            StarknetRpcApiError::InternalServerError
-        })?;
+        submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
         Ok(DeployAccountTransactionResult {
             transaction_hash: transaction.hash.into(),
@@ -742,24 +716,23 @@ where
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        let transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
-        let extrinsic = self
-            .client
-            .runtime_api()
-            .convert_transaction(best_block_hash, transaction.clone(), TxType::Declare)
-            .map_err(|e| {
-                error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to convert transaction: {:?}", e);
-                StarknetRpcApiError::InternalServerError
-            })?;
 
-        self.pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
-            error!("Failed to submit extrinsic: {:?}", e);
-            StarknetRpcApiError::InternalServerError
-        })?;
+        let current_block_hash = self.client.info().best_hash;
+        let contract_class = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), current_block_hash)
+            .contract_class_by_class_hash(current_block_hash, declare_tx.compiled_class_hash);
+        if let Some(contract_class) = contract_class {
+            error!("Contract class already exists: {:?}", contract_class);
+            return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
+        }
+
+        let transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
+
+        let extrinsic =
+            convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::Declare).await?;
+
+        submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
         Ok(DeclareTransactionResult {
             transaction_hash: transaction.hash.into(),
@@ -854,6 +827,47 @@ where
         match find_receipt {
             Some(receipt) => Ok(receipt),
             None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
+        }
+    }
+}
+
+async fn submit_extrinsic<P, B>(
+    pool: Arc<P>,
+    best_block_hash: <B as BlockT>::Hash,
+    extrinsic: <B as BlockT>::Extrinsic,
+) -> Result<<P as TransactionPool>::Hash, StarknetRpcApiError>
+where
+    P: TransactionPool<Block = B> + 'static,
+    B: BlockT,
+    <B as BlockT>::Extrinsic: Send + Sync + 'static,
+{
+    pool.submit_one(&SPBlockId::hash(best_block_hash), TX_SOURCE, extrinsic).await.map_err(|e| {
+        error!("Failed to submit extrinsic: {:?}", e);
+        StarknetRpcApiError::InternalServerError
+    })
+}
+
+async fn convert_transaction<C, B>(
+    client: Arc<C>,
+    best_block_hash: <B as BlockT>::Hash,
+    transaction: MPTransaction,
+    tx_type: TxType,
+) -> Result<<B as BlockT>::Extrinsic, StarknetRpcApiError>
+where
+    B: BlockT,
+    C: ProvideRuntimeApi<B>,
+    C::Api: StarknetRuntimeApi<B> + ConvertTransactionRuntimeApi<B>,
+{
+    let result = client.runtime_api().convert_transaction(best_block_hash, transaction, tx_type).map_err(|e| {
+        error!("Failed to convert transaction: {:?}", e);
+        StarknetRpcApiError::InternalServerError
+    })?;
+
+    match result {
+        Ok(extrinsic) => Ok(extrinsic),
+        Err(dispatch_error) => {
+            error!("Failed to convert transaction: {:?}", dispatch_error);
+            Err(StarknetRpcApiError::InternalServerError)
         }
     }
 }

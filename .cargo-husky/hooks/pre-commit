@@ -1,0 +1,7 @@
+#!/bin/sh
+cd taplo/
+if command -v taplo &> /dev/null; then
+    taplo fmt --config ./taplo/taplo.toml --check
+else
+    npx @taplo/cli fmt --config ./taplo/taplo.toml --check
+fi

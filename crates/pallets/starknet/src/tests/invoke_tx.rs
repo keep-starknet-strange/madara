@@ -20,8 +20,7 @@ use crate::{Error, Event, StorageView};
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -45,9 +44,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
-
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let sender_add = get_account_address(AccountType::NoValidate);
@@ -60,8 +57,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -122,8 +118,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -201,8 +196,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let emit_contract_address = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
 
@@ -269,8 +263,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 #[test]
 fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -300,8 +293,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 #[test]
 fn test_verify_nonce() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
@@ -320,8 +312,7 @@ fn test_verify_nonce() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
@@ -341,8 +332,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -366,8 +356,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
 #[test]
 fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
@@ -387,8 +376,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
@@ -411,8 +399,7 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
@@ -432,8 +419,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
@@ -456,8 +442,7 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
 #[test]
 fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
@@ -489,8 +474,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 #[test]
 fn test_verify_tx_longevity() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let transaction: InvokeTransaction =
@@ -506,8 +490,7 @@ fn test_verify_tx_longevity() {
 #[test]
 fn test_verify_no_require_tag() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let transaction: InvokeTransaction =
@@ -532,8 +515,7 @@ fn test_verify_no_require_tag() {
 #[test]
 fn test_verify_require_tag() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke_nonce.json");
         let transaction: InvokeTransaction =

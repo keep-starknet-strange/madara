@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
+const { ACCOUNT_CONTRACT } = require("../../tests/build/tests/tests/constants");
 const {
   initialize,
   mint,
   declare,
   deploy,
   transfer,
+  mintERC721,
 } = require("../../tests/build/tests/util/starknet");
+
+const { numberToHex } = require("@polkadot/util");
 
 module.exports = {
   rpcMethods,
   executeERC20Transfer,
+  executeERC721Mint,
 };
 
 function rpcMethods(userContext, events, done) {
@@ -44,48 +49,19 @@ async function executeERC20Transfer(userContext, events, done) {
   return done();
 }
 
-async function _setupToken(userContext, user, contractAddress) {
-  const { deployed } = userContext.vars;
+async function executeERC721Mint(userContext, events, done) {
+  const { nonce } = userContext.vars;
 
-  const mintAmount =
-    "0x0000000000000000000000000000000000000000000000000000000000001000";
-  const tokenClassHash =
-    "0x025ec026985a3bf9d0cc1fe17326b245bfdc3ff89b8fde106242a3ea56c5a918";
+  mintERC721(
+    userContext.api,
+    ACCOUNT_CONTRACT,
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    numberToHex(nonce, 256),
+    nonce
+  ).send();
 
-  // Setup token contract if it doesn't exist
-  let tokenAddress;
-  if (!deployed[tokenClassHash]) {
-    try {
-      await declare(userContext.api, user, contractAddress, tokenClassHash);
+  // Update userContext nonce
+  userContext.vars.nonce = nonce + 1;
 
-      tokenAddress = await deploy(
-        userContext.api,
-        user,
-        contractAddress,
-        tokenClassHash
-      );
-
-      console.log("Deployed token address: ", tokenAddress);
-
-      await initialize(userContext.api, user, contractAddress, tokenAddress);
-
-      await mint(
-        userContext.api,
-        user,
-        contractAddress,
-        tokenAddress,
-        mintAmount
-      );
-
-      // Update userContext deployed dict
-      userContext.vars.deployed = {
-        ...userContext.vars.deployed,
-        [tokenClassHash]: true,
-      };
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  return tokenAddress;
+  return done();
 }

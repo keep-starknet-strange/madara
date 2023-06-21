@@ -80,6 +80,7 @@ use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
 };
+use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
 use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
@@ -88,6 +89,7 @@ use mp_starknet::transaction::types::{
 };
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
+use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
@@ -99,11 +101,6 @@ use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StateCommitments, StorageKeyWrapper};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
-
-// TODO: don't use a const for this but a real sequencer address for block header
-// FIXME https://github.com/keep-starknet-strange/madara/issues/243
-pub const SEQUENCER_ADDRESS: [u8; 32] =
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 222, 173];
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
@@ -170,6 +167,8 @@ pub mod pallet {
     impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
         /// The block is being finalized.
         fn on_finalize(_n: T::BlockNumber) {
+            assert!(SeqAddrUpdate::<T>::take(), "Sequencer address must be set for the block");
+
             // Create a new Starknet block and store it.
             <Pallet<T>>::store_block(UniqueSaturatedInto::<u64>::unique_saturated_into(
                 frame_system::Pallet::<T>::block_number(),
@@ -282,6 +281,16 @@ pub mod pallet {
     #[pallet::getter(fn chain_id)]
     pub(super) type ChainId<T: Config> = StorageValue<_, Felt252Wrapper, ValueQuery>;
 
+    /// Current sequencer address.
+    #[pallet::storage]
+    #[pallet::getter(fn sequencer_address)]
+    pub type SequencerAddress<T: Config> = StorageValue<_, [u8; 32], ValueQuery>;
+
+    /// Ensure the sequencer address was updated for this block.
+    #[pallet::storage]
+    #[pallet::getter(fn seq_addr_update)]
+    pub type SeqAddrUpdate<T: Config> = StorageValue<_, bool, ValueQuery>;
+
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
     pub struct GenesisConfig<T: Config> {
@@ -304,6 +313,7 @@ pub mod pallet {
         pub _phantom: PhantomData<T>,
         /// The chain id.
         pub chain_id: Felt252Wrapper,
+        pub seq_addr_updated: bool,
     }
 
     /// `Default` impl required by `pallet::GenesisBuild`.
@@ -316,6 +326,7 @@ pub mod pallet {
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
                 chain_id: Default::default(),
+                seq_addr_updated: true,
             }
         }
     }
@@ -345,6 +356,7 @@ pub mod pallet {
             FeeTokenAddress::<T>::set(self.fee_token_address);
             // Set the chain id from the genesis config.
             ChainId::<T>::put(self.chain_id);
+            SeqAddrUpdate::<T>::put(self.seq_addr_updated);
         }
     }
 
@@ -396,6 +408,22 @@ pub mod pallet {
     /// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+        /// Set the current block author's sequencer address.
+        ///
+        /// This call should be invoked exactly once per block. It will set a default value at
+        /// the finalization phase, if this call hasn't been invoked by that time.
+        ///
+        /// The dispatch origin for this call must be `Inherent`.
+        #[pallet::call_index(0)]
+        #[pallet::weight((0, DispatchClass::Mandatory))]
+        pub fn set_sequencer_address(origin: OriginFor<T>, addr: [u8; 32]) -> DispatchResult {
+            ensure_none(origin)?;
+            assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
+            SequencerAddress::<T>::put(addr);
+            SeqAddrUpdate::<T>::put(true);
+            Ok(())
+        }
+
         /// The invoke transaction is the main transaction type used to invoke contract functions in
         /// Starknet.
         /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/#invoke_transaction`.
@@ -407,7 +435,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(0)]
+        #[pallet::call_index(1)]
         #[pallet::weight({0})]
         pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -467,7 +495,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(1)]
+        #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -550,7 +578,7 @@ pub mod pallet {
         ///  # Returns
         ///
         /// * `DispatchResult` - The result of the transaction.
-        #[pallet::call_index(2)]
+        #[pallet::call_index(3)]
         #[pallet::weight({0})]
         pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -627,7 +655,7 @@ pub mod pallet {
         ///
         /// # TODO
         /// * Compute weight
-        #[pallet::call_index(3)]
+        #[pallet::call_index(4)]
         #[pallet::weight({0})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
@@ -657,6 +685,29 @@ pub mod pallet {
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
             Ok(())
+        }
+    }
+
+    #[pallet::inherent]
+    impl<T: Config> ProvideInherent for Pallet<T> {
+        type Call = Call<T>;
+        type Error = InherentError;
+        const INHERENT_IDENTIFIER: InherentIdentifier = INHERENT_IDENTIFIER;
+
+        fn create_inherent(data: &InherentData) -> Option<Self::Call> {
+            let inherent_data = data
+                .get_data::<InherentType>(&INHERENT_IDENTIFIER)
+                .expect("Sequencer address inherent data not correctly encoded")
+                .unwrap_or(DEFAULT_SEQUENCER_ADDRESS);
+            Some(Call::set_sequencer_address { addr: inherent_data })
+        }
+
+        fn check_inherent(_call: &Self::Call, _data: &InherentData) -> result::Result<(), Self::Error> {
+            Ok(())
+        }
+
+        fn is_inherent(call: &Self::Call) -> bool {
+            matches!(call, Call::set_sequencer_address { .. })
         }
     }
 
@@ -772,7 +823,8 @@ impl<T: Config> Pallet<T> {
         let fee_token_address =
             ContractAddress::try_from(StarkFelt::new(Self::fee_token_address().into()).unwrap()).unwrap();
         let chain_id = Self::chain_id_str();
-        let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(SEQUENCER_ADDRESS)));
+        let provided_seq_addr = Self::sequencer_address();
+        let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(provided_seq_addr)));
         let vm_resource_fee_cost = HashMap::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
@@ -881,15 +933,11 @@ impl<T: Config> Pallet<T> {
     ///
     /// * `block_number` - The block number.
     fn store_block(block_number: u64) {
-        // TODO: Use actual values.
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
         let global_state_root = <T::StateRoot>::get();
-
-        // TODO: use the real sequencer address (our own address)
-        // FIXME #243
-        let sequencer_address = SEQUENCER_ADDRESS;
+        let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
 
