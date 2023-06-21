@@ -277,8 +277,7 @@ pub(crate) fn run_to_block(n: u64) {
 /// Setup initial block and sequencer address for unit tests.
 pub(crate) fn basic_test_setup(n: u64) {
     SeqAddrUpdate::<MockRuntime>::put(true);
-    let default_addr: ContractAddressWrapper =
-        ContractAddressWrapper::try_from(&DEFAULT_SEQUENCER_ADDRESS).unwrap().into();
+    let default_addr: ContractAddressWrapper = ContractAddressWrapper::try_from(&DEFAULT_SEQUENCER_ADDRESS).unwrap();
     SequencerAddress::<MockRuntime>::put(default_addr);
     System::set_block_number(0);
     run_to_block(n);
