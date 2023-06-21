@@ -782,8 +782,10 @@ pub mod pallet {
             let transaction_nonce = transaction.nonce;
             let sender_address = transaction.sender_address;
 
+            let nonce_for_priority: u64 = transaction_nonce.try_into().map_err(|_| InvalidTransaction::Future)?;
+
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
-                .priority(u64::MAX - (TryInto::<u64>::try_into(transaction_nonce)).unwrap())
+                .priority(u64::MAX - nonce_for_priority)
                 .and_provides((sender_address, transaction_nonce))
                 .longevity(T::TransactionLongevity::get())
                 .propagate(true);
@@ -1028,8 +1030,8 @@ impl<T: Config> Pallet<T> {
             ),
             // Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            BoundedVec::try_from(transactions).unwrap(),
-            BoundedVec::try_from(receipts).unwrap(),
+            BoundedVec::try_from(transactions).expect("max(len(transactions)) <= MaxTransactions"),
+            BoundedVec::try_from(receipts).expect("max(len(receipts)) <= MaxTransactions"),
         );
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash(T::SystemHash::hasher());

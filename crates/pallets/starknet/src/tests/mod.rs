@@ -17,6 +17,7 @@ mod sequencer_address;
 mod state_root;
 
 mod constants;
+mod message;
 mod mock;
 mod utils;
 
