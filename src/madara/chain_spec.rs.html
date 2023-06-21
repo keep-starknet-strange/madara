@@ -409,8 +409,8 @@
 }
 
 <span class="kw">pub fn </span>get_contract_class(contract_content: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8]) -&gt; ContractClass {
-    serde_json::from_slice(contract_content).unwrap()
-}
+    ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) <span class="comment">// TODO (Greg) handle v1
+</span>}
 
 <span class="doccomment">/// Returns the storage key for a given storage name, keys and offset.
 /// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the

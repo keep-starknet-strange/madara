@@ -955,6 +955,9 @@
 <a href="#955" id="955">955</a>
 <a href="#956" id="956">956</a>
 <a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1215,7 +1218,8 @@
                 BoundedVec::default(),
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
-            ),
+                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+            </span>),
             contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,
@@ -1362,7 +1366,8 @@
                 <span class="self">self</span>.calldata,
                 sender_address,
                 sender_address,
-            ),
+                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+            </span>),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt.into()),
             max_fee: <span class="self">self</span>.max_fee,
@@ -1460,7 +1465,8 @@
                 <span class="self">self</span>.calldata,
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
-            ),
+                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+            </span>),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,

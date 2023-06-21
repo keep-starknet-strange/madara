@@ -133,19 +133,34 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
-<span class="kw">use </span>blockifier::state::cached_state::ContractStorageKey;
+<span class="kw">use </span>blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
 <span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
+<span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::state::StateChanges;
-<span class="kw">use </span>sp_std::sync::Arc;
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+<span class="kw">use </span>starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::state::{StateDiff, StorageKey};
+<span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
@@ -209,17 +224,19 @@
         <span class="prelude-val">Ok</span>(class_hash)
     }
 
-    <span class="kw">fn </span>get_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;Arc&lt;ContractClass&gt;&gt; {
+    <span class="kw">fn </span>get_compiled_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;ContractClass&gt; {
         <span class="kw">let </span>wrapped_class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
         <span class="kw">let </span>opt_contract_class = Pallet::&lt;T&gt;::contract_class_by_class_hash(wrapped_class_hash);
         <span class="kw">match </span>opt_contract_class {
-            <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(Arc::new(
-                TryInto::&lt;ContractClass&gt;::try_into(contract_class)
-                    .map_err(|e| StateError::StateReadError(e.to_string()))<span class="question-mark">?</span>,
-            )),
+            <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(TryInto::&lt;ContractClass&gt;::try_into(contract_class)
+                .map_err(|e| StateError::StateReadError(e.to_string()))<span class="question-mark">?</span>),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash)),
         }
     }
+
+    <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
+        <span class="prelude-val">Ok</span>(CompiledClassHash::default()) <span class="comment">// TODO (Greg) update with compiled class hash
+    </span>}
 }
 
 <span class="kw">impl</span>&lt;T: Config&gt; State <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
@@ -261,11 +278,24 @@
         <span class="prelude-val">Ok</span>(())
     }
 
+    <span class="kw">fn </span>set_compiled_class_hash(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        _class_hash: ClassHash,
+        _compiled_class_hash: CompiledClassHash,
+    ) -&gt; StateResult&lt;()&gt; {
+        <span class="prelude-val">Ok</span>(()) <span class="comment">// TODO (Greg) update with compiled class hash
+    </span>}
+
     <span class="doccomment">/// As the state is updated during the execution, return an empty [StateDiff]
     ///
     /// There is no reason to use it in the current implementation of the trait
-    </span><span class="kw">fn </span>to_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateDiff {
-        StateDiff::default()
+    </span><span class="kw">fn </span>to_state_diff(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CommitmentStateDiff {
+        CommitmentStateDiff {
+            address_to_class_hash: IndexMap::with_capacity_and_hasher(<span class="number">0</span>, Default::default()),
+            address_to_nonce: IndexMap::with_capacity_and_hasher(<span class="number">0</span>, Default::default()),
+            storage_updates: IndexMap::with_capacity_and_hasher(<span class="number">0</span>, Default::default()),
+            class_hash_to_compiled_class_hash: IndexMap::with_capacity_and_hasher(<span class="number">0</span>, Default::default()),
+        }
     }
 }
 </code></pre></div>

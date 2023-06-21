@@ -147,6 +147,9 @@
 <a href="#147" id="147">147</a>
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
@@ -235,7 +238,9 @@
             calldata,
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
-        };
+            initial_gas: Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">/* TODO (Greg) update this once transaction contains the initial
+                                                      * gas */
+        </span>};
         <span class="prelude-val">Ok</span>(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }
@@ -267,6 +272,7 @@
                 calldata: <span class="macro">bounded_vec!</span>[Felt252Wrapper::ONE, Felt252Wrapper::ONE],
                 storage_address: felt_one,
                 caller_address: ContractAddressWrapper::default(),
+                initial_gas: Felt252Wrapper::from(<span class="number">0_u8</span>),
             },
             ..Transaction::default()
         };

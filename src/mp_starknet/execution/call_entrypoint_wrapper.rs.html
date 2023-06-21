@@ -145,13 +145,33 @@
 <a href="#145" id="145">145</a>
 <a href="#146" id="146">146</a>
 <a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::sync::Arc;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
-<span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+<span class="kw">use </span>blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
+<span class="kw">use </span>cairo_vm::felt::Felt252;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::ConstU32;
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
@@ -197,6 +217,8 @@
     </span><span class="kw">pub </span>storage_address: ContractAddressWrapper,
     <span class="doccomment">/// The caller address
     </span><span class="kw">pub </span>caller_address: ContractAddressWrapper,
+    <span class="doccomment">/// The initial gas
+    </span><span class="kw">pub </span>initial_gas: Felt252Wrapper,
 }
 <span class="comment">// Regular implementation.
 </span><span class="kw">impl </span>CallEntryPointWrapper {
@@ -208,8 +230,17 @@
         calldata: BoundedVec&lt;Felt252Wrapper, MaxCalldataSize&gt;,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
+        initial_gas: Felt252Wrapper,
     ) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
+        <span class="self">Self </span>{
+            class_hash,
+            entrypoint_type,
+            entrypoint_selector,
+            calldata,
+            storage_address,
+            caller_address,
+            initial_gas,
+        }
     }
 
     <span class="doccomment">/// Executes an entry point.
@@ -233,11 +264,12 @@
             <span class="self">self</span>.clone().try_into().map_err(EntryPointExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
 
         <span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
-        <span class="kw">let </span>execution_context = <span class="kw-2">&amp;mut </span>ExecutionContext::default();
         <span class="kw">let </span>account_context = AccountTransactionContext::default();
+        <span class="kw">let </span>max_steps = block_context.invoke_tx_max_n_steps;
+        <span class="kw">let </span>context = <span class="kw-2">&amp;mut </span>EntryPointExecutionContext::new(block_context, account_context, max_steps);
 
         call_entry_point
-            .execute(state, execution_resources, execution_context, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>account_context)
+            .execute(state, execution_resources, context)
             .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution)
     }
 }
@@ -252,6 +284,7 @@
             calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
+            initial_gas: Felt252Wrapper::default(),
         }
     }
 }
@@ -287,6 +320,7 @@
             // starknet-lib is constantly breaking it&#39;s api
             // I hope it&#39;s nothing important ¯\_(ツ)_/¯
             </span>code_address: <span class="prelude-val">None</span>,
+            initial_gas: Felt252::from_bytes_be(<span class="kw-2">&amp;</span><span class="self">self</span>.initial_gas.<span class="number">0</span>.to_bytes_be()),
         };
 
         <span class="prelude-val">Ok</span>(entrypoint)

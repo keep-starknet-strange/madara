@@ -63,13 +63,13 @@
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
-</pre><pre class="rust"><code><span class="kw">use </span>alloc::sync::Arc;
-
-<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+</pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::state::cached_state::ContractStorageKey;
 <span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::state::state_api::{StateReader, StateResult};
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+<span class="kw">use </span>starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
@@ -115,13 +115,17 @@
         <span class="prelude-val">Ok</span>(nonce)
     }
 
-    <span class="kw">fn </span>get_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;Arc&lt;ContractClass&gt;&gt; {
+    <span class="kw">fn </span>get_compiled_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;ContractClass&gt; {
         <span class="kw">let </span>contract_class = <span class="self">self</span>.class_hash_to_class.get(class_hash).cloned();
         <span class="kw">match </span>contract_class {
-            <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(Arc::new(contract_class)),
+            <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(contract_class),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash)),
         }
     }
+
+    <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
+        <span class="prelude-val">Ok</span>(CompiledClassHash::default()) <span class="comment">// TODO (Greg) handle the compiled class hash
+    </span>}
 
     <span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;ClassHash&gt; {
         <span class="kw">let </span>class_hash = <span class="self">self</span>.address_to_class_hash.get(<span class="kw-2">&amp;</span>contract_address).copied().unwrap_or_default();

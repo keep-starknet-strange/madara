@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["INITIAL_GAS_COST","STEP_GAS_COST"]};

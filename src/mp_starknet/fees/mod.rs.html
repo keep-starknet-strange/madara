@@ -249,6 +249,12 @@
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec;
@@ -256,7 +262,9 @@
 
 <span class="kw">use </span>blockifier::abi::constants::{GAS_USAGE, N_STEPS_RESOURCE};
 <span class="kw">use </span>blockifier::block_context::BlockContext;
-<span class="kw">use </span>blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+<span class="kw">use </span>blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 <span class="kw">use </span>blockifier::fee::gas_usage::calculate_tx_gas_usage;
 <span class="kw">use </span>blockifier::fee::os_usage::get_additional_os_resources;
 <span class="kw">use </span>blockifier::state::state_api::State;
@@ -351,7 +359,7 @@
 </span><span class="kw">pub fn </span>charge_fee&lt;S: State + StateChanges&gt;(
     state: <span class="kw-2">&amp;mut </span>S,
     block_context: <span class="kw-2">&amp;</span>BlockContext,
-    account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+    account_tx_context: AccountTransactionContext,
     resources: <span class="kw-2">&amp;</span>BTreeMap&lt;String, usize&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Fee, <span class="prelude-ty">Option</span>&lt;CallInfo&gt;), TransactionExecutionErrorWrapper&gt; {
     <span class="kw">let </span>no_fee = Fee::default();
@@ -362,8 +370,7 @@
 
     <span class="kw">let </span>actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|<span class="kw">_</span>| TransactionExecutionErrorWrapper::FeeComputationError)<span class="question-mark">?</span>;
-    <span class="kw">let </span>fee_transfer_call_info =
-        execute_fee_transfer(state, <span class="kw-2">&amp;mut </span>ExecutionResources::default(), block_context, account_tx_context, actual_fee)<span class="question-mark">?</span>;
+    <span class="kw">let </span>fee_transfer_call_info = execute_fee_transfer(state, block_context, account_tx_context, actual_fee)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>((actual_fee, <span class="prelude-val">Some</span>(fee_transfer_call_info)))
 }
@@ -371,9 +378,8 @@
 <span class="doccomment">/// Executes the fee transfer tx
 </span><span class="kw">fn </span>execute_fee_transfer(
     state: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>State,
-    execution_resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
     block_context: <span class="kw-2">&amp;</span>BlockContext,
-    account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
+    account_tx_context: AccountTransactionContext,
     actual_fee: Fee,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;CallInfo, TransactionExecutionErrorWrapper&gt; {
     <span class="comment">// TODO: use real value.
@@ -387,7 +393,10 @@
     // The least significant 128 bits of the amount transferred.
     </span><span class="kw">let </span>lsb_amount = StarkFelt::from(actual_fee.<span class="number">0 </span><span class="kw">as </span>u64);
     <span class="comment">// The most significant 128 bits of the amount transferred.
-    </span><span class="kw">let </span>msb_amount = StarkFelt::from(<span class="number">0</span>);
+    </span><span class="kw">let </span>msb_amount = StarkFelt::from(<span class="number">0_u64</span>);
+
+    <span class="comment">// The fee-token contract is a Cairo 0 contract, hence the initial gas is irrelevant.
+    </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
 
     <span class="kw">let </span>storage_address = block_context.fee_token_address;
     <span class="kw">let </span>fee_transfer_call = CallEntryPoint {
@@ -410,11 +419,14 @@
         storage_address,
         caller_address: account_tx_context.sender_address,
         call_type: CallType::Call,
+        initial_gas,
     };
-    <span class="kw">let </span><span class="kw-2">mut </span>execution_context = ExecutionContext::default();
+
+    <span class="kw">let </span>max_steps = block_context.invoke_tx_max_n_steps;
+    <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps);
 
     fee_transfer_call
-        .execute(state, execution_resources, <span class="kw-2">&amp;mut </span>execution_context, block_context, account_tx_context)
+        .execute(state, <span class="kw-2">&amp;mut </span>ExecutionResources::default(), <span class="kw-2">&amp;mut </span>context)
         .map_err(TransactionExecutionErrorWrapper::EntrypointExecution)
 }
 

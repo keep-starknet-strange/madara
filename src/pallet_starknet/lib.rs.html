@@ -1079,6 +1079,7 @@
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1972,7 +1973,8 @@
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-        );
+            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+        </span>);
 
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {
             <span class="prelude-val">Ok</span>(v) =&gt; {

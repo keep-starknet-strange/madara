@@ -282,16 +282,21 @@
 <a href="#282" id="282">282</a>
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec::Vec;
 <span class="kw">use </span>alloc::{format, vec};
 <span class="kw">use </span>core::mem;
 
-<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
 <span class="kw">use </span>cairo_vm::felt::Felt252;
 <span class="kw">use </span>cairo_vm::serde::deserialize_program::{
-    deserialize_program_json, parse_program, parse_program_json, ProgramJson, ReferenceManager,
+    deserialize_program_json, parse_program, parse_program_json, BuiltinName, ProgramJson,
 };
 <span class="kw">use </span>cairo_vm::types::errors::program_errors::ProgramError;
 <span class="kw">use </span>cairo_vm::types::program::{Program, SharedProgramData};
@@ -345,29 +350,38 @@
 
 <span class="kw">impl </span>From&lt;ContractClassWrapper&gt; <span class="kw">for </span>ContractClass {
     <span class="kw">fn </span>from(value: ContractClassWrapper) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            program: value.program.into(),
-            <span class="comment">// Convert EntrypointMapWrapper to HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;
-            </span>entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.<span class="number">0</span>.iter().clone().map(
-                |(entrypoint_type, entrypoints)| {
-                    (entrypoint_type.clone().into(), entrypoints.clone().into_iter().map(|val| val.into()).collect())
-                },
-            )),
-        }
-    }
+        <span class="self">Self</span>::V0(ContractClassV0(
+            ContractClassV0Inner {
+                program: value.program.into(),
+                <span class="comment">// Convert EntrypointMapWrapper to HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;
+                </span>entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.<span class="number">0</span>.iter().clone().map(
+                    |(entrypoint_type, entrypoints)| {
+                        (
+                            entrypoint_type.clone().into(),
+                            entrypoints.clone().into_iter().map(|val| val.into()).collect(),
+                        )
+                    },
+                )),
+            }
+            .into(),
+        )) <span class="comment">// TODO (Greg) handle v1
+    </span>}
 }
 
 <span class="kw">impl </span>From&lt;ContractClass&gt; <span class="kw">for </span>ContractClassWrapper {
     <span class="kw">fn </span>from(value: ContractClass) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            program: value.program.into(),
-            entry_points_by_type: EntrypointMapWrapper(<span class="kw">unsafe </span>{
-                mem::transmute::&lt;
-                    HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
-                    HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt;,
-                &gt;(value.entry_points_by_type)
-            }),
-        }
+        <span class="kw">match </span>value {
+            ContractClass::V0(class) =&gt; <span class="self">Self </span>{
+                program: class.program.clone().into(),
+                entry_points_by_type: EntrypointMapWrapper(<span class="kw">unsafe </span>{
+                    mem::transmute::&lt;
+                        HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
+                        HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt;,
+                    &gt;(class.entry_points_by_type.clone())
+                }),
+            },
+            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::default(), <span class="comment">// TODO (Greg) handle v1
+        </span>}
     }
 }
 
@@ -428,8 +442,8 @@
     </span><span class="kw">pub </span>shared_program_data: Arc&lt;SharedProgramData&gt;,
     <span class="doccomment">/// Constants of the program.
     </span><span class="kw">pub </span>constants: HashMap&lt;String, Felt252&gt;,
-    <span class="doccomment">/// All the references of the program.
-    </span><span class="kw">pub </span>reference_manager: ReferenceManager,
+    <span class="doccomment">/// All the builtins of the program.
+    </span><span class="kw">pub </span>builtins: Vec&lt;BuiltinName&gt;,
     <span class="doccomment">/// The version of the compiler used to compile the program.
     </span><span class="kw">pub </span>compiler_version: String,
     <span class="doccomment">/// The main scope of the program.
@@ -443,7 +457,7 @@
         <span class="self">Self </span>{
             shared_program_data: value.shared_program_data,
             constants: value.constants,
-            reference_manager: value.reference_manager,
+            builtins: value.builtins,
             compiler_version: compiler_version.to_string(),
             main_scope: <span class="string">&quot;__main__&quot;</span>.to_string(),
         }
@@ -452,11 +466,7 @@
 
 <span class="kw">impl </span>From&lt;ProgramWrapper&gt; <span class="kw">for </span>Program {
     <span class="kw">fn </span>from(value: ProgramWrapper) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            shared_program_data: value.shared_program_data,
-            constants: value.constants,
-            reference_manager: value.reference_manager,
-        }
+        <span class="self">Self </span>{ shared_program_data: value.shared_program_data, constants: value.constants, builtins: value.builtins }
     }
 }
 
@@ -543,8 +553,8 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">pub fn </span>get_contract_class(contract_content: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8]) -&gt; ContractClass {
-        serde_json::from_slice(contract_content).unwrap()
-    }
+        ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) <span class="comment">// TODO (Greg) handle v1
+    </span>}
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_serialize_deserialize_contract_class() {
