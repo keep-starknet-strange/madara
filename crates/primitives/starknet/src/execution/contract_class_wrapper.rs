@@ -4,10 +4,10 @@ use alloc::vec::Vec;
 use alloc::{format, vec};
 use core::mem;
 
-use blockifier::execution::contract_class::ContractClass;
+use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
 use cairo_vm::felt::Felt252;
 use cairo_vm::serde::deserialize_program::{
-    deserialize_program_json, parse_program, parse_program_json, ProgramJson, ReferenceManager,
+    deserialize_program_json, parse_program, parse_program_json, BuiltinName, ProgramJson,
 };
 use cairo_vm::types::errors::program_errors::ProgramError;
 use cairo_vm::types::program::{Program, SharedProgramData};
@@ -61,28 +61,37 @@ impl ContractClassWrapper {
 
 impl From<ContractClassWrapper> for ContractClass {
     fn from(value: ContractClassWrapper) -> Self {
-        Self {
-            program: value.program.into(),
-            // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
-            entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.0.iter().clone().map(
-                |(entrypoint_type, entrypoints)| {
-                    (entrypoint_type.clone().into(), entrypoints.clone().into_iter().map(|val| val.into()).collect())
-                },
-            )),
-        }
+        Self::V0(ContractClassV0(
+            ContractClassV0Inner {
+                program: value.program.into(),
+                // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
+                entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.0.iter().clone().map(
+                    |(entrypoint_type, entrypoints)| {
+                        (
+                            entrypoint_type.clone().into(),
+                            entrypoints.clone().into_iter().map(|val| val.into()).collect(),
+                        )
+                    },
+                )),
+            }
+            .into(),
+        )) // TODO (Greg) handle v1
     }
 }
 
 impl From<ContractClass> for ContractClassWrapper {
     fn from(value: ContractClass) -> Self {
-        Self {
-            program: value.program.into(),
-            entry_points_by_type: EntrypointMapWrapper(unsafe {
-                mem::transmute::<
-                    HashMap<EntryPointType, Vec<EntryPoint>>,
-                    HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>,
-                >(value.entry_points_by_type)
-            }),
+        match value {
+            ContractClass::V0(class) => Self {
+                program: class.program.clone().into(),
+                entry_points_by_type: EntrypointMapWrapper(unsafe {
+                    mem::transmute::<
+                        HashMap<EntryPointType, Vec<EntryPoint>>,
+                        HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>,
+                    >(class.entry_points_by_type.clone())
+                }),
+            },
+            _ => Self::default(), // TODO (Greg) handle v1
         }
     }
 }
@@ -144,8 +153,8 @@ pub struct ProgramWrapper {
     pub shared_program_data: Arc<SharedProgramData>,
     /// Constants of the program.
     pub constants: HashMap<String, Felt252>,
-    /// All the references of the program.
-    pub reference_manager: ReferenceManager,
+    /// All the builtins of the program.
+    pub builtins: Vec<BuiltinName>,
     /// The version of the compiler used to compile the program.
     pub compiler_version: String,
     /// The main scope of the program.
@@ -159,7 +168,7 @@ impl From<Program> for ProgramWrapper {
         Self {
             shared_program_data: value.shared_program_data,
             constants: value.constants,
-            reference_manager: value.reference_manager,
+            builtins: value.builtins,
             compiler_version: compiler_version.to_string(),
             main_scope: "__main__".to_string(),
         }
@@ -168,11 +177,7 @@ impl From<Program> for ProgramWrapper {
 
 impl From<ProgramWrapper> for Program {
     fn from(value: ProgramWrapper) -> Self {
-        Self {
-            shared_program_data: value.shared_program_data,
-            constants: value.constants,
-            reference_manager: value.reference_manager,
-        }
+        Self { shared_program_data: value.shared_program_data, constants: value.constants, builtins: value.builtins }
     }
 }
 
@@ -259,7 +264,7 @@ mod tests {
     use super::*;
 
     pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-        serde_json::from_slice(contract_content).unwrap()
+        ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) // TODO (Greg) handle v1
     }
 
     #[test]

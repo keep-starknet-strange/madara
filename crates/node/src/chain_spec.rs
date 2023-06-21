@@ -130,7 +130,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 }
 
 pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-    serde_json::from_slice(contract_content).unwrap()
+    ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) // TODO (Greg) handle v1
 }
 
 /// Returns the storage key for a given storage name, keys and offset.

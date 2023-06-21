@@ -1,10 +1,8 @@
-use alloc::sync::Arc;
-
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::state::cached_state::ContractStorageKey;
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{StateReader, StateResult};
-use starknet_api::api_core::{ClassHash, ContractAddress, Nonce};
+use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_api::stdlib::collections::HashMap;
@@ -50,12 +48,16 @@ impl StateReader for DictStateReader {
         Ok(nonce)
     }
 
-    fn get_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<Arc<ContractClass>> {
+    fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
         let contract_class = self.class_hash_to_class.get(class_hash).cloned();
         match contract_class {
-            Some(contract_class) => Ok(Arc::new(contract_class)),
+            Some(contract_class) => Ok(contract_class),
             None => Err(StateError::UndeclaredClassHash(*class_hash)),
         }
+    }
+
+    fn get_compiled_class_hash(&mut self, _class_hash: ClassHash) -> StateResult<CompiledClassHash> {
+        Ok(CompiledClassHash::default()) // TODO (Greg) handle the compiled class hash
     }
 
     fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {

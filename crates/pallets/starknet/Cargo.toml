@@ -48,6 +48,7 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 scale-info = { workspace = true, features = ["derive"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+indexmap = { workspace = true }
 
 [dev-dependencies]
 pallet-timestamp = { workspace = true }
