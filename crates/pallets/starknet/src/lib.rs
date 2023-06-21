@@ -291,7 +291,7 @@ pub mod pallet {
     /// Current L1 gas price
     #[pallet::storage]
     #[pallet::getter(fn gas_price_l1)]
-    pub(super) type GasPriceL1<T: Config> = StorageValue<_, u128, ValueQuery>;
+    pub(super) type GasPriceL1<T: Config> = StorageValue<_, Option<u128>, ValueQuery>;
 
     /// Starknet genesis configuration.
     #[pallet::genesis_config]
@@ -712,7 +712,7 @@ pub mod pallet {
         #[pallet::weight({0})]
         pub fn submit_gas_price_unsigned(_origin: OriginFor<T>, gas_price: u128) -> DispatchResult {
             // Update the gas price.
-            GasPriceL1::<T>::set(gas_price);
+            GasPriceL1::<T>::set(Some(gas_price));
             log!(info, "gas price set to {:?}", gas_price);
             Ok(())
         }
@@ -757,11 +757,10 @@ pub mod pallet {
             // Once we have a real fee market this is where we'll chose the most profitable transaction.
 
             // Firstly let's check that we call the right function.
-            if let Call::submit_gas_price_unsigned { gas_price: new_gas_price } = call {
+            if let Call::submit_gas_price_unsigned { .. } = call {
                 // We can only accept transactions with a priority lower than `UnsignedPriority`.
                 return ValidTransaction::with_tag_prefix("starknet")
                     .priority(u64::MAX)
-                    .and_provides(new_gas_price)
                     .longevity(5)
                     .propagate(true)
                     .build();
@@ -892,10 +891,7 @@ impl<T: Config> Pallet<T> {
 
         let vm_resource_fee_cost = HashMap::default();
 
-        let gas_price = match Self::gas_price_l1() {
-            0 => 10, // default gas price
-            gas_price => gas_price,
-        };
+        let gas_price = Self::gas_price_l1().unwrap_or(1);
 
         BlockContext {
             block_number: BlockNumber(block_number),

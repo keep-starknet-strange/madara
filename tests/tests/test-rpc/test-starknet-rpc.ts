@@ -1266,7 +1266,7 @@ describeDevMadara("Starknet RPC", (context) => {
         data: [
           ARGENT_CONTRACT_ADDRESS,
           SEQUENCER_ADDRESS,
-          "0x1a02c", // current fee perceived for the transfer
+          "0x299e", // current fee perceived for the transfer
           "0x0",
         ].map(cleanHex),
       });

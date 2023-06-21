@@ -57,8 +57,6 @@ impl<T: Config> Pallet<T> {
             .map_err(|_| OffchainWorkerError::StringConversionError)?
             / 1_000_000_000;
         log::info!("Gas price in gwei: {}", gas_price);
-        let currentgas_price = Self::gas_price_l1();
-        log::info!("Current Gas price: {}", currentgas_price);
 
         Ok(gas_price)
     }
