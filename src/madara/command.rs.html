@@ -191,6 +191,24 @@
 <a href="#191" id="191">191</a>
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 <span class="kw">use </span>madara_runtime::Block;
 <span class="kw">use </span>sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
@@ -198,6 +216,22 @@
 <span class="kw">use </span><span class="kw">crate</span>::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 <span class="kw">use </span><span class="kw">crate</span>::cli::{Cli, Subcommand, Testnet};
 <span class="kw">use crate</span>::{chain_spec, service};
+
+<span class="kw">fn </span>copy_chain_spec() {
+    <span class="kw">let </span><span class="kw-2">mut </span>src = std::path::PathBuf::from(<span class="macro">env!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>));
+    src.push(<span class="string">&quot;chain-specs&quot;</span>);
+    <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+    <span class="kw">let </span><span class="kw-2">mut </span>dst = std::path::PathBuf::from(home_path);
+    dst.push(<span class="string">&quot;.madara&quot;</span>);
+    dst.push(<span class="string">&quot;chain-specs&quot;</span>);
+    std::fs::create_dir_all(<span class="kw-2">&amp;</span>dst).unwrap();
+    <span class="kw">for </span>file <span class="kw">in </span>std::fs::read_dir(src).unwrap() {
+        <span class="kw">let </span>file = file.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>dst = dst.clone();
+        dst.push(file.file_name());
+        std::fs::copy(file.path(), dst).unwrap();
+    }
+}
 
 <span class="kw">impl </span>SubstrateCli <span class="kw">for </span>Cli {
     <span class="kw">fn </span>impl_name() -&gt; String {
@@ -364,6 +398,8 @@
         }
         <span class="prelude-val">None </span>=&gt; {
             <span class="kw">if </span>cli.run.testnet.is_some() {
+                copy_chain_spec();
+
                 <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
                     <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara/p2p-key.ed25519&quot;</span>).into());
