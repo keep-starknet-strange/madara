@@ -11,7 +11,7 @@ use mp_starknet::block::Block;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
-use mp_starknet::transaction::types::EventWrapper;
+use mp_starknet::transaction::types::{EventWrapper, TransactionReceiptWrapper};
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_transaction_pool::ChainApi;
@@ -66,6 +66,26 @@ where
         Ok((block_events, block))
     }
 
+    pub fn get_block_receipts(
+        &self,
+        block_id: u64,
+    ) -> Result<(Vec<TransactionReceiptWrapper>, Block), StarknetRpcApiError> {
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(BlockId::Number(block_id)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
+            error!("Failed to retrieve block");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let transaction_receipts = block.transaction_receipts().to_owned().into();
+
+        Ok((transaction_receipts, block))
+    }
+
     /// Helper function to filter Starknet events provided a RPC event filter
     ///
     /// # Arguments
@@ -89,8 +109,8 @@ where
 
         // Iterate on block range
         while current_block <= to_block {
-            let (block_events, block) = self.get_block_events(current_block)?;
-            let block_events_len = block_events.len();
+            let (trx_receipts, block) = self.get_block_receipts(current_block)?;
+            let block_events_len: usize = trx_receipts.iter().map(|receipt| receipt.events.len()).sum();
             // if block_events length < continuation_token, keep going and reduce the pagination
             if block_events_len < continuation_token {
                 continuation_token -= block_events_len;
@@ -99,40 +119,54 @@ where
                 continue;
             }
 
-            let block_events = block_events.into_iter().skip(continuation_token);
+            let block_hash = block.header().hash(*self.hasher).into();
+            let block_number = block.header().block_number;
             // Kept in order to calculate continuation token.
             let block_events_len = block_events_len - continuation_token;
             let index_before_loop = index;
 
-            let block_hash = block.header().hash(*self.hasher).into();
-            let block_number = block.header().block_number;
+            for receipt in trx_receipts.iter() {
+                let receipt_events_len: usize = receipt.events.len();
+                // skip receit with event if receipt.events.len() < continuation_token
+                if receipt_events_len < continuation_token {
+                    continuation_token -= receipt_events_len;
+                    index += receipt_events_len;
+                    continue;
+                }
+                let receipt_transaction_hash = receipt.transaction_hash;
+                let receipt_events = receipt.events.to_owned().into_iter().skip(continuation_token);
+                index += continuation_token;
 
-            let (new_filtered_events, continuation_index) = filter_events_by_params(
-                block_events,
-                from_address,
-                keys.clone(),
-                Some((chunk_size as usize) - filtered_events.len()),
-            );
-            index = continuation_index;
+                let (new_filtered_events, continuation_index) = filter_events_by_params(
+                    receipt_events,
+                    from_address,
+                    keys.clone(),
+                    Some((chunk_size as usize) - filtered_events.len()),
+                );
+                index += continuation_index;
 
-            filtered_events.extend(
-                new_filtered_events
-                    .iter()
-                    .map(|event| EmittedEvent {
-                        from_address: event.from_address.into(),
-                        keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
-                        data: event.data.clone().into_iter().map(|data| data.into()).collect(),
-                        block_hash,
-                        block_number,
-                        transaction_hash: event.transaction_hash.into(),
-                    })
-                    .collect::<Vec<EmittedEvent>>(),
-            );
+                filtered_events.extend(
+                    new_filtered_events
+                        .iter()
+                        .map(|event| EmittedEvent {
+                            from_address: event.from_address.into(),
+                            keys: event.keys.clone().into_iter().map(|key| key.into()).collect(),
+                            data: event.data.clone().into_iter().map(|data| data.into()).collect(),
+                            block_hash,
+                            block_number,
+                            transaction_hash: receipt_transaction_hash.into(),
+                        })
+                        .collect::<Vec<EmittedEvent>>(),
+                );
 
-            if filtered_events.len() >= chunk_size as usize {
-                let token = if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
-                return Ok(EventsPage { events: filtered_events, continuation_token: token });
+                if filtered_events.len() >= chunk_size as usize {
+                    let token =
+                        if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
+                    return Ok(EventsPage { events: filtered_events, continuation_token: token });
+                }
+                continuation_token = 0;
             }
+
             current_block += 1;
             continuation_token = 0;
         }
