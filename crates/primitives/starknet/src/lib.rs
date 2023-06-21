@@ -15,6 +15,9 @@ pub use sp_std;
 #[doc(hidden)]
 pub extern crate alloc;
 // Include modules.
+/// Starknet transaction constants.
+pub mod constants;
+
 /// Starknet block related functionality.
 pub mod block;
 

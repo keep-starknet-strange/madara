@@ -16,7 +16,7 @@ pub fn get_contract_class(resource_path: &str) -> ContractClass {
     let full_path = cargo_dir + "/../../../cairo-contracts/build/" + resource_path;
     let full_path: PathBuf = [full_path].iter().collect();
     let raw_contract_class = fs::read_to_string(full_path).unwrap();
-    serde_json::from_str(&raw_contract_class).unwrap()
+    ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap()) // TODO (Greg) handle v1
 }
 
 pub fn get_contract_class_wrapper(resource_path: &str) -> ContractClassWrapper {

@@ -41,6 +41,7 @@ sp-std = { workspace = true }
 
 # Other third party dependencies
 hex = { workspace = true }
+indexmap = { workspace = true }
 log = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",

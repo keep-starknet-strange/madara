@@ -45,6 +45,8 @@ pub struct DeserializeCallEntrypoint {
     pub storage_address: String,
     /// The caller address
     pub caller_address: String,
+    /// The initial gas
+    pub initial_gas: String,
 }
 
 /// Error enum for CallEntrypoint deserialization
@@ -71,6 +73,9 @@ pub enum DeserializeCallEntrypointError {
     /// InvalidCallerAddress error
     #[error("Invalid caller_address format: {0:?}")]
     InvalidCallerAddress(Felt252WrapperError),
+    /// InvalidCallerAddress error
+    #[error("Invalid initial_gas format: {0:?}")]
+    InvalidInitialGas(Felt252WrapperError),
 }
 
 /// Struct for deserializing Event from JSON
@@ -254,8 +259,21 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             Err(e) => return Err(DeserializeCallEntrypointError::InvalidCallerAddress(e)),
         };
 
+        let initial_gas = match Felt252Wrapper::from_hex_be(d.initial_gas.as_str()) {
+            Ok(felt) => felt,
+            Err(e) => return Err(DeserializeCallEntrypointError::InvalidInitialGas(e)),
+        };
+
         // Create CallEntryPointWrapper with validated and converted fields
-        Ok(Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address })
+        Ok(Self {
+            class_hash,
+            entrypoint_type,
+            entrypoint_selector,
+            calldata,
+            storage_address,
+            caller_address,
+            initial_gas,
+        })
     }
 }
 
@@ -326,8 +344,10 @@ pub fn transaction_from_json(
 
     // Set the contract_class field based on contract_content
     if !contract_content.is_empty() {
-        let raw_contract_class: ContractClass = serde_json::from_slice(contract_content)
-            .map_err(|e| DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e)))?;
+        let raw_contract_class: ContractClass =
+            ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
+                DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
+            })?); // TODO (Greg) handle V1
         transaction.contract_class =
             Some(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
