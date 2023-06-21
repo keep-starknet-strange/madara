@@ -123,74 +123,71 @@ impl Header {
     }
 }
 
-#[test]
-fn test_header_hash() {
-    use starknet_core::crypto::compute_hash_on_elements;
-    use starknet_ff::FieldElement;
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::crypto::hash::pedersen::PedersenHasher;
+    #[test]
+    fn test_header_hash() {
+        // Values taken from genesis block on mainnet
+        let hasher = PedersenHasher::default();
 
-    let parent_block_hash = Felt252Wrapper::try_from(&[1; 32]).unwrap();
-    let block_number = 42;
-    let global_state_root = Felt252Wrapper::from(12345_u128);
-    let sequencer_address = Felt252Wrapper::try_from(&[2; 32]).unwrap();
-    let block_timestamp = 1620037184;
-    let transaction_count = 2;
-    let transaction_commitment = Felt252Wrapper::try_from(&[3; 32]).unwrap();
-    let event_count = 1;
-    let event_commitment = Felt252Wrapper::try_from(&[4; 32]).unwrap();
-    let protocol_version = Some(1);
-    let extra_data = None;
+        let block_number = 86000;
+        let block_timestamp = 1687235884;
+        let global_state_root =
+            Felt252Wrapper::from_hex_be("0x006727a7aae8c38618a179aeebccd6302c67ad5f8528894d1dde794e9ae0bbfa").unwrap();
+        let parent_block_hash =
+            Felt252Wrapper::from_hex_be("0x045543088ce763aba7db8f6bfb33e33cc50af5c2ed5a26d38d5071c352a49c1d").unwrap();
+        let sequencer_address =
+            Felt252Wrapper::from_hex_be("0x1176a1bd84444c89232ec27754698e5d2e7e1a7f1539f12027f28b23ec9f3d8").unwrap();
+        let transaction_count = 197;
+        let transaction_commitment =
+            Felt252Wrapper::from_hex_be("0x70369cef825889dc005916dba67332b71f270b7af563d0433cee3342dda527d").unwrap();
+        let event_count = 1430;
+        let event_commitment =
+            Felt252Wrapper::from_hex_be("0x2043ba1ef46882ce1dbb17b501fffa4b71f87f618e8f394e9605959d92efdf6").unwrap();
+        let protocol_version = None;
+        let extra_data = None;
 
-    let header = Header::new(
-        parent_block_hash,
-        block_number,
-        global_state_root,
-        sequencer_address,
-        block_timestamp,
-        transaction_count,
-        transaction_commitment,
-        event_count,
-        event_commitment,
-        protocol_version,
-        extra_data,
-    );
+        let header = Header::new(
+            parent_block_hash,
+            block_number,
+            global_state_root,
+            sequencer_address,
+            block_timestamp,
+            transaction_count,
+            transaction_commitment,
+            event_count,
+            event_commitment,
+            protocol_version,
+            extra_data,
+        );
 
-    let hasher = crate::crypto::hash::pedersen::PedersenHasher::default();
+        let expected_hash =
+            Felt252Wrapper::from_hex_be("0x001d126ca058c7e546d59cf4e10728e4b023ca0fb368e8abcabf0b5335f4487a").unwrap();
 
-    let expected_hash = compute_hash_on_elements(&[
-        FieldElement::from(42_u32),
-        global_state_root.0,
-        sequencer_address.0,
-        FieldElement::from(1620037184_u32),
-        FieldElement::from(2_u32),
-        transaction_commitment.0,
-        FieldElement::from(1_u32),
-        event_commitment.0,
-        FieldElement::from(protocol_version.unwrap()),
-        FieldElement::ZERO,
-        parent_block_hash.0,
-    ]);
+        assert_eq!(header.hash(hasher), expected_hash);
+    }
 
-    assert_eq!(header.hash(hasher), Felt252Wrapper(expected_hash));
-}
-
-#[test]
-fn test_to_block_context() {
-    let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
-    // Create a block header.
-    let block_header = Header { block_number: 1, block_timestamp: 1, sequencer_address, ..Default::default() };
-    // Create a fee token address.
-    let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
-    // Create a chain id.
-    let chain_id = ChainId("0x1".to_string());
-    // Try to serialize the block header.
-    let block_context = block_header.into_block_context(fee_token_address, chain_id);
-    let expected_sequencer_address =
-        ContractAddress::try_from(StarkFelt::new(sequencer_address.into()).unwrap()).unwrap();
-    let expected_fee_token_address =
-        ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
-    // Check that the block context was serialized correctly.
-    assert_eq!(block_context.block_number, BlockNumber(1));
-    assert_eq!(block_context.block_timestamp, BlockTimestamp(1));
-    assert_eq!(block_context.sequencer_address, expected_sequencer_address);
-    assert_eq!(block_context.fee_token_address, expected_fee_token_address);
+    #[test]
+    fn test_to_block_context() {
+        let sequencer_address = Felt252Wrapper::from_hex_be("0xFF").unwrap();
+        // Create a block header.
+        let block_header = Header { block_number: 1, block_timestamp: 1, sequencer_address, ..Default::default() };
+        // Create a fee token address.
+        let fee_token_address = Felt252Wrapper::from_hex_be("AA").unwrap();
+        // Create a chain id.
+        let chain_id = ChainId("0x1".to_string());
+        // Try to serialize the block header.
+        let block_context = block_header.into_block_context(fee_token_address, chain_id);
+        let expected_sequencer_address =
+            ContractAddress::try_from(StarkFelt::new(sequencer_address.into()).unwrap()).unwrap();
+        let expected_fee_token_address =
+            ContractAddress::try_from(StarkFelt::new(fee_token_address.into()).unwrap()).unwrap();
+        // Check that the block context was serialized correctly.
+        assert_eq!(block_context.block_number, BlockNumber(1));
+        assert_eq!(block_context.block_timestamp, BlockTimestamp(1));
+        assert_eq!(block_context.sequencer_address, expected_sequencer_address);
+        assert_eq!(block_context.fee_token_address, expected_fee_token_address);
+    }
 }
