@@ -117,15 +117,17 @@ madara-runtime = { path = "crates/runtime" }
 
 # Starknet dependencies
 # Cairo Virtual Machine
-cairo-vm = { git = "https://github.com/tdelabro/cairo-rs", branch = "no_std-support", default-features = false }
+cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch = "no_std-support-with-cairo-1", default-features = false, features = [
+  "cairo-1-hints",
+] }
 starknet-crypto = { version = "0.5.1", default-features = false }
 starknet-core = { version = "0.3.0", default-features = false }
 starknet-ff = { version = "0.3.3", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
   "alloc",
 ] }
-blockifier = { git = "https://github.com/tdelabro/blockifier", branch = "new-no_std-support", default-features = false }
-starknet_api = { git = "https://github.com/tdelabro/starknet-api", branch = "no_std-support", features = [
+blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support", default-features = false }
+starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support", features = [
   "testing",
 ], default-features = false }
 # Other third party dependencies
@@ -153,3 +155,5 @@ pretty_assertions = "1.3.0"
 linked-hash-map = { version = "0.5.6", default-features = false }
 parking_lot = "0.12.1"
 async-trait = "0.1.68"
+cargo-husky = { version = "1.5.0", features = ["user-hooks"] }
+indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false }
