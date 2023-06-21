@@ -2,11 +2,15 @@
 
 ## Network information
 
-- Release / tag: https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-alpha.4
-- Docker image: ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4 (https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
-- Bootnode: /ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE
-- Dev explorer: https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer
-
+- Release / tag:
+  https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-alpha.4
+- Docker image:
+  ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4
+  (https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
+- Bootnode:
+  /ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE
+- Dev explorer:
+  https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer
 
 ## Madara
 
@@ -194,7 +198,8 @@ docker run --rm -d \
 
 Consider running the node in detached mode using the `-d` option. But try first
 running without the `-d` option as it's easier to see what's happening if it's
-your first time using docker. Alternatively, you can also run `docker logs -f sharingan-fullnode`.
+your first time using docker. Alternatively, you can also run
+`docker logs -f sharingan-fullnode`.
 
 ### Dev way: cloning Madara repository
 
