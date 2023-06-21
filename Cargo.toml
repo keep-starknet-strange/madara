@@ -122,10 +122,7 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
 ] }
 starknet-crypto = { version = "0.5.1", default-features = false }
 starknet-core = { version = "0.3.0", default-features = false }
-starknet-ff = { version = "0.3.4", default-features = false }
-poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
-  "alloc",
-] }
+starknet-ff = { version = "0.3.3", default-features = false }
 blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", branch = "no_std-support", default-features = false }
 starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support", features = [
   "testing",

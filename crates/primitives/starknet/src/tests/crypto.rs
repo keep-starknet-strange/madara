@@ -6,10 +6,11 @@ use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{
-    calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_event_commitment, calculate_event_hash,
-    calculate_invoke_tx_hash, calculate_transaction_commitment,
+    calculate_class_commitment_tree_root_hash, calculate_declare_tx_hash, calculate_deploy_account_tx_hash,
+    calculate_event_commitment, calculate_event_hash, calculate_invoke_tx_hash, calculate_transaction_commitment,
 };
 use crate::crypto::hash::pedersen::PedersenHasher;
+use crate::crypto::hash::poseidon::PoseidonHasher;
 use crate::crypto::hash::{hash, Hasher};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node, NodeId};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
@@ -129,6 +130,33 @@ fn test_ref_merkle_tree() {
 }
 
 #[test]
+fn test_merkle_tree_class_commitment() {
+    let class_hashes = vec![Felt252Wrapper::from(0_u128), Felt252Wrapper::from(1_u128)];
+
+    let class_com = calculate_class_commitment_tree_root_hash::<PedersenHasher>(&class_hashes);
+
+    // The values we test ours against are computed from the sequencer test.
+    assert_eq!(
+        Felt252Wrapper::from_hex_be("0x3b384835a9d9fafc541d397021fbdc7a6c29a895a29befc74afa0173b024d54").unwrap(),
+        class_com
+    );
+}
+
+#[test]
+fn test_merkle_tree_poseidon() {
+    let class_hashes = vec![Felt252Wrapper::from(0_u128), Felt252Wrapper::from(1_u128)];
+
+    let _class_com = calculate_class_commitment_tree_root_hash::<PoseidonHasher>(&class_hashes);
+
+    // The values we test ours against are computed from the sequencer test.
+    // assert_eq!(
+    //     Felt252Wrapper::from_hex_be("
+    // 0x3b384835a9d9fafc541d397021fbdc7a6c29a895a29befc74afa0173b024d54").unwrap(),
+    //     class_com
+    // );
+}
+
+#[test]
 fn test_event_hash() {
     let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
     let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
@@ -151,6 +179,15 @@ fn test_pedersen_hash() {
     let pedersen_hasher = PedersenHasher::default();
     let hash_result = pedersen_hasher.hash(&test_data());
     let expected_hash = hash(Hasher::Pedersen(PedersenHasher::default()), &test_data());
+
+    assert_eq!(hash_result, expected_hash);
+}
+
+#[test]
+fn test_poseidon_hash() {
+    let poseidon = PoseidonHasher::default();
+    let hash_result = poseidon.hash(&test_data());
+    let expected_hash = hash(Hasher::Poseidon(PoseidonHasher::default()), &test_data());
 
     assert_eq!(hash_result, expected_hash);
 }

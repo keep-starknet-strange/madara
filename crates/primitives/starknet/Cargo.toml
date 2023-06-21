@@ -24,7 +24,6 @@ blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
 cairo-vm = { workspace = true }
-poseidon_hash = { workspace = true, default-features = false }
 starknet-core = { workspace = true, optional = true }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
@@ -71,7 +70,6 @@ std = [
   "starknet-core",
   "blockifier/std",
   "starknet_api/std",
-  "poseidon_hash/std",
   # Substrate
   "frame-support/std",
   "sp-core/std",
