@@ -10,8 +10,6 @@ import {
   ec,
   hash,
   validateAndParseAddress,
-  RPC,
-  stark,
   json,
   encode,
   CompressedProgram,
@@ -306,6 +304,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const program = json.parse(
         encode.arrayBufferToString(decompressProgram(contract_class.program))
       );
@@ -953,6 +952,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const readyExtrinsics =
         await context.polkadotApi.rpc.author.pendingExtrinsics();
       const readyTxs = readyExtrinsics.map((pending) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const obj: any = pending.toHuman();
         return {
           type: obj.method.method.toUpperCase(),
