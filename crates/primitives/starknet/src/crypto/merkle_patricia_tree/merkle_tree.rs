@@ -144,7 +144,7 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         // Go through the tree, collect dirty nodes, calculate their hashes, and
         // persist them. Take care to increment ref counts of child nodes. Start from
         // the root and traverse the tree.
-        self.commit_subtree(&self.root.clone(), &mut self.nodes.0.clone());
+        self.commit_subtree(&self.root.clone());
 
         // Unwrap is safe as `commit_subtree` will set the hash.
         let root_hash = self.nodes.0.get(&self.root).unwrap().hash().unwrap();
@@ -162,8 +162,9 @@ impl<H: CryptoHasherT> MerkleTree<H> {
     /// # Arguments
     ///
     /// * `node` - The top node from the subtree to commit.
-    fn commit_subtree(&mut self, node_id: &NodeId, nodes: &mut HashMap<NodeId, Node>) {
+    fn commit_subtree(&mut self, node_id: &NodeId) {
         use Node::*;
+        let mut nodes = self.nodes.0.clone();
         let node = nodes.get_mut(node_id).unwrap();
         match node {
             Unresolved(_) => { /* Unresolved nodes are already persisted. */ }
@@ -172,16 +173,16 @@ impl<H: CryptoHasherT> MerkleTree<H> {
             Edge(edge) if edge.hash.is_some() => { /* not dirty, already persisted */ }
 
             Binary(binary) => {
-                self.commit_subtree(&binary.left, &mut self.nodes.0.clone());
-                self.commit_subtree(&binary.right, &mut self.nodes.0.clone());
+                self.commit_subtree(&binary.left);
+                self.commit_subtree(&binary.right);
                 // This will succeed as `commit_subtree` will set the child hashes.
-                binary.calculate_hash::<H>(&self.nodes.0);
+                binary.calculate_hash::<H>(&self.nodes.0.clone());
             }
 
             Edge(edge) => {
-                self.commit_subtree(&edge.child, &mut self.nodes.0.clone());
+                self.commit_subtree(&edge.child);
                 // This will succeed as `commit_subtree` will set the child's hash.
-                edge.calculate_hash::<H>(&self.nodes.0);
+                edge.calculate_hash::<H>(&self.nodes.0.clone());
             }
         }
 
