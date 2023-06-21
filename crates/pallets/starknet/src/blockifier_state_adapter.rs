@@ -10,7 +10,6 @@ use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calc
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::state::StateChanges;
 use sp_core::Get;
-use sp_std::sync::Arc;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
