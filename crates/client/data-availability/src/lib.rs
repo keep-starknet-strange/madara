@@ -2,6 +2,30 @@ pub const CAIRO_PIE_BASE64: &str = "UEsDBBQAAAAIAAAAIQBGGR6jGAEAAEsCAAANAAAAbWV0
 pub const CAIRO_FACT: &str = "0x99f8c8b3efce1cb3b53ce44fd5e8339a1299be480cc6e4599d107f69666eb7bb";
 pub const LAMBDA_URL: &str = "https://testnet.provingservice.io";
 pub const LAMBDA_MAX_PIE_MB: u64 = 20 * 2**20;
+
+
+pub struct DataAvailabilityWorkere<B: BlockT, C, BE, H> {
+    client: Arc<C>,
+    substrate_backend: Arc<BE>,
+    madara_backend: Arc<mc_db::Backend<B>>,
+}
+
+impl<B: BlockT, C, BE, H> Unpin for DataAvailabilityWorkere<B, C, BE, H> {}
+
+#[allow(clippy::too_many_arguments)]
+impl<B: BlockT, C, BE, H> DataAvailabilityWorkere<B, C, BE, H> {
+    pub fn new(
+        client: Arc<C>,
+        substrate_backend: Arc<BE>,
+        madara_backend: Arc<mc_db::Backend<B>>,
+    ) -> Self {
+        Self {
+            client,
+            substrate_backend,
+            madara_backend,
+        }
+    }
+}
 // Generate the Cairo PIE
 // class CairoPie:
 //     """
