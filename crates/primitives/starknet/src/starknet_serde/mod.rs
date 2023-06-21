@@ -347,7 +347,7 @@ pub fn transaction_from_json(
         let raw_contract_class: ContractClass =
             ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
-            })?); // TODO (Greg) handle V1
+            })?); // TODO 707 handle v1
         transaction.contract_class =
             Some(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))

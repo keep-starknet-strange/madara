@@ -75,7 +75,7 @@ impl From<ContractClassWrapper> for ContractClass {
                 )),
             }
             .into(),
-        )) // TODO (Greg) handle v1
+        )) // TODO 707 handle v1
     }
 }
 
@@ -91,7 +91,7 @@ impl From<ContractClass> for ContractClassWrapper {
                     >(class.entry_points_by_type.clone())
                 }),
             },
-            _ => Self::default(), // TODO (Greg) handle v1
+            _ => Self::default(), // TODO 707 handle v1
         }
     }
 }
@@ -264,7 +264,7 @@ mod tests {
     use super::*;
 
     pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-        ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) // TODO (Greg) handle v1
+        ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) // TODO 707 handle v1
     }
 
     #[test]

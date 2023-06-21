@@ -57,7 +57,7 @@ impl StateReader for DictStateReader {
     }
 
     fn get_compiled_class_hash(&mut self, _class_hash: ClassHash) -> StateResult<CompiledClassHash> {
-        Ok(CompiledClassHash::default()) // TODO (Greg) handle the compiled class hash
+        Ok(CompiledClassHash::default()) // TODO 708 handle the compiled class hash
     }
 
     fn get_class_hash_at(&mut self, contract_address: ContractAddress) -> StateResult<ClassHash> {

@@ -86,8 +86,7 @@ impl Message {
             calldata,
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
-            initial_gas: Felt252Wrapper::from(0_u8), /* TODO (Greg) update this once transaction contains the initial
-                                                      * gas */
+            initial_gas: Felt252Wrapper::from(0_u8), // TODO 710 update this once transaction contains the initial gas
         };
         Ok(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
