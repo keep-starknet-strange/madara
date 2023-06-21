@@ -1,0 +1,25 @@
+# Copyright 2021-2022 Dwellir AB authors & contributors
+# SPDX-License-Identifier: Apache-2.0
+
+config:
+  processor: "./functions.js"
+  environments:
+    local:
+      target: "ws://127.0.0.1:9944"
+      phases:
+        - duration: 4
+          arrivalCount: 1 # Number of users
+          name: Users Connection
+        - pause: 60
+          name: Performance Testing
+  variables:
+    nonce: 0
+  engines:
+    substrate: {}
+scenarios:
+  - engine: substrate
+    name: starknet_mint
+    flow:
+      - loop:
+          - function: "executeERC721Mint"
+        count: 10000
