@@ -1086,6 +1086,12 @@
 <a href="#1086" id="1086">1086</a>
 <a href="#1087" id="1087">1087</a>
 <a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1361,7 +1367,7 @@
     <span class="doccomment">/// Current sequencer address.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>sequencer_address)]
-    </span><span class="kw">pub type </span>SequencerAddress&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, [u8; <span class="number">32</span>], ValueQuery&gt;;
+    </span><span class="kw">pub type </span>SequencerAddress&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, ContractAddressWrapper, ValueQuery&gt;;
 
     <span class="doccomment">/// Ensure the sequencer address was updated for this block.
     </span><span class="attr">#[pallet::storage]
@@ -1477,6 +1483,7 @@
         ContractNotFound,
         ReachedBoundedVecLimit,
         TransactionConversionError,
+        SequencerAddressNotValid,
     }
 
     <span class="doccomment">/// The Starknet pallet external functions.
@@ -1502,6 +1509,8 @@
             </span><span class="kw">if </span>UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(frame_system::Pallet::&lt;T&gt;::block_number()) &gt; <span class="number">1 </span>{
                 <span class="macro">assert!</span>(!SeqAddrUpdate::&lt;T&gt;::exists(), <span class="string">&quot;Sequencer address can be updated only once in the block&quot;</span>);
             }
+
+            <span class="kw">let </span>addr = ContractAddressWrapper::try_from(<span class="kw-2">&amp;</span>addr).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::SequencerAddressNotValid)<span class="question-mark">?</span>;
             SequencerAddress::&lt;T&gt;::put(addr);
             SeqAddrUpdate::&lt;T&gt;::put(<span class="bool-val">true</span>);
             <span class="prelude-val">Ok</span>(())
@@ -1902,12 +1911,15 @@
     </span><span class="kw">fn </span>get_block_context() -&gt; BlockContext {
         <span class="kw">let </span>block_number = UniqueSaturatedInto::&lt;u64&gt;::unique_saturated_into(frame_system::Pallet::&lt;T&gt;::block_number());
         <span class="kw">let </span>block_timestamp = <span class="self">Self</span>::block_timestamp();
-        <span class="comment">// Get fee token address. Its value is checked when we set it so it&#39;s fine to unwrap
-        </span><span class="kw">let </span>fee_token_address =
-            ContractAddress::try_from(StarkFelt::new(<span class="self">Self</span>::fee_token_address().into()).unwrap()).unwrap();
+
+        <span class="comment">// Its value is checked when we set it so it&#39;s fine to unwrap
+        </span><span class="kw">let </span>fee_token_address: StarkFelt = <span class="self">Self</span>::fee_token_address().<span class="number">0</span>.into();
+        <span class="kw">let </span>fee_token_address = ContractAddress::try_from(fee_token_address).unwrap();
+        <span class="kw">let </span>sequencer_address: StarkFelt = <span class="self">Self</span>::sequencer_address().<span class="number">0</span>.into();
+        <span class="kw">let </span>sequencer_address = ContractAddress::try_from(sequencer_address).unwrap();
+
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
-        <span class="kw">let </span>provided_seq_addr = <span class="self">Self</span>::sequencer_address();
-        <span class="kw">let </span>sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(provided_seq_addr)));
+
         <span class="kw">let </span>vm_resource_fee_cost = HashMap::default();
         <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         </span><span class="kw">let </span>gas_price = <span class="number">10</span>;
@@ -1985,7 +1997,7 @@
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
         </span>);
 
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {
@@ -2046,7 +2058,7 @@
                 parent_block_hash,
                 block_number,
                 global_state_root,
-                Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>sequencer_address).unwrap(),
+                sequencer_address,
                 block_timestamp,
                 transaction_count,
                 transaction_commitment.try_into().unwrap(),

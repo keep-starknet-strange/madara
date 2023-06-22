@@ -238,9 +238,9 @@
             calldata,
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
-            initial_gas: Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">/* TODO (Greg) update this once transaction contains the initial
-                                                      * gas */
-        </span>};
+            <span class="comment">// FIXME 710
+            </span>initial_gas: Felt252Wrapper::from(<span class="number">0_u8</span>),
+        };
         <span class="prelude-val">Ok</span>(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }
 }

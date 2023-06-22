@@ -1218,7 +1218,7 @@
                 BoundedVec::default(),
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
-                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710
             </span>),
             contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
             contract_address_salt: <span class="prelude-val">None</span>,
@@ -1366,7 +1366,7 @@
                 <span class="self">self</span>.calldata,
                 sender_address,
                 sender_address,
-                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
             </span>),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt.into()),
@@ -1465,7 +1465,7 @@
                 <span class="self">self</span>.calldata,
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
-                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
             </span>),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
