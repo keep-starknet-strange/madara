@@ -44,6 +44,7 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
   UDC_CONTRACT_ADDRESS,
+  DEPLOY_ACCOUNT_COST,
 } from "../constants";
 import { Block, InvokeTransaction } from "./types";
 import { numberToHex } from "@polkadot/util";
@@ -622,6 +623,14 @@ describeDevMadara("Starknet RPC", (context) => {
         calldata,
         0
       );
+      // fund address
+      await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        deployedContractAddress,
+        DEPLOY_ACCOUNT_COST
+      );
+      await jumpBlocks(context, 1);
 
       const invocationDetails = {
         nonce: "0x0",
@@ -658,11 +667,11 @@ describeDevMadara("Starknet RPC", (context) => {
       );
       await createAndFinalizeBlock(context.polkadotApi);
 
-      const accountContractClass = await providerRPC.getClassHashAt(
+      const accountContractClassHash = await providerRPC.getClassHashAt(
         deployedContractAddress
       );
 
-      expect(validateAndParseAddress(accountContractClass)).to.be.equal(
+      expect(validateAndParseAddress(accountContractClassHash)).to.be.equal(
         ARGENT_PROXY_CLASS_HASH
       );
     });
