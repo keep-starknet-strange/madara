@@ -85,7 +85,8 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
     }
 
     fn get_compiled_class_hash(&mut self, _class_hash: ClassHash) -> StateResult<CompiledClassHash> {
-        Ok(CompiledClassHash::default()) // TODO (Greg) update with compiled class hash
+        // FIXME 708
+        Ok(CompiledClassHash::default())
     }
 }
 
@@ -133,7 +134,8 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         _class_hash: ClassHash,
         _compiled_class_hash: CompiledClassHash,
     ) -> StateResult<()> {
-        Ok(()) // TODO (Greg) update with compiled class hash
+        // FIXME 708
+        Ok(())
     }
 
     /// As the state is updated during the execution, return an empty [StateDiff]
