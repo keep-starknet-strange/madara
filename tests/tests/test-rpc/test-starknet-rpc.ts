@@ -106,15 +106,6 @@ describeDevMadara("Starknet RPC", (context) => {
     });
   });
 
-  describe("getStateUpdate", async () => {
-    it("should fail on unimplemented method", async function () {
-      const stateUpdate = providerRPC.getStateUpdate("latest");
-      await expect(stateUpdate)
-        .to.eventually.be.rejectedWith("501: Unimplemented method")
-        .and.be.an.instanceOf(LibraryError);
-    });
-  });
-
   describe("getBlockTransactionCount", async () => {
     it("should return 0 for latest block", async function () {
       const transactionCount = await providerRPC.getTransactionCount("latest");
@@ -523,16 +514,73 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("getStateUpdate", async () => {
-    it("should return state update", async function () {
-      return
+    it("should return latest block state update", async function () {
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+      const stateUpdate = await providerRPC.getStateUpdate("latest");
+
+      const latestBlock = await providerRPC.getBlockHashAndNumber();
+
+      expect(stateUpdate).to.not.be.undefined;
+      expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
+      expect(stateUpdate.new_root).to.be.equal("0x0");
+      expect(stateUpdate.old_root).to.be.equal("0x0");
+      expect(stateUpdate.state_diff).to.deep.equal({
+        storage_diffs: [],
+        deprecated_declared_classes: [],
+        declared_classes: [],
+        deployed_contracts: [],
+        replaced_classes: [],
+        nonces: [],
+      });
+    });
+
+    it("should return anterior block state update", async function () {
+      const anteriorBlock = await providerRPC.getBlockHashAndNumber();
+
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+      const stateUpdate = await providerRPC.getStateUpdate(anteriorBlock.block_hash);
+
+      expect(stateUpdate).to.not.be.undefined;
+      expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
+      expect(stateUpdate.new_root).to.be.equal("0x0");
+      expect(stateUpdate.old_root).to.be.equal("0x0");
+      expect(stateUpdate.state_diff).to.deep.equal({
+        storage_diffs: [],
+        deprecated_declared_classes: [],
+        declared_classes: [],
+        deployed_contracts: [],
+        replaced_classes: [],
+        nonces: [],
+      });
     });
 
     it("should throw block not found error", async function () {
-      return
-    });
-
-    it("", async function () {
-      return
+      const transaction = providerRPC.getStateUpdate(
+        "0x123"
+      );
+      await expect(transaction)
+        .to.eventually.be.rejectedWith("24: Block not found")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
