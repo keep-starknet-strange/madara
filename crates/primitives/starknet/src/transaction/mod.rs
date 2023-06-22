@@ -262,7 +262,7 @@ impl TryInto<InvokeTransaction> for &Transaction {
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
             calldata: entrypoint.calldata,
-        })) // TODO (Greg) handle v0 (?)
+        }))
     }
 }
 
@@ -439,12 +439,12 @@ impl Transaction {
             account_tx_context.clone(),
             block_context.validate_max_n_steps,
         );
-        // TODO (Greg): check if useful
         if context.account_tx_context.is_v0() {
             return Ok(None);
         }
 
-        let initial_gas = super::constants::INITIAL_GAS_COST.into(); // TODO (Greg) update this
+        // FIXME 710
+        let initial_gas = super::constants::INITIAL_GAS_COST.into();
 
         let validate_call = CallEntryPoint {
             entry_point_type: EntryPointType::External,
@@ -463,7 +463,8 @@ impl Transaction {
             .map_err(TransactionValidationErrorWrapper::from)?;
         verify_no_calls_to_other_contracts(&validate_call_info, String::from(constants::VALIDATE_ENTRY_POINT_NAME))
             .map_err(TransactionValidationErrorWrapper::TransactionValidationError)?;
-        // update_remaining_gas(initial_gas, &validate_call_info); TODO (Greg) update this
+        // FIXME 710
+        // update_remaining_gas(initial_gas, &validate_call_info);
 
         Ok(Some(validate_call_info))
     }
@@ -531,7 +532,8 @@ impl Transaction {
         // Verify the transaction version.
         self.verify_tx_version(&tx_type)?;
 
-        let mut initial_gas: Felt252 = super::constants::INITIAL_GAS_COST.into(); // TODO (Greg) update this
+        // FIXME 710
+        let mut initial_gas: Felt252 = super::constants::INITIAL_GAS_COST.into();
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -566,7 +568,8 @@ impl Transaction {
             TxType::L1Handler => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
-                let tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() }; // TODO (Greg) update the fee
+                // FIXME 712
+                let tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() };
 
                 // Create the context.
                 let mut context = EntryPointExecutionContext::new(
