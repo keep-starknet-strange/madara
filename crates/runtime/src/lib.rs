@@ -250,9 +250,6 @@ impl_runtime_apis! {
         }
 
         fn events() -> Vec<EventWrapper> {
-            // (Greg) Substrate documentation states "Should only be called if you know
-            // what you are doing and outside of the runtime block
-            // execution". Is it ok to call here?
             System::read_events_no_consensus().filter_map(|event| {
                 match *event {
                     EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } => Some(event),
