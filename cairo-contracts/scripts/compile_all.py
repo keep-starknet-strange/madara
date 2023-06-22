@@ -3,7 +3,7 @@ import logging
 from asyncio import run
 from datetime import datetime
 
-from utils.constants import CONTRACTS, RPC_CLIENT
+from utils.constants import CONTRACTS
 from utils.starknet import compile_contract
 
 logging.basicConfig()
@@ -14,7 +14,7 @@ logger.setLevel(logging.INFO)
 # %% Main
 async def main():
     # %% Compile
-    logger.info(f"ℹ️  Compiling contracts for network {RPC_CLIENT.url}")
+    logger.info(f"ℹ️  Compiling contracts")
     initial_time = datetime.now()
     for contract in CONTRACTS:
         logger.info(f"⏳ Compiling {contract}")

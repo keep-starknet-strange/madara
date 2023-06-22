@@ -342,6 +342,7 @@ pub fn get_account_calldata(account_type: AccountType) -> Vec<&'static str> {
             BRAAVOS_ACCOUNT_CLASS_HASH, // Braavos account class hash
             "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' selector
         ],
+        AccountType::Openzeppelin => vec![ACCOUNT_PUBLIC_KEY],
         _ => vec![],
     }
 }
