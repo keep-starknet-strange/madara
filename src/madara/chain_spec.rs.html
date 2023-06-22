@@ -278,6 +278,26 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
 <span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
@@ -293,8 +313,6 @@
 <span class="kw">use </span>starknet_core::utils::get_storage_var_address;
 
 <span class="kw">use </span><span class="kw">super</span>::constants::<span class="kw-2">*</span>;
-
-<span class="kw">pub const </span>ACCOUNT_PUBLIC_KEY: <span class="kw-2">&amp;</span>str = <span class="string">&quot;0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2&quot;</span>;
 
 <span class="doccomment">/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 </span><span class="kw">pub type </span>ChainSpec = sc_service::GenericChainSpec&lt;RuntimeGenesisConfig&gt;;
@@ -455,6 +473,14 @@
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../cairo-contracts/build/Proxy.json&quot;</span>)).try_into().unwrap();
     <span class="kw">let </span>argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
+    <span class="comment">// OZ ACCOUNT CONTRACT
+    </span><span class="kw">let </span>oz_account_class =
+        get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../cairo-contracts/build/OpenzeppelinAccount.json&quot;</span>))
+            .try_into()
+            .unwrap();
+    <span class="kw">let </span>oz_account_class_hash = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_CLASS_HASH).unwrap();
+    <span class="kw">let </span>oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
+
     <span class="comment">// TEST CONTRACT
     </span><span class="kw">let </span>test_contract_class =
         get_contract_class(<span class="macro">include_bytes!</span>(<span class="string">&quot;../../../cairo-contracts/build/test.json&quot;</span>)).try_into().unwrap();
@@ -505,11 +531,13 @@
                 (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
                 (argent_account_address, argent_account_class_hash),
+                (oz_account_address, oz_account_class_hash),
                 (udc_contract_address, udc_class_hash),
             ],
             contract_classes: <span class="macro">vec!</span>[
                 (no_validate_account_class_hash, no_validate_account_class),
                 (argent_account_class_hash, argent_account_class),
+                (oz_account_class_hash, oz_account_class),
                 (argent_proxy_class_hash, argent_proxy_class),
                 (test_contract_class_hash, test_contract_class),
                 (token_class_hash, erc20_class.clone()),
@@ -524,6 +552,14 @@
                 ),
                 (
                     get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[no_validate_account_address], <span class="number">1</span>),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[oz_account_address], <span class="number">0</span>),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(<span class="kw-2">&amp;</span>fee_token_address, <span class="string">&quot;ERC20_balances&quot;</span>, <span class="kw-2">&amp;</span>[oz_account_address], <span class="number">1</span>),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
@@ -544,7 +580,11 @@
                 ),
                 (
                     get_storage_key(<span class="kw-2">&amp;</span>argent_account_address, <span class="string">&quot;_signer&quot;</span>, <span class="kw-2">&amp;</span>[], <span class="number">0</span>),
-                    Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
+                    Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap(),
+                ),
+                (
+                    get_storage_key(<span class="kw-2">&amp;</span>oz_account_address, <span class="string">&quot;Account_public_key&quot;</span>, <span class="kw-2">&amp;</span>[], <span class="number">0</span>),
+                    Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap(),
                 ),
                 (
                     get_storage_key(<span class="kw-2">&amp;</span>nft_contract_address, <span class="string">&quot;Ownable_owner&quot;</span>, <span class="kw-2">&amp;</span>[], <span class="number">0</span>),
