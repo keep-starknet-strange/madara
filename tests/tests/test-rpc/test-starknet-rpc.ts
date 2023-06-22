@@ -559,7 +559,9 @@ describeDevMadara("Starknet RPC", (context) => {
           finalize: true,
         }
       );
-      const stateUpdate = await providerRPC.getStateUpdate(anteriorBlock.block_hash);
+      const stateUpdate = await providerRPC.getStateUpdate(
+        anteriorBlock.block_hash
+      );
 
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
@@ -576,9 +578,7 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should throw block not found error", async function () {
-      const transaction = providerRPC.getStateUpdate(
-        "0x123"
-      );
+      const transaction = providerRPC.getStateUpdate("0x123");
       await expect(transaction)
         .to.eventually.be.rejectedWith("24: Block not found")
         .and.be.an.instanceOf(LibraryError);
