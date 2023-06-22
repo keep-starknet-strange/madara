@@ -273,7 +273,7 @@ pub mod pallet {
     /// Current sequencer address.
     #[pallet::storage]
     #[pallet::getter(fn sequencer_address)]
-    pub type SequencerAddress<T: Config> = StorageValue<_, [u8; 32], ValueQuery>;
+    pub type SequencerAddress<T: Config> = StorageValue<_, ContractAddressWrapper, ValueQuery>;
 
     /// Ensure the sequencer address was updated for this block.
     #[pallet::storage]
@@ -389,6 +389,7 @@ pub mod pallet {
         ContractNotFound,
         ReachedBoundedVecLimit,
         TransactionConversionError,
+        SequencerAddressNotValid,
     }
 
     /// The Starknet pallet external functions.
@@ -414,6 +415,8 @@ pub mod pallet {
             if UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number()) > 1 {
                 assert!(!SeqAddrUpdate::<T>::exists(), "Sequencer address can be updated only once in the block");
             }
+
+            let addr = ContractAddressWrapper::try_from(&addr).map_err(|_| Error::<T>::SequencerAddressNotValid)?;
             SequencerAddress::<T>::put(addr);
             SeqAddrUpdate::<T>::put(true);
             Ok(())
@@ -814,12 +817,15 @@ impl<T: Config> Pallet<T> {
     fn get_block_context() -> BlockContext {
         let block_number = UniqueSaturatedInto::<u64>::unique_saturated_into(frame_system::Pallet::<T>::block_number());
         let block_timestamp = Self::block_timestamp();
-        // Get fee token address. Its value is checked when we set it so it's fine to unwrap
-        let fee_token_address =
-            ContractAddress::try_from(StarkFelt::new(Self::fee_token_address().into()).unwrap()).unwrap();
+
+        // Its value is checked when we set it so it's fine to unwrap
+        let fee_token_address: StarkFelt = Self::fee_token_address().0.into();
+        let fee_token_address = ContractAddress::try_from(fee_token_address).unwrap();
+        let sequencer_address: StarkFelt = Self::sequencer_address().0.into();
+        let sequencer_address = ContractAddress::try_from(sequencer_address).unwrap();
+
         let chain_id = Self::chain_id_str();
-        let provided_seq_addr = Self::sequencer_address();
-        let sequencer_address = ContractAddress(starknet_api::api_core::PatriciaKey(StarkFelt(provided_seq_addr)));
+
         let vm_resource_fee_cost = HashMap::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
@@ -897,7 +903,7 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
+            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
         );
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {
@@ -958,7 +964,7 @@ impl<T: Config> Pallet<T> {
                 parent_block_hash,
                 block_number,
                 global_state_root,
-                Felt252Wrapper::try_from(&sequencer_address).unwrap(),
+                sequencer_address,
                 block_timestamp,
                 transaction_count,
                 transaction_commitment.try_into().unwrap(),
