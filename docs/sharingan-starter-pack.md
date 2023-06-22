@@ -108,7 +108,7 @@ block to the chain. As of today, Sharingan has the following known `sequencers`:
     <td>5</td>
     <td><code>eve</code></td>
     <td><code>13.39.22.82</code></td>
-    <td><code>--</code></td>
+    <td><code>12D3KooWMyJvL4qJZz9kTcD7xP2vBMqM9SMMFdJvD3tS9KEoMJCw</code></td>
     <td><code>9944</code></td>
   </tr>
   <tr>
