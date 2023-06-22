@@ -61,6 +61,7 @@ impl ContractClassWrapper {
 
 impl From<ContractClassWrapper> for ContractClass {
     fn from(value: ContractClassWrapper) -> Self {
+        // FIXME 707
         Self::V0(ContractClassV0(
             ContractClassV0Inner {
                 program: value.program.into(),
@@ -75,12 +76,13 @@ impl From<ContractClassWrapper> for ContractClass {
                 )),
             }
             .into(),
-        )) // TODO (Greg) handle v1
+        ))
     }
 }
 
 impl From<ContractClass> for ContractClassWrapper {
     fn from(value: ContractClass) -> Self {
+        // FIXME 707
         match value {
             ContractClass::V0(class) => Self {
                 program: class.program.clone().into(),
@@ -91,7 +93,7 @@ impl From<ContractClass> for ContractClassWrapper {
                     >(class.entry_points_by_type.clone())
                 }),
             },
-            _ => Self::default(), // TODO (Greg) handle v1
+            _ => Self::default(),
         }
     }
 }
@@ -264,7 +266,8 @@ mod tests {
     use super::*;
 
     pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-        ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) // TODO (Greg) handle v1
+        // FIXME 707
+        ContractClass::V0(serde_json::from_slice(contract_content).unwrap())
     }
 
     #[test]
