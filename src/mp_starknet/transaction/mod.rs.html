@@ -804,6 +804,9 @@
 <a href="#804" id="804">804</a>
 <a href="#805" id="805">805</a>
 <a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -1068,8 +1071,8 @@
             nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
             calldata: entrypoint.calldata,
-        })) <span class="comment">// TODO (Greg) handle v0 (?)
-    </span>}
+        }))
+    }
 }
 
 <span class="doccomment">/// Try to convert a `&amp;Transaction` into a `DeclareTransaction`.
@@ -1245,14 +1248,14 @@
             account_tx_context.clone(),
             block_context.validate_max_n_steps,
         );
-        <span class="comment">// TODO (Greg): check if useful
-        </span><span class="kw">if </span>context.account_tx_context.is_v0() {
+        <span class="kw">if </span>context.account_tx_context.is_v0() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
-        <span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into(); <span class="comment">// TODO (Greg) update this
+        <span class="comment">// FIXME 710
+        </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
 
-        </span><span class="kw">let </span>validate_call = CallEntryPoint {
+        <span class="kw">let </span>validate_call = CallEntryPoint {
             entry_point_type: EntryPointType::External,
             entry_point_selector: <span class="self">self</span>.validate_entry_point_selector(tx_type)<span class="question-mark">?</span>,
             calldata: <span class="self">self</span>.validate_entrypoint_calldata(tx_type)<span class="question-mark">?</span>,
@@ -1269,7 +1272,8 @@
             .map_err(TransactionValidationErrorWrapper::from)<span class="question-mark">?</span>;
         verify_no_calls_to_other_contracts(<span class="kw-2">&amp;</span>validate_call_info, String::from(constants::VALIDATE_ENTRY_POINT_NAME))
             .map_err(TransactionValidationErrorWrapper::TransactionValidationError)<span class="question-mark">?</span>;
-        <span class="comment">// update_remaining_gas(initial_gas, &amp;validate_call_info); TODO (Greg) update this
+        <span class="comment">// FIXME 710
+        // update_remaining_gas(initial_gas, &amp;validate_call_info);
 
         </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(validate_call_info))
     }
@@ -1337,9 +1341,10 @@
         <span class="comment">// Verify the transaction version.
         </span><span class="self">self</span>.verify_tx_version(<span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>initial_gas: Felt252 = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into(); <span class="comment">// TODO (Greg) update this
+        <span class="comment">// FIXME 710
+        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas: Felt252 = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
 
-        // Going one lower level gives us more flexibility like not validating the tx as we could do
+        <span class="comment">// Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
         </span><span class="kw">let </span>(execute_call_info, validate_call_info, account_context) = <span class="kw">match </span>tx_type {
@@ -1372,9 +1377,10 @@
             TxType::L1Handler =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_l1_handler_transaction_context(<span class="kw-2">&amp;</span>tx);
-                <span class="kw">let </span>tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() }; <span class="comment">// TODO (Greg) update the fee
+                <span class="comment">// FIXME 712
+                </span><span class="kw">let </span>tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() };
 
-                // Create the context.
+                <span class="comment">// Create the context.
                 </span><span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),

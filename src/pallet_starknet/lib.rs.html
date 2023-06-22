@@ -1997,7 +1997,7 @@
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// TODO (Greg) update this once transaction contains the initial gas
+            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
         </span>);
 
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {

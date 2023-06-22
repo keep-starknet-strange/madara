@@ -148,6 +148,8 @@
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -235,8 +237,9 @@
     }
 
     <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
-        <span class="prelude-val">Ok</span>(CompiledClassHash::default()) <span class="comment">// TODO (Greg) update with compiled class hash
-    </span>}
+        <span class="comment">// FIXME 708
+        </span><span class="prelude-val">Ok</span>(CompiledClassHash::default())
+    }
 }
 
 <span class="kw">impl</span>&lt;T: Config&gt; State <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
@@ -283,8 +286,9 @@
         _class_hash: ClassHash,
         _compiled_class_hash: CompiledClassHash,
     ) -&gt; StateResult&lt;()&gt; {
-        <span class="prelude-val">Ok</span>(()) <span class="comment">// TODO (Greg) update with compiled class hash
-    </span>}
+        <span class="comment">// FIXME 708
+        </span><span class="prelude-val">Ok</span>(())
+    }
 
     <span class="doccomment">/// As the state is updated during the execution, return an empty [StateDiff]
     ///

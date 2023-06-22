@@ -358,6 +358,7 @@
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
 <a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
 </span><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::string::{String, ToString};
@@ -704,11 +705,12 @@
 
     <span class="comment">// Set the contract_class field based on contract_content
     </span><span class="kw">if </span>!contract_content.is_empty() {
-        <span class="kw">let </span>raw_contract_class: ContractClass =
+        <span class="comment">// FIXME 707
+        </span><span class="kw">let </span>raw_contract_class: ContractClass =
             ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content: {:?}&quot;</span>, e))
-            })<span class="question-mark">?</span>); <span class="comment">// TODO (Greg) handle V1
-        </span>transaction.contract_class =
+            })<span class="question-mark">?</span>);
+        transaction.contract_class =
             <span class="prelude-val">Some</span>(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content: {:?}&quot;</span>, e))
             })<span class="question-mark">?</span>);

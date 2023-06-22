@@ -277,6 +277,7 @@
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
 <span class="kw">use </span>mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
@@ -409,8 +410,9 @@
 }
 
 <span class="kw">pub fn </span>get_contract_class(contract_content: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[u8]) -&gt; ContractClass {
-    ContractClass::V0(serde_json::from_slice(contract_content).unwrap()) <span class="comment">// TODO (Greg) handle v1
-</span>}
+    <span class="comment">// FIXME 707
+    </span>ContractClass::V0(serde_json::from_slice(contract_content).unwrap())
+}
 
 <span class="doccomment">/// Returns the storage key for a given storage name, keys and offset.
 /// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the

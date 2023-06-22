@@ -103,6 +103,7 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
 </pre><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>cairo_vm::types::program::Program;
 <span class="kw">use </span>mp_digest_log::find_starknet_block;
@@ -132,8 +133,9 @@
     <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
         program: compressed_program,
         entry_points_by_type,
-        abi: <span class="prelude-val">None</span>, <span class="comment">// TODO: add ABI
-    </span>}))
+        <span class="comment">// FIXME 723
+        </span>abi: <span class="prelude-val">None</span>,
+    }))
 }
 
 <span class="doccomment">/// Returns a compressed vector of bytes

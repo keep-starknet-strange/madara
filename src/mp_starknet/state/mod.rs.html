@@ -65,6 +65,7 @@
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
 <a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::state::cached_state::ContractStorageKey;
 <span class="kw">use </span>blockifier::state::errors::StateError;
@@ -124,8 +125,9 @@
     }
 
     <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
-        <span class="prelude-val">Ok</span>(CompiledClassHash::default()) <span class="comment">// TODO (Greg) handle the compiled class hash
-    </span>}
+        <span class="comment">// FIXME 708
+        </span><span class="prelude-val">Ok</span>(CompiledClassHash::default())
+    }
 
     <span class="kw">fn </span>get_class_hash_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, contract_address: ContractAddress) -&gt; StateResult&lt;ClassHash&gt; {
         <span class="kw">let </span>class_hash = <span class="self">self</span>.address_to_class_hash.get(<span class="kw-2">&amp;</span>contract_address).copied().unwrap_or_default();
