@@ -533,7 +533,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
-      expect(stateUpdate.new_root).to.be.equal("0x0");
+      expect(stateUpdate.new_root).to.be.equal("0x1");
       expect(stateUpdate.old_root).to.be.equal("0x0");
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
@@ -565,7 +565,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
-      expect(stateUpdate.new_root).to.be.equal("0x0");
+      expect(stateUpdate.new_root).to.be.equal("0x1");
       expect(stateUpdate.old_root).to.be.equal("0x0");
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
