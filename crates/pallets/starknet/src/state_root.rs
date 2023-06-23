@@ -25,7 +25,7 @@ impl<T: Config> Get<Felt252Wrapper> for IntermediateStateRoot<T> {
         let pending_state = crate::PendingState::<T>::iter();
 
         pending_state.for_each(|(contract_address, storage_diffs)| {
-            // Retrive state trie for this contract.
+            // Retrieve state trie for this contract.
             let mut state_tree = crate::StorageTries::<T>::get(contract_address).unwrap_or_default();
             // For each smart contract, iterate through storage diffs and update the state trie.
             storage_diffs.into_iter().for_each(|(storage_key, storage_value)| {
