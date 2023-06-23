@@ -4,14 +4,13 @@ use blockifier::abi::abi_utils::get_storage_var_address;
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment::{self, calculate_invoke_tx_hash};
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper, MaxCalldataSize};
+use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
 use sp_core::H256;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
-use sp_runtime::BoundedVec;
 use starknet_core::utils::get_selector_from_name;
 use starknet_crypto::FieldElement;
 
@@ -21,7 +20,7 @@ use super::utils::sign_message_hash;
 use crate::message::Message;
 use crate::tests::{
     get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event, get_invoke_nonce,
-    get_storage_read_write_dummy,
+    get_invoke_openzeppelin_dummy, get_storage_read_write_dummy,
 };
 use crate::{Error, Event, StorageView};
 
@@ -319,19 +318,7 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Openzeppelin);
-        let calldata = get_invoke_calldata();
-
-        let mut transaction = InvokeTransaction {
-            sender_address: account_addr,
-            version: 1,
-            calldata,
-            nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
-            signature: bounded_vec!(),
-        };
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), Starknet::chain_id());
-        transaction.signature = sign_message_hash(transaction_hash);
+        let transaction: InvokeTransaction = get_invoke_openzeppelin_dummy().into();
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
@@ -350,17 +337,8 @@ fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_si
 
         let none_origin = RuntimeOrigin::none();
 
-        let account_addr = get_account_address(AccountType::Openzeppelin);
-        let calldata = get_invoke_calldata();
-
-        let mut transaction = InvokeTransaction {
-            sender_address: account_addr,
-            version: 1,
-            calldata,
-            nonce: Felt252Wrapper::ZERO,
-            max_fee: Felt252Wrapper::from(u128::MAX),
-            signature: bounded_vec!(),
-        };
+        let mut transaction: InvokeTransaction = get_invoke_openzeppelin_dummy().into();
+        // by default we get valid signature so set it to something invalid
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         let validate_result = Starknet::validate_unsigned(
@@ -545,21 +523,4 @@ fn test_verify_require_tag() {
 
         assert_eq!(validate_result.unwrap(), valid_transaction_expected.unwrap())
     });
-}
-
-fn get_invoke_calldata() -> BoundedVec<Felt252Wrapper, MaxCalldataSize> {
-    vec![
-        "0x1",                                                                // call_array_len
-        "0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7", // to
-        "0x00e7def693d16806ca2a2f398d8de5951344663ba77f340ed7a958da731872fc", // selector
-        "0x0",                                                                // data offset
-        "0x1",                                                                // data length
-        "0x1",                                                                // calldata_len
-        "0x19",                                                               // calldata
-    ]
-    .into_iter()
-    .map(|x| Felt252Wrapper::from_hex_be(x).unwrap())
-    .collect::<Vec<Felt252Wrapper>>()
-    .try_into()
-    .unwrap()
 }
