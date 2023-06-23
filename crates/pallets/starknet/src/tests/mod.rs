@@ -1,8 +1,9 @@
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::{InvokeTransaction, Transaction};
 use sp_core::bounded_vec;
 
 use self::mock::Starknet;
+use self::utils::get_contract_class;
 
 mod account_helper;
 mod call_contract;
@@ -18,6 +19,7 @@ mod constants;
 mod mock;
 mod utils;
 
+///
 pub fn get_invoke_dummy() -> Transaction {
     let signature = bounded_vec!(
         Felt252Wrapper::from_hex_be("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
@@ -49,7 +51,7 @@ fn get_invoke_argent_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap(),
     );
     let sender_address =
-        Felt252Wrapper::from_hex_be("02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5").unwrap();
+        Felt252Wrapper::from_hex_be("0x02e63de215f650e9d7e2313c6e9ed26b4f920606fb08576b1663c21a7c4a28c5").unwrap();
     let nonce = Felt252Wrapper::ZERO;
     let calldata = bounded_vec!(
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
@@ -78,7 +80,7 @@ fn get_invoke_braavos_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap(),
     );
     let sender_address =
-        Felt252Wrapper::from_hex_be("05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122").unwrap();
+        Felt252Wrapper::from_hex_be("0x05ef3fba22df259bf84890945352df711bcc9a4e3b6858cb93e9c90d053cf122").unwrap();
     let nonce = Felt252Wrapper::ZERO;
     let calldata = bounded_vec!(
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
@@ -101,7 +103,7 @@ fn get_invoke_braavos_dummy() -> Transaction {
     .from_invoke(Starknet::chain_id())
 }
 
-fn get_invoke_emit_event() -> Transaction {
+fn get_invoke_emit_event_dummy() -> Transaction {
     let signature = bounded_vec!(
         Felt252Wrapper::from_hex_be("0x00f513fe663ffefb9ad30058bb2d2f7477022b149a0c02fb63072468d3406168").unwrap(),
         Felt252Wrapper::from_hex_be("0x02e29e92544d31c03e89ecb2005941c88c28b4803a3647a7834afda12c77f096").unwrap(),
@@ -156,14 +158,14 @@ fn get_storage_read_write_dummy() -> Transaction {
     let sender_address = Felt252Wrapper::from_hex_be(constants::BLOCKIFIER_ACCOUNT_ADDRESS).unwrap();
     let nonce = Felt252Wrapper::ZERO;
     let calldata = bounded_vec!(
-        Felt252Wrapper::from_hex_be("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(),
-        Felt252Wrapper::from_hex_be("03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap(),
-        Felt252Wrapper::from_hex_be("0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
-        Felt252Wrapper::from_hex_be("0000000000000000000000000000000000000000000000000000000000000019").unwrap(),
-        Felt252Wrapper::from_hex_be("0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
+        Felt252Wrapper::from_hex_be("0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap(),
+        Felt252Wrapper::from_hex_be("0x03b097c62d3e4b85742aadd0dfb823f96134b886ec13bda57b68faf86f294d97").unwrap(),
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000002").unwrap(),
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(),
+        Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(),
     );
 
-    InvokeTransaction {
+    let mut tx = InvokeTransaction {
         version: 1,
         sender_address,
         calldata,
@@ -171,7 +173,12 @@ fn get_storage_read_write_dummy() -> Transaction {
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
     }
-    .from_invoke(Starknet::chain_id())
+    .from_invoke(Starknet::chain_id());
+
+    let raw_contract_class = get_contract_class("NoValidateAccount.json");
+    tx.contract_class = Some(ContractClassWrapper::try_from(raw_contract_class).expect("invalid contract content"));
+
+    tx
 }
 
 fn get_invoke_openzeppelin_dummy() -> Transaction {
@@ -180,7 +187,7 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x004f0481f89eae56dec538294bde0bf84bba526517dd9ff7dcb2a22628ee4d9e").unwrap(),
     );
     let sender_address =
-        Felt252Wrapper::from_hex_be("06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50").unwrap();
+        Felt252Wrapper::from_hex_be("0x06e2616a2dceff4355997369246c25a78e95093df7a49e5ca6a06ce1544ffd50").unwrap();
     let nonce = Felt252Wrapper::ZERO;
     let calldata = bounded_vec!(
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* call_array_len */

@@ -1,10 +1,9 @@
 use core::str::FromStr;
 
 use blockifier::abi::abi_utils::get_storage_var_address;
-use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment::{self, calculate_invoke_tx_hash};
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
@@ -19,7 +18,7 @@ use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::message::Message;
 use crate::tests::{
-    get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event, get_invoke_nonce,
+    get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy, get_invoke_nonce,
     get_invoke_openzeppelin_dummy, get_storage_read_write_dummy,
 };
 use crate::{Error, Event, StorageView};
@@ -127,7 +126,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let transaction: InvokeTransaction = get_invoke_emit_event().into();
+        let transaction: InvokeTransaction = get_invoke_emit_event_dummy().into();
         let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
@@ -269,14 +268,7 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
-        let contract_content = include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json");
-
-        let mut transaction = get_storage_read_write_dummy();
-        let raw_contract_class: ContractClass =
-            ContractClass::V0(serde_json::from_slice(contract_content).expect("invalid contract content"));
-
-        transaction.contract_class =
-            Some(ContractClassWrapper::try_from(raw_contract_class).expect("invalid contract content"));
+        let transaction = get_storage_read_write_dummy();
 
         let transaction = transaction.into();
 
