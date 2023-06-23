@@ -757,11 +757,11 @@
             <span class="string">&quot;madara-block-proposer&quot;</span>,
             <span class="prelude-val">None</span>,
             Box::pin(<span class="kw">async move </span>{
-                <span class="comment">// Leave some time for evaluation and block finalization (33%)
-                // and some time for block production (67%).
+                <span class="comment">// Leave some time for evaluation and block finalization (20%)
+                // and some time for block production (80%).
                 // We need to benchmark and tune this value.
                 // Open question: should we make this configurable?
-                </span><span class="kw">let </span>deadline = (<span class="self">self</span>.now)() + max_duration - max_duration / <span class="number">3</span>;
+                </span><span class="kw">let </span>deadline = (<span class="self">self</span>.now)() + max_duration - max_duration / <span class="number">5</span>;
                 <span class="kw">let </span>res = <span class="self">self</span>.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).<span class="kw">await</span>;
                 <span class="kw">if </span>tx.send(res).is_err() {
                     <span class="macro">trace!</span>(<span class="string">&quot;Could not send block production result to proposer!&quot;</span>);
