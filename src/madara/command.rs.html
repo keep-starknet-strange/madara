@@ -209,6 +209,9 @@
 <a href="#209" id="209">209</a>
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 <span class="kw">use </span>madara_runtime::Block;
 <span class="kw">use </span>sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
@@ -217,12 +220,10 @@
 <span class="kw">use </span><span class="kw">crate</span>::cli::{Cli, Subcommand, Testnet};
 <span class="kw">use crate</span>::{chain_spec, service};
 
-<span class="kw">fn </span>copy_chain_spec() {
+<span class="kw">fn </span>copy_chain_spec(madara_path: String) {
     <span class="kw">let </span><span class="kw-2">mut </span>src = std::path::PathBuf::from(<span class="macro">env!</span>(<span class="string">&quot;CARGO_MANIFEST_DIR&quot;</span>));
     src.push(<span class="string">&quot;chain-specs&quot;</span>);
-    <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
-    <span class="kw">let </span><span class="kw-2">mut </span>dst = std::path::PathBuf::from(home_path);
-    dst.push(<span class="string">&quot;.madara&quot;</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>dst = std::path::PathBuf::from(madara_path);
     dst.push(<span class="string">&quot;chain-specs&quot;</span>);
     std::fs::create_dir_all(<span class="kw-2">&amp;</span>dst).unwrap();
     <span class="kw">for </span>file <span class="kw">in </span>std::fs::read_dir(src).unwrap() {
@@ -398,15 +399,20 @@
         }
         <span class="prelude-val">None </span>=&gt; {
             <span class="kw">if </span>cli.run.testnet.is_some() {
-                copy_chain_spec();
+                <span class="kw">let </span>madara_path = <span class="kw">if </span>cli.run.madara_path.is_some() {
+                    cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
+                } <span class="kw">else </span>{
+                    <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+                    <span class="macro">format!</span>(<span class="string">&quot;{}/.madara&quot;</span>, home_path)
+                };
 
-                <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+                copy_chain_spec(madara_path.clone());
+
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara/p2p-key.ed25519&quot;</span>).into());
-                cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((home_path.clone() + <span class="string">&quot;/.madara&quot;</span>).into());
+                    <span class="prelude-val">Some</span>((madara_path.clone() + <span class="string">&quot;/p2p-key.ed25519&quot;</span>).into());
+                cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((madara_path.clone()).into());
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(Testnet::Sharingan) = cli.run.testnet {
-                    cli.run.run_cmd.shared_params.chain =
-                        <span class="prelude-val">Some</span>(home_path + <span class="string">&quot;/.madara/chain-specs/testnet-sharingan-raw.json&quot;</span>);
+                    cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
                 }
 
                 cli.run.run_cmd.shared_params.dev = <span class="bool-val">true</span>;
