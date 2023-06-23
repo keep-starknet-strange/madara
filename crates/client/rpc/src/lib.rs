@@ -41,8 +41,8 @@ use starknet_core::types::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
     FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
-    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateUpdate, SyncStatus, SyncStatusType, Transaction,
-    TransactionStatus,
+    MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType,
+    Transaction, TransactionStatus,
 };
 
 use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
@@ -607,7 +607,37 @@ where
 
     /// Get the information about the result of executing the requested block
     fn get_state_update(&self, block_id: BlockId) -> RpcResult<StateUpdate> {
-        Err(StarknetRpcApiError::UnimplementedMethod.into())
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+
+        let parent_block_hash = (TryInto::<FieldElement>::try_into(block.header().parent_block_hash)).unwrap();
+
+        let substrate_parent_block_hash =
+            self.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        let parent_block =
+            get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+
+        Ok(StateUpdate {
+            block_hash: block.header().hash(*self.hasher).into(),
+            new_root: block.header().global_state_root.into(),
+            old_root: parent_block.header().global_state_root.into(),
+            state_diff: StateDiff {
+                storage_diffs: Vec::new(),
+                deprecated_declared_classes: Vec::new(),
+                declared_classes: Vec::new(),
+                deployed_contracts: Vec::new(),
+                replaced_classes: Vec::new(),
+                nonces: Vec::new(),
+            },
+        })
     }
 
     /// Returns the transactions in the transaction pool, recognized by this sequencer
