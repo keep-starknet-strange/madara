@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1687506036915,
+  "lastUpdate": 1687506832347,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -4908,6 +4908,54 @@ window.BENCHMARK_DATA = {
             "value": 74.16666666666667,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "5263301+d-roak@users.noreply.github.com",
+            "name": "Oak",
+            "username": "d-roak"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f70025688952cabcc54aa69fd8525d3916e2308e",
+          "message": "fix: disable husky (#736)",
+          "timestamp": "2023-06-23T09:19:49+02:00",
+          "tree_id": "49a5a09d112fc290181529ff54fa7dc325d186f1",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/f70025688952cabcc54aa69fd8525d3916e2308e"
+        },
+        "date": 1687506831767,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 525,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 87.5,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average Extrinsics per block (ERC721 mints)",
+            "value": 447.25,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS (ERC721 mints)",
+            "value": 74.54166666666667,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
