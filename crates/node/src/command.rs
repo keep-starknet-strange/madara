@@ -185,13 +185,12 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             if cli.run.testnet.is_some() {
-                let madara_path;
-                if cli.run.madara_path.is_some() {
-                    madara_path = cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string();
+                let madara_path = if cli.run.madara_path.is_some() {
+                    cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
                 } else {
                     let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-                    madara_path = format!("{}/.madara", home_path);
-                }
+                    format!("{}/.madara", home_path)
+                };
 
                 copy_chain_spec(madara_path.clone());
 
