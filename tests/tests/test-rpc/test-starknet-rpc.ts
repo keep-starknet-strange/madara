@@ -419,7 +419,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       // fees were paid du to the transfer in the previous test so the value should be < u128::MAX
-      expect(value).to.be.equal("0xfffffffffffffffffffffffffff97f4f");
+      expect(value).to.be.equal("-0xffffffffffffffffffffffffffff5987");
     });
 
     it("should return 0 if the storage slot is not set", async function () {

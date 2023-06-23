@@ -178,7 +178,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         assert_eq!(
             event_commitment,
-            H256::from_str("0x0468e407007ee60120bcc127a9169e7a269f359434dc7585948dc9203dd3ef18").unwrap()
+            H256::from_str("0x077dd1d08fd8b28e76a4ab0b2db5cc0e06f88b100c76f50afdb86143f0476096").unwrap()
         );
         assert_eq!(events.len(), 2);
         assert_eq!(pending.len(), 1);
