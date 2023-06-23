@@ -18,8 +18,8 @@ use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::message::Message;
 use crate::tests::{
-    get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy, get_invoke_nonce,
-    get_invoke_openzeppelin_dummy, get_storage_read_write_dummy,
+    get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy,
 };
 use crate::{Error, Event, StorageView};
 
@@ -498,7 +498,7 @@ fn test_verify_require_tag() {
     new_test_ext().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction: InvokeTransaction = get_invoke_nonce().into();
+        let transaction: InvokeTransaction = get_invoke_nonce_dummy().into();
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
