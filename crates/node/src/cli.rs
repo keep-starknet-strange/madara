@@ -1,5 +1,6 @@
-use sc_cli::RunCmd;
 use std::path::PathBuf;
+
+use sc_cli::RunCmd;
 
 /// Available Sealing methods.
 #[derive(Debug, Copy, Clone, clap::ValueEnum, Default)]
