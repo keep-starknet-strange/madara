@@ -105,23 +105,15 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         // Update state tries if enabled in the runtime configuration
         if T::EnableStateRoot::get() {
-            // Update contracts trie
-            let mut tree = crate::State::<T>::get().storage_commitment;
-            let nonce = Pallet::<T>::nonce(contract_address);
-            let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
-
-            // Update storage trie
-            let mut state_tree = crate::State::<T>::get().state_commitment;
-            state_tree.set(key, value);
-            let state_root = state_tree.commit();
-
-            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
-            tree.set(contract_address, hash);
-
-            crate::State::<T>::mutate(|state| {
-                state.storage_commitment = tree;
-                state.state_commitment = state_tree;
-            })
+            // Store intermediary state updates
+            // As we update this mapping iteratively
+            // We will end up with only the latest storage slot update
+            // TODO: Estimate overhead of this approach
+            crate::PendingState::<T>::mutate(contract_address, |storage_slots| {
+                if let Some(storage_slots) = storage_slots {
+                    storage_slots.try_push((key, value)).unwrap(); // TODO: unwrap safu ??
+                }
+            });
         }
     }
 

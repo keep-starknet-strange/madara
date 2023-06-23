@@ -10,8 +10,10 @@ use starknet_api::stdlib::collections::HashMap;
 
 /// Nonce of a Starknet transaction.
 pub type NonceWrapper = Felt252Wrapper;
+
 /// Storage Key
 pub type StorageKeyWrapper = Felt252Wrapper;
+
 /// Contract Storage Key
 pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKeyWrapper);
 
@@ -19,6 +21,12 @@ pub type ContractStorageKeyWrapper = (ContractAddressWrapper, StorageKeyWrapper)
 pub type MaxTransactionsPendingBlock = ConstU32<1073741824>;
 
 pub type ContractClassMapping = HashMap<ClassHash, ContractClass>;
+
+/// Type wrapper for a storage slot.
+pub type StorageSlotWrapper = (StorageKeyWrapper, Felt252Wrapper);
+
+/// State trie type.
+pub type StateTrie = StateCommitmentTree<PedersenHasher>;
 
 /// Declare Transaction Output
 #[derive(
@@ -47,6 +55,4 @@ pub struct StateCommitments {
     pub storage_commitment: StateCommitmentTree<PedersenHasher>,
     /// Class Commitment
     pub class_commitment: StateCommitmentTree<PedersenHasher>,
-    /// State Commitment
-    pub state_commitment: StateCommitmentTree<PedersenHasher>,
 }

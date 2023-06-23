@@ -98,7 +98,9 @@ use starknet_api::transaction::{EventContent, TransactionHash};
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
-use crate::types::{ContractStorageKeyWrapper, NonceWrapper, StateCommitments, StorageKeyWrapper};
+use crate::types::{
+    ContractStorageKeyWrapper, NonceWrapper, StateCommitments, StateTrie, StorageKeyWrapper, StorageSlotWrapper,
+};
 
 pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
@@ -214,11 +216,28 @@ pub mod pallet {
 
     /// The Starknet pallet storage items.
     /// STORAGE
-    /// Current building block's transactions.
+    /// State commitments of the current block.
     #[pallet::storage]
     #[pallet::unbounded]
     #[pallet::getter(fn state)]
     pub(super) type State<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
+
+    /// The Starknet pallet storage items.
+    /// STORAGE
+    /// Mapping of contract address to state trie.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn state_tries)]
+    pub(super) type StorageTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
+
+    /// Pending storage slot updates
+    /// STORAGE
+    /// Mapping storage key to storage value.
+    #[pallet::storage]
+    #[pallet::unbounded]
+    #[pallet::getter(fn pending_state)]
+    pub(super) type PendingState<T: Config> =
+        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxTransactions>, OptionQuery>;
 
     /// Current building block's events.
     // TODO: This is redundant information but more performant
@@ -991,6 +1010,8 @@ impl<T: Config> Pallet<T> {
         // Save the block number <> hash mapping.
         let blockhash = block.header().hash(T::SystemHash::hasher());
         BlockHash::<T>::insert(block_number, blockhash);
+
+        // Kill pending storage.
         Pending::<T>::kill();
         PendingEvents::<T>::kill();
 
