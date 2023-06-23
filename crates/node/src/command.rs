@@ -6,12 +6,10 @@ use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
-fn copy_chain_spec() {
+fn copy_chain_spec(madara_path: String) {
     let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     src.push("chain-specs");
-    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-    let mut dst = std::path::PathBuf::from(home_path);
-    dst.push(".madara");
+    let mut dst = std::path::PathBuf::from(madara_path);
     dst.push("chain-specs");
     std::fs::create_dir_all(&dst).unwrap();
     for file in std::fs::read_dir(src).unwrap() {
@@ -187,15 +185,20 @@ pub fn run() -> sc_cli::Result<()> {
         }
         None => {
             if cli.run.testnet.is_some() {
-                copy_chain_spec();
+                let madara_path = if cli.run.madara_path.is_some() {
+                    cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
+                } else {
+                    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+                    format!("{}/.madara", home_path)
+                };
 
-                let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+                copy_chain_spec(madara_path.clone());
+
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
-                cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
+                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
+                cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    cli.run.run_cmd.shared_params.chain =
-                        Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
+                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                 }
 
                 cli.run.run_cmd.shared_params.dev = true;
