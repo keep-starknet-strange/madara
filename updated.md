@@ -1,0 +1,5 @@
+- verify_tx_version (updated)
+- handle_nonce (updated)
+- validate_tx (updated)
+- validate_entrypoint_calldata (verified)
+- validate_entry_point_selector (verified)
