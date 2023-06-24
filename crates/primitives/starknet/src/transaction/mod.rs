@@ -558,7 +558,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                self.handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context)?;
 
                 // Validate.
                 let validate_call_info =
@@ -606,7 +606,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                self.handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context)?;
 
                 // Validate.
                 let validate_call_info =
@@ -632,7 +632,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                self.handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context)?;
 
                 // Execute.
                 let transaction_execution = tx
@@ -675,7 +675,6 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<()>` - The result of the nonce handling
     pub fn handle_nonce(
-        &self,
         state: &mut dyn State,
         account_tx_context: &AccountTransactionContext,
     ) -> TransactionExecutionResultWrapper<()> {
