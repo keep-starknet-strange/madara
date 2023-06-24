@@ -14,7 +14,7 @@
 | 9 | fast-forward (live) | KO |
 | 10 | fast-forward (snap) | KO |
 
-Tests with ID 9 and 10 have failed, with the error message "ERROR main runtime: panicked at 'Timestamp slot must match `CurrentSlot`'". The root cause of this issue is currently unknown. To ensure progress is made, a [support ticket](https://substrate.stackexchange.com/questions/9024/substrate-try-runtime-sub-command-fast-forward-error-main-runtime-pa) has been promptly submitted to the substrate.
+Tests with ID 9 and 10 have encountered failures, with the error message "ERROR main runtime: panicked at 'Timestamp slot must match `CurrentSlot`'". The underlying cause of this issue is currently unknown. To facilitate the resolution and ensure progress, a support ticket has been raised and submitted to the substrate. For more information, please visit [here](https://substrate.stackexchange.com/questions/9024/substrate-try-runtime-sub-command-fast-forward-error-main-runtime-pa).
 
 ## How to Build and Run under Local Testnet
 
