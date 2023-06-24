@@ -490,6 +490,13 @@ impl Transaction {
         let allowed_versions: vec::Vec<TransactionVersion> = match tx_type {
             TxType::Declare => {
                 // Support old versions in order to allow bootstrapping of a new system.
+                vec![
+                    TransactionVersion(StarkFelt::from(0_u8)),
+                    TransactionVersion(StarkFelt::from(1_u8)),
+                    TransactionVersion(StarkFelt::from(2_u8)),
+                ]
+            }
+            TxType::Invoke => {
                 vec![TransactionVersion(StarkFelt::from(0_u8)), TransactionVersion(StarkFelt::from(1_u8))]
             }
             _ => vec![TransactionVersion(StarkFelt::from(1_u8))],
