@@ -27,7 +27,8 @@ pub fn to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -> Re
     Ok(ContractClass::Legacy(CompressedLegacyContractClass {
         program: compressed_program,
         entry_points_by_type,
-        abi: None, // TODO: add ABI
+        // FIXME 723
+        abi: None,
     }))
 }
 

@@ -6,8 +6,7 @@ use super::mock::*;
 #[test]
 fn estimates_tx_fee_successfully() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
@@ -21,8 +20,7 @@ fn estimates_tx_fee_successfully() {
 #[test]
 fn estimate_does_not_add_to_pending() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
         let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");

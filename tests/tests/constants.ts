@@ -27,6 +27,8 @@ export const TEST_CONTRACT_CLASS_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000001000";
 export const MINT_AMOUNT =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
+export const DEPLOY_ACCOUNT_COST =
+  "0x00000000000000000000000000000000000000000000000000000000ffffffff";
 export const CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 export const FEE_TOKEN_ADDRESS =
@@ -54,6 +56,9 @@ export const UDC_CLASS_HASH = "0x90000";
 // Contract classes
 export const ERC20_CONTRACT: CompiledContract = json.parse(
   fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
+);
+export const ERC721_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/ERC721.json").toString("ascii")
 );
 export const TEST_CONTRACT: CompiledContract = json.parse(
   fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")

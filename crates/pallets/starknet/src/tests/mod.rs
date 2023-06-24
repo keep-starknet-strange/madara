@@ -6,6 +6,7 @@ mod erc20;
 mod invoke_tx;
 mod l1_message;
 mod query_tx;
+mod sequencer_address;
 
 mod constants;
 mod mock;
