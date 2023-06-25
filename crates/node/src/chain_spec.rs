@@ -1,5 +1,5 @@
 use blockifier::execution::contract_class::ContractClass;
-use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
@@ -14,10 +14,8 @@ use starknet_core::utils::get_storage_var_address;
 
 use super::constants::*;
 
-pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
-
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
 
 /// Specialized `ChainSpec` for development.
 pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
@@ -29,7 +27,7 @@ pub const CHAIN_ID_STARKNET_TESTNET: u128 = 0x534e5f474f45524c49;
 #[derive(Serialize, Deserialize)]
 pub struct DevGenesisExt {
     /// Genesis config.
-    genesis_config: GenesisConfig,
+    genesis_config: RuntimeGenesisConfig,
     /// The flag that if enable manual-seal mode.
     enable_manual_seal: Option<bool>,
 }
@@ -130,7 +128,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 }
 
 pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-    serde_json::from_slice(contract_content).unwrap()
+    // FIXME 707
+    ContractClass::V0(serde_json::from_slice(contract_content).unwrap())
 }
 
 /// Returns the storage key for a given storage name, keys and offset.
@@ -158,7 +157,7 @@ fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
-) -> GenesisConfig {
+) -> RuntimeGenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
@@ -173,6 +172,14 @@ fn testnet_genesis(
     let argent_proxy_class =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json")).try_into().unwrap();
     let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
+
+    // OZ ACCOUNT CONTRACT
+    let oz_account_class =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"))
+            .try_into()
+            .unwrap();
+    let oz_account_class_hash = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_CLASS_HASH).unwrap();
+    let oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
 
     // TEST CONTRACT
     let test_contract_class =
@@ -205,7 +212,7 @@ fn testnet_genesis(
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
-    GenesisConfig {
+    RuntimeGenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
@@ -224,11 +231,13 @@ fn testnet_genesis(
                 (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
                 (argent_account_address, argent_account_class_hash),
+                (oz_account_address, oz_account_class_hash),
                 (udc_contract_address, udc_class_hash),
             ],
             contract_classes: vec![
                 (no_validate_account_class_hash, no_validate_account_class),
                 (argent_account_class_hash, argent_account_class),
+                (oz_account_class_hash, oz_account_class),
                 (argent_proxy_class_hash, argent_proxy_class),
                 (test_contract_class_hash, test_contract_class),
                 (token_class_hash, erc20_class.clone()),
@@ -243,6 +252,14 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_account_address], 1),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[oz_account_address], 0),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[oz_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
@@ -263,7 +280,11 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&argent_account_address, "_signer", &[], 0),
-                    Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
+                    Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap(),
+                ),
+                (
+                    get_storage_key(&oz_account_address, "Account_public_key", &[], 0),
+                    Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap(),
                 ),
                 (
                     get_storage_key(&nft_contract_address, "Ownable_owner", &[], 0),
@@ -273,6 +294,7 @@ fn testnet_genesis(
             fee_token_address,
             _phantom: Default::default(),
             chain_id,
+            seq_addr_updated: true,
         },
     }
 }

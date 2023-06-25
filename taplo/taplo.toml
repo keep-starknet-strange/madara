@@ -1,0 +1,11 @@
+include = ["../**/*.toml"]
+exclude = ["../**/bad.toml"]
+
+[formatting]
+align_entries = false
+
+[[rule]]
+keys = ["dependencies"]
+
+[rule.formatting]
+reorder_keys = true

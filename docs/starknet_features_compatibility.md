@@ -31,7 +31,7 @@
 | ---------------------------------------- | ------------------ |
 | starknet_getBlockWithTxHashes            | :white_check_mark: |
 | starknet_getBlockWithTxs                 | :white_check_mark: |
-| starknet_getStateUpdate                  | :construction:     |
+| starknet_getStateUpdate                  | :white_check_mark: |
 | starknet_getStorageAt                    | :white_check_mark: |
 | starknet_getTransactionByHash            | :white_check_mark: |
 | starknet_getTransactionByBlockIdAndIndex | :white_check_mark: |

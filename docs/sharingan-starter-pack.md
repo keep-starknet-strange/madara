@@ -1,5 +1,15 @@
 # Sharingan starter pack
 
+## Network information
+
+- Release / tag:
+  [v0.1.0-testnet-sharingan-beta.6](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta.6)
+- Docker image:
+  [ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.6](https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
+- Bootnode:
+  `/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWK26CZBpWtwMaVQ6nXHrrXBkdXXx6CrBAU2KgLTqDNL6o`
+- [Dev explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer)
+
 ## Madara
 
 [Madara](https://github.com/keep-starknet-strange/madara) is a Starknet
@@ -66,48 +76,48 @@ block to the chain. As of today, Sharingan has the following known `sequencers`:
     <td>1</td>
     <td><code>alice</code></td>
     <td><code>52.7.206.208</code></td>
-    <td><code>12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE</code></td>
-    <td><code>9933</code></td>
+    <td><code>12D3KooWK26CZBpWtwMaVQ6nXHrrXBkdXXx6CrBAU2KgLTqDNL6o</code></td>
+    <td><code>9944</code></td>
   </tr>
   <tr>
     <td>Starkware</td>
     <td>2</td>
     <td><code>bob</code></td>
     <td><code>44.195.161.82</code></td>
-    <td><code>12D3KooWHocNfvLz6rgpb8wJsynSpMwkspkcRn6gmN5UiK1tTTeG</code></td>
-    <td><code>9933</code></td>
+    <td><code>12D3KooWMyrW5SvZ1WpcMLi7QdjXRQ36mUBg6RoaoABtPNMGVqXr</code></td>
+    <td><code>9944</code></td>
   </tr>
   <tr>
     <td>Cartridge</td>
     <td>3</td>
     <td><code>charlie</code></td>
     <td><code>208.67.222.222</code></td>
-    <td><code>12D3KooWQe2ZtqiyC5CLJKZr9i9xTmEyiAikZcr5J18w3cG1dQAc</code></td>
-    <td><code>9933</code></td>
+    <td><code>--</code></td>
+    <td><code>9944</code></td>
   </tr>
   <tr>
     <td>LambdaClass</td>
     <td>4</td>
     <td><code>dave</code></td>
-    <td><code>65.109.91.29</code></td>
-    <td><code>12D3KooWK8QhFjkGYGyMskDuCyaS1nrhfTfadMeRjJkox4SV32co</code></td>
-    <td><code>9933</code></td>
+    <td><code>65.108.65.148</code></td>
+    <td><code>12D3KooWG29EKQvNoUHRWXwdNQ7LiEFG8wGS86CKyohe16sqYUM2</code></td>
+    <td><code>9944</code></td>
   </tr>
   <tr>
     <td>Pragma</td>
     <td>5</td>
     <td><code>eve</code></td>
     <td><code>13.39.22.82</code></td>
-    <td><code>12D3KooWGMCGJ517tFor12U9n2v3ax5WNw1pXFdj48hSHYQe6oyJ</code></td>
-    <td><code>9933</code></td>
+    <td><code>12D3KooWMyJvL4qJZz9kTcD7xP2vBMqM9SMMFdJvD3tS9KEoMJCw</code></td>
+    <td><code>9944</code></td>
   </tr>
   <tr>
     <td>Kakarot</td>
     <td>6</td>
     <td><code>ferdie</code></td>
     <td><code>52.50.242.182</code></td>
-    <td><code>12D3KooWHnQ8LC113DgB5cVVyx2mvTN7bBkm75zvzsndr2WhstEE</code></td>
-    <td><code>9933</code></td>
+    <td><code>12D3KooWMzm38Uw32PS4aUxykX9vHWkG4TqKtYY6gqKSt6dwgmk3</code></td>
+    <td><code>9944</code></td>
   </tr>
 </table>
 
@@ -129,7 +139,7 @@ To participate to Sharingan, there are few considerations to have in mind:
 
 1. The Madara code you will be running will need to expose two ports: one for
    the peer-to-peer communication, which is currently `30333`, and one for the
-   RPC mentioned earlier which is usually `9933`.
+   RPC mentioned earlier which is usually `9944`.
 
 2. Substrate is using `chain specs` to have all participating node being in sync
    on how to collaborate on the network. The chain specification is also special
@@ -164,43 +174,39 @@ version of Sharingan. However, to ensure that you are using the correct chain
 specs, please proceed to the following:
 
 1. Download the
-   [source code](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-alpha.4)
+   [source code](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta.6)
    of the current version of Sharingan release (currently
-   `v0.1.0-testnet-sharingan-alpha.4`).
+   `v0.1.0-testnet-sharingan-beta.6`).
 
-2. Extract the archive, to later access the file of interest which is
-   `madara/infra/chain-specs/testnet-sharingan-raw.json`.
+2. Create a new docker volume (in case you don't have one yet).
+
+   ```bash
+   docker sharingan-volume
+   ```
 
 3. Running the docker container, where we will use 2 volumes. One to access the
    chain specs file, and another one for the storage of the chain data.
 
-```bash
-sudo docker run -t -d \
-                --name sharingan-fullnode \
-                --network host \
-                -v /tmp:/data \
-                -v /path/to/madara/infra/chain-specs/:/chain-specs \
-                ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-alpha.4 \
-                --chain /chain-specs/testnet-sharingan-raw.json \
-                --base-path /data/sharingan \
-                --bootnodes /ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE \
-                --rpc-cors=all \
-                --rpc-external \
-                --rpc-methods=unsafe \
-                --port 30333 \
-                --rpc-port 9933
-```
+   ```bash
+   docker run --rm -d \
+    -p 9944:9944 -p 30333:30333 \
+    --name sharingan-fullnode \
+    -v sharingan-volume:/root/.madara \
+    ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.6 \
+    --testnet sharingan
+   ```
 
 Consider running the node in detached mode using the `-d` option. But try first
 running without the `-d` option as it's easier to see what's happening if it's
-your first time using docker.
+your first time using docker. Alternatively, you can also run
+`docker logs -f sharingan-fullnode`.
 
 ### Dev way: cloning Madara repository
 
 If you prefer having Madara compiled locally, you must:
 
 1. Clone [Madara repository](https://github.com/keep-starknet-strange/madara).
-2. Checkout on the tag `v0.1.0-testnet-sharingan-alpha.4`.
+2. Checkout on the tag `v0.1.0-testnet-sharingan-beta.6`.
 3. `cargo build --workspace --release` (you can check
    [this guide](https://github.com/keep-starknet-strange/madara/blob/main/docs/rpc-contribution.md)
    with some info about compiling Madara).
@@ -208,12 +214,7 @@ If you prefer having Madara compiled locally, you must:
    the root of Madara repository:
 
 ```bash
-./target/release/madara \
---base-path /path/to/storage/sharingan \
---chain ./infra/chain-specs/testnet-sharingan-raw.json \
---bootnodes /ip4/52.7.206.208/tcp/30333/p2p/12D3KooWJytWW4wqhG1xp9ckLb7B15KqDU24Q8HHo8VfwXmFe5ZE \
---rpc-cors=all --rpc-external --rpc-methods=unsafe \
---port 30333 --rpc-port 9933
+./target/release/madara --testnet sharingan
 ```
 
 Once you have your node running, you can get your Peer ID running the following
@@ -228,7 +229,7 @@ curl --header "Content-Type: application/json" \
     "params": [],
     "id": 1
 }' \
-http://your_ip:9933
+http://127.0.0.1:9944
 ```
 
 You can then go to the
@@ -250,7 +251,7 @@ coming soon for starkli).
 
 Currently, Madara is still under active development and it's recommended to
 regularly check the
-[Starknet features compatibility page of Madara](https://github.com/keep-starknet-strange/madara/blob/v0.1.0-testnet-sharingan-alpha.4/docs/starknet_features_compatibility.md).
+[Starknet features compatibility page of Madara](https://github.com/keep-starknet-strange/madara/blob/v0.1.0-testnet-sharingan-beta.6/docs/starknet_features_compatibility.md).
 
 In the current version, **please don't use** unsupported RPC endpoint as we are
 working on handling them.

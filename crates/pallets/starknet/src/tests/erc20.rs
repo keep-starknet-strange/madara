@@ -15,8 +15,7 @@ lazy_static! {
 #[test]
 fn given_erc20_transfer_when_invoke_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(1);
+        basic_test_setup(1);
         let origin = RuntimeOrigin::none();
         let sender_account = get_account_address(AccountType::NoValidate);
         // ERC20 is already declared for the fees.
@@ -91,7 +90,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 sender_account, // From
                 Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                     .unwrap(), // Sequencer address
-                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b660")
+                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b912")
                     .unwrap(), // Amount low
                 Felt252Wrapper::ZERO, // Amount high
             ),
@@ -195,7 +194,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             data: bounded_vec!(
                 sender_account,                                  // From
                 Felt252Wrapper::from_hex_be("0xdead").unwrap(),  // Sequencer address
-                Felt252Wrapper::from_hex_be("0x1e618").unwrap(), // Amount low
+                Felt252Wrapper::from_hex_be("0x1e82a").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                            // Amount high
             ),
             from_address: Starknet::fee_token_address(),

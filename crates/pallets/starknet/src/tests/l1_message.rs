@@ -11,8 +11,7 @@ use crate::Error;
 #[test]
 fn given_contract_l1_message_fails_sender_not_deployed() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -35,8 +34,7 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
 #[test]
 fn test_verify_tx_longevity() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let transaction = Transaction { tx_type: TxType::L1Handler, ..Transaction::default() };
 

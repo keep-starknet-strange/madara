@@ -3,6 +3,7 @@ use core::str::FromStr;
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
@@ -17,6 +18,7 @@ use {crate as pallet_starknet, frame_system as system};
 use super::constants::*;
 use super::utils::get_contract_class;
 use crate::types::ContractStorageKeyWrapper;
+use crate::{ContractAddressWrapper, SeqAddrUpdate, SequencerAddress};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -250,6 +252,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             ),
         ],
         chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
+        seq_addr_updated: true,
         ..Default::default()
     }
     .assimilate_storage(&mut t)
@@ -264,10 +267,20 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 /// * `n` - The block number to run to.
 pub(crate) fn run_to_block(n: u64) {
     for b in System::block_number()..=n {
+        SeqAddrUpdate::<MockRuntime>::put(true);
         System::set_block_number(b);
         Timestamp::set_timestamp(System::block_number() * 6_000);
         Starknet::on_finalize(b);
     }
+}
+
+/// Setup initial block and sequencer address for unit tests.
+pub(crate) fn basic_test_setup(n: u64) {
+    SeqAddrUpdate::<MockRuntime>::put(true);
+    let default_addr: ContractAddressWrapper = ContractAddressWrapper::try_from(&DEFAULT_SEQUENCER_ADDRESS).unwrap();
+    SequencerAddress::<MockRuntime>::put(default_addr);
+    System::set_block_number(0);
+    run_to_block(n);
 }
 
 /// Returns the storage key for a given storage name, keys and offset.
@@ -329,6 +342,7 @@ pub fn get_account_calldata(account_type: AccountType) -> Vec<&'static str> {
             BRAAVOS_ACCOUNT_CLASS_HASH, // Braavos account class hash
             "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' selector
         ],
+        AccountType::Openzeppelin => vec![ACCOUNT_PUBLIC_KEY],
         _ => vec![],
     }
 }

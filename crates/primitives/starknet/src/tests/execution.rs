@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
+use cairo_vm::felt::Felt252;
 use frame_support::{assert_ok, bounded_vec};
 use hex::FromHex;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
@@ -35,6 +36,7 @@ fn test_call_entry_point_execute_works() {
         calldata,
         address,
         ContractAddressWrapper::default(),
+        Felt252Wrapper::default(),
     );
 
     let block_context = BlockContext {
@@ -67,6 +69,7 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
         calldata,
         address,
         ContractAddressWrapper::default(),
+        Felt252Wrapper::default(),
     );
 
     let block_context = BlockContext {
@@ -100,17 +103,19 @@ fn test_try_into_entrypoint_works() {
         calldata: bounded_vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
         storage_address: Felt252Wrapper::from_hex_be("0x1").unwrap(),
         caller_address: Felt252Wrapper::from_hex_be("0x2").unwrap(),
+        initial_gas: Felt252Wrapper::from(3_u8),
     };
     let entrypoint: CallEntryPoint = entrypoint_wrapper.try_into().unwrap();
     let expected_entrypoint = CallEntryPoint {
         call_type: CallType::Call,
-        calldata: Calldata(Arc::new(vec![stark_felt!(1), stark_felt!(2), stark_felt!(3)])),
-        caller_address: ContractAddress(patricia_key!(2)),
-        storage_address: ContractAddress(patricia_key!(1)),
-        class_hash: Some(ClassHash(stark_felt!(1))),
+        calldata: Calldata(Arc::new(vec![stark_felt!(1_u8), stark_felt!(2_u8), stark_felt!(3_u8)])),
+        caller_address: ContractAddress(patricia_key!(2_u8)),
+        storage_address: ContractAddress(patricia_key!(1_u8)),
+        class_hash: Some(ClassHash(stark_felt!(1_u8))),
         code_address: None,
-        entry_point_selector: EntryPointSelector(stark_felt!(0)),
+        entry_point_selector: EntryPointSelector(stark_felt!(0_u8)),
         entry_point_type: EntryPointType::External,
+        initial_gas: Felt252::from(3_u8),
     };
 
     pretty_assertions::assert_eq!(entrypoint, expected_entrypoint);

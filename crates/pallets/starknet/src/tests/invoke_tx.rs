@@ -4,7 +4,6 @@ use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment::{self};
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::starknet_serde::transaction_from_json;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
@@ -18,13 +17,16 @@ use super::constants::{BLOCKIFIER_ACCOUNT_ADDRESS, MULTIPLE_EVENT_EMITTING_CONTR
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::message::Message;
+use crate::tests::{
+    get_invoke_argent_dummy, get_invoke_braavos_dummy, get_invoke_dummy, get_invoke_emit_event_dummy,
+    get_invoke_nonce_dummy, get_invoke_openzeppelin_dummy, get_storage_read_write_dummy,
+};
 use crate::{Error, Event, StorageView};
 
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -48,9 +50,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
-
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let sender_add = get_account_address(AccountType::NoValidate);
@@ -63,14 +63,11 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let transaction: InvokeTransaction =
-            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let transaction: InvokeTransaction = get_invoke_dummy().into();
 
         let tx = Message {
             topics: vec![
@@ -96,7 +93,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                 "0x01b8ffedfb222c609b81f301df55c640225abaa6a0715437c89f8edc21bbe5e8",
             )
             .unwrap(),
-            actual_fee: Felt252Wrapper::from(52980_u128),
+            actual_fee: Felt252Wrapper::from(53510_u128),
             tx_type: TxType::Invoke,
             events: bounded_vec![EventWrapper {
                 keys: bounded_vec!(
@@ -107,7 +104,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap(),
                     Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                         .unwrap(),
-                    Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000cef4")
+                    Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000d106")
                         .unwrap(),
                     Felt252Wrapper::ZERO,
                 ],
@@ -122,14 +119,11 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_emit_event.json");
-        let transaction: InvokeTransaction =
-            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let transaction: InvokeTransaction = get_invoke_emit_event_dummy().into();
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
 
@@ -150,7 +144,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 Felt252Wrapper::from_hex_be("0x01a3339ec92ac1061e3e0f8e704106286c642eaf302e94a582e5f95ef5e6b4d0")
                     .unwrap(), // From
                 Felt252Wrapper::from_hex_be("0xdead").unwrap(), // To
-                Felt252Wrapper::from_hex_be("0xd0f2").unwrap(), // Amount low
+                Felt252Wrapper::from_hex_be("0xd304").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
@@ -175,7 +169,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         assert_eq!(
             event_commitment,
-            H256::from_str("0x0627b4c3f2b6b1d89df90492d1f98d4479d59e7e074496f893731cb79ea2f6ba").unwrap()
+            H256::from_str("0x0468e407007ee60120bcc127a9169e7a269f359434dc7585948dc9203dd3ef18").unwrap()
         );
         assert_eq!(events.len(), 2);
         assert_eq!(pending.len(), 1);
@@ -185,7 +179,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 "0x0554f9443c06ce406badc7159f2c0da29eac095f8571fe1a6ce44a2076829a52",
             )
             .unwrap(),
-            actual_fee: Felt252Wrapper::from(53490_u128),
+            actual_fee: Felt252Wrapper::from(54020_u128),
             tx_type: TxType::Invoke,
             events: bounded_vec!(emitted_event, expected_fee_transfer_event),
         };
@@ -197,8 +191,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 #[test]
 fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let emit_contract_address = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
 
@@ -265,18 +258,12 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 #[test]
 fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
+        let transaction = get_storage_read_write_dummy();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/storage_read_write.json");
-        let transaction = transaction_from_json(
-            json_content,
-            include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"),
-        )
-        .expect("Failed to create Transaction from JSON")
-        .into();
+        let transaction = transaction.into();
 
         let target_contract_address =
             Felt252Wrapper::from_hex_be("024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7").unwrap();
@@ -296,18 +283,15 @@ fn given_hardcoded_contract_run_storage_read_and_write_it_works() {
 #[test]
 fn test_verify_nonce() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let tx = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let tx = get_invoke_dummy().into();
 
         // Test for a valid nonce (0)
         assert_ok!(Starknet::invoke(RuntimeOrigin::none(), tx));
 
         // Test for an invalid nonce (actual: 0, expected: 1)
-        let json_content_2: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let tx_2 = transaction_from_json(json_content_2, &[]).expect("Failed to create Transaction from JSON").into();
+        let tx_2 = get_invoke_dummy().into();
 
         assert_err!(Starknet::invoke(RuntimeOrigin::none(), tx_2), Error::<MockRuntime>::TransactionExecutionFailed);
     });
@@ -316,58 +300,49 @@ fn test_verify_nonce() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
-        transaction.signature = sign_message_hash(transaction.hash);
+        let transaction: InvokeTransaction = get_invoke_openzeppelin_dummy().into();
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone().into() },
+            &crate::Call::invoke { transaction: transaction.clone() },
         );
         assert_ok!(validate_result);
 
-        assert_ok!(Starknet::invoke(none_origin, transaction.into()));
+        assert_ok!(Starknet::invoke(none_origin, transaction));
     });
 }
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_openzeppelin_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_openzeppelin.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let mut transaction: InvokeTransaction = get_invoke_openzeppelin_dummy().into();
+        // by default we get valid signature so set it to something invalid
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
-            &crate::Call::invoke { transaction: transaction.clone().into() },
+            &crate::Call::invoke { transaction: transaction.clone() },
         );
         assert!(matches!(validate_result.unwrap_err(), TransactionValidityError::Invalid(_)));
 
-        assert_err!(
-            Starknet::invoke(none_origin, transaction.into()),
-            Error::<MockRuntime>::TransactionExecutionFailed
-        );
+        assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
     });
 }
 
 #[test]
 fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let mut transaction = get_invoke_argent_dummy();
         transaction.signature = sign_message_hash(transaction.hash);
 
         let validate_result = Starknet::validate_unsigned(
@@ -383,12 +358,10 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_argent.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let mut transaction = get_invoke_argent_dummy();
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         let validate_result = Starknet::validate_unsigned(
@@ -407,12 +380,10 @@ fn given_hardcoded_contract_run_invoke_on_argent_account_with_incorrect_signatur
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let mut transaction = get_invoke_braavos_dummy();
         transaction.signature = sign_message_hash(transaction.hash);
 
         let validate_result = Starknet::validate_unsigned(
@@ -428,12 +399,10 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_then_it_works() {
 #[test]
 fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_braavos.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let mut transaction = get_invoke_braavos_dummy();
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         let validate_result = Starknet::validate_unsigned(
@@ -452,12 +421,10 @@ fn given_hardcoded_contract_run_invoke_on_braavos_account_with_incorrect_signatu
 #[test]
 fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let mut transaction = transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON");
+        let mut transaction = get_invoke_dummy();
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
         transaction.sender_address = get_account_address(AccountType::InnerCall);
 
@@ -485,12 +452,9 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 #[test]
 fn test_verify_tx_longevity() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let transaction: InvokeTransaction =
-            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let transaction: InvokeTransaction = get_invoke_dummy().into();
 
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::invoke { transaction });
@@ -502,12 +466,9 @@ fn test_verify_tx_longevity() {
 #[test]
 fn test_verify_no_require_tag() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke.json");
-        let transaction: InvokeTransaction =
-            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let transaction: InvokeTransaction = get_invoke_dummy().into();
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,
@@ -528,12 +489,9 @@ fn test_verify_no_require_tag() {
 #[test]
 fn test_verify_require_tag() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
-        let json_content: &str = include_str!("../../../../../resources/transactions/invoke_nonce.json");
-        let transaction: InvokeTransaction =
-            transaction_from_json(json_content, &[]).expect("Failed to create Transaction from JSON").into();
+        let transaction: InvokeTransaction = get_invoke_nonce_dummy().into();
 
         let validate_result = Starknet::validate_unsigned(
             TransactionSource::InBlock,

@@ -12,8 +12,7 @@ use crate::{Error, Event, StorageView};
 #[test]
 fn given_contract_run_deploy_account_tx_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
@@ -50,7 +49,7 @@ fn given_contract_run_deploy_account_tx_works() {
             data: bounded_vec!(
                 test_addr,                                      // From
                 Felt252Wrapper::from_hex_be("0xdead").unwrap(), // To
-                Felt252Wrapper::from_hex_be("0xd3b8").unwrap(), // Amount low
+                Felt252Wrapper::from_hex_be("0xd552").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
@@ -63,8 +62,7 @@ fn given_contract_run_deploy_account_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_tx_twice_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
         let (address, account_class_hash, calldata) = account_helper(salt, AccountType::NoValidate);
         set_infinite_tokens(address);
@@ -100,8 +98,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
 #[test]
 fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
         let account_class_hash = get_account_class_hash(AccountType::Argent);
         let transaction = DeployAccountTransaction {
@@ -124,8 +121,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
 #[test]
 fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -162,8 +158,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 #[test]
 fn given_contract_run_deploy_account_openzeppelin_tx_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -204,8 +199,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -243,8 +237,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
 #[test]
 fn given_contract_run_deploy_account_argent_tx_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -286,8 +279,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -325,8 +317,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
 #[test]
 fn given_contract_run_deploy_account_braavos_tx_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -372,8 +363,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 #[test]
 fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -413,8 +403,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 #[test]
 fn test_verify_tx_longevity() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";

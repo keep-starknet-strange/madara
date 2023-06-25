@@ -13,8 +13,7 @@ use crate::Error;
 #[test]
 fn given_contract_declare_tx_works_once_not_twice() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
         let account_addr = get_account_address(AccountType::NoValidate);
 
@@ -42,8 +41,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
 #[test]
 fn given_contract_declare_tx_fails_sender_not_deployed() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
 
@@ -72,8 +70,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
 #[test]
 fn given_contract_declare_tx_fails_wrong_tx_version() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
         let account_addr = get_account_address(AccountType::Argent);
@@ -102,8 +99,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
 #[test]
 fn given_contract_declare_on_openzeppelin_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(AccountType::Openzeppelin);
@@ -143,8 +139,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
 #[test]
 fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(AccountType::Openzeppelin);
@@ -176,8 +171,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
 #[test]
 fn given_contract_declare_on_braavos_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(AccountType::Braavos);
@@ -217,8 +211,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
 #[test]
 fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(AccountType::Braavos);
@@ -250,8 +243,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
 #[test]
 fn given_contract_declare_on_argent_account_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(AccountType::Argent);
@@ -291,8 +283,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
 #[test]
 fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fails() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
         let account_addr = get_account_address(AccountType::Argent);
@@ -324,8 +315,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
 #[test]
 fn test_verify_tx_longevity() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
         let account_addr = get_account_address(AccountType::NoValidate);
 
         let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
@@ -351,8 +341,7 @@ fn test_verify_tx_longevity() {
 #[test]
 fn test_verify_no_require_tag() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let account_addr = get_account_address(AccountType::NoValidate);
 
@@ -389,8 +378,7 @@ fn test_verify_no_require_tag() {
 #[test]
 fn test_verify_require_tag() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(2);
+        basic_test_setup(2);
 
         let account_addr = get_account_address(AccountType::NoValidate);
 

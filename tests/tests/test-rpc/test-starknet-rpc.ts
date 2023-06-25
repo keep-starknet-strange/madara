@@ -10,8 +10,6 @@ import {
   ec,
   hash,
   validateAndParseAddress,
-  RPC,
-  stark,
   json,
   encode,
   CompressedProgram,
@@ -33,6 +31,7 @@ import {
   ARGENT_CONTRACT_ADDRESS,
   ARGENT_PROXY_CLASS_HASH,
   CHAIN_ID_STARKNET_TESTNET,
+  ERC721_CONTRACT,
   ERC20_CONTRACT,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
@@ -45,6 +44,7 @@ import {
   TEST_CONTRACT_CLASS_HASH,
   TOKEN_CLASS_HASH,
   UDC_CONTRACT_ADDRESS,
+  DEPLOY_ACCOUNT_COST,
 } from "../constants";
 import { Block, InvokeTransaction } from "./types";
 import { numberToHex } from "@polkadot/util";
@@ -104,15 +104,6 @@ describeDevMadara("Starknet RPC", (context) => {
       const blockNumber2 = await providerRPC.getBlockNumber();
 
       expect(blockNumber2).to.be.equal(blockNumber + 10);
-    });
-  });
-
-  describe("getStateUpdate", async () => {
-    it("should fail on unimplemented method", async function () {
-      const stateUpdate = providerRPC.getStateUpdate("latest");
-      await expect(stateUpdate)
-        .to.eventually.be.rejectedWith("501: Unimplemented method")
-        .and.be.an.instanceOf(LibraryError);
     });
   });
 
@@ -305,6 +296,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(contract_class.entry_points_by_type).to.deep.equal(
         ERC20_CONTRACT.entry_points_by_type
       );
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const program = json.parse(
         encode.arrayBufferToString(decompressProgram(contract_class.program))
       );
@@ -427,7 +419,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       // fees were paid du to the transfer in the previous test so the value should be < u128::MAX
-      expect(value).to.be.equal("0xfffffffffffffffffffffffffff98797");
+      expect(value).to.be.equal("0xfffffffffffffffffffffffffff97f4f");
     });
 
     it("should return 0 if the storage slot is not set", async function () {
@@ -518,6 +510,77 @@ describeDevMadara("Starknet RPC", (context) => {
         .to.eventually.be.rejectedWith(
           "27: Invalid transaction index in a block"
         )
+        .and.be.an.instanceOf(LibraryError);
+    });
+  });
+
+  describe("getStateUpdate", async () => {
+    it("should return latest block state update", async function () {
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+      const stateUpdate = await providerRPC.getStateUpdate("latest");
+
+      const latestBlock = await providerRPC.getBlockHashAndNumber();
+
+      expect(stateUpdate).to.not.be.undefined;
+      expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
+      expect(stateUpdate.new_root).to.be.equal("0x0");
+      expect(stateUpdate.old_root).to.be.equal("0x0");
+      expect(stateUpdate.state_diff).to.deep.equal({
+        storage_diffs: [],
+        deprecated_declared_classes: [],
+        declared_classes: [],
+        deployed_contracts: [],
+        replaced_classes: [],
+        nonces: [],
+      });
+    });
+
+    it("should return anterior block state update", async function () {
+      const anteriorBlock = await providerRPC.getBlockHashAndNumber();
+
+      await context.createBlock(
+        rpcTransfer(
+          providerRPC,
+          ARGENT_CONTRACT_NONCE,
+          ARGENT_CONTRACT_ADDRESS,
+          MINT_AMOUNT
+        ),
+        {
+          finalize: true,
+        }
+      );
+      const stateUpdate = await providerRPC.getStateUpdate(
+        anteriorBlock.block_hash
+      );
+
+      expect(stateUpdate).to.not.be.undefined;
+      expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
+      expect(stateUpdate.new_root).to.be.equal("0x0");
+      expect(stateUpdate.old_root).to.be.equal("0x0");
+      expect(stateUpdate.state_diff).to.deep.equal({
+        storage_diffs: [],
+        deprecated_declared_classes: [],
+        declared_classes: [],
+        deployed_contracts: [],
+        replaced_classes: [],
+        nonces: [],
+      });
+    });
+
+    it("should throw block not found error", async function () {
+      const transaction = providerRPC.getStateUpdate("0x123");
+      await expect(transaction)
+        .to.eventually.be.rejectedWith("24: Block not found")
         .and.be.an.instanceOf(LibraryError);
     });
   });
@@ -622,6 +685,14 @@ describeDevMadara("Starknet RPC", (context) => {
         calldata,
         0
       );
+      // fund address
+      await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        deployedContractAddress,
+        DEPLOY_ACCOUNT_COST
+      );
+      await jumpBlocks(context, 1);
 
       const invocationDetails = {
         nonce: "0x0",
@@ -658,11 +729,11 @@ describeDevMadara("Starknet RPC", (context) => {
       );
       await createAndFinalizeBlock(context.polkadotApi);
 
-      const accountContractClass = await providerRPC.getClassHashAt(
+      const accountContractClassHash = await providerRPC.getClassHashAt(
         deployedContractAddress
       );
 
-      expect(validateAndParseAddress(accountContractClass)).to.be.equal(
+      expect(validateAndParseAddress(accountContractClassHash)).to.be.equal(
         ARGENT_PROXY_CLASS_HASH
       );
     });
@@ -737,6 +808,8 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
+      // the above command should be used at project root
       const classHash =
         "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
       const res = await account.declare(
@@ -761,6 +834,30 @@ describeDevMadara("Starknet RPC", (context) => {
       //   stark.compressProgram(ERC20_CONTRACT.program)
       // );
       expect(res.class_hash).to.be.eq(classHash);
+    });
+
+    it("should fail to declare duplicate class", async function () {
+      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        keyPair
+      );
+
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
+      // the above command should be used at project root
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+
+      await expect(
+        account.declare(
+          {
+            classHash: classHash,
+            contract: ERC20_CONTRACT,
+          },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
+        )
+      ).to.be.rejectedWith("51: Class already declared");
     });
   });
 
@@ -800,12 +897,15 @@ describeDevMadara("Starknet RPC", (context) => {
         ARGENT_CONTRACT_ADDRESS,
         keyPair
       );
+
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC721.json
+      // the above command should be used at project root
       const classHash =
-        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+        "0x077cc28ed3c661419fda16bf120fb81f1f8f28617f5543b05a86d63b0926bbf4";
       await account.declare(
         {
           classHash: classHash,
-          contract: ERC20_CONTRACT,
+          contract: ERC721_CONTRACT,
         },
         { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
       );
@@ -923,6 +1023,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const readyExtrinsics =
         await context.polkadotApi.rpc.author.pendingExtrinsics();
       const readyTxs = readyExtrinsics.map((pending) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const obj: any = pending.toHuman();
         return {
           type: obj.method.method.toUpperCase(),
@@ -1165,7 +1266,7 @@ describeDevMadara("Starknet RPC", (context) => {
         data: [
           ARGENT_CONTRACT_ADDRESS,
           SEQUENCER_ADDRESS,
-          "0x19e1a", // current fee perceived for the transfer
+          "0x1a02c", // current fee perceived for the transfer
           "0x0",
         ].map(cleanHex),
       });
