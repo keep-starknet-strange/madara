@@ -1219,7 +1219,10 @@ describeDevMadara("Starknet RPC", (context) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx: InvokeTransaction =
-          await providerRPC.getTransactionByBlockIdAndIndex(firstBlockCreated.block_hash, i);
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            firstBlockCreated.block_hash,
+            i
+          );
         expect(
           validateAndParseAddress(events.events[2 * i].from_address)
         ).to.be.equal(FEE_TOKEN_ADDRESS);
@@ -1237,7 +1240,10 @@ describeDevMadara("Starknet RPC", (context) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx_second_block: InvokeTransaction =
-          await providerRPC.getTransactionByBlockIdAndIndex(secondBlockCreated.block_hash, i);
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            secondBlockCreated.block_hash,
+            i
+          );
         expect(
           validateAndParseAddress(events.events[10 + 2 * i].from_address)
         ).to.be.equal(FEE_TOKEN_ADDRESS);
@@ -1303,13 +1309,14 @@ describeDevMadara("Starknet RPC", (context) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx: InvokeTransaction =
-          await providerRPC.getTransactionByBlockIdAndIndex(firstBlockCreated.block_hash, i);
-        expect(
-          validateAndParseAddress(events[2 * i].from_address)
-        ).to.be.equal(FEE_TOKEN_ADDRESS);
-        expect(events[2 * i].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            firstBlockCreated.block_hash,
+            i
+          );
+        expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
+          FEE_TOKEN_ADDRESS
         );
+        expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
         expect(
           validateAndParseAddress(events[2 * i + 1].from_address)
         ).to.be.equal(FEE_TOKEN_ADDRESS);
@@ -1320,13 +1327,14 @@ describeDevMadara("Starknet RPC", (context) => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const tx3: InvokeTransaction =
-        await providerRPC.getTransactionByBlockIdAndIndex(firstBlockCreated.block_hash, 3);
-      expect(
-        validateAndParseAddress(events[6].from_address)
-      ).to.be.equal(FEE_TOKEN_ADDRESS);
-      expect(events[6].transaction_hash).to.be.equal(
-        tx3.transaction_hash
+        await providerRPC.getTransactionByBlockIdAndIndex(
+          firstBlockCreated.block_hash,
+          3
+        );
+      expect(validateAndParseAddress(events[6].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
       );
+      expect(events[6].transaction_hash).to.be.equal(tx3.transaction_hash);
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -1335,7 +1343,7 @@ describeDevMadara("Starknet RPC", (context) => {
         to_block: { block_number: secondBlockCreated.block_number },
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 7,
-        continuation_token: continuation_token
+        continuation_token: continuation_token,
       };
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -1344,35 +1352,35 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(events.length).to.be.equal(7);
       expect(toHex(continuation_token)).to.be.equal("0x15");
 
-      expect(
-        validateAndParseAddress(events[0].from_address)
-      ).to.be.equal(FEE_TOKEN_ADDRESS);
-      expect(events[0].transaction_hash).to.be.equal(
-        tx3.transaction_hash
+      expect(validateAndParseAddress(events[0].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
       );
+      expect(events[0].transaction_hash).to.be.equal(tx3.transaction_hash);
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const tx4: InvokeTransaction =
-        await providerRPC.getTransactionByBlockIdAndIndex(firstBlockCreated.block_hash, 4);
-      expect(
-        validateAndParseAddress(events[1].from_address)
-      ).to.be.equal(FEE_TOKEN_ADDRESS);
-      expect(events[1].transaction_hash).to.be.equal(
-        tx4.transaction_hash
+        await providerRPC.getTransactionByBlockIdAndIndex(
+          firstBlockCreated.block_hash,
+          4
+        );
+      expect(validateAndParseAddress(events[1].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
       );
-      expect(
-        validateAndParseAddress(events[2].from_address)
-      ).to.be.equal(FEE_TOKEN_ADDRESS);
-      expect(events[2].transaction_hash).to.be.equal(
-        tx4.transaction_hash
+      expect(events[1].transaction_hash).to.be.equal(tx4.transaction_hash);
+      expect(validateAndParseAddress(events[2].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
       );
+      expect(events[2].transaction_hash).to.be.equal(tx4.transaction_hash);
 
       for (let i = 0; i < 2; i++) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx: InvokeTransaction =
-          await providerRPC.getTransactionByBlockIdAndIndex(secondBlockCreated.block_hash, i);
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            secondBlockCreated.block_hash,
+            i
+          );
         expect(
           validateAndParseAddress(events[2 * i + 3].from_address)
         ).to.be.equal(FEE_TOKEN_ADDRESS);
@@ -1394,7 +1402,7 @@ describeDevMadara("Starknet RPC", (context) => {
         to_block: { block_number: secondBlockCreated.block_number },
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 7,
-        continuation_token: continuation_token
+        continuation_token: continuation_token,
       };
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -1407,7 +1415,10 @@ describeDevMadara("Starknet RPC", (context) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx: InvokeTransaction =
-          await providerRPC.getTransactionByBlockIdAndIndex(secondBlockCreated.block_hash, i);
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            secondBlockCreated.block_hash,
+            i
+          );
         expect(
           validateAndParseAddress(events[2 * i - 4].from_address)
         ).to.be.equal(FEE_TOKEN_ADDRESS);

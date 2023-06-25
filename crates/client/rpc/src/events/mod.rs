@@ -42,30 +42,8 @@ where
     ///
     /// # Returns
     ///
-    /// * `(block_events: Vec<EventWrapper>, block: Block)` - A tuple of the block events in
-    ///   block_id and an instance of Block
-    pub fn get_block_events(&self, block_id: u64) -> Result<(Vec<EventWrapper>, Block), StarknetRpcApiError> {
-        let substrate_block_hash =
-            self.substrate_block_hash_from_starknet_block(BlockId::Number(block_id)).map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).ok_or_else(|| {
-            error!("Failed to retrieve block");
-            StarknetRpcApiError::BlockNotFound
-        })?;
-        let block_events = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .events(substrate_block_hash)
-            .unwrap_or_else(|| {
-                dbg!("No events found in block {}", block_id);
-                Vec::new()
-            });
-        Ok((block_events, block))
-    }
-
+    /// * `(transaction_receipts: Vec<TransactionReceiptWrapper>, block: Block)` - A tuple of the
+    ///   block transaction receipts with events in block_id and an instance of Block
     pub fn get_block_receipts(
         &self,
         block_id: u64,
@@ -134,7 +112,7 @@ where
                     continue;
                 }
                 let receipt_transaction_hash = receipt.transaction_hash;
-                let receipt_events = receipt.events.to_owned().into_iter().skip(continuation_token);
+                let receipt_events = receipt.events.clone().into_iter().skip(continuation_token);
                 index += continuation_token;
 
                 let (new_filtered_events, continuation_index) = filter_events_by_params(
