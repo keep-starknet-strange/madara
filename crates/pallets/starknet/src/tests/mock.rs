@@ -81,7 +81,6 @@ parameter_types! {
 
 impl pallet_starknet::Config for MockRuntime {
     type RuntimeEvent = RuntimeEvent;
-    type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;

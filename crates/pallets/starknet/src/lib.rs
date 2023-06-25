@@ -33,6 +33,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
+use mp_starknet::crypto::state::StateCommitment;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -45,8 +46,6 @@ pub mod blockifier_state_adapter;
 pub mod message;
 /// The Starknet pallet's runtime API
 pub mod runtime_api;
-/// State root logic.
-pub mod state_root;
 /// Transaction validation logic.
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
@@ -75,7 +74,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
-use mp_starknet::crypto::commitment;
+use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
@@ -133,8 +132,6 @@ pub mod pallet {
     pub trait Config: frame_system::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-        /// How Starknet state root is calculated.
-        type StateRoot: Get<Felt252Wrapper>;
         /// The hashing function to use.
         type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
         /// The time idk what.
@@ -968,7 +965,11 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root = <T::StateRoot>::get();
+        let global_state_root = match T::EnableStateRoot::get() {
+            true => Self::compute_and_store_state_root(),
+            false => Felt252Wrapper::default(),
+        };
+
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
         let transaction_count = pending.len() as u128;
@@ -1121,5 +1122,53 @@ impl<T: Config> Pallet<T> {
             _ => Vec::default(),
         };
         Ok(events)
+    }
+
+    /// Compute the global state root and store it in the runtime storage.
+    /// This function is called at the end of each block.
+    /// It iterates through all the pending storage changes and updates the storage trie.
+    /// It then computes the state root and stores it in the runtime storage.
+    ///
+    /// # Returns
+    ///
+    /// The global state root.
+    pub fn compute_and_store_state_root() -> Felt252Wrapper {
+        // Update contracts trie
+        let mut commitments = State::<T>::get();
+        let pending_state = PendingState::<T>::iter();
+
+        pending_state.for_each(|(contract_address, storage_diffs)| {
+            // Retrieve state trie for this contract.
+            let mut state_tree = StorageTries::<T>::get(contract_address).unwrap_or_default();
+            // For each smart contract, iterate through storage diffs and update the state trie.
+            storage_diffs.into_iter().for_each(|(storage_key, storage_value)| {
+                state_tree.set(storage_key, storage_value);
+            });
+
+            // Update the state trie for this contract in runtime storage.
+            StorageTries::<T>::set(contract_address, Some(state_tree.clone()));
+
+            // We then compute the state root
+            // And update the storage trie
+            let state_root = state_tree.commit();
+
+            let nonce = Nonces::<T>::get(contract_address);
+            let class_hash = ContractClassHashes::<T>::get(contract_address).unwrap_or_default();
+            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
+            commitments.storage_commitment.set(contract_address, hash);
+
+            // Finally update the contracts trie in runtime storage.
+            State::<T>::mutate(|state| {
+                state.storage_commitment = commitments.clone().storage_commitment;
+            });
+
+            PendingState::<T>::remove(contract_address);
+        });
+
+        // Compute the final state root
+        StateCommitment::<T::SystemHash>::calculate(
+            commitments.storage_commitment.commit(),
+            commitments.class_commitment.commit(),
+        )
     }
 }
