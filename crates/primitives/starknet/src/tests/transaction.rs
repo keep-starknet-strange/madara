@@ -310,10 +310,9 @@ fn test_event_wrapper_new() {
     let data: BoundedVec<Felt252Wrapper, MaxArraySize> =
         bounded_vec![Felt252Wrapper::try_from(&[1; 32]).unwrap(), Felt252Wrapper::try_from(&[2; 32]).unwrap()];
     let from_address = Felt252Wrapper::try_from(&[3; 32]).unwrap();
-    let transaction_hash = Felt252Wrapper::try_from(&[4; 32]).unwrap();
 
-    let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address, transaction_hash);
-    let expected_event = EventWrapper { keys, data, from_address, transaction_hash };
+    let event_wrapper = EventWrapper::new(keys.clone(), data.clone(), from_address);
+    let expected_event = EventWrapper { keys, data, from_address };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }
@@ -322,12 +321,8 @@ fn test_event_wrapper_new() {
 fn test_event_wrapper_empty() {
     let event_wrapper = EventWrapper::empty();
 
-    let expected_event = EventWrapper {
-        keys: bounded_vec![],
-        data: bounded_vec![],
-        from_address: ContractAddressWrapper::default(),
-        transaction_hash: Felt252Wrapper::default(),
-    };
+    let expected_event =
+        EventWrapper { keys: bounded_vec![], data: bounded_vec![], from_address: ContractAddressWrapper::default() };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }
@@ -337,13 +332,11 @@ fn test_event_wrapper_builder() {
     let keys = vec![Felt252Wrapper::ZERO, Felt252Wrapper::try_from(&[1; 32]).unwrap()];
     let data = vec![Felt252Wrapper::try_from(&[1; 32]).unwrap(), Felt252Wrapper::try_from(&[2; 32]).unwrap()];
     let from_address = Felt252Wrapper::try_from(&[3; 32]).unwrap();
-    let transaction_hash = Felt252Wrapper::try_from(&[4; 32]).unwrap();
 
     let event_wrapper = EventWrapper::builder()
         .with_keys(keys.clone())
         .with_data(data.clone())
         .with_from_address(ContractAddress::try_from(StarkFelt::new(from_address.into()).unwrap()).unwrap())
-        .with_transaction_hash(TransactionHash(StarkFelt::new(transaction_hash.into()).unwrap()))
         .build()
         .unwrap();
 
@@ -351,7 +344,6 @@ fn test_event_wrapper_builder() {
         keys: BoundedVec::<Felt252Wrapper, MaxArraySize>::try_from(keys).unwrap(),
         data: BoundedVec::<Felt252Wrapper, MaxArraySize>::try_from(data).unwrap(),
         from_address,
-        transaction_hash,
     };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);
@@ -370,12 +362,8 @@ fn test_event_wrapper_builder_with_event_content() {
     let bounded_data: BoundedVec<Felt252Wrapper, MaxArraySize> =
         bounded_vec![Felt252Wrapper::try_from(&[1; 32]).unwrap(), Felt252Wrapper::try_from(&[2; 32]).unwrap()];
 
-    let expected_event = EventWrapper {
-        keys: bounded_keys,
-        data: bounded_data,
-        from_address: ContractAddressWrapper::default(),
-        transaction_hash: Felt252Wrapper::default(),
-    };
+    let expected_event =
+        EventWrapper { keys: bounded_keys, data: bounded_data, from_address: ContractAddressWrapper::default() };
 
     pretty_assertions::assert_eq!(event_wrapper, expected_event);
 }

@@ -1,6 +1,5 @@
 use frame_support::{assert_ok, bounded_vec};
 use lazy_static::lazy_static;
-use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 
@@ -44,8 +43,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id();
-        let transaction_hash = calculate_invoke_tx_hash(deploy_transaction.clone(), chain_id);
 
         let expected_erc20_address =
             Felt252Wrapper::from_hex_be("0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff").unwrap();
@@ -82,7 +79,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                         .unwrap(), // Salt
                 ),
                 from_address: sender_account,
-                transaction_hash
             }),
             events[events.len() - 3].event.clone().try_into().unwrap(),
         );
@@ -100,7 +96,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 Felt252Wrapper::ZERO, // Amount high
             ),
             from_address: Starknet::fee_token_address(),
-            transaction_hash,
         });
         // Check fee transfer event
         pretty_assertions::assert_eq!(
@@ -125,8 +120,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id();
-        let transaction_hash = calculate_invoke_tx_hash(transfer_transaction.clone(), chain_id);
 
         // Also asserts that the deployment has been saved.
         assert_ok!(Starknet::invoke(origin, transfer_transaction));
@@ -190,7 +183,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 "0x00dc58c1280862c95964106ef9eba5d9ed8c0c16d05883093e4540f22b829dff",
             )
             .unwrap(),
-            transaction_hash,
         });
 
         pretty_assertions::assert_eq!(expected_event, events[events.len() - 2].event.clone().try_into().unwrap());
@@ -207,7 +199,6 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 Felt252Wrapper::ZERO,                            // Amount high
             ),
             from_address: Starknet::fee_token_address(),
-            transaction_hash,
         });
         pretty_assertions::assert_eq!(
             expected_fee_transfer_event,
