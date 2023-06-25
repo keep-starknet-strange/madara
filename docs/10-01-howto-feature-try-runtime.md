@@ -175,7 +175,7 @@ cargo \
     --chain  "$CHAIN_SPEC" \
     execute-block \
     --try-state=all \
-	--block-ws-uri="$RPC_WS_URL" \
+ --block-ws-uri="$RPC_WS_URL" \
     snap \
     --snapshot-path "$SNAPSHOT_PATH"
 ```
@@ -225,7 +225,7 @@ cargo \
     --runtime existing \
     --chain  "$CHAIN_SPEC" \
     offchain-worker \
-	--header-ws-uri="$RPC_WS_URL" \
+ --header-ws-uri="$RPC_WS_URL" \
     snap \
     --snapshot-path "$SNAPSHOT_PATH"
 ```
@@ -251,9 +251,9 @@ cargo \
     --chain  "$CHAIN_SPEC" \
     follow-chain \
     --uri  "$RPC_WS_URL" \
-	--state-root-check \
-	--try-state all \
-	--keep-connection
+ --state-root-check \
+ --try-state all \
+ --keep-connection
 ```
 
 ![](https://i.imgur.com/mfKgfM0.png)
@@ -278,8 +278,8 @@ cargo \
     --runtime existing \
     --chain  "$CHAIN_SPEC" \
     fast-forward \
-	--n-blocks=2 \
-	--try-state=all \
+ --n-blocks=2 \
+ --try-state=all \
     live \
     --uri  "$RPC_WS_URL"
 ```
@@ -305,9 +305,9 @@ cargo \
     --runtime existing \
     --chain  "$CHAIN_SPEC" \
     fast-forward \
-	--block-ws-uri="$RPC_WS_URL" \
-	--try-state=all \
-	--n-blocks=2 \
+ --block-ws-uri="$RPC_WS_URL" \
+ --try-state=all \
+ --n-blocks=2 \
     snap \
     --snapshot-path "$SNAPSHOT_PATH"
 ```
