@@ -1,26 +1,31 @@
-
 ## Sub-Command Execution Status
 
-| Test ID | Sub-Command | Status |
-| --- | --- | --- |
-| 1 | create-snapshot | OK |
-| 2 | on-runtime-upgrade (live) | OK |
-| 3 | on-runtime-upgrade (snap) | OK |
-| 4 | execute-block (live) | OK |
-| 5 | execute-block (snap) | OK |
-| 6 | offchain-worker (live) | OK |
-| 7 | offchain-worker (snap) | OK |
-| 8 | follow-chain | OK |
-| 9 | fast-forward (live) | KO |
-| 10 | fast-forward (snap) | KO |
+| Test ID | Sub-Command               | Status |
+| ------- | ------------------------- | ------ |
+| 1       | create-snapshot           | OK     |
+| 2       | on-runtime-upgrade (live) | OK     |
+| 3       | on-runtime-upgrade (snap) | OK     |
+| 4       | execute-block (live)      | OK     |
+| 5       | execute-block (snap)      | OK     |
+| 6       | offchain-worker (live)    | OK     |
+| 7       | offchain-worker (snap)    | OK     |
+| 8       | follow-chain              | OK     |
+| 9       | fast-forward (live)       | KO     |
+| 10      | fast-forward (snap)       | KO     |
 
-Tests with ID 9 and 10 have encountered failures, with the error message "ERROR main runtime: panicked at 'Timestamp slot must match `CurrentSlot`'". The underlying cause of this issue is currently unknown. To facilitate the resolution and ensure progress, a support ticket has been raised and submitted to the substrate. For more information, please visit [here](https://substrate.stackexchange.com/questions/9024/substrate-try-runtime-sub-command-fast-forward-error-main-runtime-pa).
+Tests with ID 9 and 10 have encountered failures, with the error message "ERROR
+main runtime: panicked at 'Timestamp slot must match `CurrentSlot`'". The
+underlying cause of this issue is currently unknown. To facilitate the
+resolution and ensure progress, a support ticket has been raised and submitted
+to the substrate. For more information, please visit
+[here](https://substrate.stackexchange.com/questions/9024/substrate-try-runtime-sub-command-fast-forward-error-main-runtime-pa).
 
 ## How to Build and Run under Local Testnet
 
 To build and run under the local testnet, follow the steps below:
 
-1. Create the release binary and launch the local testnet using the script `infra/local-testnet/run-cfg2.sh`:
+1. Create the release binary and launch the local testnet using the script
+   `infra/local-testnet/run-cfg2.sh`:
 
 ```bash
 cargo build --release --bin madara
@@ -36,13 +41,17 @@ This will provide you with a list of available `try-runtime` subcommands:
 
 - `on-runtime-upgrade`: Execute the migrations of the given runtime.
 - `execute-block`: Executes the given block against some state.
-- `offchain-worker`: Executes the offchain worker hooks of a given block against some state.
-- `follow-chain`: Follow the given chain's finalized blocks and apply all of its extrinsics.
-- `fast-forward`: Produce a series of empty, consecutive blocks and execute them one-by-one.
+- `offchain-worker`: Executes the offchain worker hooks of a given block against
+  some state.
+- `follow-chain`: Follow the given chain's finalized blocks and apply all of its
+  extrinsics.
+- `fast-forward`: Produce a series of empty, consecutive blocks and execute them
+  one-by-one.
 - `create-snapshot`: Create a new snapshot file.
 - `help`: Print this message or the help of the given subcommand(s).
 
-Feel free to refer to these instructions when building and running under the local testnet.
+Feel free to refer to these instructions when building and running under the
+local testnet.
 
 ================================================================
 
@@ -97,7 +106,6 @@ cargo \
 ```
 
 ![](https://i.imgur.com/2ExO6Df.png)
-
 
 **snap**
 

@@ -1,6 +1,6 @@
 {
-  "name": "Local Testnet",
-  "id": "local_testnet",
+  "name": "Local Testnet Cfg2",
+  "id": "local_testnet_cfg2",
   "chainType": "Local",
   "bootNodes": [],
   "telemetryEndpoints": null,
