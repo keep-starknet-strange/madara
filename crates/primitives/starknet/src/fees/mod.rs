@@ -5,7 +5,9 @@ use alloc::vec::Vec;
 
 use blockifier::abi::constants::{GAS_USAGE, N_STEPS_RESOURCE};
 use blockifier::block_context::BlockContext;
-use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 use blockifier::fee::gas_usage::calculate_tx_gas_usage;
 use blockifier::fee::os_usage::get_additional_os_resources;
 use blockifier::state::state_api::State;
@@ -100,7 +102,7 @@ pub fn get_transaction_resources<S: State + StateChanges>(
 pub fn charge_fee<S: State + StateChanges>(
     state: &mut S,
     block_context: &BlockContext,
-    account_tx_context: &AccountTransactionContext,
+    account_tx_context: AccountTransactionContext,
     resources: &BTreeMap<String, usize>,
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
     let no_fee = Fee::default();
@@ -111,8 +113,7 @@ pub fn charge_fee<S: State + StateChanges>(
 
     let actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
-    let fee_transfer_call_info =
-        execute_fee_transfer(state, &mut ExecutionResources::default(), block_context, account_tx_context, actual_fee)?;
+    let fee_transfer_call_info = execute_fee_transfer(state, block_context, account_tx_context, actual_fee)?;
 
     Ok((actual_fee, Some(fee_transfer_call_info)))
 }
@@ -120,9 +121,8 @@ pub fn charge_fee<S: State + StateChanges>(
 /// Executes the fee transfer tx
 fn execute_fee_transfer(
     state: &mut dyn State,
-    execution_resources: &mut ExecutionResources,
     block_context: &BlockContext,
-    account_tx_context: &AccountTransactionContext,
+    account_tx_context: AccountTransactionContext,
     actual_fee: Fee,
 ) -> Result<CallInfo, TransactionExecutionErrorWrapper> {
     // TODO: use real value.
@@ -136,7 +136,10 @@ fn execute_fee_transfer(
     // The least significant 128 bits of the amount transferred.
     let lsb_amount = StarkFelt::from(actual_fee.0 as u64);
     // The most significant 128 bits of the amount transferred.
-    let msb_amount = StarkFelt::from(0);
+    let msb_amount = StarkFelt::from(0_u64);
+
+    // The fee-token contract is a Cairo 0 contract, hence the initial gas is irrelevant.
+    let initial_gas = super::constants::INITIAL_GAS_COST.into();
 
     let storage_address = block_context.fee_token_address;
     let fee_transfer_call = CallEntryPoint {
@@ -159,11 +162,14 @@ fn execute_fee_transfer(
         storage_address,
         caller_address: account_tx_context.sender_address,
         call_type: CallType::Call,
+        initial_gas,
     };
-    let mut execution_context = ExecutionContext::default();
+
+    let max_steps = block_context.invoke_tx_max_n_steps;
+    let mut context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps);
 
     fee_transfer_call
-        .execute(state, execution_resources, &mut execution_context, block_context, account_tx_context)
+        .execute(state, &mut ExecutionResources::default(), &mut context)
         .map_err(TransactionExecutionErrorWrapper::EntrypointExecution)
 }
 

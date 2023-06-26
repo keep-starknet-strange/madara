@@ -324,6 +324,87 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "fracek",
+      "name": "Francesco Ceccon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/282580?v=4",
+      "profile": "https://ceccon.me/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ptisserand",
+      "name": "ptisserand",
+      "avatar_url": "https://avatars.githubusercontent.com/u/544314?v=4",
+      "profile": "https://github.com/ptisserand",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "zizou0x",
+      "name": "Zizou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/111426680?v=4",
+      "profile": "https://github.com/zizou0x",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "makluganteng",
+      "name": "V.O.T",
+      "avatar_url": "https://avatars.githubusercontent.com/u/74396818?v=4",
+      "profile": "https://github.com/makluganteng",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "MdTeach",
+      "name": "Abishek Bashyal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19630321?v=4",
+      "profile": "https://github.com/MdTeach",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "kariy",
+      "name": "Ammar Arif",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26515232?v=4",
+      "profile": "https://github.com/kariy",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lambda-0x",
+      "name": "lambda-0x",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87354252?v=4",
+      "profile": "https://github.com/lambda-0x",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "exp-table",
+      "name": "exp_table",
+      "avatar_url": "https://avatars.githubusercontent.com/u/76456212?v=4",
+      "profile": "https://github.com/exp-table",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Pilouche",
+      "name": "Pilou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/26655725?v=4",
+      "profile": "https://github.com/Pilouche",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

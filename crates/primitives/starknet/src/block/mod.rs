@@ -15,32 +15,10 @@ use crate::transaction::types::{Transaction, TransactionReceiptWrapper};
 pub type MaxTransactions = ConstU32<4294967295>;
 
 /// Block Transactions
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-pub enum BlockTransactions {
-    /// Only hashes
-    Hashes(BoundedVec<Felt252Wrapper, MaxTransactions>),
-    /// Full transactions
-    Full(BoundedVec<Transaction, MaxTransactions>),
-}
+pub type BlockTransactions = BoundedVec<Transaction, MaxTransactions>;
 
 /// Block transaction receipts.
 pub type BlockTransactionReceipts = BoundedVec<TransactionReceiptWrapper, MaxTransactions>;
-
-impl Default for BlockTransactions {
-    fn default() -> Self {
-        Self::Full(BoundedVec::default())
-    }
-}
 
 /// Starknet block definition.
 #[derive(
@@ -54,7 +32,7 @@ impl Default for BlockTransactions {
     Default,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "std", derive(serde::Deserialize))]
 pub struct Block {
     /// The block header.
     header: Header,
@@ -96,10 +74,7 @@ impl Block {
 
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
-        match &self.transactions {
-            BlockTransactions::Full(transactions) => transactions.into_iter().map(|tx| tx.hash).collect(),
-
-            BlockTransactions::Hashes(hashes) => hashes.to_vec(),
-        }
+        let transactions = &self.transactions;
+        transactions.into_iter().map(|tx| tx.hash).collect()
     }
 }

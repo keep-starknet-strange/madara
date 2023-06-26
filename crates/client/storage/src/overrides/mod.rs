@@ -3,8 +3,7 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::block::Block as StarknetBlock;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -15,6 +14,7 @@ use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 
 mod schema_v1_override;
+use starknet_core::types::FieldElement;
 
 pub use self::schema_v1_override::SchemaV1Override;
 use crate::onchain_storage_schema;
@@ -55,8 +55,14 @@ impl<B: BlockT> OverrideHandle<B> {
 /// State Backend with some assumptions about pallet-starknet's storage schema. Using such an
 /// optimized implementation avoids spawning a runtime and the overhead associated with it.
 pub trait StorageOverride<B: BlockT>: Send + Sync {
-    /// Return the current block.
-    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock>;
+    /// get storage
+    fn get_storage_by_storage_key(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+        key: FieldElement,
+    ) -> Option<Felt252Wrapper>;
+
     /// Return the class hash at the provided address for the provided block.
     fn contract_class_hash_by_address(
         &self,
@@ -79,6 +85,8 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
+    /// Returns the storage value for a provided key and block hash.
+    fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -112,10 +120,19 @@ where
     C: ProvideRuntimeApi<B> + Send + Sync,
     C::Api: StarknetRuntimeApi<B>,
 {
-    fn current_block(&self, block_hash: B::Hash) -> Option<StarknetBlock> {
+    fn get_storage_by_storage_key(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+        key: FieldElement,
+    ) -> Option<Felt252Wrapper> {
         let api = self.client.runtime_api();
 
-        api.current_block(block_hash).ok()
+        match api.get_storage_at(block_hash, address, key.into()) {
+            Ok(Ok(storage)) => Some(storage),
+            Ok(Err(_)) => None,
+            Err(_) => None,
+        }
     }
 
     fn contract_class_by_address(
@@ -189,5 +206,17 @@ where
     /// * `Some(events)` - The events for the provided block hash
     fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
         self.client.runtime_api().events(block_hash).ok()
+    }
+
+    /// Return the chain id for a provided block hash.
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(chain_id)` - The chain id for the provided block hash
+    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
+        self.client.runtime_api().chain_id(block_hash).ok()
     }
 }

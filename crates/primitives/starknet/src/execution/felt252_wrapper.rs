@@ -19,8 +19,8 @@ use starknet_ff::{FieldElement, FromByteSliceError, FromStrError};
 use thiserror_no_std::Error;
 
 ///
-#[derive(Clone, Debug, PartialEq, Eq, Copy)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+//#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct Felt252Wrapper(pub FieldElement);
 
 impl Felt252Wrapper {
@@ -65,6 +65,20 @@ impl Felt252Wrapper {
     pub fn from_dec_str(value: &str) -> Result<Self, Felt252WrapperError> {
         let fe = FieldElement::from_dec_str(value)?;
         Ok(Self(fe))
+    }
+}
+
+#[cfg(feature = "std")]
+impl Felt252Wrapper {
+    /// Decodes the bytes representation in utf-8
+    ///
+    /// # Errors
+    ///
+    /// If the bytes are not valid utf-8, returns [`Felt252WrapperError`].
+    pub fn from_utf8(&self) -> Result<String, Felt252WrapperError> {
+        let s =
+            std::str::from_utf8(&self.0.to_bytes_be()).map_err(|_| Felt252WrapperError::InvalidCharacter)?.to_string();
+        Ok(s.trim_start_matches('\0').to_string())
     }
 }
 
@@ -113,6 +127,13 @@ impl TryFrom<&[u8]> for Felt252Wrapper {
 /// [`u64`] to [`Felt252Wrapper`].
 impl From<u64> for Felt252Wrapper {
     fn from(value: u64) -> Self {
+        Self(FieldElement::from(value))
+    }
+}
+
+/// [`u8`] to [`Felt252Wrapper`].
+impl From<u8> for Felt252Wrapper {
+    fn from(value: u8) -> Self {
         Self(FieldElement::from(value))
     }
 }
@@ -424,5 +445,11 @@ mod felt252_wrapper_tests {
     fn primitives_try_from_felt252() {
         let felt_u64 = Felt252Wrapper::from(4_294_967_296u64);
         assert_eq!(TryInto::<u64>::try_into(felt_u64).unwrap(), 4_294_967_296u64);
+    }
+
+    #[test]
+    fn decode_utf8() {
+        let felt = Felt252Wrapper::from_hex_be("0x534e5f474f45524c49").unwrap();
+        assert_eq!(felt.from_utf8().unwrap(), "SN_GOERLI".to_string());
     }
 }

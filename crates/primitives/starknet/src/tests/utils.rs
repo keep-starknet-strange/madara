@@ -28,8 +28,10 @@ pub const TEST_FAULTY_ACCOUNT_CONTRACT_CLASS_HASH: &str = "0x113";
 pub const SECURITY_TEST_CLASS_HASH: &str = "0x114";
 
 // Paths.
-pub const TEST_CONTRACT_PATH: &str = "../../../resources/test.json";
-pub const SECURITY_TEST_CONTRACT_PATH: &str = "../../../resources/security_test.json";
+pub const TEST_CONTRACT_PATH: &str = "../../../cairo-contracts/build/test.json";
+pub const SECURITY_TEST_CONTRACT_PATH: &str = "../../../cairo-contracts/build/security_test.json";
+
+pub const PEDERSEN_ZERO_HASH: &str = "0x49EE3EBA8C1600700EE1B87EB599F16716B0B1022947733551FDE4050CA6804";
 
 impl Block {
     /// Creates a mock block.
@@ -60,5 +62,6 @@ pub fn create_test_state() -> CachedState<DictStateReader> {
 pub fn get_contract_class(contract_path: &str) -> ContractClass {
     let path: PathBuf = [contract_path].iter().collect();
     let raw_contract_class = fs::read_to_string(path).unwrap();
-    serde_json::from_str(&raw_contract_class).unwrap()
+    // FIXME 707
+    ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap())
 }

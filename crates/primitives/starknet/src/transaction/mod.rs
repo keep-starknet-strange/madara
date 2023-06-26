@@ -3,28 +3,36 @@
 pub mod constants;
 /// Types related to transactions.
 pub mod types;
+/// Functions related to transaction conversions
+pub mod utils;
 
 use alloc::string::{String, ToString};
 use alloc::vec;
 
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
-use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 use blockifier::execution::errors::EntryPointExecutionError;
+use blockifier::state::errors::StateError;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
-use blockifier::transaction::transaction_utils::verify_no_calls_to_other_contracts;
-use blockifier::transaction::transactions::Executable;
+use blockifier::transaction::transaction_utils::{update_remaining_gas, verify_no_calls_to_other_contracts};
+use blockifier::transaction::transactions::{
+    DeclareTransaction as StarknetDeclareTransaction, Executable, L1HandlerTransaction as StarknetL1HandlerTransaction,
+};
+use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{ChainId, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
     Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent,
-    Fee, InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt,
-    TransactionSignature, TransactionVersion,
+    Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput,
+    TransactionReceipt, TransactionSignature, TransactionVersion,
 };
 use starknet_api::{calldata, StarknetApiError};
 
@@ -33,7 +41,6 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::block::Block as StarknetBlock;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
@@ -189,8 +196,6 @@ impl TryInto<TransactionReceiptWrapper> for &TransactionReceipt {
                 TransactionOutput::L1Handler(_) => TxType::L1Handler,
                 _ => TxType::Invoke,
             },
-            block_hash: self.block_hash.0.into(),
-            block_number: self.block_number.0,
             events: BoundedVec::try_from(_events?).map_err(|_| EventError::TooManyEvents)?,
         })
     }
@@ -242,13 +247,13 @@ impl TryInto<L1HandlerTransaction> for &Transaction {
 }
 
 /// Try to convert a `&Transaction` into a `InvokeTransaction`.
-impl TryInto<InvokeTransactionV1> for &Transaction {
+impl TryInto<InvokeTransaction> for &Transaction {
     type Error = StarknetApiError;
 
-    fn try_into(self) -> Result<InvokeTransactionV1, Self::Error> {
+    fn try_into(self) -> Result<InvokeTransaction, Self::Error> {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
 
-        Ok(InvokeTransactionV1 {
+        Ok(InvokeTransaction::V1(InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
             max_fee: Fee(2),
             signature: TransactionSignature(
@@ -257,7 +262,7 @@ impl TryInto<InvokeTransactionV1> for &Transaction {
             nonce: Nonce(StarkFelt::new(self.nonce.into())?),
             sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
             calldata: entrypoint.calldata,
-        })
+        }))
     }
 }
 
@@ -361,9 +366,9 @@ impl Transaction {
             }
             // Calldata for validation is the same calldata as for the execution itself.
             TxType::Invoke => {
-                let invoke_tx: InvokeTransactionV1 =
+                let invoke_tx: InvokeTransaction =
                     self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
-                Ok(Calldata(invoke_tx.calldata.0))
+                Ok(Calldata(invoke_tx.calldata().0))
             }
             TxType::L1Handler => Err(EntryPointExecutionError::InvalidExecutionInput {
                 input_descriptor: "tx_type".to_string(),
@@ -408,7 +413,10 @@ impl Transaction {
             }
         };
 
-        self.validate_tx(state, execution_resources, block_context, &account_context, tx_type)
+        // FIXME 710
+        let mut initial_gas = super::constants::INITIAL_GAS_COST.into();
+
+        self.validate_tx(state, execution_resources, block_context, &account_context, tx_type, &mut initial_gas)
     }
 
     /// Validates a transaction
@@ -428,7 +436,17 @@ impl Transaction {
         block_context: &BlockContext,
         account_tx_context: &AccountTransactionContext,
         tx_type: &TxType,
+        remaining_gas: &mut Felt252,
     ) -> TransactionValidationResultWrapper<Option<CallInfo>> {
+        let mut context = EntryPointExecutionContext::new(
+            block_context.clone(),
+            account_tx_context.clone(),
+            block_context.validate_max_n_steps,
+        );
+        if context.account_tx_context.is_v0() {
+            return Ok(None);
+        }
+
         let validate_call = CallEntryPoint {
             entry_point_type: EntryPointType::External,
             entry_point_selector: self.validate_entry_point_selector(tx_type)?,
@@ -438,14 +456,16 @@ impl Transaction {
             storage_address: account_tx_context.sender_address,
             caller_address: StarknetContractAddress::default(),
             call_type: CallType::Call,
+            initial_gas: remaining_gas.clone(),
         };
-        let mut execution_context = ExecutionContext::default();
 
         let validate_call_info = validate_call
-            .execute(state, execution_resources, &mut execution_context, block_context, account_tx_context)
+            .execute(state, execution_resources, &mut context)
             .map_err(TransactionValidationErrorWrapper::from)?;
         verify_no_calls_to_other_contracts(&validate_call_info, String::from(constants::VALIDATE_ENTRY_POINT_NAME))
             .map_err(TransactionValidationErrorWrapper::TransactionValidationError)?;
+
+        update_remaining_gas(remaining_gas, &validate_call_info);
 
         Ok(Some(validate_call_info))
     }
@@ -471,9 +491,16 @@ impl Transaction {
         let allowed_versions: vec::Vec<TransactionVersion> = match tx_type {
             TxType::Declare => {
                 // Support old versions in order to allow bootstrapping of a new system.
-                vec![TransactionVersion(StarkFelt::from(0)), TransactionVersion(StarkFelt::from(1))]
+                vec![
+                    TransactionVersion(StarkFelt::from(0_u8)),
+                    TransactionVersion(StarkFelt::from(1_u8)),
+                    TransactionVersion(StarkFelt::from(2_u8)),
+                ]
             }
-            _ => vec![TransactionVersion(StarkFelt::from(1))],
+            TxType::Invoke => {
+                vec![TransactionVersion(StarkFelt::from(0_u8)), TransactionVersion(StarkFelt::from(1_u8))]
+            }
+            _ => vec![TransactionVersion(StarkFelt::from(1_u8))],
         };
         if allowed_versions.contains(&version) {
             Ok(())
@@ -503,37 +530,50 @@ impl Transaction {
     pub fn execute<S: State + StateChanges>(
         &self,
         state: &mut S,
-        block: StarknetBlock,
+        block_context: &BlockContext,
         tx_type: TxType,
         contract_class: Option<ContractClass>,
-        fee_token_address: ContractAddressWrapper,
-        chain_id: ChainId,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
-        let block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
-
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
 
         // Verify the transaction version.
         self.verify_tx_version(&tx_type)?;
 
+        // FIXME 710
+        let mut initial_gas: Felt252 = super::constants::INITIAL_GAS_COST.into();
+
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
         // However it also means we need to copy/paste internal code from the tx.execute() method.
         let (execute_call_info, validate_call_info, account_context) = match tx_type {
             TxType::Invoke => {
-                let tx: InvokeTransactionV1 = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
+                let tx: InvokeTransaction = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_invoke_transaction_context(&tx);
+
+                // Create the context.
+                let mut context = EntryPointExecutionContext::new(
+                    block_context.clone(),
+                    account_context.clone(),
+                    block_context.invoke_tx_max_n_steps,
+                );
+
                 // Update nonce
-                self.handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context)?;
 
                 // Validate.
-                let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                let validate_call_info = self.validate_tx(
+                    state,
+                    execution_resources,
+                    block_context,
+                    &account_context,
+                    &tx_type,
+                    &mut initial_gas,
+                )?;
 
                 // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
                     account_context,
@@ -542,8 +582,17 @@ impl Transaction {
             TxType::L1Handler => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
+                // FIXME 712
+                let tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() };
+
+                // Create the context.
+                let mut context = EntryPointExecutionContext::new(
+                    block_context.clone(),
+                    account_context.clone(),
+                    block_context.invoke_tx_max_n_steps,
+                );
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     None,
                     account_context,
@@ -552,17 +601,33 @@ impl Transaction {
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
+                let contract_class =
+                    contract_class.ok_or_else(|| StateError::UndeclaredClassHash(ClassHash::default()))?;
+                let tx = StarknetDeclareTransaction::new(tx, contract_class)?;
+
+                // Create the context.
+                let mut context = EntryPointExecutionContext::new(
+                    block_context.clone(),
+                    account_context.clone(),
+                    block_context.invoke_tx_max_n_steps,
+                );
 
                 // Update nonce
-                self.handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context)?;
 
                 // Validate.
-                let validate_call_info =
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?;
+                let validate_call_info = self.validate_tx(
+                    state,
+                    execution_resources,
+                    block_context,
+                    &account_context,
+                    &tx_type,
+                    &mut initial_gas,
+                )?;
 
                 // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
                     account_context,
@@ -571,17 +636,32 @@ impl Transaction {
             TxType::DeployAccount => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_deploy_account_transaction_context(&tx);
+
+                // Create the context.
+                let mut context = EntryPointExecutionContext::new(
+                    block_context.clone(),
+                    account_context.clone(),
+                    block_context.invoke_tx_max_n_steps,
+                );
+
                 // Update nonce
-                self.handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context)?;
 
                 // Execute.
                 let transaction_execution = tx
-                    .run_execute(state, execution_resources, &block_context, &account_context, contract_class)
+                    .run_execute(state, execution_resources, &mut context, &mut initial_gas)
                     .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
 
                 (
                     transaction_execution,
-                    self.validate_tx(state, execution_resources, &block_context, &account_context, &tx_type)?,
+                    self.validate_tx(
+                        state,
+                        execution_resources,
+                        block_context,
+                        &account_context,
+                        &tx_type,
+                        &mut initial_gas,
+                    )?,
                     account_context,
                 )
             }
@@ -593,7 +673,7 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, &block_context, &account_context, &tx_resources)?;
+        let (actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, account_context, &tx_resources)?;
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
@@ -615,11 +695,10 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<()>` - The result of the nonce handling
     pub fn handle_nonce(
-        &self,
         state: &mut dyn State,
         account_tx_context: &AccountTransactionContext,
     ) -> TransactionExecutionResultWrapper<()> {
-        if account_tx_context.version == TransactionVersion(StarkFelt::from(0)) {
+        if account_tx_context.version == TransactionVersion(StarkFelt::from(0_u8)) {
             return Ok(());
         }
 
@@ -672,14 +751,14 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_invoke_transaction_context(&self, tx: &InvokeTransactionV1) -> AccountTransactionContext {
+    fn get_invoke_transaction_context(&self, tx: &InvokeTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
-            max_fee: tx.max_fee,
-            version: TransactionVersion(StarkFelt::from(1)),
-            signature: tx.signature.clone(),
-            nonce: tx.nonce,
-            sender_address: tx.sender_address,
+            transaction_hash: tx.transaction_hash(),
+            max_fee: tx.max_fee(),
+            version: TransactionVersion(StarkFelt::from(1_u8)),
+            signature: tx.signature(),
+            nonce: tx.nonce(),
+            sender_address: tx.sender_address(),
         }
     }
 
@@ -715,17 +794,10 @@ impl Transaction {
     ///
     /// * `AccountTransactionContext` - The context of the transaction
     fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
-        // TODO: use lib implem once this PR is merged: https://github.com/starkware-libs/starknet-api/pull/49
-        let version = match tx {
-            DeclareTransaction::V0(_) => TransactionVersion(StarkFelt::from(0)),
-            DeclareTransaction::V1(_) => TransactionVersion(StarkFelt::from(1)),
-            DeclareTransaction::V2(_) => TransactionVersion(StarkFelt::from(2)),
-        };
-
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version,
+            version: tx.version(),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -757,8 +829,6 @@ impl Default for TransactionReceiptWrapper {
             transaction_hash: Felt252Wrapper::default(),
             actual_fee: Felt252Wrapper::default(),
             tx_type: TxType::Invoke,
-            block_hash: Felt252Wrapper::default(),
-            block_number: 0_u64,
             events: BoundedVec::try_from(vec![EventWrapper::default(), EventWrapper::default()]).unwrap(),
         }
     }

@@ -1,12 +1,16 @@
 use alloc::format;
 use alloc::sync::Arc;
 
-use blockifier::execution::entry_point::{CallEntryPoint, CallInfo, CallType, ExecutionContext, ExecutionResources};
+use blockifier::block_context::BlockContext;
+use blockifier::execution::entry_point::{
+    CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
+};
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
+use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
-use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector};
+use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::Calldata;
 use starknet_api::StarknetApiError;
@@ -15,10 +19,13 @@ use super::entrypoint_wrapper::{
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
 use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
-use crate::block::Block as StarknetBlock;
 
 /// Max number of calldata / tx.
+#[cfg(not(test))]
 pub type MaxCalldataSize = ConstU32<{ u32::MAX }>;
+
+#[cfg(test)]
+pub type MaxCalldataSize = ConstU32<100>;
 
 /// Representation of a Starknet Call Entry Point.
 #[derive(
@@ -46,6 +53,8 @@ pub struct CallEntryPointWrapper {
     pub storage_address: ContractAddressWrapper,
     /// The caller address
     pub caller_address: ContractAddressWrapper,
+    /// The initial gas
+    pub initial_gas: Felt252Wrapper,
 }
 // Regular implementation.
 impl CallEntryPointWrapper {
@@ -57,8 +66,17 @@ impl CallEntryPointWrapper {
         calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
+        initial_gas: Felt252Wrapper,
     ) -> Self {
-        Self { class_hash, entrypoint_type, entrypoint_selector, calldata, storage_address, caller_address }
+        Self {
+            class_hash,
+            entrypoint_type,
+            entrypoint_selector,
+            calldata,
+            storage_address,
+            caller_address,
+            initial_gas,
+        }
     }
 
     /// Executes an entry point.
@@ -76,22 +94,18 @@ impl CallEntryPointWrapper {
     pub fn execute<S: State>(
         &self,
         state: &mut S,
-        block: StarknetBlock,
-        fee_token_address: ContractAddressWrapper,
-        chain_id: ChainId,
+        block_context: BlockContext,
     ) -> EntryPointExecutionResultWrapper<CallInfo> {
         let call_entry_point: CallEntryPoint =
             self.clone().try_into().map_err(EntryPointExecutionErrorWrapper::StarknetApi)?;
 
         let execution_resources = &mut ExecutionResources::default();
-        let execution_context = &mut ExecutionContext::default();
         let account_context = AccountTransactionContext::default();
-
-        // Create the block context.
-        let block_context = block.header().clone().into_block_context(fee_token_address, chain_id);
+        let max_steps = block_context.invoke_tx_max_n_steps;
+        let context = &mut EntryPointExecutionContext::new(block_context, account_context, max_steps);
 
         call_entry_point
-            .execute(state, execution_resources, execution_context, &block_context, &account_context)
+            .execute(state, execution_resources, context)
             .map_err(EntryPointExecutionErrorWrapper::EntryPointExecution)
     }
 }
@@ -106,6 +120,7 @@ impl Default for CallEntryPointWrapper {
             calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
+            initial_gas: Felt252Wrapper::default(),
         }
     }
 }
@@ -141,6 +156,7 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             // starknet-lib is constantly breaking it's api
             // I hope it's nothing important ¯\_(ツ)_/¯
             code_address: None,
+            initial_gas: Felt252::from_bytes_be(&self.initial_gas.0.to_bytes_be()),
         };
 
         Ok(entrypoint)

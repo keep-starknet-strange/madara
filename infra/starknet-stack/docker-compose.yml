@@ -21,3 +21,26 @@ services:
       - "8080:80"
     environment:
       WS_URL: "ws://0.0.0.0:9944"
+
+  starkcet-front:
+    image: ghcr.io/zizou0x/starkcet-frontend:latest
+    ports:
+      - 3000:3000
+    depends_on:
+      - starkcet-back
+    networks:
+      - faucet
+
+  starkcet-back:
+    image: ghcr.io/zizou0x/starkcet-backend:latest
+    environment:
+      - PRIVATE_KEY=0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d
+      - STARKNET_ACCOUNT_ADDRESS=0x2
+      - TOKEN_ADDRESS=0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+      - RPC_URL=http://host.docker.internal:9944
+      - AMOUNT_TRANSFERED=1000000000000000
+    networks:
+      - faucet
+
+networks:
+  faucet:

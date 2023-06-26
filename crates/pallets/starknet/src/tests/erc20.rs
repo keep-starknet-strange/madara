@@ -10,14 +10,13 @@ use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
 use crate::Event;
 
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("erc20/erc20.json");
+    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("ERC20.json");
 }
 
 #[test]
 fn given_erc20_transfer_when_invoke_then_it_works() {
     new_test_ext().execute_with(|| {
-        System::set_block_number(0);
-        run_to_block(1);
+        basic_test_setup(1);
         let origin = RuntimeOrigin::none();
         let sender_account = get_account_address(AccountType::NoValidate);
         // ERC20 is already declared for the fees.
@@ -44,8 +43,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(deploy_transaction.clone(), chain_id);
 
         let expected_erc20_address =
@@ -85,7 +83,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 from_address: sender_account,
                 transaction_hash
             }),
-            events[events.len() - 2].event.clone().try_into().unwrap(),
+            events[events.len() - 3].event.clone().try_into().unwrap(),
         );
         let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
             keys: bounded_vec![
@@ -94,9 +92,9 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             ],
             data: bounded_vec!(
                 sender_account, // From
-                Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000002")
+                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000000dead")
                     .unwrap(), // Sequencer address
-                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b660")
+                Felt252Wrapper::from_hex_be("0x000000000000000000000000000000000000000000000000000000000002b912")
                     .unwrap(), // Amount low
                 Felt252Wrapper::ZERO, // Amount high
             ),
@@ -126,8 +124,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let chain_id = Starknet::chain_id().0.to_bytes_be();
-        let chain_id = std::str::from_utf8(&chain_id[..]).unwrap();
+        let chain_id = Starknet::chain_id();
         let transaction_hash = calculate_invoke_tx_hash(transfer_transaction.clone(), chain_id);
 
         // Also asserts that the deployment has been saved.
@@ -204,8 +201,8 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             ],
             data: bounded_vec!(
                 sender_account,                                  // From
-                Felt252Wrapper::from_hex_be("0x2").unwrap(),     // Sequencer address
-                Felt252Wrapper::from_hex_be("0x1e618").unwrap(), // Amount low
+                Felt252Wrapper::from_hex_be("0xdead").unwrap(),  // Sequencer address
+                Felt252Wrapper::from_hex_be("0x1e82a").unwrap(), // Amount low
                 Felt252Wrapper::ZERO,                            // Amount high
             ),
             from_address: Starknet::fee_token_address(),

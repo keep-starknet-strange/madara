@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-32-cores
 
     steps:
       - name: Checkout repository
@@ -27,6 +27,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          platforms: linux/amd64
           push: true
           file: infra/docker/Dockerfile
           tags: >

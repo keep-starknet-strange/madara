@@ -1,0 +1,3618 @@
+{
+  "abi": [],
+  "entry_points_by_type": {
+    "CONSTRUCTOR": [],
+    "EXTERNAL": [],
+    "L1_HANDLER": []
+  },
+  "program": {
+    "attributes": [
+      {
+        "accessible_scopes": [
+          "__main__",
+          "__main__.ec_mul_inner"
+        ],
+        "end_pc": 480,
+        "flow_tracking_data": {
+          "ap_tracking": {
+            "group": 16,
+            "offset": 0
+          },
+          "reference_ids": {}
+        },
+        "name": "error_message",
+        "start_pc": 478,
+        "value": "Too large scalar"
+      }
+    ],
+    "builtins": [
+      "range_check"
+    ],
+    "compiler_version": "0.11.2",
+    "data": [
+      "0x4824800180058000",
+      "0xffffffffff8000000000000000000000",
+      "0x48307fff80038000",
+      "0x400280007ffd7fff",
+      "0x4824800180048000",
+      "0xffffffffffc000000000000000000000",
+      "0x400280017ffd7fff",
+      "0x482680017ffd8000",
+      "0x5",
+      "0x48007ffd7fff8000",
+      "0x48007ffe7ffe8000",
+      "0x48007fff7ffd8000",
+      "0x208b7fff7fff7ffe",
+      "0x480280017ffc8000",
+      "0x482480017fff8000",
+      "0xffffffffffffffffffffffe000000000",
+      "0x400280027ffc7fff",
+      "0x480280017ffc8000",
+      "0x484480017fff8000",
+      "0x100000000000000000000000000000000",
+      "0x480280007ffc8000",
+      "0x40317fff7ffe7ffd",
+      "0x482680017ffc8000",
+      "0x3",
+      "0x208b7fff7fff7ffe",
+      "0x484a7ffd7ffa8000",
+      "0x484a7ffc7ffa8000",
+      "0x484a7ffd7ff98000",
+      "0x48307fff7ffe8000",
+      "0x484a7ffb7ff88000",
+      "0x480680017fff8000",
+      "0x100000000000000",
+      "0x48507ffa7fff8000",
+      "0x48307fff7ffd8000",
+      "0x480680017fff8000",
+      "0x4",
+      "0x48507ffa7fff8000",
+      "0x484a7ffb7ff98000",
+      "0x484a7ffc7ff88000",
+      "0x48307fff7ffe8000",
+      "0x480680017fff8000",
+      "0x800000000000010fffffffffffffffffffffffffffffffc0000000000000005",
+      "0x48507ff27fff8000",
+      "0x48307fff7ffd8000",
+      "0x480680017fff8000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffff001",
+      "0x48507ff27fff8000",
+      "0x484a7ffb7ffa8000",
+      "0x484a7ffc7ff98000",
+      "0x48307fff7ffe8000",
+      "0x484a7ffd7ff88000",
+      "0x48307fff7ffe8000",
+      "0x480680017fff8000",
+      "0x800000000000010ffffffffffffffffffffffffffffeffffffffffffffff001",
+      "0x48507fe87fff8000",
+      "0x48307fff7ffd8000",
+      "0x480680017fff8000",
+      "0x3fffffffc00000",
+      "0x48507fe87fff8000",
+      "0x48307fed7feb8000",
+      "0x48307ff47ff28000",
+      "0x48307ffd7ffb8000",
+      "0x208b7fff7fff7ffe",
+      "0x484a7ffd7ffd8000",
+      "0x484a7ffc7ffd8000",
+      "0x484a7ffd7ffc8000",
+      "0x48307fff7ffe8000",
+      "0x484a7ffb7ffc8000",
+      "0x484a7ffb7ffb8000",
+      "0x480680017fff8000",
+      "0x100000000000000",
+      "0x48507ff97fff8000",
+      "0x48307fff7ffd8000",
+      "0x480680017fff8000",
+      "0x4",
+      "0x48507ff97fff8000",
+      "0x48307ff97ff98000",
+      "0x480680017fff8000",
+      "0x800000000000010fffffffffffffffffffffffffffffffc0000000000000005",
+      "0x48507ff37fff8000",
+      "0x48307fff7ffd8000",
+      "0x480680017fff8000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffff001",
+      "0x48507ff37fff8000",
+      "0x484a7ffb7ffd8000",
+      "0x484a7ffc7ffc8000",
+      "0x48307fff7ffe8000",
+      "0x484a7ffd7ffb8000",
+      "0x48307fff7ffe8000",
+      "0x480680017fff8000",
+      "0x800000000000010ffffffffffffffffffffffffffffeffffffffffffffff001",
+      "0x48507fe97fff8000",
+      "0x48307fff7ffd8000",
+      "0x480680017fff8000",
+      "0x3fffffffc00000",
+      "0x48507fe97fff8000",
+      "0x48307fef7fed8000",
+      "0x48307ff47ff28000",
+      "0x48307ffd7ffb8000",
+      "0x208b7fff7fff7ffe",
+      "0x40780017fff7fff",
+      "0x1",
+      "0x480a7ffa7fff8000",
+      "0x4826800180008000",
+      "0x100000000000000000000000000000000000000000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffa5",
+      "0x482a80007ffb8000",
+      "0x484480017fff8000",
+      "0x800000000000010ffffffdfffffffffffffbc00000000000000000000000001",
+      "0x48127ffd7fff8000",
+      "0x482480017ffe8000",
+      "0x100000000000000000000000000000000000000000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff9d",
+      "0x4846800180008000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffc01",
+      "0x48327fff7ffc8000",
+      "0x48307ff37fff8000",
+      "0x484480017fff8000",
+      "0x800000000000010ffffffdfffffffffffffbc00000000000000000000000001",
+      "0x48127ffb7fff8000",
+      "0x482480017ffe8000",
+      "0x100000000000000000000000000000000000000000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff92",
+      "0x4846800180008000",
+      "0xffffffff00000",
+      "0x4846800180008000",
+      "0x1000000000000000000000",
+      "0x48307ff380007fff",
+      "0x40327ffd7ffd7fff",
+      "0x48127ffc7fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x40780017fff7fff",
+      "0x1",
+      "0x20680017fff7fff",
+      "0x4",
+      "0x10780017fff7fff",
+      "0xb",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffd5",
+      "0x480680017fff8000",
+      "0x1",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff6b",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x48127ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff7c",
+      "0x48127fd57fff8000",
+      "0x482480017ffc8000",
+      "0x800000000000011000000000000000000000000000000000000000000000000",
+      "0x48127ffc7fff8000",
+      "0x48127ffc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffc0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff56",
+      "0x48127ffc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff53",
+      "0x48127ffc7fff8000",
+      "0x48317ffc80007ffb",
+      "0x48317ffc80007ffc",
+      "0x48317ffc80007ffd",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffb1",
+      "0x48127fce7fff8000",
+      "0x48127fce7fff8000",
+      "0x48127fce7fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ff77fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff46",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff80",
+      "0x48127fda7fff8000",
+      "0x48127fda7fff8000",
+      "0x48127fda7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff52",
+      "0x480680017fff8000",
+      "0x3",
+      "0x48507fd57fff8000",
+      "0x482480017fff8000",
+      "0x3ffffffffffffffffffffc",
+      "0x480680017fff8000",
+      "0x2",
+      "0x48507ff97fff8000",
+      "0x480680017fff8000",
+      "0x3",
+      "0x48507fd17fff8000",
+      "0x482480017fff8000",
+      "0x3ff",
+      "0x480680017fff8000",
+      "0x2",
+      "0x48507ff57fff8000",
+      "0x480680017fff8000",
+      "0x3",
+      "0x48507fcd7fff8000",
+      "0x482480017fff8000",
+      "0xffffffff0000000100000",
+      "0x480680017fff8000",
+      "0x2",
+      "0x48507ff17fff8000",
+      "0x48127fa37fff8000",
+      "0x48307ff480007ff2",
+      "0x48307ff880007ff6",
+      "0x48307ffc80007ffa",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff7f",
+      "0x48127f757fff8000",
+      "0x48127f757fff8000",
+      "0x48127f757fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ff17fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff14",
+      "0x48297ff880007ff2",
+      "0x48297ff980007ff3",
+      "0x48297ffa80007ff4",
+      "0x48127ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff25",
+      "0x48287ff580007ffd",
+      "0x48287ff680007ffd",
+      "0x48287ff780007ffd",
+      "0x48127fd27fff8000",
+      "0x48287ffb7ffc8000",
+      "0x48287ffc7ffc8000",
+      "0x48287ffd7ffc8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff67",
+      "0x48127fa47fff8000",
+      "0x48127fa47fff8000",
+      "0x48127fa47fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x20780017fff7ff8",
+      "0xe",
+      "0x20780017fff7ff9",
+      "0xc",
+      "0x20780017fff7ffa",
+      "0xa",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffa2",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff25",
+      "0x48127fdc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffee3",
+      "0x48127ffc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffee0",
+      "0x48307ff380007fe9",
+      "0x480680017fff8000",
+      "0x2",
+      "0x48487ff87fff8000",
+      "0x48307ff180007fe7",
+      "0x480680017fff8000",
+      "0x2",
+      "0x48487ff97fff8000",
+      "0x48307fef80007fe5",
+      "0x480680017fff8000",
+      "0x2",
+      "0x48487ffa7fff8000",
+      "0x48127ff37fff8000",
+      "0x48307ff880007ff6",
+      "0x48307ffa80007ff8",
+      "0x48307ffc80007ffa",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff32",
+      "0x48317fbb80007ff8",
+      "0x48317fbb80007ff9",
+      "0x48317fbb80007ffa",
+      "0x48127f8e7fff8000",
+      "0x48127f8e7fff8000",
+      "0x48127f8e7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffedf",
+      "0x48287ffb80007ffd",
+      "0x48287ffc80007ffd",
+      "0x48287ffd80007ffd",
+      "0x48127fd57fff8000",
+      "0x48307f9a80007ffc",
+      "0x48307f9a80007ffc",
+      "0x48307f9a80007ffc",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff21",
+      "0x48127f627fff8000",
+      "0x48127f627fff8000",
+      "0x48127f627fff8000",
+      "0x48127f697fff8000",
+      "0x48127f697fff8000",
+      "0x48127f697fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x20780017fff7ff2",
+      "0xe",
+      "0x20780017fff7ff3",
+      "0xc",
+      "0x20780017fff7ff4",
+      "0xa",
+      "0x480a7ff17fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x20780017fff7ff8",
+      "0xe",
+      "0x20780017fff7ff9",
+      "0xc",
+      "0x20780017fff7ffa",
+      "0xa",
+      "0x480a7ff17fff8000",
+      "0x480a7ff27fff8000",
+      "0x480a7ff37fff8000",
+      "0x480a7ff47fff8000",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ff17fff8000",
+      "0x480a7ff27fff8000",
+      "0x480a7ff37fff8000",
+      "0x480a7ff47fff8000",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff77",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffec8",
+      "0x48127fdc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffe86",
+      "0x48127ffc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffe83",
+      "0x48307ff380007fe9",
+      "0x48287ff280007fff",
+      "0x48307ff280007fe8",
+      "0x48287ff380007fff",
+      "0x48307ff180007fe7",
+      "0x48287ff480007fff",
+      "0x48127ff67fff8000",
+      "0x48287ff880007ffa",
+      "0x48287ff980007ffb",
+      "0x48287ffa80007ffc",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffedb",
+      "0x48317fbe80007ff2",
+      "0x48317fbe80007ff3",
+      "0x48317fbe80007ff4",
+      "0x48127f917fff8000",
+      "0x48127f917fff8000",
+      "0x48127f917fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffe88",
+      "0x48287ff580007ffd",
+      "0x48287ff680007ffd",
+      "0x48287ff780007ffd",
+      "0x48127fd57fff8000",
+      "0x48307f9d80007ffc",
+      "0x48307f9d80007ffc",
+      "0x48307f9d80007ffc",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffeca",
+      "0x48127f657fff8000",
+      "0x48127f657fff8000",
+      "0x48127f657fff8000",
+      "0x48127f6c7fff8000",
+      "0x48127f6c7fff8000",
+      "0x48127f6c7fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ff17fff8000",
+      "0x48297ff880007ff2",
+      "0x48297ff980007ff3",
+      "0x48297ffa80007ff4",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffedf",
+      "0x20680017fff7fff",
+      "0x12",
+      "0x48127ffe7fff8000",
+      "0x480a7ff27fff8000",
+      "0x480a7ff37fff8000",
+      "0x480a7ff47fff8000",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff95",
+      "0x208b7fff7fff7ffe",
+      "0x48127ffe7fff8000",
+      "0x482a7ffb7ff58000",
+      "0x482a7ffc7ff68000",
+      "0x482a7ffd7ff78000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffec7",
+      "0x20680017fff7fff",
+      "0xc",
+      "0x48127ffe7fff8000",
+      "0x480a7ff27fff8000",
+      "0x480a7ff37fff8000",
+      "0x480a7ff47fff8000",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff3a",
+      "0x208b7fff7fff7ffe",
+      "0x48127ffe7fff8000",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x208b7fff7fff7ffe",
+      "0x20780017fff7ffd",
+      "0x18",
+      "0x400780017fff7ffc",
+      "0x0",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x480680017fff8000",
+      "0x0",
+      "0x208b7fff7fff7ffe",
+      "0x40780017fff7fff",
+      "0x6",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff08",
+      "0xa0680017fff8000",
+      "0x10",
+      "0x48127ff87fff8000",
+      "0x48127ff87fff8000",
+      "0x48127ff87fff8000",
+      "0x48127ff87fff8000",
+      "0x48127ff87fff8000",
+      "0x48127ff87fff8000",
+      "0x48127ff87fff8000",
+      "0x484680017ffc8000",
+      "0x400000000000008800000000000000000000000000000000000000000000001",
+      "0x482680017ffd8000",
+      "0x800000000000011000000000000000000000000000000000000000000000000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffd1",
+      "0x208b7fff7fff7ffe",
+      "0x482680017ffc8000",
+      "0x800000000000011000000000000000000000000000000000000000000000000",
+      "0x48127ff77fff8000",
+      "0x48127ff77fff8000",
+      "0x48127ff77fff8000",
+      "0x48127ff77fff8000",
+      "0x48127ff77fff8000",
+      "0x48127ff77fff8000",
+      "0x48127ff77fff8000",
+      "0x484480017ff88000",
+      "0x400000000000008800000000000000000000000000000000000000000000001",
+      "0x482680017ffd8000",
+      "0x800000000000011000000000000000000000000000000000000000000000000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffffc1",
+      "0x40137ff47fff8000",
+      "0x40137ff57fff8001",
+      "0x40137ff67fff8002",
+      "0x40137ff77fff8003",
+      "0x40137ff87fff8004",
+      "0x40137ff97fff8005",
+      "0x48127ff37fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff1d",
+      "0x48127ff97fff8000",
+      "0x480a80007fff8000",
+      "0x480a80017fff8000",
+      "0x480a80027fff8000",
+      "0x480a80037fff8000",
+      "0x480a80047fff8000",
+      "0x480a80057fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x208b7fff7fff7ffe",
+      "0x40780017fff7fff",
+      "0x12",
+      "0x480a7ff47fff8000",
+      "0x480a7ff57fff8000",
+      "0x480a7ff67fff8000",
+      "0x480a7ff77fff8000",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480a7ffb7fff8000",
+      "0x480680017fff8000",
+      "0x56",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff90",
+      "0x40137ffa7fff8000",
+      "0x40137ffb7fff8001",
+      "0x40137ffc7fff8002",
+      "0x40137ffd7fff8003",
+      "0x40137ffe7fff8004",
+      "0x40137fff7fff8005",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480680017fff8000",
+      "0x56",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff7e",
+      "0x40137ffa7fff8006",
+      "0x40137ffb7fff8007",
+      "0x40137ffc7fff8008",
+      "0x40137ffd7fff8009",
+      "0x40137ffe7fff800a",
+      "0x40137fff7fff800b",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x48127ff37fff8000",
+      "0x480a7ffd7fff8000",
+      "0x480680017fff8000",
+      "0x54",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff6c",
+      "0x40137ffa7fff800c",
+      "0x40137ffb7fff800d",
+      "0x40137ffc7fff800e",
+      "0x40137ffd7fff800f",
+      "0x40137ffe7fff8010",
+      "0x40137fff7fff8011",
+      "0x48127ff37fff8000",
+      "0x480a80007fff8000",
+      "0x480a80017fff8000",
+      "0x480a80027fff8000",
+      "0x480a80037fff8000",
+      "0x480a80047fff8000",
+      "0x480a80057fff8000",
+      "0x480a80067fff8000",
+      "0x480a80077fff8000",
+      "0x480a80087fff8000",
+      "0x480a80097fff8000",
+      "0x480a800a7fff8000",
+      "0x480a800b7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff1f",
+      "0x480a800c7fff8000",
+      "0x480a800d7fff8000",
+      "0x480a800e7fff8000",
+      "0x480a800f7fff8000",
+      "0x480a80107fff8000",
+      "0x480a80117fff8000",
+      "0x1104800180018000",
+      "0x800000000000010ffffffffffffffffffffffffffffffffffffffffffffff17",
+      "0x208b7fff7fff7ffe",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffdac",
+      "0x480a7ff77fff8000",
+      "0x48127ffc7fff8000",
+      "0x48127ffc7fff8000",
+      "0x48127ffc7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffe11",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x48127ffa7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffd78",
+      "0x480a7ff87fff8000",
+      "0x480a7ff97fff8000",
+      "0x480a7ffa7fff8000",
+      "0x480680017fff8000",
+      "0x3ffffffffffffffffffffc",
+      "0x480680017fff8000",
+      "0x3ff",
+      "0x480680017fff8000",
+      "0xffffffff0000000100000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffd6d",
+      "0x480a7ffb7fff8000",
+      "0x480a7ffc7fff8000",
+      "0x480a7ffd7fff8000",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffd8e",
+      "0x482480017fda8000",
+      "0x13b0f63bce3c3e27d2604b",
+      "0x48307fff7fb28000",
+      "0x482480017fd98000",
+      "0x3555da621af194741ac331",
+      "0x48307fff7fb18000",
+      "0x482480017fd88000",
+      "0x5ac635d8aa3a93e7b3ebb",
+      "0x48307fff7fb08000",
+      "0x48127f857fff8000",
+      "0x48307ff680007ffa",
+      "0x48307ff680007ffb",
+      "0x48307ff680007ffc",
+      "0x1104800180018000",
+      "0x800000000000010fffffffffffffffffffffffffffffffffffffffffffffda4",
+      "0x208b7fff7fff7ffe"
+    ],
+    "debug_info": null,
+    "hints": {
+      "0": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.bigint",
+            "src.accounts.braavos.lib.bigint.nondet_bigint3"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import split\n\nsegments.write_arg(ids.res.address_, split(value))",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 0,
+              "offset": 0
+            },
+            "reference_ids": {
+              "src.accounts.braavos.lib.bigint.nondet_bigint3.res": 0
+            }
+          }
+        }
+      ],
+      "13": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.assert_165_bit"
+          ],
+          "code": "from starkware.cairo.common.math_utils import as_int\n\n# Correctness check.\nvalue = as_int(ids.value, PRIME) % PRIME\nassert value < ids.UPPER_BOUND, f'{value} is outside of the range [0, 2**250).'\n\n# Calculation for the assertion.\nids.high, ids.low = divmod(ids.value, ids.SHIFT)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 1,
+              "offset": 0
+            },
+            "reference_ids": {
+              "src.accounts.braavos.lib.field.assert_165_bit.high": 3,
+              "src.accounts.braavos.lib.field.assert_165_bit.low": 2,
+              "src.accounts.braavos.lib.field.assert_165_bit.value": 1
+            }
+          }
+        }
+      ],
+      "102": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.verify_zero"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 4,
+              "offset": 1
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.verify_zero"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\n\nq, r = divmod(pack(ids.val, PRIME), SECP_P)\nassert r == 0, f\"verify_zero: Invalid input {ids.val.d0, ids.val.d1, ids.val.d2}.\"\nids.q = q % PRIME",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 4,
+              "offset": 1
+            },
+            "reference_ids": {
+              "src.accounts.braavos.lib.field.verify_zero.q": 5,
+              "src.accounts.braavos.lib.field.verify_zero.val": 4
+            }
+          }
+        }
+      ],
+      "134": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.is_zero"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 5,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.is_zero"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nx = pack(ids.x, PRIME) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 5,
+              "offset": 0
+            },
+            "reference_ids": {
+              "src.accounts.braavos.lib.field.is_zero.x": 6
+            }
+          }
+        },
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.is_zero"
+          ],
+          "code": "memory[ap] = to_felt_or_relocatable(x == 0)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 5,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "149": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.is_zero"
+          ],
+          "code": "from starkware.python.math_utils import div_mod\n\nvalue = x_inv = div_mod(1, x, SECP_P)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 5,
+              "offset": 1
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "170": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.reduce"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 6,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.reduce"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nx = pack(ids.x, PRIME) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 6,
+              "offset": 0
+            },
+            "reference_ids": {
+              "src.accounts.braavos.lib.field.reduce.x": 7
+            }
+          }
+        },
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.reduce"
+          ],
+          "code": "from starkware.python.math_utils import div_mod\n\nvalue = x_inv = div_mod(1, x, SECP_P)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 6,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "173": [
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.reduce"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nx = pack(ids.x, PRIME) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 6,
+              "offset": 10
+            },
+            "reference_ids": {
+              "src.accounts.braavos.lib.field.reduce.x": 8
+            }
+          }
+        },
+        {
+          "accessible_scopes": [
+            "src.accounts.braavos.lib.field",
+            "src.accounts.braavos.lib.field.reduce"
+          ],
+          "code": "from starkware.python.math_utils import div_mod\n\nvalue = x_inv = div_mod(1, x, SECP_P)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 6,
+              "offset": 10
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "186": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.compute_doubling_slope"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 7,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.compute_doubling_slope"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_ALPHA as ALPHA",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 7,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.compute_doubling_slope"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nfrom starkware.python.math_utils import ec_double_slope\n\n# Compute the slope.\nx = pack(ids.point.x, PRIME)\ny = pack(ids.point.y, PRIME)\nvalue = slope = ec_double_slope(point=(x, y), alpha=ALPHA, p=SECP_P)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 7,
+              "offset": 0
+            },
+            "reference_ids": {
+              "__main__.compute_doubling_slope.point": 9
+            }
+          }
+        }
+      ],
+      "236": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.compute_slope"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 8,
+              "offset": 0
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.compute_slope"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nfrom starkware.python.math_utils import line_slope\n\n# Compute the slope.\nx0 = pack(ids.point0.x, PRIME)\ny0 = pack(ids.point0.y, PRIME)\nx1 = pack(ids.point1.x, PRIME)\ny1 = pack(ids.point1.y, PRIME)\nvalue = slope = line_slope(point1=(x0, y0), point2=(x1, y1), p=SECP_P)",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 8,
+              "offset": 0
+            },
+            "reference_ids": {
+              "__main__.compute_slope.point0": 10,
+              "__main__.compute_slope.point1": 11
+            }
+          }
+        }
+      ],
+      "285": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.ec_double"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 9,
+              "offset": 190
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.ec_double"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\n\nslope = pack(ids.slope, PRIME)\nx = pack(ids.point.x, PRIME)\ny = pack(ids.point.y, PRIME)\n\nvalue = new_x = (pow(slope, 2, SECP_P) - 2 * x) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 9,
+              "offset": 190
+            },
+            "reference_ids": {
+              "__main__.ec_double.point": 12,
+              "__main__.ec_double.slope": 13
+            }
+          }
+        }
+      ],
+      "288": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.ec_double"
+          ],
+          "code": "value = new_y = (slope * (x - new_x) - y) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 9,
+              "offset": 200
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "378": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.fast_ec_add"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 10,
+              "offset": 149
+            },
+            "reference_ids": {}
+          }
+        },
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.fast_ec_add"
+          ],
+          "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\n\nslope = pack(ids.slope, PRIME)\nx0 = pack(ids.point0.x, PRIME)\nx1 = pack(ids.point1.x, PRIME)\ny0 = pack(ids.point0.y, PRIME)\n\nvalue = new_x = (pow(slope, 2, SECP_P) - x0 - x1) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 10,
+              "offset": 149
+            },
+            "reference_ids": {
+              "__main__.fast_ec_add.point0": 14,
+              "__main__.fast_ec_add.point1": 15,
+              "__main__.fast_ec_add.slope": 16
+            }
+          }
+        }
+      ],
+      "381": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.fast_ec_add"
+          ],
+          "code": "value = new_y = (slope * (x0 - new_x) - y0) % SECP_P",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 10,
+              "offset": 159
+            },
+            "reference_ids": {}
+          }
+        }
+      ],
+      "511": [
+        {
+          "accessible_scopes": [
+            "__main__",
+            "__main__.ec_mul_inner"
+          ],
+          "code": "memory[ap] = (ids.scalar % PRIME) % 2",
+          "flow_tracking_data": {
+            "ap_tracking": {
+              "group": 17,
+              "offset": 0
+            },
+            "reference_ids": {
+              "__main__.ec_mul_inner.scalar": 17
+            }
+          }
+        }
+      ]
+    },
+    "identifiers": {
+      "__main__.A0": {
+        "destination": "src.accounts.braavos.lib.constants.A0",
+        "type": "alias"
+      },
+      "__main__.A1": {
+        "destination": "src.accounts.braavos.lib.constants.A1",
+        "type": "alias"
+      },
+      "__main__.A2": {
+        "destination": "src.accounts.braavos.lib.constants.A2",
+        "type": "alias"
+      },
+      "__main__.B0": {
+        "destination": "src.accounts.braavos.lib.constants.B0",
+        "type": "alias"
+      },
+      "__main__.B1": {
+        "destination": "src.accounts.braavos.lib.constants.B1",
+        "type": "alias"
+      },
+      "__main__.B2": {
+        "destination": "src.accounts.braavos.lib.constants.B2",
+        "type": "alias"
+      },
+      "__main__.BigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "type": "alias"
+      },
+      "__main__.EcPoint": {
+        "destination": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "type": "alias"
+      },
+      "__main__.UnreducedBigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "type": "alias"
+      },
+      "__main__.compute_doubling_slope": {
+        "decorators": [],
+        "pc": 186,
+        "type": "function"
+      },
+      "__main__.compute_doubling_slope.Args": {
+        "full_name": "__main__.compute_doubling_slope.Args",
+        "members": {
+          "point": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "__main__.compute_doubling_slope.ImplicitArgs": {
+        "full_name": "__main__.compute_doubling_slope.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.compute_doubling_slope.Return": {
+        "cairo_type": "(slope: starkware.cairo.common.cairo_secp.bigint.BigInt3)",
+        "type": "type_definition"
+      },
+      "__main__.compute_doubling_slope.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.compute_doubling_slope.point": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "full_name": "__main__.compute_doubling_slope.point",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 7,
+              "offset": 0
+            },
+            "pc": 186,
+            "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.compute_slope": {
+        "decorators": [],
+        "pc": 236,
+        "type": "function"
+      },
+      "__main__.compute_slope.Args": {
+        "full_name": "__main__.compute_slope.Args",
+        "members": {
+          "point0": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          },
+          "point1": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 6
+          }
+        },
+        "size": 12,
+        "type": "struct"
+      },
+      "__main__.compute_slope.ImplicitArgs": {
+        "full_name": "__main__.compute_slope.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.compute_slope.Return": {
+        "cairo_type": "(slope: starkware.cairo.common.cairo_secp.bigint.BigInt3)",
+        "type": "type_definition"
+      },
+      "__main__.compute_slope.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.compute_slope.point0": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "full_name": "__main__.compute_slope.point0",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 8,
+              "offset": 0
+            },
+            "pc": 236,
+            "value": "[cast(fp + (-14), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.compute_slope.point1": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "full_name": "__main__.compute_slope.point1",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 8,
+              "offset": 0
+            },
+            "pc": 236,
+            "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.ec_add": {
+        "decorators": [],
+        "pc": 420,
+        "type": "function"
+      },
+      "__main__.ec_add.Args": {
+        "full_name": "__main__.ec_add.Args",
+        "members": {
+          "point0": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          },
+          "point1": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 6
+          }
+        },
+        "size": 12,
+        "type": "struct"
+      },
+      "__main__.ec_add.ImplicitArgs": {
+        "full_name": "__main__.ec_add.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.ec_add.Return": {
+        "cairo_type": "(res: starkware.cairo.common.cairo_secp.ec.EcPoint)",
+        "type": "type_definition"
+      },
+      "__main__.ec_add.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.ec_double": {
+        "decorators": [],
+        "pc": 260,
+        "type": "function"
+      },
+      "__main__.ec_double.Args": {
+        "full_name": "__main__.ec_double.Args",
+        "members": {
+          "point": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "__main__.ec_double.ImplicitArgs": {
+        "full_name": "__main__.ec_double.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.ec_double.Return": {
+        "cairo_type": "(res: starkware.cairo.common.cairo_secp.ec.EcPoint)",
+        "type": "type_definition"
+      },
+      "__main__.ec_double.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.ec_double.point": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "full_name": "__main__.ec_double.point",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 9,
+              "offset": 0
+            },
+            "pc": 260,
+            "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.ec_double.slope": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "full_name": "__main__.ec_double.slope",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 9,
+              "offset": 158
+            },
+            "pc": 283,
+            "value": "[cast(ap + (-3), starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.ec_mul": {
+        "decorators": [],
+        "pc": 577,
+        "type": "function"
+      },
+      "__main__.ec_mul.Args": {
+        "full_name": "__main__.ec_mul.Args",
+        "members": {
+          "point": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          },
+          "scalar": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 6
+          }
+        },
+        "size": 9,
+        "type": "struct"
+      },
+      "__main__.ec_mul.ImplicitArgs": {
+        "full_name": "__main__.ec_mul.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.ec_mul.Return": {
+        "cairo_type": "(res: starkware.cairo.common.cairo_secp.ec.EcPoint)",
+        "type": "type_definition"
+      },
+      "__main__.ec_mul.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 18
+      },
+      "__main__.ec_mul_inner": {
+        "decorators": [],
+        "pc": 476,
+        "type": "function"
+      },
+      "__main__.ec_mul_inner.Args": {
+        "full_name": "__main__.ec_mul_inner.Args",
+        "members": {
+          "m": {
+            "cairo_type": "felt",
+            "offset": 7
+          },
+          "point": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          },
+          "scalar": {
+            "cairo_type": "felt",
+            "offset": 6
+          }
+        },
+        "size": 8,
+        "type": "struct"
+      },
+      "__main__.ec_mul_inner.ImplicitArgs": {
+        "full_name": "__main__.ec_mul_inner.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.ec_mul_inner.Return": {
+        "cairo_type": "(pow2: starkware.cairo.common.cairo_secp.ec.EcPoint, res: starkware.cairo.common.cairo_secp.ec.EcPoint)",
+        "type": "type_definition"
+      },
+      "__main__.ec_mul_inner.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 6
+      },
+      "__main__.ec_mul_inner.odd": {
+        "pc": 527,
+        "type": "label"
+      },
+      "__main__.ec_mul_inner.scalar": {
+        "cairo_type": "felt",
+        "full_name": "__main__.ec_mul_inner.scalar",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 16,
+              "offset": 0
+            },
+            "pc": 476,
+            "value": "[cast(fp + (-4), felt*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.fast_ec_add": {
+        "decorators": [],
+        "pc": 333,
+        "type": "function"
+      },
+      "__main__.fast_ec_add.Args": {
+        "full_name": "__main__.fast_ec_add.Args",
+        "members": {
+          "point0": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          },
+          "point1": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 6
+          }
+        },
+        "size": 12,
+        "type": "struct"
+      },
+      "__main__.fast_ec_add.ImplicitArgs": {
+        "full_name": "__main__.fast_ec_add.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.fast_ec_add.Return": {
+        "cairo_type": "(res: starkware.cairo.common.cairo_secp.ec.EcPoint)",
+        "type": "type_definition"
+      },
+      "__main__.fast_ec_add.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.fast_ec_add.point0": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "full_name": "__main__.fast_ec_add.point0",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 10,
+              "offset": 0
+            },
+            "pc": 333,
+            "value": "[cast(fp + (-14), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.fast_ec_add.point1": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "full_name": "__main__.fast_ec_add.point1",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 10,
+              "offset": 0
+            },
+            "pc": 333,
+            "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.fast_ec_add.slope": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "full_name": "__main__.fast_ec_add.slope",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 10,
+              "offset": 117
+            },
+            "pc": 376,
+            "value": "[cast(ap + (-3), starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "__main__.is_zero": {
+        "destination": "src.accounts.braavos.lib.field.is_zero",
+        "type": "alias"
+      },
+      "__main__.nondet_bigint3": {
+        "destination": "src.accounts.braavos.lib.bigint.nondet_bigint3",
+        "type": "alias"
+      },
+      "__main__.reduce": {
+        "destination": "src.accounts.braavos.lib.field.reduce",
+        "type": "alias"
+      },
+      "__main__.unreduced_mul": {
+        "destination": "src.accounts.braavos.lib.field.unreduced_mul",
+        "type": "alias"
+      },
+      "__main__.unreduced_sqr": {
+        "destination": "src.accounts.braavos.lib.field.unreduced_sqr",
+        "type": "alias"
+      },
+      "__main__.verify_point": {
+        "decorators": [],
+        "pc": 657,
+        "type": "function"
+      },
+      "__main__.verify_point.Args": {
+        "full_name": "__main__.verify_point.Args",
+        "members": {
+          "pt": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+            "offset": 0
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "__main__.verify_point.ImplicitArgs": {
+        "full_name": "__main__.verify_point.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "__main__.verify_point.Return": {
+        "cairo_type": "()",
+        "type": "type_definition"
+      },
+      "__main__.verify_point.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "__main__.verify_zero": {
+        "destination": "src.accounts.braavos.lib.field.verify_zero",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.bigint.BASE": {
+        "destination": "src.accounts.braavos.lib.constants.BASE",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.bigint.BigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3": {
+        "decorators": [],
+        "pc": 0,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.Args": {
+        "full_name": "src.accounts.braavos.lib.bigint.nondet_bigint3.Args",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.D2_BOUND": {
+        "type": "const",
+        "value": 340282366920861092210919271164587016192
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.bigint.nondet_bigint3.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.MAX_SUM_BOUND": {
+        "type": "const",
+        "value": 340282366920783720958463934897405820928
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.Return": {
+        "cairo_type": "(res: starkware.cairo.common.cairo_secp.bigint.BigInt3)",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "src.accounts.braavos.lib.bigint.nondet_bigint3.res": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "full_name": "src.accounts.braavos.lib.bigint.nondet_bigint3.res",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 0,
+              "offset": 0
+            },
+            "pc": 0,
+            "value": "[cast(ap + 4, starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.constants.A0": {
+        "type": "const",
+        "value": 77371252455336267181195260
+      },
+      "src.accounts.braavos.lib.constants.A1": {
+        "type": "const",
+        "value": 1023
+      },
+      "src.accounts.braavos.lib.constants.A2": {
+        "type": "const",
+        "value": 19342813109330467168976896
+      },
+      "src.accounts.braavos.lib.constants.B0": {
+        "type": "const",
+        "value": 23805269282153275520606283
+      },
+      "src.accounts.braavos.lib.constants.B1": {
+        "type": "const",
+        "value": 64478498050055519801623345
+      },
+      "src.accounts.braavos.lib.constants.B2": {
+        "type": "const",
+        "value": 6858709101169761702330043
+      },
+      "src.accounts.braavos.lib.constants.BASE": {
+        "type": "const",
+        "value": 77371252455336267181195264
+      },
+      "src.accounts.braavos.lib.constants.GX0": {
+        "type": "const",
+        "value": 52227620040540588600771222
+      },
+      "src.accounts.braavos.lib.constants.GX1": {
+        "type": "const",
+        "value": 33347259622618539004134583
+      },
+      "src.accounts.braavos.lib.constants.GX2": {
+        "type": "const",
+        "value": 8091721874918813684698062
+      },
+      "src.accounts.braavos.lib.constants.GY0": {
+        "type": "const",
+        "value": 59685082318776612195095029
+      },
+      "src.accounts.braavos.lib.constants.GY1": {
+        "type": "const",
+        "value": 54599710628478995760242092
+      },
+      "src.accounts.braavos.lib.constants.GY2": {
+        "type": "const",
+        "value": 6036146923926000695307902
+      },
+      "src.accounts.braavos.lib.constants.N0": {
+        "type": "const",
+        "value": 28553880287938765337601361
+      },
+      "src.accounts.braavos.lib.constants.N1": {
+        "type": "const",
+        "value": 77371252455335114450843292
+      },
+      "src.accounts.braavos.lib.constants.N2": {
+        "type": "const",
+        "value": 19342813109330467168976895
+      },
+      "src.accounts.braavos.lib.constants.P0": {
+        "type": "const",
+        "value": 77371252455336267181195263
+      },
+      "src.accounts.braavos.lib.constants.P1": {
+        "type": "const",
+        "value": 1023
+      },
+      "src.accounts.braavos.lib.constants.P2": {
+        "type": "const",
+        "value": 19342813109330467168976896
+      },
+      "src.accounts.braavos.lib.constants.SECP_REM": {
+        "type": "const",
+        "value": 26959946660873538059280334323183841250350249843923952699046031785985
+      },
+      "src.accounts.braavos.lib.constants.SECP_REM0": {
+        "type": "const",
+        "value": 1
+      },
+      "src.accounts.braavos.lib.constants.SECP_REM1": {
+        "type": "const",
+        "value": -1024
+      },
+      "src.accounts.braavos.lib.constants.SECP_REM2": {
+        "type": "const",
+        "value": 4503599626321920
+      },
+      "src.accounts.braavos.lib.constants.r0": {
+        "type": "const",
+        "value": 4
+      },
+      "src.accounts.braavos.lib.constants.r1": {
+        "type": "const",
+        "value": -4096
+      },
+      "src.accounts.braavos.lib.constants.r2": {
+        "type": "const",
+        "value": 18014398505287680
+      },
+      "src.accounts.braavos.lib.constants.s0": {
+        "type": "const",
+        "value": 72057594037927936
+      },
+      "src.accounts.braavos.lib.constants.s1": {
+        "type": "const",
+        "value": -73786976294838206460
+      },
+      "src.accounts.braavos.lib.constants.s2": {
+        "type": "const",
+        "value": -75557863725914323423232
+      },
+      "src.accounts.braavos.lib.field.BASE": {
+        "destination": "src.accounts.braavos.lib.constants.BASE",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.BigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.P0": {
+        "destination": "src.accounts.braavos.lib.constants.P0",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.P1": {
+        "destination": "src.accounts.braavos.lib.constants.P1",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.P2": {
+        "destination": "src.accounts.braavos.lib.constants.P2",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.SECP_REM": {
+        "destination": "src.accounts.braavos.lib.constants.SECP_REM",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.SECP_REM0": {
+        "destination": "src.accounts.braavos.lib.constants.SECP_REM0",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.SECP_REM1": {
+        "destination": "src.accounts.braavos.lib.constants.SECP_REM1",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.SECP_REM2": {
+        "destination": "src.accounts.braavos.lib.constants.SECP_REM2",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.UnreducedBigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit": {
+        "decorators": [],
+        "pc": 13,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.Args": {
+        "full_name": "src.accounts.braavos.lib.field.assert_165_bit.Args",
+        "members": {
+          "value": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.HIGH_BOUND": {
+        "type": "const",
+        "value": 340282366920938463463374607294329257984
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.field.assert_165_bit.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.Return": {
+        "cairo_type": "()",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.SHIFT": {
+        "type": "const",
+        "value": 340282366920938463463374607431768211456
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.UPPER_BOUND": {
+        "type": "const",
+        "value": 46768052394588893382517914646921056628989841375232
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.high": {
+        "cairo_type": "felt",
+        "full_name": "src.accounts.braavos.lib.field.assert_165_bit.high",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 1,
+              "offset": 0
+            },
+            "pc": 13,
+            "value": "[cast([fp + (-4)] + 1, felt*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.low": {
+        "cairo_type": "felt",
+        "full_name": "src.accounts.braavos.lib.field.assert_165_bit.low",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 1,
+              "offset": 0
+            },
+            "pc": 13,
+            "value": "[cast([fp + (-4)], felt*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.field.assert_165_bit.value": {
+        "cairo_type": "felt",
+        "full_name": "src.accounts.braavos.lib.field.assert_165_bit.value",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 1,
+              "offset": 0
+            },
+            "pc": 13,
+            "value": "[cast(fp + (-3), felt*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.field.is_zero": {
+        "decorators": [],
+        "pc": 134,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.field.is_zero.Args": {
+        "full_name": "src.accounts.braavos.lib.field.is_zero.Args",
+        "members": {
+          "x": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 0
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.is_zero.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.field.is_zero.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.is_zero.Return": {
+        "cairo_type": "(res: felt)",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.field.is_zero.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "src.accounts.braavos.lib.field.is_zero.x": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "full_name": "src.accounts.braavos.lib.field.is_zero.x",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 5,
+              "offset": 0
+            },
+            "pc": 134,
+            "value": "[cast(fp + (-5), starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.field.nondet_bigint3": {
+        "destination": "src.accounts.braavos.lib.bigint.nondet_bigint3",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.r0": {
+        "destination": "src.accounts.braavos.lib.constants.r0",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.r1": {
+        "destination": "src.accounts.braavos.lib.constants.r1",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.r2": {
+        "destination": "src.accounts.braavos.lib.constants.r2",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.reduce": {
+        "decorators": [],
+        "pc": 170,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.field.reduce.Args": {
+        "full_name": "src.accounts.braavos.lib.field.reduce.Args",
+        "members": {
+          "x": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+            "offset": 0
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.reduce.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.field.reduce.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.reduce.Return": {
+        "cairo_type": "(reduced_x: starkware.cairo.common.cairo_secp.bigint.BigInt3)",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.field.reduce.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "src.accounts.braavos.lib.field.reduce.x": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "full_name": "src.accounts.braavos.lib.field.reduce.x",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 6,
+              "offset": 0
+            },
+            "pc": 170,
+            "value": "[cast(fp + (-5), starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3*)]"
+          },
+          {
+            "ap_tracking_data": {
+              "group": 6,
+              "offset": 10
+            },
+            "pc": 173,
+            "value": "[cast(ap + (-3), starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.field.s0": {
+        "destination": "src.accounts.braavos.lib.constants.s0",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.s1": {
+        "destination": "src.accounts.braavos.lib.constants.s1",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.s2": {
+        "destination": "src.accounts.braavos.lib.constants.s2",
+        "type": "alias"
+      },
+      "src.accounts.braavos.lib.field.unreduced_mul": {
+        "decorators": [],
+        "pc": 25,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.field.unreduced_mul.Args": {
+        "full_name": "src.accounts.braavos.lib.field.unreduced_mul.Args",
+        "members": {
+          "a": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 0
+          },
+          "b": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 3
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.unreduced_mul.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.field.unreduced_mul.ImplicitArgs",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.unreduced_mul.Return": {
+        "cairo_type": "(res_low: starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3)",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.field.unreduced_mul.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "src.accounts.braavos.lib.field.unreduced_sqr": {
+        "decorators": [],
+        "pc": 63,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.field.unreduced_sqr.Args": {
+        "full_name": "src.accounts.braavos.lib.field.unreduced_sqr.Args",
+        "members": {
+          "a": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 0
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.unreduced_sqr.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.field.unreduced_sqr.ImplicitArgs",
+        "members": {},
+        "size": 0,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.unreduced_sqr.Return": {
+        "cairo_type": "(res_low: starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3)",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.field.unreduced_sqr.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 0
+      },
+      "src.accounts.braavos.lib.field.verify_zero": {
+        "decorators": [],
+        "pc": 100,
+        "type": "function"
+      },
+      "src.accounts.braavos.lib.field.verify_zero.Args": {
+        "full_name": "src.accounts.braavos.lib.field.verify_zero.Args",
+        "members": {
+          "val": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+            "offset": 0
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.verify_zero.ImplicitArgs": {
+        "full_name": "src.accounts.braavos.lib.field.verify_zero.ImplicitArgs",
+        "members": {
+          "range_check_ptr": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "src.accounts.braavos.lib.field.verify_zero.Return": {
+        "cairo_type": "()",
+        "type": "type_definition"
+      },
+      "src.accounts.braavos.lib.field.verify_zero.SIZEOF_LOCALS": {
+        "type": "const",
+        "value": 1
+      },
+      "src.accounts.braavos.lib.field.verify_zero.q": {
+        "cairo_type": "felt",
+        "full_name": "src.accounts.braavos.lib.field.verify_zero.q",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 4,
+              "offset": 1
+            },
+            "pc": 102,
+            "value": "[cast(fp, felt*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "src.accounts.braavos.lib.field.verify_zero.val": {
+        "cairo_type": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "full_name": "src.accounts.braavos.lib.field.verify_zero.val",
+        "references": [
+          {
+            "ap_tracking_data": {
+              "group": 4,
+              "offset": 0
+            },
+            "pc": 100,
+            "value": "[cast(fp + (-5), starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3*)]"
+          }
+        ],
+        "type": "reference"
+      },
+      "starkware.cairo.common.bitwise.ALL_ONES": {
+        "type": "const",
+        "value": -106710729501573572985208420194530329073740042555888586719234
+      },
+      "starkware.cairo.common.bitwise.BitwiseBuiltin": {
+        "destination": "starkware.cairo.common.cairo_builtins.BitwiseBuiltin",
+        "type": "alias"
+      },
+      "starkware.cairo.common.bool.FALSE": {
+        "type": "const",
+        "value": 0
+      },
+      "starkware.cairo.common.bool.TRUE": {
+        "type": "const",
+        "value": 1
+      },
+      "starkware.cairo.common.cairo_builtins.BitwiseBuiltin": {
+        "full_name": "starkware.cairo.common.cairo_builtins.BitwiseBuiltin",
+        "members": {
+          "x": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "x_and_y": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "x_or_y": {
+            "cairo_type": "felt",
+            "offset": 4
+          },
+          "x_xor_y": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "y": {
+            "cairo_type": "felt",
+            "offset": 1
+          }
+        },
+        "size": 5,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_builtins.EcOpBuiltin": {
+        "full_name": "starkware.cairo.common.cairo_builtins.EcOpBuiltin",
+        "members": {
+          "m": {
+            "cairo_type": "felt",
+            "offset": 4
+          },
+          "p": {
+            "cairo_type": "starkware.cairo.common.ec_point.EcPoint",
+            "offset": 0
+          },
+          "q": {
+            "cairo_type": "starkware.cairo.common.ec_point.EcPoint",
+            "offset": 2
+          },
+          "r": {
+            "cairo_type": "starkware.cairo.common.ec_point.EcPoint",
+            "offset": 5
+          }
+        },
+        "size": 7,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_builtins.EcPoint": {
+        "destination": "starkware.cairo.common.ec_point.EcPoint",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_builtins.HashBuiltin": {
+        "full_name": "starkware.cairo.common.cairo_builtins.HashBuiltin",
+        "members": {
+          "result": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "x": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "y": {
+            "cairo_type": "felt",
+            "offset": 1
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_builtins.KeccakBuiltin": {
+        "full_name": "starkware.cairo.common.cairo_builtins.KeccakBuiltin",
+        "members": {
+          "input": {
+            "cairo_type": "starkware.cairo.common.keccak_state.KeccakBuiltinState",
+            "offset": 0
+          },
+          "output": {
+            "cairo_type": "starkware.cairo.common.keccak_state.KeccakBuiltinState",
+            "offset": 8
+          }
+        },
+        "size": 16,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_builtins.KeccakBuiltinState": {
+        "destination": "starkware.cairo.common.keccak_state.KeccakBuiltinState",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_builtins.PoseidonBuiltin": {
+        "full_name": "starkware.cairo.common.cairo_builtins.PoseidonBuiltin",
+        "members": {
+          "input": {
+            "cairo_type": "starkware.cairo.common.poseidon_state.PoseidonBuiltinState",
+            "offset": 0
+          },
+          "output": {
+            "cairo_type": "starkware.cairo.common.poseidon_state.PoseidonBuiltinState",
+            "offset": 3
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_builtins.PoseidonBuiltinState": {
+        "destination": "starkware.cairo.common.poseidon_state.PoseidonBuiltinState",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_builtins.SignatureBuiltin": {
+        "full_name": "starkware.cairo.common.cairo_builtins.SignatureBuiltin",
+        "members": {
+          "message": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "pub_key": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.BASE": {
+        "destination": "starkware.cairo.common.cairo_secp.constants.BASE",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.BigInt3": {
+        "full_name": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "members": {
+          "d0": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "d1": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "d2": {
+            "cairo_type": "felt",
+            "offset": 2
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.RC_BOUND": {
+        "destination": "starkware.cairo.common.math_cmp.RC_BOUND",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.Uint256": {
+        "destination": "starkware.cairo.common.uint256.Uint256",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3": {
+        "full_name": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "members": {
+          "d0": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "d1": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "d2": {
+            "cairo_type": "felt",
+            "offset": 2
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt5": {
+        "full_name": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt5",
+        "members": {
+          "d0": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "d1": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "d2": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "d3": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "d4": {
+            "cairo_type": "felt",
+            "offset": 4
+          }
+        },
+        "size": 5,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.assert_nn": {
+        "destination": "starkware.cairo.common.math.assert_nn",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.assert_nn_le": {
+        "destination": "starkware.cairo.common.math.assert_nn_le",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.bigint.unsigned_div_rem": {
+        "destination": "starkware.cairo.common.math.unsigned_div_rem",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.constants.BASE": {
+        "type": "const",
+        "value": 77371252455336267181195264
+      },
+      "starkware.cairo.common.cairo_secp.constants.BETA": {
+        "type": "const",
+        "value": 7
+      },
+      "starkware.cairo.common.cairo_secp.constants.N0": {
+        "type": "const",
+        "value": 10428087374290690730508609
+      },
+      "starkware.cairo.common.cairo_secp.constants.N1": {
+        "type": "const",
+        "value": 77371252455330678278691517
+      },
+      "starkware.cairo.common.cairo_secp.constants.N2": {
+        "type": "const",
+        "value": 19342813113834066795298815
+      },
+      "starkware.cairo.common.cairo_secp.constants.P0": {
+        "type": "const",
+        "value": 77371252455336262886226991
+      },
+      "starkware.cairo.common.cairo_secp.constants.P1": {
+        "type": "const",
+        "value": 77371252455336267181195263
+      },
+      "starkware.cairo.common.cairo_secp.constants.P2": {
+        "type": "const",
+        "value": 19342813113834066795298815
+      },
+      "starkware.cairo.common.cairo_secp.constants.SECP_REM": {
+        "type": "const",
+        "value": 4294968273
+      },
+      "starkware.cairo.common.cairo_secp.ec.BigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.ec.EcPoint": {
+        "full_name": "starkware.cairo.common.cairo_secp.ec.EcPoint",
+        "members": {
+          "x": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 0
+          },
+          "y": {
+            "cairo_type": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+            "offset": 3
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "starkware.cairo.common.cairo_secp.ec.UnreducedBigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.ec.is_zero": {
+        "destination": "starkware.cairo.common.cairo_secp.field.is_zero",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.ec.nondet_bigint3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.nondet_bigint3",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.ec.unreduced_mul": {
+        "destination": "starkware.cairo.common.cairo_secp.field.unreduced_mul",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.ec.unreduced_sqr": {
+        "destination": "starkware.cairo.common.cairo_secp.field.unreduced_sqr",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.ec.verify_zero": {
+        "destination": "starkware.cairo.common.cairo_secp.field.verify_zero",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.BASE": {
+        "destination": "starkware.cairo.common.cairo_secp.constants.BASE",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.BigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.BigInt3",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.P0": {
+        "destination": "starkware.cairo.common.cairo_secp.constants.P0",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.P1": {
+        "destination": "starkware.cairo.common.cairo_secp.constants.P1",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.P2": {
+        "destination": "starkware.cairo.common.cairo_secp.constants.P2",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.SECP_REM": {
+        "destination": "starkware.cairo.common.cairo_secp.constants.SECP_REM",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.UnreducedBigInt3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.assert_nn_le": {
+        "destination": "starkware.cairo.common.math.assert_nn_le",
+        "type": "alias"
+      },
+      "starkware.cairo.common.cairo_secp.field.nondet_bigint3": {
+        "destination": "starkware.cairo.common.cairo_secp.bigint.nondet_bigint3",
+        "type": "alias"
+      },
+      "starkware.cairo.common.dict_access.DictAccess": {
+        "full_name": "starkware.cairo.common.dict_access.DictAccess",
+        "members": {
+          "key": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "new_value": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "prev_value": {
+            "cairo_type": "felt",
+            "offset": 1
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.cairo.common.ec_point.EcPoint": {
+        "full_name": "starkware.cairo.common.ec_point.EcPoint",
+        "members": {
+          "x": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "y": {
+            "cairo_type": "felt",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.cairo.common.hash.HashBuiltin": {
+        "destination": "starkware.cairo.common.cairo_builtins.HashBuiltin",
+        "type": "alias"
+      },
+      "starkware.cairo.common.keccak_state.KeccakBuiltinState": {
+        "full_name": "starkware.cairo.common.keccak_state.KeccakBuiltinState",
+        "members": {
+          "s0": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "s1": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "s2": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "s3": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "s4": {
+            "cairo_type": "felt",
+            "offset": 4
+          },
+          "s5": {
+            "cairo_type": "felt",
+            "offset": 5
+          },
+          "s6": {
+            "cairo_type": "felt",
+            "offset": 6
+          },
+          "s7": {
+            "cairo_type": "felt",
+            "offset": 7
+          }
+        },
+        "size": 8,
+        "type": "struct"
+      },
+      "starkware.cairo.common.math.FALSE": {
+        "destination": "starkware.cairo.common.bool.FALSE",
+        "type": "alias"
+      },
+      "starkware.cairo.common.math.TRUE": {
+        "destination": "starkware.cairo.common.bool.TRUE",
+        "type": "alias"
+      },
+      "starkware.cairo.common.math_cmp.RC_BOUND": {
+        "type": "const",
+        "value": 340282366920938463463374607431768211456
+      },
+      "starkware.cairo.common.math_cmp.assert_le_felt": {
+        "destination": "starkware.cairo.common.math.assert_le_felt",
+        "type": "alias"
+      },
+      "starkware.cairo.common.math_cmp.assert_lt_felt": {
+        "destination": "starkware.cairo.common.math.assert_lt_felt",
+        "type": "alias"
+      },
+      "starkware.cairo.common.poseidon_state.PoseidonBuiltinState": {
+        "full_name": "starkware.cairo.common.poseidon_state.PoseidonBuiltinState",
+        "members": {
+          "s0": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "s1": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "s2": {
+            "cairo_type": "felt",
+            "offset": 2
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.cairo.common.pow.assert_le": {
+        "destination": "starkware.cairo.common.math.assert_le",
+        "type": "alias"
+      },
+      "starkware.cairo.common.pow.get_ap": {
+        "destination": "starkware.cairo.common.registers.get_ap",
+        "type": "alias"
+      },
+      "starkware.cairo.common.pow.get_fp_and_pc": {
+        "destination": "starkware.cairo.common.registers.get_fp_and_pc",
+        "type": "alias"
+      },
+      "starkware.cairo.common.registers.get_ap": {
+        "destination": "starkware.cairo.lang.compiler.lib.registers.get_ap",
+        "type": "alias"
+      },
+      "starkware.cairo.common.registers.get_fp_and_pc": {
+        "destination": "starkware.cairo.lang.compiler.lib.registers.get_fp_and_pc",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.ALL_ONES": {
+        "type": "const",
+        "value": 340282366920938463463374607431768211455
+      },
+      "starkware.cairo.common.uint256.BitwiseBuiltin": {
+        "destination": "starkware.cairo.common.cairo_builtins.BitwiseBuiltin",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.HALF_SHIFT": {
+        "type": "const",
+        "value": 18446744073709551616
+      },
+      "starkware.cairo.common.uint256.SHIFT": {
+        "type": "const",
+        "value": 340282366920938463463374607431768211456
+      },
+      "starkware.cairo.common.uint256.Uint256": {
+        "full_name": "starkware.cairo.common.uint256.Uint256",
+        "members": {
+          "high": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "low": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.cairo.common.uint256.assert_in_range": {
+        "destination": "starkware.cairo.common.math.assert_in_range",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.assert_le": {
+        "destination": "starkware.cairo.common.math.assert_le",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.assert_nn_le": {
+        "destination": "starkware.cairo.common.math.assert_nn_le",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.assert_not_zero": {
+        "destination": "starkware.cairo.common.math.assert_not_zero",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.bitwise_and": {
+        "destination": "starkware.cairo.common.bitwise.bitwise_and",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.bitwise_or": {
+        "destination": "starkware.cairo.common.bitwise.bitwise_or",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.bitwise_xor": {
+        "destination": "starkware.cairo.common.bitwise.bitwise_xor",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.get_ap": {
+        "destination": "starkware.cairo.common.registers.get_ap",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.get_fp_and_pc": {
+        "destination": "starkware.cairo.common.registers.get_fp_and_pc",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.is_le": {
+        "destination": "starkware.cairo.common.math_cmp.is_le",
+        "type": "alias"
+      },
+      "starkware.cairo.common.uint256.pow": {
+        "destination": "starkware.cairo.common.pow.pow",
+        "type": "alias"
+      },
+      "starkware.starknet.common.storage.ADDR_BOUND": {
+        "type": "const",
+        "value": -106710729501573572985208420194530329073740042555888586719489
+      },
+      "starkware.starknet.common.storage.MAX_STORAGE_ITEM_SIZE": {
+        "type": "const",
+        "value": 256
+      },
+      "starkware.starknet.common.storage.assert_250_bit": {
+        "destination": "starkware.cairo.common.math.assert_250_bit",
+        "type": "alias"
+      },
+      "starkware.starknet.common.syscalls.CALL_CONTRACT_SELECTOR": {
+        "type": "const",
+        "value": 20853273475220472486191784820
+      },
+      "starkware.starknet.common.syscalls.CallContract": {
+        "full_name": "starkware.starknet.common.syscalls.CallContract",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.CallContractRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.CallContractResponse",
+            "offset": 5
+          }
+        },
+        "size": 7,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.CallContractRequest": {
+        "full_name": "starkware.starknet.common.syscalls.CallContractRequest",
+        "members": {
+          "calldata": {
+            "cairo_type": "felt*",
+            "offset": 4
+          },
+          "calldata_size": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "contract_address": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "function_selector": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 5,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.CallContractResponse": {
+        "full_name": "starkware.starknet.common.syscalls.CallContractResponse",
+        "members": {
+          "retdata": {
+            "cairo_type": "felt*",
+            "offset": 1
+          },
+          "retdata_size": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.DELEGATE_CALL_SELECTOR": {
+        "type": "const",
+        "value": 21167594061783206823196716140
+      },
+      "starkware.starknet.common.syscalls.DELEGATE_L1_HANDLER_SELECTOR": {
+        "type": "const",
+        "value": 23274015802972845247556842986379118667122
+      },
+      "starkware.starknet.common.syscalls.DEPLOY_SELECTOR": {
+        "type": "const",
+        "value": 75202468540281
+      },
+      "starkware.starknet.common.syscalls.Deploy": {
+        "full_name": "starkware.starknet.common.syscalls.Deploy",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.DeployRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.DeployResponse",
+            "offset": 6
+          }
+        },
+        "size": 9,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.DeployRequest": {
+        "full_name": "starkware.starknet.common.syscalls.DeployRequest",
+        "members": {
+          "class_hash": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "constructor_calldata": {
+            "cairo_type": "felt*",
+            "offset": 4
+          },
+          "constructor_calldata_size": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "contract_address_salt": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "deploy_from_zero": {
+            "cairo_type": "felt",
+            "offset": 5
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 6,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.DeployResponse": {
+        "full_name": "starkware.starknet.common.syscalls.DeployResponse",
+        "members": {
+          "constructor_retdata": {
+            "cairo_type": "felt*",
+            "offset": 2
+          },
+          "constructor_retdata_size": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "contract_address": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.DictAccess": {
+        "destination": "starkware.cairo.common.dict_access.DictAccess",
+        "type": "alias"
+      },
+      "starkware.starknet.common.syscalls.EMIT_EVENT_SELECTOR": {
+        "type": "const",
+        "value": 1280709301550335749748
+      },
+      "starkware.starknet.common.syscalls.EmitEvent": {
+        "full_name": "starkware.starknet.common.syscalls.EmitEvent",
+        "members": {
+          "data": {
+            "cairo_type": "felt*",
+            "offset": 4
+          },
+          "data_len": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "keys": {
+            "cairo_type": "felt*",
+            "offset": 2
+          },
+          "keys_len": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 5,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GET_BLOCK_NUMBER_SELECTOR": {
+        "type": "const",
+        "value": 1448089106835523001438702345020786
+      },
+      "starkware.starknet.common.syscalls.GET_BLOCK_TIMESTAMP_SELECTOR": {
+        "type": "const",
+        "value": 24294903732626645868215235778792757751152
+      },
+      "starkware.starknet.common.syscalls.GET_CALLER_ADDRESS_SELECTOR": {
+        "type": "const",
+        "value": 94901967781393078444254803017658102643
+      },
+      "starkware.starknet.common.syscalls.GET_CONTRACT_ADDRESS_SELECTOR": {
+        "type": "const",
+        "value": 6219495360805491471215297013070624192820083
+      },
+      "starkware.starknet.common.syscalls.GET_SEQUENCER_ADDRESS_SELECTOR": {
+        "type": "const",
+        "value": 1592190833581991703053805829594610833820054387
+      },
+      "starkware.starknet.common.syscalls.GET_TX_INFO_SELECTOR": {
+        "type": "const",
+        "value": 1317029390204112103023
+      },
+      "starkware.starknet.common.syscalls.GET_TX_SIGNATURE_SELECTOR": {
+        "type": "const",
+        "value": 1448089128652340074717162277007973
+      },
+      "starkware.starknet.common.syscalls.GetBlockNumber": {
+        "full_name": "starkware.starknet.common.syscalls.GetBlockNumber",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetBlockNumberRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetBlockNumberResponse",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetBlockNumberRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetBlockNumberRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetBlockNumberResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetBlockNumberResponse",
+        "members": {
+          "block_number": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetBlockTimestamp": {
+        "full_name": "starkware.starknet.common.syscalls.GetBlockTimestamp",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetBlockTimestampRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetBlockTimestampResponse",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetBlockTimestampRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetBlockTimestampRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetBlockTimestampResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetBlockTimestampResponse",
+        "members": {
+          "block_timestamp": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetCallerAddress": {
+        "full_name": "starkware.starknet.common.syscalls.GetCallerAddress",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetCallerAddressRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetCallerAddressResponse",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetCallerAddressRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetCallerAddressRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetCallerAddressResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetCallerAddressResponse",
+        "members": {
+          "caller_address": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetContractAddress": {
+        "full_name": "starkware.starknet.common.syscalls.GetContractAddress",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetContractAddressRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetContractAddressResponse",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetContractAddressRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetContractAddressRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetContractAddressResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetContractAddressResponse",
+        "members": {
+          "contract_address": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetSequencerAddress": {
+        "full_name": "starkware.starknet.common.syscalls.GetSequencerAddress",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetSequencerAddressRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetSequencerAddressResponse",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetSequencerAddressRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetSequencerAddressRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetSequencerAddressResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetSequencerAddressResponse",
+        "members": {
+          "sequencer_address": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetTxInfo": {
+        "full_name": "starkware.starknet.common.syscalls.GetTxInfo",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetTxInfoRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetTxInfoResponse",
+            "offset": 1
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetTxInfoRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetTxInfoRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetTxInfoResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetTxInfoResponse",
+        "members": {
+          "tx_info": {
+            "cairo_type": "starkware.starknet.common.syscalls.TxInfo*",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetTxSignature": {
+        "full_name": "starkware.starknet.common.syscalls.GetTxSignature",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetTxSignatureRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.GetTxSignatureResponse",
+            "offset": 1
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetTxSignatureRequest": {
+        "full_name": "starkware.starknet.common.syscalls.GetTxSignatureRequest",
+        "members": {
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.GetTxSignatureResponse": {
+        "full_name": "starkware.starknet.common.syscalls.GetTxSignatureResponse",
+        "members": {
+          "signature": {
+            "cairo_type": "felt*",
+            "offset": 1
+          },
+          "signature_len": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.LIBRARY_CALL_L1_HANDLER_SELECTOR": {
+        "type": "const",
+        "value": 436233452754198157705746250789557519228244616562
+      },
+      "starkware.starknet.common.syscalls.LIBRARY_CALL_SELECTOR": {
+        "type": "const",
+        "value": 92376026794327011772951660
+      },
+      "starkware.starknet.common.syscalls.LibraryCall": {
+        "full_name": "starkware.starknet.common.syscalls.LibraryCall",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.LibraryCallRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.CallContractResponse",
+            "offset": 5
+          }
+        },
+        "size": 7,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.LibraryCallRequest": {
+        "full_name": "starkware.starknet.common.syscalls.LibraryCallRequest",
+        "members": {
+          "calldata": {
+            "cairo_type": "felt*",
+            "offset": 4
+          },
+          "calldata_size": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "class_hash": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "function_selector": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 5,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.REPLACE_CLASS_SELECTOR": {
+        "type": "const",
+        "value": 25500403217443378527601783667
+      },
+      "starkware.starknet.common.syscalls.ReplaceClass": {
+        "full_name": "starkware.starknet.common.syscalls.ReplaceClass",
+        "members": {
+          "class_hash": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.SEND_MESSAGE_TO_L1_SELECTOR": {
+        "type": "const",
+        "value": 433017908768303439907196859243777073
+      },
+      "starkware.starknet.common.syscalls.STORAGE_READ_SELECTOR": {
+        "type": "const",
+        "value": 100890693370601760042082660
+      },
+      "starkware.starknet.common.syscalls.STORAGE_WRITE_SELECTOR": {
+        "type": "const",
+        "value": 25828017502874050592466629733
+      },
+      "starkware.starknet.common.syscalls.SendMessageToL1SysCall": {
+        "full_name": "starkware.starknet.common.syscalls.SendMessageToL1SysCall",
+        "members": {
+          "payload_ptr": {
+            "cairo_type": "felt*",
+            "offset": 3
+          },
+          "payload_size": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "to_address": {
+            "cairo_type": "felt",
+            "offset": 1
+          }
+        },
+        "size": 4,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.StorageRead": {
+        "full_name": "starkware.starknet.common.syscalls.StorageRead",
+        "members": {
+          "request": {
+            "cairo_type": "starkware.starknet.common.syscalls.StorageReadRequest",
+            "offset": 0
+          },
+          "response": {
+            "cairo_type": "starkware.starknet.common.syscalls.StorageReadResponse",
+            "offset": 2
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.StorageReadRequest": {
+        "full_name": "starkware.starknet.common.syscalls.StorageReadRequest",
+        "members": {
+          "address": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 2,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.StorageReadResponse": {
+        "full_name": "starkware.starknet.common.syscalls.StorageReadResponse",
+        "members": {
+          "value": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 1,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.StorageWrite": {
+        "full_name": "starkware.starknet.common.syscalls.StorageWrite",
+        "members": {
+          "address": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "selector": {
+            "cairo_type": "felt",
+            "offset": 0
+          },
+          "value": {
+            "cairo_type": "felt",
+            "offset": 2
+          }
+        },
+        "size": 3,
+        "type": "struct"
+      },
+      "starkware.starknet.common.syscalls.TxInfo": {
+        "full_name": "starkware.starknet.common.syscalls.TxInfo",
+        "members": {
+          "account_contract_address": {
+            "cairo_type": "felt",
+            "offset": 1
+          },
+          "chain_id": {
+            "cairo_type": "felt",
+            "offset": 6
+          },
+          "max_fee": {
+            "cairo_type": "felt",
+            "offset": 2
+          },
+          "nonce": {
+            "cairo_type": "felt",
+            "offset": 7
+          },
+          "signature": {
+            "cairo_type": "felt*",
+            "offset": 4
+          },
+          "signature_len": {
+            "cairo_type": "felt",
+            "offset": 3
+          },
+          "transaction_hash": {
+            "cairo_type": "felt",
+            "offset": 5
+          },
+          "version": {
+            "cairo_type": "felt",
+            "offset": 0
+          }
+        },
+        "size": 8,
+        "type": "struct"
+      }
+    },
+    "main_scope": "__main__",
+    "prime": "0x800000000000011000000000000000000000000000000000000000000000001",
+    "reference_manager": {
+      "references": [
+        {
+          "ap_tracking_data": {
+            "group": 0,
+            "offset": 0
+          },
+          "pc": 0,
+          "value": "[cast(ap + 4, starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 1,
+            "offset": 0
+          },
+          "pc": 13,
+          "value": "[cast(fp + (-3), felt*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 1,
+            "offset": 0
+          },
+          "pc": 13,
+          "value": "[cast([fp + (-4)], felt*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 1,
+            "offset": 0
+          },
+          "pc": 13,
+          "value": "[cast([fp + (-4)] + 1, felt*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 4,
+            "offset": 0
+          },
+          "pc": 100,
+          "value": "[cast(fp + (-5), starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 4,
+            "offset": 1
+          },
+          "pc": 102,
+          "value": "[cast(fp, felt*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 5,
+            "offset": 0
+          },
+          "pc": 134,
+          "value": "[cast(fp + (-5), starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 6,
+            "offset": 0
+          },
+          "pc": 170,
+          "value": "[cast(fp + (-5), starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 6,
+            "offset": 10
+          },
+          "pc": 173,
+          "value": "[cast(ap + (-3), starkware.cairo.common.cairo_secp.bigint.UnreducedBigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 7,
+            "offset": 0
+          },
+          "pc": 186,
+          "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 8,
+            "offset": 0
+          },
+          "pc": 236,
+          "value": "[cast(fp + (-14), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 8,
+            "offset": 0
+          },
+          "pc": 236,
+          "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 9,
+            "offset": 0
+          },
+          "pc": 260,
+          "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 9,
+            "offset": 158
+          },
+          "pc": 283,
+          "value": "[cast(ap + (-3), starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 10,
+            "offset": 0
+          },
+          "pc": 333,
+          "value": "[cast(fp + (-14), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 10,
+            "offset": 0
+          },
+          "pc": 333,
+          "value": "[cast(fp + (-8), starkware.cairo.common.cairo_secp.ec.EcPoint*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 10,
+            "offset": 117
+          },
+          "pc": 376,
+          "value": "[cast(ap + (-3), starkware.cairo.common.cairo_secp.bigint.BigInt3*)]"
+        },
+        {
+          "ap_tracking_data": {
+            "group": 16,
+            "offset": 0
+          },
+          "pc": 476,
+          "value": "[cast(fp + (-4), felt*)]"
+        }
+      ]
+    }
+  }
+}

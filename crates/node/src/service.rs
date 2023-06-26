@@ -9,11 +9,16 @@ use futures::future;
 use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
+use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
+use mc_transaction_pool::FullPool;
+use mp_starknet::sequencer_address::{
+    InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
+};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
-use sc_client_api::{BlockBackend, BlockchainEvents, HeaderBackend};
+use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
 use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
@@ -21,16 +26,16 @@ pub use sc_executor::NativeElseWasmExecutor;
 use sc_service::error::Error as ServiceError;
 use sc_service::{Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
-use sc_transaction_pool::FullPool;
+use sp_api::offchain::OffchainStorage;
 use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 
 use crate::cli::Sealing;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
-
 // Our native executor instance.
 pub struct ExecutorDispatch;
 
@@ -68,7 +73,7 @@ pub fn new_partial<BIQ>(
         FullBackend,
         FullSelectChain,
         sc_consensus::DefaultImportQueue<Block, FullClient>,
-        sc_transaction_pool::FullPool<Block, FullClient>,
+        mc_transaction_pool::FullPool<Block, FullClient>,
         (
             BoxBlockImport<FullClient>,
             sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
@@ -117,8 +122,8 @@ where
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-        config.transaction_pool.clone(),
+    let transaction_pool = mc_transaction_pool::BasicPool::new_full(
+        mc_transaction_pool::Options::from(config.transaction_pool.clone()),
         config.role.is_authority().into(),
         config.prometheus_registry(),
         task_manager.spawn_essential_handle(),
@@ -133,8 +138,6 @@ where
     )?;
 
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
-
-    let _slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 
     let (import_queue, block_import) = build_import_queue(
         client.clone(),
@@ -171,6 +174,7 @@ where
     RuntimeApi: Send + Sync + 'static,
 {
     let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
+
     let create_inherent_data_providers = move |_, ()| async move {
         let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
         let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
@@ -289,7 +293,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     let starknet_rpc_params = StarknetDeps {
         client: client.clone(),
         madara_backend: madara_backend.clone(),
-        overrides: overrides.clone(),
+        overrides,
         sync_service: sync_service.clone(),
         starting_block,
     };
@@ -297,11 +301,13 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     let rpc_extensions_builder = {
         let client = client.clone();
         let pool = transaction_pool.clone();
+        let graph = transaction_pool.pool().clone();
 
         Box::new(move |deny_unsafe, _| {
             let deps = crate::rpc::FullDeps {
                 client: client.clone(),
                 pool: pool.clone(),
+                graph: graph.clone(),
                 deny_unsafe,
                 starknet: starknet_rpc_params.clone(),
                 command_sink: if sealing.is_some() { Some(command_sink.clone()) } else { None },
@@ -335,8 +341,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             client.import_notification_stream(),
             Duration::new(6, 0),
             client.clone(),
-            backend,
-            overrides,
+            backend.clone(),
             madara_backend,
             3,
             0,
@@ -356,7 +361,6 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
                 block_import,
                 &task_manager,
                 prometheus_registry.as_ref(),
-                telemetry.as_ref(),
                 commands_stream,
             )?;
 
@@ -366,12 +370,11 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             return Ok(task_manager);
         }
 
-        let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+        let proposer_factory = ProposerFactory::new(
             task_manager.spawn_handle(),
             client.clone(),
             transaction_pool,
             prometheus_registry.as_ref(),
-            telemetry.as_ref().map(|x| x.handle()),
         );
 
         let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
@@ -382,15 +385,31 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             select_chain,
             block_import,
             proposer_factory,
-            create_inherent_data_providers: move |_, ()| async move {
-                let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+            create_inherent_data_providers: move |_, ()| {
+                let offchain_storage = backend.offchain_storage();
+                async move {
+                    let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
 
-                let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-                    *timestamp,
-                    slot_duration,
-                );
+                    let slot = sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+                        *timestamp,
+                        slot_duration,
+                    );
 
-                Ok((slot, timestamp))
+                    let ocw_storage = offchain_storage.clone();
+                    let prefix = &STORAGE_PREFIX;
+                    let key = SEQ_ADDR_STORAGE_KEY;
+
+                    let sequencer_address = if let Some(storage) = ocw_storage {
+                        SeqAddrInherentDataProvider::try_from(
+                            storage.get(prefix, key).unwrap_or(DEFAULT_SEQUENCER_ADDRESS.to_vec()),
+                        )
+                        .unwrap_or_default()
+                    } else {
+                        SeqAddrInherentDataProvider::default()
+                    };
+
+                    Ok((slot, timestamp, sequencer_address))
+                }
             },
             force_authoring,
             backoff_authoring_blocks,
@@ -464,19 +483,17 @@ fn run_manual_seal_authorship(
     block_import: BoxBlockImport<FullClient>,
     task_manager: &TaskManager,
     prometheus_registry: Option<&Registry>,
-    telemetry: Option<&Telemetry>,
     commands_stream: mpsc::Receiver<sc_consensus_manual_seal::rpc::EngineCommand<Hash>>,
 ) -> Result<(), ServiceError>
 where
     RuntimeApi: ConstructRuntimeApi<Block, FullClient>,
     RuntimeApi: Send + Sync + 'static,
 {
-    let proposer_factory = sc_basic_authorship::ProposerFactory::new(
+    let proposer_factory = ProposerFactory::new(
         task_manager.spawn_handle(),
         client.clone(),
         transaction_pool.clone(),
         prometheus_registry,
-        telemetry.as_ref().map(|x| x.handle()),
     );
 
     thread_local!(static TIMESTAMP: RefCell<u64> = RefCell::new(0));

@@ -18,6 +18,8 @@ pub enum StarknetRpcApiError {
     InvalidTxnIndex = 27,
     #[error("Class hash not found")]
     ClassHashNotFound = 28,
+    #[error("Class already declared")]
+    ClassAlreadyDeclared = 51,
     #[error("Requested page size is too big")]
     PageSizeTooBig = 31,
     #[error("There are no blocks")]
@@ -36,6 +38,8 @@ pub enum StarknetRpcApiError {
     InternalServerError = 500,
     #[error("Failed to fetch pending transactions")]
     FailedToFetchPendingTransactions = 38,
+    #[error("Unimplemented method")]
+    UnimplementedMethod = 501,
 }
 
 impl From<StarknetRpcApiError> for jsonrpsee::core::Error {

@@ -12,6 +12,13 @@ pub trait HasherT {
     /// # Returns
     /// The hash of the data.
     fn hash(&self, data: &[u8]) -> Felt252Wrapper;
+
+    // Hashes the given data.
+    /// # Arguments
+    /// * `data` - The data to hash.
+    /// # Returns
+    /// The hash of the data.
+    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper;
 }
 
 /// A trait for default hashing instance.

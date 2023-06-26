@@ -1,0 +1,80 @@
+---
+- name: Install apt dependencies
+  become: true
+  become_user: root
+  ansible.builtin.apt:
+    update_cache: true
+    pkg:
+      - git
+      - clang
+      - curl
+      - libssl-dev
+      - llvm
+      - libudev-dev
+      - make
+      - protobuf-compiler
+- name: Install rust
+  ansible.builtin.shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  register: rust_install_output
+
+- name: Print rust installation output
+  ansible.builtin.debug:
+    msg: "{{ rust_install_output.stdout_lines }}"
+
+- name: Compile madara node
+  ansible.builtin.shell: |
+    . $HOME/.cargo/env
+    rm -rf madara
+    git clone https://github.com/keep-starknet-strange/madara.git
+    cd madara
+    cargo build --release
+  register: substrate_compile_output
+
+- name: Print substrate compilation output
+  ansible.builtin.debug:
+    msg: "{{ substrate_compile_output.stdout_lines }}"
+
+- name: Wait for bootstrap_node
+  wait_for: host={{ bootstrap_node }} port=9944 delay=1 timeout=300
+  when: bootstrap_node is defined
+
+- name: Get bootstrap peer id
+  ansible.builtin.uri:
+    url: http://{{bootstrap_node}}:9944
+    method: POST
+    return_content: yes
+    headers:
+      Content-Type: "application/json"
+    body:
+      '{"jsonrpc": "2.0","method": "system_localPeerId","params": [],"id": 1}'
+  register: bootstrap_peerid
+  when: bootstrap_node is defined
+
+- name: print bootstrap peer id
+  ansible.builtin.debug:
+    msg: "{{ bootstrap_peerid }}"
+
+- name: Enable systemd linger for {{ ansible_user }} user
+  become: true
+  become_user: root
+  ansible.builtin.shell: |
+    loginctl enable-linger {{ ansible_user }}
+
+- name: Create {{ ansible_user }} user systemd directory
+  ansible.builtin.file:
+    state: directory
+    path: /home/{{ ansible_user }}/.config/systemd/user
+
+- name: Install systemd service
+  ansible.builtin.template:
+    src: madara.service.j2
+    dest: /home/{{ ansible_user }}/.config/systemd/user/madara.service
+
+- name: Start madara service
+  ansible.builtin.systemd:
+    scope: user
+    state: started
+    daemon_reload: true
+    enabled: true
+    name: madara

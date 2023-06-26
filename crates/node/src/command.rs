@@ -1,11 +1,24 @@
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
-use madara_runtime::{Block, EXISTENTIAL_DEPOSIT};
-use sc_cli::{ChainSpec, RuntimeVersion, SubstrateCli};
-use sp_keyring::Sr25519Keyring;
+use madara_runtime::Block;
+use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
-use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder, TransferKeepAliveBuilder};
-use crate::cli::{Cli, Subcommand};
+use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
+use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
+
+fn copy_chain_spec(madara_path: String) {
+    let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    src.push("chain-specs");
+    let mut dst = std::path::PathBuf::from(madara_path);
+    dst.push("chain-specs");
+    std::fs::create_dir_all(&dst).unwrap();
+    for file in std::fs::read_dir(src).unwrap() {
+        let file = file.unwrap();
+        let mut dst = dst.clone();
+        dst.push(file.file_name());
+        std::fs::copy(file.path(), dst).unwrap();
+    }
+}
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -50,7 +63,7 @@ impl SubstrateCli for Cli {
 
 /// Parse and run command line arguments
 pub fn run() -> sc_cli::Result<()> {
-    let cli = Cli::from_args();
+    let mut cli = Cli::from_args();
 
     match &cli.subcommand {
         Some(Subcommand::Key(cmd)) => cmd.run(&cli),
@@ -141,15 +154,8 @@ pub fn run() -> sc_cli::Result<()> {
                     }
                     BenchmarkCmd::Extrinsic(cmd) => {
                         let (client, _, _, _, _) = service::new_chain_ops(&mut config)?;
-                        // Register the *Remark* and *TKA* builders.
-                        let ext_factory = ExtrinsicFactory(vec![
-                            Box::new(RemarkBuilder::new(client.clone())),
-                            Box::new(TransferKeepAliveBuilder::new(
-                                client.clone(),
-                                Sr25519Keyring::Alice.to_account_id(),
-                                EXISTENTIAL_DEPOSIT,
-                            )),
-                        ]);
+                        // Register the *Remark* builder.
+                        let ext_factory = ExtrinsicFactory(vec![Box::new(RemarkBuilder::new(client.clone()))]);
 
                         cmd.run(client, inherent_benchmark_data()?, Vec::new(), &ext_factory)
                     }
@@ -178,7 +184,27 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            let runner = cli.create_runner(&cli.run)?;
+            if cli.run.testnet.is_some() {
+                let madara_path = if cli.run.madara_path.is_some() {
+                    cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
+                } else {
+                    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+                    format!("{}/.madara", home_path)
+                };
+
+                copy_chain_spec(madara_path.clone());
+
+                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
+                cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
+                if let Some(Testnet::Sharingan) = cli.run.testnet {
+                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                }
+
+                cli.run.run_cmd.rpc_external = true;
+                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+            }
+            let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
             })

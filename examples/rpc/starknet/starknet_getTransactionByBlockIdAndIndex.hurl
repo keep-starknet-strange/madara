@@ -1,11 +1,11 @@
-POST http://0.0.0.0:9933
+POST {{RPC_URL}}
 Content-Type: application/json
 {
     "jsonrpc": "2.0",
     "method": "starknet_getTransactionByBlockIdAndIndex",
     "params": [
         "latest",
-        "0"
+        0
     ],
     "id": 1
 }

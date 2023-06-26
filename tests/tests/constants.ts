@@ -1,4 +1,7 @@
-export const TEST_CONTRACT =
+import fs from "fs";
+import { CompiledContract, json } from "starknet";
+
+export const TEST_CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000001111";
 
 export const ACCOUNT_CONTRACT =
@@ -24,14 +27,39 @@ export const TEST_CONTRACT_CLASS_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000001000";
 export const MINT_AMOUNT =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
+export const DEPLOY_ACCOUNT_COST =
+  "0x00000000000000000000000000000000000000000000000000000000ffffffff";
 export const CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
 export const FEE_TOKEN_ADDRESS =
-  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d01";
+  "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 export const TOKEN_CLASS_HASH =
   "0x0000000000000000000000000000000000000000000000000000000000010000";
 export const ARGENT_CONTRACT_ADDRESS =
   "0x0000000000000000000000000000000000000000000000000000000000000002";
 
+// Sequencer address
+export const SEQUENCER_ADDRESS =
+  "0x000000000000000000000000000000000000000000000000000000000000dead";
+
 // Starknet testnet SN_GOERLI
 export const CHAIN_ID_STARKNET_TESTNET = "0x534e5f474f45524c49";
+
+export const NFT_CONTRACT_ADDRESS =
+  "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02";
+export const NFT_CLASS_HASH = "0x90000";
+
+export const UDC_CONTRACT_ADDRESS =
+  "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
+export const UDC_CLASS_HASH = "0x90000";
+
+// Contract classes
+export const ERC20_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
+);
+export const ERC721_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/ERC721.json").toString("ascii")
+);
+export const TEST_CONTRACT: CompiledContract = json.parse(
+  fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")
+);

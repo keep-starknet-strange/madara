@@ -24,7 +24,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use madara_runtime as runtime;
-use runtime::{AccountId, Balance, BalancesCall, SystemCall};
+use runtime::SystemCall;
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
 use sp_core::{Encode, Pair};
@@ -67,45 +67,6 @@ impl frame_benchmarking_cli::ExtrinsicBuilder for RemarkBuilder {
     }
 }
 
-/// Generates `Balances::TransferKeepAlive` extrinsics for the benchmarks.
-///
-/// Note: Should only be used for benchmarking.
-pub struct TransferKeepAliveBuilder {
-    client: Arc<FullClient>,
-    dest: AccountId,
-    value: Balance,
-}
-
-impl TransferKeepAliveBuilder {
-    /// Creates a new [`Self`] from the given client.
-    pub fn new(client: Arc<FullClient>, dest: AccountId, value: Balance) -> Self {
-        Self { client, dest, value }
-    }
-}
-
-impl frame_benchmarking_cli::ExtrinsicBuilder for TransferKeepAliveBuilder {
-    fn pallet(&self) -> &str {
-        "balances"
-    }
-
-    fn extrinsic(&self) -> &str {
-        "transfer_keep_alive"
-    }
-
-    fn build(&self, nonce: u32) -> std::result::Result<OpaqueExtrinsic, &'static str> {
-        let acc = Sr25519Keyring::Bob.pair();
-        let extrinsic: OpaqueExtrinsic = create_benchmark_extrinsic(
-            self.client.as_ref(),
-            acc,
-            BalancesCall::transfer_keep_alive { dest: self.dest.clone().into(), value: self.value }.into(),
-            nonce,
-        )
-        .into();
-
-        Ok(extrinsic)
-    }
-}
-
 /// Create a transaction using the given `call`.
 ///
 /// Note: Should only be used for benchmarking.
@@ -131,13 +92,12 @@ pub fn create_benchmark_extrinsic(
         )),
         frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
         frame_system::CheckWeight::<runtime::Runtime>::new(),
-        pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(0),
     );
 
     let raw_payload = runtime::SignedPayload::from_raw(
         call.clone(),
         extra.clone(),
-        ((), runtime::VERSION.spec_version, runtime::VERSION.transaction_version, genesis_hash, best_hash, (), (), ()),
+        ((), runtime::VERSION.spec_version, runtime::VERSION.transaction_version, genesis_hash, best_hash, (), ()),
     );
     let signature = raw_payload.using_encoded(|e| sender.sign(e));
 

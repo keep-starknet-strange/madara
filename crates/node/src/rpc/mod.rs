@@ -11,7 +11,8 @@ use std::sync::Arc;
 use futures::channel::mpsc;
 use jsonrpsee::RpcModule;
 use madara_runtime::opaque::Block;
-use madara_runtime::{AccountId, Balance, Hash, Index};
+use madara_runtime::{AccountId, Hash, Index};
+use mc_transaction_pool::{ChainApi, Pool};
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use sc_client_api::{Backend, StorageProvider};
 use sc_consensus_manual_seal::rpc::EngineCommand;
@@ -23,11 +24,13 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 pub use starknet::StarknetDeps;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P> {
+pub struct FullDeps<A: ChainApi, C, P> {
     /// The client instance to use.
     pub client: Arc<C>,
     /// Transaction pool instance.
     pub pool: Arc<P>,
+    /// Extrinsic pool graph instance.
+    pub graph: Arc<Pool<A>>,
     /// Whether to deny unsafe calls
     pub deny_unsafe: DenyUnsafe,
     /// Manual seal command sink
@@ -37,13 +40,15 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create_full<C, P, BE>(deps: FullDeps<C, P>) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
+pub fn create_full<A, C, P, BE>(
+    deps: FullDeps<A, C, P>,
+) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
 where
+    A: ChainApi<Block = Block> + 'static,
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + StorageProvider<Block, BE> + 'static,
     C: Send + Sync + 'static,
     C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-    C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
     C::Api: BlockBuilder<Block>,
     C::Api: pallet_starknet::runtime_api::StarknetRuntimeApi<Block>
         + pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block>,
@@ -51,23 +56,22 @@ where
     BE: Backend<Block> + 'static,
 {
     use mc_rpc::{Starknet, StarknetRpcApiServer};
-    use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
     use sc_consensus_manual_seal::rpc::{ManualSeal, ManualSealApiServer};
     use substrate_frame_rpc_system::{System, SystemApiServer};
 
     let mut module = RpcModule::new(());
-    let FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink } = deps;
+    let FullDeps { client, pool, deny_unsafe, starknet: starknet_params, command_sink, graph } = deps;
 
     let hasher = client.runtime_api().get_hasher(client.info().best_hash)?.into();
 
     module.merge(System::new(client.clone(), pool.clone(), deny_unsafe).into_rpc())?;
-    module.merge(TransactionPayment::new(client.clone()).into_rpc())?;
     module.merge(
         Starknet::new(
             client,
             starknet_params.madara_backend,
             starknet_params.overrides,
             pool,
+            graph,
             starknet_params.sync_service,
             starknet_params.starting_block,
             hasher,
