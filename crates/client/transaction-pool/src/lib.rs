@@ -17,7 +17,6 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 //! Substrate transaction pool implementation.
-
 #![recursion_limit = "256"]
 #![warn(missing_docs)]
 #![warn(unused_extern_crates)]
@@ -28,6 +27,7 @@ pub mod error;
 mod graph;
 mod metrics;
 mod revalidation;
+
 use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::sync::Arc;
@@ -45,9 +45,8 @@ use parking_lot::Mutex;
 use prometheus_endpoint::Registry as PrometheusRegistry;
 use sc_transaction_pool_api::error::Error as TxPoolError;
 use sc_transaction_pool_api::{
-    ChainEvent, ImportNotificationStream, MaintainedTransactionPool, OffchainTransactionPoolFactory, PoolFuture,
-    PoolStatus, ReadyTransactions, TransactionFor, TransactionPool, TransactionSource, TransactionStatusStreamFor,
-    TxHash,
+    ChainEvent, ImportNotificationStream, MaintainedTransactionPool, PoolFuture, PoolStatus, ReadyTransactions,
+    TransactionFor, TransactionPool, TransactionSource, TransactionStatusStreamFor, TxHash,
 };
 use sp_blockchain::{HashAndNumber, TreeRoute};
 use sp_core::traits::SpawnEssentialNamed;
@@ -377,7 +376,7 @@ where
         ));
 
         // make transaction pool available for off-chain runtime calls.
-        client.execution_extensions().register_transaction_pool_factory(OffchainTransactionPoolFactory::new(&pool));
+        client.execution_extensions().register_transaction_pool(&pool);
 
         pool
     }
@@ -400,16 +399,14 @@ where
 
     fn submit_local(
         &self,
-        at: Block::Hash,
+        at: &BlockId<Self::Block>,
         xt: sc_transaction_pool_api::LocalTransactionFor<Self>,
     ) -> Result<Self::Hash, Self::Error> {
         use sp_runtime::traits::SaturatedConversion;
         use sp_runtime::transaction_validity::TransactionValidityError;
 
-        let validity = self
-            .api
-            .validate_transaction_blocking(&BlockId::hash(at), TransactionSource::Local, xt.clone())?
-            .map_err(|e| {
+        let validity =
+            self.api.validate_transaction_blocking(at, TransactionSource::Local, xt.clone())?.map_err(|e| {
                 Self::Error::Pool(match e {
                     TransactionValidityError::Invalid(i) => TxPoolError::InvalidTransaction(i),
                     TransactionValidityError::Unknown(u) => TxPoolError::UnknownTransaction(u),
@@ -417,10 +414,8 @@ where
             })?;
 
         let (hash, bytes) = self.pool.validated_pool().api().hash_and_length(&xt);
-        let block_number = self
-            .api
-            .block_id_to_number(&BlockId::hash(at))?
-            .ok_or_else(|| error::Error::BlockIdConversion(format!("{:?}", at)))?;
+        let block_number =
+            self.api.block_id_to_number(at)?.ok_or_else(|| error::Error::BlockIdConversion(format!("{:?}", at)))?;
 
         let validated = ValidatedTransaction::valid_at(
             block_number.saturated_into::<u64>(),
