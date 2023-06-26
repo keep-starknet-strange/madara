@@ -9,7 +9,6 @@ use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use cairo_vm::types::program::Program;
-#[cfg(feature = "std")]
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
