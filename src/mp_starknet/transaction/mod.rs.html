@@ -807,6 +807,32 @@
 <a href="#807" id="807">807</a>
 <a href="#808" id="808">808</a>
 <a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -828,7 +854,7 @@
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
-<span class="kw">use </span>blockifier::transaction::transaction_utils::verify_no_calls_to_other_contracts;
+<span class="kw">use </span>blockifier::transaction::transaction_utils::{update_remaining_gas, verify_no_calls_to_other_contracts};
 <span class="kw">use </span>blockifier::transaction::transactions::{
     DeclareTransaction <span class="kw">as </span>StarknetDeclareTransaction, Executable, L1HandlerTransaction <span class="kw">as </span>StarknetL1HandlerTransaction,
 };
@@ -1222,7 +1248,10 @@
             }
         };
 
-        <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, tx_type)
+        <span class="comment">// FIXME 710
+        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
+
+        <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, tx_type, <span class="kw-2">&amp;mut </span>initial_gas)
     }
 
     <span class="doccomment">/// Validates a transaction
@@ -1242,6 +1271,7 @@
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
         tx_type: <span class="kw-2">&amp;</span>TxType,
+        remaining_gas: <span class="kw-2">&amp;mut </span>Felt252,
     ) -&gt; TransactionValidationResultWrapper&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
@@ -1252,9 +1282,6 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
 
-        <span class="comment">// FIXME 710
-        </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
-
         <span class="kw">let </span>validate_call = CallEntryPoint {
             entry_point_type: EntryPointType::External,
             entry_point_selector: <span class="self">self</span>.validate_entry_point_selector(tx_type)<span class="question-mark">?</span>,
@@ -1264,7 +1291,7 @@
             storage_address: account_tx_context.sender_address,
             caller_address: StarknetContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas,
+            initial_gas: remaining_gas.clone(),
         };
 
         <span class="kw">let </span>validate_call_info = validate_call
@@ -1272,10 +1299,10 @@
             .map_err(TransactionValidationErrorWrapper::from)<span class="question-mark">?</span>;
         verify_no_calls_to_other_contracts(<span class="kw-2">&amp;</span>validate_call_info, String::from(constants::VALIDATE_ENTRY_POINT_NAME))
             .map_err(TransactionValidationErrorWrapper::TransactionValidationError)<span class="question-mark">?</span>;
-        <span class="comment">// FIXME 710
-        // update_remaining_gas(initial_gas, &amp;validate_call_info);
 
-        </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(validate_call_info))
+        update_remaining_gas(remaining_gas, <span class="kw-2">&amp;</span>validate_call_info);
+
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(validate_call_info))
     }
 
     <span class="doccomment">/// Verifies if a transaction has the correct version
@@ -1299,7 +1326,14 @@
         <span class="kw">let </span>allowed_versions: vec::Vec&lt;TransactionVersion&gt; = <span class="kw">match </span>tx_type {
             TxType::Declare =&gt; {
                 <span class="comment">// Support old versions in order to allow bootstrapping of a new system.
-                </span><span class="macro">vec!</span>[TransactionVersion(StarkFelt::from(<span class="number">0_u8</span>)), TransactionVersion(StarkFelt::from(<span class="number">1_u8</span>))]
+                </span><span class="macro">vec!</span>[
+                    TransactionVersion(StarkFelt::from(<span class="number">0_u8</span>)),
+                    TransactionVersion(StarkFelt::from(<span class="number">1_u8</span>)),
+                    TransactionVersion(StarkFelt::from(<span class="number">2_u8</span>)),
+                ]
+            }
+            TxType::Invoke =&gt; {
+                <span class="macro">vec!</span>[TransactionVersion(StarkFelt::from(<span class="number">0_u8</span>)), TransactionVersion(StarkFelt::from(<span class="number">1_u8</span>))]
             }
             <span class="kw">_ </span>=&gt; <span class="macro">vec!</span>[TransactionVersion(StarkFelt::from(<span class="number">1_u8</span>))],
         };
@@ -1360,11 +1394,17 @@
                 );
 
                 <span class="comment">// Update nonce
-                </span><span class="self">self</span>.handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
+                </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
 
                 <span class="comment">// Validate.
-                </span><span class="kw">let </span>validate_call_info =
-                    <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
+                </span><span class="kw">let </span>validate_call_info = <span class="self">self</span>.validate_tx(
+                    state,
+                    execution_resources,
+                    block_context,
+                    <span class="kw-2">&amp;</span>account_context,
+                    <span class="kw-2">&amp;</span>tx_type,
+                    <span class="kw-2">&amp;mut </span>initial_gas,
+                )<span class="question-mark">?</span>;
 
                 <span class="comment">// Execute.
                 </span>(
@@ -1408,11 +1448,17 @@
                 );
 
                 <span class="comment">// Update nonce
-                </span><span class="self">self</span>.handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
+                </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
 
                 <span class="comment">// Validate.
-                </span><span class="kw">let </span>validate_call_info =
-                    <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
+                </span><span class="kw">let </span>validate_call_info = <span class="self">self</span>.validate_tx(
+                    state,
+                    execution_resources,
+                    block_context,
+                    <span class="kw-2">&amp;</span>account_context,
+                    <span class="kw-2">&amp;</span>tx_type,
+                    <span class="kw-2">&amp;mut </span>initial_gas,
+                )<span class="question-mark">?</span>;
 
                 <span class="comment">// Execute.
                 </span>(
@@ -1434,7 +1480,7 @@
                 );
 
                 <span class="comment">// Update nonce
-                </span><span class="self">self</span>.handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
+                </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context)<span class="question-mark">?</span>;
 
                 <span class="comment">// Execute.
                 </span><span class="kw">let </span>transaction_execution = tx
@@ -1443,7 +1489,14 @@
 
                 (
                     transaction_execution,
-                    <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, <span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>,
+                    <span class="self">self</span>.validate_tx(
+                        state,
+                        execution_resources,
+                        block_context,
+                        <span class="kw-2">&amp;</span>account_context,
+                        <span class="kw-2">&amp;</span>tx_type,
+                        <span class="kw-2">&amp;mut </span>initial_gas,
+                    )<span class="question-mark">?</span>,
                     account_context,
                 )
             }
@@ -1477,7 +1530,6 @@
     ///
     /// * `TransactionExecutionResult&lt;()&gt;` - The result of the nonce handling
     </span><span class="kw">pub fn </span>handle_nonce(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
         state: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>State,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
     ) -&gt; TransactionExecutionResultWrapper&lt;()&gt; {
