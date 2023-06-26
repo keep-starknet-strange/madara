@@ -173,13 +173,14 @@ There is a docker image built for Sharingan, which will be updated at each
 version of Sharingan. However, to ensure that you are using the correct chain
 specs, please proceed to the following:
 
-1. Create a dedicated directory to store sharingan data (in case you don't have one yet).
+1. Create a dedicated directory to store sharingan data (in case you don't have
+   one yet).
 
    ```bash
    mkdir sharingan-volume
    ```
 
-3. Running the docker container.
+2. Running the docker container.
 
    ```bash
    docker run --rm -d \
@@ -210,6 +211,7 @@ If you prefer having Madara compiled locally, you must:
 ```bash
 ./target/release/madara --testnet sharingan
 ```
+
 This will store the data into `$HOME/.madara`.
 
 Once you have your node running, you can get your Peer ID running the following
