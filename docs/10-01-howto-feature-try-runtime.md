@@ -24,14 +24,14 @@ to the substrate. For more information, please visit
 
 To build and run under the local testnet, follow the steps below:
 
-1. Create the release binary and launch the local testnet using the script
+* Create the release binary and launch the local testnet using the script
    `infra/local-testnet/run-cfg2.sh`:
 
 ```bash
 cargo build --release --bin madara
 ```
 
-2. Execute the `try-runtime` subcommands against the local testnet:
+* Execute the `try-runtime` subcommands against the local testnet:
 
 ```bash
 cargo run --release --features=try-runtime --bin madara -- try-runtime --help
@@ -59,7 +59,7 @@ local testnet.
 
 > Step-01 | create snapshot from sharingan testnet
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 export SNAPSHOT_PATH="../000-01-install/madara-localnet.snap" && \
@@ -84,9 +84,9 @@ cargo \
 
 ## on-runtime-upgrade
 
-**live**
+> **live**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 RUST_LOG=runtime=trace,try-runtime::cli=trace,executor=trace \
@@ -107,9 +107,9 @@ cargo \
 
 ![](https://i.imgur.com/2ExO6Df.png)
 
-**snap**
+> **snap**
 
-```
+```bash
 export SNAPSHOT_PATH="../000-01-install/madara-localnet.snap" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 RUST_LOG=runtime=trace,try-runtime::cli=trace,executor=trace \
@@ -134,9 +134,9 @@ cargo \
 
 ## execute-block
 
-**live**
+> **live**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 RUST_LOG=runtime=trace,try-runtime::cli=trace,executor=trace \
@@ -157,9 +157,9 @@ cargo \
 
 ![](https://i.imgur.com/g69ntk8.png)
 
-**snap**
+> **snap**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export SNAPSHOT_PATH="../000-01-install/madara-localnet.snap" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
@@ -186,9 +186,9 @@ cargo \
 
 ## offchain-worker
 
-**live**
+> **live**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 RUST_LOG=runtime=trace,try-runtime::cli=trace,executor=trace \
@@ -208,9 +208,9 @@ cargo \
 
 ![](https://i.imgur.com/9ln94nu.png)
 
-**snap**
+> **snap**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export SNAPSHOT_PATH="../000-01-install/madara-localnet.snap" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
@@ -236,7 +236,7 @@ cargo \
 
 ## follow-chain
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 RUST_LOG=runtime=trace,try-runtime::cli=trace,executor=trace \
@@ -262,9 +262,9 @@ cargo \
 
 ## fast-forward
 
-**live**
+> **live**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
 RUST_LOG=runtime=trace,try-runtime::cli=trace,executor=trace \
@@ -288,9 +288,9 @@ cargo \
 
 ![](https://i.imgur.com/k7GW3Xb.png)
 
-**snap**
+> **snap**
 
-```
+```bash
 export RPC_WS_URL="ws://127.0.0.1:9931" && \
 export SNAPSHOT_PATH="../000-01-install/madara-localnet.snap" && \
 export CHAIN_SPEC="./crates/node/chain-specs/madara-local-cfg2-raw.json" && \
