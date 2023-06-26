@@ -184,6 +184,9 @@
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
 </pre><pre class="rust"><code><span class="comment">// This file is part of Substrate.
 
 // Copyright (C) Parity Technologies (UK) Ltd.
@@ -204,9 +207,10 @@
 
 </span><span class="doccomment">//! Substrate transaction pool implementation.
 
-</span><span class="kw">use </span>sc_transaction_pool_api::ChainEvent;
+</span><span class="kw">use </span>num_traits::CheckedSub;
+<span class="kw">use </span>sc_transaction_pool_api::ChainEvent;
 <span class="kw">use </span>sp_blockchain::TreeRoute;
-<span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, NumberFor, Saturating};
+<span class="kw">use </span>sp_runtime::traits::{Block <span class="kw">as </span>BlockT, NumberFor};
 
 <span class="kw">use </span><span class="kw">crate</span>::LOG_TARGET;
 
@@ -287,12 +291,14 @@
         </span>TreeRouteF: Fn(Block::Hash, Block::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;TreeRoute&lt;Block&gt;, String&gt;,
         BlockNumberF: Fn(Block::Hash) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;NumberFor&lt;Block&gt;&gt;, String&gt;,
     {
-        <span class="kw">let </span>new_hash = event.hash();
-        <span class="kw">let </span>finalized = event.is_finalized();
+        <span class="kw">let </span>(new_hash, current_hash, finalized) = <span class="kw">match </span>event {
+            ChainEvent::NewBestBlock { hash, .. } =&gt; (<span class="kw-2">*</span>hash, <span class="self">self</span>.recent_best_block, <span class="bool-val">false</span>),
+            ChainEvent::Finalized { hash, .. } =&gt; (<span class="kw-2">*</span>hash, <span class="self">self</span>.recent_finalized_block, <span class="bool-val">true</span>),
+        };
 
         <span class="comment">// do not proceed with txpool maintain if block distance is to high
-        </span><span class="kw">let </span>skip_maintenance = <span class="kw">match </span>(hash_to_number(new_hash), hash_to_number(<span class="self">self</span>.recent_best_block)) {
-            (<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(new)), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current))) =&gt; new.saturating_sub(current) &gt; SKIP_MAINTENANCE_THRESHOLD.into(),
+        </span><span class="kw">let </span>skip_maintenance = <span class="kw">match </span>(hash_to_number(new_hash), hash_to_number(current_hash)) {
+            (<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(new)), <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(current))) =&gt; new.checked_sub(<span class="kw-2">&amp;</span>current) &gt; <span class="prelude-val">Some</span>(SKIP_MAINTENANCE_THRESHOLD.into()),
             <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
         };
 
@@ -314,10 +320,10 @@
 
         <span class="macro">log::debug!</span>(
             target: LOG_TARGET,
-            <span class="string">&quot;resolve hash: {new_hash:?} finalized: {finalized:?} tree_route: (common {:?}, last {:?}) best_block: \
-             {:?} finalized_block:{:?}&quot;</span>,
-            tree_route.common_block(),
-            tree_route.last(),
+            <span class="string">&quot;resolve hash:{:?} finalized:{:?} tree_route:{:?} best_block:{:?} finalized_block:{:?}&quot;</span>,
+            new_hash,
+            finalized,
+            tree_route,
             <span class="self">self</span>.recent_best_block,
             <span class="self">self</span>.recent_finalized_block
         );

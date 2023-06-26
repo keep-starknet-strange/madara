@@ -162,15 +162,10 @@
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
-<a href="#165" id="165">165</a>
-<a href="#166" id="166">166</a>
-<a href="#167" id="167">167</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
-
-</span><span class="kw">use </span>frame_support::traits::ConstBool;
-<span class="kw">pub use </span>frame_support::traits::{
+</span><span class="kw">pub use </span>frame_support::traits::{
     ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
 <span class="kw">pub use </span>frame_support::weights::constants::{
@@ -284,7 +279,6 @@
     <span class="kw">type </span>AuthorityId = AuraId;
     <span class="kw">type </span>DisabledValidators = ();
     <span class="kw">type </span>MaxAuthorities = ConstU32&lt;<span class="number">32</span>&gt;;
-    <span class="kw">type </span>AllowMultipleBlocksPerSlot = ConstBool&lt;<span class="bool-val">true</span>&gt;;
 }
 
 <span class="doccomment">/// Deterministic finality mechanism used for block finalization.

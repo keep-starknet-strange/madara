@@ -329,20 +329,20 @@
 <span class="kw">use </span><span class="kw">crate</span>::metrics::{ApiMetrics, ApiMetricsExt};
 <span class="kw">use crate</span>::{graph, LOG_TARGET};
 
-<span class="kw">type </span>PinBoxFuture = Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;;
-
 <span class="doccomment">/// The transaction pool logic for full client.
+</span><span class="attr">#[allow(clippy::type_complexity)]
 </span><span class="kw">pub struct </span>FullChainApi&lt;Client, Block&gt; {
     client: Arc&lt;Client&gt;,
     _marker: PhantomData&lt;Block&gt;,
     metrics: <span class="prelude-ty">Option</span>&lt;Arc&lt;ApiMetrics&gt;&gt;,
-    validation_pool: Arc&lt;Mutex&lt;mpsc::Sender&lt;PinBoxFuture&gt;&gt;&gt;,
+    validation_pool: Arc&lt;Mutex&lt;mpsc::Sender&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;&gt;&gt;&gt;,
 }
 
 <span class="doccomment">/// Spawn a validation task that will be used by the transaction pool to validate transactions.
+</span><span class="attr">#[allow(clippy::type_complexity)]
 </span><span class="kw">fn </span>spawn_validation_pool_task(
     name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
-    receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;PinBoxFuture&gt;&gt;&gt;,
+    receiver: Arc&lt;Mutex&lt;mpsc::Receiver&lt;Pin&lt;Box&lt;<span class="kw">dyn </span>Future&lt;Output = ()&gt; + Send&gt;&gt;&gt;&gt;&gt;,
     spawner: <span class="kw-2">&amp;</span><span class="kw">impl </span>SpawnEssentialNamed,
 ) {
     spawner.spawn_essential_blocking(
