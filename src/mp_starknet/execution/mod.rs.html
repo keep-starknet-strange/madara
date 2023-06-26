@@ -101,13 +101,13 @@
 <a href="#101" id="101">101</a>
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet execution functionality.
 
 </span><span class="kw">use </span>alloc::collections::BTreeMap;
 
 <span class="kw">use </span>frame_support::BoundedBTreeMap;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>frame_support::Serialize;
 <span class="kw">use </span>serde::de::Error <span class="kw">as </span>DeserializationError;
 <span class="kw">use </span>serde::{Deserialize, Deserializer, Serializer};
 <span class="kw">use </span>sp_core::Get;
@@ -120,74 +120,6 @@
 </span><span class="kw">pub mod </span>entrypoint_wrapper;
 <span class="doccomment">/// Felt252Wrapper type
 </span><span class="kw">pub mod </span>felt252_wrapper;
-
-<span class="doccomment">/// Serialization of [BoundedBTreeMap].
-/// This is needed for the genesis config.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">pub fn </span>serialize_bounded_btreemap&lt;SE: Serializer, K, V, S&gt;(
-    v: <span class="kw-2">&amp;</span>BoundedBTreeMap&lt;K, V, S&gt;,
-    serializer: SE,
-) -&gt; <span class="prelude-ty">Result</span>&lt;SE::Ok, SE::Error&gt;
-<span class="kw">where
-    </span>K: scale_codec::Decode + Ord + Serialize + Clone,
-    V: scale_codec::Decode + Serialize + Clone,
-    S: Get&lt;u32&gt;,
-{
-    v.clone().into_inner().serialize(serializer)
-}
-
-<span class="doccomment">/// Serialization of [`Option&lt;BoundedBTreeMap&gt;`].
-/// This is needed for the genesis config.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">pub fn </span>serialize_option_bounded_btreemap&lt;SE: Serializer, K, V, S&gt;(
-    v: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;BoundedBTreeMap&lt;K, V, S&gt;&gt;,
-    serializer: SE,
-) -&gt; <span class="prelude-ty">Result</span>&lt;SE::Ok, SE::Error&gt;
-<span class="kw">where
-    </span>K: scale_codec::Decode + Ord + Serialize + Clone,
-    V: scale_codec::Decode + Serialize + Clone,
-    S: Get&lt;u32&gt;,
-{
-    v.clone().map(|val| val.into_inner()).serialize(serializer)
-}
-
-<span class="doccomment">/// Deserialization of [BoundedBTreeMap].
-/// This is needed for the genesis config.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">pub fn </span>deserialize_bounded_btreemap&lt;<span class="lifetime">&#39;de</span>, D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;, K, V, S&gt;(
-    deserializer: D,
-) -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBTreeMap&lt;K, V, S&gt;, D::Error&gt;
-<span class="kw">where
-    </span>K: scale_codec::Decode + Ord + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
-    V: scale_codec::Decode + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
-    S: Get&lt;u32&gt;,
-{
-    <span class="kw">let </span>btree_map = BTreeMap::deserialize(deserializer)<span class="question-mark">?</span>;
-    BoundedBTreeMap::try_from(btree_map)
-        .map_err(|<span class="kw">_</span>| DeserializationError::custom(<span class="string">&quot;Couldn&#39;t convert BTreeMap to BoundedBTreeMap&quot;</span>.to_string()))
-}
-
-<span class="doccomment">/// Deserialization of an [`Option&lt;BoundedBTreeMap&gt;`] object.
-/// This is needed for the genesis config.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">pub fn </span>deserialize_option_bounded_btreemap&lt;<span class="lifetime">&#39;de</span>, D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;, K, V, S&gt;(
-    deserializer: D,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;BoundedBTreeMap&lt;K, V, S&gt;&gt;, D::Error&gt;
-<span class="kw">where
-    </span>K: scale_codec::Decode + Ord + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
-    V: scale_codec::Decode + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
-    S: Get&lt;u32&gt;,
-{
-    <span class="kw">let </span>opt_btree_map = <span class="prelude-ty">Option</span>::&lt;BTreeMap&lt;K, V&gt;&gt;::deserialize(deserializer)<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(<span class="kw">match </span>opt_btree_map {
-        <span class="prelude-val">Some</span>(btree_map) =&gt; {
-            <span class="prelude-val">Some</span>(BoundedBTreeMap::try_from(btree_map).map_err(|<span class="kw">_</span>| {
-                DeserializationError::custom(<span class="string">&quot;Couldn&#39;t convert BTreeMap to BoundedBTreeMap&quot;</span>.to_string())
-            })<span class="question-mark">?</span>)
-        }
-        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
-    })
-}
 
 <span class="doccomment">/// All the types related to the execution of a transaction.
 </span><span class="kw">pub mod </span>types {
@@ -204,5 +136,77 @@
     <span class="kw">pub use </span><span class="kw">super</span>::entrypoint_wrapper::<span class="kw-2">*</span>;
     <span class="kw">pub use </span><span class="kw">super</span>::felt252_wrapper::<span class="kw-2">*</span>;
 }
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">mod </span>reexport_private_types {
+    <span class="kw">use </span>frame_support::Serialize;
+
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="doccomment">/// Serialization of [BoundedBTreeMap].
+    /// This is needed for the genesis config.
+    </span><span class="kw">pub fn </span>serialize_bounded_btreemap&lt;SE: Serializer, K, V, S&gt;(
+        v: <span class="kw-2">&amp;</span>BoundedBTreeMap&lt;K, V, S&gt;,
+        serializer: SE,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SE::Ok, SE::Error&gt;
+    <span class="kw">where
+        </span>K: scale_codec::Decode + Ord + Serialize + Clone,
+        V: scale_codec::Decode + Serialize + Clone,
+        S: Get&lt;u32&gt;,
+    {
+        v.clone().into_inner().serialize(serializer)
+    }
+
+    <span class="doccomment">/// Serialization of [`Option&lt;BoundedBTreeMap&gt;`].
+    /// This is needed for the genesis config.
+    </span><span class="kw">pub fn </span>serialize_option_bounded_btreemap&lt;SE: Serializer, K, V, S&gt;(
+        v: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;BoundedBTreeMap&lt;K, V, S&gt;&gt;,
+        serializer: SE,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;SE::Ok, SE::Error&gt;
+    <span class="kw">where
+        </span>K: scale_codec::Decode + Ord + Serialize + Clone,
+        V: scale_codec::Decode + Serialize + Clone,
+        S: Get&lt;u32&gt;,
+    {
+        v.clone().map(|val| val.into_inner()).serialize(serializer)
+    }
+
+    <span class="doccomment">/// Deserialization of [BoundedBTreeMap].
+    /// This is needed for the genesis config.
+    </span><span class="kw">pub fn </span>deserialize_bounded_btreemap&lt;<span class="lifetime">&#39;de</span>, D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;, K, V, S&gt;(
+        deserializer: D,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBTreeMap&lt;K, V, S&gt;, D::Error&gt;
+    <span class="kw">where
+        </span>K: scale_codec::Decode + Ord + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
+        V: scale_codec::Decode + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
+        S: Get&lt;u32&gt;,
+    {
+        <span class="kw">let </span>btree_map = BTreeMap::deserialize(deserializer)<span class="question-mark">?</span>;
+        BoundedBTreeMap::try_from(btree_map)
+            .map_err(|<span class="kw">_</span>| DeserializationError::custom(<span class="string">&quot;Couldn&#39;t convert BTreeMap to BoundedBTreeMap&quot;</span>.to_string()))
+    }
+
+    <span class="doccomment">/// Deserialization of an [`Option&lt;BoundedBTreeMap&gt;`] object.
+    /// This is needed for the genesis config.
+    </span><span class="kw">pub fn </span>deserialize_option_bounded_btreemap&lt;<span class="lifetime">&#39;de</span>, D: Deserializer&lt;<span class="lifetime">&#39;de</span>&gt;, K, V, S&gt;(
+        deserializer: D,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;BoundedBTreeMap&lt;K, V, S&gt;&gt;, D::Error&gt;
+    <span class="kw">where
+        </span>K: scale_codec::Decode + Ord + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
+        V: scale_codec::Decode + Deserialize&lt;<span class="lifetime">&#39;de</span>&gt;,
+        S: Get&lt;u32&gt;,
+    {
+        <span class="kw">let </span>opt_btree_map = <span class="prelude-ty">Option</span>::&lt;BTreeMap&lt;K, V&gt;&gt;::deserialize(deserializer)<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="kw">match </span>opt_btree_map {
+            <span class="prelude-val">Some</span>(btree_map) =&gt; <span class="prelude-val">Some</span>(BoundedBTreeMap::try_from(btree_map).map_err(|<span class="kw">_</span>| {
+                DeserializationError::custom(<span class="string">&quot;Couldn&#39;t convert BTreeMap to BoundedBTreeMap&quot;</span>.to_string())
+            })<span class="question-mark">?</span>),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
+        })
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub use </span>reexport_private_types::<span class="kw-2">*</span>;
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

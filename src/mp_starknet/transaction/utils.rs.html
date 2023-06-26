@@ -26,33 +26,41 @@
 <a href="#26" id="26">26</a>
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>std::collections::HashMap;
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};
 
-<span class="doccomment">/// Returns a [HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt;] from
-/// [LegacyEntryPointsByType]
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">pub fn </span>to_hash_map_entrypoints(
-    entries: LegacyEntryPointsByType,
-) -&gt; HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type = HashMap::default();
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">mod </span>reexport_std_types {
+    <span class="kw">use </span>std::collections::HashMap;
 
-    entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, get_entrypoint_value(entries.constructor));
-    entry_points_by_type.insert(EntryPointTypeWrapper::External, get_entrypoint_value(entries.external));
-    entry_points_by_type.insert(EntryPointTypeWrapper::L1Handler, get_entrypoint_value(entries.l1_handler));
-    entry_points_by_type
+    <span class="kw">use </span>starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
+
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="doccomment">/// Returns a [HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt;] from
+    /// [LegacyEntryPointsByType]
+    </span><span class="kw">pub fn </span>to_hash_map_entrypoints(
+        entries: LegacyEntryPointsByType,
+    ) -&gt; HashMap&lt;EntryPointTypeWrapper, Vec&lt;EntryPointWrapper&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type = HashMap::default();
+
+        entry_points_by_type.insert(EntryPointTypeWrapper::Constructor, get_entrypoint_value(entries.constructor));
+        entry_points_by_type.insert(EntryPointTypeWrapper::External, get_entrypoint_value(entries.external));
+        entry_points_by_type.insert(EntryPointTypeWrapper::L1Handler, get_entrypoint_value(entries.l1_handler));
+        entry_points_by_type
+    }
+
+    <span class="doccomment">/// Returns a [Vec&lt;EntryPointWrapper&gt;] from a [Vec&lt;LegacyContractEntryPoint&gt;]
+    </span><span class="kw">fn </span>get_entrypoint_value(entries: Vec&lt;LegacyContractEntryPoint&gt;) -&gt; Vec&lt;EntryPointWrapper&gt; {
+        entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+    }
 }
 
-<span class="doccomment">/// Returns a [Vec&lt;EntryPointWrapper&gt;] from a [Vec&lt;LegacyContractEntryPoint&gt;]
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">fn </span>get_entrypoint_value(entries: Vec&lt;LegacyContractEntryPoint&gt;) -&gt; Vec&lt;EntryPointWrapper&gt; {
-    entries.iter().map(|e| EntryPointWrapper::from(e.clone())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-}
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub use </span>reexport_std_types::<span class="kw-2">*</span>;
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

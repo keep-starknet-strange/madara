@@ -140,6 +140,11 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
 </pre><pre class="rust"><code><span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_core::ConstU32;
@@ -147,8 +152,6 @@
 <span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::StarknetApiError;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>starknet_core::types::LegacyContractEntryPoint;
 <span class="kw">use </span>starknet_ff::{FieldElement, FromByteArrayError};
 <span class="kw">use </span>thiserror_no_std::Error;
 
@@ -250,25 +253,6 @@
     </span>}
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>From&lt;LegacyContractEntryPoint&gt; <span class="kw">for </span>EntryPointWrapper {
-    <span class="kw">fn </span>from(value: LegacyContractEntryPoint) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
-        <span class="kw">let </span>offset = EntryPointOffset(value.offset <span class="kw">as </span>usize);
-        <span class="self">Self</span>(EntryPoint { selector, offset })
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TryFrom&lt;EntryPointWrapper&gt; <span class="kw">for </span>LegacyContractEntryPoint {
-    <span class="kw">type </span>Error = FromByteArrayError;
-    <span class="kw">fn </span>try_from(value: EntryPointWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>selector = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>value.<span class="number">0</span>.selector.<span class="number">0.0</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>offset = value.<span class="number">0</span>.offset.<span class="number">0 </span><span class="kw">as </span>u64;
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ selector, offset })
-    }
-}
-
 <span class="doccomment">/// Wrapper type for transaction execution error.
 </span><span class="attr">#[derive(Debug, Error)]
 </span><span class="kw">pub enum </span>EntryPointExecutionErrorWrapper {
@@ -282,5 +266,31 @@
     </span><span class="attr">#[error(<span class="string">&quot;Block context serialization error&quot;</span>)]
     </span>BlockContextSerializationError,
 }
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">mod </span>reexport_std_types {
+    <span class="kw">use </span>starknet_core::types::LegacyContractEntryPoint;
+
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">impl </span>From&lt;LegacyContractEntryPoint&gt; <span class="kw">for </span>EntryPointWrapper {
+        <span class="kw">fn </span>from(value: LegacyContractEntryPoint) -&gt; <span class="self">Self </span>{
+            <span class="kw">let </span>selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
+            <span class="kw">let </span>offset = EntryPointOffset(value.offset <span class="kw">as </span>usize);
+            <span class="self">Self</span>(EntryPoint { selector, offset })
+        }
+    }
+
+    <span class="kw">impl </span>TryFrom&lt;EntryPointWrapper&gt; <span class="kw">for </span>LegacyContractEntryPoint {
+        <span class="kw">type </span>Error = FromByteArrayError;
+        <span class="kw">fn </span>try_from(value: EntryPointWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+            <span class="kw">let </span>selector = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>value.<span class="number">0</span>.selector.<span class="number">0.0</span>)<span class="question-mark">?</span>;
+            <span class="kw">let </span>offset = value.<span class="number">0</span>.offset.<span class="number">0 </span><span class="kw">as </span>u64;
+            <span class="prelude-val">Ok</span>(<span class="self">Self </span>{ selector, offset })
+        }
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub use </span>reexport_std_types::<span class="kw-2">*</span>;
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

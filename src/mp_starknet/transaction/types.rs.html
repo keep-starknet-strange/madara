@@ -955,9 +955,6 @@
 <a href="#955" id="955">955</a>
 <a href="#956" id="956">956</a>
 <a href="#957" id="957">957</a>
-<a href="#958" id="958">958</a>
-<a href="#959" id="959">959</a>
-<a href="#960" id="960">960</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -969,34 +966,12 @@
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
 <span class="kw">use </span>cairo_vm::types::program::Program;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>flate2::read::GzDecoder;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, U256};
 <span class="kw">use </span>starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 <span class="kw">use </span>starknet_api::StarknetApiError;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>starknet_core::types::contract::legacy::{
-    LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
-};
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>starknet_core::types::contract::ComputeClassHashError;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span>starknet_core::types::{
-    BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-    DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction, DeclareTransactionReceipt <span class="kw">as </span>RPCDeclareTransactionReceipt,
-    DeclareTransactionV1 <span class="kw">as </span>RPCDeclareTransactionV1, DeclareTransactionV2 <span class="kw">as </span>RPCDeclareTransactionV2,
-    DeployAccountTransaction <span class="kw">as </span>RPCDeployAccountTransaction,
-    DeployAccountTransactionReceipt <span class="kw">as </span>RPCDeployAccountTransactionReceipt, Event <span class="kw">as </span>RPCEvent, FieldElement,
-    InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction, InvokeTransactionReceipt <span class="kw">as </span>RPCInvokeTransactionReceipt,
-    InvokeTransactionV0 <span class="kw">as </span>RPCInvokeTransactionV0, InvokeTransactionV1 <span class="kw">as </span>RPCInvokeTransactionV1,
-    L1HandlerTransaction <span class="kw">as </span>RPCL1HandlerTransaction, L1HandlerTransactionReceipt <span class="kw">as </span>RPCL1HandlerTransactionReceipt,
-    LegacyContractEntryPoint, LegacyEntryPointsByType,
-    MaybePendingTransactionReceipt <span class="kw">as </span>RPCMaybePendingTransactionReceipt, StarknetError, Transaction <span class="kw">as </span>RPCTransaction,
-    TransactionReceipt <span class="kw">as </span>RPCTransactionReceipt, TransactionStatus <span class="kw">as </span>RPCTransactionStatus,
-};
 <span class="kw">use </span>thiserror_no_std::Error;
 
 <span class="kw">use </span><span class="kw">crate</span>::crypto::commitment::{
@@ -1008,8 +983,6 @@
     CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntrypointMapWrapper, Felt252Wrapper,
     Felt252WrapperError,
 };
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">use </span><span class="kw">crate</span>::transaction::utils::to_hash_map_entrypoints;
 
 <span class="doccomment">/// Max size of arrays.
 /// TODO: add real value (#250)
@@ -1089,42 +1062,6 @@
     <span class="kw">fn </span>from(error: EntryPointExecutionError) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::TransactionValidationError(TransactionExecutionError::from(error))
     }
-}
-
-<span class="doccomment">/// Wrapper type for broadcasted transaction conversion errors.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[derive(Debug, Error)]
-</span><span class="kw">pub enum </span>BroadcastedTransactionConversionErrorWrapper {
-    <span class="doccomment">/// Failed to decompress the contract class program
-    </span><span class="attr">#[error(<span class="string">&quot;Failed to decompress the contract class program&quot;</span>)]
-    </span>ContractClassProgramDecompressionError,
-    <span class="doccomment">/// Failed to deserialize the contract class program
-    </span><span class="attr">#[error(<span class="string">&quot;Failed to deserialize the contract class program&quot;</span>)]
-    </span>ContractClassProgramDeserializationError,
-    <span class="doccomment">/// Failed to convert signature
-    </span><span class="attr">#[error(<span class="string">&quot;Failed to convert signature&quot;</span>)]
-    </span>SignatureConversionError,
-    <span class="doccomment">/// Failed to convert calldata
-    </span><span class="attr">#[error(<span class="string">&quot;Failed to convert calldata&quot;</span>)]
-    </span>CalldataConversionError,
-    <span class="doccomment">/// Failed to convert program to program wrapper&quot;
-    </span><span class="attr">#[error(<span class="string">&quot;Failed to convert program to program wrapper&quot;</span>)]
-    </span>ProgramConversionError,
-    <span class="doccomment">/// Failed to bound signatures Vec&lt;H256&gt; by MaxArraySize
-    </span><span class="attr">#[error(<span class="string">&quot;failed to bound signatures Vec&lt;H256&gt; by MaxArraySize&quot;</span>)]
-    </span>SignatureBoundError,
-    <span class="doccomment">/// Failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize
-    </span><span class="attr">#[error(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize&quot;</span>)]
-    </span>CalldataBoundError,
-    <span class="doccomment">/// Starknet Error
-    </span><span class="attr">#[error(transparent)]
-    </span>StarknetError(<span class="attr">#[from] </span>StarknetError),
-    <span class="doccomment">/// Failed to convert transaction
-    </span><span class="attr">#[error(transparent)]
-    </span>TransactionConversionError(<span class="attr">#[from] </span>TransactionConversionError),
-    <span class="doccomment">/// Failed to compute the contract class hash.
-    </span><span class="attr">#[error(transparent)]
-    </span>ClassHashComputationError(<span class="attr">#[from] </span>ComputeClassHashError),
 }
 
 <span class="doccomment">/// Different tx types.
@@ -1223,80 +1160,6 @@
             contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,
-        }
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">fn </span>to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -&gt; RawLegacyEntryPoints {
-    RawLegacyEntryPoints {
-        constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
-        external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
-        l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">fn </span>to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -&gt; RawLegacyEntryPoint {
-    RawLegacyEntryPoint { offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset), selector: entry_point.selector }
-}
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TryFrom&lt;BroadcastedDeclareTransaction&gt; <span class="kw">for </span>DeclareTransaction {
-    <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
-    <span class="kw">fn </span>try_from(tx: BroadcastedDeclareTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">match </span>tx {
-            BroadcastedDeclareTransaction::V1(declare_tx_v1) =&gt; {
-                <span class="kw">let </span>signature = declare_tx_v1
-                    .signature
-                    .iter()
-                    .map(|f| (<span class="kw-2">*</span>f).into())
-                    .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
-                    .try_into()
-                    .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)<span class="question-mark">?</span>;
-
-                <span class="comment">// Create a GzipDecoder to decompress the bytes
-                </span><span class="kw">let </span><span class="kw-2">mut </span>gz = GzDecoder::new(<span class="kw-2">&amp;</span>declare_tx_v1.contract_class.program[..]);
-
-                <span class="comment">// Read the decompressed bytes into a Vec&lt;u8&gt;
-                </span><span class="kw">let </span><span class="kw-2">mut </span>decompressed_bytes = Vec::new();
-                std::io::Read::read_to_end(<span class="kw-2">&amp;mut </span>gz, <span class="kw-2">&amp;mut </span>decompressed_bytes).map_err(|<span class="kw">_</span>| {
-                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
-                })<span class="question-mark">?</span>;
-
-                <span class="comment">// Deserialize it then
-                </span><span class="kw">let </span>program: Program = Program::from_bytes(<span class="kw-2">&amp;</span>decompressed_bytes, <span class="prelude-val">None</span>).map_err(|<span class="kw">_</span>| {
-                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
-                })<span class="question-mark">?</span>;
-                <span class="kw">let </span>legacy_contract_class = LegacyContractClass {
-                    program: serde_json::from_slice(decompressed_bytes.as_slice())
-                        .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
-                    abi: <span class="kw">match </span>declare_tx_v1.contract_class.abi.as_ref() {
-                        <span class="prelude-val">Some</span>(abi) =&gt; abi.iter().cloned().map(|entry| entry.into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-                        <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
-                    },
-                    entry_points_by_type: to_raw_legacy_entry_points(
-                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                    ),
-                };
-
-                <span class="prelude-val">Ok</span>(DeclareTransaction {
-                    version: <span class="number">1_u8</span>,
-                    sender_address: declare_tx_v1.sender_address.into(),
-                    nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                    max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                    signature,
-                    contract_class: ContractClassWrapper {
-                        program: program
-                            .try_into()
-                            .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
-                        entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
-                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        )),
-                    },
-                    compiled_class_hash: legacy_contract_class.class_hash()<span class="question-mark">?</span>.into(),
-                })
-            }
-            BroadcastedDeclareTransaction::V2(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
         }
     }
 }
@@ -1474,31 +1337,6 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TryFrom&lt;BroadcastedInvokeTransaction&gt; <span class="kw">for </span>InvokeTransaction {
-    <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
-    <span class="kw">fn </span>try_from(tx: BroadcastedInvokeTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">match </span>tx {
-            BroadcastedInvokeTransaction::V0(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
-            BroadcastedInvokeTransaction::V1(invoke_tx_v1) =&gt; <span class="prelude-val">Ok</span>(InvokeTransaction {
-                version: <span class="number">1_u8</span>,
-                signature: BoundedVec::try_from(
-                    invoke_tx_v1.signature.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
-                )
-                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)<span class="question-mark">?</span>,
-
-                sender_address: invoke_tx_v1.sender_address.into(),
-                nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
-                calldata: BoundedVec::try_from(
-                    invoke_tx_v1.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
-                )
-                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)<span class="question-mark">?</span>,
-                max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
-            }),
-        }
-    }
-}
-
 <span class="doccomment">/// Representation of a Starknet transaction.
 </span><span class="attr">#[derive(
     Clone,
@@ -1551,171 +1389,6 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TryFrom&lt;BroadcastedDeployAccountTransaction&gt; <span class="kw">for </span>DeployAccountTransaction {
-    <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
-    <span class="kw">fn </span>try_from(tx: BroadcastedDeployAccountTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>contract_address_salt = tx.contract_address_salt.into();
-
-        <span class="kw">let </span>account_class_hash = tx.class_hash;
-
-        <span class="kw">let </span>signature = tx
-            .signature
-            .iter()
-            .map(|f| (<span class="kw-2">*</span>f).into())
-            .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
-            .try_into()
-            .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>calldata = tx
-            .constructor_calldata
-            .iter()
-            .map(|f| (<span class="kw-2">*</span>f).into())
-            .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
-            .try_into()
-            .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>nonce = Felt252Wrapper::from(tx.nonce);
-        <span class="kw">let </span>max_fee = Felt252Wrapper::from(tx.max_fee);
-
-        <span class="prelude-val">Ok</span>(DeployAccountTransaction {
-            version: <span class="number">1_u8</span>,
-            calldata,
-            salt: contract_address_salt,
-            signature,
-            account_class_hash: account_class_hash.into(),
-            nonce,
-            max_fee,
-        })
-    }
-}
-
-<span class="doccomment">/// Error of conversion between the Madara Primitive Transaction and the RPC Transaction
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[derive(Debug, Error)]
-</span><span class="kw">pub enum </span>RPCTransactionConversionError {
-    <span class="doccomment">/// The u8 stored version doesn&#39;t match any of the existing version at the RPC level
-    </span><span class="attr">#[error(<span class="string">&quot;Unknown version&quot;</span>)]
-    </span>UnknownVersion,
-    <span class="doccomment">/// Missing information
-    </span><span class="attr">#[error(<span class="string">&quot;Missing information&quot;</span>)]
-    </span>MissingInformation,
-    <span class="doccomment">/// Conversion from byte array has failed.
-    </span><span class="attr">#[error(<span class="string">&quot;Conversion from byte array has failed&quot;</span>)]
-    </span>FromArrayError,
-    <span class="doccomment">/// Provided byte array has incorrect lengths.
-    </span><span class="attr">#[error(<span class="string">&quot;Provided byte array has incorrect lengths&quot;</span>)]
-    </span>InvalidLength,
-    <span class="doccomment">/// Invalid character in hex string.
-    </span><span class="attr">#[error(<span class="string">&quot;Invalid character in hex string&quot;</span>)]
-    </span>InvalidCharacter,
-    <span class="doccomment">/// Value is too large for FieldElement (felt252).
-    </span><span class="attr">#[error(<span class="string">&quot;Value is too large for FieldElement (felt252)&quot;</span>)]
-    </span>OutOfRange,
-    <span class="doccomment">/// Value is too large to fit into target type.
-    </span><span class="attr">#[error(<span class="string">&quot;Value is too large to fit into target type&quot;</span>)]
-    </span>ValueTooLarge,
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>From&lt;Felt252WrapperError&gt; <span class="kw">for </span>RPCTransactionConversionError {
-    <span class="kw">fn </span>from(value: Felt252WrapperError) -&gt; <span class="self">Self </span>{
-        <span class="kw">match </span>value {
-            Felt252WrapperError::FromArrayError =&gt; <span class="self">Self</span>::FromArrayError,
-            Felt252WrapperError::InvalidLength =&gt; <span class="self">Self</span>::InvalidLength,
-            Felt252WrapperError::InvalidCharacter =&gt; <span class="self">Self</span>::InvalidCharacter,
-            Felt252WrapperError::OutOfRange =&gt; <span class="self">Self</span>::OutOfRange,
-            Felt252WrapperError::ValueTooLarge =&gt; <span class="self">Self</span>::ValueTooLarge,
-        }
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TryFrom&lt;Transaction&gt; <span class="kw">for </span>RPCTransaction {
-    <span class="kw">type </span>Error = RPCTransactionConversionError;
-    <span class="kw">fn </span>try_from(value: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
-        <span class="kw">let </span>transaction_hash = value.hash.<span class="number">0</span>;
-        <span class="kw">let </span>max_fee = value.max_fee.<span class="number">0</span>;
-        <span class="kw">let </span>signature = value.signature.iter().map(|<span class="kw-2">&amp;</span>f| f.<span class="number">0</span>).collect();
-        <span class="kw">let </span>nonce = value.nonce.<span class="number">0</span>;
-        <span class="kw">let </span>sender_address = value.sender_address.<span class="number">0</span>;
-        <span class="kw">let </span>class_hash = value.call_entrypoint.class_hash.ok_or(RPCTransactionConversionError::MissingInformation);
-        <span class="kw">let </span>contract_address = value.call_entrypoint.storage_address.<span class="number">0</span>;
-        <span class="kw">let </span>entry_point_selector =
-            value.call_entrypoint.entrypoint_selector.ok_or(RPCTransactionConversionError::MissingInformation);
-        <span class="kw">let </span>calldata = value.call_entrypoint.calldata.iter().map(|<span class="kw-2">&amp;</span>f| f.<span class="number">0</span>).collect();
-
-        <span class="kw">match </span>value.tx_type {
-            TxType::Declare =&gt; {
-                <span class="kw">let </span>class_hash = class_hash<span class="question-mark">?</span>.<span class="number">0</span>;
-                <span class="kw">match </span>value.version {
-                    <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
-                        transaction_hash,
-                        max_fee,
-                        signature,
-                        nonce,
-                        class_hash,
-                        sender_address,
-                    }))),
-                    <span class="number">2 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
-                        transaction_hash,
-                        max_fee,
-                        signature,
-                        nonce,
-                        class_hash,
-                        sender_address,
-                        compiled_class_hash: class_hash,
-                    }))),
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RPCTransactionConversionError::UnknownVersion),
-                }
-            }
-            TxType::Invoke =&gt; <span class="kw">match </span>value.version {
-                <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
-                    transaction_hash,
-                    max_fee,
-                    signature,
-                    nonce,
-                    contract_address,
-                    entry_point_selector: entry_point_selector<span class="question-mark">?</span>.<span class="number">0</span>,
-                    calldata,
-                }))),
-                <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
-                    transaction_hash,
-                    max_fee,
-                    signature,
-                    nonce,
-                    sender_address,
-                    calldata,
-                }))),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RPCTransactionConversionError::UnknownVersion),
-            },
-            TxType::DeployAccount =&gt; <span class="prelude-val">Ok</span>(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
-                transaction_hash,
-                max_fee,
-                signature,
-                nonce,
-                contract_address_salt: Felt252Wrapper::try_from(
-                    value.contract_address_salt.ok_or(RPCTransactionConversionError::MissingInformation)<span class="question-mark">?</span>,
-                )<span class="question-mark">?
-                </span>.<span class="number">0</span>,
-                constructor_calldata: calldata,
-                class_hash: class_hash<span class="question-mark">?</span>.<span class="number">0</span>,
-            })),
-            TxType::L1Handler =&gt; {
-                <span class="kw">let </span>nonce = TryInto::try_into(value.nonce).unwrap(); <span class="comment">// this panics in case of overflow
-                </span><span class="prelude-val">Ok</span>(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
-                    transaction_hash,
-                    version: value.version.into(),
-                    nonce,
-                    contract_address,
-                    entry_point_selector: entry_point_selector<span class="question-mark">?</span>.<span class="number">0</span>,
-                    calldata,
-                }))
-            }
-        }
-    }
-}
-
 <span class="doccomment">/// Representation of a Starknet transaction receipt.
 </span><span class="attr">#[derive(
     Clone,
@@ -1741,84 +1414,6 @@
     </span><span class="kw">pub </span>events: BoundedVec&lt;EventWrapper, MaxArraySize&gt;,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TransactionReceiptWrapper {
-    <span class="doccomment">/// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
-    ///
-    /// This conversion is done in a function and not `From` trait due to the need
-    /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
-    /// which are unknown in the [`TransactionReceiptWrapper`].
-    ///
-    /// Maybe extended later for other missing fields like messages sent to L1
-    /// and the contract class for the deploy.
-    </span><span class="kw">pub fn </span>into_maybe_pending_transaction_receipt(
-        <span class="self">self</span>,
-        status: RPCTransactionStatus,
-        block_hash_and_number: (FieldElement, u64),
-    ) -&gt; RPCMaybePendingTransactionReceipt {
-        <span class="kw">let </span>transaction_hash = <span class="self">self</span>.transaction_hash.into();
-        <span class="kw">let </span>actual_fee = <span class="self">self</span>.actual_fee.into();
-        <span class="kw">let </span>status = status;
-        <span class="kw">let </span>block_hash = block_hash_and_number.<span class="number">0</span>;
-        <span class="kw">let </span>block_number = block_hash_and_number.<span class="number">1</span>;
-        <span class="kw">let </span>events = <span class="self">self</span>.events.iter().map(|e| (<span class="kw-2">*</span>e).clone().into()).collect();
-
-        <span class="comment">// TODO: from where those message must be taken?
-        </span><span class="kw">let </span>messages_sent = <span class="macro">vec!</span>[];
-
-        <span class="kw">match </span><span class="self">self</span>.tx_type {
-            TxType::DeployAccount =&gt; {
-                RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
-                    RPCDeployAccountTransactionReceipt {
-                        transaction_hash,
-                        actual_fee,
-                        status,
-                        block_hash,
-                        block_number,
-                        messages_sent,
-                        events,
-                        <span class="comment">// TODO: from where can I get this one?
-                        </span>contract_address: FieldElement::ZERO,
-                    },
-                ))
-            }
-            TxType::Declare =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Declare(
-                RPCDeclareTransactionReceipt {
-                    transaction_hash,
-                    actual_fee,
-                    status,
-                    block_hash,
-                    block_number,
-                    messages_sent,
-                    events,
-                },
-            )),
-            TxType::Invoke =&gt; {
-                RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(RPCInvokeTransactionReceipt {
-                    transaction_hash,
-                    actual_fee,
-                    status,
-                    block_hash,
-                    block_number,
-                    messages_sent,
-                    events,
-                }))
-            }
-            TxType::L1Handler =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
-                RPCL1HandlerTransactionReceipt {
-                    transaction_hash,
-                    actual_fee,
-                    status,
-                    block_hash,
-                    block_number,
-                    messages_sent,
-                    events,
-                },
-            )),
-        }
-    }
-}
-
 <span class="doccomment">/// Representation of a Starknet event.
 </span><span class="attr">#[derive(
     Clone,
@@ -1840,17 +1435,6 @@
     </span><span class="kw">pub </span>from_address: ContractAddressWrapper,
     <span class="doccomment">/// The hash of the transaction that emitted the event
     </span><span class="kw">pub </span>transaction_hash: Felt252Wrapper,
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>From&lt;EventWrapper&gt; <span class="kw">for </span>RPCEvent {
-    <span class="kw">fn </span>from(value: EventWrapper) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            from_address: value.from_address.into(),
-            keys: value.keys.iter().map(|k| (<span class="kw-2">*</span>k).into()).collect(),
-            data: value.data.iter().map(|d| (<span class="kw-2">*</span>d).into()).collect(),
-        }
-    }
 }
 
 <span class="doccomment">/// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
@@ -1918,5 +1502,415 @@
     </span><span class="attr">#[error(<span class="string">&quot;Couldn&#39;t register newly declared contracts&quot;</span>)]
     </span>DeclaredClassError,
 }
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">mod </span>reexport_private_types {
+    <span class="kw">use </span>flate2::read::GzDecoder;
+    <span class="kw">use </span>starknet_core::types::contract::legacy::{
+        LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
+    };
+    <span class="kw">use </span>starknet_core::types::contract::ComputeClassHashError;
+    <span class="kw">use </span>starknet_core::types::{
+        BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
+        DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction, DeclareTransactionReceipt <span class="kw">as </span>RPCDeclareTransactionReceipt,
+        DeclareTransactionV1 <span class="kw">as </span>RPCDeclareTransactionV1, DeclareTransactionV2 <span class="kw">as </span>RPCDeclareTransactionV2,
+        DeployAccountTransaction <span class="kw">as </span>RPCDeployAccountTransaction,
+        DeployAccountTransactionReceipt <span class="kw">as </span>RPCDeployAccountTransactionReceipt, Event <span class="kw">as </span>RPCEvent, FieldElement,
+        InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction, InvokeTransactionReceipt <span class="kw">as </span>RPCInvokeTransactionReceipt,
+        InvokeTransactionV0 <span class="kw">as </span>RPCInvokeTransactionV0, InvokeTransactionV1 <span class="kw">as </span>RPCInvokeTransactionV1,
+        L1HandlerTransaction <span class="kw">as </span>RPCL1HandlerTransaction, L1HandlerTransactionReceipt <span class="kw">as </span>RPCL1HandlerTransactionReceipt,
+        LegacyContractEntryPoint, LegacyEntryPointsByType,
+        MaybePendingTransactionReceipt <span class="kw">as </span>RPCMaybePendingTransactionReceipt, StarknetError,
+        Transaction <span class="kw">as </span>RPCTransaction, TransactionReceipt <span class="kw">as </span>RPCTransactionReceipt,
+        TransactionStatus <span class="kw">as </span>RPCTransactionStatus,
+    };
+
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span><span class="kw">crate</span>::transaction::utils::to_hash_map_entrypoints;
+    <span class="doccomment">/// Wrapper type for broadcasted transaction conversion errors.
+    </span><span class="attr">#[derive(Debug, Error)]
+    </span><span class="kw">pub enum </span>BroadcastedTransactionConversionErrorWrapper {
+        <span class="doccomment">/// Failed to decompress the contract class program
+        </span><span class="attr">#[error(<span class="string">&quot;Failed to decompress the contract class program&quot;</span>)]
+        </span>ContractClassProgramDecompressionError,
+        <span class="doccomment">/// Failed to deserialize the contract class program
+        </span><span class="attr">#[error(<span class="string">&quot;Failed to deserialize the contract class program&quot;</span>)]
+        </span>ContractClassProgramDeserializationError,
+        <span class="doccomment">/// Failed to convert signature
+        </span><span class="attr">#[error(<span class="string">&quot;Failed to convert signature&quot;</span>)]
+        </span>SignatureConversionError,
+        <span class="doccomment">/// Failed to convert calldata
+        </span><span class="attr">#[error(<span class="string">&quot;Failed to convert calldata&quot;</span>)]
+        </span>CalldataConversionError,
+        <span class="doccomment">/// Failed to convert program to program wrapper&quot;
+        </span><span class="attr">#[error(<span class="string">&quot;Failed to convert program to program wrapper&quot;</span>)]
+        </span>ProgramConversionError,
+        <span class="doccomment">/// Failed to bound signatures Vec&lt;H256&gt; by MaxArraySize
+        </span><span class="attr">#[error(<span class="string">&quot;failed to bound signatures Vec&lt;H256&gt; by MaxArraySize&quot;</span>)]
+        </span>SignatureBoundError,
+        <span class="doccomment">/// Failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize
+        </span><span class="attr">#[error(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize&quot;</span>)]
+        </span>CalldataBoundError,
+        <span class="doccomment">/// Starknet Error
+        </span><span class="attr">#[error(transparent)]
+        </span>StarknetError(<span class="attr">#[from] </span>StarknetError),
+        <span class="doccomment">/// Failed to convert transaction
+        </span><span class="attr">#[error(transparent)]
+        </span>TransactionConversionError(<span class="attr">#[from] </span>TransactionConversionError),
+        <span class="doccomment">/// Failed to compute the contract class hash.
+        </span><span class="attr">#[error(transparent)]
+        </span>ClassHashComputationError(<span class="attr">#[from] </span>ComputeClassHashError),
+    }
+
+    <span class="kw">fn </span>to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -&gt; RawLegacyEntryPoints {
+        RawLegacyEntryPoints {
+            constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
+            external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
+            l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
+        }
+    }
+
+    <span class="kw">fn </span>to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -&gt; RawLegacyEntryPoint {
+        RawLegacyEntryPoint {
+            offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset),
+            selector: entry_point.selector,
+        }
+    }
+
+    <span class="kw">impl </span>TryFrom&lt;BroadcastedDeclareTransaction&gt; <span class="kw">for </span>DeclareTransaction {
+        <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
+        <span class="kw">fn </span>try_from(tx: BroadcastedDeclareTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
+            <span class="kw">match </span>tx {
+                BroadcastedDeclareTransaction::V1(declare_tx_v1) =&gt; {
+                    <span class="kw">let </span>signature = declare_tx_v1
+                        .signature
+                        .iter()
+                        .map(|f| (<span class="kw-2">*</span>f).into())
+                        .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
+                        .try_into()
+                        .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)<span class="question-mark">?</span>;
+
+                    <span class="comment">// Create a GzipDecoder to decompress the bytes
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>gz = GzDecoder::new(<span class="kw-2">&amp;</span>declare_tx_v1.contract_class.program[..]);
+
+                    <span class="comment">// Read the decompressed bytes into a Vec&lt;u8&gt;
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>decompressed_bytes = Vec::new();
+                    std::io::Read::read_to_end(<span class="kw-2">&amp;mut </span>gz, <span class="kw-2">&amp;mut </span>decompressed_bytes).map_err(|<span class="kw">_</span>| {
+                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
+                    })<span class="question-mark">?</span>;
+
+                    <span class="comment">// Deserialize it then
+                    </span><span class="kw">let </span>program: Program = Program::from_bytes(<span class="kw-2">&amp;</span>decompressed_bytes, <span class="prelude-val">None</span>).map_err(|<span class="kw">_</span>| {
+                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
+                    })<span class="question-mark">?</span>;
+                    <span class="kw">let </span>legacy_contract_class = LegacyContractClass {
+                        program: serde_json::from_slice(decompressed_bytes.as_slice())
+                            .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
+                        abi: <span class="kw">match </span>declare_tx_v1.contract_class.abi.as_ref() {
+                            <span class="prelude-val">Some</span>(abi) =&gt; abi.iter().cloned().map(|entry| entry.into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+                            <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
+                        },
+                        entry_points_by_type: to_raw_legacy_entry_points(
+                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                        ),
+                    };
+
+                    <span class="prelude-val">Ok</span>(DeclareTransaction {
+                        version: <span class="number">1_u8</span>,
+                        sender_address: declare_tx_v1.sender_address.into(),
+                        nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
+                        max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
+                        signature,
+                        contract_class: ContractClassWrapper {
+                            program: program
+                                .try_into()
+                                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
+                            entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
+                                declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                            )),
+                        },
+                        compiled_class_hash: legacy_contract_class.class_hash()<span class="question-mark">?</span>.into(),
+                    })
+                }
+                BroadcastedDeclareTransaction::V2(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
+            }
+        }
+    }
+
+    <span class="kw">impl </span>TryFrom&lt;BroadcastedInvokeTransaction&gt; <span class="kw">for </span>InvokeTransaction {
+        <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
+        <span class="kw">fn </span>try_from(tx: BroadcastedInvokeTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction, <span class="self">Self</span>::Error&gt; {
+            <span class="kw">match </span>tx {
+                BroadcastedInvokeTransaction::V0(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
+                BroadcastedInvokeTransaction::V1(invoke_tx_v1) =&gt; <span class="prelude-val">Ok</span>(InvokeTransaction {
+                    version: <span class="number">1_u8</span>,
+                    signature: BoundedVec::try_from(
+                        invoke_tx_v1.signature.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
+                    )
+                    .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)<span class="question-mark">?</span>,
+
+                    sender_address: invoke_tx_v1.sender_address.into(),
+                    nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
+                    calldata: BoundedVec::try_from(
+                        invoke_tx_v1.calldata.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;(),
+                    )
+                    .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)<span class="question-mark">?</span>,
+                    max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
+                }),
+            }
+        }
+    }
+
+    <span class="kw">impl </span>TryFrom&lt;BroadcastedDeployAccountTransaction&gt; <span class="kw">for </span>DeployAccountTransaction {
+        <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
+        <span class="kw">fn </span>try_from(tx: BroadcastedDeployAccountTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeployAccountTransaction, <span class="self">Self</span>::Error&gt; {
+            <span class="kw">let </span>contract_address_salt = tx.contract_address_salt.into();
+
+            <span class="kw">let </span>account_class_hash = tx.class_hash;
+
+            <span class="kw">let </span>signature = tx
+                .signature
+                .iter()
+                .map(|f| (<span class="kw-2">*</span>f).into())
+                .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
+                .try_into()
+                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)<span class="question-mark">?</span>;
+
+            <span class="kw">let </span>calldata = tx
+                .constructor_calldata
+                .iter()
+                .map(|f| (<span class="kw-2">*</span>f).into())
+                .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
+                .try_into()
+                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)<span class="question-mark">?</span>;
+
+            <span class="kw">let </span>nonce = Felt252Wrapper::from(tx.nonce);
+            <span class="kw">let </span>max_fee = Felt252Wrapper::from(tx.max_fee);
+
+            <span class="prelude-val">Ok</span>(DeployAccountTransaction {
+                version: <span class="number">1_u8</span>,
+                calldata,
+                salt: contract_address_salt,
+                signature,
+                account_class_hash: account_class_hash.into(),
+                nonce,
+                max_fee,
+            })
+        }
+    }
+
+    <span class="doccomment">/// Error of conversion between the Madara Primitive Transaction and the RPC Transaction
+    </span><span class="attr">#[derive(Debug, Error)]
+    </span><span class="kw">pub enum </span>RPCTransactionConversionError {
+        <span class="doccomment">/// The u8 stored version doesn&#39;t match any of the existing version at the RPC level
+        </span><span class="attr">#[error(<span class="string">&quot;Unknown version&quot;</span>)]
+        </span>UnknownVersion,
+        <span class="doccomment">/// Missing information
+        </span><span class="attr">#[error(<span class="string">&quot;Missing information&quot;</span>)]
+        </span>MissingInformation,
+        <span class="doccomment">/// Conversion from byte array has failed.
+        </span><span class="attr">#[error(<span class="string">&quot;Conversion from byte array has failed&quot;</span>)]
+        </span>FromArrayError,
+        <span class="doccomment">/// Provided byte array has incorrect lengths.
+        </span><span class="attr">#[error(<span class="string">&quot;Provided byte array has incorrect lengths&quot;</span>)]
+        </span>InvalidLength,
+        <span class="doccomment">/// Invalid character in hex string.
+        </span><span class="attr">#[error(<span class="string">&quot;Invalid character in hex string&quot;</span>)]
+        </span>InvalidCharacter,
+        <span class="doccomment">/// Value is too large for FieldElement (felt252).
+        </span><span class="attr">#[error(<span class="string">&quot;Value is too large for FieldElement (felt252)&quot;</span>)]
+        </span>OutOfRange,
+        <span class="doccomment">/// Value is too large to fit into target type.
+        </span><span class="attr">#[error(<span class="string">&quot;Value is too large to fit into target type&quot;</span>)]
+        </span>ValueTooLarge,
+    }
+
+    <span class="kw">impl </span>From&lt;Felt252WrapperError&gt; <span class="kw">for </span>RPCTransactionConversionError {
+        <span class="kw">fn </span>from(value: Felt252WrapperError) -&gt; <span class="self">Self </span>{
+            <span class="kw">match </span>value {
+                Felt252WrapperError::FromArrayError =&gt; <span class="self">Self</span>::FromArrayError,
+                Felt252WrapperError::InvalidLength =&gt; <span class="self">Self</span>::InvalidLength,
+                Felt252WrapperError::InvalidCharacter =&gt; <span class="self">Self</span>::InvalidCharacter,
+                Felt252WrapperError::OutOfRange =&gt; <span class="self">Self</span>::OutOfRange,
+                Felt252WrapperError::ValueTooLarge =&gt; <span class="self">Self</span>::ValueTooLarge,
+            }
+        }
+    }
+
+    <span class="kw">impl </span>TryFrom&lt;Transaction&gt; <span class="kw">for </span>RPCTransaction {
+        <span class="kw">type </span>Error = RPCTransactionConversionError;
+        <span class="kw">fn </span>try_from(value: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+            <span class="kw">let </span>transaction_hash = value.hash.<span class="number">0</span>;
+            <span class="kw">let </span>max_fee = value.max_fee.<span class="number">0</span>;
+            <span class="kw">let </span>signature = value.signature.iter().map(|<span class="kw-2">&amp;</span>f| f.<span class="number">0</span>).collect();
+            <span class="kw">let </span>nonce = value.nonce.<span class="number">0</span>;
+            <span class="kw">let </span>sender_address = value.sender_address.<span class="number">0</span>;
+            <span class="kw">let </span>class_hash = value.call_entrypoint.class_hash.ok_or(RPCTransactionConversionError::MissingInformation);
+            <span class="kw">let </span>contract_address = value.call_entrypoint.storage_address.<span class="number">0</span>;
+            <span class="kw">let </span>entry_point_selector =
+                value.call_entrypoint.entrypoint_selector.ok_or(RPCTransactionConversionError::MissingInformation);
+            <span class="kw">let </span>calldata = value.call_entrypoint.calldata.iter().map(|<span class="kw-2">&amp;</span>f| f.<span class="number">0</span>).collect();
+
+            <span class="kw">match </span>value.tx_type {
+                TxType::Declare =&gt; {
+                    <span class="kw">let </span>class_hash = class_hash<span class="question-mark">?</span>.<span class="number">0</span>;
+                    <span class="kw">match </span>value.version {
+                        <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
+                            transaction_hash,
+                            max_fee,
+                            signature,
+                            nonce,
+                            class_hash,
+                            sender_address,
+                        }))),
+                        <span class="number">2 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
+                            transaction_hash,
+                            max_fee,
+                            signature,
+                            nonce,
+                            class_hash,
+                            sender_address,
+                            compiled_class_hash: class_hash,
+                        }))),
+                        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RPCTransactionConversionError::UnknownVersion),
+                    }
+                }
+                TxType::Invoke =&gt; <span class="kw">match </span>value.version {
+                    <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        contract_address,
+                        entry_point_selector: entry_point_selector<span class="question-mark">?</span>.<span class="number">0</span>,
+                        calldata,
+                    }))),
+                    <span class="number">1 </span>=&gt; <span class="prelude-val">Ok</span>(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        sender_address,
+                        calldata,
+                    }))),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(RPCTransactionConversionError::UnknownVersion),
+                },
+                TxType::DeployAccount =&gt; <span class="prelude-val">Ok</span>(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
+                    transaction_hash,
+                    max_fee,
+                    signature,
+                    nonce,
+                    contract_address_salt: Felt252Wrapper::try_from(
+                        value.contract_address_salt.ok_or(RPCTransactionConversionError::MissingInformation)<span class="question-mark">?</span>,
+                    )<span class="question-mark">?
+                    </span>.<span class="number">0</span>,
+                    constructor_calldata: calldata,
+                    class_hash: class_hash<span class="question-mark">?</span>.<span class="number">0</span>,
+                })),
+                TxType::L1Handler =&gt; {
+                    <span class="kw">let </span>nonce = TryInto::try_into(value.nonce).unwrap(); <span class="comment">// this panics in case of overflow
+                    </span><span class="prelude-val">Ok</span>(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
+                        transaction_hash,
+                        version: value.version.into(),
+                        nonce,
+                        contract_address,
+                        entry_point_selector: entry_point_selector<span class="question-mark">?</span>.<span class="number">0</span>,
+                        calldata,
+                    }))
+                }
+            }
+        }
+    }
+
+    <span class="kw">impl </span>TransactionReceiptWrapper {
+        <span class="doccomment">/// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
+        ///
+        /// This conversion is done in a function and not `From` trait due to the need
+        /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
+        /// which are unknown in the [`TransactionReceiptWrapper`].
+        ///
+        /// Maybe extended later for other missing fields like messages sent to L1
+        /// and the contract class for the deploy.
+        </span><span class="kw">pub fn </span>into_maybe_pending_transaction_receipt(
+            <span class="self">self</span>,
+            status: RPCTransactionStatus,
+            block_hash_and_number: (FieldElement, u64),
+        ) -&gt; RPCMaybePendingTransactionReceipt {
+            <span class="kw">let </span>transaction_hash = <span class="self">self</span>.transaction_hash.into();
+            <span class="kw">let </span>actual_fee = <span class="self">self</span>.actual_fee.into();
+            <span class="kw">let </span>status = status;
+            <span class="kw">let </span>block_hash = block_hash_and_number.<span class="number">0</span>;
+            <span class="kw">let </span>block_number = block_hash_and_number.<span class="number">1</span>;
+            <span class="kw">let </span>events = <span class="self">self</span>.events.iter().map(|e| (<span class="kw-2">*</span>e).clone().into()).collect();
+
+            <span class="comment">// TODO: from where those message must be taken?
+            </span><span class="kw">let </span>messages_sent = <span class="macro">vec!</span>[];
+
+            <span class="kw">match </span><span class="self">self</span>.tx_type {
+                TxType::DeployAccount =&gt; {
+                    RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
+                        RPCDeployAccountTransactionReceipt {
+                            transaction_hash,
+                            actual_fee,
+                            status,
+                            block_hash,
+                            block_number,
+                            messages_sent,
+                            events,
+                            <span class="comment">// TODO: from where can I get this one?
+                            </span>contract_address: FieldElement::ZERO,
+                        },
+                    ))
+                }
+                TxType::Declare =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Declare(
+                    RPCDeclareTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+                TxType::Invoke =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(
+                    RPCInvokeTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+                TxType::L1Handler =&gt; RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
+                    RPCL1HandlerTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+            }
+        }
+    }
+
+    <span class="kw">impl </span>From&lt;EventWrapper&gt; <span class="kw">for </span>RPCEvent {
+        <span class="kw">fn </span>from(value: EventWrapper) -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{
+                from_address: value.from_address.into(),
+                keys: value.keys.iter().map(|k| (<span class="kw-2">*</span>k).into()).collect(),
+                data: value.data.iter().map(|d| (<span class="kw-2">*</span>d).into()).collect(),
+            }
+        }
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub use </span>reexport_private_types::<span class="kw-2">*</span>;
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

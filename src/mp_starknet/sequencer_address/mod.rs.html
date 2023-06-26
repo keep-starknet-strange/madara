@@ -112,6 +112,8 @@
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::array::TryFromSliceError;
 
 <span class="kw">use </span>scale_codec::{Decode, Encode};
@@ -147,14 +149,6 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>InherentError {
-    <span class="doccomment">/// Try to create an instance ouf of the given identifier and data.
-    </span><span class="kw">pub fn </span>try_from(id: <span class="kw-2">&amp;</span>InherentIdentifier, <span class="kw-2">mut </span>data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">if </span>id == <span class="kw-2">&amp;</span>INHERENT_IDENTIFIER { &lt;InherentError <span class="kw">as </span>Decode&gt;::decode(<span class="kw-2">&amp;mut </span>data).ok() } <span class="kw">else </span>{ <span class="prelude-val">None </span>}
-    }
-}
-
 <span class="doccomment">/// Auxiliary trait to extract sequencer address inherent data.
 </span><span class="kw">pub trait </span>SequencerAddressInherentData {
     <span class="doccomment">/// Get sequencer address inherent data.
@@ -167,64 +161,74 @@
     }
 }
 
-<span class="attr">#[derive(Copy, Clone, Decode, Encode, sp_runtime::RuntimeDebug)]
-#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="doccomment">/// The inherent data provider for sequencer address.
-</span><span class="kw">pub struct </span>InherentDataProvider {
-    <span class="doccomment">/// The sequencer address field.
-    </span><span class="kw">pub </span>sequencer_address: InherentType,
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>InherentDataProvider {
-    <span class="doccomment">/// Create `Self` using the given `addr`.
-    </span><span class="kw">pub fn </span>new(addr: InherentType) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ sequencer_address: addr }
-    }
-
-    <span class="doccomment">/// Returns the sequencer address of this inherent data provider.
-    </span><span class="kw">pub fn </span>sequencer_address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; InherentType {
-        <span class="self">self</span>.sequencer_address
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>Default <span class="kw">for </span>InherentDataProvider {
-    <span class="kw">fn </span>default() -&gt; InherentDataProvider {
-        InherentDataProvider { sequencer_address: DEFAULT_SEQUENCER_ADDRESS }
-    }
-}
-
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl </span>TryFrom&lt;Vec&lt;u8&gt;&gt; <span class="kw">for </span>InherentDataProvider {
-    <span class="kw">type </span>Error = InherentError;
-    <span class="kw">fn </span>try_from(storage_val: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, InherentError&gt; {
-        <span class="kw">match </span>slice_to_arr(<span class="kw-2">&amp;</span>storage_val) {
-            <span class="prelude-val">Ok</span>(addr) =&gt; <span class="prelude-val">Ok</span>(InherentDataProvider { sequencer_address: addr }),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(InherentError::WrongAddressFormat),
-        }
-    }
-}
-
 <span class="doccomment">/// Helper function to convert storage value.
 </span><span class="kw">fn </span>slice_to_arr(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;[u8; <span class="number">32</span>], TryFromSliceError&gt; {
     slice.try_into()
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[async_trait::async_trait]
-</span><span class="kw">impl </span>sp_inherents::InherentDataProvider <span class="kw">for </span>InherentDataProvider {
-    <span class="kw">async fn </span>provide_inherent_data(<span class="kw-2">&amp;</span><span class="self">self</span>, inherent_data: <span class="kw-2">&amp;mut </span>InherentData) -&gt; <span class="prelude-ty">Result</span>&lt;(), sp_inherents::Error&gt; {
-        inherent_data.put_data(INHERENT_IDENTIFIER, <span class="kw-2">&amp;</span><span class="self">self</span>.sequencer_address)
+</span><span class="kw">mod </span>reexport_std_types {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+
+    <span class="kw">impl </span>InherentError {
+        <span class="doccomment">/// Try to create an instance ouf of the given identifier and data.
+        </span><span class="kw">pub fn </span>try_from(id: <span class="kw-2">&amp;</span>InherentIdentifier, <span class="kw-2">mut </span>data: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+            <span class="kw">if </span>id == <span class="kw-2">&amp;</span>INHERENT_IDENTIFIER { &lt;InherentError <span class="kw">as </span>Decode&gt;::decode(<span class="kw-2">&amp;mut </span>data).ok() } <span class="kw">else </span>{ <span class="prelude-val">None </span>}
+        }
     }
 
-    <span class="kw">async fn </span>try_handle_error(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        identifier: <span class="kw-2">&amp;</span>InherentIdentifier,
-        error: <span class="kw-2">&amp;</span>[u8],
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;(), sp_inherents::Error&gt;&gt; {
-        <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(sp_inherents::Error::Application(Box::from(InherentError::try_from(identifier, error)<span class="question-mark">?</span>))))
+    <span class="attr">#[derive(Copy, Clone, Decode, Encode, sp_runtime::RuntimeDebug)]
+    </span><span class="doccomment">/// The inherent data provider for sequencer address.
+    </span><span class="kw">pub struct </span>InherentDataProvider {
+        <span class="doccomment">/// The sequencer address field.
+        </span><span class="kw">pub </span>sequencer_address: InherentType,
+    }
+
+    <span class="kw">impl </span>InherentDataProvider {
+        <span class="doccomment">/// Create `Self` using the given `addr`.
+        </span><span class="kw">pub fn </span>new(addr: InherentType) -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{ sequencer_address: addr }
+        }
+
+        <span class="doccomment">/// Returns the sequencer address of this inherent data provider.
+        </span><span class="kw">pub fn </span>sequencer_address(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; InherentType {
+            <span class="self">self</span>.sequencer_address
+        }
+    }
+
+    <span class="kw">impl </span>Default <span class="kw">for </span>InherentDataProvider {
+        <span class="kw">fn </span>default() -&gt; InherentDataProvider {
+            InherentDataProvider { sequencer_address: DEFAULT_SEQUENCER_ADDRESS }
+        }
+    }
+
+    <span class="kw">impl </span>TryFrom&lt;Vec&lt;u8&gt;&gt; <span class="kw">for </span>InherentDataProvider {
+        <span class="kw">type </span>Error = InherentError;
+        <span class="kw">fn </span>try_from(storage_val: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, InherentError&gt; {
+            <span class="kw">match </span>slice_to_arr(<span class="kw-2">&amp;</span>storage_val) {
+                <span class="prelude-val">Ok</span>(addr) =&gt; <span class="prelude-val">Ok</span>(InherentDataProvider { sequencer_address: addr }),
+                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(InherentError::WrongAddressFormat),
+            }
+        }
+    }
+
+    <span class="attr">#[async_trait::async_trait]
+    </span><span class="kw">impl </span>sp_inherents::InherentDataProvider <span class="kw">for </span>InherentDataProvider {
+        <span class="kw">async fn </span>provide_inherent_data(<span class="kw-2">&amp;</span><span class="self">self</span>, inherent_data: <span class="kw-2">&amp;mut </span>InherentData) -&gt; <span class="prelude-ty">Result</span>&lt;(), sp_inherents::Error&gt; {
+            inherent_data.put_data(INHERENT_IDENTIFIER, <span class="kw-2">&amp;</span><span class="self">self</span>.sequencer_address)
+        }
+
+        <span class="kw">async fn </span>try_handle_error(
+            <span class="kw-2">&amp;</span><span class="self">self</span>,
+            identifier: <span class="kw-2">&amp;</span>InherentIdentifier,
+            error: <span class="kw-2">&amp;</span>[u8],
+        ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;(), sp_inherents::Error&gt;&gt; {
+            <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(sp_inherents::Error::Application(Box::from(InherentError::try_from(identifier, error)<span class="question-mark">?</span>))))
+        }
     }
 }
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub use </span>reexport_std_types::<span class="kw-2">*</span>;
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
