@@ -216,8 +216,8 @@ pub mod pallet {
     /// State commitments of the current block.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn state)]
-    pub(super) type State<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
+    #[pallet::getter(fn current_state_commitments)]
+    pub(super) type CurrentStateCommitments<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
 
     /// The Starknet pallet storage items.
     /// STORAGE
@@ -232,8 +232,8 @@ pub mod pallet {
     /// Mapping storage key to storage value.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn pending_state)]
-    pub(super) type PendingState<T: Config> =
+    #[pallet::getter(fn pending_storage_changes)]
+    pub(super) type PendingStorageChanges<T: Config> =
         StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxTransactions>, OptionQuery>;
 
     /// Current building block's events.
@@ -965,10 +965,8 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root = match T::EnableStateRoot::get() {
-            true => Self::compute_and_store_state_root(),
-            false => Felt252Wrapper::default(),
-        };
+        let global_state_root =
+            if T::EnableStateRoot::get() { Self::compute_and_store_state_root() } else { Felt252Wrapper::default() };
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
@@ -1134,10 +1132,10 @@ impl<T: Config> Pallet<T> {
     /// The global state root.
     pub fn compute_and_store_state_root() -> Felt252Wrapper {
         // Update contracts trie
-        let mut commitments = State::<T>::get();
-        let pending_state = PendingState::<T>::iter();
+        let mut commitments = Self::current_state_commitments();
+        let pending_storage_changes = PendingStorageChanges::<T>::iter();
 
-        pending_state.for_each(|(contract_address, storage_diffs)| {
+        pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
             // Retrieve state trie for this contract.
             let mut state_tree = StorageTries::<T>::get(contract_address).unwrap_or_default();
             // For each smart contract, iterate through storage diffs and update the state trie.
@@ -1152,17 +1150,17 @@ impl<T: Config> Pallet<T> {
             // And update the storage trie
             let state_root = state_tree.commit();
 
-            let nonce = Nonces::<T>::get(contract_address);
-            let class_hash = ContractClassHashes::<T>::get(contract_address).unwrap_or_default();
+            let nonce = Self::nonce(contract_address);
+            let class_hash = Self::contract_class_hash_by_address(contract_address).unwrap_or_default();
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
             commitments.storage_commitment.set(contract_address, hash);
 
             // Finally update the contracts trie in runtime storage.
-            State::<T>::mutate(|state| {
+            CurrentStateCommitments::<T>::mutate(|state| {
                 state.storage_commitment = commitments.clone().storage_commitment;
             });
 
-            PendingState::<T>::remove(contract_address);
+            PendingStorageChanges::<T>::remove(contract_address);
         });
 
         // Compute the final state root
