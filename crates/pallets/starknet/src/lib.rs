@@ -1155,12 +1155,12 @@ impl<T: Config> Pallet<T> {
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
             commitments.storage_commitment.set(contract_address, hash);
 
-            // Finally update the contracts trie in runtime storage.
-            CurrentStateCommitments::<T>::mutate(|state| {
-                state.storage_commitment = commitments.clone().storage_commitment;
-            });
-
             PendingStorageChanges::<T>::remove(contract_address);
+        });
+
+        // Finally update the contracts trie in runtime storage.
+        CurrentStateCommitments::<T>::mutate(|state| {
+            state.storage_commitment = commitments.clone().storage_commitment;
         });
 
         // Compute the final state root
