@@ -24,14 +24,14 @@ to the substrate. For more information, please visit
 
 To build and run under the local testnet, follow the steps below:
 
-* Create the release binary and launch the local testnet using the script
-   `infra/local-testnet/run-cfg2.sh`:
+- Create the release binary and launch the local testnet using the script
+  `infra/local-testnet/run-cfg2.sh`:
 
 ```bash
 cargo build --release --bin madara
 ```
 
-* Execute the `try-runtime` subcommands against the local testnet:
+- Execute the `try-runtime` subcommands against the local testnet:
 
 ```bash
 cargo run --release --features=try-runtime --bin madara -- try-runtime --help
