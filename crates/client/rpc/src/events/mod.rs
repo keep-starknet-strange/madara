@@ -75,7 +75,6 @@ where
     /// * `EventsPage` - The filtered events with continuation token
     pub fn filter_events(&self, filter: RpcEventFilter) -> RpcResult<EventsPage> {
         let mut filtered_events = vec![];
-        let mut index = 0;
 
         // get filter values
         let mut current_block = filter.from_block;
@@ -85,35 +84,35 @@ where
         let mut continuation_token = filter.continuation_token;
         let chunk_size = filter.chunk_size;
 
+        // skip blocks with continuation token block number
+        current_block += continuation_token.block_n;
+
         // Iterate on block range
         while current_block <= to_block {
             let (trx_receipts, block) = self.get_block_receipts(current_block)?;
-            let block_events_len: usize = trx_receipts.iter().map(|receipt| receipt.events.len()).sum();
-            // if block_events length < continuation_token, keep going and reduce the pagination
-            if block_events_len < continuation_token {
-                continuation_token -= block_events_len;
-                index += block_events_len;
-                current_block += 1;
-                continue;
+            // check if continuation_token.receipt_n correct
+            if (trx_receipts.len() as u64) < continuation_token.receipt_n {
+                return Err(StarknetRpcApiError::InvalidContinuationToken.into());
             }
 
             let block_hash = block.header().hash(*self.hasher).into();
             let block_number = block.header().block_number;
-            // Kept in order to calculate continuation token.
-            let block_events_len = block_events_len - continuation_token;
-            let index_before_loop = index;
 
-            for receipt in trx_receipts.iter() {
+            // skip transaction receipts
+            for receipt in trx_receipts.iter().skip(continuation_token.receipt_n as usize) {
                 let receipt_events_len: usize = receipt.events.len();
-                // skip receit with event if receipt.events.len() < continuation_token
-                if receipt_events_len < continuation_token {
-                    continuation_token -= receipt_events_len;
-                    index += receipt_events_len;
+                // check if continuation_token.event_n is correct
+                if (receipt_events_len as u64) < continuation_token.event_n {
+                    return Err(StarknetRpcApiError::InvalidContinuationToken.into());
+                } else if (receipt_events_len as u64) == continuation_token.event_n {
+                    continuation_token.receipt_n += 1;
+                    continuation_token.event_n = 0;
                     continue;
                 }
+
                 let receipt_transaction_hash = receipt.transaction_hash;
-                let receipt_events = receipt.events.clone().into_iter().skip(continuation_token);
-                index += continuation_token;
+                // skip events
+                let receipt_events = receipt.events.clone().into_iter().skip(continuation_token.event_n as usize);
 
                 let (new_filtered_events, continuation_index) = filter_events_by_params(
                     receipt_events,
@@ -121,7 +120,6 @@ where
                     keys.clone(),
                     Some((chunk_size as usize) - filtered_events.len()),
                 );
-                index += continuation_index;
 
                 filtered_events.extend(
                     new_filtered_events
@@ -138,15 +136,25 @@ where
                 );
 
                 if filtered_events.len() >= chunk_size as usize {
-                    let token =
-                        if index - index_before_loop < block_events_len { Some((index).to_string()) } else { None };
+                    let token = if current_block < to_block
+                        || continuation_token.receipt_n < trx_receipts.len() as u64 - 1
+                        || continuation_index < receipt_events_len
+                    {
+                        continuation_token.event_n = continuation_index as u64;
+                        Some(continuation_token.to_string())
+                    } else {
+                        None
+                    };
                     return Ok(EventsPage { events: filtered_events, continuation_token: token });
                 }
-                continuation_token = 0;
+
+                continuation_token.receipt_n += 1;
+                continuation_token.event_n = 0;
             }
 
             current_block += 1;
-            continuation_token = 0;
+            continuation_token.block_n += 1;
+            continuation_token.receipt_n = 0;
         }
         Ok(EventsPage { events: filtered_events, continuation_token: None })
     }
