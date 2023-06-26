@@ -201,7 +201,6 @@ pub fn run() -> sc_cli::Result<()> {
                     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                 }
 
-                cli.run.run_cmd.shared_params.dev = true;
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
