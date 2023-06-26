@@ -122,7 +122,7 @@ cairo-vm = { git = "https://github.com/keep-starknet-strange/cairo-rs", branch =
 ] }
 starknet-crypto = { version = "0.5.1", default-features = false }
 starknet-core = { version = "0.3.0", default-features = false }
-starknet-ff = { version = "0.3.3", default-features = false }
+starknet-ff = { version = "0.3.4", default-features = false }
 poseidon_hash = { default-features = false, package = "poseidon", git = "https://github.com/EvolveArt/poseidon-rs", branch = "feature/no-std-refractor", features = [
   "alloc",
 ] }
@@ -134,17 +134,17 @@ starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", 
 anyhow = "1.0.71"
 flate2 = "1.0.26"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
-scale-info = { version = "2.6.0", default-features = false }
+scale-info = { version = "2.8.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.19", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
-clap = { version = "4.3.4", default-features = false }
+clap = { version = "4.3.8", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 serde = { version = "1.0.163", default-features = false }
-serde_json = { version = "1.0.97", default-features = false }
+serde_json = { version = "1.0.99", default-features = false }
 serde_with = "2.3.3"
 bitvec = { version = "0.17.4", default-features = false }
 thiserror = "1.0.40"
