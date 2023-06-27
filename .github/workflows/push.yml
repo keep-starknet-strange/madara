@@ -29,3 +29,5 @@ jobs:
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
+    permissions:
+      contents: write
