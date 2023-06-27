@@ -1,6 +1,6 @@
 /// General helper functions related to mocking
-mod mock;
-pub use mock::*;
+mod helpers;
+pub use helpers::*;
 
 /// Mock Runtime with default config
 /// Closest to Public Starknet

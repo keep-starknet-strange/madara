@@ -8,7 +8,7 @@ use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use starknet_core::types::FieldElement;
 use {crate as pallet_starknet, frame_system as system};
 
-use super::mock::*;
+use super::helpers::*;
 use crate::tests::constants::*;
 use crate::tests::utils::get_contract_class;
 use crate::{ContractAddressWrapper, SeqAddrUpdate, SequencerAddress};
