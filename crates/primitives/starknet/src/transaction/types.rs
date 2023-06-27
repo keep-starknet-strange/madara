@@ -9,34 +9,12 @@ use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use cairo_vm::types::program::Program;
-#[cfg(feature = "std")]
-use flate2::read::GzDecoder;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
-#[cfg(feature = "std")]
-use starknet_core::types::contract::legacy::{
-    LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
-};
-#[cfg(feature = "std")]
-use starknet_core::types::contract::ComputeClassHashError;
-#[cfg(feature = "std")]
-use starknet_core::types::{
-    BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-    DeclareTransaction as RPCDeclareTransaction, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
-    DeclareTransactionV1 as RPCDeclareTransactionV1, DeclareTransactionV2 as RPCDeclareTransactionV2,
-    DeployAccountTransaction as RPCDeployAccountTransaction,
-    DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
-    InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
-    InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
-    L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
-    LegacyContractEntryPoint, LegacyEntryPointsByType,
-    MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError, Transaction as RPCTransaction,
-    TransactionReceipt as RPCTransactionReceipt, TransactionStatus as RPCTransactionStatus,
-};
 use thiserror_no_std::Error;
 
 use crate::crypto::commitment::{
@@ -48,8 +26,6 @@ use crate::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntrypointMapWrapper, Felt252Wrapper,
     Felt252WrapperError,
 };
-#[cfg(feature = "std")]
-use crate::transaction::utils::to_hash_map_entrypoints;
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -129,42 +105,6 @@ impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
     fn from(error: EntryPointExecutionError) -> Self {
         Self::TransactionValidationError(TransactionExecutionError::from(error))
     }
-}
-
-/// Wrapper type for broadcasted transaction conversion errors.
-#[cfg(feature = "std")]
-#[derive(Debug, Error)]
-pub enum BroadcastedTransactionConversionErrorWrapper {
-    /// Failed to decompress the contract class program
-    #[error("Failed to decompress the contract class program")]
-    ContractClassProgramDecompressionError,
-    /// Failed to deserialize the contract class program
-    #[error("Failed to deserialize the contract class program")]
-    ContractClassProgramDeserializationError,
-    /// Failed to convert signature
-    #[error("Failed to convert signature")]
-    SignatureConversionError,
-    /// Failed to convert calldata
-    #[error("Failed to convert calldata")]
-    CalldataConversionError,
-    /// Failed to convert program to program wrapper"
-    #[error("Failed to convert program to program wrapper")]
-    ProgramConversionError,
-    /// Failed to bound signatures Vec<H256> by MaxArraySize
-    #[error("failed to bound signatures Vec<H256> by MaxArraySize")]
-    SignatureBoundError,
-    /// Failed to bound calldata Vec<U256> by MaxCalldataSize
-    #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
-    CalldataBoundError,
-    /// Starknet Error
-    #[error(transparent)]
-    StarknetError(#[from] StarknetError),
-    /// Failed to convert transaction
-    #[error(transparent)]
-    TransactionConversionError(#[from] TransactionConversionError),
-    /// Failed to compute the contract class hash.
-    #[error(transparent)]
-    ClassHashComputationError(#[from] ComputeClassHashError),
 }
 
 /// Different tx types.
@@ -258,85 +198,11 @@ impl DeclareTransaction {
                 BoundedVec::default(),
                 self.sender_address,
                 self.sender_address,
-                Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
+                Felt252Wrapper::from(0_u8), // FIXME 710
             ),
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
             max_fee: self.max_fee,
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-fn to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -> RawLegacyEntryPoints {
-    RawLegacyEntryPoints {
-        constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
-        external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
-        l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
-    }
-}
-
-#[cfg(feature = "std")]
-fn to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -> RawLegacyEntryPoint {
-    RawLegacyEntryPoint { offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset), selector: entry_point.selector }
-}
-#[cfg(feature = "std")]
-impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
-    type Error = BroadcastedTransactionConversionErrorWrapper;
-    fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
-        match tx {
-            BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
-                let signature = declare_tx_v1
-                    .signature
-                    .iter()
-                    .map(|f| (*f).into())
-                    .collect::<Vec<Felt252Wrapper>>()
-                    .try_into()
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
-
-                // Create a GzipDecoder to decompress the bytes
-                let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
-
-                // Read the decompressed bytes into a Vec<u8>
-                let mut decompressed_bytes = Vec::new();
-                std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).map_err(|_| {
-                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
-                })?;
-
-                // Deserialize it then
-                let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
-                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
-                })?;
-                let legacy_contract_class = LegacyContractClass {
-                    program: serde_json::from_slice(decompressed_bytes.as_slice())
-                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                    abi: match declare_tx_v1.contract_class.abi.as_ref() {
-                        Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
-                        None => vec![],
-                    },
-                    entry_points_by_type: to_raw_legacy_entry_points(
-                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                    ),
-                };
-
-                Ok(DeclareTransaction {
-                    version: 1_u8,
-                    sender_address: declare_tx_v1.sender_address.into(),
-                    nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                    max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                    signature,
-                    contract_class: ContractClassWrapper {
-                        program: program
-                            .try_into()
-                            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                        entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
-                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        )),
-                    },
-                    compiled_class_hash: legacy_contract_class.class_hash()?.into(),
-                })
-            }
-            BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
         }
     }
 }
@@ -406,7 +272,7 @@ impl DeployAccountTransaction {
                 self.calldata,
                 sender_address,
                 sender_address,
-                Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
+                Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
             ),
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
@@ -505,36 +371,11 @@ impl InvokeTransaction {
                 self.calldata,
                 self.sender_address,
                 self.sender_address,
-                Felt252Wrapper::from(0_u8), // TODO (Greg) update this once transaction contains the initial gas
+                Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
             ),
             contract_class: None,
             contract_address_salt: None,
             max_fee: self.max_fee,
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
-    type Error = BroadcastedTransactionConversionErrorWrapper;
-    fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
-        match tx {
-            BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
-            BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
-                version: 1_u8,
-                signature: BoundedVec::try_from(
-                    invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
-                )
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
-
-                sender_address: invoke_tx_v1.sender_address.into(),
-                nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
-                calldata: BoundedVec::try_from(
-                    invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
-                )
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
-                max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
-            }),
         }
     }
 }
@@ -591,171 +432,6 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
     }
 }
 
-#[cfg(feature = "std")]
-impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
-    type Error = BroadcastedTransactionConversionErrorWrapper;
-    fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction, Self::Error> {
-        let contract_address_salt = tx.contract_address_salt.into();
-
-        let account_class_hash = tx.class_hash;
-
-        let signature = tx
-            .signature
-            .iter()
-            .map(|f| (*f).into())
-            .collect::<Vec<Felt252Wrapper>>()
-            .try_into()
-            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
-
-        let calldata = tx
-            .constructor_calldata
-            .iter()
-            .map(|f| (*f).into())
-            .collect::<Vec<Felt252Wrapper>>()
-            .try_into()
-            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
-
-        let nonce = Felt252Wrapper::from(tx.nonce);
-        let max_fee = Felt252Wrapper::from(tx.max_fee);
-
-        Ok(DeployAccountTransaction {
-            version: 1_u8,
-            calldata,
-            salt: contract_address_salt,
-            signature,
-            account_class_hash: account_class_hash.into(),
-            nonce,
-            max_fee,
-        })
-    }
-}
-
-/// Error of conversion between the Madara Primitive Transaction and the RPC Transaction
-#[cfg(feature = "std")]
-#[derive(Debug, Error)]
-pub enum RPCTransactionConversionError {
-    /// The u8 stored version doesn't match any of the existing version at the RPC level
-    #[error("Unknown version")]
-    UnknownVersion,
-    /// Missing information
-    #[error("Missing information")]
-    MissingInformation,
-    /// Conversion from byte array has failed.
-    #[error("Conversion from byte array has failed")]
-    FromArrayError,
-    /// Provided byte array has incorrect lengths.
-    #[error("Provided byte array has incorrect lengths")]
-    InvalidLength,
-    /// Invalid character in hex string.
-    #[error("Invalid character in hex string")]
-    InvalidCharacter,
-    /// Value is too large for FieldElement (felt252).
-    #[error("Value is too large for FieldElement (felt252)")]
-    OutOfRange,
-    /// Value is too large to fit into target type.
-    #[error("Value is too large to fit into target type")]
-    ValueTooLarge,
-}
-
-#[cfg(feature = "std")]
-impl From<Felt252WrapperError> for RPCTransactionConversionError {
-    fn from(value: Felt252WrapperError) -> Self {
-        match value {
-            Felt252WrapperError::FromArrayError => Self::FromArrayError,
-            Felt252WrapperError::InvalidLength => Self::InvalidLength,
-            Felt252WrapperError::InvalidCharacter => Self::InvalidCharacter,
-            Felt252WrapperError::OutOfRange => Self::OutOfRange,
-            Felt252WrapperError::ValueTooLarge => Self::ValueTooLarge,
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl TryFrom<Transaction> for RPCTransaction {
-    type Error = RPCTransactionConversionError;
-    fn try_from(value: Transaction) -> Result<Self, Self::Error> {
-        let transaction_hash = value.hash.0;
-        let max_fee = value.max_fee.0;
-        let signature = value.signature.iter().map(|&f| f.0).collect();
-        let nonce = value.nonce.0;
-        let sender_address = value.sender_address.0;
-        let class_hash = value.call_entrypoint.class_hash.ok_or(RPCTransactionConversionError::MissingInformation);
-        let contract_address = value.call_entrypoint.storage_address.0;
-        let entry_point_selector =
-            value.call_entrypoint.entrypoint_selector.ok_or(RPCTransactionConversionError::MissingInformation);
-        let calldata = value.call_entrypoint.calldata.iter().map(|&f| f.0).collect();
-
-        match value.tx_type {
-            TxType::Declare => {
-                let class_hash = class_hash?.0;
-                match value.version {
-                    1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
-                        transaction_hash,
-                        max_fee,
-                        signature,
-                        nonce,
-                        class_hash,
-                        sender_address,
-                    }))),
-                    2 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
-                        transaction_hash,
-                        max_fee,
-                        signature,
-                        nonce,
-                        class_hash,
-                        sender_address,
-                        compiled_class_hash: class_hash,
-                    }))),
-                    _ => Err(RPCTransactionConversionError::UnknownVersion),
-                }
-            }
-            TxType::Invoke => match value.version {
-                0 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
-                    transaction_hash,
-                    max_fee,
-                    signature,
-                    nonce,
-                    contract_address,
-                    entry_point_selector: entry_point_selector?.0,
-                    calldata,
-                }))),
-                1 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
-                    transaction_hash,
-                    max_fee,
-                    signature,
-                    nonce,
-                    sender_address,
-                    calldata,
-                }))),
-                _ => Err(RPCTransactionConversionError::UnknownVersion),
-            },
-            TxType::DeployAccount => Ok(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
-                transaction_hash,
-                max_fee,
-                signature,
-                nonce,
-                contract_address_salt: Felt252Wrapper::try_from(
-                    value.contract_address_salt.ok_or(RPCTransactionConversionError::MissingInformation)?,
-                )?
-                .0,
-                constructor_calldata: calldata,
-                class_hash: class_hash?.0,
-            })),
-            TxType::L1Handler => {
-                let nonce = TryInto::try_into(value.nonce).unwrap(); // this panics in case of overflow
-                Ok(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
-                    transaction_hash,
-                    version: value.version.into(),
-                    nonce,
-                    contract_address,
-                    entry_point_selector: entry_point_selector?.0,
-                    calldata,
-                }))
-            }
-        }
-    }
-}
-
 /// Representation of a Starknet transaction receipt.
 #[derive(
     Clone,
@@ -781,84 +457,6 @@ pub struct TransactionReceiptWrapper {
     pub events: BoundedVec<EventWrapper, MaxArraySize>,
 }
 
-#[cfg(feature = "std")]
-impl TransactionReceiptWrapper {
-    /// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
-    ///
-    /// This conversion is done in a function and not `From` trait due to the need
-    /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
-    /// which are unknown in the [`TransactionReceiptWrapper`].
-    ///
-    /// Maybe extended later for other missing fields like messages sent to L1
-    /// and the contract class for the deploy.
-    pub fn into_maybe_pending_transaction_receipt(
-        self,
-        status: RPCTransactionStatus,
-        block_hash_and_number: (FieldElement, u64),
-    ) -> RPCMaybePendingTransactionReceipt {
-        let transaction_hash = self.transaction_hash.into();
-        let actual_fee = self.actual_fee.into();
-        let status = status;
-        let block_hash = block_hash_and_number.0;
-        let block_number = block_hash_and_number.1;
-        let events = self.events.iter().map(|e| (*e).clone().into()).collect();
-
-        // TODO: from where those message must be taken?
-        let messages_sent = vec![];
-
-        match self.tx_type {
-            TxType::DeployAccount => {
-                RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
-                    RPCDeployAccountTransactionReceipt {
-                        transaction_hash,
-                        actual_fee,
-                        status,
-                        block_hash,
-                        block_number,
-                        messages_sent,
-                        events,
-                        // TODO: from where can I get this one?
-                        contract_address: FieldElement::ZERO,
-                    },
-                ))
-            }
-            TxType::Declare => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Declare(
-                RPCDeclareTransactionReceipt {
-                    transaction_hash,
-                    actual_fee,
-                    status,
-                    block_hash,
-                    block_number,
-                    messages_sent,
-                    events,
-                },
-            )),
-            TxType::Invoke => {
-                RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(RPCInvokeTransactionReceipt {
-                    transaction_hash,
-                    actual_fee,
-                    status,
-                    block_hash,
-                    block_number,
-                    messages_sent,
-                    events,
-                }))
-            }
-            TxType::L1Handler => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
-                RPCL1HandlerTransactionReceipt {
-                    transaction_hash,
-                    actual_fee,
-                    status,
-                    block_hash,
-                    block_number,
-                    messages_sent,
-                    events,
-                },
-            )),
-        }
-    }
-}
-
 /// Representation of a Starknet event.
 #[derive(
     Clone,
@@ -880,17 +478,6 @@ pub struct EventWrapper {
     pub from_address: ContractAddressWrapper,
     /// The hash of the transaction that emitted the event
     pub transaction_hash: Felt252Wrapper,
-}
-
-#[cfg(feature = "std")]
-impl From<EventWrapper> for RPCEvent {
-    fn from(value: EventWrapper) -> Self {
-        Self {
-            from_address: value.from_address.into(),
-            keys: value.keys.iter().map(|k| (*k).into()).collect(),
-            data: value.data.iter().map(|d| (*d).into()).collect(),
-        }
-    }
 }
 
 /// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
@@ -958,3 +545,413 @@ pub enum StateDiffError {
     #[error("Couldn't register newly declared contracts")]
     DeclaredClassError,
 }
+
+#[cfg(feature = "std")]
+mod reexport_private_types {
+    use flate2::read::GzDecoder;
+    use starknet_core::types::contract::legacy::{
+        LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
+    };
+    use starknet_core::types::contract::ComputeClassHashError;
+    use starknet_core::types::{
+        BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
+        DeclareTransaction as RPCDeclareTransaction, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
+        DeclareTransactionV1 as RPCDeclareTransactionV1, DeclareTransactionV2 as RPCDeclareTransactionV2,
+        DeployAccountTransaction as RPCDeployAccountTransaction,
+        DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
+        InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
+        InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
+        L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
+        LegacyContractEntryPoint, LegacyEntryPointsByType,
+        MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError,
+        Transaction as RPCTransaction, TransactionReceipt as RPCTransactionReceipt,
+        TransactionStatus as RPCTransactionStatus,
+    };
+
+    use super::*;
+    use crate::transaction::utils::to_hash_map_entrypoints;
+    /// Wrapper type for broadcasted transaction conversion errors.
+    #[derive(Debug, Error)]
+    pub enum BroadcastedTransactionConversionErrorWrapper {
+        /// Failed to decompress the contract class program
+        #[error("Failed to decompress the contract class program")]
+        ContractClassProgramDecompressionError,
+        /// Failed to deserialize the contract class program
+        #[error("Failed to deserialize the contract class program")]
+        ContractClassProgramDeserializationError,
+        /// Failed to convert signature
+        #[error("Failed to convert signature")]
+        SignatureConversionError,
+        /// Failed to convert calldata
+        #[error("Failed to convert calldata")]
+        CalldataConversionError,
+        /// Failed to convert program to program wrapper"
+        #[error("Failed to convert program to program wrapper")]
+        ProgramConversionError,
+        /// Failed to bound signatures Vec<H256> by MaxArraySize
+        #[error("failed to bound signatures Vec<H256> by MaxArraySize")]
+        SignatureBoundError,
+        /// Failed to bound calldata Vec<U256> by MaxCalldataSize
+        #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
+        CalldataBoundError,
+        /// Starknet Error
+        #[error(transparent)]
+        StarknetError(#[from] StarknetError),
+        /// Failed to convert transaction
+        #[error(transparent)]
+        TransactionConversionError(#[from] TransactionConversionError),
+        /// Failed to compute the contract class hash.
+        #[error(transparent)]
+        ClassHashComputationError(#[from] ComputeClassHashError),
+    }
+
+    fn to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -> RawLegacyEntryPoints {
+        RawLegacyEntryPoints {
+            constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
+            external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
+            l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
+        }
+    }
+
+    fn to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -> RawLegacyEntryPoint {
+        RawLegacyEntryPoint {
+            offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset),
+            selector: entry_point.selector,
+        }
+    }
+
+    impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
+        type Error = BroadcastedTransactionConversionErrorWrapper;
+        fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
+            match tx {
+                BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
+                    let signature = declare_tx_v1
+                        .signature
+                        .iter()
+                        .map(|f| (*f).into())
+                        .collect::<Vec<Felt252Wrapper>>()
+                        .try_into()
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+
+                    // Create a GzipDecoder to decompress the bytes
+                    let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
+
+                    // Read the decompressed bytes into a Vec<u8>
+                    let mut decompressed_bytes = Vec::new();
+                    std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).map_err(|_| {
+                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
+                    })?;
+
+                    // Deserialize it then
+                    let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
+                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
+                    })?;
+                    let legacy_contract_class = LegacyContractClass {
+                        program: serde_json::from_slice(decompressed_bytes.as_slice())
+                            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
+                        abi: match declare_tx_v1.contract_class.abi.as_ref() {
+                            Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
+                            None => vec![],
+                        },
+                        entry_points_by_type: to_raw_legacy_entry_points(
+                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                        ),
+                    };
+
+                    Ok(DeclareTransaction {
+                        version: 1_u8,
+                        sender_address: declare_tx_v1.sender_address.into(),
+                        nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
+                        max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
+                        signature,
+                        contract_class: ContractClassWrapper {
+                            program: program
+                                .try_into()
+                                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
+                            entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
+                                declare_tx_v1.contract_class.entry_points_by_type.clone(),
+                            )),
+                        },
+                        compiled_class_hash: legacy_contract_class.class_hash()?.into(),
+                    })
+                }
+                BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
+            }
+        }
+    }
+
+    impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
+        type Error = BroadcastedTransactionConversionErrorWrapper;
+        fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
+            match tx {
+                BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
+                BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
+                    version: 1_u8,
+                    signature: BoundedVec::try_from(
+                        invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
+                    )
+                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
+
+                    sender_address: invoke_tx_v1.sender_address.into(),
+                    nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
+                    calldata: BoundedVec::try_from(
+                        invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
+                    )
+                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
+                    max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
+                }),
+            }
+        }
+    }
+
+    impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
+        type Error = BroadcastedTransactionConversionErrorWrapper;
+        fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction, Self::Error> {
+            let contract_address_salt = tx.contract_address_salt.into();
+
+            let account_class_hash = tx.class_hash;
+
+            let signature = tx
+                .signature
+                .iter()
+                .map(|f| (*f).into())
+                .collect::<Vec<Felt252Wrapper>>()
+                .try_into()
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+
+            let calldata = tx
+                .constructor_calldata
+                .iter()
+                .map(|f| (*f).into())
+                .collect::<Vec<Felt252Wrapper>>()
+                .try_into()
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
+
+            let nonce = Felt252Wrapper::from(tx.nonce);
+            let max_fee = Felt252Wrapper::from(tx.max_fee);
+
+            Ok(DeployAccountTransaction {
+                version: 1_u8,
+                calldata,
+                salt: contract_address_salt,
+                signature,
+                account_class_hash: account_class_hash.into(),
+                nonce,
+                max_fee,
+            })
+        }
+    }
+
+    /// Error of conversion between the Madara Primitive Transaction and the RPC Transaction
+    #[derive(Debug, Error)]
+    pub enum RPCTransactionConversionError {
+        /// The u8 stored version doesn't match any of the existing version at the RPC level
+        #[error("Unknown version")]
+        UnknownVersion,
+        /// Missing information
+        #[error("Missing information")]
+        MissingInformation,
+        /// Conversion from byte array has failed.
+        #[error("Conversion from byte array has failed")]
+        FromArrayError,
+        /// Provided byte array has incorrect lengths.
+        #[error("Provided byte array has incorrect lengths")]
+        InvalidLength,
+        /// Invalid character in hex string.
+        #[error("Invalid character in hex string")]
+        InvalidCharacter,
+        /// Value is too large for FieldElement (felt252).
+        #[error("Value is too large for FieldElement (felt252)")]
+        OutOfRange,
+        /// Value is too large to fit into target type.
+        #[error("Value is too large to fit into target type")]
+        ValueTooLarge,
+    }
+
+    impl From<Felt252WrapperError> for RPCTransactionConversionError {
+        fn from(value: Felt252WrapperError) -> Self {
+            match value {
+                Felt252WrapperError::FromArrayError => Self::FromArrayError,
+                Felt252WrapperError::InvalidLength => Self::InvalidLength,
+                Felt252WrapperError::InvalidCharacter => Self::InvalidCharacter,
+                Felt252WrapperError::OutOfRange => Self::OutOfRange,
+                Felt252WrapperError::ValueTooLarge => Self::ValueTooLarge,
+            }
+        }
+    }
+
+    impl TryFrom<Transaction> for RPCTransaction {
+        type Error = RPCTransactionConversionError;
+        fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+            let transaction_hash = value.hash.0;
+            let max_fee = value.max_fee.0;
+            let signature = value.signature.iter().map(|&f| f.0).collect();
+            let nonce = value.nonce.0;
+            let sender_address = value.sender_address.0;
+            let class_hash = value.call_entrypoint.class_hash.ok_or(RPCTransactionConversionError::MissingInformation);
+            let contract_address = value.call_entrypoint.storage_address.0;
+            let entry_point_selector =
+                value.call_entrypoint.entrypoint_selector.ok_or(RPCTransactionConversionError::MissingInformation);
+            let calldata = value.call_entrypoint.calldata.iter().map(|&f| f.0).collect();
+
+            match value.tx_type {
+                TxType::Declare => {
+                    let class_hash = class_hash?.0;
+                    match value.version {
+                        1 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
+                            transaction_hash,
+                            max_fee,
+                            signature,
+                            nonce,
+                            class_hash,
+                            sender_address,
+                        }))),
+                        2 => Ok(RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
+                            transaction_hash,
+                            max_fee,
+                            signature,
+                            nonce,
+                            class_hash,
+                            sender_address,
+                            compiled_class_hash: class_hash,
+                        }))),
+                        _ => Err(RPCTransactionConversionError::UnknownVersion),
+                    }
+                }
+                TxType::Invoke => match value.version {
+                    0 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V0(RPCInvokeTransactionV0 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        contract_address,
+                        entry_point_selector: entry_point_selector?.0,
+                        calldata,
+                    }))),
+                    1 => Ok(RPCTransaction::Invoke(RPCInvokeTransaction::V1(RPCInvokeTransactionV1 {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        sender_address,
+                        calldata,
+                    }))),
+                    _ => Err(RPCTransactionConversionError::UnknownVersion),
+                },
+                TxType::DeployAccount => Ok(RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
+                    transaction_hash,
+                    max_fee,
+                    signature,
+                    nonce,
+                    contract_address_salt: Felt252Wrapper::try_from(
+                        value.contract_address_salt.ok_or(RPCTransactionConversionError::MissingInformation)?,
+                    )?
+                    .0,
+                    constructor_calldata: calldata,
+                    class_hash: class_hash?.0,
+                })),
+                TxType::L1Handler => {
+                    let nonce = TryInto::try_into(value.nonce).unwrap(); // this panics in case of overflow
+                    Ok(RPCTransaction::L1Handler(RPCL1HandlerTransaction {
+                        transaction_hash,
+                        version: value.version.into(),
+                        nonce,
+                        contract_address,
+                        entry_point_selector: entry_point_selector?.0,
+                        calldata,
+                    }))
+                }
+            }
+        }
+    }
+
+    impl TransactionReceiptWrapper {
+        /// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
+        ///
+        /// This conversion is done in a function and not `From` trait due to the need
+        /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
+        /// which are unknown in the [`TransactionReceiptWrapper`].
+        ///
+        /// Maybe extended later for other missing fields like messages sent to L1
+        /// and the contract class for the deploy.
+        pub fn into_maybe_pending_transaction_receipt(
+            self,
+            status: RPCTransactionStatus,
+            block_hash_and_number: (FieldElement, u64),
+        ) -> RPCMaybePendingTransactionReceipt {
+            let transaction_hash = self.transaction_hash.into();
+            let actual_fee = self.actual_fee.into();
+            let status = status;
+            let block_hash = block_hash_and_number.0;
+            let block_number = block_hash_and_number.1;
+            let events = self.events.iter().map(|e| (*e).clone().into()).collect();
+
+            // TODO: from where those message must be taken?
+            let messages_sent = vec![];
+
+            match self.tx_type {
+                TxType::DeployAccount => {
+                    RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
+                        RPCDeployAccountTransactionReceipt {
+                            transaction_hash,
+                            actual_fee,
+                            status,
+                            block_hash,
+                            block_number,
+                            messages_sent,
+                            events,
+                            // TODO: from where can I get this one?
+                            contract_address: FieldElement::ZERO,
+                        },
+                    ))
+                }
+                TxType::Declare => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Declare(
+                    RPCDeclareTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+                TxType::Invoke => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(
+                    RPCInvokeTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+                TxType::L1Handler => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
+                    RPCL1HandlerTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+            }
+        }
+    }
+
+    impl From<EventWrapper> for RPCEvent {
+        fn from(value: EventWrapper) -> Self {
+            Self {
+                from_address: value.from_address.into(),
+                keys: value.keys.iter().map(|k| (*k).into()).collect(),
+                data: value.data.iter().map(|d| (*d).into()).collect(),
+            }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+pub use reexport_private_types::*;

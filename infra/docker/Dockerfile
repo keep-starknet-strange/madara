@@ -17,10 +17,13 @@ LABEL description="Madara, a blazing fast Starknet sequencer" \
   source="https://github.com/keep-starknet-strange/madara" \
   documentation="https://docs.madara.wtf/"
 
-COPY --from=builder /madara/target/release/madara /
+# TODO: change the way chain-specs are copied on the node
+COPY --from=builder /madara /madara
+COPY --from=builder /madara/target/release/madara /madara-bin
 COPY --from=builder /madara/crates/node/chain-specs /chain-specs
+
 # 9444 JSON-RPC server
 # 9615 Prometheus exporter
 # 30333 P2P communication
 EXPOSE 9933 9944 9615 30333
-ENTRYPOINT ["/madara"]
+ENTRYPOINT ["/madara-bin"]

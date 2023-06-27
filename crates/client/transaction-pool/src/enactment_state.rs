@@ -18,9 +18,10 @@
 
 //! Substrate transaction pool implementation.
 
+use num_traits::CheckedSub;
 use sc_transaction_pool_api::ChainEvent;
 use sp_blockchain::TreeRoute;
-use sp_runtime::traits::{Block as BlockT, NumberFor, Saturating};
+use sp_runtime::traits::{Block as BlockT, NumberFor};
 
 use crate::LOG_TARGET;
 
@@ -101,12 +102,14 @@ where
         TreeRouteF: Fn(Block::Hash, Block::Hash) -> Result<TreeRoute<Block>, String>,
         BlockNumberF: Fn(Block::Hash) -> Result<Option<NumberFor<Block>>, String>,
     {
-        let new_hash = event.hash();
-        let finalized = event.is_finalized();
+        let (new_hash, current_hash, finalized) = match event {
+            ChainEvent::NewBestBlock { hash, .. } => (*hash, self.recent_best_block, false),
+            ChainEvent::Finalized { hash, .. } => (*hash, self.recent_finalized_block, true),
+        };
 
         // do not proceed with txpool maintain if block distance is to high
-        let skip_maintenance = match (hash_to_number(new_hash), hash_to_number(self.recent_best_block)) {
-            (Ok(Some(new)), Ok(Some(current))) => new.saturating_sub(current) > SKIP_MAINTENANCE_THRESHOLD.into(),
+        let skip_maintenance = match (hash_to_number(new_hash), hash_to_number(current_hash)) {
+            (Ok(Some(new)), Ok(Some(current))) => new.checked_sub(&current) > Some(SKIP_MAINTENANCE_THRESHOLD.into()),
             _ => true,
         };
 
@@ -128,10 +131,10 @@ where
 
         log::debug!(
             target: LOG_TARGET,
-            "resolve hash: {new_hash:?} finalized: {finalized:?} tree_route: (common {:?}, last {:?}) best_block: \
-             {:?} finalized_block:{:?}",
-            tree_route.common_block(),
-            tree_route.last(),
+            "resolve hash:{:?} finalized:{:?} tree_route:{:?} best_block:{:?} finalized_block:{:?}",
+            new_hash,
+            finalized,
+            tree_route,
             self.recent_best_block,
             self.recent_finalized_block
         );

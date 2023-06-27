@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use sc_cli::RunCmd;
 
 /// Available Sealing methods.
@@ -13,6 +15,7 @@ pub enum Sealing {
 /// Available testnets.
 #[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
 pub enum Testnet {
+    Local,
     Sharingan,
 }
 
@@ -36,6 +39,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub testnet: Option<Testnet>,
+
+    #[clap(long)]
+    pub madara_path: Option<PathBuf>,
 }
 
 #[allow(clippy::large_enum_variant)]

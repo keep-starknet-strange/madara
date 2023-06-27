@@ -18,6 +18,7 @@ futures = { workspace = true }
 futures-timer = { workspace = true }
 linked-hash-map = { workspace = true }
 log = { workspace = true }
+num-traits = { workspace = true }
 parking_lot = { workspace = true }
 prometheus-endpoint = { workspace = true }
 sc-client-api = { workspace = true }
