@@ -195,7 +195,7 @@ fn verify_tx_version_passes_for_valid_version() {
 #[test]
 fn verify_tx_version_fails_for_invalid_version() {
     let tx = Transaction {
-        version: 0_u8,
+        version: 2_u8,
         hash: Felt252Wrapper::from(6_u128),
         signature: bounded_vec![
             Felt252Wrapper::from(10_u128),
