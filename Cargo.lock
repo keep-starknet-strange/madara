@@ -371,6 +371,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52f63c5c1316a16a4b35eaac8b76a98248961a533f061684cb2a7cb0eafb6c6"
 
 [[package]]
+name = "array-bytes"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9b1c5a481ec30a5abd8dfbd94ab5cf1bb4e9a66be7f1b3b322f2f1170c200fd"
+
+[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -629,6 +635,15 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
+]
+
+[[package]]
+name = "binary-merkle-tree"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "hash-db",
+ "log",
 ]
 
 [[package]]
@@ -1195,6 +1210,15 @@ checksum = "773f3b9af64447d2ce9850330c473515014aa235e6a783b02db81ff39e4a3dad"
 dependencies = [
  "crypto-common",
  "inout",
+]
+
+[[package]]
+name = "ckb-merkle-mountain-range"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56ccb671c5921be8a84686e6212ca184cb1d7c51cadcdbfcbd1cc3f042f5dfb8"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]
@@ -2467,7 +2491,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
  "Inflector",
- "array-bytes",
+ "array-bytes 4.2.0",
  "chrono",
  "clap",
  "comfy-table",
@@ -4582,10 +4606,12 @@ dependencies = [
  "futures-timer",
  "log",
  "parity-scale-codec",
+ "parking_lot 0.12.1",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
  "sc-telemetry",
+ "sc-transaction-pool",
  "sc-transaction-pool-api",
  "sp-api",
  "sp-blockchain",
@@ -4594,6 +4620,7 @@ dependencies = [
  "sp-inherents",
  "sp-runtime",
  "substrate-prometheus-endpoint",
+ "substrate-test-runtime-client",
 ]
 
 [[package]]
@@ -5382,6 +5409,88 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-babe"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-authorship",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-application-crypto",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-balances"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-beefy"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-authorship",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-consensus-beefy",
+ "sp-runtime",
+ "sp-session",
+ "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-beefy-mmr"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "array-bytes 4.2.0",
+ "binary-merkle-tree",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-beefy",
+ "pallet-mmr",
+ "pallet-session",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-consensus-beefy",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
@@ -5401,6 +5510,38 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-mmr"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-mmr-primitives",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-root-testing"
+version = "1.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -5456,6 +5597,21 @@ dependencies = [
  "starknet-crypto",
  "starknet_api",
  "test-case",
+]
+
+[[package]]
+name = "pallet-sudo"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6808,7 +6964,7 @@ name = "sc-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "chrono",
  "clap",
  "fdlimit",
@@ -7005,7 +7161,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
  "ahash 0.8.3",
- "array-bytes",
+ "array-bytes 4.2.0",
  "async-trait",
  "dyn-clone",
  "finality-grandpa",
@@ -7170,7 +7326,7 @@ name = "sc-keystore"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "parking_lot 0.12.1",
  "serde_json",
  "sp-application-crypto",
@@ -7184,7 +7340,7 @@ name = "sc-network"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "async-channel",
  "async-trait",
  "asynchronous-codec",
@@ -7251,7 +7407,7 @@ name = "sc-network-common"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "async-trait",
  "bitflags",
  "bytes",
@@ -7296,7 +7452,7 @@ name = "sc-network-light"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "async-channel",
  "futures",
  "libp2p-identity",
@@ -7318,7 +7474,7 @@ name = "sc-network-sync"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "async-channel",
  "async-trait",
  "fork-tree",
@@ -7352,7 +7508,7 @@ name = "sc-network-transactions"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "futures",
  "libp2p",
  "log",
@@ -7370,7 +7526,7 @@ name = "sc-offchain"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "bytes",
  "fnv",
  "futures",
@@ -7474,7 +7630,7 @@ name = "sc-rpc-spec-v2"
 version = "0.10.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "futures",
  "futures-util",
  "hex",
@@ -8372,6 +8528,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-consensus-beefy"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "lazy_static",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-mmr-primitives",
+ "sp-runtime",
+ "sp-std",
+ "strum",
+]
+
+[[package]]
 name = "sp-consensus-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
@@ -8406,7 +8581,7 @@ name = "sp-core"
 version = "21.0.0"
 source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
 dependencies = [
- "array-bytes",
+ "array-bytes 4.2.0",
  "bitflags",
  "blake2",
  "bounded-collections",
@@ -8584,6 +8759,24 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-std",
+]
+
+[[package]]
+name = "sp-mmr-primitives"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "ckb-merkle-mountain-range",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-debug-derive",
+ "sp-runtime",
+ "sp-std",
+ "thiserror",
 ]
 
 [[package]]
@@ -9175,6 +9368,100 @@ dependencies = [
  "sc-rpc-api",
  "serde",
  "sp-runtime",
+]
+
+[[package]]
+name = "substrate-test-client"
+version = "2.0.1"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "array-bytes 4.2.0",
+ "async-trait",
+ "futures",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-client-db",
+ "sc-consensus",
+ "sc-executor",
+ "sc-offchain",
+ "sc-service",
+ "serde",
+ "serde_json",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-keyring",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+]
+
+[[package]]
+name = "substrate-test-runtime"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "array-bytes 6.1.0",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "frame-system-rpc-runtime-api",
+ "log",
+ "memory-db",
+ "pallet-babe",
+ "pallet-balances",
+ "pallet-beefy-mmr",
+ "pallet-root-testing",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "sc-service",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-application-crypto",
+ "sp-block-builder",
+ "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-consensus-beefy",
+ "sp-consensus-grandpa",
+ "sp-core",
+ "sp-debug-derive",
+ "sp-externalities",
+ "sp-inherents",
+ "sp-io",
+ "sp-keyring",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-session",
+ "sp-state-machine",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-trie",
+ "sp-version",
+ "substrate-wasm-builder",
+ "trie-db",
+]
+
+[[package]]
+name = "substrate-test-runtime-client"
+version = "2.0.0"
+source = "git+https://github.com/paritytech/substrate?rev=2e7fde8#2e7fde832b77b242269b136f1c3b6fffef86f9b6"
+dependencies = [
+ "futures",
+ "parity-scale-codec",
+ "sc-block-builder",
+ "sc-chain-spec",
+ "sc-client-api",
+ "sc-consensus",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-core",
+ "sp-runtime",
+ "substrate-test-client",
+ "substrate-test-runtime",
 ]
 
 [[package]]

@@ -84,6 +84,7 @@ sc-consensus-aura = { git = "https://github.com/paritytech/substrate", rev = "2e
 sc-block-builder = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
 sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
 sc-utils = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
+substrate-test-runtime-client = { git = "https://github.com/paritytech/substrate", rev = "2e7fde8" }
 
 
 # Substrate build & tools dependencies
