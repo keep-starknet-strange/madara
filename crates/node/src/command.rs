@@ -203,15 +203,16 @@ pub fn run() -> sc_cli::Result<()> {
                         cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
                     }
                     Some(Testnet::Sharingan) => {
-                        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                        cli.run.run_cmd.shared_params.chain =
+                            Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                     }
-                    None => { }
+                    None => {}
                 };
 
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
-            
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)

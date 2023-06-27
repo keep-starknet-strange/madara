@@ -103,10 +103,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
                 wasm_binary,
                 // Initial PoA authorities
                 // Intended to be only 2
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                ],
+                vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
                 true,
             )
         },
