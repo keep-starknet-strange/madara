@@ -6,6 +6,7 @@ on:
     inputs:
       release_tag_name:
         description: 'Release tag name'
+        type: string
         required: true
 
 jobs:
