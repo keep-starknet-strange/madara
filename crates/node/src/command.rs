@@ -6,6 +6,20 @@ use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
+fn copy_chain_spec(madara_path: String) {
+    let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    src.push("chain-specs");
+    let mut dst = std::path::PathBuf::from(madara_path);
+    dst.push("chain-specs");
+    std::fs::create_dir_all(&dst).unwrap();
+    for file in std::fs::read_dir(src).unwrap() {
+        let file = file.unwrap();
+        let mut dst = dst.clone();
+        dst.push(file.file_name());
+        std::fs::copy(file.path(), dst).unwrap();
+    }
+}
+
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Substrate Node".into()
@@ -170,20 +184,35 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            if cli.run.testnet.is_some() {
+            let madara_path = if cli.run.madara_path.is_some() {
+                cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
+            } else {
                 let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-                cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    Some((home_path.clone() + "/.madara/p2p-key.ed25519").into());
-                cli.run.run_cmd.shared_params.base_path = Some((home_path.clone() + "/.madara").into());
-                if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    cli.run.run_cmd.shared_params.chain =
-                        Some(home_path + "/.madara/chain-specs/testnet-sharingan-raw.json");
-                }
+                format!("{}/.madara", home_path)
+            };
 
-                cli.run.run_cmd.shared_params.dev = true;
+            cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                Some((madara_path.clone() + "/p2p-key.ed25519").into());
+            cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
+
+            if cli.run.testnet.is_some() {
+                copy_chain_spec(madara_path.clone());
+
+                match cli.run.testnet {
+                    Some(Testnet::Local) => {
+                        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
+                    }
+                    Some(Testnet::Sharingan) => {
+                        cli.run.run_cmd.shared_params.chain =
+                            Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                    }
+                    None => {}
+                };
+
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)
