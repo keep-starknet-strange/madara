@@ -18,3 +18,10 @@ jobs:
   benchmark:
     name: Run benchmarks
     uses: ./.github/workflows/benchmarks.yml
+    permissions:
+      # deployments permission to deploy GitHub pages website
+      deployments: write
+      # contents permission to update benchmark contents in gh-pages branch
+      contents: write
+      # post on the pull-request page
+      pull-requests: write
