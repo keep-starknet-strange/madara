@@ -9,16 +9,16 @@ on:
 jobs:
   stale_issues:
     name: Stale issues
-    uses: ./.github/workflows/tasks/stale-issues.yml
+    uses: ./.github/workflows/stale-issues.yml
 
   lock_closed:
     name: Lock closed issues/PRs
-    uses: ./.github/workflows/tasks/lock-closed.yml
+    uses: ./.github/workflows/lock-closed.yml
 
   security_audit:
     name: Security audit
-    uses: ./.github/workflows/tasks/security-audit.yml
+    uses: ./.github/workflows/security-audit.yml
 
   docker_nightly_build:
     name: Docker nightly build
-    uses: ./.github/workflows/tasks/docker-build.yml
+    uses: ./.github/workflows/docker-build.yml
