@@ -1421,4 +1421,11 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(nonce).to.not.be.undefined;
     });
   });
+
+  describe("state root", async () => {
+    it("should return default when disabled", async function () {
+      const latestBlock = await providerRPC.getBlock("latest");
+      expect(latestBlock.new_root).to.eq("0x0");
+    });
+  });
 });
