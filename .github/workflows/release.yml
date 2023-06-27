@@ -10,5 +10,5 @@ on:
   docker_release_build:
     name: Docker release build
     uses: ./.github/workflows/docker-build.yml
-    with:
+    inputs:
       release_tag_name: ${{ github.event.release.tag_name }}
