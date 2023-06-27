@@ -3,6 +3,7 @@ name: Task - Stale Issues
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   stale:

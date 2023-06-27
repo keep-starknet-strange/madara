@@ -8,6 +8,12 @@ on:
         description: 'Release tag name'
         type: string
         required: true
+  workflow_call:
+    inputs:
+      release_tag_name:
+        description: 'Release tag name'
+        type: string
+        required: true
 
 jobs:
   build-amd64-and-push:

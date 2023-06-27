@@ -3,6 +3,7 @@ name: Task - Lock Closed Issues/PRs
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   lock:

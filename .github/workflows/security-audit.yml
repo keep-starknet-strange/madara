@@ -3,6 +3,7 @@ name: Task - Security Audit
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   security_audit:

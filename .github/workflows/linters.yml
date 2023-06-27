@@ -3,6 +3,7 @@ name: Task - Linters
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   spell-check:

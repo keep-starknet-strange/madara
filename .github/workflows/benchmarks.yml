@@ -3,6 +3,7 @@ name: Task - Benchmark
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   # deployments permission to deploy GitHub pages website
