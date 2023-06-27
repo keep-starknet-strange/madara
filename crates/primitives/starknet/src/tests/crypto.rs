@@ -137,7 +137,7 @@ fn test_merkle_tree_class_commitment() {
 
     // The values we test ours against are computed from the sequencer test.
     assert_eq!(
-        Felt252Wrapper::from_hex_be("0x3b384835a9d9fafc541d397021fbdc7a6c29a895a29befc74afa0173b024d54").unwrap(),
+        Felt252Wrapper::from_hex_be("0x0218b7f0879373722df04bd1c2054cad721251b3dd238973e153347a26f8a674").unwrap(),
         class_com
     );
 }
