@@ -14,12 +14,12 @@ jobs:
   tests:
     name: Run tests and coverage
     uses: ./.github/workflows/tests.yml
-    depends-on: linters
+    needs: linters
 
   benchmark:
     name: Run benchmarks
     uses: ./.github/workflows/benchmarks.yml
-    depends-on: tests
+    needs: tests
     permissions:
       # deployments permission to deploy GitHub pages website
       deployments: write
@@ -31,6 +31,6 @@ jobs:
   rustdoc:
     name: Deploy docs to GitHub Pages
     uses: ./.github/workflows/rustdoc.yml
-    depends-on: tests
+    needs: tests
     permissions:
       contents: write
