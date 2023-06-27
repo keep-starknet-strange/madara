@@ -184,27 +184,35 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            if cli.run.testnet.is_some() {
-                let madara_path = if cli.run.madara_path.is_some() {
-                    cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
-                } else {
-                    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-                    format!("{}/.madara", home_path)
-                };
+            let madara_path = if cli.run.madara_path.is_some() {
+                cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
+            } else {
+                let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+                format!("{}/.madara", home_path)
+            };
 
+            cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                Some((madara_path.clone() + "/p2p-key.ed25519").into());
+            cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
+
+            if cli.run.testnet.is_some() {
                 copy_chain_spec(madara_path.clone());
 
-                cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
-                cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
-                if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-                }
+                match cli.run.testnet {
+                    Some(Testnet::Local) => {
+                        cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
+                    }
+                    Some(Testnet::Sharingan) => {
+                        cli.run.run_cmd.shared_params.chain =
+                            Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                    }
+                    None => {}
+                };
 
-                cli.run.run_cmd.shared_params.dev = true;
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)

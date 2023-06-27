@@ -1,5 +1,5 @@
 use blockifier::execution::contract_class::ContractClass;
-use madara_runtime::{AuraConfig, EnableManualSeal, GrandpaConfig, RuntimeGenesisConfig, SystemConfig, WASM_BINARY};
+use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
 use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
@@ -15,7 +15,7 @@ use starknet_core::utils::get_storage_var_address;
 use super::constants::*;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = sc_service::GenericChainSpec<RuntimeGenesisConfig>;
+pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 
 /// Specialized `ChainSpec` for development.
 pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
@@ -27,7 +27,7 @@ pub const CHAIN_ID_STARKNET_TESTNET: u128 = 0x534e5f474f45524c49;
 #[derive(Serialize, Deserialize)]
 pub struct DevGenesisExt {
     /// Genesis config.
-    genesis_config: RuntimeGenesisConfig,
+    genesis_config: GenesisConfig,
     /// The flag that if enable manual-seal mode.
     enable_manual_seal: Option<bool>,
 }
@@ -102,14 +102,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                    authority_keys_from_seed("Charlie"),
-                    authority_keys_from_seed("Dave"),
-                    authority_keys_from_seed("Eve"),
-                    authority_keys_from_seed("Ferdie"),
-                ],
+                // Intended to be only 2
+                vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
                 true,
             )
         },
@@ -157,7 +151,7 @@ fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
-) -> RuntimeGenesisConfig {
+) -> GenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
@@ -212,7 +206,7 @@ fn testnet_genesis(
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
     let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
-    RuntimeGenesisConfig {
+    GenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
             code: wasm_binary.to_vec(),
