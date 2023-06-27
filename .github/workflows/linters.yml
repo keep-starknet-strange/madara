@@ -2,11 +2,7 @@
 name: Task - Linters
 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   spell-check:
@@ -46,7 +42,24 @@ jobs:
           cd tests
           npx eslint .
 
-  markdownlint:
+  cargo-lint:
+    runs-on: ubuntu-latest-16-cores
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup rust toolchain
+        run: rustup show
+      - name: Set-Up
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - uses: Swatinem/rust-cache@v2
+      - name: Format and clippy
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all -- -D warnings
+          cargo clippy --tests -- -D warnings
+
+  markdown-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -55,3 +68,11 @@ jobs:
           config: "./.markdownlint.json"
           args: "."
           ignore: "./target"
+
+  toml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout toml files
+        uses: actions/checkout@v3
+      - name: Run toml check
+        run: npx @taplo/cli fmt --config ./taplo/taplo.toml --check
