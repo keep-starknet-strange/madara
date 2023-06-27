@@ -1,6 +1,14 @@
+---
 name: Workflow - Push
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
  
+jobs:
+  stale_issues:
+    name: Stale issues
+    uses: ./.github/workflows/stale-issues.yml
+
+

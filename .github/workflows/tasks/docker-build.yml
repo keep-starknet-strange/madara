@@ -3,9 +3,6 @@ name: Task - Build and Push Docker Image
 
 on:
   workflow_dispatch:
-  release:
-    types:
-      - created
 
 jobs:
   build-amd64-and-push:
