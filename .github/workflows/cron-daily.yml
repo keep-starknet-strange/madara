@@ -23,5 +23,4 @@ jobs:
     name: Docker nightly build
     uses: ./.github/workflows/docker-build.yml
     with:
-      # nightly-${date}
       release_tag_name: nightly-${{ dateFormat(now(), 'YYYY-MM-DD') }}

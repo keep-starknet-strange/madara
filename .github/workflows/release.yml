@@ -7,7 +7,7 @@ on:
     types:
       - created
 
-  docker_release_build:
+  docker_build:
     name: Docker release build
     uses: ./.github/workflows/docker-build.yml
     with:
