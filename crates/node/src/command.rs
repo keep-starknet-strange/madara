@@ -197,6 +197,7 @@ pub fn run() -> sc_cli::Result<()> {
 
             if cli.run.testnet.is_some() {
                 copy_chain_spec(madara_path.clone());
+
                 match cli.run.testnet {
                     Some(Testnet::Local) => {
                         cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
@@ -206,6 +207,7 @@ pub fn run() -> sc_cli::Result<()> {
                     }
                     None => { }
                 };
+
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }

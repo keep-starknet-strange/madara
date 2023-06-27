@@ -5,8 +5,6 @@ use starknet_api::api_core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
-#[cfg(feature = "std")]
-use starknet_core::types::LegacyContractEntryPoint;
 use starknet_ff::{FieldElement, FromByteArrayError};
 use thiserror_no_std::Error;
 
@@ -108,25 +106,6 @@ impl From<EntryPointWrapper> for EntryPoint {
     }
 }
 
-#[cfg(feature = "std")]
-impl From<LegacyContractEntryPoint> for EntryPointWrapper {
-    fn from(value: LegacyContractEntryPoint) -> Self {
-        let selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
-        let offset = EntryPointOffset(value.offset as usize);
-        Self(EntryPoint { selector, offset })
-    }
-}
-
-#[cfg(feature = "std")]
-impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
-    type Error = FromByteArrayError;
-    fn try_from(value: EntryPointWrapper) -> Result<Self, Self::Error> {
-        let selector = FieldElement::from_bytes_be(&value.0.selector.0.0)?;
-        let offset = value.0.offset.0 as u64;
-        Ok(Self { selector, offset })
-    }
-}
-
 /// Wrapper type for transaction execution error.
 #[derive(Debug, Error)]
 pub enum EntryPointExecutionErrorWrapper {
@@ -140,3 +119,29 @@ pub enum EntryPointExecutionErrorWrapper {
     #[error("Block context serialization error")]
     BlockContextSerializationError,
 }
+
+#[cfg(feature = "std")]
+mod reexport_std_types {
+    use starknet_core::types::LegacyContractEntryPoint;
+
+    use super::*;
+    impl From<LegacyContractEntryPoint> for EntryPointWrapper {
+        fn from(value: LegacyContractEntryPoint) -> Self {
+            let selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
+            let offset = EntryPointOffset(value.offset as usize);
+            Self(EntryPoint { selector, offset })
+        }
+    }
+
+    impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
+        type Error = FromByteArrayError;
+        fn try_from(value: EntryPointWrapper) -> Result<Self, Self::Error> {
+            let selector = FieldElement::from_bytes_be(&value.0.selector.0.0)?;
+            let offset = value.0.offset.0 as u64;
+            Ok(Self { selector, offset })
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+pub use reexport_std_types::*;
