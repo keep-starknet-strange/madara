@@ -24,7 +24,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system,
-        Starknet: pallet_starknet,
+    Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
     }
 );

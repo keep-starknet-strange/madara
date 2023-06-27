@@ -1131,9 +1131,13 @@ impl<T: Config> Pallet<T> {
     ///
     /// The global state root.
     pub fn compute_and_store_state_root() -> Felt252Wrapper {
-        // Update contracts trie
+		// Update contracts trie
         let mut commitments = Self::current_state_commitments();
-        let pending_storage_changes = PendingStorageChanges::<T>::iter();
+        let pending_storage_changes = PendingStorageChanges::<T>::drain();
+
+		sp_std::if_std! {
+			println!("updating rooot");
+		}
 
         pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
             // Retrieve state trie for this contract.
@@ -1154,8 +1158,6 @@ impl<T: Config> Pallet<T> {
             let class_hash = Self::contract_class_hash_by_address(contract_address).unwrap_or_default();
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
             commitments.storage_commitment.set(contract_address, hash);
-
-            PendingStorageChanges::<T>::remove(contract_address);
         });
 
         // Finally update the contracts trie in runtime storage.

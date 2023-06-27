@@ -259,7 +259,7 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
 /// The function will repeatedly create and run blocks until the block number is equal to `n`.
 /// # Arguments
 /// * `n` - The block number to run to.
-pub(crate) fn run_to_block<T: Config>(n: u64) {
+pub(crate) fn run_to_block_state_root<T: Config>(n: u64) {
     for b in System::block_number()..=n {
         SeqAddrUpdate::<T>::put(true);
         System::set_block_number(b);
@@ -269,12 +269,12 @@ pub(crate) fn run_to_block<T: Config>(n: u64) {
 }
 
 /// Setup initial block and sequencer address for unit tests.
-pub(crate) fn basic_test_setup<T: Config>(n: u64) {
+pub(crate) fn basic_test_setup_state_root<T: Config>(n: u64) {
     SeqAddrUpdate::<T>::put(true);
     let default_addr: ContractAddressWrapper = ContractAddressWrapper::try_from(&DEFAULT_SEQUENCER_ADDRESS).unwrap();
     SequencerAddress::<T>::put(default_addr);
     System::set_block_number(0);
-    run_to_block::<T>(n);
+    run_to_block_state_root::<T>(n);
 }
 
 /// Returns the chain id used by the mock runtime.
