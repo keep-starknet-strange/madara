@@ -74,7 +74,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
-use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
+use mp_starknet::crypto::commitment::{self, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
     Felt252Wrapper,
@@ -358,6 +358,18 @@ pub mod pallet {
 
             for (address, class_hash) in self.contracts.iter() {
                 ContractClassHashes::<T>::insert(address, class_hash);
+
+                // Update state tries if enabled in the runtime configuration
+                if T::EnableStateRoot::get() {
+                    // Update classes trie
+                    let mut tree = CurrentStateCommitments::<T>::get().class_commitment;
+                    let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(*class_hash);
+                    tree.set(*class_hash, final_hash);
+
+                    CurrentStateCommitments::<T>::mutate(|state| {
+                        state.class_commitment = tree;
+                    })
+                }
             }
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
@@ -366,7 +378,21 @@ pub mod pallet {
 
             for (key, value) in self.storage.iter() {
                 StorageView::<T>::insert(key, value);
+
+                // Update state tries if enabled in the runtime configuration
+                if T::EnableStateRoot::get() {
+                    // Store intermediary state updates
+                    // As we update this mapping iteratively
+                    // We will end up with only the latest storage slot update
+                    // TODO: Estimate overhead of this approach
+                    PendingStorageChanges::<T>::mutate(key.0, |storage_slots| {
+                        if let Some(storage_slots) = storage_slots {
+                            storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
+                        }
+                    });
+                }
             }
+
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
@@ -1131,13 +1157,9 @@ impl<T: Config> Pallet<T> {
     ///
     /// The global state root.
     pub fn compute_and_store_state_root() -> Felt252Wrapper {
-		// Update contracts trie
+        // Update contracts trie
         let mut commitments = Self::current_state_commitments();
         let pending_storage_changes = PendingStorageChanges::<T>::drain();
-
-		sp_std::if_std! {
-			println!("updating rooot");
-		}
 
         pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
             // Retrieve state trie for this contract.
