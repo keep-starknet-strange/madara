@@ -1,4 +1,5 @@
-name: Check, Build & Tests
+---
+name: Task - Check, Build & Tests
 
 # Controls when the action will run.
 on:

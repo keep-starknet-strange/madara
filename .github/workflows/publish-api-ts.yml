@@ -1,5 +1,5 @@
 ---
-name: Publish Typescript API
+name: Task - Publish Typescript API
 
 on:
   workflow_dispatch:
