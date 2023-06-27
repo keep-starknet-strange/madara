@@ -1,9 +1,7 @@
 ---
-name: Lock
+name: Task - Lock Closed Issues/PRs
 
 on:
-  schedule:
-    - cron: "0 9 * * *"
   workflow_dispatch:
 
 jobs:

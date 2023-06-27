@@ -1,6 +1,8 @@
-name: Build and Push Docker Image
+---
+name: Task - Build and Push Docker Image
 
 on:
+  workflow_dispatch:
   release:
     types:
       - created

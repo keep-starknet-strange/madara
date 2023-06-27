@@ -1,0 +1,6 @@
+name: Workflow - Push
+
+on:
+  push:
+    branches: [main]
+ 

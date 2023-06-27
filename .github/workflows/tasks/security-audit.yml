@@ -1,9 +1,12 @@
-name: Security audit
+---
+name: Task - Security Audit
+
 on:
-  schedule:
-    - cron: "0 0 * * *"
+  workflow_dispatch:
+
 jobs:
   security_audit:
+    name: Security audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
