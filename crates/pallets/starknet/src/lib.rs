@@ -224,14 +224,13 @@ pub mod pallet {
     /// Mapping of contract address to state trie.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn state_tries)]
-    pub(super) type StorageTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
+    #[pallet::getter(fn contract_tries)]
+    pub(super) type ContractTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
 
     /// Pending storage slot updates
     /// STORAGE
     /// Mapping storage key to storage value.
     #[pallet::storage]
-    #[pallet::unbounded]
     #[pallet::getter(fn pending_storage_changes)]
     pub(super) type PendingStorageChanges<T: Config> =
         StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxTransactions>, OptionQuery>;
@@ -1163,14 +1162,14 @@ impl<T: Config> Pallet<T> {
 
         pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
             // Retrieve state trie for this contract.
-            let mut state_tree = StorageTries::<T>::get(contract_address).unwrap_or_default();
+            let mut state_tree = ContractTries::<T>::get(contract_address).unwrap_or_default();
             // For each smart contract, iterate through storage diffs and update the state trie.
             storage_diffs.into_iter().for_each(|(storage_key, storage_value)| {
                 state_tree.set(storage_key, storage_value);
             });
 
             // Update the state trie for this contract in runtime storage.
-            StorageTries::<T>::set(contract_address, Some(state_tree.clone()));
+            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
 
             // We then compute the state root
             // And update the storage trie

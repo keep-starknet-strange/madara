@@ -146,14 +146,13 @@ fn test_merkle_tree_class_commitment() {
 fn test_merkle_tree_poseidon() {
     let class_hashes = vec![Felt252Wrapper::from(0_u128), Felt252Wrapper::from(1_u128)];
 
-    let _class_com = calculate_class_commitment_tree_root_hash::<PoseidonHasher>(&class_hashes);
+    let class_com = calculate_class_commitment_tree_root_hash::<PoseidonHasher>(&class_hashes);
 
     // The values we test ours against are computed from the sequencer test.
-    // assert_eq!(
-    //     Felt252Wrapper::from_hex_be("
-    // 0x3b384835a9d9fafc541d397021fbdc7a6c29a895a29befc74afa0173b024d54").unwrap(),
-    //     class_com
-    // );
+    assert_eq!(
+        Felt252Wrapper::from_hex_be("0x01d195cdec8d7a8bbe302e5d728f1d5d6d985b9a2e054abd415412cd9c9674fb").unwrap(),
+        class_com
+    );
 }
 
 #[test]
