@@ -280,6 +280,6 @@ pub(crate) fn basic_test_setup_state_root<T: Config>(n: u64) {
 /// Returns the chain id used by the mock runtime.
 /// # Returns
 /// The chain id of the mock runtime.
-pub fn get_chain_id() -> Felt252Wrapper {
+pub fn _get_chain_id() -> Felt252Wrapper {
     Starknet::chain_id()
 }
