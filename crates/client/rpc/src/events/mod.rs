@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+use std::cmp::Ordering;
 use std::iter::Skip;
 use std::vec::IntoIter;
 
@@ -102,12 +103,14 @@ where
             for receipt in trx_receipts.iter().skip(continuation_token.receipt_n as usize) {
                 let receipt_events_len: usize = receipt.events.len();
                 // check if continuation_token.event_n is correct
-                if (receipt_events_len as u64) < continuation_token.event_n {
-                    return Err(StarknetRpcApiError::InvalidContinuationToken.into());
-                } else if (receipt_events_len as u64) == continuation_token.event_n {
-                    continuation_token.receipt_n += 1;
-                    continuation_token.event_n = 0;
-                    continue;
+                match (receipt_events_len as u64).cmp(&continuation_token.event_n) {
+                    Ordering::Greater => (),
+                    Ordering::Less => return Err(StarknetRpcApiError::InvalidContinuationToken.into()),
+                    Ordering::Equal => {
+                        continuation_token.receipt_n += 1;
+                        continuation_token.event_n = 0;
+                        continue;
+                    }
                 }
 
                 let receipt_transaction_hash = receipt.transaction_hash;

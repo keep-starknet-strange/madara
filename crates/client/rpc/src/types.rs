@@ -1,5 +1,5 @@
 use std::num::ParseIntError;
-use std::u64;
+use std::{fmt, u64};
 
 use mp_starknet::execution::types::Felt252Wrapper;
 use starknet_ff::FieldElement;
@@ -26,21 +26,23 @@ pub enum ParseTokenError {
     ParseFailed(ParseIntError),
 }
 
+impl fmt::Display for ContinuationToken {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:x},{:x},{:x}", self.block_n, self.receipt_n, self.event_n)
+    }
+}
+
 impl ContinuationToken {
     pub fn parse(token: String) -> Result<Self, ParseTokenError> {
-        let arr: Vec<&str> = token.split(",").collect();
+        let arr: Vec<&str> = token.split(',').collect();
         if arr.len() != 3 {
             return Err(ParseTokenError::WrongToken);
         }
-        let block_n = u64::from_str_radix(arr[0], 16).map_err(|e| ParseTokenError::ParseFailed(e))?;
-        let receipt_n = u64::from_str_radix(arr[1], 16).map_err(|e| ParseTokenError::ParseFailed(e))?;
-        let event_n = u64::from_str_radix(arr[2], 16).map_err(|e| ParseTokenError::ParseFailed(e))?;
+        let block_n = u64::from_str_radix(arr[0], 16).map_err(ParseTokenError::ParseFailed)?;
+        let receipt_n = u64::from_str_radix(arr[1], 16).map_err(ParseTokenError::ParseFailed)?;
+        let event_n = u64::from_str_radix(arr[2], 16).map_err(ParseTokenError::ParseFailed)?;
 
         Ok(ContinuationToken { block_n, receipt_n, event_n })
-    }
-
-    pub fn to_string(&self) -> String {
-        format!("{:x},{:x},{:x}", self.block_n, self.receipt_n, self.event_n)
     }
 }
 
