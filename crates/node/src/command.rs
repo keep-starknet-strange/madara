@@ -206,7 +206,6 @@ pub fn run() -> sc_cli::Result<()> {
                     }
                     None => { }
                 };
-                cli.run.run_cmd.shared_params.dev = true;
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
