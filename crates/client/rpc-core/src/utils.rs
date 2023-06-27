@@ -5,7 +5,6 @@ use std::sync::Arc;
 use anyhow::{anyhow, Result};
 use blockifier::execution::contract_class::{ContractClass as BlockifierContractClass, ContractClassV1};
 use cairo_lang_casm_contract_class::{CasmContractClass, CasmContractEntryPoint, CasmContractEntryPoints};
-use cairo_lang_sierra::program::Program as SierraProgram;
 use cairo_lang_starknet::contract_class::{
     ContractClass as SierraContractClass, ContractEntryPoint, ContractEntryPoints,
 };

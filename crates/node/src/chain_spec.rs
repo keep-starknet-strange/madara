@@ -125,7 +125,6 @@ pub fn get_contract_class(contract_content: &'static [u8], contract_version: u8)
     if contract_version == 0 {
         return ContractClass::V0(serde_json::from_slice(contract_content).unwrap());
     } else {
-        // (Greg) handle v1
         return get_casm_from_bytes(contract_content);
     }
 }
@@ -174,9 +173,17 @@ fn testnet_genesis(
 
     // OZ ACCOUNT CONTRACT
     let oz_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"));
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"), 0);
     let oz_account_class_hash = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_CLASS_HASH).unwrap();
     let oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
+
+    // CAIRO 1 ACCOUNT CONTRACT
+    let cairo_1_account_class: ContractClassWrapper =
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1)
+            .try_into()
+            .unwrap();
+    let cairo_1_account_class_hash = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_CLASS_HASH).unwrap();
+    let cairo_1_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_ADDRESS).unwrap();
 
     // TEST CONTRACT
     let test_contract_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json"), 0);
@@ -191,12 +198,6 @@ fn testnet_genesis(
     let erc20_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json"), 0);
     let token_class_hash = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH).unwrap();
     let token_contract_address = Felt252Wrapper::from_hex_be(ERC20_ADDRESS).unwrap();
-
-    // ERC20 CONTRACT CAIRO 1
-    let erc20_class_cairo_1 =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/cairo_1/erc20.casm.json"), 1);
-    let token_class_hash_cairo_1 = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH_CAIRO_1).unwrap();
-    let token_contract_address_cairo_1 = Felt252Wrapper::from_hex_be(ERC20_ADDRESS_CAIRO_1).unwrap();
 
     // ERC721 CONTRACT
     let erc721_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json"), 0);
@@ -224,9 +225,9 @@ fn testnet_genesis(
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
                 (no_validate_account_address, no_validate_account_class_hash),
+                (cairo_1_account_address, cairo_1_account_class_hash),
                 (test_contract_address, test_contract_class_hash),
                 (token_contract_address, token_class_hash),
-                (token_contract_address_cairo_1, token_class_hash_cairo_1),
                 (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
                 (argent_account_address, argent_account_class_hash),
@@ -235,12 +236,12 @@ fn testnet_genesis(
             ],
             contract_classes: vec![
                 (no_validate_account_class_hash, no_validate_account_class),
+                (cairo_1_account_class_hash, cairo_1_account_class),
                 (argent_account_class_hash, argent_account_class),
                 (oz_account_class_hash, oz_account_class),
                 (argent_proxy_class_hash, argent_proxy_class),
                 (test_contract_class_hash, test_contract_class),
                 (token_class_hash, erc20_class.clone()),
-                (token_class_hash_cairo_1, erc20_class_cairo_1.clone()),
                 (fee_token_class_hash, erc20_class),
                 (nft_class_hash, erc721_class),
                 (udc_class_hash, udc_class),
@@ -275,21 +276,11 @@ fn testnet_genesis(
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    get_storage_key(
-                        &token_contract_address_cairo_1,
-                        "ERC20_balances",
-                        &[no_validate_account_address],
-                        0,
-                    ),
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[cairo_1_account_address], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
-                    get_storage_key(
-                        &token_contract_address_cairo_1,
-                        "ERC20_balances",
-                        &[no_validate_account_address],
-                        1,
-                    ),
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[cairo_1_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
