@@ -14,10 +14,12 @@ jobs:
   tests:
     name: Run tests and coverage
     uses: ./.github/workflows/tests.yml
+    depends-on: linters
 
   benchmark:
     name: Run benchmarks
     uses: ./.github/workflows/benchmarks.yml
+    depends-on: tests
     permissions:
       # deployments permission to deploy GitHub pages website
       deployments: write
