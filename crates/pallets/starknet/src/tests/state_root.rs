@@ -24,7 +24,7 @@ fn given_default_runtime_with_state_root_enabled_default_value_is_correct() {
         // Check the default state root value
         pretty_assertions::assert_eq!(
             Starknet::compute_and_store_state_root(),
-            Felt252Wrapper::from_hex_be("0x0207137ad3e6ce7fdefc04e8e07e8590a310362629f00aacd486dd57378847b4")
+            Felt252Wrapper::from_hex_be("0x0207137ad3e6ce7fdefc04e8e07e8590a310362629f00aacd486dd57378847b4").unwrap()
         );
     });
 }
