@@ -105,6 +105,7 @@ pub(crate) const LOG_TARGET: &str = "runtime::starknet";
 
 pub const ETHEREUM_EXECUTION_RPC: &[u8] = b"starknet::ETHEREUM_EXECUTION_RPC";
 pub const ETHEREUM_CONSENSUS_RPC: &[u8] = b"starknet::ETHEREUM_CONSENSUS_RPC";
+pub(crate) const NONCE_DECODE_FAILURE: u8 = 1;
 
 // syntactic sugar for logging.
 #[macro_export]
@@ -782,7 +783,8 @@ pub mod pallet {
             let transaction_nonce = transaction.nonce;
             let sender_address = transaction.sender_address;
 
-            let nonce_for_priority: u64 = transaction_nonce.try_into().map_err(|_| InvalidTransaction::Future)?;
+            let nonce_for_priority: u64 =
+                transaction_nonce.try_into().map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
 
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
                 .priority(u64::MAX - nonce_for_priority)
