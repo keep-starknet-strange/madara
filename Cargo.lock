@@ -801,12 +801,12 @@ name = "blockifier"
 version = "0.1.0"
 source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support#4dff73546a0e816bd48a98a1c20989aa30fd2862"
 dependencies = [
- "cairo-felt",
+ "cairo-felt 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "cairo-lang-casm",
  "cairo-lang-casm-contract-class",
  "cairo-lang-utils",
  "cairo-lang-vm-utils",
- "cairo-vm",
+ "cairo-vm 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "derive_more",
  "hashbrown 0.13.2",
  "indexmap 2.0.0-pre",
@@ -925,6 +925,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-felt"
+version = "0.6.0"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc#a4865bf0a0885191dce50ea22ae40b4d3f8998cc"
+dependencies = [
+ "lazy_static",
+ "num-bigint 0.4.3",
+ "num-integer",
+ "num-traits",
+ "serde",
+]
+
+[[package]]
 name = "cairo-lang-casm"
 version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#c1dcc9dbf85efcdde020d14cc1cfa64d6640d2ee"
@@ -955,7 +967,7 @@ name = "cairo-lang-utils"
 version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#c1dcc9dbf85efcdde020d14cc1cfa64d6640d2ee"
 dependencies = [
- "cairo-felt",
+ "cairo-felt 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "hashbrown 0.14.0",
  "indexmap 2.0.0-pre",
  "itertools",
@@ -973,10 +985,10 @@ source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-s
 dependencies = [
  "ark-ff",
  "ark-std 0.3.0",
- "cairo-felt",
+ "cairo-felt 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "cairo-lang-casm",
  "cairo-lang-utils",
- "cairo-vm",
+ "cairo-vm 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "hashbrown 0.14.0",
  "num-bigint 0.4.3",
  "num-integer",
@@ -992,6 +1004,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cairo-take_until_unbalanced"
+version = "0.29.0"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc#a4865bf0a0885191dce50ea22ae40b4d3f8998cc"
+dependencies = [
+ "nom",
+]
+
+[[package]]
 name = "cairo-vm"
 version = "0.6.0"
 source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#441a3285fa473b9d41782ab62b16ae9f1824e502"
@@ -1001,10 +1021,10 @@ dependencies = [
  "ark-std 0.3.0",
  "bincode 2.0.0-rc.2",
  "bitvec 1.0.1",
- "cairo-felt",
+ "cairo-felt 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "cairo-lang-casm",
  "cairo-lang-casm-contract-class",
- "cairo-take_until_unbalanced",
+ "cairo-take_until_unbalanced 0.29.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
  "generic-array 0.14.7",
  "hashbrown 0.13.2",
  "hex",
@@ -1014,6 +1034,41 @@ dependencies = [
  "num-bigint 0.4.3",
  "num-integer",
  "num-prime",
+ "num-traits",
+ "rand 0.8.5",
+ "rand_core 0.6.4",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "sha2 0.10.6",
+ "sha3",
+ "starknet-crypto",
+ "thiserror",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "cairo-vm"
+version = "0.6.0"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc#a4865bf0a0885191dce50ea22ae40b4d3f8998cc"
+dependencies = [
+ "anyhow",
+ "ark-ff",
+ "ark-std 0.3.0",
+ "bincode 2.0.0-rc.2",
+ "bitvec 1.0.1",
+ "cairo-felt 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc)",
+ "cairo-lang-casm",
+ "cairo-lang-casm-contract-class",
+ "cairo-take_until_unbalanced 0.29.0 (git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc)",
+ "generic-array 0.14.7",
+ "hashbrown 0.13.2",
+ "hex",
+ "keccak",
+ "lazy_static",
+ "nom",
+ "num-bigint 0.4.3",
+ "num-integer",
  "num-traits",
  "rand 0.8.5",
  "rand_core 0.6.4",
@@ -4619,7 +4674,7 @@ name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "cairo-vm",
+ "cairo-vm 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc)",
  "flate2",
  "frame-support",
  "hex",
@@ -4841,7 +4896,7 @@ dependencies = [
  "async-trait",
  "bitvec 0.17.4",
  "blockifier",
- "cairo-vm",
+ "cairo-vm 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?rev=a4865bf0a0885191dce50ea22ae40b4d3f8998cc)",
  "derive_more",
  "flate2",
  "frame-support",
