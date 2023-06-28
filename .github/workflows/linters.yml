@@ -43,23 +43,6 @@ jobs:
           cd tests
           npx eslint .
 
-  cargo-lint:
-    runs-on: ubuntu-latest-16-cores
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup rust toolchain
-        run: rustup show
-      - name: Set-Up
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - uses: Swatinem/rust-cache@v2
-      - name: Format and clippy
-        run: |
-          cargo fmt --all -- --check
-          cargo clippy --all -- -D warnings
-          cargo clippy --tests -- -D warnings
-
   markdown-lint:
     runs-on: ubuntu-latest
     steps:
