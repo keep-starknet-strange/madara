@@ -23,7 +23,7 @@ jobs:
 
       - name: Cache hit (continue)
         if: steps.cache.outputs.cache-hit == 'true'
-        run: exit 0
+        run: exit_with_success
 
       - name: Setup rust toolchain
         run: rustup show
