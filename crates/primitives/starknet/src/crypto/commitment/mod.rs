@@ -1,17 +1,22 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
+use bitvec::prelude::Msb0;
+use bitvec::slice::BitSlice;
 use bitvec::vec::BitVec;
-use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
-use super::merkle_patricia_tree::merkle_tree::MerkleTree;
+use super::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
+use super::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
 };
+
+/// Hash of the leaf of the ClassCommitment tree
+pub type ClassCommitmentLeafHash = Felt252Wrapper;
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -21,12 +26,12 @@ use crate::transaction::types::{
 ///
 /// The tree height is 64 in our case since our set operation takes u64 index values.
 struct CommitmentTree<T: CryptoHasherT> {
-    tree: MerkleTree<T>,
+    tree: RefMerkleTree<T>,
 }
 
 impl<T: CryptoHasherT> Default for CommitmentTree<T> {
     fn default() -> Self {
-        Self { tree: MerkleTree::empty() }
+        Self { tree: RefMerkleTree::empty() }
     }
 }
 
@@ -39,12 +44,53 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
     /// * `value` - The value to set.
     pub fn set(&mut self, index: u64, value: FieldElement) {
         let key = index.to_be_bytes();
-        self.tree.set(&BitVec::from(key.to_vec()), value)
+        self.tree.set(&BitVec::from_vec(key.to_vec()), Felt252Wrapper(value))
     }
 
     /// Get the merkle root of the tree.
-    pub fn commit(self) -> FieldElement {
+    pub fn commit(self) -> Felt252Wrapper {
         self.tree.commit()
+    }
+}
+
+/// A Patricia Merkle tree with height 251 used to compute transaction and event commitments.
+///
+/// According to the [documentation](https://docs.starknet.io/docs/Blocks/header/#block-header)
+/// the commitment trees are of height 251, because the key used is a Field Element.
+///
+/// The tree height is 251 in our case since our set operation takes Fieldelement index values.
+#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+pub struct StateCommitmentTree<T: CryptoHasherT> {
+    tree: MerkleTree<T>,
+}
+
+impl<T: CryptoHasherT> Default for StateCommitmentTree<T> {
+    fn default() -> Self {
+        Self { tree: MerkleTree::empty() }
+    }
+}
+
+impl<T: CryptoHasherT> StateCommitmentTree<T> {
+    /// Sets the value of a key in the merkle tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - The index of the value to set.
+    /// * `value` - The value to set.
+    pub fn set(&mut self, index: Felt252Wrapper, value: Felt252Wrapper) {
+        let key = &index.0.to_bytes_be()[..31];
+        self.tree.set(&BitVec::from_vec(key.to_vec()), value)
+    }
+
+    /// Get the merkle root of the tree.
+    pub fn commit(&mut self) -> Felt252Wrapper {
+        self.tree.commit()
+    }
+
+    #[allow(dead_code)]
+    /// Generates a proof for `key`. See [`MerkleTree::get_proof`].
+    pub fn get_proof(&self, key: &BitSlice<u8, Msb0>) -> Vec<ProofNode> {
+        self.tree.get_proof(key)
     }
 }
 
@@ -57,7 +103,10 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-pub fn calculate_commitments<T: CryptoHasherT>(transactions: &[Transaction], events: &[EventWrapper]) -> (H256, H256) {
+pub fn calculate_commitments<T: CryptoHasherT>(
+    transactions: &[Transaction],
+    events: &[EventWrapper],
+) -> (Felt252Wrapper, Felt252Wrapper) {
     (calculate_transaction_commitment::<T>(transactions), calculate_event_commitment::<T>(events))
 }
 
@@ -74,7 +123,7 @@ pub fn calculate_commitments<T: CryptoHasherT>(transactions: &[Transaction], eve
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transaction]) -> H256 {
+pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transaction]) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<T>::default();
 
     transactions.iter().enumerate().for_each(|(idx, tx)| {
@@ -82,7 +131,7 @@ pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transa
         let final_hash = calculate_transaction_hash_with_signature::<T>(tx);
         tree.set(idx, final_hash);
     });
-    H256::from_slice(&tree.commit().to_bytes_be())
+    tree.commit()
 }
 
 /// Calculate transaction commitment hash value.
@@ -99,13 +148,82 @@ pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transa
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> H256 {
+pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<T>::default();
     events.iter().enumerate().for_each(|(id, event)| {
         let final_hash = calculate_event_hash::<T>(event);
         tree.set(id as u64, final_hash);
     });
-    H256::from_slice(&tree.commit().to_bytes_be())
+    tree.commit()
+}
+
+/// Calculate class commitment tree leaf hash value.
+///
+/// See: <https://docs.starknet.io/documentation/architecture_and_concepts/State/starknet-state/#classes_tree>
+///
+/// # Arguments
+///
+/// * `compiled_class_hash` - The hash of the compiled class.
+///
+/// # Returns
+///
+/// The hash of the class commitment tree leaf.
+pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(
+    compiled_class_hash: Felt252Wrapper,
+) -> ClassCommitmentLeafHash {
+    let contract_class_hash_version = Felt252Wrapper::try_from("CONTRACT_CLASS_LEAF_V0".as_bytes()).unwrap(); // Unwrap safu
+
+    let hash = <T>::compute_hash_on_elements(&[contract_class_hash_version.0, compiled_class_hash.0]);
+
+    hash.into()
+}
+
+/// Calculate class commitment tree root hash value.
+///
+/// The classes tree encodes the information about the existing classes in the state of Starknet.
+/// It maps (Cairo 1.0) class hashes to their compiled class hashes
+///
+/// # Arguments
+///
+/// * `classes` - The classes to get the root from.
+///
+/// # Returns
+///
+/// The merkle root of the merkle tree built from the classes.
+pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes: &[Felt252Wrapper]) -> Felt252Wrapper {
+    let mut tree = StateCommitmentTree::<T>::default();
+    class_hashes.iter().for_each(|class_hash| {
+        let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
+        tree.set(*class_hash, final_hash);
+    });
+    tree.commit()
+}
+
+/// Calculates the contract state hash from its preimage.
+///
+/// # Arguments
+///
+/// * `hash` - The hash of the contract definition.
+/// * `root` - The root of root of another Merkle-Patricia tree of height 251 that is constructed
+///   from the contract’s storage.
+/// * `nonce` - The current nonce of the contract.
+///
+/// # Returns
+///
+/// The contract state hash.
+pub fn calculate_contract_state_hash<T: CryptoHasherT>(
+    hash: Felt252Wrapper,
+    root: Felt252Wrapper,
+    nonce: Felt252Wrapper,
+) -> Felt252Wrapper {
+    const CONTRACT_STATE_HASH_VERSION: Felt252Wrapper = Felt252Wrapper::ZERO;
+
+    // The contract state hash is defined as H(H(H(hash, root), nonce), CONTRACT_STATE_HASH_VERSION)
+    let hash = <T>::compute_hash_on_elements(&[hash.0, root.0, nonce.0, CONTRACT_STATE_HASH_VERSION.0]);
+
+    // Compare this with the HashChain construction used in the contract_hash: the number of
+    // elements is not hashed to this hash, and this is supposed to be different.
+    hash.into()
 }
 
 /// Compute the combined hash of the transaction hash and the signature.
