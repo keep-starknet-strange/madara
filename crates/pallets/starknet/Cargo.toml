@@ -19,7 +19,7 @@ mp-digest-log = { workspace = true, default-features = false }
 mp-starknet = { workspace = true, default-features = false }
 
 blockifier = { workspace = true, default-features = false, features = [
-  "testing",
+  "testing", "parity-scale-codec",
 ] }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
