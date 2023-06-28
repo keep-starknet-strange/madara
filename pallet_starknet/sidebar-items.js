@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["ETHEREUM_CONSENSUS_RPC","ETHEREUM_EXECUTION_RPC"],"externcrate":["alloc"],"macro":["log"],"mod":["blockifier_state_adapter","message","pallet","runtime_api","state_root","transaction_validation","types"]};
+window.SIDEBAR_ITEMS = {"constant":["ETHEREUM_CONSENSUS_RPC","ETHEREUM_EXECUTION_RPC"],"externcrate":["alloc"],"macro":["log"],"mod":["blockifier_state_adapter","message","pallet","runtime_api","transaction_validation","types"]};

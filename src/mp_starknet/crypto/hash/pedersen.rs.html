@@ -87,7 +87,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
 
 <span class="doccomment">/// The Pedersen hasher.
-</span><span class="attr">#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+</span><span class="attr">#[derive(Debug, Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 #[cfg_attr(feature = <span class="string">&quot;std&quot;</span>, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>PedersenHasher;
 

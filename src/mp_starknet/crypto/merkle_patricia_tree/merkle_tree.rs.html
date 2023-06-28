@@ -480,59 +480,176 @@
 <a href="#480" id="480">480</a>
 <a href="#481" id="481">481</a>
 <a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a>
+<a href="#499" id="499">499</a>
+<a href="#500" id="500">500</a>
+<a href="#501" id="501">501</a>
+<a href="#502" id="502">502</a>
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This is a gigantic copy pasta from &lt;https://github.com/eqlabs/pathfinder/tree/main/crates/merkle-tree&gt; Thanks to the equilibrium team and whoever else contributed for the code.
-</span><span class="kw">use </span>alloc::rc::Rc;
-<span class="kw">use </span>alloc::vec::Vec;
-<span class="kw">use </span>core::cell::RefCell;
+</span><span class="kw">use </span>alloc::vec::Vec;
+<span class="kw">use </span>core::borrow::Borrow;
 <span class="kw">use </span>core::iter::once;
 <span class="kw">use </span>core::marker::PhantomData;
 
 <span class="kw">use </span>bitvec::prelude::{BitSlice, BitVec, Msb0};
-<span class="kw">use </span>starknet_crypto::FieldElement;
+<span class="kw">use </span>derive_more::Constructor;
+<span class="kw">use </span>scale_codec::{Decode, Encode, Error, Input, Output};
+<span class="kw">use </span>scale_info::build::Fields;
+<span class="kw">use </span>scale_info::{Path, Type, TypeInfo};
+<span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
-<span class="kw">use </span><span class="kw">crate</span>::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node};
+<span class="kw">use </span><span class="kw">crate</span>::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasherT;
 
-<span class="doccomment">/// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>BinaryProofNode {
-    <span class="doccomment">/// Left hash.
-    </span><span class="kw">pub </span>left_hash: FieldElement,
-    <span class="doccomment">/// Right hash.
-    </span><span class="kw">pub </span>right_hash: FieldElement,
-}
+<span class="doccomment">/// Wrapper type for a [HashMap&lt;NodeId, Node&gt;] object. (It&#39;s not really a wrapper it&#39;s a
+/// copy of the type but we implement the necessary traits.)
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Default, Constructor)]
+</span><span class="kw">pub struct </span>NodesMapping(<span class="kw">pub </span>HashMap&lt;NodeId, Node&gt;);
 
-<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>BinaryNode&gt; <span class="kw">for </span>ProofNode {
-    <span class="kw">fn </span>from(bin: <span class="kw-2">&amp;</span>BinaryNode) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::Binary(BinaryProofNode {
-            left_hash: bin.left.borrow().hash().expect(<span class="string">&quot;Node should be committed&quot;</span>),
-            right_hash: bin.right.borrow().hash().expect(<span class="string">&quot;Node should be committed&quot;</span>),
-        })
+<span class="doccomment">/// SCALE trait.
+</span><span class="kw">impl </span>Encode <span class="kw">for </span>NodesMapping {
+    <span class="kw">fn </span>encode_to&lt;T: Output + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, dest: <span class="kw-2">&amp;mut </span>T) {
+        <span class="comment">// Convert the NodesMapping to Vec&lt;(NodeId, Node)&gt; to be
+        // able to use the Encode trait from this type. We implemented it for NodeId, derived it
+        // for Node so we can use it for Vec&lt;(NodeId, Node)&gt;.
+        </span><span class="kw">let </span>val: Vec&lt;(NodeId, Node)&gt; = <span class="self">self</span>.<span class="number">0</span>.clone().into_iter().collect();
+        dest.write(<span class="kw-2">&amp;</span>Encode::encode(<span class="kw-2">&amp;</span>val));
+    }
+}
+<span class="doccomment">/// SCALE trait.
+</span><span class="kw">impl </span>Decode <span class="kw">for </span>NodesMapping {
+    <span class="kw">fn </span>decode&lt;I: Input&gt;(input: <span class="kw-2">&amp;mut </span>I) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Error&gt; {
+        <span class="comment">// Convert the NodesMapping to Vec&lt;(NodeId, Node)&gt; to be
+        // able to use the Decode trait from this type. We implemented it for NodeId, derived it
+        // for Node so we can use it for Vec&lt;(NodeId, Node)&gt;.
+        </span><span class="kw">let </span>val: Vec&lt;(NodeId, Node)&gt; =
+            Decode::decode(input).map_err(|<span class="kw">_</span>| Error::from(<span class="string">&quot;Can&#39;t get NodesMapping from input buffer.&quot;</span>))<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(NodesMapping(HashMap::from_iter(val.into_iter())))
     }
 }
 
-<span class="doccomment">/// Ligthtweight representation of [EdgeNode]. Only holds its path and its child&#39;s hash.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>EdgeProofNode {
-    <span class="doccomment">/// Path of the node.
-    </span><span class="kw">pub </span>path: BitVec&lt;Msb0, u8&gt;,
-    <span class="doccomment">/// Hash of the child node.
-    </span><span class="kw">pub </span>child_hash: FieldElement,
+<span class="doccomment">/// SCALE trait.
+</span><span class="kw">impl </span>TypeInfo <span class="kw">for </span>NodesMapping {
+    <span class="kw">type </span>Identity = <span class="self">Self</span>;
+
+    <span class="comment">// The type info is saying that the NodesMapping must be seen as an
+    // array of bytes.
+    </span><span class="kw">fn </span>type_info() -&gt; Type {
+        Type::builder()
+            .path(Path::new(<span class="string">&quot;NodesMapping&quot;</span>, <span class="macro">module_path!</span>()))
+            .composite(Fields::unnamed().field(|f| f.ty::&lt;[u8]&gt;().type_name(<span class="string">&quot;NodesMapping&quot;</span>)))
+    }
 }
 
-<span class="kw">impl </span>From&lt;<span class="kw-2">&amp;</span>EdgeNode&gt; <span class="kw">for </span>ProofNode {
-    <span class="kw">fn </span>from(edge: <span class="kw-2">&amp;</span>EdgeNode) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::Edge(EdgeProofNode {
+<span class="doccomment">/// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+</span><span class="kw">pub struct </span>BinaryProofNode {
+    <span class="doccomment">/// Left hash.
+    </span><span class="kw">pub </span>left_hash: Felt252Wrapper,
+    <span class="doccomment">/// Right hash.
+    </span><span class="kw">pub </span>right_hash: Felt252Wrapper,
+}
+
+<span class="doccomment">/// Ligthtweight representation of [EdgeNode]. Only holds its path and its child&#39;s hash.
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
+</span><span class="kw">pub struct </span>EdgeProofNode {
+    <span class="doccomment">/// Path of the node.
+    </span><span class="kw">pub </span>path: BitVec&lt;u8, Msb0&gt;,
+    <span class="doccomment">/// Hash of the child node.
+    </span><span class="kw">pub </span>child_hash: Felt252Wrapper,
+}
+
+<span class="kw">fn </span>get_proof_node(node: <span class="kw-2">&amp;</span>Node, nodes: <span class="kw-2">&amp;</span>HashMap&lt;NodeId, Node&gt;) -&gt; ProofNode {
+    <span class="kw">match </span>node {
+        Node::Binary(bin) =&gt; ProofNode::Binary(BinaryProofNode {
+            left_hash: nodes.get(<span class="kw-2">&amp;</span>bin.left).unwrap().hash().expect(<span class="string">&quot;Node should be committed&quot;</span>),
+            right_hash: nodes.get(<span class="kw-2">&amp;</span>bin.right).unwrap().hash().expect(<span class="string">&quot;Node should be committed&quot;</span>),
+        }),
+        Node::Edge(edge) =&gt; ProofNode::Edge(EdgeProofNode {
             path: edge.path.clone(),
-            child_hash: edge.child.borrow().hash().expect(<span class="string">&quot;Node should be committed&quot;</span>),
-        })
+            child_hash: nodes.get(<span class="kw-2">&amp;</span>edge.child).unwrap().hash().expect(<span class="string">&quot;Node should be committed&quot;</span>),
+        }),
+        Node::Leaf(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Leaf nodes should not appear in a proof&quot;</span>),
+        Node::Unresolved(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unresolved nodes should not appear in a proof&quot;</span>),
     }
 }
 
 <span class="doccomment">/// [ProofNode] s are lightweight versions of their `Node` counterpart.
 /// They only consist of [BinaryProofNode] and [EdgeProofNode] because `Leaf`
 /// and `Unresolved` nodes should not appear in a proof.
-</span><span class="attr">#[derive(Debug, PartialEq, Eq)]
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 </span><span class="kw">pub enum </span>ProofNode {
     <span class="doccomment">/// Binary node.
     </span>Binary(BinaryProofNode),
@@ -545,10 +662,12 @@
 /// This is used to update, mutate and access global Starknet state as well as individual contract
 /// states.
 ///
-/// For more information on how this functions internally, see [here](super::merkle_tree).
-</span><span class="attr">#[derive(Debug, Clone)]
+/// For more information on how this functions internally, see [here](super::merkle_node).
+</span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
 </span><span class="kw">pub struct </span>MerkleTree&lt;H: CryptoHasherT&gt; {
-    root: Rc&lt;RefCell&lt;Node&gt;&gt;,
+    root: NodeId,
+    nodes: NodesMapping,
+    latest_node_id: NodeId,
     _hasher: PhantomData&lt;H&gt;,
 }
 
@@ -556,31 +675,38 @@
     <span class="doccomment">/// Less visible initialization for `MerkleTree&lt;T&gt;` as the main entry points should be
     /// [`MerkleTree::&lt;RcNodeStorage&gt;::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.
-    </span><span class="kw">fn </span>new(root: FieldElement) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>root_node = Rc::new(RefCell::new(Node::Unresolved(root)));
-        <span class="self">Self </span>{ root: root_node, _hasher: PhantomData }
+    </span><span class="kw">fn </span>new(root: Felt252Wrapper) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>root_node = Node::Unresolved(root);
+        <span class="kw">let </span><span class="kw-2">mut </span>nodes_mapping: HashMap&lt;NodeId, Node&gt; = HashMap::new();
+        <span class="kw">let </span>root_id = NodeId(<span class="number">0</span>); <span class="comment">// Assign the appropriate initial node ID here
+        </span>nodes_mapping.insert(root_id, root_node);
+
+        <span class="self">Self </span>{ root: root_id, nodes: NodesMapping(nodes_mapping), latest_node_id: root_id, _hasher: PhantomData }
     }
 
     <span class="doccomment">/// Empty tree.
     </span><span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::new(FieldElement::ZERO)
+        <span class="self">Self</span>::new(Felt252Wrapper::ZERO)
     }
 
     <span class="doccomment">/// Persists all changes to storage and returns the new root hash.
     ///
     /// Note that the root is reference counted in storage. Committing the
     /// same tree again will therefore increment the count again.
-    </span><span class="kw">pub fn </span>commit(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; FieldElement {
+    </span><span class="kw">pub fn </span>commit(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Felt252Wrapper {
         <span class="self">self</span>.commit_mut()
     }
+
     <span class="doccomment">/// Return the state root.
-    </span><span class="kw">pub fn </span>commit_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; FieldElement {
-        <span class="comment">// Go through tree, collect dirty nodes, calculate their hashes and
-        // persist them. Take care to increment ref counts of child nodes. So in order
-        // to do this correctly, will have to start back-to-front.
-        </span><span class="self">Self</span>::commit_subtree(<span class="kw-2">&amp;mut </span><span class="self">self</span>.root.borrow_mut());
-        <span class="comment">// unwrap is safe as `commit_subtree` will set the hash.
-        </span><span class="self">self</span>.root.borrow().hash().unwrap()
+    </span><span class="kw">pub fn </span>commit_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Felt252Wrapper {
+        <span class="comment">// Go through the tree, collect dirty nodes, calculate their hashes, and
+        // persist them. Take care to increment ref counts of child nodes. Start from
+        // the root and traverse the tree.
+        </span><span class="self">self</span>.commit_subtree(<span class="kw-2">&amp;</span><span class="self">self</span>.root.clone());
+
+        <span class="comment">// Unwrap is safe as `commit_subtree` will set the hash.
+        </span><span class="kw">let </span>root_hash = <span class="self">self</span>.nodes.<span class="number">0</span>.get(<span class="kw-2">&amp;</span><span class="self">self</span>.root).unwrap().hash().unwrap();
+        root_hash
     }
 
     <span class="doccomment">/// Persists any changes in this subtree to storage.
@@ -594,8 +720,10 @@
     /// # Arguments
     ///
     /// * `node` - The top node from the subtree to commit.
-    </span><span class="kw">fn </span>commit_subtree(node: <span class="kw-2">&amp;mut </span>Node) {
+    </span><span class="kw">fn </span>commit_subtree(<span class="kw-2">&amp;mut </span><span class="self">self</span>, node_id: <span class="kw-2">&amp;</span>NodeId) {
         <span class="kw">use </span>Node::<span class="kw-2">*</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>nodes = <span class="self">self</span>.nodes.<span class="number">0</span>.clone();
+        <span class="kw">let </span>node = nodes.get_mut(node_id).unwrap();
         <span class="kw">match </span>node {
             Unresolved(<span class="kw">_</span>) =&gt; { <span class="comment">/* Unresolved nodes are already persisted. */ </span>}
             Leaf(<span class="kw">_</span>) =&gt; { <span class="comment">/* storage wouldn&#39;t persist these even if we asked. */ </span>}
@@ -603,28 +731,33 @@
             Edge(edge) <span class="kw">if </span>edge.hash.is_some() =&gt; { <span class="comment">/* not dirty, already persisted */ </span>}
 
             Binary(binary) =&gt; {
-                <span class="self">Self</span>::commit_subtree(<span class="kw-2">&amp;mut </span>binary.left.borrow_mut());
-                <span class="self">Self</span>::commit_subtree(<span class="kw-2">&amp;mut </span>binary.right.borrow_mut());
+                <span class="self">self</span>.commit_subtree(<span class="kw-2">&amp;</span>binary.left);
+                <span class="self">self</span>.commit_subtree(<span class="kw-2">&amp;</span>binary.right);
                 <span class="comment">// This will succeed as `commit_subtree` will set the child hashes.
-                </span>binary.calculate_hash::&lt;H&gt;();
+                </span>binary.calculate_hash::&lt;H&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.nodes.<span class="number">0</span>.clone());
             }
 
             Edge(edge) =&gt; {
-                <span class="self">Self</span>::commit_subtree(<span class="kw-2">&amp;mut </span>edge.child.borrow_mut());
+                <span class="self">self</span>.commit_subtree(<span class="kw-2">&amp;</span>edge.child);
                 <span class="comment">// This will succeed as `commit_subtree` will set the child&#39;s hash.
-                </span>edge.calculate_hash::&lt;H&gt;();
+                </span>edge.calculate_hash::&lt;H&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>.nodes.<span class="number">0</span>.clone());
             }
         }
+
+        <span class="comment">// Update internal nodes mapping
+        </span><span class="self">self</span>.nodes.<span class="number">0 </span>= nodes.clone();
     }
 
-    <span class="doccomment">/// Sets the value of a key. To delete a key, set the value to [FieldElement::ZERO].
+    <span class="doccomment">/// Sets the value of a key. To delete a key, set the value to [Felt252Wrapper::ZERO].
     ///
     /// # Arguments
     ///
     /// * `key` - The key to set.
     /// * `value` - The value to set.
-    </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;Msb0, u8&gt;, value: FieldElement) {
-        <span class="kw">if </span>value == FieldElement::ZERO {
+    </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;u8, Msb0&gt;, value: Felt252Wrapper) {
+        <span class="kw">let </span><span class="kw-2">mut </span>nodes = <span class="self">self</span>.nodes.<span class="number">0</span>.clone();
+
+        <span class="kw">if </span>value == Felt252Wrapper::ZERO {
             <span class="kw">return </span><span class="self">self</span>.delete_leaf(key);
         }
 
@@ -632,7 +765,7 @@
         // of all nodes along the path to the leaf.
         </span><span class="kw">let </span>path = <span class="self">self</span>.traverse(key);
         <span class="kw">for </span>node <span class="kw">in </span><span class="kw-2">&amp;</span>path {
-            node.borrow_mut().mark_dirty();
+            nodes.get_mut(node).unwrap().mark_dirty();
         }
 
         <span class="comment">// There are three possibilities.
@@ -654,46 +787,51 @@
         </span><span class="kw">use </span>Node::<span class="kw-2">*</span>;
         <span class="kw">match </span>path.last() {
             <span class="prelude-val">Some</span>(node) =&gt; {
-                <span class="kw">let </span>updated = <span class="kw">match </span><span class="kw-2">&amp;*</span>node.borrow() {
+                <span class="kw">let </span>match_node = <span class="self">self</span>.nodes.<span class="number">0</span>.get(node).unwrap();
+                <span class="kw">let </span>updated: Node = <span class="kw">match </span>match_node {
                     Edge(edge) =&gt; {
                         <span class="kw">let </span>common = edge.common_path(key);
 
                         <span class="comment">// Height of the binary node
-                        </span><span class="kw">let </span>branch_height = edge.height + common.len();
+                        </span><span class="kw">let </span>branch_height = edge.height <span class="kw">as </span>usize + common.len();
                         <span class="comment">// Height of the binary node&#39;s children
                         </span><span class="kw">let </span>child_height = branch_height + <span class="number">1</span>;
 
                         <span class="comment">// Path from binary node to new leaf
-                        </span><span class="kw">let </span>new_path = key[child_height..].to_vec();
+                        </span><span class="kw">let </span>new_path = key[child_height..].to_bitvec();
                         <span class="comment">// Path from binary node to existing child
-                        </span><span class="kw">let </span>old_path = edge.path[common.len() + <span class="number">1</span>..].to_vec();
+                        </span><span class="kw">let </span>old_path = edge.path[common.len() + <span class="number">1</span>..].to_bitvec();
 
                         <span class="comment">// The new leaf branch of the binary node.
                         // (this may be edge -&gt; leaf, or just leaf depending).
                         </span><span class="kw">let </span>new_leaf = Node::Leaf(value);
+                        nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), new_leaf);
+
                         <span class="kw">let </span>new = <span class="kw">if </span>new_path.is_empty() {
-                            Rc::new(RefCell::new(new_leaf))
+                            <span class="self">self</span>.latest_node_id
                         } <span class="kw">else </span>{
                             <span class="kw">let </span>new_edge = Node::Edge(EdgeNode {
                                 hash: <span class="prelude-val">None</span>,
-                                height: child_height,
+                                height: child_height <span class="kw">as </span>u64,
                                 path: new_path,
-                                child: Rc::new(RefCell::new(new_leaf)),
+                                child: <span class="self">self</span>.latest_node_id,
                             });
-                            Rc::new(RefCell::new(new_edge))
+                            nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), new_edge);
+                            <span class="self">self</span>.latest_node_id
                         };
 
                         <span class="comment">// The existing child branch of the binary node.
                         </span><span class="kw">let </span>old = <span class="kw">if </span>old_path.is_empty() {
-                            edge.child.clone()
+                            edge.child
                         } <span class="kw">else </span>{
                             <span class="kw">let </span>old_edge = Node::Edge(EdgeNode {
                                 hash: <span class="prelude-val">None</span>,
-                                height: child_height,
+                                height: child_height <span class="kw">as </span>u64,
                                 path: old_path,
-                                child: edge.child.clone(),
+                                child: edge.child,
                             });
-                            Rc::new(RefCell::new(old_edge))
+                            nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), old_edge);
+                            <span class="self">self</span>.latest_node_id
                         };
 
                         <span class="kw">let </span>new_direction = Direction::from(key[branch_height]);
@@ -702,28 +840,37 @@
                             Direction::Right =&gt; (old, new),
                         };
 
-                        <span class="kw">let </span>branch = Node::Binary(BinaryNode { hash: <span class="prelude-val">None</span>, height: branch_height, left, right });
+                        <span class="kw">let </span>branch = Node::Binary(BinaryNode { hash: <span class="prelude-val">None</span>, height: branch_height <span class="kw">as </span>u64, left, right });
+                        nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), branch.clone());
 
                         <span class="comment">// We may require an edge leading to the binary node.
                         </span><span class="kw">if </span>common.is_empty() {
                             branch
                         } <span class="kw">else </span>{
-                            Node::Edge(EdgeNode {
+                            <span class="kw">let </span>edge = Node::Edge(EdgeNode {
                                 hash: <span class="prelude-val">None</span>,
                                 height: edge.height,
-                                path: common.to_vec(),
-                                child: Rc::new(RefCell::new(branch)),
-                            })
+                                path: common.to_bitvec(),
+                                child: <span class="self">self</span>.latest_node_id,
+                            });
+                            nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), edge.clone());
+                            edge
                         }
                     }
                     <span class="comment">// Leaf exists, we replace its value.
-                    </span>Leaf(<span class="kw">_</span>) =&gt; Node::Leaf(value),
+                    </span>Leaf(<span class="kw">_</span>) =&gt; {
+                        <span class="kw">let </span>leaf = Node::Leaf(value);
+                        nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), leaf.clone());
+                        leaf
+                    }
                     Unresolved(<span class="kw">_</span>) | Binary(<span class="kw">_</span>) =&gt; {
                         <span class="macro">unreachable!</span>(<span class="string">&quot;The end of a traversion cannot be unresolved or binary&quot;</span>)
                     }
                 };
 
-                node.swap(<span class="kw-2">&amp;</span>RefCell::new(updated));
+                <span class="comment">// node.swap(&amp;Box::new(updated));
+                </span>nodes.insert(<span class="kw-2">*</span>node, updated);
+                nodes.insert(<span class="self">self</span>.latest_node_id, <span class="self">self</span>.nodes.<span class="number">0</span>.get(node).unwrap().clone());
             }
             <span class="prelude-val">None </span>=&gt; {
                 <span class="comment">// Getting no travel nodes implies that the tree is empty.
@@ -731,27 +878,29 @@
                 // Create a new leaf node with the value, and the root becomes
                 // an edge node connecting to the leaf.
                 </span><span class="kw">let </span>leaf = Node::Leaf(value);
-                <span class="kw">let </span>edge = Node::Edge(EdgeNode {
-                    hash: <span class="prelude-val">None</span>,
-                    height: <span class="number">0</span>,
-                    path: key.to_vec(),
-                    child: Rc::new(RefCell::new(leaf)),
-                });
+                nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), leaf);
+                <span class="kw">let </span>edge =
+                    Node::Edge(EdgeNode { hash: <span class="prelude-val">None</span>, height: <span class="number">0</span>, path: key.to_bitvec(), child: <span class="self">self</span>.latest_node_id });
+                nodes.insert(<span class="self">self</span>.latest_node_id.next_id(), edge);
 
-                <span class="self">self</span>.root = Rc::new(RefCell::new(edge));
+                <span class="self">self</span>.root = <span class="self">self</span>.latest_node_id;
             }
         }
+
+        <span class="comment">// Updates self nodes mapping
+        </span><span class="self">self</span>.nodes.<span class="number">0 </span>= nodes;
     }
 
     <span class="doccomment">/// Deletes a leaf node from the tree.
     ///
     /// This is not an external facing API; the functionality is instead accessed by calling
-    /// [`MerkleTree::set`] with value set to [`FieldElement::ZERO`].
+    /// [`MerkleTree::set`] with value set to [`Felt252Wrapper::ZERO`].
     ///
     /// # Arguments
     ///
     /// * `key` - The key to delete.
-    </span><span class="kw">fn </span>delete_leaf(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;Msb0, u8&gt;) {
+    </span><span class="kw">fn </span>delete_leaf(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;u8, Msb0&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>nodes = <span class="self">self</span>.nodes.<span class="number">0</span>.clone();
         <span class="comment">// Algorithm explanation:
         //
         // The leaf&#39;s parent node is either an edge, or a binary node.
@@ -769,7 +918,7 @@
 
         <span class="comment">// Do nothing if the leaf does not exist.
         </span><span class="kw">match </span>path.last() {
-            <span class="prelude-val">Some</span>(node) =&gt; <span class="kw">match </span><span class="kw-2">&amp;*</span>node.borrow() {
+            <span class="prelude-val">Some</span>(node) =&gt; <span class="kw">match </span>nodes.get(node).unwrap() {
                 Node::Leaf(<span class="kw">_</span>) =&gt; {}
                 <span class="kw">_ </span>=&gt; <span class="kw">return</span>,
             },
@@ -778,22 +927,23 @@
 
         <span class="comment">// All hashes along the path will become invalid (if they aren&#39;t deleted).
         </span><span class="kw">for </span>node <span class="kw">in </span><span class="kw-2">&amp;</span>path {
-            node.borrow_mut().mark_dirty();
+            nodes.get_mut(node).unwrap().mark_dirty();
         }
 
         <span class="comment">// Go backwards until we hit a branch node.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>node_iter = path.into_iter().rev().skip_while(|node| !node.borrow().is_binary());
+        </span><span class="kw">let </span><span class="kw-2">mut </span>node_iter = path.into_iter().rev().skip_while(|node| !<span class="self">self</span>.nodes.<span class="number">0</span>.get(node).unwrap().is_binary());
 
         <span class="kw">match </span>node_iter.next() {
             <span class="prelude-val">Some</span>(node) =&gt; {
                 <span class="kw">let </span>new_edge = {
+                    <span class="kw">let </span>node = nodes.get_mut(<span class="kw-2">&amp;</span>node).unwrap();
                     <span class="comment">// This node must be a binary node due to the iteration condition.
-                    </span><span class="kw">let </span>binary = node.borrow().as_binary().cloned().unwrap();
+                    </span><span class="kw">let </span>binary = node.as_binary().cloned().unwrap();
                     <span class="comment">// Create an edge node to replace the old binary node
                     // i.e. with the remaining child (note the direction invert),
                     //      and a path of just a single bit.
                     </span><span class="kw">let </span>direction = binary.direction(key).invert();
-                    <span class="kw">let </span>child = binary.get_child(direction);
+                    <span class="kw">let </span>child = binary.get_child(direction.clone());
                     <span class="kw">let </span>path = once(bool::from(direction)).collect::&lt;BitVec&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;();
                     <span class="kw">let </span><span class="kw-2">mut </span>edge = EdgeNode { hash: <span class="prelude-val">None</span>, height: binary.height, path, child };
 
@@ -803,19 +953,21 @@
                     edge
                 };
                 <span class="comment">// Replace the old binary node with the new edge node.
-                </span>node.swap(<span class="kw-2">&amp;</span>RefCell::new(Node::Edge(new_edge)));
+                // node.swap(&amp;Box::new(Node::Edge(new_edge)));
+                </span>nodes.insert(node, Node::Edge(new_edge));
+                nodes.insert(<span class="self">self</span>.latest_node_id, nodes.get(<span class="kw-2">&amp;</span>node).unwrap().clone());
             }
             <span class="prelude-val">None </span>=&gt; {
                 <span class="comment">// We reached the root without a hitting binary node. The new tree
                 // must therefore be empty.
-                </span><span class="self">self</span>.root = Rc::new(RefCell::new(Node::Unresolved(FieldElement::ZERO)));
+                </span><span class="self">self</span>.root = NodeId(<span class="number">0</span>);
                 <span class="kw">return</span>;
             }
         };
 
         <span class="comment">// Check the parent of the new edge. If it is also an edge, then they must merge.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(node) = node_iter.next() {
-            <span class="kw">if let </span>Node::Edge(edge) = <span class="kw-2">&amp;mut *</span>node.borrow_mut() {
+            <span class="kw">if let </span>Node::Edge(edge) = nodes.get_mut(<span class="kw-2">&amp;</span>node).unwrap() {
                 <span class="self">self</span>.merge_edges(edge);
             }
         }
@@ -830,9 +982,9 @@
     /// # Returns
     ///
     /// The value of the key.
-    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;Msb0, u8&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;FieldElement&gt; {
-        <span class="self">self</span>.traverse(key).last().and_then(|node| <span class="kw">match </span><span class="kw-2">&amp;*</span>node.borrow() {
-            Node::Leaf(value) <span class="kw">if </span>!value.eq(<span class="kw-2">&amp;</span>FieldElement::ZERO) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>value),
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;u8, Msb0&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt; {
+        <span class="self">self</span>.traverse(key).last().and_then(|node| <span class="kw">match </span><span class="self">self</span>.nodes.<span class="number">0</span>.get(node).unwrap() {
+            Node::Leaf(value) <span class="kw">if </span>!value.eq(<span class="kw-2">&amp;</span>Felt252Wrapper::ZERO) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>value),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         })
     }
@@ -856,7 +1008,7 @@
     /// # Returns
     ///
     /// The merkle proof and all the child nodes hashes.
-    </span><span class="kw">pub fn </span>get_proof(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;Msb0, u8&gt;) -&gt; Vec&lt;ProofNode&gt; {
+    </span><span class="kw">pub fn </span>get_proof(<span class="kw-2">&amp;</span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>BitSlice&lt;u8, Msb0&gt;) -&gt; Vec&lt;ProofNode&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>nodes = <span class="self">self</span>.traverse(key);
 
         <span class="comment">// Return an empty list if tree is empty.
@@ -867,15 +1019,15 @@
 
         <span class="comment">// A leaf node is redundant data as the information for it is already contained in the previous
         // node.
-        </span><span class="kw">if </span><span class="macro">matches!</span>(<span class="kw-2">&amp;*</span>node.borrow(), Node::Leaf(<span class="kw">_</span>)) {
+        </span><span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.nodes.<span class="number">0</span>.get(node).unwrap(), Node::Leaf(<span class="kw">_</span>)) {
             nodes.pop();
         }
 
         nodes
             .iter()
-            .map(|node| <span class="kw">match </span><span class="kw-2">&amp;*</span>node.borrow() {
-                Node::Binary(bin) =&gt; ProofNode::from(bin),
-                Node::Edge(edge) =&gt; ProofNode::from(edge),
+            .map(|node| <span class="kw">match </span><span class="self">self</span>.nodes.<span class="number">0</span>.get(node).unwrap() {
+                Node::Binary(bin) =&gt; get_proof_node(<span class="kw-2">&amp;</span>Node::Binary(bin.clone()), <span class="kw-2">&amp;</span><span class="self">self</span>.nodes.<span class="number">0</span>),
+                Node::Edge(edge) =&gt; get_proof_node(<span class="kw-2">&amp;</span>Node::Edge(edge.clone()), <span class="kw-2">&amp;</span><span class="self">self</span>.nodes.<span class="number">0</span>),
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             })
             .collect()
@@ -901,33 +1053,33 @@
     /// # Returns
     ///
     /// The list of nodes along the path.
-    </span><span class="kw">fn </span>traverse(<span class="kw-2">&amp;</span><span class="self">self</span>, dst: <span class="kw-2">&amp;</span>BitSlice&lt;Msb0, u8&gt;) -&gt; Vec&lt;Rc&lt;RefCell&lt;Node&gt;&gt;&gt; {
-        <span class="kw">if </span><span class="self">self</span>.root.borrow().is_empty() {
+    </span><span class="kw">fn </span>traverse(<span class="kw-2">&amp;</span><span class="self">self</span>, dst: <span class="kw-2">&amp;</span>BitSlice&lt;u8, Msb0&gt;) -&gt; Vec&lt;NodeId&gt; {
+        <span class="kw">if </span><span class="self">self</span>.nodes.<span class="number">0</span>.get(<span class="kw-2">&amp;</span><span class="self">self</span>.root).unwrap().is_empty() {
             <span class="kw">return </span>Vec::new();
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>current = <span class="self">self</span>.root.clone();
+        <span class="kw">let </span><span class="kw-2">mut </span>current = <span class="self">self</span>.root;
         <span class="attr">#[allow(unused_variables)]
         </span><span class="kw">let </span><span class="kw-2">mut </span>height = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>nodes = Vec::new();
         <span class="kw">loop </span>{
             <span class="kw">use </span>Node::<span class="kw-2">*</span>;
 
-            <span class="kw">let </span>current_tmp = current.borrow().clone();
+            <span class="kw">let </span>current_tmp = <span class="self">self</span>.nodes.<span class="number">0</span>.get(<span class="kw-2">&amp;</span>current).unwrap().clone();
 
             <span class="kw">let </span>next = <span class="kw">match </span>current_tmp {
                 Unresolved(_hash) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Resolve is useless&quot;</span>),
                 Binary(binary) =&gt; {
-                    nodes.push(current.clone());
+                    nodes.push(current);
                     <span class="kw">let </span>next = binary.direction(dst);
                     <span class="kw">let </span>next = binary.get_child(next);
                     height += <span class="number">1</span>;
                     next
                 }
                 Edge(edge) <span class="kw">if </span>edge.path_matches(dst) =&gt; {
-                    nodes.push(current.clone());
+                    nodes.push(current);
                     height += edge.path.len();
-                    edge.child.clone()
+                    edge.child
                 }
                 Leaf(<span class="kw">_</span>) | Edge(<span class="kw">_</span>) =&gt; {
                     nodes.push(current);
@@ -951,13 +1103,13 @@
     ///
     /// * `parent` - The parent node to merge the child with.
     </span><span class="kw">fn </span>merge_edges(<span class="kw-2">&amp;</span><span class="self">self</span>, parent: <span class="kw-2">&amp;mut </span>EdgeNode) {
-        <span class="kw">let </span>resolved_child = <span class="kw">match </span><span class="kw-2">&amp;*</span>parent.child.borrow() {
+        <span class="kw">let </span>resolved_child = <span class="kw">match </span><span class="self">self</span>.nodes.<span class="number">0</span>.get(<span class="kw-2">&amp;</span>parent.child).unwrap().borrow() {
             Node::Unresolved(_hash) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Resolve is useless&quot;</span>),
             other =&gt; other.clone(),
         };
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(child_edge) = resolved_child.as_edge().cloned() {
-            parent.path.extend_from_slice(<span class="kw-2">&amp;</span>child_edge.path);
+            parent.path.extend_from_bitslice(<span class="kw-2">&amp;</span>child_edge.path);
             parent.child = child_edge.child;
         }
     }

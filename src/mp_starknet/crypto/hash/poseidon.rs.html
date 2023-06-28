@@ -53,20 +53,10 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
-<a href="#56" id="56">56</a>
-<a href="#57" id="57">57</a>
-<a href="#58" id="58">58</a>
-<a href="#59" id="59">59</a>
-<a href="#60" id="60">60</a>
-<a href="#61" id="61">61</a>
-<a href="#62" id="62">62</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
 </span><span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
-<span class="kw">use </span>poseidon_hash::hash_sw8;
-<span class="kw">use </span>poseidon_hash::parameters::sw8::GF;
-<span class="kw">use </span>starknet_crypto::FieldElement;
+<span class="kw">use </span>starknet_crypto::{poseidon_hash, poseidon_hash_many, poseidon_hash_single, FieldElement};
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
@@ -83,11 +73,9 @@
     /// # Returns
     /// The hash of the data.
     </span><span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
-        <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(data);
-        <span class="kw">let </span>binding = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
-        <span class="kw">let </span>result = binding.as_slice();
-        result.try_into().unwrap() <span class="comment">// TODO: remove unwrap
-    </span>}
+        <span class="kw">let </span>data = FieldElement::from_byte_slice_be(data).unwrap();
+        Felt252Wrapper(poseidon_hash_single(data))
+    }
 
     <span class="doccomment">/// Hashes a slice of field elements using the Poseido hash function.
     ///
@@ -99,11 +87,9 @@
     ///
     /// The hash of the data.
     </span><span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
-        <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(<span class="kw-2">&amp;</span>data.iter().flat_map(|x| x.<span class="number">0</span>.to_bytes_be()).collect::&lt;Vec&lt;u8&gt;&gt;());
-        <span class="kw">let </span>binding = u8s_from_felts(<span class="kw-2">&amp;</span>hash_sw8(<span class="kw-2">&amp;</span>input));
-        <span class="kw">let </span>result = binding.as_slice();
-        result.try_into().unwrap() <span class="comment">// TODO: remove unwrap
-    </span>}
+        <span class="kw">let </span>data = data.iter().map(|x| x.<span class="number">0</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        Felt252Wrapper(poseidon_hash_many(<span class="kw-2">&amp;</span>data))
+    }
 }
 
 <span class="kw">impl </span>DefaultHasher <span class="kw">for </span>PoseidonHasher {
@@ -115,11 +101,11 @@
 <span class="doccomment">/// The poseidon CryptoHasher implementation.
 </span><span class="kw">impl </span>CryptoHasherT <span class="kw">for </span>PoseidonHasher {
     <span class="kw">fn </span>hash(a: FieldElement, b: FieldElement) -&gt; FieldElement {
-        <span class="kw">let </span>input = felts_from_u8s::&lt;GF&gt;(<span class="kw-2">&amp;</span>[a.to_bytes_be(), b.to_bytes_be()].concat());
-        FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>u8s_from_felts(<span class="kw-2">&amp;</span>poseidon_hash::hash_sw8(<span class="kw-2">&amp;</span>input))).unwrap()
+        poseidon_hash(a, b)
     }
-    <span class="kw">fn </span>compute_hash_on_elements(_elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
-        <span class="macro">todo!</span>()
+
+    <span class="kw">fn </span>compute_hash_on_elements(elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
+        poseidon_hash_many(elements)
     }
 }
 </code></pre></div>

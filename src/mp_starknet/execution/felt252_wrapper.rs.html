@@ -453,6 +453,13 @@
 <a href="#453" id="453">453</a>
 <a href="#454" id="454">454</a>
 <a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
 </pre><pre class="rust"><code><span class="doccomment">//! # Felt252 - FieldElement wrapper.
 //!
 //! Starknet base type is a [`FieldElement`] from starknet-ff crate.
@@ -474,7 +481,7 @@
 <span class="kw">use </span>thiserror_no_std::Error;
 
 <span class="doccomment">///
-</span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, Copy, serde::Serialize, serde::Deserialize)]
+</span><span class="attr">#[derive(Clone, Debug, PartialEq, PartialOrd, Ord, Hash, Eq, Copy, serde::Serialize, serde::Deserialize)]
 </span><span class="comment">//#[cfg_attr(feature = &quot;std&quot;, derive(serde::Serialize, serde::Deserialize))]
 </span><span class="kw">pub struct </span>Felt252Wrapper(<span class="kw">pub </span>FieldElement);
 
@@ -582,6 +589,13 @@
 <span class="doccomment">/// [`u64`] to [`Felt252Wrapper`].
 </span><span class="kw">impl </span>From&lt;u64&gt; <span class="kw">for </span>Felt252Wrapper {
     <span class="kw">fn </span>from(value: u64) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(FieldElement::from(value))
+    }
+}
+
+<span class="doccomment">/// [`u32`] to [`Felt252Wrapper`].
+</span><span class="kw">impl </span>From&lt;u32&gt; <span class="kw">for </span>Felt252Wrapper {
+    <span class="kw">fn </span>from(value: u32) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>(FieldElement::from(value))
     }
 }

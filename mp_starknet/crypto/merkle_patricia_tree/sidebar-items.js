@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["merkle_node","merkle_tree"]};
+window.SIDEBAR_ITEMS = {"mod":["merkle_node","merkle_tree","ref_merkle_node","ref_merkle_tree"]};

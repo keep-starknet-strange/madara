@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Direction","Node"],"struct":["BinaryNode","EdgeNode"]};

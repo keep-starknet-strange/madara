@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["commitment","hash","merkle_patricia_tree"]};
+window.SIDEBAR_ITEMS = {"mod":["commitment","hash","merkle_patricia_tree","state"]};

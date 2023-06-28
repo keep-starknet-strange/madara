@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ProofNode"],"struct":["BinaryProofNode","EdgeProofNode","MerkleTree"]};
+window.SIDEBAR_ITEMS = {"enum":["ProofNode"],"struct":["BinaryProofNode","EdgeProofNode","MerkleTree","NodesMapping"]};
