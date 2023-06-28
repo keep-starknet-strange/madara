@@ -802,7 +802,9 @@ dependencies = [
  "num-bigint",
  "num-integer",
  "num-traits",
+ "parity-scale-codec",
  "phf",
+ "scale-info",
  "serde",
  "serde_json",
  "sha3",
@@ -4438,6 +4440,7 @@ dependencies = [
 name = "madara-runtime"
 version = "0.1.0-alpha"
 dependencies = [
+ "blockifier",
  "frame-benchmarking",
  "frame-executive",
  "frame-support",
@@ -4598,6 +4601,7 @@ name = "mc-rpc-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "blockifier",
  "cairo-vm",
  "flate2",
  "frame-support",
@@ -4620,6 +4624,7 @@ dependencies = [
 name = "mc-storage"
 version = "0.1.0"
 dependencies = [
+ "blockifier",
  "frame-support",
  "frame-system",
  "madara-runtime",
@@ -9827,7 +9832,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 

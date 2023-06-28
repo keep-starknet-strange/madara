@@ -1,4 +1,4 @@
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{InvokeTransaction, Transaction};
 use sp_core::bounded_vec;
 
@@ -182,8 +182,7 @@ fn get_storage_read_write_dummy() -> Transaction {
     }
     .from_invoke(Starknet::chain_id());
 
-    let raw_contract_class = get_contract_class("NoValidateAccount.json");
-    tx.contract_class = Some(ContractClassWrapper::try_from(raw_contract_class).expect("invalid contract content"));
+    tx.contract_class = Some(get_contract_class("NoValidateAccount.json"));
 
     tx
 }
