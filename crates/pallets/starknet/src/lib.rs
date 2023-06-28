@@ -216,8 +216,8 @@ pub mod pallet {
     /// State commitments of the current block.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn current_state_commitments)]
-    pub(super) type CurrentStateCommitments<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
+    #[pallet::getter(fn starknet_state_commitments)]
+    pub(super) type StarknetStateCommitments<T: Config> = StorageValue<_, StateCommitments, ValueQuery>;
 
     /// The Starknet pallet storage items.
     /// STORAGE
@@ -361,11 +361,11 @@ pub mod pallet {
                 // Update state tries if enabled in the runtime configuration
                 if T::EnableStateRoot::get() {
                     // Update classes trie
-                    let mut tree = CurrentStateCommitments::<T>::get().class_commitment;
+                    let mut tree = StarknetStateCommitments::<T>::get().class_commitment;
                     let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(*class_hash);
                     tree.set(*class_hash, final_hash);
 
-                    CurrentStateCommitments::<T>::mutate(|state| {
+                    StarknetStateCommitments::<T>::mutate(|state| {
                         state.class_commitment = tree;
                     })
                 }
@@ -1157,7 +1157,7 @@ impl<T: Config> Pallet<T> {
     /// The global state root.
     pub fn compute_and_store_state_root() -> Felt252Wrapper {
         // Update contracts trie
-        let mut commitments = Self::current_state_commitments();
+        let mut commitments = Self::starknet_state_commitments();
         let pending_storage_changes = PendingStorageChanges::<T>::drain();
 
         pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
@@ -1182,7 +1182,7 @@ impl<T: Config> Pallet<T> {
         });
 
         // Finally update the contracts trie in runtime storage.
-        CurrentStateCommitments::<T>::mutate(|state| {
+        StarknetStateCommitments::<T>::mutate(|state| {
             state.storage_commitment = commitments.clone().storage_commitment;
         });
 

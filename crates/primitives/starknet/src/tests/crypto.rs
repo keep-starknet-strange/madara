@@ -135,7 +135,7 @@ fn test_merkle_tree_class_commitment() {
 
     let class_com = calculate_class_commitment_tree_root_hash::<PedersenHasher>(&class_hashes);
 
-    // The values we test ours against are computed from the sequencer test.
+    // The values we test ours against are computed with the starkware python library.
     assert_eq!(
         Felt252Wrapper::from_hex_be("0x0218b7f0879373722df04bd1c2054cad721251b3dd238973e153347a26f8a674").unwrap(),
         class_com

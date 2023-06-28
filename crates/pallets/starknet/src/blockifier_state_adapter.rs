@@ -127,12 +127,12 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         // Update state tries if enabled in the runtime configuration
         if T::EnableStateRoot::get() {
             // Update contracts trie
-            let mut tree = crate::CurrentStateCommitments::<T>::get().storage_commitment;
+            let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
             let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, Felt252Wrapper::ZERO, new_nonce);
             tree.set(contract_address, hash);
 
-            crate::CurrentStateCommitments::<T>::mutate(|state| {
+            crate::StarknetStateCommitments::<T>::mutate(|state| {
                 state.storage_commitment = tree;
             })
         }
@@ -150,11 +150,11 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         // Update state tries if enabled in the runtime configuration
         if T::EnableStateRoot::get() {
             // Update classes trie
-            let mut tree = crate::CurrentStateCommitments::<T>::get().class_commitment;
+            let mut tree = crate::StarknetStateCommitments::<T>::get().class_commitment;
             let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(Felt252Wrapper::ZERO);
             tree.set(class_hash, final_hash);
 
-            crate::CurrentStateCommitments::<T>::mutate(|state| {
+            crate::StarknetStateCommitments::<T>::mutate(|state| {
                 state.class_commitment = tree;
             })
         }
@@ -171,11 +171,11 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         // Update state tries if enabled in the runtime configuration
         if T::EnableStateRoot::get() {
             // Update classes trie
-            let mut tree = crate::CurrentStateCommitments::<T>::get().class_commitment;
+            let mut tree = crate::StarknetStateCommitments::<T>::get().class_commitment;
             let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(class_hash);
             tree.set(class_hash, final_hash);
 
-            crate::CurrentStateCommitments::<T>::mutate(|state| {
+            crate::StarknetStateCommitments::<T>::mutate(|state| {
                 state.class_commitment = tree;
             })
         }
