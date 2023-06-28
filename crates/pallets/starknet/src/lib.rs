@@ -1162,6 +1162,7 @@ impl<T: Config> Pallet<T> {
 
         pending_storage_changes.for_each(|(contract_address, storage_diffs)| {
             // Retrieve state trie for this contract.
+            // TODO: Investigate what to do in case of failure of the state root computation
             let mut state_tree = ContractTries::<T>::get(contract_address).unwrap_or_default();
             // For each smart contract, iterate through storage diffs and update the state trie.
             storage_diffs.into_iter().for_each(|(storage_key, storage_value)| {
