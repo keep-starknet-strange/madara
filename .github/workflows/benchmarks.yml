@@ -19,7 +19,7 @@ jobs:
           npm run build
           cd ../benchmarking
           npm i
-      - name: Retrieve cached build 
+      - name: Retrieve cached build
         uses: actions/cache@v3
         with:
           path: |
