@@ -104,38 +104,50 @@
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
-</pre><pre class="rust"><code><span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
-<span class="kw">use </span>cairo_vm::types::program::Program;
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>anyhow::{anyhow, <span class="prelude-ty">Result</span>};
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>BlockifierContractClass;
 <span class="kw">use </span>mp_digest_log::find_starknet_block;
 <span class="kw">use </span>mp_starknet::block::Block <span class="kw">as </span>StarknetBlock;
-<span class="kw">use </span>mp_starknet::execution::types::{
-    ContractClassWrapper, EntryPointTypeWrapper, EntrypointMapWrapper, Felt252Wrapper,
-};
+<span class="kw">use </span>mp_starknet::execution::types::Felt252Wrapper;
 <span class="kw">use </span>mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
 };
 <span class="kw">use </span>sp_api::{BlockT, HeaderT};
 <span class="kw">use </span>sp_blockchain::HeaderBackend;
+<span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 <span class="kw">use </span>starknet_core::types::{
-    BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FromByteArrayError, LegacyContractEntryPoint,
-    LegacyEntryPointsByType,
+    BroadcastedTransaction, CompressedLegacyContractClass, ContractClass, FieldElement, FromByteArrayError,
+    LegacyContractEntryPoint, LegacyEntryPointsByType,
 };
 
-<span class="doccomment">/// Returns a [`ContractClass`] from a [`ContractClassWrapper`]
-</span><span class="kw">pub fn </span>to_rpc_contract_class(contract_class_wrapped: ContractClassWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
-    <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>contract_class_wrapped.entry_points_by_type)<span class="question-mark">?</span>;
-
-    <span class="kw">let </span>program: Program =
-        contract_class_wrapped.program.try_into().map_err(|<span class="kw">_</span>| <span class="macro">anyhow!</span>(<span class="string">&quot;Contract Class conversion failed.&quot;</span>))<span class="question-mark">?</span>;
-    <span class="kw">let </span>compressed_program = compress(<span class="kw-2">&amp;</span>program.to_bytes())<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
-        program: compressed_program,
-        entry_points_by_type,
-        <span class="comment">// FIXME 723
-        </span>abi: <span class="prelude-val">None</span>,
-    }))
+<span class="doccomment">/// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
+</span><span class="kw">pub fn </span>to_rpc_contract_class(contract_class: BlockifierContractClass) -&gt; <span class="prelude-ty">Result</span>&lt;ContractClass&gt; {
+    <span class="kw">match </span>contract_class {
+        BlockifierContractClass::V0(contract_class) =&gt; {
+            <span class="kw">let </span>entry_points_by_type = to_legacy_entry_points_by_type(<span class="kw-2">&amp;</span>contract_class.entry_points_by_type)<span class="question-mark">?</span>;
+            <span class="kw">let </span>compressed_program = compress(<span class="kw-2">&amp;</span>contract_class.program.to_bytes())<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(ContractClass::Legacy(CompressedLegacyContractClass {
+                program: compressed_program,
+                entry_points_by_type,
+                <span class="comment">// FIXME 723
+                </span>abi: <span class="prelude-val">None</span>,
+            }))
+        }
+        BlockifierContractClass::V1(<span class="kw">_</span>) =&gt; <span class="macro">todo!</span>(<span class="string">&quot;V1 contract class&quot;</span>),
+    }
 }
 
 <span class="doccomment">/// Returns a compressed vector of bytes
@@ -176,27 +188,35 @@
     }
 }
 
-<span class="doccomment">/// Returns a [Result&lt;LegacyEntryPointsByType&gt;] (blockifier type) from a [EntrypointMapWrapper]
-/// (internal type)
-</span><span class="kw">fn </span>to_legacy_entry_points_by_type(entries: <span class="kw-2">&amp;</span>EntrypointMapWrapper) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
+<span class="doccomment">/// Returns a [Result&lt;LegacyEntryPointsByType&gt;] (starknet-rs type) from a [HashMap&lt;EntryPointType,
+/// Vec&lt;EntryPoint&gt;&gt;]
+</span><span class="kw">fn </span>to_legacy_entry_points_by_type(
+    entries: <span class="kw-2">&amp;</span>HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
+) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyEntryPointsByType&gt; {
     <span class="kw">fn </span>collect_entry_points(
-        entries: <span class="kw-2">&amp;</span>EntrypointMapWrapper,
-        entry_point_type: EntryPointTypeWrapper,
+        entries: <span class="kw-2">&amp;</span>HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;,
+        entry_point_type: EntryPointType,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;&gt; {
         <span class="prelude-val">Ok</span>(entries
-            .<span class="number">0
-            </span>.get(<span class="kw-2">&amp;</span>entry_point_type)
+            .get(<span class="kw-2">&amp;</span>entry_point_type)
             .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Missing {:?} entry point&quot;</span>, entry_point_type))<span class="question-mark">?
             </span>.iter()
-            .map(|e| (e.clone()).try_into())
+            .map(|e| to_legacy_entry_point(e.clone()))
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;Vec&lt;LegacyContractEntryPoint&gt;, FromByteArrayError&gt;&gt;()<span class="question-mark">?</span>)
     }
 
-    <span class="kw">let </span>constructor = collect_entry_points(entries, EntryPointTypeWrapper::Constructor)<span class="question-mark">?</span>;
-    <span class="kw">let </span>external = collect_entry_points(entries, EntryPointTypeWrapper::External)<span class="question-mark">?</span>;
-    <span class="kw">let </span>l1_handler = collect_entry_points(entries, EntryPointTypeWrapper::L1Handler)<span class="question-mark">?</span>;
+    <span class="kw">let </span>constructor = collect_entry_points(entries, EntryPointType::Constructor)<span class="question-mark">?</span>;
+    <span class="kw">let </span>external = collect_entry_points(entries, EntryPointType::External)<span class="question-mark">?</span>;
+    <span class="kw">let </span>l1_handler = collect_entry_points(entries, EntryPointType::L1Handler)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(LegacyEntryPointsByType { constructor, external, l1_handler })
+}
+
+<span class="doccomment">/// Returns a [LegacyContractEntryPoint] (starknet-rs) from a [EntryPoint] (starknet-api)
+</span><span class="kw">fn </span>to_legacy_entry_point(entry_point: EntryPoint) -&gt; <span class="prelude-ty">Result</span>&lt;LegacyContractEntryPoint, FromByteArrayError&gt; {
+    <span class="kw">let </span>selector = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>entry_point.selector.<span class="number">0.0</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>offset = entry_point.offset.<span class="number">0 </span><span class="kw">as </span>u64;
+    <span class="prelude-val">Ok</span>(LegacyContractEntryPoint { selector, offset })
 }
 
 <span class="doccomment">/// Returns the current Starknet block from the block header&#39;s digest

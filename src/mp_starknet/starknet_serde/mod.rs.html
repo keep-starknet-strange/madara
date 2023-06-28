@@ -354,11 +354,6 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
 </span><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::string::{String, ToString};
@@ -371,8 +366,7 @@
 <span class="kw">use </span>thiserror_no_std::Error;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{
-    CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
-    MaxCalldataSize,
+    CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError, MaxCalldataSize,
 };
 <span class="kw">use </span><span class="kw">crate</span>::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
@@ -706,14 +700,10 @@
     <span class="comment">// Set the contract_class field based on contract_content
     </span><span class="kw">if </span>!contract_content.is_empty() {
         <span class="comment">// FIXME 707
-        </span><span class="kw">let </span>raw_contract_class: ContractClass =
-            ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
+        </span>transaction.contract_class =
+            <span class="prelude-val">Some</span>(ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content: {:?}&quot;</span>, e))
-            })<span class="question-mark">?</span>);
-        transaction.contract_class =
-            <span class="prelude-val">Some</span>(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
-                DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content: {:?}&quot;</span>, e))
-            })<span class="question-mark">?</span>);
+            })<span class="question-mark">?</span>));
     } <span class="kw">else </span>{
         transaction.contract_class = <span class="prelude-val">None</span>;
     }

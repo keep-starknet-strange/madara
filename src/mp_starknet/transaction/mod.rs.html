@@ -876,7 +876,7 @@
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-<span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::fees::{<span class="self">self</span>, charge_fee};
 <span class="kw">use </span><span class="kw">crate</span>::state::StateChanges;
 
@@ -1140,7 +1140,7 @@
         sender_address: ContractAddressWrapper,
         nonce: Felt252Wrapper,
         call_entrypoint: CallEntryPointWrapper,
-        contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
+        contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
         contract_address_salt: <span class="prelude-ty">Option</span>&lt;U256&gt;,
         max_fee: Felt252Wrapper,
     ) -&gt; <span class="self">Self </span>{

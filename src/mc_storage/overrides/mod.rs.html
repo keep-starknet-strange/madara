@@ -217,15 +217,13 @@
 <a href="#217" id="217">217</a>
 <a href="#218" id="218">218</a>
 <a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>frame_support::{Identity, StorageHasher};
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::storage::StarknetStorageSchemaVersion;
 <span class="kw">use </span>mp_starknet::transaction::types::EventWrapper;
 <span class="kw">use </span>pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -292,17 +290,13 @@
         address: ContractAddressWrapper,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;;
     <span class="doccomment">/// Return the contract class at the provided address for the provided block.
-    </span><span class="kw">fn </span>contract_class_by_address(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        block_hash: B::Hash,
-        address: ContractAddressWrapper,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;;
+    </span><span class="kw">fn </span>contract_class_by_address(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: B::Hash, address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
     <span class="doccomment">/// Return the contract class for a provided class_hash and block hash.
     </span><span class="kw">fn </span>contract_class_by_class_hash(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: B::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;;
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
     <span class="doccomment">/// Returns the nonce for a provided contract address and block hash.
     </span><span class="kw">fn </span>nonce(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: B::Hash, address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;NonceWrapper&gt;;
     <span class="doccomment">/// Returns the events for a provided block hash.
@@ -361,7 +355,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
         address: ContractAddressWrapper,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
         <span class="kw">let </span>api = <span class="self">self</span>.client.runtime_api();
         <span class="kw">let </span>contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()<span class="question-mark">?</span>;
 
@@ -401,7 +395,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
         <span class="self">self</span>.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()<span class="question-mark">?
     </span>}
 

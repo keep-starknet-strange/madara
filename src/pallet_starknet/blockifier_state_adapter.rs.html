@@ -198,12 +198,6 @@
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a>
-<a href="#206" id="206">206</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -213,7 +207,7 @@
 <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
 <span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::state::StateChanges;
 <span class="kw">use </span>sp_core::Get;
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -221,7 +215,6 @@
 <span class="kw">use </span>starknet_api::state::StorageKey;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
-<span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
 <span class="kw">use </span><span class="kw">crate</span>::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
 <span class="kw">use crate</span>::{Config, Pallet};
 
@@ -284,12 +277,8 @@
 
     <span class="kw">fn </span>get_compiled_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash) -&gt; StateResult&lt;ContractClass&gt; {
         <span class="kw">let </span>wrapped_class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
-        <span class="kw">let </span>opt_contract_class = Pallet::&lt;T&gt;::contract_class_by_class_hash(wrapped_class_hash);
-        <span class="kw">match </span>opt_contract_class {
-            <span class="prelude-val">Some</span>(contract_class) =&gt; <span class="prelude-val">Ok</span>(TryInto::&lt;ContractClass&gt;::try_into(contract_class)
-                .map_err(|e| StateError::StateReadError(e.to_string()))<span class="question-mark">?</span>),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash)),
-        }
+        Pallet::&lt;T&gt;::contract_class_by_class_hash(wrapped_class_hash)
+            .ok_or(StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash))
     }
 
     <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
@@ -370,7 +359,6 @@
 
     <span class="kw">fn </span>set_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash, contract_class: ContractClass) -&gt; StateResult&lt;()&gt; {
         <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
-        <span class="kw">let </span>contract_class: ContractClassWrapper = ContractClassWrapper::from(contract_class);
 
         <span class="kw">crate</span>::ContractClasses::&lt;T&gt;::insert(class_hash, contract_class);
 

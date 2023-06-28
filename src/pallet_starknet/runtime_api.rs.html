@@ -53,7 +53,6 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
-<a href="#56" id="56">56</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -61,10 +60,9 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 </span><span class="attr">#![allow(clippy::extra_unused_type_parameters)]
 
-</span><span class="kw">use </span>mp_starknet::crypto::hash::Hasher;
-<span class="kw">use </span>mp_starknet::execution::types::{
-    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
-};
+</span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<span class="kw">use </span>mp_starknet::crypto::hash::Hasher;
+<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 <span class="kw">use </span>mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 <span class="kw">use </span>sp_api::BlockT;
 <span class="kw">pub extern crate </span>alloc;
@@ -87,7 +85,7 @@
         <span class="doccomment">/// Returns the contract class hash at the given address.
         </span><span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;;
         <span class="doccomment">/// Returns the contract class for the given class hash.
-        </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;;
+        </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
         <span class="doccomment">/// Returns the chain id.
         </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns fee estimate

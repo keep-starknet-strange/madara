@@ -153,12 +153,14 @@
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
 <a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>frame_system::EventRecord;
 <span class="kw">use </span>madara_runtime::{Hash, RuntimeEvent};
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
     STARKNET_NONCE, STARKNET_STORAGE, SYSTEM_EVENTS,
@@ -244,7 +246,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
         address: ContractAddressWrapper,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
         <span class="kw">let </span>class_hash = <span class="self">self</span>.contract_class_hash_by_address(block_hash, address)<span class="question-mark">?</span>;
         <span class="self">self</span>.contract_class_by_class_hash(block_hash, class_hash)
     }
@@ -265,9 +267,9 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
         <span class="kw">let </span>storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
-        <span class="self">self</span>.query_storage::&lt;ContractClassWrapper&gt;(
+        <span class="self">self</span>.query_storage::&lt;ContractClass&gt;(
             block_hash,
             <span class="kw-2">&amp;</span>StorageKey(storage_key_build(
                 storage_contract_class_prefix,

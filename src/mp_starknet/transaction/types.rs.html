@@ -955,11 +955,54 @@
 <a href="#955" id="955">955</a>
 <a href="#956" id="956">956</a>
 <a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
 <span class="kw">use </span>alloc::vec::Vec;
 
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::execution::entry_point::CallInfo;
 <span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
 <span class="kw">use </span>blockifier::state::errors::StateError;
@@ -979,10 +1022,7 @@
 };
 <span class="kw">use </span><span class="kw">crate</span>::execution::call_entrypoint_wrapper::MaxCalldataSize;
 <span class="kw">use </span><span class="kw">crate</span>::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-<span class="kw">use </span><span class="kw">crate</span>::execution::types::{
-    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntrypointMapWrapper, Felt252Wrapper,
-    Felt252WrapperError,
-};
+<span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper, Felt252WrapperError};
 
 <span class="doccomment">/// Max size of arrays.
 /// TODO: add real value (#250)
@@ -1112,7 +1152,6 @@
 </span><span class="attr">#[derive(
     Clone,
     Debug,
-    Default,
     PartialEq,
     Eq,
     scale_codec::Encode,
@@ -1129,7 +1168,7 @@
     <span class="doccomment">/// Class hash to declare.
     </span><span class="kw">pub </span>compiled_class_hash: Felt252Wrapper,
     <span class="doccomment">/// Contract to declare.
-    </span><span class="kw">pub </span>contract_class: ContractClassWrapper,
+    </span><span class="kw">pub </span>contract_class: ContractClass,
     <span class="doccomment">/// Account contract nonce.
     </span><span class="kw">pub </span>nonce: Felt252Wrapper,
     <span class="doccomment">/// Transaction signature.
@@ -1365,7 +1404,7 @@
     <span class="doccomment">/// Call entrypoint
     </span><span class="kw">pub </span>call_entrypoint: CallEntryPointWrapper,
     <span class="doccomment">/// Contract Class
-    </span><span class="kw">pub </span>contract_class: <span class="prelude-ty">Option</span>&lt;ContractClassWrapper&gt;,
+    </span><span class="kw">pub </span>contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
     <span class="doccomment">/// Contract Address Salt
     </span><span class="kw">pub </span>contract_address_salt: <span class="prelude-ty">Option</span>&lt;U256&gt;,
     <span class="doccomment">/// Max fee.
@@ -1505,7 +1544,12 @@
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">mod </span>reexport_private_types {
+    <span class="kw">use </span>std::collections::HashMap;
+
+    <span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
     <span class="kw">use </span>flate2::read::GzDecoder;
+    <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
+    <span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
     <span class="kw">use </span>starknet_core::types::contract::legacy::{
         LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
     };
@@ -1526,7 +1570,6 @@
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span><span class="kw">crate</span>::transaction::utils::to_hash_map_entrypoints;
     <span class="doccomment">/// Wrapper type for broadcasted transaction conversion errors.
     </span><span class="attr">#[derive(Debug, Error)]
     </span><span class="kw">pub enum </span>BroadcastedTransactionConversionErrorWrapper {
@@ -1614,21 +1657,62 @@
                             declare_tx_v1.contract_class.entry_points_by_type.clone(),
                         ),
                     };
-
+                    <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type = &lt;HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;&gt;::new();
+                    entry_points_by_type.insert(
+                        EntryPointType::Constructor,
+                        declare_tx_v1
+                            .contract_class
+                            .entry_points_by_type
+                            .constructor
+                            .iter()
+                            .map(|entry_point| -&gt; EntryPoint {
+                                EntryPoint {
+                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
+                                    offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
+                                }
+                            })
+                            .collect::&lt;Vec&lt;EntryPoint&gt;&gt;(),
+                    );
+                    entry_points_by_type.insert(
+                        EntryPointType::External,
+                        declare_tx_v1
+                            .contract_class
+                            .entry_points_by_type
+                            .external
+                            .iter()
+                            .map(|entry_point| -&gt; EntryPoint {
+                                EntryPoint {
+                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
+                                    offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
+                                }
+                            })
+                            .collect::&lt;Vec&lt;EntryPoint&gt;&gt;(),
+                    );
+                    entry_points_by_type.insert(
+                        EntryPointType::L1Handler,
+                        declare_tx_v1
+                            .contract_class
+                            .entry_points_by_type
+                            .l1_handler
+                            .iter()
+                            .map(|entry_point| -&gt; EntryPoint {
+                                EntryPoint {
+                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
+                                    offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
+                                }
+                            })
+                            .collect::&lt;Vec&lt;EntryPoint&gt;&gt;(),
+                    );
                     <span class="prelude-val">Ok</span>(DeclareTransaction {
                         version: <span class="number">1_u8</span>,
                         sender_address: declare_tx_v1.sender_address.into(),
                         nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
                         max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
                         signature,
-                        contract_class: ContractClassWrapper {
-                            program: program
-                                .try_into()
-                                .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
-                            entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
-                                declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                            )),
-                        },
+                        contract_class: ContractClass::V0(ContractClassV0(Arc::new(ContractClassV0Inner {
+                            program,
+                            entry_points_by_type,
+                        }))),
                         compiled_class_hash: legacy_contract_class.class_hash()<span class="question-mark">?</span>.into(),
                     })
                 }

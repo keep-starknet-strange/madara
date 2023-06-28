@@ -1194,10 +1194,6 @@
 <a href="#1194" id="1194">1194</a>
 <a href="#1195" id="1195">1195</a>
 <a href="#1196" id="1196">1196</a>
-<a href="#1197" id="1197">1197</a>
-<a href="#1198" id="1198">1198</a>
-<a href="#1199" id="1199">1199</a>
-<a href="#1200" id="1200">1200</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1267,6 +1263,7 @@
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>blockifier::block_context::BlockContext;
+<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 <span class="kw">use </span>blockifier_state_adapter::BlockifierStateAdapter;
 <span class="kw">use </span>frame_support::pallet_prelude::<span class="kw-2">*</span>;
@@ -1276,8 +1273,7 @@
 <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
 <span class="kw">use </span>mp_starknet::crypto::commitment::{<span class="self">self</span>, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
 <span class="kw">use </span>mp_starknet::execution::types::{
-    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
-    Felt252Wrapper,
+    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
 <span class="kw">use </span>mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 <span class="kw">use </span>mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
@@ -1462,8 +1458,7 @@
     /// Safe to use `Identity` as the key is already a hash.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>contract_class_by_class_hash)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClasses&lt;T: Config&gt; =
-        StorageMap&lt;<span class="kw">_</span>, Identity, ClassHashWrapper, ContractClassWrapper, OptionQuery&gt;;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClasses&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, ClassHashWrapper, ContractClass, OptionQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -1521,7 +1516,7 @@
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        </span><span class="kw">pub </span>contract_classes: Vec&lt;(ClassHashWrapper, ContractClassWrapper)&gt;,
+        </span><span class="kw">pub </span>contract_classes: Vec&lt;(ClassHashWrapper, ContractClass)&gt;,
         <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKeyWrapper, Felt252Wrapper)&gt;,
         <span class="doccomment">/// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
@@ -1769,9 +1764,6 @@
 
             <span class="comment">// Get current block context
             </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-
-            <span class="comment">// Parse contract class
-            </span><span class="kw">let </span>contract_class = contract_class.try_into().or(<span class="prelude-val">Err</span>(Error::&lt;T&gt;::InvalidContractClass))<span class="question-mark">?</span>;
 
             <span class="comment">// Execute transaction
             </span><span class="kw">let </span>call_info = transaction.execute(
