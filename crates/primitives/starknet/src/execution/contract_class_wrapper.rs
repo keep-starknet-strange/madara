@@ -2,9 +2,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use alloc::{format, vec};
-use core::mem;
 
-use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
 use cairo_vm::felt::Felt252;
 use cairo_vm::serde::deserialize_program::{
     deserialize_program_json, parse_program, parse_program_json, BuiltinName, ProgramJson,
@@ -13,12 +11,11 @@ use cairo_vm::types::errors::program_errors::ProgramError;
 use cairo_vm::types::program::{Program, SharedProgramData};
 use derive_more::Constructor;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointType};
 use starknet_api::stdlib::collections::HashMap;
 
 use super::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
 use crate::alloc::string::ToString;
-use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
+use crate::scale_codec::{Decode, Encode, Error, Input, Output};
 use crate::scale_info::build::Fields;
 use crate::scale_info::{Path, Type, TypeInfo};
 
@@ -39,69 +36,6 @@ impl<'de> Deserialize<'de> for ProgramWrapper {
         ProgramJson::deserialize(deserializer)?
             .try_into()
             .map_err(|e| de::Error::custom(format!("couldn't convert programjson to program wrapper {e:}")))
-    }
-}
-
-/// [ContractClass] type equivalent. This is not really a wrapper it's more of a copy where we
-/// implement the substrate necessary traits.
-#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Default, Encode, Decode, Serialize, Deserialize)]
-pub struct ContractClassWrapper {
-    /// Wrapper type for a [Program] object. (It's not really a wrapper it's a copy of the type but
-    /// we implement the necessary traits.)
-    pub program: ProgramWrapper,
-    /// Wrapper type for a [HashMap<String, EntryPoint>] object. (It's not really a wrapper it's a
-    /// copy of the type but we implement the necessary traits.)
-    pub entry_points_by_type: EntrypointMapWrapper,
-}
-
-impl ContractClassWrapper {
-    // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
-    const MAX_CONTRACT_BYTE_SIZE: usize = 20971520;
-}
-
-impl From<ContractClassWrapper> for ContractClass {
-    fn from(value: ContractClassWrapper) -> Self {
-        // FIXME 707
-        Self::V0(ContractClassV0(
-            ContractClassV0Inner {
-                program: value.program.into(),
-                // Convert EntrypointMapWrapper to HashMap<EntryPointType, Vec<EntryPoint>>
-                entry_points_by_type: HashMap::from_iter(value.entry_points_by_type.0.iter().clone().map(
-                    |(entrypoint_type, entrypoints)| {
-                        (
-                            entrypoint_type.clone().into(),
-                            entrypoints.clone().into_iter().map(|val| val.into()).collect(),
-                        )
-                    },
-                )),
-            }
-            .into(),
-        ))
-    }
-}
-
-impl From<ContractClass> for ContractClassWrapper {
-    fn from(value: ContractClass) -> Self {
-        // FIXME 707
-        match value {
-            ContractClass::V0(class) => Self {
-                program: class.program.clone().into(),
-                entry_points_by_type: EntrypointMapWrapper(unsafe {
-                    mem::transmute::<
-                        HashMap<EntryPointType, Vec<EntryPoint>>,
-                        HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>,
-                    >(class.entry_points_by_type.clone())
-                }),
-            },
-            _ => Self::default(),
-        }
-    }
-}
-
-impl MaxEncodedLen for ContractClassWrapper {
-    fn max_encoded_len() -> usize {
-        // This is the maximum size of a contract in starknet. https://docs.starknet.io/documentation/starknet_versions/limits_and_triggers/
-        Self::MAX_CONTRACT_BYTE_SIZE
     }
 }
 
@@ -256,37 +190,5 @@ impl TypeInfo for ProgramWrapper {
         Type::builder()
             .path(Path::new("ProgramWrapper", module_path!()))
             .composite(Fields::unnamed().field(|f| f.ty::<[u8]>().type_name("Program")))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use blockifier::execution::contract_class::ContractClass;
-
-    use super::*;
-
-    pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-        // FIXME 707
-        ContractClass::V0(serde_json::from_slice(contract_content).unwrap())
-    }
-
-    #[test]
-    fn test_serialize_deserialize_contract_class() {
-        let contract_class: ContractClassWrapper =
-            serde_json::from_slice(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json"))
-                .unwrap();
-        let contract_class_serialized = serde_json::to_vec(&contract_class).unwrap();
-        let contract_class_deserialized: ContractClassWrapper =
-            serde_json::from_slice(&contract_class_serialized).unwrap();
-
-        pretty_assertions::assert_eq!(contract_class, contract_class_deserialized);
-    }
-
-    #[test]
-    fn test_encode_decode_contract_class() {
-        let contract_class: ContractClassWrapper =
-            get_contract_class(include_bytes!("../../../../../cairo-contracts/build/NoValidateAccount.json")).into();
-        let encoded = contract_class.encode();
-        pretty_assertions::assert_eq!(contract_class, ContractClassWrapper::decode(&mut &encoded[..]).unwrap())
     }
 }

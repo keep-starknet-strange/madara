@@ -4,7 +4,7 @@ use std::{env, fs};
 
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::bounded_vec;
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::MaxArraySize;
 use sp_runtime::BoundedVec;
 use starknet_crypto::{sign, FieldElement};
@@ -18,11 +18,6 @@ pub fn get_contract_class(resource_path: &str) -> ContractClass {
     let raw_contract_class = fs::read_to_string(full_path).unwrap();
     // FIXME 707
     ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap())
-}
-
-pub fn get_contract_class_wrapper(resource_path: &str) -> ContractClassWrapper {
-    let contract_class = get_contract_class(resource_path);
-    ContractClassWrapper::try_from(contract_class).unwrap()
 }
 
 pub fn sign_message_hash(hash: Felt252Wrapper) -> BoundedVec<Felt252Wrapper, MaxArraySize> {

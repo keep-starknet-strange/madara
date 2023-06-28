@@ -569,9 +569,6 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
 
-            // Parse contract class
-            let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
-
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),

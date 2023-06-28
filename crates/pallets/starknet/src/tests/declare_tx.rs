@@ -1,6 +1,6 @@
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment::calculate_declare_tx_hash;
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::DeclareTransaction;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
@@ -17,7 +17,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
         let none_origin = RuntimeOrigin::none();
         let account_addr = get_account_address(AccountType::NoValidate);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -49,7 +49,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
         let contract_address =
             Felt252Wrapper::from_hex_be("0x03e437FB56Bb213f5708Fcd6966502070e276c093ec271aA33433b89E21fd31f").unwrap();
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -75,7 +75,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
         let none_origin = RuntimeOrigin::none();
         let account_addr = get_account_address(AccountType::Argent);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         // TODO: Delete when the class hash can be derived from ContractClass
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
@@ -104,7 +104,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
 
         let account_addr = get_account_address(AccountType::Openzeppelin);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -141,7 +141,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
 
         let account_addr = get_account_address(AccountType::Openzeppelin);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -173,7 +173,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
 
         let account_addr = get_account_address(AccountType::Braavos);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -210,7 +210,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
 
         let account_addr = get_account_address(AccountType::Braavos);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -242,7 +242,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
 
         let account_addr = get_account_address(AccountType::Argent);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -279,7 +279,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
 
         let account_addr = get_account_address(AccountType::Argent);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -309,7 +309,7 @@ fn test_verify_tx_longevity() {
         basic_test_setup(2);
         let account_addr = get_account_address(AccountType::NoValidate);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -336,7 +336,7 @@ fn test_verify_no_require_tag() {
 
         let account_addr = get_account_address(AccountType::NoValidate);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
@@ -373,7 +373,7 @@ fn test_verify_require_tag() {
 
         let account_addr = get_account_address(AccountType::NoValidate);
 
-        let erc20_class = ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap();
+        let erc20_class = get_contract_class("ERC20.json");
         let erc20_class_hash =
             Felt252Wrapper::from_hex_be("057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
 
