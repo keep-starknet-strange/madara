@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Retrieve cached build 
+      - name: Retrieve cached build
         uses: actions/cache@v3
         with:
           path: |
