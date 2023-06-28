@@ -356,6 +356,12 @@ impl_runtime_apis! {
 
     #[cfg(feature = "try-runtime")]
     impl frame_try_runtime::TryRuntime<Block> for Runtime {
+        /// Executes all OnRuntimeUpgrade callbacks for this runtime, including pre- and post-migration checks.
+        ///
+        /// If checks is set to true, the function will run the try-state code both before and after the migration function.
+        /// It will also run the pre_upgrade and post_upgrade hooks.
+        ///
+        /// If checks is set to false, the function will only run the migration function.
         fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
             // NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
             // have a backtrace here. If any of the pre/post migration checks fail, we shall stop
