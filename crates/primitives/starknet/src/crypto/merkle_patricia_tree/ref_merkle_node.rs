@@ -2,31 +2,20 @@
 //! used by Starknet.
 //!
 //! For more information about how these Starknet trees are structured, see
-//! [`MerkleTree`](super::merkle_tree::MerkleTree).
+//! [`MerkleTree`](super::ref_merkle_tree::RefMerkleTree).
+
+use alloc::rc::Rc;
+use core::cell::RefCell;
 
 use bitvec::order::Msb0;
 use bitvec::prelude::BitVec;
 use bitvec::slice::BitSlice;
-use scale_codec::{Decode, Encode};
-use starknet_api::stdlib::collections::HashMap;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
 
-/// Id of a Node within the tree
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
-pub struct NodeId(pub u64);
-
-impl NodeId {
-    /// Mutates the given NodeId to be the next one and returns it.
-    pub fn next_id(&mut self) -> NodeId {
-        self.0 += 1;
-        NodeId(self.0)
-    }
-}
-
 /// A node in a Binary Merkle-Patricia Tree graph.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Node {
     /// A node that has not been fetched from storage yet.
     ///
@@ -41,37 +30,37 @@ pub enum Node {
 }
 
 /// Describes the [Node::Binary] variant.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BinaryNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
     pub hash: Option<Felt252Wrapper>,
     /// The height of this node in the tree.
-    pub height: u64,
+    pub height: usize,
     /// [Left](Direction::Left) child.
-    pub left: NodeId,
+    pub left: Rc<RefCell<Node>>,
     /// [Right](Direction::Right) child.
-    pub right: NodeId,
+    pub right: Rc<RefCell<Node>>,
 }
 
 /// Node that is an edge.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EdgeNode {
     /// The hash of this node. Is [None] if the node
     /// has not yet been committed.
     pub hash: Option<Felt252Wrapper>,
     /// The starting height of this node in the tree.
-    pub height: u64,
+    pub height: usize,
     /// The path this edge takes.
     pub path: BitVec<u8, Msb0>,
     /// The child of this node.
-    pub child: NodeId,
+    pub child: Rc<RefCell<Node>>,
 }
 
 /// Describes the direction a child of a [BinaryNode] may have.
 ///
 /// Binary nodes have two children, one left and one right.
-#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
     /// Left direction.
     Left,
@@ -127,7 +116,7 @@ impl BinaryNode {
     ///
     /// The direction of the key.
     pub fn direction(&self, key: &BitSlice<u8, Msb0>) -> Direction {
-        key[self.height as usize].into()
+        key[self.height].into()
     }
 
     /// Returns the [Left] or [Right] child.
@@ -142,10 +131,10 @@ impl BinaryNode {
     /// # Returns
     ///
     /// The child in the specified direction.
-    pub fn get_child(&self, direction: Direction) -> NodeId {
+    pub fn get_child(&self, direction: Direction) -> Rc<RefCell<Node>> {
         match direction {
-            Direction::Left => self.left,
-            Direction::Right => self.right,
+            Direction::Left => self.left.clone(),
+            Direction::Right => self.right.clone(),
         }
     }
 
@@ -155,25 +144,19 @@ impl BinaryNode {
     ///
     /// If either child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
+    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self) {
         if self.hash.is_some() {
             return;
         }
 
-        let left = match nodes.get(&self.left) {
-            Some(node) => match node.hash() {
-                Some(hash) => hash,
-                None => unreachable!("subtrees have to be committed first"),
-            },
-            None => unreachable!("left child not found"),
+        let left = match self.left.borrow().hash() {
+            Some(hash) => hash,
+            None => unreachable!("subtrees have to be committed first"),
         };
 
-        let right = match nodes.get(&self.right) {
-            Some(node) => match node.hash() {
-                Some(hash) => hash,
-                None => unreachable!("subtrees have to be committed first"),
-            },
-            None => unreachable!("right child not found"),
+        let right = match self.right.borrow().hash() {
+            Some(hash) => hash,
+            None => unreachable!("subtrees have to be committed first"),
         };
 
         self.hash = Some(Felt252Wrapper(H::hash(left.0, right.0)));
@@ -243,7 +226,7 @@ impl EdgeNode {
     ///
     /// * `key` - The key to check if the path matches with the edge node.
     pub fn path_matches(&self, key: &BitSlice<u8, Msb0>) -> bool {
-        self.path == key[(self.height as usize)..(self.height + self.path.len() as u64) as usize]
+        self.path == key[self.height..self.height + self.path.len()]
     }
 
     /// Returns the common bit prefix between the edge node's path and the given key.
@@ -254,7 +237,7 @@ impl EdgeNode {
     ///
     /// * `key` - The key to get the common path from.
     pub fn common_path(&self, key: &BitSlice<u8, Msb0>) -> &BitSlice<u8, Msb0> {
-        let key_path = key.iter().skip(self.height as usize);
+        let key_path = key.iter().skip(self.height);
         let common_length = key_path.zip(self.path.iter()).take_while(|(a, b)| a == b).count();
 
         &self.path[..common_length]
@@ -266,19 +249,15 @@ impl EdgeNode {
     ///
     /// If the child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
+    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self) {
         if self.hash.is_some() {
             return;
         }
 
-        let child = match nodes.get(&self.child) {
-            Some(node) => match node.hash() {
-                Some(hash) => hash,
-                None => unreachable!("subtree has to be committed before"),
-            },
-            None => unreachable!("child node not found"),
+        let child = match self.child.borrow().hash() {
+            Some(hash) => hash,
+            None => unreachable!("subtree has to be committed before"),
         };
-
         let mut temp_path = self.path.clone();
         temp_path.force_align();
 
