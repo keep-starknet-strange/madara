@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
   workflow_call:
 
+jobs:
   rust_build:
     runs-on: ubuntu-latest-32-cores
     steps:
