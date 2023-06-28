@@ -1,0 +1,25 @@
+---
+name: Task - Linters Cargo
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+  cargo-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Format and clippy
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all -- -D warnings
+          cargo clippy --tests -- -D warnings

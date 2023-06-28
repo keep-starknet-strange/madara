@@ -11,6 +11,14 @@ jobs:
     name: Run linters
     uses: ./.github/workflows/linters.yml
 
+  rust_build:
+    name: Build Rust project
+    uses: ./.github/workflows/rust-build.yml
+
+  linters_cargo:
+    name: Run Cargo linters
+    uses: ./.github/workflows/linters-cargo.yml
+
   tests:
     name: Run tests and coverage
     uses: ./.github/workflows/tests.yml

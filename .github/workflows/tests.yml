@@ -21,14 +21,15 @@ jobs:
         run: |-
           cd tests
           npm install
-      - name: Setup rust toolchain
-        run: rustup show
-      - name: Set-Up
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --workspace --release
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Run test
         run: |-
           cd tests
