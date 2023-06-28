@@ -596,7 +596,7 @@ mod tests {
             )),
         );
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client.clone(), txpool.clone(), None);
 
         let cell = Mutex::new((false, time::Instant::now()));
         let proposer = proposer_factory.init_with_now(
@@ -632,7 +632,7 @@ mod tests {
         let spawner = sp_core::testing::TaskExecutor::new();
         let txpool = BasicPool::new_full(Default::default(), true.into(), None, spawner.clone(), client.clone());
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client.clone(), txpool, None);
 
         let cell = Mutex::new((false, time::Instant::now()));
         let proposer = proposer_factory.init_with_now(
@@ -671,10 +671,10 @@ mod tests {
             )),
         );
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client.clone(), txpool, None);
 
         let proposer = proposer_factory
-            .init_with_now(&client.header(genesis_hash).unwrap().unwrap(), Box::new(move || time::Instant::now()));
+            .init_with_now(&client.header(genesis_hash).unwrap().unwrap(), Box::new(time::Instant::now));
 
         let deadline = time::Duration::from_secs(9);
         let proposal = block_on(proposer.propose(Default::default(), Default::default(), deadline, None)).unwrap();
@@ -711,12 +711,12 @@ mod tests {
         ))
         .unwrap();
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client.clone(), txpool.clone(), None);
         let mut propose_block =
             |client: &TestClient, parent_number, expected_block_extrinsics, expected_pool_transactions| {
                 let hash = client.expect_block_hash_from_id(&BlockId::Number(parent_number)).unwrap();
-                let proposer = proposer_factory
-                    .init_with_now(&client.expect_header(hash).unwrap(), Box::new(move || time::Instant::now()));
+                let proposer =
+                    proposer_factory.init_with_now(&client.expect_header(hash).unwrap(), Box::new(time::Instant::now));
 
                 // when
                 let deadline = time::Duration::from_secs(900);
@@ -783,19 +783,16 @@ mod tests {
             ExtrinsicBuilder::new_fill_block(Perbill::from_parts(HUGE)).signer(AccountKeyring::numeric(who)).build()
         };
 
-        block_on(
-            txpool.submit_at(
-                &BlockId::number(0),
-                SOURCE,
-                // add 2 * MAX_SKIPPED_TRANSACTIONS that exhaust resources
-                (0..MAX_SKIPPED_TRANSACTIONS * 2)
-					.into_iter()
+        block_on(txpool.submit_at(
+            &BlockId::number(0),
+            SOURCE,
+            // add 2 * MAX_SKIPPED_TRANSACTIONS that exhaust resources
+            (0..MAX_SKIPPED_TRANSACTIONS * 2)
 					.map(huge)
 					// and some transactions that are okay.
-					.chain((0..MAX_SKIPPED_TRANSACTIONS as u64).into_iter().map(tiny))
+					.chain((0..MAX_SKIPPED_TRANSACTIONS as u64).map(tiny))
 					.collect(),
-            ),
-        )
+        ))
         .unwrap();
 
         block_on(
@@ -805,7 +802,7 @@ mod tests {
         );
         assert_eq!(txpool.ready().count(), MAX_SKIPPED_TRANSACTIONS * 3);
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client.clone(), txpool, None);
 
         let cell = Mutex::new(time::Instant::now());
         let proposer = proposer_factory.init_with_now(
@@ -846,18 +843,15 @@ mod tests {
             ExtrinsicBuilder::new_fill_block(Perbill::from_parts(HUGE)).signer(AccountKeyring::numeric(who)).build()
         };
 
-        block_on(
-            txpool.submit_at(
-                &BlockId::number(0),
-                SOURCE,
-                (0..MAX_SKIPPED_TRANSACTIONS + 2)
-					.into_iter()
+        block_on(txpool.submit_at(
+            &BlockId::number(0),
+            SOURCE,
+            (0..MAX_SKIPPED_TRANSACTIONS + 2)
 					.map(huge)
 					// and some transactions that are okay.
-					.chain((0..MAX_SKIPPED_TRANSACTIONS + 2).into_iter().map(tiny))
+					.chain((0..MAX_SKIPPED_TRANSACTIONS + 2).map(tiny))
 					.collect(),
-            ),
-        )
+        ))
         .unwrap();
 
         block_on(
@@ -867,7 +861,7 @@ mod tests {
         );
         assert_eq!(txpool.ready().count(), MAX_SKIPPED_TRANSACTIONS * 2 + 4);
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client.clone(), txpool, None);
 
         let deadline = time::Duration::from_secs(600);
         let cell = Arc::new(Mutex::new((0, time::Instant::now())));
@@ -924,11 +918,11 @@ mod tests {
             + extrinsics.iter().take(extrinsics_num - 1).map(Encode::encoded_size).sum::<usize>()
             + Vec::<Extrinsic>::new().encoded_size();
 
-        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, extrinsics.clone())).unwrap();
+        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, extrinsics)).unwrap();
 
         block_on(txpool.maintain(chain_event(genesis_header.clone())));
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client, txpool, None);
 
         let proposer = block_on(proposer_factory.init(&genesis_header)).unwrap();
 
@@ -970,11 +964,11 @@ mod tests {
             + extrinsics.iter().take(extrinsics_num - 1).map(Encode::encoded_size).sum::<usize>()
             + Vec::<Extrinsic>::new().encoded_size();
 
-        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, extrinsics.clone())).unwrap();
+        block_on(txpool.submit_at(&BlockId::number(0), SOURCE, extrinsics)).unwrap();
 
         block_on(txpool.maintain(chain_event(genesis_header.clone())));
 
-        let mut proposer_factory = ProposerFactory::new(spawner.clone(), client.clone(), txpool.clone(), None);
+        let mut proposer_factory = ProposerFactory::new(spawner, client, txpool, None);
         proposer_factory.set_default_block_size_limit(block_limit);
 
         let proposer = block_on(proposer_factory.init(&genesis_header)).unwrap();
