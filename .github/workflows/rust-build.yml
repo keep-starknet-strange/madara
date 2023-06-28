@@ -19,6 +19,7 @@ jobs:
             ~/.cargo/
             target/
           key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.lock') }}
+          lookup-only: true
           enableCrossOsArchive: true
 
       - name: Setup rust toolchain
