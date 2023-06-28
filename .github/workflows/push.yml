@@ -28,7 +28,7 @@ jobs:
   benchmark:
     name: Run benchmarks
     uses: ./.github/workflows/benchmarks.yml
-    needs: tests
+    needs: [rust_build, tests]
     permissions:
       # deployments permission to deploy GitHub pages website
       deployments: write
