@@ -228,9 +228,6 @@ where
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");
                 }
-
-                // write DA facts to DB
-                // write PIE to DB
             }),
         );
 

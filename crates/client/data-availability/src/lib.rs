@@ -1,13 +1,10 @@
-use ethers::{
-    prelude::abigen,
-    providers::{Http, Provider},
-    types::Address,
-};
-
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use ethers::prelude::abigen;
+use ethers::providers::{Http, Provider};
+use ethers::types::Address;
 use futures::StreamExt;
 use sc_client_api::client::BlockchainEvents;
 use serde::Deserialize;
@@ -40,14 +37,15 @@ where
             let _res = madara_backend
                 .fact()
                 .store_block_facts(&notification.hash, vec![H256::from_str(TEST_CAIRO_FACT).unwrap()]);
-			
-			// Submit the StarkNet OS PIE
-			if let Ok(job_resp) = submit_pie(TEST_CAIRO_PIE_BASE64) {
-				log::info!("Submitted job id: {}", job_resp.cairo_job_key);
 
-				// Store the cairo job key
-				let _res = madara_backend.fact().update_cairo_job(&notification.hash, Uuid::from_str(TEST_JOB_ID).unwrap());
-			}
+            // Submit the StarkNet OS PIE
+            if let Ok(job_resp) = submit_pie(TEST_CAIRO_PIE_BASE64) {
+                log::info!("Submitted job id: {}", job_resp.cairo_job_key);
+
+                // Store the cairo job key
+                let _res =
+                    madara_backend.fact().update_cairo_job(&notification.hash, Uuid::from_str(TEST_JOB_ID).unwrap());
+            }
         }
     }
 }
@@ -63,20 +61,19 @@ where
 
         while let Some(notification) = notification_st.next().await {
             // Query last proven block
-			// let res = madara_backend.fact().last_proved_block().unwrap();
-			starknet_last_proven_block().await;
+            // let res = madara_backend.fact().last_proved_block().unwrap();
+            starknet_last_proven_block().await;
             // log::info!("Last proved block: {}", res);
 
-			// Check the associated job status
-			if let Ok(job_resp) = get_status(TEST_JOB_ID) {
-				log::info!("Job status: {}", job_resp.status);
-				// TODO: use fact db enum type
-				if job_resp.status == "ONCHAIN" {
-					// Fetch DA Facts for block
-					let _res = madara_backend.fact().block_facts(&notification.hash).unwrap();
-
-				}
-			}
+            // Check the associated job status
+            if let Ok(job_resp) = get_status(TEST_JOB_ID) {
+                log::info!("Job status: {}", job_resp.status);
+                // TODO: use fact db enum type
+                if job_resp.status == "ONCHAIN" {
+                    // Fetch DA Facts for block
+                    let _res = madara_backend.fact().block_facts(&notification.hash).unwrap();
+                }
+            }
         }
     }
 }
@@ -127,25 +124,25 @@ pub fn get_status(job_key: &str) -> Result<CairoStatusResponse, String> {
 }
 
 // async fn publish_data(sender_id: &[u8], data: &[u8]) -> Result<(), &str> {
-    // abigen!(
-    //     STARKNET,
-    //     r#"[
-    //         function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
-    //     ]"#,
-    // );
+// abigen!(
+//     STARKNET,
+//     r#"[
+//         function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256
+// onchainDataSize) external     ]"#,
+// );
 
-    // const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
-    // pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
-    // // pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
-    
-    // let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
-    // let client = Arc::new(provider);
+// const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
+// pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
+// // pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
 
-    // let address: Address = STARKNET_MAINNET_CC_ADDRESS.parse().unwrap();
-    // let contract = STARKNET::new(address, client);
-    // if let Ok(state_block_number) = contract.state_block_number().call().await {
-    //     log::info!("State Block Number {state_block_number:?}");
-    // }
+// let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
+// let client = Arc::new(provider);
+
+// let address: Address = STARKNET_MAINNET_CC_ADDRESS.parse().unwrap();
+// let contract = STARKNET::new(address, client);
+// if let Ok(state_block_number) = contract.state_block_number().call().await {
+//     log::info!("State Block Number {state_block_number:?}");
+// }
 // }
 
 pub async fn starknet_last_proven_block() {
@@ -159,7 +156,7 @@ pub async fn starknet_last_proven_block() {
     const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
     pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
     // pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
-    
+
     let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
     let client = Arc::new(provider);
 
