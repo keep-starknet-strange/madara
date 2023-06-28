@@ -5,13 +5,13 @@ on:
   workflow_dispatch:
     inputs:
       release_tag_name:
-        description: 'Release tag name'
+        description: "Release tag name"
         type: string
         required: true
   workflow_call:
     inputs:
       release_tag_name:
-        description: 'Release tag name'
+        description: "Release tag name"
         type: string
         required: true
 
@@ -41,8 +41,8 @@ jobs:
           push: true
           file: infra/docker/Dockerfile
           tags: >
-            ghcr.io/${{ github.repository }}:latest,
-            ghcr.io/${{ github.repository }}:${{ github.event.inputs.release_tag_name }}
+            ghcr.io/${{ github.repository }}:latest, ghcr.io/${{
+            github.repository }}:${{ github.event.inputs.release_tag_name }}
 
   build-arm64-and-push:
     runs-on: ubuntu-latest-32-cores
@@ -74,5 +74,5 @@ jobs:
           push: true
           file: infra/docker/Dockerfile
           tags: >
-            ghcr.io/${{ github.repository }}:latest,
-            ghcr.io/${{ github.repository }}:${{ github.event.inputs.release_tag_name }}
+            ghcr.io/${{ github.repository }}:latest, ghcr.io/${{
+            github.repository }}:${{ github.event.inputs.release_tag_name }}

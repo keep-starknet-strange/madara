@@ -1,6 +1,6 @@
 ---
 name: Workflow - Release
- 
+
 on:
   workflow_dispatch:
   release:

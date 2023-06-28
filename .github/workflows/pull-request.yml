@@ -1,6 +1,6 @@
 ---
 name: Workflow - Pull Request
- 
+
 on:
   workflow_dispatch:
   pull_request:

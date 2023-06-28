@@ -1,6 +1,6 @@
 ---
 name: Workflow - Daily Cron
-  
+
 on:
   workflow_dispatch:
   schedule:
