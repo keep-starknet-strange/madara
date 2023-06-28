@@ -22,7 +22,7 @@ jobs:
 
   tests:
     name: Run tests and coverage
-    uses: ./.github/workflows/tests.yml
+    uses: ./.github/workflows/tests-coverage.yml
     needs: [linters, linters_cargo, rust_build]
 
   benchmark:
