@@ -26,7 +26,8 @@ jobs:
           path: |
             ~/.cargo/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.tom') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
       - name: Run test
         run: |-
           cd tests
@@ -42,9 +43,9 @@ jobs:
             ~/.cargo/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
-      - uses: Swatinem/rust-cache@v2
       - name: Coverage
         run: cargo llvm-cov --codecov --output-path codecov.json
       - name: Upload coverage to codecov.io

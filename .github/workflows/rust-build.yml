@@ -11,16 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Check if build is cached
-        id: cache
+      - name: Retrieve cached build
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/
             target/
-          key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           lookup-only: true
-          enableCrossOsArchive: true
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit == 'false'
