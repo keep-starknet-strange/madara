@@ -18,7 +18,7 @@ jobs:
           path: |
             ~/.cargo/
             target/
-          key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.lock') }}
+          key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.toml') }}
 
       - name: Cache hit (continue)
         if: steps.cache.outputs.cache-hit == 'true'
@@ -35,11 +35,3 @@ jobs:
       - name: Build the project
         run: |
           cargo build --release --workspace
-
-      - name: Cache Rust bin and build
-        uses: actions/cache/save@v3
-        with:
-          path: |
-            ~/.cargo/
-            target/
-          key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.lock') }}
