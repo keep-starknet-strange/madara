@@ -129,10 +129,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
         assert_ok!(validate_result);
 
         assert_ok!(Starknet::declare(none_origin, transaction));
-        assert_eq!(
-            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
-            ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap()
-        );
+        assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(), get_contract_class("ERC20.json"));
     });
 }
 
@@ -201,10 +198,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
         assert_ok!(validate_result);
 
         assert_ok!(Starknet::declare(none_origin, transaction));
-        assert_eq!(
-            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
-            ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap()
-        );
+        assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(), get_contract_class("ERC20.json"));
     });
 }
 
@@ -273,10 +267,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
         assert_ok!(validate_result);
 
         assert_ok!(Starknet::declare(none_origin, transaction));
-        assert_eq!(
-            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
-            ContractClassWrapper::try_from(get_contract_class("ERC20.json")).unwrap()
-        );
+        assert_eq!(Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(), get_contract_class("ERC20.json"));
     });
 }
 
