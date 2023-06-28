@@ -15,7 +15,6 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_crypto::FieldElement;
 
-use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
 use crate::{Config, Pallet};
 
@@ -80,8 +79,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
         let wrapped_class_hash: ClassHashWrapper = class_hash.0.into();
         let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
         match opt_contract_class {
-            Some(contract_class) => Ok(TryInto::<ContractClass>::try_into(contract_class)
-                .map_err(|e| StateError::StateReadError(e.to_string()))?),
+            Some(contract_class) => Ok(contract_class),
             None => Err(StateError::UndeclaredClassHash(*class_hash)),
         }
     }
@@ -164,7 +162,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
         let class_hash: ClassHashWrapper = class_hash.0.into();
-        let contract_class: ContractClassWrapper = ContractClassWrapper::from(contract_class);
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 
