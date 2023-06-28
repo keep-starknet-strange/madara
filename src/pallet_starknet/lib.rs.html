@@ -1194,6 +1194,10 @@
 <a href="#1194" id="1194">1194</a>
 <a href="#1195" id="1195">1195</a>
 <a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1301,6 +1305,7 @@
 
 <span class="kw">pub const </span>ETHEREUM_EXECUTION_RPC: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;starknet::ETHEREUM_EXECUTION_RPC&quot;</span>;
 <span class="kw">pub const </span>ETHEREUM_CONSENSUS_RPC: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;starknet::ETHEREUM_CONSENSUS_RPC&quot;</span>;
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>NONCE_DECODE_FAILURE: u8 = <span class="number">1</span>;
 
 <span class="comment">// syntactic sugar for logging.
 </span><span class="attr">#[macro_export]
@@ -1978,8 +1983,11 @@
             <span class="kw">let </span>transaction_nonce = transaction.nonce;
             <span class="kw">let </span>sender_address = transaction.sender_address;
 
+            <span class="kw">let </span>nonce_for_priority: u64 =
+                transaction_nonce.try_into().map_err(|<span class="kw">_</span>| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))<span class="question-mark">?</span>;
+
             <span class="kw">let </span><span class="kw-2">mut </span>valid_transaction_builder = ValidTransaction::with_tag_prefix(<span class="string">&quot;starknet&quot;</span>)
-                .priority(u64::MAX - (TryInto::&lt;u64&gt;::try_into(transaction_nonce)).unwrap())
+                .priority(u64::MAX - nonce_for_priority)
                 .and_provides((sender_address, transaction_nonce))
                 .longevity(T::TransactionLongevity::get())
                 .propagate(<span class="bool-val">true</span>);
@@ -2224,8 +2232,8 @@
             ),
             <span class="comment">// Safe because `transactions` is build from the `pending` bounded vec,
             // which has the same size limit of `MaxTransactions`
-            </span>BoundedVec::try_from(transactions).unwrap(),
-            BoundedVec::try_from(receipts).unwrap(),
+            </span>BoundedVec::try_from(transactions).expect(<span class="string">&quot;max(len(transactions)) &lt;= MaxTransactions&quot;</span>),
+            BoundedVec::try_from(receipts).expect(<span class="string">&quot;max(len(receipts)) &lt;= MaxTransactions&quot;</span>),
         );
         <span class="comment">// Save the block number &lt;&gt; hash mapping.
         </span><span class="kw">let </span>blockhash = block.header().hash(T::SystemHash::hasher());

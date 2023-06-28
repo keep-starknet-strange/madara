@@ -370,7 +370,7 @@
 
     <span class="kw">fn </span>set_contract_class(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: <span class="kw-2">&amp;</span>ClassHash, contract_class: ContractClass) -&gt; StateResult&lt;()&gt; {
         <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
-        <span class="kw">let </span>contract_class: ContractClassWrapper = ContractClassWrapper::try_from(contract_class).unwrap();
+        <span class="kw">let </span>contract_class: ContractClassWrapper = ContractClassWrapper::from(contract_class);
 
         <span class="kw">crate</span>::ContractClasses::&lt;T&gt;::insert(class_hash, contract_class);
 
