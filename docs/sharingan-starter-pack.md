@@ -3,12 +3,12 @@
 ## Network information
 
 - Release / tag:
-  [v0.1.0-testnet-sharingan-beta.6](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta.6)
+  [v0.1.0-testnet-sharingan-beta.7.1](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta.7.1)
 - Docker image:
-  [ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.6](https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
+  [ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.7.1](https://github.com/keep-starknet-strange/madara/pkgs/container/madara)
 - Bootnode:
   `/ip4/52.7.206.208/tcp/30333/p2p/12D3KooWK26CZBpWtwMaVQ6nXHrrXBkdXXx6CrBAU2KgLTqDNL6o`
-- [Dev explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer)
+- [Dev explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.madara.wtf%20#/explorer)
 
 ## Madara
 
@@ -127,7 +127,7 @@ More technical details can be found in the discussion
 As Madara is using substrate, there is an existing web application that allows
 you to monitor the Sharingan state. And to check the node typology, you can
 directly go here to the
-[node info](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer/node)
+[node info](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.madara.wtf%20#/explorer/node)
 tab.
 
 Currently, `sequencers` are chosen by Starkware, and you can join as a
@@ -173,26 +173,21 @@ There is a docker image built for Sharingan, which will be updated at each
 version of Sharingan. However, to ensure that you are using the correct chain
 specs, please proceed to the following:
 
-1. Download the
-   [source code](https://github.com/keep-starknet-strange/madara/releases/tag/v0.1.0-testnet-sharingan-beta.6)
-   of the current version of Sharingan release (currently
-   `v0.1.0-testnet-sharingan-beta.6`).
-
-2. Create a new docker volume (in case you don't have one yet).
+1. Create a dedicated directory to store sharingan data (in case you don't have
+   one yet).
 
    ```bash
-   docker sharingan-volume
+   mkdir sharingan-volume
    ```
 
-3. Running the docker container, where we will use 2 volumes. One to access the
-   chain specs file, and another one for the storage of the chain data.
+2. Running the docker container.
 
    ```bash
    docker run --rm -d \
     -p 9944:9944 -p 30333:30333 \
     --name sharingan-fullnode \
     -v sharingan-volume:/root/.madara \
-    ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.6 \
+    ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.7.1 \
     --testnet sharingan
    ```
 
@@ -206,7 +201,7 @@ your first time using docker. Alternatively, you can also run
 If you prefer having Madara compiled locally, you must:
 
 1. Clone [Madara repository](https://github.com/keep-starknet-strange/madara).
-2. Checkout on the tag `v0.1.0-testnet-sharingan-beta.6`.
+2. Checkout on the tag `v0.1.0-testnet-sharingan-beta.7.1`.
 3. `cargo build --workspace --release` (you can check
    [this guide](https://github.com/keep-starknet-strange/madara/blob/main/docs/rpc-contribution.md)
    with some info about compiling Madara).
@@ -216,6 +211,8 @@ If you prefer having Madara compiled locally, you must:
 ```bash
 ./target/release/madara --testnet sharingan
 ```
+
+This will store the data into `$HOME/.madara`.
 
 Once you have your node running, you can get your Peer ID running the following
 command:
@@ -233,7 +230,7 @@ http://127.0.0.1:9944
 ```
 
 You can then go to the
-[node explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer/node)
+[node explorer](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.madara.wtf%20#/explorer/node)
 and check that your node is appearing and start synchronizing the blocks.
 
 **Welcome to Sharingan, you're in!** :rocket:
@@ -251,17 +248,14 @@ coming soon for starkli).
 
 Currently, Madara is still under active development and it's recommended to
 regularly check the
-[Starknet features compatibility page of Madara](https://github.com/keep-starknet-strange/madara/blob/v0.1.0-testnet-sharingan-beta.6/docs/starknet_features_compatibility.md).
-
-In the current version, **please don't use** unsupported RPC endpoint as we are
-working on handling them.
+[Starknet features compatibility page of Madara](https://github.com/keep-starknet-strange/madara/blob/v0.1.0-testnet-sharingan-beta.7.1/docs/starknet_features_compatibility.md).
 
 Here are some examples of RPC using the sequencer-1 of Starkware:
 
 ### Get the last block hash
 
 ```bash
-starkli block-hash --rpc http://52.7.206.208:9933
+starkli block-hash --rpc http://52.7.206.208:9944
 ```
 
 ```bash
@@ -272,12 +266,12 @@ curl --header "Content-Type: application/json" \
      "method": "starknet_blockHashAndNumber",
      "params": ["latest"],
      "id":1}' \
-     http://52.7.206.208:9933
+     http://52.7.206.208:9944
 ```
 
 ## Sharingan substrate explorer
 
-[Here](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.cartridge.gg/#/explorer/node)
+[Here](https://starknet-madara.netlify.app/?rpc=wss%3A%2F%2Fsharingan.madara.wtf%20#/explorer/node)
 is the web app to visualize Sharingan status.
 
 As mentioned earlier, Madara is using substrate SDK. As a particularity of how
