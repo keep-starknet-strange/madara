@@ -352,14 +352,15 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     );
 
     task_manager.spawn_essential_handle().spawn(
-        "data-availability-worker",
+        "da-worker-prove",
         Some("madara"),
-        DataAvailabilityWorker::new(
-            client.clone(),
-            backend,
-            madara_backend,
-        )
-        .for_each(|()| future::ready(())),
+        DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend.clone()),
+    );
+
+    task_manager.spawn_essential_handle().spawn(
+        "da-worker-update",
+        Some("madara"),
+        DataAvailabilityWorker::update_state(client.clone(), madara_backend.clone()),
     );
 
     if role.is_authority() {

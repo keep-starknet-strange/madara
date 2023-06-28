@@ -12,17 +12,19 @@ repository = "https://github.com/keep-starknet-strange/madara"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-futures = { workspace = true, default-features = true }
-futures-timer = "3.0.2"
-log = { workspace = true, default-features = true }
-mc-db = { workspace = true }
-mc-rpc-core = { workspace = true }
-mc-storage = { workspace = true }
-mp-digest-log = { workspace = true }
-mp-starknet = { workspace = true }
-pallet-starknet = { workspace = true }
-sc-client-api = { workspace = true }
-sp-api = { workspace = true }
-sp-blockchain = { workspace = true }
+async-trait = { workspace = true }
+futures = "0.3.21"
+log = { workspace = true }
+reqwest = { version = "0.11.18", features = ["blocking", "json"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = "1.4.0"
+
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-api = { workspace = true }
+sc-client-api = { workspace = true }
+
+mc-db = { workspace = true }
+ethers = "2.0.7"

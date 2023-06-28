@@ -14,16 +14,16 @@
 mod mapping_db;
 pub use mapping_db::MappingCommitment;
 mod db_opening_utils;
-mod meta_db;
 mod fact_db;
+mod meta_db;
 
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
+use fact_db::FactDb;
 use mapping_db::MappingDb;
 use meta_db::MetaDb;
-use fact_db::FactDb;
 use sc_client_db::DatabaseSource;
 use sp_database::Database;
 use sp_runtime::traits::Block as BlockT;
@@ -49,6 +49,7 @@ pub(crate) mod columns {
 
 pub mod static_keys {
     pub const CURRENT_SYNCING_TIPS: &[u8] = b"CURRENT_SYNCING_TIPS";
+    pub const LAST_PROVED_BLOCK: &[u8] = b"LAST_PROVED_BLOCK";
 }
 
 /// The Madara client database backend
