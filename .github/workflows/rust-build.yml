@@ -19,6 +19,7 @@ jobs:
             ~/.cargo/
             target/
           key: ${{ runner.os }}-rust-${{ hashFiles('Cargo.lock') }}
+          enableCrossOsArchive: true
 
       - name: Cache hit (continue)
         if: steps.cache.outputs.cache-hit == 'true'
