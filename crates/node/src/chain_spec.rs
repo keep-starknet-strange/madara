@@ -1,6 +1,6 @@
 use blockifier::execution::contract_class::ContractClass;
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -154,30 +154,25 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json"));
     let no_validate_account_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
     let no_validate_account_address = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json")).try_into().unwrap();
+    let argent_account_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json"));
     let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
     let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
-    let argent_proxy_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json")).try_into().unwrap();
+    let argent_proxy_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json"));
     let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     // OZ ACCOUNT CONTRACT
     let oz_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"))
-            .try_into()
-            .unwrap();
+        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"));
     let oz_account_class_hash = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_CLASS_HASH).unwrap();
     let oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
 
     // TEST CONTRACT
-    let test_contract_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json")).try_into().unwrap();
+    let test_contract_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json"));
     let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CONTRACT_CLASS_HASH).unwrap();
     let test_contract_address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
 
@@ -186,20 +181,17 @@ fn testnet_genesis(
     let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let erc20_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json")).try_into().unwrap();
+    let erc20_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json"));
     let token_class_hash = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH).unwrap();
     let token_contract_address = Felt252Wrapper::from_hex_be(ERC20_ADDRESS).unwrap();
 
     // ERC721 CONTRACT
-    let erc721_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json")).try_into().unwrap();
+    let erc721_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json"));
     let nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
     let nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
     // UDC CONTRACT
-    let udc_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/UniversalDeployer.json")).try_into().unwrap();
+    let udc_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/UniversalDeployer.json"));
     let udc_class_hash = Felt252Wrapper::from_hex_be(UDC_CLASS_HASH).unwrap();
     let udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
 

@@ -7,7 +7,7 @@ use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::state::StateChanges;
 use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -15,7 +15,6 @@ use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_crypto::FieldElement;
 
-use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
 use crate::{Config, Pallet};
 
@@ -78,12 +77,8 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 
     fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
         let wrapped_class_hash: ClassHashWrapper = class_hash.0.into();
-        let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
-        match opt_contract_class {
-            Some(contract_class) => Ok(TryInto::<ContractClass>::try_into(contract_class)
-                .map_err(|e| StateError::StateReadError(e.to_string()))?),
-            None => Err(StateError::UndeclaredClassHash(*class_hash)),
-        }
+        Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash)
+            .ok_or(StateError::UndeclaredClassHash(*class_hash))
     }
 
     fn get_compiled_class_hash(&mut self, _class_hash: ClassHash) -> StateResult<CompiledClassHash> {
@@ -164,7 +159,6 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
         let class_hash: ClassHashWrapper = class_hash.0.into();
-        let contract_class: ContractClassWrapper = ContractClassWrapper::from(contract_class);
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 

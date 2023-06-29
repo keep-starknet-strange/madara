@@ -5,10 +5,9 @@
 // Specifically, the macro generates a trait (`StarknetRuntimeApi`) with unused type parameters.
 #![allow(clippy::extra_unused_type_parameters)]
 
+use blockifier::execution::contract_class::ContractClass;
 use mp_starknet::crypto::hash::Hasher;
-use mp_starknet::execution::types::{
-    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
-};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 use mp_starknet::transaction::types::{EventWrapper, Transaction, TxType};
 use sp_api::BlockT;
 pub extern crate alloc;
@@ -31,7 +30,7 @@ sp_api::decl_runtime_apis! {
         /// Returns the contract class hash at the given address.
         fn contract_class_hash_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper>;
         /// Returns the contract class for the given class hash.
-        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper>;
+        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass>;
         /// Returns the chain id.
         fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate

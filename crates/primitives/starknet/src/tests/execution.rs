@@ -6,17 +6,15 @@ use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
 use cairo_vm::felt::Felt252;
 use frame_support::{assert_ok, bounded_vec};
-use hex::FromHex;
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
-use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
+use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
-use crate::execution::contract_class_wrapper::{ContractClassWrapper, EntrypointMapWrapper, ProgramWrapper};
-use crate::execution::entrypoint_wrapper::{EntryPointTypeWrapper, EntryPointWrapper};
+use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::tests::utils::{create_test_state, TEST_CLASS_HASH, TEST_CONTRACT_ADDRESS};
 
@@ -119,72 +117,4 @@ fn test_try_into_entrypoint_works() {
     };
 
     pretty_assertions::assert_eq!(entrypoint, expected_entrypoint);
-}
-
-#[test]
-fn test_contract_class_wrapper_try_from_contract_class() {
-    let json_content: &str = r#"
-	{
-	"entry_points_by_type": {
-		"CONSTRUCTOR": [
-			{
-				"offset": "0x147",
-				"selector": "0x28ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194"
-			}
-		],
-		"EXTERNAL": [
-			{
-				"offset": "0x16e",
-				"selector": "0x966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588"
-			}
-		],
-		"L1_HANDLER": []
-	},
-	"program": {
-		"main_scope": "__main__",
-    "reference_manager": {
-      "references": []
-    },
-		"builtins": [],
-		"debug_info": null,
-		"hints": {},
-		"compiler_version": "0.10.3",
-		"prime": "0x800000000000011000000000000000000000000000000000000000000000001",
-    "identifiers": {},
-    "data": [],
-    "attributes": []
-	}
-}"#;
-    let contract_class_wrapper: ContractClassWrapper = serde_json::from_str(json_content).unwrap();
-    let mut expected_entrypoints = <HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>>::new();
-    expected_entrypoints.insert(
-        EntryPointTypeWrapper::External,
-        vec![EntryPointWrapper::from(EntryPoint {
-            offset: EntryPointOffset(0x16e),
-            selector: EntryPointSelector(StarkFelt(
-                <[u8; 32]>::from_hex("00966af5d72d3975f70858b044c77785d3710638bbcebbd33cc7001a91025588").unwrap(),
-            )),
-        })],
-    );
-    expected_entrypoints.insert(
-        EntryPointTypeWrapper::Constructor,
-        vec![EntryPointWrapper::from(EntryPoint {
-            offset: EntryPointOffset(0x147),
-            selector: EntryPointSelector(StarkFelt(
-                <[u8; 32]>::from_hex("028ffe4ff0f226a9107253e17a904099aa4f63a02a5621de0576e5aa71bc5194").unwrap(),
-            )),
-        })],
-    );
-    expected_entrypoints.insert(EntryPointTypeWrapper::L1Handler, vec![]);
-    let program_wrapper = ProgramWrapper {
-        compiler_version: "0.10.3".to_string(),
-        main_scope: "__main__".to_string(),
-        ..ProgramWrapper::default()
-    };
-    let expected_contract_class_wrapper = ContractClassWrapper {
-        program: program_wrapper,
-        entry_points_by_type: EntrypointMapWrapper(expected_entrypoints),
-    };
-
-    pretty_assertions::assert_eq!(contract_class_wrapper, expected_contract_class_wrapper);
 }

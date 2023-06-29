@@ -53,6 +53,8 @@ frame-system-benchmarking = { workspace = true, optional = true }
 pallet-starknet = { workspace = true }
 # Madara Primitives
 mp-starknet = { workspace = true, default-features = false }
+# Starknet dependencies
+blockifier = { workspace = true, default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
