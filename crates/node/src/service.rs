@@ -113,7 +113,7 @@ where
 
     let genesis_block_builder = MadaraGenesisBlockBuilder::<Block, _, _>::new(
         config.chain_spec.as_storage_builder(),
-        false,
+        true,
         backend.clone(),
         executor.clone(),
     )

@@ -68,7 +68,7 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
             state_root,
             Default::default(),
             Digest {
-                logs: digest, // TODO: add digest of Starknet block
+                logs: digest,
             },
         ),
         Default::default(),
