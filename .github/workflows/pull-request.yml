@@ -43,12 +43,17 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+
+      - name: Confirm secrets exist
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIV_KEY }} 
       
       - name: Generate a token
         id: generate_token
         uses: tibdex/github-app-token@v1.8
         with:
-          app_id: ${{ secrets.CODECOV_TOKEN }}
+          app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.PRIV_KEY }}
 
       - name: Cleanup
