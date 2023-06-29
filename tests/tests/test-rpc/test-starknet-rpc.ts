@@ -1187,15 +1187,16 @@ describeDevMadara("Starknet RPC", (context) => {
         );
       }
       await context.createBlock(transactions);
+      const block = await providerRPC.getBlockHashAndNumber();
       let filter2 = {
-        from_block: "latest",
-        to_block: "latest",
+        from_block: { block_number: block.block_number },
+        to_block: { block_number: block.block_number },
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1,
         continuation_token: "0,100,1",
       };
 
-      events = providerRPC.getEvents(filter);
+      events = providerRPC.getEvents(filter2);
       await expect(events)
         .to.eventually.be.rejectedWith(
           "33: The supplied continuation token is invalid or unknown"
@@ -1203,14 +1204,14 @@ describeDevMadara("Starknet RPC", (context) => {
         .and.be.an.instanceOf(LibraryError);
 
       filter2 = {
-        from_block: "latest",
-        to_block: "latest",
+        from_block: { block_number: block.block_number },
+        to_block: { block_number: block.block_number },
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1,
         continuation_token: "0,0,100",
       };
 
-      events = providerRPC.getEvents(filter);
+      events = providerRPC.getEvents(filter2);
       await expect(events)
         .to.eventually.be.rejectedWith(
           "33: The supplied continuation token is invalid or unknown"
