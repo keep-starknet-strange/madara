@@ -16,14 +16,27 @@ use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddr
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
+#[cfg(feature = "std")]
+use starknet_core::types::contract::ComputeClassHashError;
+#[cfg(feature = "std")]
+use starknet_core::types::{
+    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
+    DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
+    DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
+    DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
+    InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
+    InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
+    L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
+    MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError, Transaction as RPCTransaction,
+    TransactionReceipt as RPCTransactionReceipt, TransactionStatus as RPCTransactionStatus,
+};
 use thiserror_no_std::Error;
 
-use super::utils::flattened_sierra_to_casm_contract_class;
 use crate::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
-use crate::execution::contract_class_wrapper::{ContractClassV1Wrapper, ContractClassWrapper};
+use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper, Felt252WrapperError};
 
@@ -105,42 +118,6 @@ impl From<EntryPointExecutionError> for TransactionValidationErrorWrapper {
     fn from(error: EntryPointExecutionError) -> Self {
         Self::TransactionValidationError(TransactionExecutionError::from(error))
     }
-}
-
-/// Wrapper type for broadcasted transaction conversion errors.
-#[cfg(feature = "std")]
-#[derive(Debug, Error)]
-pub enum BroadcastedTransactionConversionErrorWrapper {
-    /// Failed to decompress the contract class program
-    #[error("Failed to decompress the contract class program")]
-    ContractClassProgramDecompressionError,
-    /// Failed to deserialize the contract class program
-    #[error("Failed to deserialize the contract class program")]
-    ContractClassProgramDeserializationError,
-    /// Failed to convert signature
-    #[error("Failed to convert signature")]
-    SignatureConversionError,
-    /// Failed to convert calldata
-    #[error("Failed to convert calldata")]
-    CalldataConversionError,
-    /// Failed to convert program to program wrapper"
-    #[error("Failed to convert program to program wrapper")]
-    ProgramConversionError,
-    /// Failed to bound signatures Vec<H256> by MaxArraySize
-    #[error("failed to bound signatures Vec<H256> by MaxArraySize")]
-    SignatureBoundError,
-    /// Failed to bound calldata Vec<U256> by MaxCalldataSize
-    #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
-    CalldataBoundError,
-    /// Starknet Error
-    #[error(transparent)]
-    StarknetError(#[from] StarknetError),
-    /// Failed to convert transaction
-    #[error(transparent)]
-    TransactionConversionError(#[from] TransactionConversionError),
-    /// Failed to compute the contract class hash.
-    #[error(transparent)]
-    ClassHashComputationError(#[from] ComputeClassHashError),
 }
 
 /// Different tx types.
@@ -238,80 +215,6 @@ impl DeclareTransaction {
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
             max_fee: self.max_fee,
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-fn to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -> RawLegacyEntryPoints {
-    RawLegacyEntryPoints {
-        constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
-        external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
-        l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
-    }
-}
-
-#[cfg(feature = "std")]
-fn to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -> RawLegacyEntryPoint {
-    RawLegacyEntryPoint { offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset), selector: entry_point.selector }
-}
-#[cfg(feature = "std")]
-impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
-    type Error = BroadcastedTransactionConversionErrorWrapper;
-    fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
-        match tx {
-            BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
-                let signature = declare_tx_v1
-                    .signature
-                    .iter()
-                    .map(|f| (*f).into())
-                    .collect::<Vec<Felt252Wrapper>>()
-                    .try_into()
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
-
-                // Create a GzipDecoder to decompress the bytes
-                let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
-
-                // Read the decompressed bytes into a Vec<u8>
-                let mut decompressed_bytes = Vec::new();
-                std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).map_err(|_| {
-                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
-                })?;
-
-                // Deserialize it then
-                let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
-                    BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
-                })?;
-                let legacy_contract_class = LegacyContractClass {
-                    program: serde_json::from_slice(decompressed_bytes.as_slice())
-                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                    abi: match declare_tx_v1.contract_class.abi.as_ref() {
-                        Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
-                        None => vec![],
-                    },
-                    entry_points_by_type: to_raw_legacy_entry_points(
-                        declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                    ),
-                };
-
-                Ok(DeclareTransaction {
-                    version: 1_u8,
-                    sender_address: declare_tx_v1.sender_address.into(),
-                    nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                    max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                    signature,
-                    contract_class: ContractClassWrapper {
-                        program: program
-                            .try_into()
-                            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                        entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
-                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        )),
-                    },
-                    compiled_class_hash: legacy_contract_class.class_hash()?.into(),
-                })
-            }
-            BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
         }
     }
 }
@@ -705,6 +608,14 @@ mod reexport_private_types {
         /// Failed to bound calldata Vec<U256> by MaxCalldataSize
         #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
         CalldataBoundError,
+        /// Failed to compile Sierra to Casm
+        #[error("failed to compile Sierra to Casm")]
+        SierraCompilationError,
+        /// Failed to convert Casm contract class to ContractClassV1
+        #[error("failed to convert Casm contract class to ContractClassV1")]
+        CasmContractClassConversionError,
+        #[error("compiled class hash does not match sierra code")]
+        CompiledClassHashError,
         /// Starknet Error
         #[error(transparent)]
         StarknetError(#[from] StarknetError),

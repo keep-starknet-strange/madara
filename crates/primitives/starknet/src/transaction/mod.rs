@@ -269,16 +269,7 @@ impl TryInto<DeclareTransaction> for &Transaction {
         let class_hash = entrypoint.class_hash.unwrap_or_default();
 
         if self.version <= 1_u8 {
-            let tx = DeclareTransactionV0V1 {
-                transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-                max_fee: Fee(2),
-                signature: TransactionSignature(
-                    self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
-                ),
-                nonce: Nonce(StarkFelt::new(self.nonce.into())?),
-                sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-                class_hash: entrypoint.class_hash.unwrap_or_default(),
-            };
+            let tx = DeclareTransactionV0V1 { transaction_hash, max_fee, signature, nonce, sender_address, class_hash };
             if self.version == 0_u8 {
                 return Ok(DeclareTransaction::V0(tx));
             } else {
@@ -286,14 +277,12 @@ impl TryInto<DeclareTransaction> for &Transaction {
             }
         } else if self.version == 2_u8 {
             let tx = DeclareTransactionV2 {
-                transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-                max_fee: Fee(2),
-                signature: TransactionSignature(
-                    self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
-                ),
-                nonce: Nonce(StarkFelt::new(self.nonce.into())?),
-                sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-                class_hash: entrypoint.class_hash.unwrap_or_default(),
+                transaction_hash,
+                max_fee,
+                signature,
+                nonce,
+                sender_address,
+                class_hash,
                 compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().0),
             };
             return Ok(DeclareTransaction::V2(tx));
