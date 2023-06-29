@@ -41,7 +41,7 @@ pub struct Header {
     /// A commitment to the events produced in this block
     pub event_commitment: Felt252Wrapper,
     /// The version of the Starknet protocol used when creating this block
-    pub protocol_version: Option<u8>,
+    pub protocol_version: u8,
     /// Extraneous data that might be useful for running transactions
     pub extra_data: Option<U256>,
 }
@@ -60,7 +60,7 @@ impl Header {
         transaction_commitment: Felt252Wrapper,
         event_count: u128,
         event_commitment: Felt252Wrapper,
-        protocol_version: Option<u8>,
+        protocol_version: u8,
         extra_data: Option<U256>,
     ) -> Self {
         Self {
@@ -103,8 +103,6 @@ impl Header {
     /// Compute the hash of the header.
     #[must_use]
     pub fn hash<H: HasherT>(&self, hasher: H) -> Felt252Wrapper {
-        let protocol_version = self.protocol_version.unwrap_or_default().into();
-
         let data: &[Felt252Wrapper] = &[
             self.block_number.into(), // TODO: remove unwrap
             self.global_state_root,
@@ -114,7 +112,7 @@ impl Header {
             self.transaction_commitment,
             self.event_count.into(),
             self.event_commitment,
-            protocol_version,
+            self.protocol_version.into(),
             Felt252Wrapper::ZERO,
             self.parent_block_hash,
         ];

@@ -157,6 +157,8 @@ pub mod pallet {
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ValidateMaxNSteps: Get<u32>;
+        #[pallet::constant]
+        type ProtocolVersion: Get<u8>;
     }
 
     /// The Starknet pallet hooks.
@@ -997,7 +999,7 @@ impl<T: Config> Pallet<T> {
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
-        let protocol_version = None;
+        let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
         let block = StarknetBlock::new(
