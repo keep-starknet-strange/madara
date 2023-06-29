@@ -67,9 +67,7 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
             extrinsics_root,
             state_root,
             Default::default(),
-            Digest {
-                logs: digest,
-            },
+            Digest { logs: digest },
         ),
         Default::default(),
     )
