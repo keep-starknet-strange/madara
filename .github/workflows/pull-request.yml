@@ -59,7 +59,6 @@ jobs:
           echo "Fetching list of cache key"
           cacheKeysForPR=$(gh actions-cache list -B $BRANCH --key ${{ runner.os }}-cargo- | cut -f 1 )
           set +e
-
           echo "Deleting caches..."
           for cacheKey in $cacheKeysForPR
           do
