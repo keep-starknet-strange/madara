@@ -360,7 +360,7 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     task_manager.spawn_essential_handle().spawn(
         "da-worker-update",
         Some("madara"),
-        DataAvailabilityWorker::update_state(client.clone(), madara_backend.clone()),
+        DataAvailabilityWorker::update_state(client.clone(), madara_backend),
     );
 
     if role.is_authority() {

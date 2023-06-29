@@ -8,15 +8,24 @@ use ethers::prelude::abigen;
 use ethers::providers::{Http, Provider};
 use ethers::types::Address;
 use futures::StreamExt;
+use lazy_static::lazy_static;
+use mp_starknet::storage::{
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
+};
 use sc_client_api::client::BlockchainEvents;
 use sp_api::ProvideRuntimeApi;
-use sp_core::H256;
+use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 use uuid::Uuid;
 
-pub const TEST_CAIRO_PIE_BASE64: &str = "UEsDBBQAAAAIAAAAIQBGGR6jGAEAAEsCAAANAAAAbWV0YWRhdGEuanNvbnWR3WqDQBCFX0W8zsX87M7O9lVCCDbZBqEa0RVCgu/e0aaYgL1bznwz5xx9lF1/vfRVU34Uj/Jc5coeeyfIHr0gEaojz87tCgTYFR5V1YMTYIwRgjoTN3F6ww1xGjyy/IPzG64Roo0c0yxGjcpeOARx3q6YyGbAziNoEGEMjM7WDrui/Bzr71y3w9yjvI65G3M5601Vt6aZi1Wum2RvFjQ3CqoilgnJ4sXAZApD9BAAwQsxQiD0zOijSIyGQCSbWA0NBAROcbK7fcrHr+44pEuT2rx80bo9p9tsZeOhvs+uMK0p/9hhgZ9pX/do3eNpXky3dBpzfW03bXDFw7Q0XX7uJgsri/R7OvfVa6L94VmqO21ecK+lph9QSwMEFAAAAAgAAAAhAEMqWVOVAAAAcAMAAAoAAABtZW1vcnkuYmlujZIxDsIwDEVtp6QULsHExCE69iDcI957sV6qlAq+UCphOz9Lhqf/HMVEnyjpVljzSEYY3NMCEPn1rYVUJotLjd4O3BJ4T5WXHW9u9PbgHux7z5VXHO9wmO9uchdwydfSFdyrbPuZby68W78X8zHKNac2J4c+MbkELtoXzBVyHfqiPWD0Ne2Lxv8r6Iu4jL5UTfEn+gZQSwMEFAAAAAgAAAAhAKwgWIQtAAAAMwAAABQAAABhZGRpdGlvbmFsX2RhdGEuanNvbqtWyi8tKSgtiU8qzcwpycxTslKoVipITE8tBrFqdRSUEktKijKTSkugIrW1AFBLAwQUAAAACAAAACEAIxC1mksAAABWAAAAGAAAAGV4ZWN1dGlvbl9yZXNvdXJjZXMuanNvbqtWSirNzCnJzIvPzCsuScxLTo1Pzi/NK0ktUrJSqFbKLy0pKC2Jh6oBChnX6igo5cUXl6QWFAO5FmBebmpuflFlfEZ+TipI0KAWAFBLAwQUAAAACAAAACEA2YDFkhYAAAAUAAAADAAAAHZlcnNpb24uanNvbqtWSk7MLMqPL8hMVbJSUDLUM1SqBQBQSwECFAMUAAAACAAAACEARhkeoxgBAABLAgAADQAAAAAAAAAAAAAAgAEAAAAAbWV0YWRhdGEuanNvblBLAQIUAxQAAAAIAAAAIQBDKllTlQAAAHADAAAKAAAAAAAAAAAAAACAAUMBAABtZW1vcnkuYmluUEsBAhQDFAAAAAgAAAAhAKwgWIQtAAAAMwAAABQAAAAAAAAAAAAAAIABAAIAAGFkZGl0aW9uYWxfZGF0YS5qc29uUEsBAhQDFAAAAAgAAAAhACMQtZpLAAAAVgAAABgAAAAAAAAAAAAAAIABXwIAAGV4ZWN1dGlvbl9yZXNvdXJjZXMuanNvblBLAQIUAxQAAAAIAAAAIQDZgMWSFgAAABQAAAAMAAAAAAAAAAAAAACAAeACAAB2ZXJzaW9uLmpzb25QSwUGAAAAAAUABQA1AQAAIAMAAAAA";
-pub const TEST_CAIRO_FACT: &str = "0x99f8c8b3efce1cb3b53ce44fd5e8339a1299be480cc6e4599d107f69666eb7bb";
-pub const TEST_JOB_ID: &str = "61a99af0-dcbb-47c9-8350-a08e488af073";
+lazy_static! {
+    static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
+    static ref SN_CONTRACT_CLASS_HASH_PREFIX: Vec<u8> =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS_HASH)].concat();
+    static ref SN_CONTRACT_CLASS_PREFIX: Vec<u8> =
+        [twox_128(PALLET_STARKNET), twox_128(STARKNET_CONTRACT_CLASS)].concat();
+    static ref SN_STORAGE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_STORAGE)].concat();
+}
 
 pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 
@@ -27,23 +36,46 @@ where
     C: BlockchainEvents<B> + 'static,
 {
     pub async fn prove_current_block(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
-        let mut notification_st = client.import_notification_stream();
+        let mut storage_event_st = client.storage_changes_notification_stream(None, None).unwrap();
 
-        while let Some(notification) = notification_st.next().await {
-            // Run the StarkNet OS for Block
+        while let Some(storage_event) = storage_event_st.next().await {
+            // TODO: old_declared_contracts, declared_classes, replaced_classes
+            let mut _deployed_contracts: Vec<String> = Vec::new();
+            let mut nonces: Vec<String> = Vec::new();
+            let mut storage_diffs: Vec<String> = Vec::new();
 
-            // Store the DA facts
-            let _res = madara_backend
-                .fact()
-                .store_block_facts(&notification.hash, vec![H256::from_str(TEST_CAIRO_FACT).unwrap()]);
+            for event in storage_event.changes.iter() {
+                let mut prefix = event.1.0.as_slice();
+                let mut key: &[u8] = &[];
+                if prefix.len() > 32 {
+                    let sto_split = prefix.split_at(32);
+                    prefix = sto_split.0;
+                    key = sto_split.1;
+                }
+
+                if prefix == *SN_NONCE_PREFIX {
+                    nonces.push(hex::encode(key));
+                    if let Some(data) = event.2 {
+                        nonces.push(hex::encode(data.0.as_slice()));
+                    }
+                }
+                if prefix == *SN_STORAGE_PREFIX {
+                    storage_diffs.push(hex::encode(key));
+                    if let Some(data) = event.2 {
+                        storage_diffs.push(hex::encode(data.0.as_slice()));
+                    }
+                }
+            }
+            storage_diffs.append(&mut nonces);
+            let _res = madara_backend.da().store_state_diff(&storage_event.block, storage_diffs);
 
             // Submit the StarkNet OS PIE
-            if let Ok(job_resp) = sharp_utils::submit_pie(TEST_CAIRO_PIE_BASE64) {
-                log::info!("Submitted job id: {}", job_resp.cairo_job_key);
-
+            if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {
+                log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                 // Store the cairo job key
-                let _res =
-                    madara_backend.fact().update_cairo_job(&notification.hash, Uuid::from_str(TEST_JOB_ID).unwrap());
+                let _res = madara_backend
+                    .da()
+                    .update_cairo_job(&storage_event.block, Uuid::from_str(sharp_utils::TEST_JOB_ID).unwrap());
             }
         }
     }
@@ -60,43 +92,47 @@ where
 
         while let Some(notification) = notification_st.next().await {
             // Query last proven block
-            // let res = madara_backend.fact().last_proved_block().unwrap();
+            // let res = madara_backend.da().last_proved_block().unwrap();
             starknet_last_proven_block().await;
             // log::info!("Last proved block: {}", res);
 
             // Check the associated job status
-            if let Ok(job_resp) = sharp_utils::get_status(TEST_JOB_ID) {
-                log::info!("Job status: {}", job_resp.status);
+            if let Ok(job_resp) = sharp_utils::get_status(sharp_utils::TEST_JOB_ID) {
                 // TODO: use fact db enum type
-                if job_resp.status == "ONCHAIN" {
-                    // Fetch DA Facts for block
-                    let _res = madara_backend.fact().block_facts(&notification.hash).unwrap();
+                if let Some(status) = job_resp.status {
+                    if status == "ONCHAIN" {
+                        // Fetch DA Facts for block
+                        let _res = madara_backend.da().state_diff(&notification.hash).unwrap();
+                    }
                 }
             }
         }
     }
 }
 
-// async fn publish_data(sender_id: &[u8], data: &[u8]) -> Result<(), &str> {
-// abigen!(
-//     STARKNET,
-//     r#"[
-//         function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256
-// onchainDataSize) external     ]"#,
-// );
+// async fn publish_data(sender_id: &[u8], state_diff: Vec<String>) {
+//     abigen!(
+//         STARKNET,
+//         r#"[
+//             function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
+//         ]"#,
+//     );
 
-// const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
-// pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
-// // pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
+    // const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
+    // pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
+    // pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
 
-// let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
-// let client = Arc::new(provider);
+    // let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
+    // let client = Arc::new(provider);
+    
+    // let address: Address = STARKNET_MAINNET_CC_ADDRESS.parse().unwrap();
+    // let signer = Arc::new(SignerMiddleware::new(provider, from_wallet.with_chain_id(anvil.chain_id())));
+    // let contract = STARKNET::new(address, client, signer);
 
-// let address: Address = STARKNET_MAINNET_CC_ADDRESS.parse().unwrap();
-// let contract = STARKNET::new(address, client);
-// if let Ok(state_block_number) = contract.state_block_number().call().await {
-//     log::info!("State Block Number {state_block_number:?}");
-// }
+    // let tx = contract.update_state(state_diff, U256::default(), U256::default());
+    // let pending_tx = tx.send().await.unwrap();
+    // let _minted_tx = pending_tx.await.unwrap();
+    // log::info!("State Update: {pending_tx:?}");
 // }
 
 pub async fn starknet_last_proven_block() {

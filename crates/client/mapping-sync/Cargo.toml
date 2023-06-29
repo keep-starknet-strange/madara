@@ -18,7 +18,6 @@ futures-timer = "3.0.2"
 log = { workspace = true, default-features = true }
 mc-db = { workspace = true }
 mc-rpc-core = { workspace = true }
-mc-storage = { workspace = true }
 mp-digest-log = { workspace = true }
 mp-starknet = { workspace = true }
 pallet-starknet = { workspace = true }
