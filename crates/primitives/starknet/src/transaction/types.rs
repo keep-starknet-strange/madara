@@ -3,6 +3,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
+use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
@@ -22,10 +23,7 @@ use crate::crypto::commitment::{
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-use crate::execution::types::{
-    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntrypointMapWrapper, Felt252Wrapper,
-    Felt252WrapperError,
-};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper, Felt252WrapperError};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -155,7 +153,6 @@ impl From<TxType> for TransactionType {
 #[derive(
     Clone,
     Debug,
-    Default,
     PartialEq,
     Eq,
     scale_codec::Encode,
@@ -172,7 +169,7 @@ pub struct DeclareTransaction {
     /// Class hash to declare.
     pub compiled_class_hash: Felt252Wrapper,
     /// Contract to declare.
-    pub contract_class: ContractClassWrapper,
+    pub contract_class: ContractClass,
     /// Account contract nonce.
     pub nonce: Felt252Wrapper,
     /// Transaction signature.
@@ -408,7 +405,7 @@ pub struct Transaction {
     /// Call entrypoint
     pub call_entrypoint: CallEntryPointWrapper,
     /// Contract Class
-    pub contract_class: Option<ContractClassWrapper>,
+    pub contract_class: Option<ContractClass>,
     /// Contract Address Salt
     pub contract_address_salt: Option<U256>,
     /// Max fee.
@@ -546,7 +543,12 @@ pub enum StateDiffError {
 
 #[cfg(feature = "std")]
 mod reexport_private_types {
+    use std::collections::HashMap;
+
+    use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
     use flate2::read::GzDecoder;
+    use starknet_api::api_core::EntryPointSelector;
+    use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
     use starknet_core::types::contract::legacy::{
         LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
     };
@@ -567,7 +569,6 @@ mod reexport_private_types {
     };
 
     use super::*;
-    use crate::transaction::utils::to_hash_map_entrypoints;
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
     pub enum BroadcastedTransactionConversionErrorWrapper {
@@ -655,21 +656,62 @@ mod reexport_private_types {
                             declare_tx_v1.contract_class.entry_points_by_type.clone(),
                         ),
                     };
-
+                    let mut entry_points_by_type = <HashMap<EntryPointType, Vec<EntryPoint>>>::new();
+                    entry_points_by_type.insert(
+                        EntryPointType::Constructor,
+                        declare_tx_v1
+                            .contract_class
+                            .entry_points_by_type
+                            .constructor
+                            .iter()
+                            .map(|entry_point| -> EntryPoint {
+                                EntryPoint {
+                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
+                                    offset: EntryPointOffset(entry_point.offset as usize),
+                                }
+                            })
+                            .collect::<Vec<EntryPoint>>(),
+                    );
+                    entry_points_by_type.insert(
+                        EntryPointType::External,
+                        declare_tx_v1
+                            .contract_class
+                            .entry_points_by_type
+                            .external
+                            .iter()
+                            .map(|entry_point| -> EntryPoint {
+                                EntryPoint {
+                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
+                                    offset: EntryPointOffset(entry_point.offset as usize),
+                                }
+                            })
+                            .collect::<Vec<EntryPoint>>(),
+                    );
+                    entry_points_by_type.insert(
+                        EntryPointType::L1Handler,
+                        declare_tx_v1
+                            .contract_class
+                            .entry_points_by_type
+                            .l1_handler
+                            .iter()
+                            .map(|entry_point| -> EntryPoint {
+                                EntryPoint {
+                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
+                                    offset: EntryPointOffset(entry_point.offset as usize),
+                                }
+                            })
+                            .collect::<Vec<EntryPoint>>(),
+                    );
                     Ok(DeclareTransaction {
                         version: 1_u8,
                         sender_address: declare_tx_v1.sender_address.into(),
                         nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
                         max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
                         signature,
-                        contract_class: ContractClassWrapper {
-                            program: program
-                                .try_into()
-                                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                            entry_points_by_type: EntrypointMapWrapper::new(to_hash_map_entrypoints(
-                                declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                            )),
-                        },
+                        contract_class: ContractClass::V0(ContractClassV0(Arc::new(ContractClassV0Inner {
+                            program,
+                            entry_points_by_type,
+                        }))),
                         compiled_class_hash: legacy_contract_class.class_hash()?.into(),
                     })
                 }

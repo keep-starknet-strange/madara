@@ -531,10 +531,10 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const latestBlock = await providerRPC.getBlockHashAndNumber();
 
+      // TODO: Add real values
+
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
-      expect(stateUpdate.new_root).to.be.equal("0x0");
-      expect(stateUpdate.old_root).to.be.equal("0x0");
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
         deprecated_declared_classes: [],
@@ -563,10 +563,10 @@ describeDevMadara("Starknet RPC", (context) => {
         anteriorBlock.block_hash
       );
 
+      // TODO: Add real values
+
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
-      expect(stateUpdate.new_root).to.be.equal("0x0");
-      expect(stateUpdate.old_root).to.be.equal("0x0");
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
         deprecated_declared_classes: [],
@@ -1892,6 +1892,13 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       expect(nonce).to.not.be.undefined;
+    });
+  });
+
+  describe("state root", async () => {
+    it("should return default when disabled", async function () {
+      const latestBlock = await providerRPC.getBlock("latest");
+      expect(latestBlock.new_root).to.eq("0x0");
     });
   });
 });

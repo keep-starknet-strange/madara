@@ -10,8 +10,7 @@ use sp_core::U256;
 use thiserror_no_std::Error;
 
 use crate::execution::types::{
-    CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
-    MaxCalldataSize,
+    CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError, MaxCalldataSize,
 };
 use crate::transaction::types::{EventWrapper, MaxArraySize, Transaction};
 
@@ -338,14 +337,10 @@ pub fn transaction_from_json(
     // Set the contract_class field based on contract_content
     if !contract_content.is_empty() {
         // FIXME 707
-        let raw_contract_class: ContractClass =
-            ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
-                DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
-            })?);
         transaction.contract_class =
-            Some(ContractClassWrapper::try_from(raw_contract_class).map_err(|e| {
+            Some(ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
                 DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
-            })?);
+            })?));
     } else {
         transaction.contract_class = None;
     }

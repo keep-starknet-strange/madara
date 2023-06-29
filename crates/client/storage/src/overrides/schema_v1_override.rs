@@ -1,9 +1,10 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use blockifier::execution::contract_class::ContractClass;
 use frame_system::EventRecord;
 use madara_runtime::{Hash, RuntimeEvent};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
     STARKNET_NONCE, STARKNET_STORAGE, SYSTEM_EVENTS,
@@ -89,7 +90,7 @@ where
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
-    ) -> Option<ContractClassWrapper> {
+    ) -> Option<ContractClass> {
         let class_hash = self.contract_class_hash_by_address(block_hash, address)?;
         self.contract_class_by_class_hash(block_hash, class_hash)
     }
@@ -110,9 +111,9 @@ where
         &self,
         block_hash: <B as BlockT>::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -> Option<ContractClassWrapper> {
+    ) -> Option<ContractClass> {
         let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
-        self.query_storage::<ContractClassWrapper>(
+        self.query_storage::<ContractClass>(
             block_hash,
             &StorageKey(storage_key_build(
                 storage_contract_class_prefix,

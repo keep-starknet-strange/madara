@@ -41,7 +41,7 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
 
@@ -290,7 +290,7 @@ impl Transaction {
         sender_address: ContractAddressWrapper,
         nonce: Felt252Wrapper,
         call_entrypoint: CallEntryPointWrapper,
-        contract_class: Option<ContractClassWrapper>,
+        contract_class: Option<ContractClass>,
         contract_address_salt: Option<U256>,
         max_fee: Felt252Wrapper,
     ) -> Self {

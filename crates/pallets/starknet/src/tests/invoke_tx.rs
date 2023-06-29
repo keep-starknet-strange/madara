@@ -1,5 +1,3 @@
-use core::str::FromStr;
-
 use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment::{self};
@@ -7,7 +5,6 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
-use sp_core::H256;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
 use starknet_core::utils::get_selector_from_name;
@@ -169,7 +166,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         assert_eq!(
             event_commitment,
-            H256::from_str("0x0468e407007ee60120bcc127a9169e7a269f359434dc7585948dc9203dd3ef18").unwrap()
+            Felt252Wrapper::from_hex_be("0x0468e407007ee60120bcc127a9169e7a269f359434dc7585948dc9203dd3ef18").unwrap()
         );
         assert_eq!(events.len(), 2);
         assert_eq!(pending.len(), 1);

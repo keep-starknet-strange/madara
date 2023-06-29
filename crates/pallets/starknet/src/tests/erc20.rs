@@ -1,15 +1,17 @@
+use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_ok, bounded_vec};
 use lazy_static::lazy_static;
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 
 use super::mock::*;
-use super::utils::get_contract_class_wrapper;
 use crate::tests::constants::TOKEN_CONTRACT_CLASS_HASH;
+use crate::tests::utils::get_contract_class;
 use crate::Event;
 
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClassWrapper = get_contract_class_wrapper("ERC20.json");
+    static ref ERC20_CONTRACT_CLASS: ContractClass = get_contract_class("ERC20.json");
 }
 
 #[test]
