@@ -4398,6 +4398,7 @@ dependencies = [
  "mc-rpc",
  "mc-storage",
  "mc-transaction-pool",
+ "mp-digest-log",
  "mp-starknet",
  "pallet-starknet",
  "sc-cli",
