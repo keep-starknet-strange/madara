@@ -107,25 +107,6 @@ impl From<EntryPointV0Wrapper> for EntryPoint {
     }
 }
 
-#[cfg(feature = "std")]
-impl From<LegacyContractEntryPoint> for EntryPointV0Wrapper {
-    fn from(value: LegacyContractEntryPoint) -> Self {
-        let selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
-        let offset = EntryPointOffset(value.offset as usize);
-        Self(EntryPoint { selector, offset })
-    }
-}
-
-#[cfg(feature = "std")]
-impl TryFrom<EntryPointV0Wrapper> for LegacyContractEntryPoint {
-    type Error = FromByteArrayError;
-    fn try_from(value: EntryPointV0Wrapper) -> Result<Self, Self::Error> {
-        let selector = FieldElement::from_bytes_be(&value.0.selector.0.0)?;
-        let offset = value.0.offset.0 as u64;
-        Ok(Self { selector, offset })
-    }
-}
-
 /// Representation of a EntryPoint used in ContractClassV1Inner
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct EntryPointV1Wrapper(EntryPointV1);
@@ -187,7 +168,7 @@ mod reexport_std_types {
     use starknet_core::types::LegacyContractEntryPoint;
 
     use super::*;
-    impl From<LegacyContractEntryPoint> for EntryPointWrapper {
+    impl From<LegacyContractEntryPoint> for EntryPointV0Wrapper {
         fn from(value: LegacyContractEntryPoint) -> Self {
             let selector = EntryPointSelector(StarkFelt(value.selector.to_bytes_be()));
             let offset = EntryPointOffset(value.offset as usize);
@@ -195,9 +176,9 @@ mod reexport_std_types {
         }
     }
 
-    impl TryFrom<EntryPointWrapper> for LegacyContractEntryPoint {
+    impl TryFrom<EntryPointV0Wrapper> for LegacyContractEntryPoint {
         type Error = FromByteArrayError;
-        fn try_from(value: EntryPointWrapper) -> Result<Self, Self::Error> {
+        fn try_from(value: EntryPointV0Wrapper) -> Result<Self, Self::Error> {
             let selector = FieldElement::from_bytes_be(&value.0.selector.0.0)?;
             let offset = value.0.offset.0 as u64;
             Ok(Self { selector, offset })

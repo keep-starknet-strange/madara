@@ -21,7 +21,7 @@ use mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
     Transaction,
 };
-use mp_starknet::transaction::utils::to_hash_map_entrypoints;
+use mp_starknet::transaction::utils::reexport_std_types::to_hash_map_entrypoints;
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
 use sp_blockchain::HeaderBackend;
