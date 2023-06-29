@@ -1580,11 +1580,11 @@
     <span class="doccomment">/// Returns all events matching the given filter
     </span><span class="kw">async fn </span>get_events(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: EventFilterWithPage) -&gt; RpcResult&lt;EventsPage&gt; {
         <span class="kw">let </span>continuation_token = <span class="kw">match </span>filter.result_page_request.continuation_token {
-            <span class="prelude-val">Some</span>(token) =&gt; token.parse::&lt;usize&gt;().map_err(|e| {
+            <span class="prelude-val">Some</span>(token) =&gt; types::ContinuationToken::parse(token).map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to parse continuation token: {:?}&quot;</span>, e);
                 StarknetRpcApiError::InvalidContinuationToken
             })<span class="question-mark">?</span>,
-            <span class="prelude-val">None </span>=&gt; <span class="number">0usize</span>,
+            <span class="prelude-val">None </span>=&gt; types::ContinuationToken::default(),
         };
         <span class="kw">let </span>from_address = filter.event_filter.address.map(Felt252Wrapper::from);
         <span class="kw">let </span>keys = filter.event_filter.keys.unwrap_or_default();

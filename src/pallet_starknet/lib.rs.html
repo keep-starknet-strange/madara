@@ -1174,26 +1174,6 @@
 <a href="#1174" id="1174">1174</a>
 <a href="#1175" id="1175">1175</a>
 <a href="#1176" id="1176">1176</a>
-<a href="#1177" id="1177">1177</a>
-<a href="#1178" id="1178">1178</a>
-<a href="#1179" id="1179">1179</a>
-<a href="#1180" id="1180">1180</a>
-<a href="#1181" id="1181">1181</a>
-<a href="#1182" id="1182">1182</a>
-<a href="#1183" id="1183">1183</a>
-<a href="#1184" id="1184">1184</a>
-<a href="#1185" id="1185">1185</a>
-<a href="#1186" id="1186">1186</a>
-<a href="#1187" id="1187">1187</a>
-<a href="#1188" id="1188">1188</a>
-<a href="#1189" id="1189">1189</a>
-<a href="#1190" id="1190">1190</a>
-<a href="#1191" id="1191">1191</a>
-<a href="#1192" id="1192">1192</a>
-<a href="#1193" id="1193">1193</a>
-<a href="#1194" id="1194">1194</a>
-<a href="#1195" id="1195">1195</a>
-<a href="#1196" id="1196">1196</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1289,7 +1269,7 @@
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
-<span class="kw">use </span>starknet_api::transaction::{EventContent, TransactionHash};
+<span class="kw">use </span>starknet_api::transaction::EventContent;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::alloc::string::ToString;
@@ -1705,11 +1685,7 @@
                 }) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
 
-                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(
-                        TransactionHash(transaction.hash.into()),
-                        execute_call_info,
-                        fee_transfer_call_info,
-                    )<span class="question-mark">?</span>;
+                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(execute_call_info, fee_transfer_call_info)<span class="question-mark">?</span>;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
@@ -1782,11 +1758,7 @@
                 }) =&gt; {
                     <span class="macro">log!</span>(trace, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
 
-                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(
-                        TransactionHash(transaction.hash.into()),
-                        execute_call_info,
-                        fee_transfer_call_info,
-                    )<span class="question-mark">?</span>;
+                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(execute_call_info, fee_transfer_call_info)<span class="question-mark">?</span>;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
@@ -1857,11 +1829,7 @@
                 }) =&gt; {
                     <span class="macro">log!</span>(trace, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
 
-                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(
-                        TransactionHash(transaction.hash.into()),
-                        execute_call_info,
-                        fee_transfer_call_info,
-                    )<span class="question-mark">?</span>;
+                    <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(execute_call_info, fee_transfer_call_info)<span class="question-mark">?</span>;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::ReachedBoundedVecLimit)<span class="question-mark">?</span>,
@@ -2249,17 +2217,17 @@
     ///
     /// The result of the operation.
     </span><span class="attr">#[inline(always)]
-    </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;mut </span>CallInfo, tx_hash: TransactionHash) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, EventError&gt; {
+    </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;mut </span>CallInfo) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, EventError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>events = Vec::new();
 
         call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
         <span class="kw">for </span>ordered_event <span class="kw">in </span><span class="kw-2">&amp;</span>call_info.execution.events {
-            <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, call_info.call.storage_address, tx_hash)<span class="question-mark">?</span>;
+            <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, call_info.call.storage_address)<span class="question-mark">?</span>;
             events.push(event_type);
         }
 
         <span class="kw">for </span>inner_call <span class="kw">in </span><span class="kw-2">&amp;mut </span>call_info.inner_calls {
-            <span class="kw">let </span>inner_events = <span class="self">Self</span>::emit_events(inner_call, tx_hash)<span class="question-mark">?</span>;
+            <span class="kw">let </span>inner_events = <span class="self">Self</span>::emit_events(inner_call)<span class="question-mark">?</span>;
             <span class="kw">if </span>!inner_events.is_empty() {
                 events.extend(inner_events);
             }
@@ -2278,17 +2246,10 @@
     ///
     /// Returns an error if the event construction fails.
     </span><span class="attr">#[inline(always)]
-    </span><span class="kw">fn </span>emit_event(
-        event: <span class="kw-2">&amp;</span>EventContent,
-        from_address: ContractAddress,
-        tx_hash: TransactionHash,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetEventType, EventError&gt; {
+    </span><span class="kw">fn </span>emit_event(event: <span class="kw-2">&amp;</span>EventContent, from_address: ContractAddress) -&gt; <span class="prelude-ty">Result</span>&lt;StarknetEventType, EventError&gt; {
         <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction event: {:?}&quot;</span>, event);
-        <span class="kw">let </span>sn_event = StarknetEventType::builder()
-            .with_event_content(event.clone())
-            .with_from_address(from_address)
-            .with_transaction_hash(tx_hash)
-            .build()<span class="question-mark">?</span>;
+        <span class="kw">let </span>sn_event =
+            StarknetEventType::builder().with_event_content(event.clone()).with_from_address(from_address).build()<span class="question-mark">?</span>;
         <span class="self">Self</span>::deposit_event(Event::StarknetEvent(sn_event.clone()));
 
         PendingEvents::&lt;T&gt;::try_append(sn_event.clone()).map_err(|<span class="kw">_</span>| EventError::TooManyEvents)<span class="question-mark">?</span>;
@@ -2327,17 +2288,16 @@
     }
 
     <span class="kw">pub fn </span>emit_events_for_calls(
-        tx_hash: TransactionHash,
         execute_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
         fee_transfer_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, Error&lt;T&gt;&gt; {
         <span class="kw">let </span>events = <span class="kw">match </span>(execute_call_info, fee_transfer_call_info) {
             (<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>exec), <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>fee)) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>exec, tx_hash).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
-                events.append(<span class="kw-2">&amp;mut </span><span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>fee, tx_hash).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>exec).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
+                events.append(<span class="kw-2">&amp;mut </span><span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>fee).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>);
                 events
             }
-            (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>fee)) =&gt; <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>fee, tx_hash).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>,
+            (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>fee)) =&gt; <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>fee).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>,
             <span class="kw">_ </span>=&gt; Vec::default(),
         };
         <span class="prelude-val">Ok</span>(events)
