@@ -247,8 +247,11 @@ pub fn to_declare_transaction(
                 .try_into()
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
 
-            let casm_constract_class = flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class)
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SierraCompilationError)?;
+            let casm_constract_class =
+                flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class).map_err(|err| {
+                    print!("err: {:?}", err);
+                    return BroadcastedTransactionConversionErrorWrapper::SierraCompilationError;
+                })?;
             let contract_class = ContractClassV1::try_from(casm_constract_class.clone())
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CasmContractClassConversionError)?;
 
