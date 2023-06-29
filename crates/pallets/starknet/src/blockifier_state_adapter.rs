@@ -88,7 +88,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
         let compiled_class_hash = CompiledClassHash(
             StarkFelt::try_from(
                 Pallet::<T>::compiled_class_hash_by_class_hash(wrapped_class_hash)
-                    .ok_or(StateError::UndeclaredClassHash(class_hash.clone()))
+                    .ok_or(StateError::UndeclaredClassHash(class_hash))
                     .unwrap()
                     .0,
             )

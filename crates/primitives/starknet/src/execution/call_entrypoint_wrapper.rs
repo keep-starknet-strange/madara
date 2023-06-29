@@ -61,6 +61,7 @@ pub struct CallEntryPointWrapper {
 // Regular implementation.
 impl CallEntryPointWrapper {
     /// Creates a new instance of a call entrypoint.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,

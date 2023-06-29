@@ -1,13 +1,12 @@
 use std::sync::Arc;
 
-use frame_support::log::info;
 use mp_starknet::transaction::types::{BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, MaxArraySize};
 use sp_core::TypedGet;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::SierraClass;
 use starknet_core::types::{
     BlockTag, BroadcastedDeclareTransactionV1, BroadcastedDeclareTransactionV2, CompressedLegacyContractClass,
-    FlattenedSierraClass, StarknetError,
+    FlattenedSierraClass,
 };
 
 use super::*;
@@ -164,7 +163,7 @@ fn get_compressed_legacy_contract_class() -> CompressedLegacyContractClass {
 
 fn get_flattened_sierra_contract_class() -> FlattenedSierraClass {
     // when HelloStarknet is compiled into Sierra, the output does not have inputs: [] in the events ABI
-    // this has been manually added right now becaue starknet-rs expects it
+    // this has been manually added right now because starknet-rs expects it
     let contract_class_bytes = include_bytes!("../../../../cairo-contracts/build/cairo_1/HelloStarknet.sierra.json");
 
     let contract_class: SierraClass = serde_json::from_slice(contract_class_bytes).unwrap();

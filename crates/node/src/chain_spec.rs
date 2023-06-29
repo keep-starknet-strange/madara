@@ -158,9 +158,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
-        get_contract_class(&read_file_to_string("../../cairo-contracts/build/NoValidateAccount.json"), 0)
-            .try_into()
-            .unwrap();
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/NoValidateAccount.json"), 0);
     let no_validate_account_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
     let no_validate_account_address = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();
 
@@ -180,9 +178,7 @@ fn testnet_genesis(
 
     // CAIRO 1 ACCOUNT CONTRACT
     let cairo_1_no_validate_account_class =
-        get_contract_class(&read_file_to_string("../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1)
-            .try_into()
-            .unwrap();
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1);
     let cairo_1_no_validate_account_class_hash =
         Felt252Wrapper::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
     let cairo_1_no_validate_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();

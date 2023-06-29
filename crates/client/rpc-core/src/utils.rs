@@ -249,10 +249,7 @@ pub fn to_declare_transaction(
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
 
             let casm_constract_class = flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class.clone())
-                .map_err(|err| {
-                    print!("err: {:?}", err);
-                    return BroadcastedTransactionConversionErrorWrapper::SierraCompilationError;
-                })?;
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SierraCompilationError)?;
             let contract_class = ContractClassV1::try_from(casm_constract_class.clone())
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CasmContractClassConversionError)?;
 
@@ -268,8 +265,8 @@ pub fn to_declare_transaction(
                 max_fee: Felt252Wrapper::from(declare_tx_v2.max_fee),
                 signature,
                 contract_class: BlockifierContractClass::V1(contract_class),
-                compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash.clone())),
-                class_hash: declare_tx_v2.contract_class.class_hash().clone().into(),
+                compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash)),
+                class_hash: declare_tx_v2.contract_class.class_hash().into(),
             })
         }
     }
@@ -294,7 +291,7 @@ pub fn flattened_sierra_to_casm_contract_class(
     flattened_sierra: Arc<FlattenedSierraClass>,
 ) -> Result<CasmContractClass, StarknetSierraCompilationError> {
     let sierra_contract_class = SierraContractClass {
-        sierra_program: flattened_sierra.sierra_program.iter().map(|x| field_element_to_big_uint_as_hex(x)).collect(),
+        sierra_program: flattened_sierra.sierra_program.iter().map(field_element_to_big_uint_as_hex).collect(),
         sierra_program_debug_info: None,
         contract_class_version: flattened_sierra.contract_class_version.clone(),
         entry_points_by_type: entry_points_by_type_to_contract_entry_points(
@@ -306,14 +303,17 @@ pub fn flattened_sierra_to_casm_contract_class(
     Ok(casm_contract_class)
 }
 
+/// Converts a [FieldElement] to a [BigUint]
 fn field_element_to_big_uint(value: &FieldElement) -> BigUint {
     BigInt::from_bytes_be(Sign::Plus, &value.to_bytes_be()).to_biguint().unwrap()
 }
 
+/// Converts a [FieldElement] to a [BigUintAsHex]
 fn field_element_to_big_uint_as_hex(value: &FieldElement) -> BigUintAsHex {
     BigUintAsHex { value: field_element_to_big_uint(value) }
 }
 
+/// Converts a [EntryPointsByType] to a [ContractEntryPoints]
 fn entry_points_by_type_to_contract_entry_points(value: EntryPointsByType) -> ContractEntryPoints {
     fn sierra_entry_point_to_contract_entry_point(value: SierraEntryPoint) -> ContractEntryPoint {
         ContractEntryPoint {
@@ -349,12 +349,13 @@ pub fn casm_contract_class_to_compiled_class(casm_contract_class: &CasmContractC
 /// Converts a [CasmContractEntryPoints] to a [CompiledClassEntrypointList]
 fn casm_entry_points_to_compiled_entry_points(value: &CasmContractEntryPoints) -> CompiledClassEntrypointList {
     CompiledClassEntrypointList {
-        external: value.external.iter().map(|x| casm_entry_point_to_compiled_entry_point(&x)).collect(),
-        l1_handler: value.l1_handler.iter().map(|x| casm_entry_point_to_compiled_entry_point(&x)).collect(),
-        constructor: value.constructor.iter().map(|x| casm_entry_point_to_compiled_entry_point(&x)).collect(),
+        external: value.external.iter().map(casm_entry_point_to_compiled_entry_point).collect(),
+        l1_handler: value.l1_handler.iter().map(casm_entry_point_to_compiled_entry_point).collect(),
+        constructor: value.constructor.iter().map(casm_entry_point_to_compiled_entry_point).collect(),
     }
 }
 
+/// Converts a [CasmContractEntryPoint] to a [CompiledClassEntrypoint]
 fn casm_entry_point_to_compiled_entry_point(value: &CasmContractEntryPoint) -> CompiledClassEntrypoint {
     CompiledClassEntrypoint {
         selector: biguint_to_field_element(&value.selector),
@@ -363,13 +364,7 @@ fn casm_entry_point_to_compiled_entry_point(value: &CasmContractEntryPoint) -> C
     }
 }
 
+/// Converts a [BigUint] to a [FieldElement]
 fn biguint_to_field_element(value: &BigUint) -> FieldElement {
     FieldElement::from_str(value.to_string().as_str()).unwrap()
-}
-
-// utils to read casm from bytes and return [BlockifierContractClass]
-pub fn get_casm_from_bytes(bytes: &[u8]) -> BlockifierContractClass {
-    // read CasmContractClass from bytes
-    let casm_contract_class: CasmContractClass = serde_json::from_slice(bytes).unwrap();
-    BlockifierContractClass::V1(ContractClassV1::try_from(casm_contract_class).unwrap())
 }

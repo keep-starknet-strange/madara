@@ -288,6 +288,7 @@ pub enum TransactionConversionError {
     /// Class hash is missing from the object of type [Transaction]
     #[error("Class hash is missing from the object of type [Transaction]")]
     MissingClassHash,
+    /// Casm class hash is missing from the object of type [Transaction]
     #[error("Casm class hash is missing from the object of type [Transaction]")]
     MissingCasmClassHash,
     /// Class is missing from the object of type [Transaction]
@@ -303,7 +304,7 @@ pub enum TransactionConversionError {
 impl TryFrom<Transaction> for DeclareTransaction {
     type Error = TransactionConversionError;
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
-        let mut casm_class_hash = value.call_entrypoint.compiled_class_hash;
+        let casm_class_hash = value.call_entrypoint.compiled_class_hash;
         if value.version <= 1 && casm_class_hash.is_some() {
             return Err(TransactionConversionError::CasmClashHashNotNone);
         } else if value.version == 2 && casm_class_hash.is_none() {

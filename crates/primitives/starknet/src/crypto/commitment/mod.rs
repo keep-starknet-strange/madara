@@ -307,6 +307,7 @@ pub fn calculate_deploy_account_tx_hash(
 }
 
 /// Computes the transaction hash using a hash function of type T
+#[allow(clippy::too_many_arguments)]
 pub fn calculate_transaction_hash_common<T>(
     sender_address: Felt252Wrapper,
     calldata: &[Felt252Wrapper],
@@ -332,8 +333,8 @@ where
 
     let mut elements =
         vec![tx_prefix, version, sender_address, FieldElement::ZERO, calldata_hash, max_fee, chain_id.0, nonce];
-    if compiled_class_hash.is_some() {
-        elements.push(FieldElement::from_bytes_be(&compiled_class_hash.unwrap().into()).unwrap())
+    if let Some(compiled_class_hash) = compiled_class_hash {
+        elements.push(FieldElement::from_bytes_be(&compiled_class_hash.into()).unwrap())
     }
 
     let tx_hash = <T as CryptoHasherT>::compute_hash_on_elements(&elements);
