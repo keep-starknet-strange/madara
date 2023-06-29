@@ -1,6 +1,6 @@
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use sp_core::H256;
 use sp_runtime::testing::Header;
@@ -167,24 +167,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (multiple_event_emitting_contract_address, multiple_event_emitting_class_hash),
         ],
         contract_classes: vec![
-            (test_contract_class_hash, ContractClassWrapper::try_from(test_contract_class).unwrap()),
-            (l1_handler_class_hash, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
-            (blockifier_account_class_hash, ContractClassWrapper::try_from(blockifier_account_class).unwrap()),
-            (openzeppelin_account_class_hash, ContractClassWrapper::try_from(openzeppelin_account_class).unwrap()),
-            (argent_account_class_hash, ContractClassWrapper::try_from(argent_account_class).unwrap()),
-            (braavos_account_class_hash, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
-            (braavos_proxy_class_hash, ContractClassWrapper::try_from(braavos_proxy_class).unwrap()),
-            (no_validate_class_hash, ContractClassWrapper::try_from(no_validate_class).unwrap()),
-            (inner_call_account_class_hash, ContractClassWrapper::try_from(inner_call_account_class).unwrap()),
-            (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
-            (
-                single_event_emitting_contract_class_hash,
-                ContractClassWrapper::try_from(single_event_emitting_class).unwrap(),
-            ),
-            (
-                multiple_event_emitting_class_hash,
-                ContractClassWrapper::try_from(multiple_event_emitting_class).unwrap(),
-            ),
+            (test_contract_class_hash, test_contract_class),
+            (l1_handler_class_hash, l1_handler_class),
+            (blockifier_account_class_hash, blockifier_account_class),
+            (openzeppelin_account_class_hash, openzeppelin_account_class),
+            (argent_account_class_hash, argent_account_class),
+            (braavos_account_class_hash, braavos_account_class),
+            (braavos_proxy_class_hash, braavos_proxy_class),
+            (no_validate_class_hash, no_validate_class),
+            (inner_call_account_class_hash, inner_call_account_class),
+            (token_class_hash, erc20_class),
+            (single_event_emitting_contract_class_hash, single_event_emitting_class),
+            (multiple_event_emitting_class_hash, multiple_event_emitting_class),
         ],
         fee_token_address,
         storage: vec![

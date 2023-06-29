@@ -67,6 +67,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use blockifier::block_context::BlockContext;
+use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
@@ -76,8 +77,7 @@ use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment::{self, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
-    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, EntryPointTypeWrapper,
-    Felt252Wrapper,
+    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
 use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
@@ -262,8 +262,7 @@ pub mod pallet {
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
-    pub(super) type ContractClasses<T: Config> =
-        StorageMap<_, Identity, ClassHashWrapper, ContractClassWrapper, OptionQuery>;
+    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -321,7 +320,7 @@ pub mod pallet {
         /// second element is the contract class definition.
         /// Same as `contracts`, this can be used to start the chain with a set of pre-deployed
         /// contracts classes.
-        pub contract_classes: Vec<(ClassHashWrapper, ContractClassWrapper)>,
+        pub contract_classes: Vec<(ClassHashWrapper, ContractClass)>,
         pub storage: Vec<(ContractStorageKeyWrapper, Felt252Wrapper)>,
         /// The address of the fee token.
         /// Must be set to the address of the fee token ERC20 contract.
@@ -569,9 +568,6 @@ pub mod pallet {
 
             // Get current block context
             let block_context = Self::get_block_context();
-
-            // Parse contract class
-            let contract_class = contract_class.try_into().or(Err(Error::<T>::InvalidContractClass))?;
 
             // Execute transaction
             let call_info = transaction.execute(
