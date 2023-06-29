@@ -40,7 +40,8 @@ jobs:
 
   cleanup:
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      actions: write
     steps:
       - name: Check out code
         uses: actions/checkout@v3
