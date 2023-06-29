@@ -14,6 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
+use mc_rpc_core::types::{RpcGetProofInput, RpcGetProofOutput};
 use mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
@@ -858,6 +859,16 @@ where
             Some(receipt) => Ok(receipt),
             None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
         }
+    }
+
+    fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput> {
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(get_proof_input.block_id).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
     }
 }
 
