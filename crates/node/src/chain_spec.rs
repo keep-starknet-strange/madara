@@ -1,7 +1,9 @@
-use blockifier::execution::contract_class::ContractClass;
+use std::fs;
+use std::path::PathBuf;
+
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-use mc_rpc::get_casm_from_bytes;
 use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::starknet_serde::get_contract_class;
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -122,14 +124,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
-pub fn get_contract_class(contract_content: &'static [u8], contract_version: u8) -> ContractClass {
-    if contract_version == 0 {
-        return ContractClass::V0(serde_json::from_slice(contract_content).unwrap());
-    } else {
-        return get_casm_from_bytes(contract_content);
-    }
-}
-
 /// Returns the storage key for a given storage name, keys and offset.
 /// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
 /// starknet contract for storage_name(key_1, key_2, ..., key_n).
@@ -150,6 +144,12 @@ pub fn get_storage_key(
     (*address, storage_key.into())
 }
 
+fn read_file_to_string(path: &str) -> String {
+    let cargo_dir = String::from(env!("CARGO_MANIFEST_DIR"));
+    let path: PathBuf = [cargo_dir + "/" + path].iter().collect();
+    fs::read_to_string(path).unwrap()
+}
+
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -158,7 +158,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json"), 0)
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/NoValidateAccount.json"), 0)
             .try_into()
             .unwrap();
     let no_validate_account_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
@@ -166,28 +166,29 @@ fn testnet_genesis(
 
     // ARGENT ACCOUNT CONTRACT
     let argent_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json"), 0);
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/ArgentAccount.json"), 0);
     let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
     let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
-    let argent_proxy_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json"), 0);
+    let argent_proxy_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/Proxy.json"), 0);
     let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     // OZ ACCOUNT CONTRACT
     let oz_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"), 0);
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/OpenzeppelinAccount.json"), 0);
     let oz_account_class_hash = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_CLASS_HASH).unwrap();
     let oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
 
     // CAIRO 1 ACCOUNT CONTRACT
     let cairo_1_no_validate_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1)
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1)
             .try_into()
             .unwrap();
-    let cairo_1_no_validate_account_class_hash = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_CLASS_HASH).unwrap();
-    let cairo_1_no_validate_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_ADDRESS).unwrap();
+    let cairo_1_no_validate_account_class_hash =
+        Felt252Wrapper::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
+    let cairo_1_no_validate_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();
 
     // TEST CONTRACT
-    let test_contract_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json"), 0);
+    let test_contract_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/test.json"), 0);
     let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CONTRACT_CLASS_HASH).unwrap();
     let test_contract_address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
 
@@ -196,17 +197,17 @@ fn testnet_genesis(
     let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let erc20_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json"), 0);
+    let erc20_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/ERC20.json"), 0);
     let token_class_hash = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH).unwrap();
     let token_contract_address = Felt252Wrapper::from_hex_be(ERC20_ADDRESS).unwrap();
 
     // ERC721 CONTRACT
-    let erc721_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json"), 0);
+    let erc721_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/ERC721.json"), 0);
     let nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
     let nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
     // UDC CONTRACT
-    let udc_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/UniversalDeployer.json"), 0);
+    let udc_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/UniversalDeployer.json"), 0);
     let udc_class_hash = Felt252Wrapper::from_hex_be(UDC_CLASS_HASH).unwrap();
     let udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
 

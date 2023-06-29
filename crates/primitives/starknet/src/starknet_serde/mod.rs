@@ -3,7 +3,8 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use blockifier::execution::contract_class::ContractClass;
+use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
+use cairo_lang_casm_contract_class::CasmContractClass;
 use frame_support::BoundedVec;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
@@ -355,4 +356,23 @@ pub fn transaction_from_json(
     }
 
     Ok(transaction)
+}
+
+/// Create a `ContractClass` from a JSON string
+///
+/// This function takes a JSON string (`json_str`) containing the JSON representation of a
+/// ContractClass
+///
+/// `ContractClassV0` can be read directly from the JSON because the Serde methods have been
+/// implemented in the blockifier
+///
+/// `ContractClassV1` needs to be read in Casm and then converted to Contract Class V1
+pub fn get_contract_class(json_str: &str, version: u8) -> ContractClass {
+    if version == 0 {
+        return ContractClass::V0(serde_json::from_str(json_str).unwrap());
+    } else if version == 1 {
+        let casm_contract_class: CasmContractClass = serde_json::from_str(json_str).unwrap();
+        return ContractClass::V1(ContractClassV1::try_from(casm_contract_class).unwrap());
+    }
+    unimplemented!("version {} is not supported to get contract class from JSON", version);
 }

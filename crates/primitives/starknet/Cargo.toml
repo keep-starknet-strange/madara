@@ -34,6 +34,7 @@ starknet-ff = { workspace = true, default-features = false, features = [
 ] }
 starknet_api = { workspace = true, default-features = false }
 cairo-lang-casm = { workspace = true, default-features = false }
+cairo-lang-casm-contract-class = { workspace = true }
 
 # Other third party dependencies
 bitvec = { workspace = true, features = ["alloc"] }

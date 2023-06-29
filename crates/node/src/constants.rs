@@ -11,8 +11,9 @@ pub const TEST_CONTRACT_ADDRESS: &str = "0x1111";
 pub const TEST_CONTRACT_CLASS_HASH: &str = "0x1000";
 pub const ERC20_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
 pub const ERC20_CLASS_HASH: &str = "0x10000";
-pub const CAIRO_1_ACCOUNT_ADDRESS: &str = "0x4";
-pub const CAIRO_1_ACCOUNT_CLASS_HASH: &str = "0x02e26ffc88ed4a3661e8de6ee385cc1e87ebeb9028ad45e9adef490ca0f380a8";
+pub const CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS: &str = "0x4";
+pub const CAIRO_1_NO_VALIDATE_ACCOUNT_CLASS_HASH: &str =
+    "0x02e26ffc88ed4a3661e8de6ee385cc1e87ebeb9028ad45e9adef490ca0f380a8";
 pub const ERC721_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02";
 pub const ERC721_CLASS_HASH: &str = "0x80000";
 pub const UDC_CONTRACT_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";

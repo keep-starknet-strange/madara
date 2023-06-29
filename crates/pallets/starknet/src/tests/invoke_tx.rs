@@ -50,7 +50,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_invalid_tx_version() {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
 
-        let sender_add = get_account_address(AccountType::NoValidate);
+        let sender_add = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
         let transaction = InvokeTransaction { version: 3, sender_address: sender_add, ..InvokeTransaction::default() };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -192,7 +192,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
 
         let emit_contract_address = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
 
-        let sender_account = get_account_address(AccountType::NoValidate);
+        let sender_account = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         let emit_internal_selector = Felt252Wrapper::from(get_selector_from_name("emit_internal").unwrap());
         let emit_external_selector = Felt252Wrapper::from(get_selector_from_name("emit_external").unwrap());
@@ -423,7 +423,7 @@ fn given_hardcoded_contract_run_invoke_with_inner_call_in_validate_then_it_fails
 
         let mut transaction = get_invoke_dummy();
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
-        transaction.sender_address = get_account_address(AccountType::InnerCall);
+        transaction.sender_address = get_account_address(AccountType::V0(AccountTypeV0Inner::InnerCall));
 
         let storage_key = get_storage_var_address("destination", &[]).unwrap();
         let destination = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
