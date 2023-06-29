@@ -87,7 +87,6 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
         self.tree.commit()
     }
 
-    #[allow(dead_code)]
     /// Generates a proof for `key`. See [`MerkleTree::get_proof`].
     pub fn get_proof(&self, key: &BitSlice<u8, Msb0>) -> Vec<ProofNode> {
         self.tree.get_proof(key)

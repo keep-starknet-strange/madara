@@ -9,6 +9,8 @@ use derive_more::Constructor;
 use scale_codec::{Decode, Encode, Error, Input, Output};
 use scale_info::build::Fields;
 use scale_info::{Path, Type, TypeInfo};
+use serde::ser::SerializeStructVariant;
+use serde::Serialize;
 use starknet_api::stdlib::collections::HashMap;
 
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
@@ -97,6 +99,40 @@ pub enum ProofNode {
     Binary(BinaryProofNode),
     /// Edge node.
     Edge(EdgeProofNode),
+}
+
+/// Utility struct used for serializing.
+#[cfg(feature = "std")]
+#[derive(Debug, Serialize)]
+struct PathWrapper {
+    value: starknet_ff::FieldElement,
+    len: usize,
+}
+
+#[cfg(feature = "std")]
+impl Serialize for ProofNode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match &self {
+            ProofNode::Binary(bin) => {
+                let mut state = serializer.serialize_struct_variant("ProofNode", 0, "Binary", 2)?;
+                state.serialize_field("left", &bin.left_hash)?;
+                state.serialize_field("right", &bin.right_hash)?;
+                state.end()
+            }
+            ProofNode::Edge(edge) => {
+                let value = starknet_ff::FieldElement::from_byte_slice_be(edge.path.as_raw_slice()).unwrap();
+                let path_wrapper = PathWrapper { value, len: edge.path.len() };
+
+                let mut state = serializer.serialize_struct_variant("ProofNode", 1, "Edge", 2)?;
+                state.serialize_field("path", &path_wrapper)?;
+                state.serialize_field("child", &edge.child_hash)?;
+                state.end()
+            }
+        }
+    }
 }
 
 /// A Starknet binary Merkle-Patricia tree with a specific root entry-point and storage.
