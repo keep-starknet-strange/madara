@@ -235,7 +235,8 @@ pub fn to_declare_transaction(
                     program,
                     entry_points_by_type,
                 }))),
-                compiled_class_hash: legacy_contract_class.class_hash()?.into(),
+                class_hash: legacy_contract_class.class_hash()?.into(),
+                compiled_class_hash: None,
             })
         }
         BroadcastedDeclareTransaction::V2(declare_tx_v2) => {
@@ -247,8 +248,8 @@ pub fn to_declare_transaction(
                 .try_into()
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
 
-            let casm_constract_class =
-                flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class).map_err(|err| {
+            let casm_constract_class = flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class.clone())
+                .map_err(|err| {
                     print!("err: {:?}", err);
                     return BroadcastedTransactionConversionErrorWrapper::SierraCompilationError;
                 })?;
@@ -267,7 +268,8 @@ pub fn to_declare_transaction(
                 max_fee: Felt252Wrapper::from(declare_tx_v2.max_fee),
                 signature,
                 contract_class: BlockifierContractClass::V1(contract_class),
-                compiled_class_hash: Felt252Wrapper::from(declare_tx_v2.compiled_class_hash.clone()),
+                compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash.clone())),
+                class_hash: declare_tx_v2.contract_class.class_hash().clone().into(),
             })
         }
     }

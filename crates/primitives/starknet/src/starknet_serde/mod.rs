@@ -34,6 +34,8 @@ fn string_to_felt(hex_str: &str) -> Result<Felt252Wrapper, String> {
 pub struct DeserializeCallEntrypoint {
     /// The class hash
     pub class_hash: Option<String>,
+    /// The casm class hash for declare v2
+    pub casm_class_hash: Option<String>,
     /// The entrypoint type
     pub entrypoint_type: String,
     /// The entrypoint selector
@@ -55,6 +57,9 @@ pub enum DeserializeCallEntrypointError {
     /// InvalidClassHash error
     #[error("Invalid class hash format: {0}")]
     InvalidClassHash(Felt252WrapperError),
+    /// InvalidCasmClassHash error
+    #[error("Invalid casm class hash format: {0}")]
+    InvalidCasmClassHash(Felt252WrapperError),
     /// InvalidCalldata error
     #[error("Invalid calldata format: {0}")]
     InvalidCalldata(String),
@@ -220,6 +225,15 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             None => None,
         };
 
+        // Convert casm_class_hash to Option<Felt252Wrapper> if present
+        let casm_class_hash = match d.casm_class_hash {
+            Some(hash_str) => match Felt252Wrapper::from_hex_be(hash_str.as_str()) {
+                Ok(felt) => Some(felt),
+                Err(e) => return Err(DeserializeCallEntrypointError::InvalidCasmClassHash(e)),
+            },
+            None => None,
+        };
+
         // Convert entrypoint_type to EntryPointTypeWrapper
         let entrypoint_type = match d.entrypoint_type.as_str() {
             "Constructor" => EntryPointTypeWrapper::Constructor,
@@ -271,6 +285,7 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             storage_address,
             caller_address,
             initial_gas,
+            compiled_class_hash: casm_class_hash,
         })
     }
 }

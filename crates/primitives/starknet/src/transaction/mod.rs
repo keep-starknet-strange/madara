@@ -283,6 +283,7 @@ impl TryInto<DeclareTransaction> for &Transaction {
                 nonce,
                 sender_address,
                 class_hash,
+                // TODO: (Apoorv) Fix this to use compiled_class_hash once blockifier is update
                 compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().0),
             };
             return Ok(DeclareTransaction::V2(tx));

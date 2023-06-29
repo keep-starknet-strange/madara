@@ -129,6 +129,12 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
     let no_validate_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
     let no_validate_address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
 
+    // CAIRO 1 NO VALIDATE ACCOUNT CONTRACT
+    let cairo_1_no_validate_account_class = get_contract_class("NoValidateAccount.casm.json", 1);
+    let cairo_1_no_validate_account_class_hash =
+        Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_1).unwrap();
+    let cairo_1_no_validate_account_address = get_account_address(AccountType::V1(AccountTypeV1Inner::NoValidate));
+
     // TEST CONTRACT
     let test_contract_class = get_contract_class("test.json", 0);
     let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CLASS_HASH).unwrap();
@@ -163,6 +169,7 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
             (braavos_account_address, braavos_account_class_hash),
             (braavos_proxy_address, braavos_proxy_class_hash),
             (no_validate_address, no_validate_class_hash),
+            (cairo_1_no_validate_account_address, cairo_1_no_validate_account_class_hash),
             (inner_call_account_address, inner_call_account_class_hash),
             (fee_token_address, token_class_hash),
             (single_event_emitting_contract_address, single_event_emitting_contract_class_hash),
@@ -177,6 +184,7 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
             (braavos_account_class_hash, braavos_account_class),
             (braavos_proxy_class_hash, braavos_proxy_class),
             (no_validate_class_hash, no_validate_class),
+            (cairo_1_no_validate_account_class_hash, cairo_1_no_validate_account_class),
             (inner_call_account_class_hash, inner_call_account_class),
             (token_class_hash, erc20_class),
             (single_event_emitting_contract_class_hash, single_event_emitting_class),
@@ -190,6 +198,14 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
             ),
             (
                 get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_address], 1),
+                Felt252Wrapper::from(u128::MAX),
+            ),
+            (
+                get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 0),
+                Felt252Wrapper::from(u128::MAX),
+            ),
+            (
+                get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 1),
                 Felt252Wrapper::from(u128::MAX),
             ),
             (

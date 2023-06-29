@@ -945,7 +945,8 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas,
+            None,
         );
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {

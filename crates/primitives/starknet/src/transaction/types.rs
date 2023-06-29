@@ -166,7 +166,9 @@ pub struct DeclareTransaction {
     /// Transaction sender address.
     pub sender_address: ContractAddressWrapper,
     /// Class hash to declare.
-    pub compiled_class_hash: Felt252Wrapper,
+    pub compiled_class_hash: Option<Felt252Wrapper>,
+    /// Sierra class hash used in V2.
+    pub class_hash: Felt252Wrapper,
     /// Contract to declare.
     pub contract_class: ContractClass,
     /// Account contract nonce.
@@ -188,13 +190,14 @@ impl DeclareTransaction {
             sender_address: self.sender_address,
             nonce: self.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(self.compiled_class_hash),
+                Some(self.class_hash),
                 EntryPointTypeWrapper::External,
                 None,
                 BoundedVec::default(),
                 self.sender_address,
                 self.sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710
+                self.compiled_class_hash,
             ),
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
@@ -269,6 +272,7 @@ impl DeployAccountTransaction {
                 sender_address,
                 sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                None,
             ),
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
@@ -284,9 +288,14 @@ pub enum TransactionConversionError {
     /// Class hash is missing from the object of type [Transaction]
     #[error("Class hash is missing from the object of type [Transaction]")]
     MissingClassHash,
+    #[error("Casm class hash is missing from the object of type [Transaction]")]
+    MissingCasmClassHash,
     /// Class is missing from the object of type [Transaction]
     #[error("Class is missing from the object of type [Transaction]")]
     MissingClass,
+    /// Casm class hash must be None in [Transaction] for version <=1
+    #[error("Casm class hash must be None in [Transaction] for version <=1")]
+    CasmClashHashNotNone,
     /// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
     #[error("Impossible to derive the contract address from the object of type [DeployAccountTransaction]")]
     ContractAddressDerivationError,
@@ -294,16 +303,20 @@ pub enum TransactionConversionError {
 impl TryFrom<Transaction> for DeclareTransaction {
     type Error = TransactionConversionError;
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+        let mut casm_class_hash = value.call_entrypoint.compiled_class_hash;
+        if value.version <= 1 && casm_class_hash.is_some() {
+            return Err(TransactionConversionError::CasmClashHashNotNone);
+        } else if value.version == 2 && casm_class_hash.is_none() {
+            return Err(TransactionConversionError::MissingCasmClassHash);
+        }
         Ok(Self {
             version: value.version,
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
             contract_class: value.contract_class.ok_or(TransactionConversionError::MissingClass)?,
-            compiled_class_hash: value
-                .call_entrypoint
-                .class_hash
-                .ok_or(TransactionConversionError::MissingClassHash)?,
+            compiled_class_hash: casm_class_hash,
+            class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
         })
     }
@@ -368,6 +381,7 @@ impl InvokeTransaction {
                 self.sender_address,
                 self.sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                None,
             ),
             contract_class: None,
             contract_address_salt: None,
