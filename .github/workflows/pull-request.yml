@@ -68,4 +68,4 @@ jobs:
           done
           echo "Done"
         env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }
