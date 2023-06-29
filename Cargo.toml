@@ -84,6 +84,7 @@ sc-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = 
 sc-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-proposer-metrics = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 sc-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
+substrate-test-runtime-client = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 
 
 # Substrate build & tools dependencies
