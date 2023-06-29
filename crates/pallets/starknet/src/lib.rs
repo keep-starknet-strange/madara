@@ -96,7 +96,6 @@ use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::{EventContent, TransactionHash};
 use starknet_crypto::FieldElement;
 
-
 use crate::alloc::string::ToString;
 use crate::types::{
     ContractStorageKeyWrapper, NonceWrapper, StateCommitments, StateTrie, StorageKeyWrapper, StorageSlotWrapper,
