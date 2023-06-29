@@ -23,9 +23,8 @@ use sc_consensus::BasicQueue;
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
-use sc_service::new_db_backend;
 use sc_service::error::Error as ServiceError;
-use sc_service::{Configuration, TaskManager, WarpSyncParams};
+use sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sp_api::offchain::OffchainStorage;
 use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
@@ -112,8 +111,13 @@ where
 
     let backend = new_db_backend(config.db_config())?;
 
-    let genesis_block_builder =
-        MadaraGenesisBlockBuilder::<Block, _, _>::new(config.chain_spec.as_storage_builder(), false, backend.clone(), executor.clone()).unwrap();
+    let genesis_block_builder = MadaraGenesisBlockBuilder::<Block, _, _>::new(
+        config.chain_spec.as_storage_builder(),
+        false,
+        backend.clone(),
+        executor.clone(),
+    )
+    .unwrap();
 
     let (client, backend, keystore_container, task_manager) = sc_service::new_full_parts_with_genesis_builder::<
         Block,

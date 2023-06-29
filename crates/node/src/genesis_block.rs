@@ -49,14 +49,9 @@ impl<Block: BlockT, B: Backend<Block>, E: RuntimeVersionOf> BuildGenesisBlock<Bl
 }
 
 /// Construct genesis block.
-fn construct_genesis_block<Block: BlockT>(
-    state_root: Block::Hash,
-    state_version: StateVersion,
-) -> Block {
-    let extrinsics_root = <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(
-        Vec::new(),
-        state_version,
-    );
+fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version: StateVersion) -> Block {
+    let extrinsics_root =
+        <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(Vec::new(), state_version);
 
     Block::new(
         <<Block as BlockT>::Header as HeaderT>::new(
