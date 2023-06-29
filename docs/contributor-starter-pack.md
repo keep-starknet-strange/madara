@@ -40,27 +40,26 @@ ecosystem, it's important to adopt a positive and collaborative mindset. Here
 are some key aspects of the mindset that can help you navigate your contribution
 journey:
 
-- _Openness to Learning_  
-  Embrace a mindset of continuous learning and be open to acquiring new
-  knowledge and skills. Starknet is a recent ecosystem and does have its own
-  unique concepts and principles. Stay curious, ask questions (there are no dumb
-  questions), and be willing to explore and understand new concepts.
+- _Openness to Learning_\
+  Embrace a mindset of continuous learning and be open to acquiring new knowledge
+  and skills. Starknet is a recent ecosystem and does have its own unique concepts
+  and principles. Stay curious, ask questions (there are no dumb questions), and
+  be willing to explore and understand new concepts.
 
-- _Patience and Perseverance_  
-  Contributing to a complex or quickly evolving project takes time and effort.
-  Be patient with yourself and the learning process. Expect challenges along the
-  way, but persevere through them. Building expertise and making meaningful
-  contributions often requires persistence and determination.
+- _Patience and Perseverance_\
+  Contributing to a complex or quickly evolving project takes time and effort. Be
+  patient with yourself and the learning process. Expect challenges along the way,
+  but persevere through them. Building expertise and making meaningful contributions
+  often requires persistence and determination.
 
-- _Collaboration and Communication_  
-  Engage with the community, ask for guidance when needed, and seek feedback on
-  your contributions. Actively participate in GitHub discussions, issues or the
-  chat channels. Be respectful and constructive with other builders.
+- _Collaboration and Communication_\
+  Engage with the community, ask for guidance when needed, and seek feedback on your
+  contributions. Actively participate in GitHub discussions, issues or the chat channels.
+  Be respectful and constructive with other builders.
 
-- _Respect for Existing Contributors_  
-  Recognize and respect the work of existing contributors and maintainers.
-  Appreciate the efforts of others and collaborate with them in a respectful and
-  inclusive manner.
+- _Respect for Existing Contributors_\
+  Recognize and respect the work of existing contributors and maintainers. Appreciate
+  the efforts of others and collaborate with them in a respectful and inclusive manner.
 
 With this mindset, you'll participate to Madara and Starknet projects in a
 collaborative and productive atmosphere. It's not everything about code but also
@@ -82,9 +81,8 @@ Rust is the programming language used for Madara and Substrate, and here are
 some valuable and helpful resources.
 
 [The Rust Programming Language Book](https://doc.rust-lang.org/book/): read this
-first  
-[Rust by Example](https://doc.rust-lang.org/rust-by-example/): practical
-approach  
+first\
+[Rust by Example](https://doc.rust-lang.org/rust-by-example/): practical approach\
 [Rustlings](https://github.com/rust-lang/rustlings): Educative and interactive
 learning
 
@@ -107,15 +105,15 @@ improving transaction throughput and reducing fees. Layer 2 solutions address
 the scalability limitations of blockchains, enabling them to handle a higher
 volume of transactions and improving the overall user experience.
 
-[Blockchain Explained](
-https://blockgeeks.com/guides/what-is-blockchain-technology/)  
-[Introduction to Blockchain Concepts]( https://www.ibm.com/topics/blockchain)  
-[How Does Blockchain Work?](
-https://www.investopedia.com/terms/b/blockchain.asp)  
+[Blockchain
+Explained](https://blockgeeks.com/guides/what-is-blockchain-technology/)\
+[Introduction to Blockchain Concepts](https://www.ibm.com/topics/blockchain)\
+[How Does Blockchain
+Work?](https://www.investopedia.com/terms/b/blockchain.asp)\
 [Topics on Dev.to](https://dev.to/t/blockchain)
 
-The following two are a bit more technical, but very fundamental:  
-[Ethereum white paper](https://ethereum.org/en/whitepaper/)  
+The following two are a bit more technical, but very fundamental:\
+[Ethereum white paper](https://ethereum.org/en/whitepaper/)\
 [Bitcoin paper](https://bitcoin.org/bitcoin.pdf)
 
 ## What is Starknet <a name="what-is-starknet"/>
@@ -129,11 +127,10 @@ Ethereum for verification. This approach significantly reduces transaction costs
 and increases scalability while maintaining the security and decentralization of
 the Ethereum network.
 
-[Starknet getting started](https://www.starknet.io/en/what-is-starknet)  
-[Using Starknet with the Starknet book](https://book.starknet.io/)  
-[Starknet documentation](https://docs.starknet.io/documentation/)  
-[Starknet article](
-https://medium.com/starkware/exploring-the-use-cases-of-cheap-computation-1ab6254e7895)
+[Starknet getting started](https://www.starknet.io/en/what-is-starknet)\
+[Using Starknet with the Starknet book](https://book.starknet.io/)\
+[Starknet documentation](https://docs.starknet.io/documentation/)\
+[Starknet article](https://medium.com/starkware/exploring-the-use-cases-of-cheap-computation-1ab6254e7895)
 
 ## What Substrate is? And why is Madara using it?
 
@@ -148,20 +145,18 @@ build.
 
 Some key features of Substrate are:
 
-- _Modular Framework_  
-  Substrate provides a modular framework that allows developers to easily
-  customize and configure various components of a blockchain network.
+- _Modular Framework_\
+  Substrate provides a modular framework that allows developers to easily customize
+  and configure various components of a blockchain network.
 
-- _Efficiency and Scalability_  
-  Substrate leverages advanced techniques such as in its transaction queue
-  management to ensure high performance and the ability to handle a large number
-  of transactions.
+- _Efficiency and Scalability_\
+  Substrate leverages advanced techniques such as in its transaction queue management
+  to ensure high performance and the ability to handle a large number of transactions.
 
-- _Runtime Upgradability_  
-  Substrate allows for seamless runtime upgrades, enabling the introduction of
-  new features or bug fixes in a live blockchain network without requiring a
-  hard fork. This feature enhances the upgradability and maintainability of the
-  blockchain system.
+- _Runtime Upgradability_\
+  Substrate allows for seamless runtime upgrades, enabling the introduction of new
+  features or bug fixes in a live blockchain network without requiring a hard fork.
+  This feature enhances the upgradability and maintainability of the blockchain system.
 
 Substrate achieves its modularity through three key components: the **client**,
 the **runtime**, and the **primitives**. Those are key concepts of Substrate
@@ -179,8 +174,8 @@ As a naming convention, every rust library used for the client implementation is
 prefixed with **sc\_** (for Substrate Client, in the Substrate crates). Madara
 sticks to this by having **mc\_** prefix.
 
-As an example, [the storage package for Madara's client](
-https://github.com/keep-starknet-strange/madara/blob/main/crates/client/storage/Cargo.toml#L3).
+As an example, [the storage package for Madara's
+client](https://github.com/keep-starknet-strange/madara/blob/main/crates/client/storage/Cargo.toml#L3).
 
 ### Runtime <a name="substrate-runtime"/>
 
@@ -200,8 +195,8 @@ As a naming convention, every rust library used for the runtime implementation
 is prefixed with **frame\_** or **pallet\_** (in the Substrate crates). Madara
 sticks to this by having **pallet\_** prefix.
 
-As an example: [the pallet_starknet](
-https://github.com/keep-starknet-strange/madara/blob/main/crates/pallets/starknet/Cargo.toml#L2).
+As an example: [the
+pallet_starknet](https://github.com/keep-starknet-strange/madara/blob/main/crates/pallets/starknet/Cargo.toml#L2).
 
 ### Primitives <a name="substrate-primitives"/>
 
@@ -215,8 +210,8 @@ As a naming convention, every rust library used as a primitive is prefixed with
 **sp\_** (for Substrate Primitives, in the Substrate crates). Madara sticks to
 this using the **mp\_** prefix.
 
-As an example: [the mp_starknet package](
-https://github.com/keep-starknet-strange/madara/blob/main/crates/primitives/starknet/Cargo.toml#L2).
+As an example: [the mp_starknet
+package](https://github.com/keep-starknet-strange/madara/blob/main/crates/primitives/starknet/Cargo.toml#L2).
 
 ---
 
@@ -262,10 +257,10 @@ development, it's still a very useful framework for creating a state-of-the-art
 blockchain, even without connecting it to Polkadot. This is referred to as
 "Solo-Chain" in Polkadot terminology.
 
-[Substrate docs](https://docs.substrate.io/)  
-[Substrate architecture](https://docs.substrate.io/learn/architecture/)  
-[Substrate and Polkadot](
-https://medium.com/polkadot-network/a-brief-summary-of-everything-substrate-and-polkadot-f1f21071499d)
+[Substrate docs](https://docs.substrate.io/)\
+[Substrate architecture](https://docs.substrate.io/learn/architecture/)\
+[Substrate and
+Polkadot](https://medium.com/polkadot-network/a-brief-summary-of-everything-substrate-and-polkadot-f1f21071499d)
 
 For a more practical learning experience, these [Substrate
 Tutorials](https://github.com/rusty-crewmates/substrate-tutorials) would be a
@@ -287,9 +282,8 @@ As the backbone of transaction sequencing, Madara ensures that transactions are
 organized and executed in a secure and deterministic manner.
 
 You can find Madara documentation (work in progress)
-[here](https://docs.madara.wtf/).  
-You can contribute to this documentation
-[here](https://github.com/keep-starknet-strange/madara-docs).
+[here](https://docs.madara.wtf/).\
+You can contribute to this documentation [here](https://github.com/keep-starknet-strange/madara-docs).
 
 How to contribute?
 
@@ -301,6 +295,10 @@ How to contribute?
 3. Work on your fork, in a branch dedicated to the issue you are working on.
 4. Push your changes to your fork, and submit a pull request (PR) on Madara
    official repository.
+5. If change is non trivial and require some time to complete we suggest opening
+   a Draft PR. In case you need any help you can ask in [madara's
+   telegram](https://t.me/MadaraStarknet) channel and link to the relevant code
+   path.
 
 Exciting stuff, right? Join the community of Starknet builders!
 
@@ -308,12 +306,12 @@ Joining the community is crucial for engaging with fellow contributors, seeking
 help, and staying up-to-date with Madara developments. Join us in building the
 future of Ethereum scaling!
 
-[GitHub contributor guide](
-https://docs.github.com/en/get-started/quickstart/hello-world)  
-[Madara GitHub repository](https://github.com/keep-starknet-strange/madara)  
-[Madara Telegram](https://t.me/MadaraStarknet)  
-[Starknet Discord](https://discord.gg/qypnmzkhbc) (Or search for Starknet in
-discord's servers browser)
+[GitHub contributor
+guide](https://docs.github.com/en/get-started/quickstart/hello-world)\
+[Madara GitHub repository](https://github.com/keep-starknet-strange/madara)\
+[Madara Telegram](https://t.me/MadaraStarknet)\
+[Starknet Discord](https://discord.gg/qypnmzkhbc) (Or search for Starknet in discord's
+servers browser)
 
 ## Contribution rewards on OnlyDust <a name="onlydust"/>
 
