@@ -46,6 +46,12 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
       
+      - name: Generate a token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIV_KEY }}
 
       - name: Cleanup
         run: |
@@ -63,3 +69,5 @@ jobs:
             gh actions-cache delete $cacheKey -B $BRANCH --confirm
           done
           echo "Done"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }
