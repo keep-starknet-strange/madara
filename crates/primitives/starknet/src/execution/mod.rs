@@ -25,6 +25,9 @@ pub mod types {
     /// Wrapper type for class hash field.
     pub type ClassHashWrapper = Felt252Wrapper;
 
+    /// Wrapper type for compiled class hash field.
+    pub type CompiledClassHashWrapper = Felt252Wrapper;
+
     pub use super::call_entrypoint_wrapper::*;
     pub use super::entrypoint_wrapper::*;
     pub use super::felt252_wrapper::*;

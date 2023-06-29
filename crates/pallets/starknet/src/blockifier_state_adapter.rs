@@ -7,7 +7,9 @@ use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
 use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{
+    ClassHashWrapper, CompiledClassHashWrapper, ContractAddressWrapper, Felt252Wrapper,
+};
 use mp_starknet::state::StateChanges;
 use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -81,9 +83,18 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
             .ok_or(StateError::UndeclaredClassHash(*class_hash))
     }
 
-    fn get_compiled_class_hash(&mut self, _class_hash: ClassHash) -> StateResult<CompiledClassHash> {
-        // FIXME 708
-        Ok(CompiledClassHash::default())
+    fn get_compiled_class_hash(&mut self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
+        let wrapped_class_hash: ClassHashWrapper = class_hash.0.into();
+        let compiled_class_hash = CompiledClassHash(
+            StarkFelt::try_from(
+                Pallet::<T>::compiled_class_hash_by_class_hash(wrapped_class_hash)
+                    .ok_or(StateError::UndeclaredClassHash(class_hash.clone()))
+                    .unwrap()
+                    .0,
+            )
+            .unwrap(),
+        );
+        Ok(compiled_class_hash)
     }
 }
 
@@ -179,10 +190,18 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_compiled_class_hash(
         &mut self,
-        _class_hash: ClassHash,
-        _compiled_class_hash: CompiledClassHash,
+        class_hash: ClassHash,
+        compiled_class_hash: CompiledClassHash,
     ) -> StateResult<()> {
         // FIXME 708
+        let class_hash: ClassHashWrapper = class_hash.0.into();
+        let compiled_class_hash: CompiledClassHashWrapper = compiled_class_hash.0.into();
+
+        crate::CompiledClassHashes::<T>::insert(class_hash, compiled_class_hash);
+
+        // This is called in declare V2 when set_contract_class has already been called
+        // so we don't need to update the state trie again
+
         Ok(())
     }
 
