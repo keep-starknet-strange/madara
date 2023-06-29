@@ -5157,7 +5157,7 @@ dependencies = [
  "jsonrpsee",
  "mp-digest-log",
  "mp-starknet",
- "num-bigint 0.4.3",
+ "num-bigint",
  "serde",
  "serde_json",
  "serde_with",

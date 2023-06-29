@@ -1,14 +1,9 @@
 use alloc::vec::Vec;
-#[cfg(feature = "std")]
-use std::collections::HashMap;
-
-#[cfg(feature = "std")]
-use starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
 
 use crate::execution::types::{EntryPointTypeWrapper, EntryPointV0Wrapper};
 
 #[cfg(feature = "std")]
-pub mod reexport_std_types {
+mod reexport_std_types {
     use std::collections::HashMap;
 
     use starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
@@ -34,6 +29,4 @@ pub mod reexport_std_types {
 }
 
 #[cfg(feature = "std")]
-fn get_entrypoint_value(entries: Vec<LegacyContractEntryPoint>) -> Vec<EntryPointV0Wrapper> {
-    entries.iter().map(|e| EntryPointV0Wrapper::from(e.clone())).collect::<Vec<_>>()
-}
+pub use reexport_std_types::*;

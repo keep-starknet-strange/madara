@@ -9,34 +9,18 @@ use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
-use cairo_vm::types::program::Program;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
-#[cfg(feature = "std")]
-use starknet_core::types::contract::ComputeClassHashError;
-#[cfg(feature = "std")]
-use starknet_core::types::{
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
-    DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
-    DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
-    DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
-    InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
-    InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
-    L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
-    MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError, Transaction as RPCTransaction,
-    TransactionReceipt as RPCTransactionReceipt, TransactionStatus as RPCTransactionStatus,
-};
 use thiserror_no_std::Error;
 
 use crate::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper, Felt252WrapperError};
 
@@ -558,26 +542,16 @@ pub enum StateDiffError {
 
 #[cfg(feature = "std")]
 mod reexport_private_types {
-    use std::collections::HashMap;
 
-    use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
-    use flate2::read::GzDecoder;
-    use starknet_api::api_core::EntryPointSelector;
-    use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
-    use starknet_core::types::contract::legacy::{
-        LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
-    };
     use starknet_core::types::contract::ComputeClassHashError;
     use starknet_core::types::{
-        BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-        DeclareTransaction as RPCDeclareTransaction, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
-        DeclareTransactionV1 as RPCDeclareTransactionV1, DeclareTransactionV2 as RPCDeclareTransactionV2,
-        DeployAccountTransaction as RPCDeployAccountTransaction,
+        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
+        DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
+        DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
         DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
         InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
         InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
         L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
-        LegacyContractEntryPoint, LegacyEntryPointsByType,
         MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError,
         Transaction as RPCTransaction, TransactionReceipt as RPCTransactionReceipt,
         TransactionStatus as RPCTransactionStatus,
@@ -614,6 +588,7 @@ mod reexport_private_types {
         /// Failed to convert Casm contract class to ContractClassV1
         #[error("failed to convert Casm contract class to ContractClassV1")]
         CasmContractClassConversionError,
+        /// Computed compiled class hash doesn't match with the request
         #[error("compiled class hash does not match sierra code")]
         CompiledClassHashError,
         /// Starknet Error

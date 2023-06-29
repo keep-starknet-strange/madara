@@ -1,5 +1,6 @@
 use blockifier::execution::contract_class::ContractClass;
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+use mc_rpc::get_casm_from_bytes;
 use mp_starknet::execution::types::Felt252Wrapper;
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
@@ -178,12 +179,12 @@ fn testnet_genesis(
     let oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
 
     // CAIRO 1 ACCOUNT CONTRACT
-    let cairo_1_account_class: ContractClassWrapper =
+    let cairo_1_no_validate_account_class =
         get_contract_class(include_bytes!("../../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1)
             .try_into()
             .unwrap();
-    let cairo_1_account_class_hash = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_CLASS_HASH).unwrap();
-    let cairo_1_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_ADDRESS).unwrap();
+    let cairo_1_no_validate_account_class_hash = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_CLASS_HASH).unwrap();
+    let cairo_1_no_validate_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_ACCOUNT_ADDRESS).unwrap();
 
     // TEST CONTRACT
     let test_contract_class = get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json"), 0);
@@ -225,7 +226,7 @@ fn testnet_genesis(
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
                 (no_validate_account_address, no_validate_account_class_hash),
-                (cairo_1_account_address, cairo_1_account_class_hash),
+                (cairo_1_no_validate_account_address, cairo_1_no_validate_account_class_hash),
                 (test_contract_address, test_contract_class_hash),
                 (token_contract_address, token_class_hash),
                 (nft_contract_address, nft_class_hash),
@@ -236,7 +237,7 @@ fn testnet_genesis(
             ],
             contract_classes: vec![
                 (no_validate_account_class_hash, no_validate_account_class),
-                (cairo_1_account_class_hash, cairo_1_account_class),
+                (cairo_1_no_validate_account_class_hash, cairo_1_no_validate_account_class),
                 (argent_account_class_hash, argent_account_class),
                 (oz_account_class_hash, oz_account_class),
                 (argent_proxy_class_hash, argent_proxy_class),
@@ -253,6 +254,14 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_account_address], 1),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 0),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
@@ -273,14 +282,6 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&token_contract_address, "ERC20_balances", &[no_validate_account_address], 1),
-                    Felt252Wrapper::from(u128::MAX),
-                ),
-                (
-                    get_storage_key(&token_contract_address, "ERC20_balances", &[cairo_1_account_address], 0),
-                    Felt252Wrapper::from(u128::MAX),
-                ),
-                (
-                    get_storage_key(&token_contract_address, "ERC20_balances", &[cairo_1_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (

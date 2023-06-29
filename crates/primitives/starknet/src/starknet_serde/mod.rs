@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use sp_core::U256;
 use thiserror_no_std::Error;
 
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::{
     CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError, MaxCalldataSize,
 };
@@ -352,10 +351,7 @@ pub fn transaction_from_json(
             unimplemented!("version {} is not supported", transaction.version);
         }
 
-        transaction.contract_class =
-            Some(ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
-                DeserializeTransactionError::FailedToParse(format!("invalid contract content: {:?}", e))
-            })?));
+        transaction.contract_class = Some(raw_contract_class);
     }
 
     Ok(transaction)
