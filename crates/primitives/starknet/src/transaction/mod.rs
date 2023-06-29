@@ -26,13 +26,15 @@ use blockifier::transaction::transactions::{
 use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{
+    ClassHash, CompiledClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce,
+};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent,
-    Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput,
-    TransactionReceipt, TransactionSignature, TransactionVersion,
+    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2,
+    DeployAccountTransaction, EventContent, Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction,
+    TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature, TransactionVersion,
 };
 use starknet_api::{calldata, StarknetApiError};
 
@@ -257,25 +259,46 @@ impl TryInto<DeclareTransaction> for &Transaction {
 
     fn try_into(self) -> Result<DeclareTransaction, Self::Error> {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
+        let transaction_hash = TransactionHash(StarkFelt::new(self.hash.into())?);
+        let max_fee = Fee(2);
+        let signature = TransactionSignature(
+            self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
+        );
+        let nonce = Nonce(StarkFelt::new(self.nonce.into())?);
+        let sender_address = StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?;
+        let class_hash = entrypoint.class_hash.unwrap_or_default();
 
-        let tx = DeclareTransactionV0V1 {
-            transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
-            signature: TransactionSignature(
-                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(self.nonce.into())?),
-            sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-            class_hash: entrypoint.class_hash.unwrap_or_default(),
-        };
-
-        Ok(if self.version == 0_u8 {
-            DeclareTransaction::V0(tx)
-        } else if self.version == 1_u8 {
-            DeclareTransaction::V1(tx)
-        } else {
-            unimplemented!("DeclareTransactionV2 required the compiled class hash. I don't know how to get it");
-        })
+        if self.version <= 1_u8 {
+            let tx = DeclareTransactionV0V1 {
+                transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
+                max_fee: Fee(2),
+                signature: TransactionSignature(
+                    self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
+                ),
+                nonce: Nonce(StarkFelt::new(self.nonce.into())?),
+                sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
+                class_hash: entrypoint.class_hash.unwrap_or_default(),
+            };
+            if self.version == 0_u8 {
+                return Ok(DeclareTransaction::V0(tx));
+            } else {
+                return Ok(DeclareTransaction::V1(tx));
+            }
+        } else if self.version == 2_u8 {
+            let tx = DeclareTransactionV2 {
+                transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
+                max_fee: Fee(2),
+                signature: TransactionSignature(
+                    self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
+                ),
+                nonce: Nonce(StarkFelt::new(self.nonce.into())?),
+                sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
+                class_hash: entrypoint.class_hash.unwrap_or_default(),
+                compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().0),
+            };
+            return Ok(DeclareTransaction::V2(tx));
+        }
+        unimplemented!("DeclareTransaction version {} is not supported", self.version)
     }
 }
 
