@@ -93,7 +93,7 @@ use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
-use starknet_api::transaction::{EventContent, TransactionHash};
+use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;

@@ -1,7 +1,6 @@
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::{assert_ok, bounded_vec};
 use lazy_static::lazy_static;
-use mp_starknet::crypto::commitment::calculate_invoke_tx_hash;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{EventWrapper, InvokeTransaction};
 
