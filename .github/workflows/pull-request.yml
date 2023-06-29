@@ -56,6 +56,7 @@ jobs:
         run: |
           gh extension install actions/gh-actions-cache
           BRANCH="refs/pull/${{ github.event.pull_request.number }}/merge"
+
           echo "Fetching list of cache key"
           cacheKeysForPR=$(gh actions-cache list -B $BRANCH --key ${{ runner.os }}-cargo- | cut -f 1 )
           set +e
