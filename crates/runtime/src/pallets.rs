@@ -39,6 +39,7 @@ impl pallet_starknet::Config for Runtime {
     type EnableStateRoot = ConstBool<false>;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
+    type ProtocolVersion = ProtocolVersion;
 }
 
 /// --------------------------------------
@@ -149,6 +150,7 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
+    pub const ProtocolVersion: u8 = 0;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

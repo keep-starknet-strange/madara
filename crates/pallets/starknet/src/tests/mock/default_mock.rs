@@ -70,6 +70,7 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const EnableStateRoot: bool = false;
+    pub const ProtocolVersion: u8 = 0;
 }
 
 impl pallet_starknet::Config for MockRuntime {
@@ -81,6 +82,7 @@ impl pallet_starknet::Config for MockRuntime {
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type EnableStateRoot = EnableStateRoot;
+    type ProtocolVersion = ProtocolVersion;
 }
 
 // Build genesis storage according to the mock runtime.
