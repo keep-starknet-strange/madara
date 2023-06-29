@@ -162,6 +162,8 @@
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
@@ -203,6 +205,7 @@
     <span class="kw">type </span>EnableStateRoot = ConstBool&lt;<span class="bool-val">false</span>&gt;;
     <span class="kw">type </span>InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     <span class="kw">type </span>ValidateMaxNSteps = ValidateMaxNSteps;
+    <span class="kw">type </span>ProtocolVersion = ProtocolVersion;
 }
 
 <span class="doccomment">/// --------------------------------------
@@ -313,6 +316,7 @@
     <span class="kw">pub const </span>TransactionLongevity: u64 = u64::MAX;
     <span class="kw">pub const </span>InvokeTxMaxNSteps: u32 = <span class="number">1_000_000</span>;
     <span class="kw">pub const </span>ValidateMaxNSteps: u32 = <span class="number">1_000_000</span>;
+    <span class="kw">pub const </span>ProtocolVersion: u8 = <span class="number">0</span>;
 }
 
 <span class="doccomment">/// Implement the OnTimestampSet trait to override the default Aura.
