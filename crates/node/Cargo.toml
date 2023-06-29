@@ -80,6 +80,7 @@ mc-mapping-sync = { workspace = true }
 mc-rpc = { workspace = true }
 mc-storage = { workspace = true }
 mc-transaction-pool = { workspace = true }
+mp-digest-log = { workspace = true }
 mp-starknet = { workspace = true }
 pallet-starknet = { workspace = true }
 starknet-core = { workspace = true }

@@ -1,13 +1,16 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use mp_digest_log::{Log, MADARA_ENGINE_ID};
+use mp_starknet::block::Block as StarknetBlock;
 use sc_client_api::backend::Backend;
 use sc_client_api::BlockImportOperation;
 use sc_executor::RuntimeVersionOf;
 use sc_service::{resolve_state_version_from_wasm, BuildGenesisBlock};
+use sp_api::Encode;
 use sp_core::storage::{StateVersion, Storage};
 use sp_runtime::traits::{Block as BlockT, Hash as HashT, Header as HeaderT, Zero};
-use sp_runtime::{BuildStorage, Digest};
+use sp_runtime::{BuildStorage, Digest, DigestItem};
 
 /// Custom genesis block builder for Madara.
 pub struct MadaraGenesisBlockBuilder<Block: BlockT, B, E> {
@@ -53,6 +56,11 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
     let extrinsics_root =
         <<<Block as BlockT>::Header as HeaderT>::Hashing as HashT>::trie_root(Vec::new(), state_version);
 
+    let mut digest = vec![];
+    let block = StarknetBlock::default();
+
+    digest.push(DigestItem::Consensus(MADARA_ENGINE_ID, Log::Block(block).encode()));
+
     Block::new(
         <<Block as BlockT>::Header as HeaderT>::new(
             Zero::zero(),
@@ -60,7 +68,7 @@ fn construct_genesis_block<Block: BlockT>(state_root: Block::Hash, state_version
             state_root,
             Default::default(),
             Digest {
-                logs: vec![], // TODO: add digest of Starknet block
+                logs: digest, // TODO: add digest of Starknet block
             },
         ),
         Default::default(),
