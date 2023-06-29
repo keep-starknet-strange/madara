@@ -53,10 +53,6 @@ jobs:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.PRIV_KEY }}
 
-      - name: Use the token
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }
-        
       - name: Cleanup
         run: |
           gh extension install actions/gh-actions-cache
@@ -72,4 +68,4 @@ jobs:
           done
           echo "Done"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }
