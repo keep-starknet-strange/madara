@@ -86,8 +86,6 @@ pub struct DeserializeEventWrapper {
     pub data: Vec<String>,
     /// The address that emitted the event
     pub from_address: String,
-    /// The transaction hash that emitted the event
-    pub transaction_hash: String,
 }
 
 /// Error enum for Event deserialization
@@ -311,13 +309,8 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
             Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
         };
 
-        let transaction_hash = match Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
-            Ok(felt) => felt,
-            Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
-        };
-
         // Create EventWrapper with validated and converted fields
-        Ok(Self { keys, data, from_address, transaction_hash })
+        Ok(Self { keys, data, from_address })
     }
 }
 

@@ -677,11 +677,11 @@ where
     /// Returns all events matching the given filter
     async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage> {
         let continuation_token = match filter.result_page_request.continuation_token {
-            Some(token) => token.parse::<usize>().map_err(|e| {
+            Some(token) => types::ContinuationToken::parse(token).map_err(|e| {
                 error!("Failed to parse continuation token: {:?}", e);
                 StarknetRpcApiError::InvalidContinuationToken
             })?,
-            None => 0usize,
+            None => types::ContinuationToken::default(),
         };
         let from_address = filter.event_filter.address.map(Felt252Wrapper::from);
         let keys = filter.event_filter.keys.unwrap_or_default();
