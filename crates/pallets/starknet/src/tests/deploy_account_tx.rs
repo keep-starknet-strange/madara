@@ -38,8 +38,6 @@ fn given_contract_run_deploy_account_tx_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
-        let transaction_hash = mp_transaction.hash;
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
@@ -55,7 +53,6 @@ fn given_contract_run_deploy_account_tx_works() {
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
-            transaction_hash,
         })
         .into();
         System::assert_last_event(expected_fee_transfer_event)

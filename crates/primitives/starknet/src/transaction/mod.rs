@@ -58,9 +58,8 @@ impl EventWrapper {
         keys: BoundedVec<Felt252Wrapper, MaxArraySize>,
         data: BoundedVec<Felt252Wrapper, MaxArraySize>,
         from_address: ContractAddressWrapper,
-        transaction_hash: Felt252Wrapper,
     ) -> Self {
-        Self { keys, data, from_address, transaction_hash }
+        Self { keys, data, from_address }
     }
 
     /// Creates an empty event.
@@ -69,7 +68,6 @@ impl EventWrapper {
             keys: BoundedVec::try_from(vec![]).unwrap(),
             data: BoundedVec::try_from(vec![]).unwrap(),
             from_address: ContractAddressWrapper::default(),
-            transaction_hash: Felt252Wrapper::default(),
         }
     }
 
@@ -85,7 +83,6 @@ pub struct EventBuilder {
     keys: vec::Vec<Felt252Wrapper>,
     data: vec::Vec<Felt252Wrapper>,
     from_address: Option<StarknetContractAddress>,
-    transaction_hash: Option<TransactionHash>,
 }
 
 impl EventBuilder {
@@ -119,16 +116,6 @@ impl EventBuilder {
         self
     }
 
-    /// Sets the transaction hash of the event.
-    ///
-    /// # Arguments
-    ///
-    /// * `transaction_hash` - Transaction hash where the event was emitted from.
-    pub fn with_transaction_hash(mut self, transaction_hash: TransactionHash) -> Self {
-        self.transaction_hash = Some(transaction_hash);
-        self
-    }
-
     /// Sets keys and data from an event content.
     ///
     /// # Arguments
@@ -155,7 +142,6 @@ impl EventBuilder {
                 .bytes()
                 .try_into()
                 .map_err(|_| EventError::InvalidFromAddress)?,
-            transaction_hash: self.transaction_hash.unwrap_or_default().0.into(),
         })
     }
 }
@@ -167,7 +153,6 @@ impl Default for EventWrapper {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
             from_address: one,
-            transaction_hash: Felt252Wrapper::default(),
         }
     }
 }
