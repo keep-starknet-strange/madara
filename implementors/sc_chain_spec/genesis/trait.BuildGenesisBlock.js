@@ -1,0 +1,3 @@
+(function() {var implementors = {
+"madara":[["impl&lt;Block: BlockT, B: Backend&lt;Block&gt;, E: RuntimeVersionOf&gt; BuildGenesisBlock&lt;Block&gt; for <a class=\"struct\" href=\"madara/genesis_block/struct.MadaraGenesisBlockBuilder.html\" title=\"struct madara::genesis_block::MadaraGenesisBlockBuilder\">MadaraGenesisBlockBuilder</a>&lt;Block, B, E&gt;"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

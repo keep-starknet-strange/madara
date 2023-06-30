@@ -577,6 +577,25 @@
 <a href="#577" id="577">577</a>
 <a href="#578" id="578">578</a>
 <a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 </span><span class="kw">use </span>std::cell::RefCell;
@@ -603,7 +622,7 @@
 <span class="kw">use </span>sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 <span class="kw">pub use </span>sc_executor::NativeElseWasmExecutor;
 <span class="kw">use </span>sc_service::error::Error <span class="kw">as </span>ServiceError;
-<span class="kw">use </span>sc_service::{Configuration, TaskManager, WarpSyncParams};
+<span class="kw">use </span>sc_service::{new_db_backend, Configuration, TaskManager, WarpSyncParams};
 <span class="kw">use </span>sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 <span class="kw">use </span>sp_api::offchain::OffchainStorage;
 <span class="kw">use </span>sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
@@ -613,6 +632,7 @@
 <span class="kw">use </span>sp_trie::PrefixedMemoryDB;
 
 <span class="kw">use </span><span class="kw">crate</span>::cli::Sealing;
+<span class="kw">use </span><span class="kw">crate</span>::genesis_block::MadaraGenesisBlockBuilder;
 <span class="kw">use </span><span class="kw">crate</span>::rpc::StarknetDeps;
 <span class="kw">use </span><span class="kw">crate</span>::starknet::{db_config_dir, MadaraBackend};
 <span class="comment">// Our native executor instance.
@@ -687,11 +707,29 @@
 
     <span class="kw">let </span>executor = sc_service::new_native_or_wasm_executor(config);
 
-    <span class="kw">let </span>(client, backend, keystore_container, task_manager) = sc_service::new_full_parts::&lt;Block, RuntimeApi, <span class="kw">_</span>&gt;(
+    <span class="kw">let </span>backend = new_db_backend(config.db_config())<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>genesis_block_builder = MadaraGenesisBlockBuilder::&lt;Block, <span class="kw">_</span>, <span class="kw">_</span>&gt;::new(
+        config.chain_spec.as_storage_builder(),
+        <span class="bool-val">true</span>,
+        backend.clone(),
+        executor.clone(),
+    )
+    .unwrap();
+
+    <span class="kw">let </span>(client, backend, keystore_container, task_manager) = sc_service::new_full_parts_with_genesis_builder::&lt;
+        Block,
+        RuntimeApi,
+        <span class="kw">_</span>,
+        MadaraGenesisBlockBuilder&lt;Block, FullBackend, NativeElseWasmExecutor&lt;ExecutorDispatch&gt;&gt;,
+    &gt;(
         config,
         telemetry.as_ref().map(|(<span class="kw">_</span>, telemetry)| telemetry.handle()),
         executor,
+        backend,
+        genesis_block_builder,
     )<span class="question-mark">?</span>;
+
     <span class="kw">let </span>client = Arc::new(client);
 
     <span class="kw">let </span>telemetry = telemetry.map(|(worker, telemetry)| {
