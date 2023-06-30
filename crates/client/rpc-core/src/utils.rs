@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Result};
@@ -366,5 +365,6 @@ fn casm_entry_point_to_compiled_entry_point(value: &CasmContractEntryPoint) -> C
 
 /// Converts a [BigUint] to a [FieldElement]
 fn biguint_to_field_element(value: &BigUint) -> FieldElement {
-    FieldElement::from_str(value.to_string().as_str()).unwrap()
+    let bytes = value.to_bytes_be();
+    FieldElement::from_byte_slice_be(&bytes.as_slice()).unwrap()
 }
