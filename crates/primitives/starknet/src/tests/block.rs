@@ -22,7 +22,7 @@ fn generate_dummy_header() -> Header {
         Felt252Wrapper::THREE,
         0,
         Felt252Wrapper::from_dec_str("4").unwrap(),
-        Some(1),
+        1,
         Some(U256::from(3)),
     )
 }
@@ -131,7 +131,7 @@ fn test_real_header_hash() {
     let event_count = 1430;
     let event_commitment =
         Felt252Wrapper::from_hex_be("0x2043ba1ef46882ce1dbb17b501fffa4b71f87f618e8f394e9605959d92efdf6").unwrap();
-    let protocol_version = None;
+    let protocol_version = 0;
     let extra_data = None;
 
     let header = Header::new(

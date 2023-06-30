@@ -1,13 +1,10 @@
-use core::str::FromStr;
-
 use blockifier::abi::abi_utils::get_storage_var_address;
 use frame_support::{assert_err, assert_ok, bounded_vec};
-use mp_starknet::crypto::commitment::{self, calculate_invoke_tx_hash};
+use mp_starknet::crypto::commitment::{self};
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{
     EventWrapper, InvokeTransaction, Transaction, TransactionReceiptWrapper, TxType,
 };
-use sp_core::H256;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
 use starknet_core::utils::get_selector_from_name;
@@ -68,8 +65,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
         let none_origin = RuntimeOrigin::none();
 
         let transaction: InvokeTransaction = get_invoke_dummy().into();
-        let chain_id = Starknet::chain_id();
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         let tx = Message {
             topics: vec![
@@ -111,7 +106,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_it_works() {
                     Felt252Wrapper::ZERO,
                 ],
                 from_address: Starknet::fee_token_address(),
-                transaction_hash
             },],
         };
 
@@ -127,8 +121,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
         let none_origin = RuntimeOrigin::none();
 
         let transaction: InvokeTransaction = get_invoke_emit_event_dummy().into();
-        let chain_id = Starknet::chain_id();
-        let transaction_hash = calculate_invoke_tx_hash(transaction.clone(), chain_id);
 
         assert_ok!(Starknet::invoke(none_origin, transaction));
 
@@ -139,7 +131,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
             ],
             data: bounded_vec!(Felt252Wrapper::from_hex_be("0x1").unwrap()),
             from_address: Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap(),
-            transaction_hash,
         };
         let expected_fee_transfer_event = EventWrapper {
             keys: bounded_vec![
@@ -154,7 +145,6 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
-            transaction_hash,
         };
         let events = System::events();
         // Actual event.
@@ -176,7 +166,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_event_is_emitted() {
 
         assert_eq!(
             event_commitment,
-            H256::from_str("0x0468e407007ee60120bcc127a9169e7a269f359434dc7585948dc9203dd3ef18").unwrap()
+            Felt252Wrapper::from_hex_be("0x0468e407007ee60120bcc127a9169e7a269f359434dc7585948dc9203dd3ef18").unwrap()
         );
         assert_eq!(events.len(), 2);
         assert_eq!(pending.len(), 1);

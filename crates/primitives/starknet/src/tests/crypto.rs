@@ -1,21 +1,20 @@
-use alloc::rc::Rc;
-use core::cell::RefCell;
 use std::str::FromStr;
 
+use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use frame_support::bounded_vec;
-use sp_core::H256;
+use starknet_api::stdlib::collections::HashMap;
 use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::FieldElement;
 
 use crate::crypto::commitment::{
-    calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_event_commitment, calculate_event_hash,
-    calculate_invoke_tx_hash, calculate_transaction_commitment,
+    calculate_class_commitment_tree_root_hash, calculate_declare_tx_hash, calculate_deploy_account_tx_hash,
+    calculate_event_commitment, calculate_event_hash, calculate_invoke_tx_hash, calculate_transaction_commitment,
 };
 use crate::crypto::hash::pedersen::PedersenHasher;
+use crate::crypto::hash::poseidon::PoseidonHasher;
 use crate::crypto::hash::{hash, Hasher};
-use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node};
+use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node, NodeId};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
 use crate::tests::utils::PEDERSEN_ZERO_HASH;
 use crate::traits::hash::{CryptoHasherT, HasherT};
@@ -60,7 +59,8 @@ fn test_declare_tx_hash() {
         signature: bounded_vec!(),
         max_fee: Felt252Wrapper::ONE,
         compiled_class_hash: Felt252Wrapper::THREE,
-        contract_class: ContractClassWrapper::default(),
+        // Arbitrary choice to pick v1 vs v0.
+        contract_class: ContractClass::from(ContractClassV1::default()),
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }
@@ -85,7 +85,7 @@ fn test_invoke_tx_hash() {
 }
 
 #[test]
-fn test_merkle_tree() {
+fn test_ref_merkle_tree() {
     let txs = vec![
         Transaction {
             tx_type: TxType::Invoke,
@@ -121,10 +121,39 @@ fn test_merkle_tree() {
     let event_com = calculate_event_commitment::<PedersenHasher>(&events);
     // The values we test ours against are computed from the sequencer test.
     assert_eq!(
-        H256::from_str("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02").unwrap(),
+        Felt252Wrapper::from_hex_be("0x03ebee479332edbeecca7dee501cb507c69d51e0df116d28ae84cd2671dfef02").unwrap(),
         event_com
     );
-    assert_eq!(H256::from_str("0x054c0fddf3aaf1ca03271712b323822647b66042ccc418ba1d7fb852aebfd2da").unwrap(), tx_com);
+    assert_eq!(
+        Felt252Wrapper::from_hex_be("0x054c0fddf3aaf1ca03271712b323822647b66042ccc418ba1d7fb852aebfd2da").unwrap(),
+        tx_com
+    );
+}
+
+#[test]
+fn test_merkle_tree_class_commitment() {
+    let class_hashes = vec![Felt252Wrapper::from(0_u128), Felt252Wrapper::from(1_u128)];
+
+    let class_com = calculate_class_commitment_tree_root_hash::<PedersenHasher>(&class_hashes);
+
+    // The values we test ours against are computed with the starkware python library.
+    assert_eq!(
+        Felt252Wrapper::from_hex_be("0x0218b7f0879373722df04bd1c2054cad721251b3dd238973e153347a26f8a674").unwrap(),
+        class_com
+    );
+}
+
+#[test]
+fn test_merkle_tree_poseidon() {
+    let class_hashes = vec![Felt252Wrapper::from(0_u128), Felt252Wrapper::from(1_u128)];
+
+    let class_com = calculate_class_commitment_tree_root_hash::<PoseidonHasher>(&class_hashes);
+
+    // The values we test ours against are computed from the sequencer test.
+    assert_eq!(
+        Felt252Wrapper::from_hex_be("0x01d195cdec8d7a8bbe302e5d728f1d5d6d985b9a2e054abd415412cd9c9674fb").unwrap(),
+        class_com
+    );
 }
 
 #[test]
@@ -132,8 +161,7 @@ fn test_event_hash() {
     let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
     let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
     let from_address = Felt252Wrapper::from(10_u128);
-    let transaction_hash = Felt252Wrapper::from(0_u128);
-    let event = EventWrapper::new(keys, data, from_address, transaction_hash);
+    let event = EventWrapper::new(keys, data, from_address);
     assert_eq!(
         calculate_event_hash::<PedersenHasher>(&event),
         FieldElement::from_str("0x3f44fb0516121d225664058ecc7e415c4725d6a7a11fd7d515c55c34ef8270b").unwrap()
@@ -150,6 +178,15 @@ fn test_pedersen_hash() {
     let pedersen_hasher = PedersenHasher::default();
     let hash_result = pedersen_hasher.hash(&test_data());
     let expected_hash = hash(Hasher::Pedersen(PedersenHasher::default()), &test_data());
+
+    assert_eq!(hash_result, expected_hash);
+}
+
+#[test]
+fn test_poseidon_hash() {
+    let poseidon = PoseidonHasher::default();
+    let hash_result = poseidon.hash(&test_data());
+    let expected_hash = hash(Hasher::Poseidon(PoseidonHasher::default()), &test_data());
 
     assert_eq!(hash_result, expected_hash);
 }
@@ -181,19 +218,24 @@ impl CryptoHasherT for TestCryptoHasher {
 
 #[test]
 fn test_binary_node_functions() {
-    let binary_node = BinaryNode {
-        hash: Some(FieldElement::from(1_u32)),
-        height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
-    };
+    let mut nodes: HashMap<NodeId, Node> = HashMap::new();
+    nodes.insert(NodeId(0), Node::Leaf(Felt252Wrapper::from(2_u32)));
+    nodes.insert(NodeId(1), Node::Leaf(Felt252Wrapper::from(3_u32)));
 
-    let unresolved_node = Node::Unresolved(FieldElement::from(6_u32));
+    let binary_node =
+        BinaryNode { hash: Some(Felt252Wrapper::from(1_u32)), height: 0, left: NodeId(0), right: NodeId(1) };
 
-    assert_eq!(binary_node.get_child(Direction::Left).borrow().hash(), Some(FieldElement::from(2_u32)));
-    assert_eq!(binary_node.get_child(Direction::Right).borrow().hash(), Some(FieldElement::from(3_u32)));
+    let unresolved_node = Node::Unresolved(Felt252Wrapper::from(6_u32));
 
-    assert_eq!(binary_node.hash, Some(FieldElement::from(1_u32)));
+    let left_child = binary_node.get_child(Direction::Left);
+    let right_child = binary_node.get_child(Direction::Right);
+
+    assert_eq!(left_child, NodeId(0));
+    assert_eq!(right_child, NodeId(1));
+    assert_eq!(nodes.get(&left_child).unwrap().hash(), Some(Felt252Wrapper::from(2_u32)));
+    assert_eq!(nodes.get(&right_child).unwrap().hash(), Some(Felt252Wrapper::from(3_u32)));
+
+    assert_eq!(binary_node.hash, Some(Felt252Wrapper::from(1_u32)));
 
     assert!(!unresolved_node.is_empty());
     assert!(!unresolved_node.is_binary());
@@ -210,43 +252,31 @@ fn test_direction_invert() {
 
 #[test]
 fn test_binary_node_calculate_hash() {
-    let mut binary_node = BinaryNode {
-        hash: None,
-        height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
-    };
+    let mut nodes: HashMap<NodeId, Node> = HashMap::new();
+    nodes.insert(NodeId(0), Node::Leaf(Felt252Wrapper::from(2_u32)));
+    nodes.insert(NodeId(1), Node::Leaf(Felt252Wrapper::from(3_u32)));
 
-    binary_node.calculate_hash::<TestCryptoHasher>();
-    assert_eq!(binary_node.hash, Some(FieldElement::from(5_u32)));
+    let mut binary_node = BinaryNode { hash: None, height: 0, left: NodeId(0), right: NodeId(1) };
+
+    binary_node.calculate_hash::<TestCryptoHasher>(&nodes);
+    assert_eq!(binary_node.hash, Some(Felt252Wrapper::from(5_u32)));
 }
 
 #[test]
 fn test_binary_node_implementations() {
-    let test_node = BinaryNode {
-        hash: None,
-        height: 0,
-        left: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(2_u32)))),
-        right: Rc::new(RefCell::new(Node::Leaf(FieldElement::from(3_u32)))),
-    };
+    let mut nodes: HashMap<NodeId, Node> = HashMap::new();
+    nodes.insert(NodeId(0), Node::Leaf(Felt252Wrapper::from(2_u32)));
+    nodes.insert(NodeId(1), Node::Leaf(Felt252Wrapper::from(3_u32)));
+
+    let test_node = BinaryNode { hash: None, height: 0, left: NodeId(0), right: NodeId(1) };
 
     // Test Display trait implementation
     let node_string = format!("{:?}", test_node);
-    assert_eq!(
-        node_string,
-        "BinaryNode { hash: None, height: 0, left: RefCell { value: Leaf(FieldElement { inner: \
-         0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: RefCell { value: \
-         Leaf(FieldElement { inner: 0x0000000000000000000000000000000000000000000000000000000000000003 }) } }"
-    );
+    assert_eq!(node_string, "BinaryNode { hash: None, height: 0, left: NodeId(0), right: NodeId(1) }");
 
     // Test Debug trait implementation
     let debug_string = format!("{:?}", test_node);
-    assert_eq!(
-        debug_string,
-        "BinaryNode { hash: None, height: 0, left: RefCell { value: Leaf(FieldElement { inner: \
-         0x0000000000000000000000000000000000000000000000000000000000000002 }) }, right: RefCell { value: \
-         Leaf(FieldElement { inner: 0x0000000000000000000000000000000000000000000000000000000000000003 }) } }"
-    );
+    assert_eq!(debug_string, "BinaryNode { hash: None, height: 0, left: NodeId(0), right: NodeId(1) }");
 }
 
 #[test]

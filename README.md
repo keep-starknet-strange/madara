@@ -120,6 +120,16 @@ In other words, while the absolute throughput numbers may not be reflective of
  are what we focus on. This way, we can ensure that Madara is always improving,
  and that we maintain a high standard of performance as the project evolves.
 
+One can use flamegraph-rs to generate flamegraphs and look for
+the performance bottlenecks of the system by running the following :
+
+  ```bash
+  flamegraph --root --open  -- ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=1 --no-telemetry
+  ```
+
+In parallel to that, run `npm run test` within the `benchmarking` folder.
+Once you stop the node, the flamegraph will open in your browser.
+
 ## 🌐 Connect to the dev webapp
 
 Once your Madara node is up and running, you can connect to the Polkadot-JS Apps

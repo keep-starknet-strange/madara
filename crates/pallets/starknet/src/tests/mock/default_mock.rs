@@ -1,23 +1,16 @@
-use core::str::FromStr;
-
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU16, ConstU64, GenesisBuild, Hooks};
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use sp_core::H256;
 use sp_runtime::testing::Header;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
-use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
-use starknet_api::hash::StarkFelt;
-use starknet_api::transaction::{Calldata, ContractAddressSalt};
-use starknet_api::StarknetApiError;
 use starknet_core::types::FieldElement;
-use starknet_core::utils::get_storage_var_address;
 use {crate as pallet_starknet, frame_system as system};
 
-use super::constants::*;
-use super::utils::get_contract_class;
-use crate::types::ContractStorageKeyWrapper;
+use super::helpers::*;
+use crate::tests::constants::*;
+use crate::tests::utils::get_contract_class;
 use crate::{ContractAddressWrapper, SeqAddrUpdate, SequencerAddress};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -31,7 +24,7 @@ frame_support::construct_runtime!(
         UncheckedExtrinsic = UncheckedExtrinsic,
     {
         System: frame_system,
-        Starknet: pallet_starknet,
+    Starknet: pallet_starknet,
         Timestamp: pallet_timestamp,
     }
 );
@@ -76,17 +69,20 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
+    pub const EnableStateRoot: bool = false;
+    pub const ProtocolVersion: u8 = 0;
 }
 
 impl pallet_starknet::Config for MockRuntime {
     type RuntimeEvent = RuntimeEvent;
-    type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
+    type EnableStateRoot = EnableStateRoot;
+    type ProtocolVersion = ProtocolVersion;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -173,24 +169,18 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
             (multiple_event_emitting_contract_address, multiple_event_emitting_class_hash),
         ],
         contract_classes: vec![
-            (test_contract_class_hash, ContractClassWrapper::try_from(test_contract_class).unwrap()),
-            (l1_handler_class_hash, ContractClassWrapper::try_from(l1_handler_class).unwrap()),
-            (blockifier_account_class_hash, ContractClassWrapper::try_from(blockifier_account_class).unwrap()),
-            (openzeppelin_account_class_hash, ContractClassWrapper::try_from(openzeppelin_account_class).unwrap()),
-            (argent_account_class_hash, ContractClassWrapper::try_from(argent_account_class).unwrap()),
-            (braavos_account_class_hash, ContractClassWrapper::try_from(braavos_account_class).unwrap()),
-            (braavos_proxy_class_hash, ContractClassWrapper::try_from(braavos_proxy_class).unwrap()),
-            (no_validate_class_hash, ContractClassWrapper::try_from(no_validate_class).unwrap()),
-            (inner_call_account_class_hash, ContractClassWrapper::try_from(inner_call_account_class).unwrap()),
-            (token_class_hash, ContractClassWrapper::try_from(erc20_class).unwrap()),
-            (
-                single_event_emitting_contract_class_hash,
-                ContractClassWrapper::try_from(single_event_emitting_class).unwrap(),
-            ),
-            (
-                multiple_event_emitting_class_hash,
-                ContractClassWrapper::try_from(multiple_event_emitting_class).unwrap(),
-            ),
+            (test_contract_class_hash, test_contract_class),
+            (l1_handler_class_hash, l1_handler_class),
+            (blockifier_account_class_hash, blockifier_account_class),
+            (openzeppelin_account_class_hash, openzeppelin_account_class),
+            (argent_account_class_hash, argent_account_class),
+            (braavos_account_class_hash, braavos_account_class),
+            (braavos_proxy_class_hash, braavos_proxy_class),
+            (no_validate_class_hash, no_validate_class),
+            (inner_call_account_class_hash, inner_call_account_class),
+            (token_class_hash, erc20_class),
+            (single_event_emitting_contract_class_hash, single_event_emitting_class),
+            (multiple_event_emitting_class_hash, multiple_event_emitting_class),
         ],
         fee_token_address,
         storage: vec![
@@ -281,104 +271,6 @@ pub(crate) fn basic_test_setup(n: u64) {
     SequencerAddress::<MockRuntime>::put(default_addr);
     System::set_block_number(0);
     run_to_block(n);
-}
-
-/// Returns the storage key for a given storage name, keys and offset.
-/// Calculates pedersen(sn_keccak(storage_name), keys) + storage_key_offset which is the key in the
-/// starknet contract for storage_name(key_1, key_2, ..., key_n).
-/// https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/#storage_variables
-pub fn get_storage_key(
-    address: &Felt252Wrapper,
-    storage_name: &str,
-    keys: &[Felt252Wrapper],
-    storage_key_offset: u64,
-) -> ContractStorageKeyWrapper {
-    let storage_key_offset = H256::from_low_u64_be(storage_key_offset);
-    let mut storage_key = get_storage_var_address(
-        storage_name,
-        keys.iter().map(|x| FieldElement::from(*x)).collect::<Vec<_>>().as_slice(),
-    )
-    .unwrap();
-    storage_key += FieldElement::from_bytes_be(&storage_key_offset.to_fixed_bytes()).unwrap();
-    (*address, storage_key.into())
-}
-
-#[derive(Copy, Clone)]
-pub enum AccountType {
-    Argent,
-    Openzeppelin,
-    Braavos,
-    BraavosProxy,
-    NoValidate,
-    InnerCall,
-}
-
-/// Returns the account address, class hash and calldata given an account type and given deploy salt
-pub fn account_helper(salt: &str, account_type: AccountType) -> (Felt252Wrapper, Felt252Wrapper, Vec<&str>) {
-    let account_class_hash = get_account_class_hash(account_type);
-    let calldata = get_account_calldata(account_type);
-    let account_salt = H256::from_str(salt).unwrap();
-    let addr = calculate_contract_address(account_salt, account_class_hash.into(), calldata.clone()).unwrap();
-    (addr.0.0.into(), account_class_hash, calldata)
-}
-
-/// Returns the class hash of a given account type
-pub fn get_account_class_hash(account_type: AccountType) -> Felt252Wrapper {
-    let class_hash = match account_type {
-        AccountType::Argent => ARGENT_ACCOUNT_CLASS_HASH,
-        AccountType::Braavos => BRAAVOS_ACCOUNT_CLASS_HASH,
-        AccountType::BraavosProxy => BRAAVOS_PROXY_CLASS_HASH,
-        AccountType::Openzeppelin => OPENZEPPELIN_ACCOUNT_CLASS_HASH,
-        AccountType::NoValidate => NO_VALIDATE_ACCOUNT_CLASS_HASH,
-        AccountType::InnerCall => UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH,
-    };
-    FieldElement::from_hex_be(class_hash).unwrap().into()
-}
-
-/// Returns the required calldata for deploying the given account type
-pub fn get_account_calldata(account_type: AccountType) -> Vec<&'static str> {
-    match account_type {
-        AccountType::BraavosProxy => vec![
-            BRAAVOS_ACCOUNT_CLASS_HASH, // Braavos account class hash
-            "0x02dd76e7ad84dbed81c314ffe5e7a7cacfb8f4836f01af4e913f275f89a3de1a", // 'initializer' selector
-        ],
-        AccountType::Openzeppelin => vec![ACCOUNT_PUBLIC_KEY],
-        _ => vec![],
-    }
-}
-
-/// Returns the account address for an account type
-pub fn get_account_address(account_type: AccountType) -> Felt252Wrapper {
-    account_helper(TEST_ACCOUNT_SALT, account_type).0
-}
-
-/// Calculate the address of a contract.
-/// # Arguments
-/// * `salt` - The salt of the contract.
-/// * `class_hash` - The hash of the contract class.
-/// * `constructor_calldata` - The calldata of the constructor.
-/// # Returns
-/// The address of the contract.
-/// # Errors
-/// If the contract address cannot be calculated.
-pub fn calculate_contract_address(
-    salt: H256,
-    class_hash: H256,
-    constructor_calldata: Vec<&str>,
-) -> Result<ContractAddress, StarknetApiError> {
-    _calculate_contract_address(
-        ContractAddressSalt(StarkFelt::new(salt.0)?),
-        ClassHash(StarkFelt::new(class_hash.0)?),
-        &Calldata(
-            constructor_calldata
-                .clone()
-                .into_iter()
-                .map(|x| StarkFelt::try_from(x).unwrap())
-                .collect::<Vec<StarkFelt>>()
-                .into(),
-        ),
-        ContractAddress::default(),
-    )
 }
 
 /// Returns the chain id used by the mock runtime.

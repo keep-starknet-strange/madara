@@ -531,10 +531,10 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const latestBlock = await providerRPC.getBlockHashAndNumber();
 
+      // TODO: Add real values
+
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
-      expect(stateUpdate.new_root).to.be.equal("0x0");
-      expect(stateUpdate.old_root).to.be.equal("0x0");
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
         deprecated_declared_classes: [],
@@ -563,10 +563,10 @@ describeDevMadara("Starknet RPC", (context) => {
         anteriorBlock.block_hash
       );
 
+      // TODO: Add real values
+
       expect(stateUpdate).to.not.be.undefined;
       expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
-      expect(stateUpdate.new_root).to.be.equal("0x0");
-      expect(stateUpdate.old_root).to.be.equal("0x0");
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
         deprecated_declared_classes: [],
@@ -1167,7 +1167,51 @@ describeDevMadara("Starknet RPC", (context) => {
         continuation_token: "0xabdel",
       };
 
-      const events = providerRPC.getEvents(filter);
+      let events = providerRPC.getEvents(filter);
+      await expect(events)
+        .to.eventually.be.rejectedWith(
+          "33: The supplied continuation token is invalid or unknown"
+        )
+        .and.be.an.instanceOf(LibraryError);
+
+      // Send transactions
+      const transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+      const block = await providerRPC.getBlockHashAndNumber();
+      let filter2 = {
+        from_block: { block_number: block.block_number },
+        to_block: { block_number: block.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 1,
+        continuation_token: "0,100,1",
+      };
+
+      events = providerRPC.getEvents(filter2);
+      await expect(events)
+        .to.eventually.be.rejectedWith(
+          "33: The supplied continuation token is invalid or unknown"
+        )
+        .and.be.an.instanceOf(LibraryError);
+
+      filter2 = {
+        from_block: { block_number: block.block_number },
+        to_block: { block_number: block.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 1,
+        continuation_token: "0,0,100",
+      };
+
+      events = providerRPC.getEvents(filter2);
       await expect(events)
         .to.eventually.be.rejectedWith(
           "33: The supplied continuation token is invalid or unknown"
@@ -1272,6 +1316,436 @@ describeDevMadara("Starknet RPC", (context) => {
       });
     });
 
+    it("returns expected events on correct filter two blocks", async function () {
+      // Send transactions
+      const transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+      const firstBlockCreated = await providerRPC.getBlockHashAndNumber();
+      // Second block
+      const transactions2 = [];
+      for (let i = 0; i < 5; i++) {
+        transactions2.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions2);
+      const secondBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: secondBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 100,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const events = await providerRPC.getEvents(filter);
+
+      expect(events.events.length).to.be.equal(20);
+      expect(events.continuation_token).to.be.null;
+      for (let i = 0; i < 2; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            firstBlockCreated.block_hash,
+            i
+          );
+        expect(
+          validateAndParseAddress(events.events[2 * i].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[2 * i].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+        expect(
+          validateAndParseAddress(events.events[2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[2 * i + 1].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+      for (let i = 0; i < 2; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx_second_block: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            secondBlockCreated.block_hash,
+            i
+          );
+        expect(
+          validateAndParseAddress(events.events[10 + 2 * i].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[10 + 2 * i].transaction_hash).to.be.equal(
+          tx_second_block.transaction_hash
+        );
+        expect(
+          validateAndParseAddress(events.events[10 + 2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events.events[10 + 2 * i + 1].transaction_hash).to.be.equal(
+          tx_second_block.transaction_hash
+        );
+      }
+    });
+
+    it("returns expected events on correct filter two blocks pagination", async function () {
+      // Send transactions
+      const transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+      const firstBlockCreated = await providerRPC.getBlockHashAndNumber();
+      // Second block
+      const transactions2 = [];
+      for (let i = 0; i < 5; i++) {
+        transactions2.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions2);
+      const secondBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      let filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: secondBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 7,
+        continuation_token: null,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      let { events, continuation_token } = await providerRPC.getEvents(filter);
+
+      expect(events.length).to.be.equal(7);
+      expect(continuation_token).to.be.equal("0,3,2");
+
+      for (let i = 0; i < 3; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            firstBlockCreated.block_hash,
+            i
+          );
+        expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
+          FEE_TOKEN_ADDRESS
+        );
+        expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
+        expect(
+          validateAndParseAddress(events[2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i + 1].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const tx3: InvokeTransaction =
+        await providerRPC.getTransactionByBlockIdAndIndex(
+          firstBlockCreated.block_hash,
+          3
+        );
+      expect(validateAndParseAddress(events[6].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
+      );
+      expect(events[6].transaction_hash).to.be.equal(tx3.transaction_hash);
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: secondBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 7,
+        continuation_token: continuation_token,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ({ events, continuation_token } = await providerRPC.getEvents(filter));
+
+      expect(events.length).to.be.equal(7);
+      expect(continuation_token).to.be.equal("1,1,3");
+
+      expect(validateAndParseAddress(events[0].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
+      );
+      expect(events[0].transaction_hash).to.be.equal(tx3.transaction_hash);
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const tx4: InvokeTransaction =
+        await providerRPC.getTransactionByBlockIdAndIndex(
+          firstBlockCreated.block_hash,
+          4
+        );
+      expect(validateAndParseAddress(events[1].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
+      );
+      expect(events[1].transaction_hash).to.be.equal(tx4.transaction_hash);
+      expect(validateAndParseAddress(events[2].from_address)).to.be.equal(
+        FEE_TOKEN_ADDRESS
+      );
+      expect(events[2].transaction_hash).to.be.equal(tx4.transaction_hash);
+
+      for (let i = 0; i < 2; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            secondBlockCreated.block_hash,
+            i
+          );
+        expect(
+          validateAndParseAddress(events[2 * i + 3].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i + 3].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+        expect(
+          validateAndParseAddress(events[2 * i + 4].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i + 4].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: secondBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 7,
+        continuation_token: continuation_token,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ({ events, continuation_token } = await providerRPC.getEvents(filter));
+
+      expect(events.length).to.be.equal(6);
+      expect(continuation_token).to.be.null;
+
+      for (let i = 2; i < 5; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            secondBlockCreated.block_hash,
+            i
+          );
+        expect(
+          validateAndParseAddress(events[2 * i - 4].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i - 4].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+        expect(
+          validateAndParseAddress(events[2 * i - 3].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i - 3].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+    });
+
+    it("returns expected events on correct filter many blocks pagination", async function () {
+      // Send transactions
+      const transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+      const firstBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+      // 3 blocks without transactions
+      const empty_transactions = [];
+      await context.createBlock(empty_transactions);
+      await context.createBlock(empty_transactions);
+      await context.createBlock(empty_transactions);
+      // Second block
+      const transactions2 = [];
+      for (let i = 0; i < 5; i++) {
+        transactions2.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions2);
+      const fifthBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      let filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: fifthBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 10,
+        continuation_token: null,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      let { events, continuation_token } = await providerRPC.getEvents(filter);
+
+      expect(events.length).to.be.equal(10);
+      expect(continuation_token).to.be.equal("0,4,3");
+
+      for (let i = 0; i < 5; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            firstBlockCreated.block_hash,
+            i
+          );
+        expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
+          FEE_TOKEN_ADDRESS
+        );
+        expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
+        expect(
+          validateAndParseAddress(events[2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i + 1].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: fifthBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 10,
+        continuation_token: continuation_token,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ({ events, continuation_token } = await providerRPC.getEvents(filter));
+
+      expect(events.length).to.be.equal(10);
+      expect(continuation_token).to.be.null;
+
+      for (let i = 0; i < 5; i++) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const tx: InvokeTransaction =
+          await providerRPC.getTransactionByBlockIdAndIndex(
+            fifthBlockCreated.block_hash,
+            i
+          );
+        expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
+          FEE_TOKEN_ADDRESS
+        );
+        expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
+        expect(
+          validateAndParseAddress(events[2 * i + 1].from_address)
+        ).to.be.equal(FEE_TOKEN_ADDRESS);
+        expect(events[2 * i + 1].transaction_hash).to.be.equal(
+          tx.transaction_hash
+        );
+      }
+    });
+
+    it("returns expected events on correct filter many empty blocks pagination", async function () {
+      // Send transactions
+      const transactions = [];
+      for (let i = 0; i < 5; i++) {
+        transactions.push(
+          rpcTransfer(
+            providerRPC,
+            ARGENT_CONTRACT_NONCE,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT
+          )
+        );
+      }
+      await context.createBlock(transactions);
+      const firstBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+      // 4 blocks without transactions
+      const empty_transactions = [];
+      await context.createBlock(empty_transactions);
+      await context.createBlock(empty_transactions);
+      await context.createBlock(empty_transactions);
+      await context.createBlock(empty_transactions);
+
+      const fifthBlockCreated = await providerRPC.getBlockHashAndNumber();
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      let filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: fifthBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 10,
+        continuation_token: null,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      let { events, continuation_token } = await providerRPC.getEvents(filter);
+
+      expect(events.length).to.be.equal(10);
+      expect(continuation_token).to.be.equal("0,4,3");
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      filter = {
+        from_block: { block_number: firstBlockCreated.block_number },
+        to_block: { block_number: fifthBlockCreated.block_number },
+        address: FEE_TOKEN_ADDRESS,
+        chunk_size: 10,
+        continuation_token: continuation_token,
+      };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      ({ events, continuation_token } = await providerRPC.getEvents(filter));
+
+      expect(events.length).to.be.equal(0);
+      expect(continuation_token).to.be.null;
+    });
+
     it("returns expected events on correct filter with chunk size", async function () {
       // Send transactions
       const transactions = [];
@@ -1297,7 +1771,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // @ts-ignore
       const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(4);
-      expect(toHex(events.continuation_token)).to.be.equal("0x6");
+      expect(events.continuation_token).to.be.equal("0,1,3");
       for (let i = 0; i < 2; i++) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -1339,7 +1813,7 @@ describeDevMadara("Starknet RPC", (context) => {
         to_block: "latest",
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 4,
-        continuation_token: (skip * 3).toString(), // 3 events per transaction
+        continuation_token: `0,${skip - 1},${3}`, // 3 events per transaction
       };
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -1392,7 +1866,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // @ts-ignore
       const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(1);
-      expect(toHex(events.continuation_token)).to.be.equal("0x1");
+      expect(events.continuation_token).to.be.equal("0,0,1");
       expect(events.events[0]).to.deep.equal({
         transaction_hash: tx.transaction_hash,
         block_hash: block_hash_and_number.block_hash,
@@ -1419,6 +1893,13 @@ describeDevMadara("Starknet RPC", (context) => {
         "latest"
       );
       expect(nonce).to.not.be.undefined;
+    });
+  });
+
+  describe("state root", async () => {
+    it("should return default when disabled", async function () {
+      const latestBlock = await providerRPC.getBlock("latest");
+      expect(latestBlock.new_root).to.eq("0x0");
     });
   });
 });
