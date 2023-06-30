@@ -44,6 +44,7 @@ where
             let mut nonces: Vec<String> = Vec::new();
             let mut storage_diffs: Vec<String> = Vec::new();
 
+            // Locate and encode the storage change
             for event in storage_event.changes.iter() {
                 let mut prefix = event.1.0.as_slice();
                 let mut key: &[u8] = &[];
@@ -66,8 +67,9 @@ where
                     }
                 }
             }
+
             storage_diffs.append(&mut nonces);
-            let _res = madara_backend.da().store_state_diff(&storage_event.block, storage_diffs);
+            let _res: Result<(), String> = madara_backend.da().store_state_diff(&storage_event.block, storage_diffs);
 
             // Submit the StarkNet OS PIE
             if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {

@@ -21,7 +21,7 @@ pub enum CairoJobStatus {
     Failed,
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)]`
 impl CairoJobStatus {
     fn as_str(&self) -> &'static str {
         match self {
