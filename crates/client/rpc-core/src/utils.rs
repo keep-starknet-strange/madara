@@ -50,10 +50,10 @@ pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<
             }))
         }
         BlockifierContractClass::V1(_contract_class) => Ok(ContractClass::Sierra(FlattenedSierraClass {
-            sierra_program: vec![], // TODO: add sierra program
+            sierra_program: vec![], // FIXME: https://github.com/keep-starknet-strange/madara/issues/775
             contract_class_version: option_env!("COMPILER_VERSION").unwrap_or("0.11.2").into(),
             entry_points_by_type: EntryPointsByType { constructor: vec![], external: vec![], l1_handler: vec![] }, /* TODO: add entry_points_by_type */
-            abi: String::from("{}"), // TODO: add ABI
+            abi: String::from("{}"), // FIXME: https://github.com/keep-starknet-strange/madara/issues/790
         })),
     }
 }

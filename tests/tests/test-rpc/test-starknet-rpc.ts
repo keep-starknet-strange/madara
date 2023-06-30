@@ -774,7 +774,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "invalid type: map, expected variant identifier"
       );
 
-      // TODO: (Apoorv) uncomment below lines once we support a request array for estimate_fee
+      // FIXME: https://github.com/keep-starknet-strange/madara/issues/795
       // expect(fee_estimate.overall_fee === 0n).to.be.equal(1);
       // expect(fee_estimate.gas_consumed === 0n).to.be.equal(1);
     });
@@ -805,7 +805,7 @@ describeDevMadara("Starknet RPC", (context) => {
         "invalid type: map, expected variant identifier"
       );
 
-      // TODO: (Apoorv) uncomment below lines once we support a request array for estimate_fee
+      // FIXME: https://github.com/keep-starknet-strange/madara/issues/795
       // await expect(estimate)
       //   .to.eventually.be.rejectedWith("40: Contract error")
       //   .and.be.an.instanceOf(LibraryError);
