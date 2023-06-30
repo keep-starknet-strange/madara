@@ -169,6 +169,8 @@ To participate to Sharingan, there are few considerations to have in mind:
    the nodes. You can find the dashboard
    [here](https://telemetry.madara.zone/#map/). It's time to add your node on
    this map!
+   ![image](https://github.com/glihm/madara/assets/7962849/d14eeb73-e25d-4da1-914d-2aacb5e47962)
+
 
 To participate to Sharingan as a fullnode, you have two options:
 
