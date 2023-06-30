@@ -744,7 +744,7 @@ describeDevMadara("Starknet RPC", (context) => {
   //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estimateAccountDeployFee
   describe("estimateFee", async () => {
     it("should estimate fee to 0", async function () {
-      const tx = {
+      const tx1 = {
         contractAddress: ACCOUNT_CONTRACT,
         calldata: [
           TEST_CONTRACT_ADDRESS,
@@ -753,24 +753,31 @@ describeDevMadara("Starknet RPC", (context) => {
         ],
       };
 
-      const nonce = await providerRPC.getNonceForAddress(
+      const nonce1 = await providerRPC.getNonceForAddress(
         ACCOUNT_CONTRACT,
         "latest"
       );
 
-      const txDetails = {
-        nonce: nonce,
+      const nonce2 = (parseInt(nonce1, 16) + 1).toString(16);
+
+      const txDetails1 = {
+        nonce: nonce1,
+        version: "0x1",
+      };
+
+      const txDetails2 = {
+        nonce: nonce2,
         version: "0x1",
       };
 
       const fee_estimate = await providerRPC.getEstimateFee(
-        tx,
-        txDetails,
+        [tx1, tx1],
+        [txDetails1, txDetails2],
         "latest"
       );
 
-      expect(fee_estimate.overall_fee.cmp(toBN(0))).to.be.equal(1);
-      expect(fee_estimate.gas_consumed.cmp(toBN(0))).to.be.equal(1);
+      expect(fee_estimate[0].overall_fee.cmp(toBN(0))).to.be.equal(1);
+      expect(fee_estimate[0].gas_consumed.cmp(toBN(0))).to.be.equal(1);
     });
 
     it("should raise if contract does not exist", async function () {
@@ -793,7 +800,7 @@ describeDevMadara("Starknet RPC", (context) => {
         version: "0x1",
       };
 
-      const estimate = providerRPC.getEstimateFee(tx, txDetails, "latest");
+      const estimate = providerRPC.getEstimateFee([tx], [txDetails], "latest");
       await expect(estimate)
         .to.eventually.be.rejectedWith("40: Contract error")
         .and.be.an.instanceOf(LibraryError);
