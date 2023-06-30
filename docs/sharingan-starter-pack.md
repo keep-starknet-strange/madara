@@ -171,7 +171,6 @@ To participate to Sharingan, there are few considerations to have in mind:
    this map!
    ![image](https://github.com/glihm/madara/assets/7962849/d14eeb73-e25d-4da1-914d-2aacb5e47962)
 
-
 To participate to Sharingan as a fullnode, you have two options:
 
 ### Easy way: docker image
