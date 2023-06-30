@@ -292,19 +292,26 @@
             graphsElem.className = "benchmark-graphs";
             setElem.appendChild(graphsElem);
 
-            for (const [benchName, benches] of [...benchSet.entries()].sort(
-              ([keyA], [keyB]) => {
-                const lowerCaseKeyA = keyA.toLowerCase();
-                const lowerCaseKeyB = keyB.toLowerCase();
+            console.log("benchSet",benchSet);
+            window.benchset = benchSet;
 
-                if (lowerCaseKeyA.includes("tps")) {
-                  return -1; // keyA comes first
-                } else if (lowerCaseKeyB.includes("tps")) {
-                  return 1; // keyB comes first
-                }
-                return 0; // maintain the original order
-              }
-            )) {
+            // ordering of the graphs via the benchmark name
+            let order  = {
+              "Average TPS": 0,
+              "Average Extrinsics per block": 1,
+              "Average TPS (ERC721 mints)": 2,
+              "Average Extrinsics per block (ERC721 mints)": 3,
+            }
+
+            const entries = [];
+            // sort the entries by the order
+            [...benchSet.entries()].forEach((e)=>{
+              const [benchname] = e;
+              entries[order[benchname]] = e;
+            })
+
+            for (const [benchName, benches] of entries)
+              {
               renderGraph(graphsElem, benchName, benches);
             }
           }
