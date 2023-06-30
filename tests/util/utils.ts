@@ -16,7 +16,6 @@ import {
 } from "../tests/constants";
 import { numberToU8a } from "@polkadot/util";
 
-
 // Convert a BigNumberish to a hex string
 export function toHex(value: BigNumberish) {
   return num.toHex(value);
@@ -48,7 +47,11 @@ export async function rpcTransfer(
   transferAmount: string,
   maxFee?: number
 ): Promise<InvokeFunctionResponse> {
-  const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE);
+  const account = new Account(
+    providerRPC,
+    ARGENT_CONTRACT_ADDRESS,
+    SIGNER_PRIVATE
+  );
 
   const invokeResponse = account.execute(
     {
