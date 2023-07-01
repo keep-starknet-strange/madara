@@ -10,7 +10,7 @@ use super::hash::pedersen::PedersenHasher;
 use super::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
 use super::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 use crate::execution::types::Felt252Wrapper;
-use crate::traits::hash::CryptoHasherT;
+use crate::traits::hash::HasherT;
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
 };
@@ -25,17 +25,17 @@ pub type ClassCommitmentLeafHash = Felt252Wrapper;
 /// of the index of the transaction / event within the block.
 ///
 /// The tree height is 64 in our case since our set operation takes u64 index values.
-struct CommitmentTree<T: CryptoHasherT> {
+struct CommitmentTree<T: HasherT> {
     tree: RefMerkleTree<T>,
 }
 
-impl<T: CryptoHasherT> Default for CommitmentTree<T> {
+impl<T: HasherT> Default for CommitmentTree<T> {
     fn default() -> Self {
         Self { tree: RefMerkleTree::empty() }
     }
 }
 
-impl<T: CryptoHasherT> CommitmentTree<T> {
+impl<T: HasherT> CommitmentTree<T> {
     /// Sets the value of a key in the merkle tree.
     ///
     /// # Arguments
@@ -60,17 +60,17 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
 ///
 /// The tree height is 251 in our case since our set operation takes Fieldelement index values.
 #[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
-pub struct StateCommitmentTree<T: CryptoHasherT> {
+pub struct StateCommitmentTree<T: HasherT> {
     tree: MerkleTree<T>,
 }
 
-impl<T: CryptoHasherT> Default for StateCommitmentTree<T> {
+impl<T: HasherT> Default for StateCommitmentTree<T> {
     fn default() -> Self {
         Self { tree: MerkleTree::empty() }
     }
 }
 
-impl<T: CryptoHasherT> StateCommitmentTree<T> {
+impl<T: HasherT> StateCommitmentTree<T> {
     /// Sets the value of a key in the merkle tree.
     ///
     /// # Arguments
@@ -103,7 +103,7 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-pub fn calculate_commitments<T: CryptoHasherT>(
+pub fn calculate_commitments<T: HasherT>(
     transactions: &[Transaction],
     events: &[EventWrapper],
 ) -> (Felt252Wrapper, Felt252Wrapper) {
@@ -123,7 +123,7 @@ pub fn calculate_commitments<T: CryptoHasherT>(
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transaction]) -> Felt252Wrapper {
+pub fn calculate_transaction_commitment<T: HasherT>(transactions: &[Transaction]) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<T>::default();
 
     transactions.iter().enumerate().for_each(|(idx, tx)| {
@@ -148,7 +148,7 @@ pub fn calculate_transaction_commitment<T: CryptoHasherT>(transactions: &[Transa
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> Felt252Wrapper {
+pub fn calculate_event_commitment<T: HasherT>(events: &[EventWrapper]) -> Felt252Wrapper {
     let mut tree = CommitmentTree::<T>::default();
     events.iter().enumerate().for_each(|(id, event)| {
         let final_hash = calculate_event_hash::<T>(event);
@@ -168,7 +168,7 @@ pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> 
 /// # Returns
 ///
 /// The hash of the class commitment tree leaf.
-pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(
+pub fn calculate_class_commitment_leaf_hash<T: HasherT>(
     compiled_class_hash: Felt252Wrapper,
 ) -> ClassCommitmentLeafHash {
     let contract_class_hash_version = Felt252Wrapper::try_from("CONTRACT_CLASS_LEAF_V0".as_bytes()).unwrap(); // Unwrap safu
@@ -190,7 +190,7 @@ pub fn calculate_class_commitment_leaf_hash<T: CryptoHasherT>(
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the classes.
-pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes: &[Felt252Wrapper]) -> Felt252Wrapper {
+pub fn calculate_class_commitment_tree_root_hash<T: HasherT>(class_hashes: &[Felt252Wrapper]) -> Felt252Wrapper {
     let mut tree = StateCommitmentTree::<T>::default();
     class_hashes.iter().for_each(|class_hash| {
         let final_hash = calculate_class_commitment_leaf_hash::<T>(*class_hash);
@@ -211,7 +211,7 @@ pub fn calculate_class_commitment_tree_root_hash<T: CryptoHasherT>(class_hashes:
 /// # Returns
 ///
 /// The contract state hash.
-pub fn calculate_contract_state_hash<T: CryptoHasherT>(
+pub fn calculate_contract_state_hash<T: HasherT>(
     hash: Felt252Wrapper,
     root: Felt252Wrapper,
     nonce: Felt252Wrapper,
@@ -241,12 +241,12 @@ pub fn calculate_contract_state_hash<T: CryptoHasherT>(
 /// The transaction hash with signature.
 fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> FieldElement
 where
-    T: CryptoHasherT,
+    T: HasherT,
 {
-    let signature_hash = <T as CryptoHasherT>::compute_hash_on_elements(
+    let signature_hash = <T as HasherT>::compute_hash_on_elements(
         &tx.signature.iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
     );
-    <T as CryptoHasherT>::hash(FieldElement::from(tx.hash), signature_hash)
+    <T as HasherT>::hash_elements(FieldElement::from(tx.hash), signature_hash)
 }
 /// Computes the transaction hash of an invoke transaction.
 ///
@@ -319,11 +319,11 @@ pub fn calculate_transaction_hash_common<T>(
     compiled_class_hash: Option<Felt252Wrapper>,
 ) -> Felt252Wrapper
 where
-    T: CryptoHasherT,
+    T: HasherT,
 {
     // All the values are validated before going through this function so it's safe to unwrap.
     let sender_address = FieldElement::from_bytes_be(&sender_address.into()).unwrap();
-    let calldata_hash = <T as CryptoHasherT>::compute_hash_on_elements(
+    let calldata_hash = <T as HasherT>::compute_hash_on_elements(
         &calldata.iter().map(|&val| FieldElement::from(val)).collect::<Vec<FieldElement>>(),
     );
     let max_fee = FieldElement::from_bytes_be(&max_fee.into()).unwrap();
@@ -337,7 +337,7 @@ where
         elements.push(FieldElement::from_bytes_be(&compiled_class_hash.into()).unwrap())
     }
 
-    let tx_hash = <T as CryptoHasherT>::compute_hash_on_elements(&elements);
+    let tx_hash = <T as HasherT>::compute_hash_on_elements(&elements);
 
     tx_hash.into()
 }
@@ -346,7 +346,7 @@ where
 ///
 /// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
 /// for details.
-pub fn calculate_event_hash<T: CryptoHasherT>(event: &EventWrapper) -> FieldElement {
+pub fn calculate_event_hash<T: HasherT>(event: &EventWrapper) -> FieldElement {
     let keys_hash = T::compute_hash_on_elements(
         &event.keys.iter().map(|key| FieldElement::from(*key)).collect::<Vec<FieldElement>>(),
     );

@@ -1,4 +1,6 @@
 //! This module contains the hash functions used in the StarkNet protocol.
+use starknet_ff::FieldElement;
+
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::traits::hash::HasherT;
 use crate::traits::ThreadSafeCopy;
@@ -20,18 +22,32 @@ impl ThreadSafeCopy for Hasher {}
 
 /// Implement the `HasherT` trait for the `Hasher` enum.
 impl HasherT for Hasher {
-    fn hash(&self, data: &[u8]) -> Felt252Wrapper {
+    fn hash_bytes(&self, data: &[u8]) -> Felt252Wrapper {
         match self {
-            Self::Pedersen(p) => p.hash(data),
-            Self::Poseidon(p) => p.hash(data),
+            Self::Pedersen(p) => p.hash_bytes(data),
+            Self::Poseidon(p) => p.hash_bytes(data),
         }
     }
 
-    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
+    fn compute_hash_on_wrappers(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
         match self {
-            Self::Pedersen(p) => p.hash_elements(data),
-            Self::Poseidon(p) => p.hash_elements(data),
+            Self::Pedersen(p) => p.compute_hash_on_wrappers(data),
+            Self::Poseidon(p) => p.compute_hash_on_wrappers(data),
         }
+    }
+
+    fn hash_elements(_a: FieldElement, _b: FieldElement) -> FieldElement {
+        todo!()
+    }
+
+    fn compute_hash_on_elements(_elements: &[FieldElement]) -> FieldElement {
+        todo!()
+    }
+}
+
+impl Default for Hasher {
+    fn default() -> Self {
+        Hasher::Pedersen(pedersen::PedersenHasher::default()) // Here we choose `Variant2` with a value of `0` as the default.
     }
 }
 
@@ -64,7 +80,7 @@ into_hasher! {
 /// The hash of the data.
 pub fn hash(hasher: Hasher, data: &[u8]) -> Felt252Wrapper {
     match hasher {
-        Hasher::Pedersen(p) => p.hash(data),
-        Hasher::Poseidon(p) => p.hash(data),
+        Hasher::Pedersen(p) => p.hash_bytes(data),
+        Hasher::Poseidon(p) => p.hash_bytes(data),
     }
 }

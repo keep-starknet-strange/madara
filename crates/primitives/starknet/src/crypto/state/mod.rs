@@ -1,7 +1,7 @@
 use core::marker::PhantomData;
 
 use crate::execution::types::Felt252Wrapper;
-use crate::traits::hash::CryptoHasherT;
+use crate::traits::hash::HasherT;
 
 /// Root of the Merkle-Patricia tree whose leaves are the contracts states
 pub type StorageCommitment = Felt252Wrapper;
@@ -9,9 +9,9 @@ pub type StorageCommitment = Felt252Wrapper;
 pub type ClassCommitment = Felt252Wrapper;
 
 /// Global Starknet State Commitment
-pub struct StateCommitment<T: CryptoHasherT>(Felt252Wrapper, PhantomData<T>);
+pub struct StateCommitment<T: HasherT>(Felt252Wrapper, PhantomData<T>);
 
-impl<T: CryptoHasherT> StateCommitment<T> {
+impl<T: HasherT> StateCommitment<T> {
     /// Calculates  global state commitment by combining the storage and class commitment.
     ///
     /// See
