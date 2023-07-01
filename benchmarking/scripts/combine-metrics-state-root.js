@@ -15,7 +15,10 @@ function main() {
     metrics.forEach((metric) => finalOutput.push(metric));
   });
 
-  fs.writeFileSync("reports/metrics-state-root.json", JSON.stringify(finalOutput));
+  fs.writeFileSync(
+    "reports/metrics-state-root.json",
+    JSON.stringify(finalOutput)
+  );
 }
 
 try {
