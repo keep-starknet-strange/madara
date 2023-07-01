@@ -17,5 +17,4 @@ services:
         source: ./.local
         target: /root/.local
     command:
-      bash -c "cargo build --release && ./target/release/madara --dev
-      --ws-external"
+      bash -c "cargo build --release && ./target/release/madara --dev"
