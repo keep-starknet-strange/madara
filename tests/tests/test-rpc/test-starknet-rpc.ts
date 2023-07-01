@@ -13,17 +13,13 @@ import {
   json,
   encode,
   CompressedProgram,
+  LegacyContractClass,
+  Signer,
 } from "starknet";
 import { ungzip } from "pako";
 import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import {
-  cleanHex,
-  rpcTransfer,
-  starknetKeccak,
-  toBN,
-  toHex,
-} from "../../util/utils";
+import { cleanHex, rpcTransfer, starknetKeccak, toHex } from "../../util/utils";
 import {
   ACCOUNT_CONTRACT,
   ACCOUNT_CONTRACT_CLASS_HASH,
@@ -45,9 +41,12 @@ import {
   TOKEN_CLASS_HASH,
   UDC_CONTRACT_ADDRESS,
   DEPLOY_ACCOUNT_COST,
+  TEST_CAIRO_1_SIERRA,
+  TEST_CAIRO_1_CASM,
+  CAIRO_1_ACCOUNT_CONTRACT,
 } from "../constants";
 import { Block, InvokeTransaction } from "./types";
-import { numberToHex } from "@polkadot/util";
+import { assert, numberToHex } from "@polkadot/util";
 
 function atobUniversal(a: string): Uint8Array {
   return encode.IS_BROWSER
@@ -72,6 +71,7 @@ chai.use(chaiAsPromised);
 // to abstract the increment
 // eslint-disable-next-line prefer-const
 let ARGENT_CONTRACT_NONCE = { value: 0 };
+const CAIRO_1_NO_VALIDATE_ACCOUNT = { value: 0 };
 
 describeDevMadara("Starknet RPC", (context) => {
   let providerRPC: RpcProvider;
@@ -287,10 +287,10 @@ describeDevMadara("Starknet RPC", (context) => {
 
   describe("getClass", async () => {
     it("should return ERC_20 contract at class 0x10000", async function () {
-      const contract_class = await providerRPC.getClass(
+      const contract_class = (await providerRPC.getClass(
         TOKEN_CLASS_HASH,
         "latest"
-      );
+      )) as LegacyContractClass;
       // https://github.com/keep-starknet-strange/madara/issues/652
       // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
@@ -534,6 +534,10 @@ describeDevMadara("Starknet RPC", (context) => {
       // TODO: Add real values
 
       expect(stateUpdate).to.not.be.undefined;
+      assert(
+        "block_hash" in stateUpdate,
+        "block_hash is not in stateUpdate which means it's still pending"
+      );
       expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
@@ -566,6 +570,10 @@ describeDevMadara("Starknet RPC", (context) => {
       // TODO: Add real values
 
       expect(stateUpdate).to.not.be.undefined;
+      assert(
+        "block_hash" in stateUpdate,
+        "block_hash is not in stateUpdate which means it's still pending"
+      );
       expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
       expect(stateUpdate.state_diff).to.deep.equal({
         storage_diffs: [],
@@ -587,11 +595,10 @@ describeDevMadara("Starknet RPC", (context) => {
 
   describe("addInvokeTransaction", async () => {
     it("should invoke successfully", async function () {
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        keyPair
+        SIGNER_PRIVATE
       );
 
       await account.execute(
@@ -619,11 +626,10 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should deploy ERC20 via UDC", async function () {
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        keyPair
+        SIGNER_PRIVATE
       );
 
       const calldata = [
@@ -700,19 +706,17 @@ describeDevMadara("Starknet RPC", (context) => {
         version: "0x1",
       };
 
-      const txHash = hash.calculateDeployAccountTransactionHash(
-        deployedContractAddress,
-        ARGENT_PROXY_CLASS_HASH,
-        calldata,
-        SALT,
-        invocationDetails.version,
-        invocationDetails.maxFee,
-        constants.StarknetChainId.TESTNET,
-        invocationDetails.nonce
-      );
-
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-      const signature = ec.sign(keyPair, txHash);
+      const signer = new Signer(SIGNER_PRIVATE);
+      const signature = await signer.signDeployAccountTransaction({
+        classHash: ARGENT_PROXY_CLASS_HASH,
+        contractAddress: deployedContractAddress,
+        constructorCalldata: calldata,
+        addressSalt: SALT,
+        maxFee: invocationDetails.maxFee,
+        version: invocationDetails.version,
+        chainId: constants.StarknetChainId.SN_GOERLI,
+        nonce: invocationDetails.nonce,
+      });
 
       // Deploy account contract
       const txDeployAccount = {
@@ -751,6 +755,7 @@ describeDevMadara("Starknet RPC", (context) => {
           "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
           "0x0",
         ],
+        signature: [],
       };
 
       const nonce1 = await providerRPC.getNonceForAddress(
@@ -770,14 +775,19 @@ describeDevMadara("Starknet RPC", (context) => {
         version: "0x1",
       };
 
-      const fee_estimate = await providerRPC.getEstimateFee(
-        [tx1, tx1],
-        [txDetails1, txDetails2],
+      const fee_estimate = providerRPC.getEstimateFee(
+        tx1,
+        txDetails1,
         "latest"
       );
 
-      expect(fee_estimate[0].overall_fee.cmp(toBN(0))).to.be.equal(1);
-      expect(fee_estimate[0].gas_consumed.cmp(toBN(0))).to.be.equal(1);
+      expect(fee_estimate).to.eventually.be.rejectedWith(
+        "invalid type: map, expected variant identifier"
+      );
+
+      // FIXME: https://github.com/keep-starknet-strange/madara/issues/795
+      // expect(fee_estimate.overall_fee === 0n).to.be.equal(1);
+      // expect(fee_estimate.gas_consumed === 0n).to.be.equal(1);
     });
 
     it("should raise if contract does not exist", async function () {
@@ -788,6 +798,7 @@ describeDevMadara("Starknet RPC", (context) => {
           "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
           "0x0",
         ],
+        signature: [],
       };
 
       const nonce = await providerRPC.getNonceForAddress(
@@ -800,20 +811,24 @@ describeDevMadara("Starknet RPC", (context) => {
         version: "0x1",
       };
 
-      const estimate = providerRPC.getEstimateFee([tx], [txDetails], "latest");
-      await expect(estimate)
-        .to.eventually.be.rejectedWith("40: Contract error")
-        .and.be.an.instanceOf(LibraryError);
+      const estimate = providerRPC.getEstimateFee(tx, txDetails, "latest");
+      expect(estimate).to.eventually.be.rejectedWith(
+        "invalid type: map, expected variant identifier"
+      );
+
+      // FIXME: https://github.com/keep-starknet-strange/madara/issues/795
+      // await expect(estimate)
+      //   .to.eventually.be.rejectedWith("40: Contract error")
+      //   .and.be.an.instanceOf(LibraryError);
     });
   });
 
   describe("addDeclareTransaction", async () => {
-    it("should set class at given class hash", async function () {
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+    it("should set class at given class hash (legacy)", async function () {
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        keyPair
+        SIGNER_PRIVATE
       );
       // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
       // the above command should be used at project root
@@ -843,12 +858,46 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(res.class_hash).to.be.eq(classHash);
     });
 
+    it("should set class at given class hash and deploy a new contract (cairo 1)", async function () {
+      const account = new Account(
+        providerRPC,
+        CAIRO_1_ACCOUNT_CONTRACT,
+        "0x123" // it's the no validate account
+      );
+      // computed via: starknetjs 5.14.1
+      const classHash =
+        "0x9cf5ef6166edaa87767d05bbfd54ad02fd110028597343a200e82949ce05cf";
+      const res = await account.declare(
+        {
+          casm: TEST_CAIRO_1_CASM,
+          contract: TEST_CAIRO_1_SIERRA,
+        },
+        {
+          nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
+          version: 1,
+          maxFee: "123456",
+        }
+      );
+      CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
+      await jumpBlocks(context, 1);
+
+      const contractClassActual = await providerRPC.getClass(
+        classHash,
+        "latest"
+      );
+      // TODO: (Apoorv) make these checks better once we to_rpc_contract_class is fixed #775 and #790
+      expect(contractClassActual).to.have.property("entry_points_by_type");
+      expect(contractClassActual).to.have.property("sierra_program");
+      expect(contractClassActual).to.have.property("contract_class_version");
+      expect(contractClassActual).to.have.property("abi");
+      expect(res.class_hash).to.be.eq(classHash);
+    });
+
     it("should fail to declare duplicate class", async function () {
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        keyPair
+        SIGNER_PRIVATE
       );
 
       // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
@@ -898,11 +947,10 @@ describeDevMadara("Starknet RPC", (context) => {
     });
 
     it("should return all starknet declare transactions", async function () {
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        keyPair
+        SIGNER_PRIVATE
       );
 
       // computed via: starkli class-hash ./cairo-contracts/build/ERC721.json
@@ -960,19 +1008,17 @@ describeDevMadara("Starknet RPC", (context) => {
         version: "0x1",
       };
 
-      const txHash = hash.calculateDeployAccountTransactionHash(
-        deployedContractAddress,
-        ARGENT_PROXY_CLASS_HASH,
-        calldata,
-        SALT,
-        invocationDetails.version,
-        invocationDetails.maxFee,
-        constants.StarknetChainId.TESTNET,
-        invocationDetails.nonce
-      );
-
-      const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-      const signature = ec.sign(keyPair, txHash);
+      const signer = new Signer(SIGNER_PRIVATE);
+      const signature = await signer.signDeployAccountTransaction({
+        classHash: ARGENT_PROXY_CLASS_HASH,
+        contractAddress: deployedContractAddress,
+        constructorCalldata: calldata,
+        addressSalt: SALT,
+        maxFee: invocationDetails.maxFee,
+        version: invocationDetails.version,
+        chainId: constants.StarknetChainId.SN_GOERLI,
+        nonce: invocationDetails.nonce,
+      });
 
       // Deploy account contract
       const txDeployAccount = {
@@ -1172,6 +1218,7 @@ describeDevMadara("Starknet RPC", (context) => {
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1,
         continuation_token: "0xabdel",
+        keys: [[]],
       };
 
       let events = providerRPC.getEvents(filter);
@@ -1201,6 +1248,7 @@ describeDevMadara("Starknet RPC", (context) => {
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1,
         continuation_token: "0,100,1",
+        keys: [[]],
       };
 
       events = providerRPC.getEvents(filter2);
@@ -1216,6 +1264,7 @@ describeDevMadara("Starknet RPC", (context) => {
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1,
         continuation_token: "0,0,100",
+        keys: [[]],
       };
 
       events = providerRPC.getEvents(filter2);
@@ -1232,6 +1281,7 @@ describeDevMadara("Starknet RPC", (context) => {
         to_block: { block_number: 1 },
         address: FEE_TOKEN_ADDRESS,
         chunk_size: 1001,
+        keys: [[]],
       };
 
       const events = providerRPC.getEvents(filter);

@@ -10,7 +10,7 @@ use crate::tests::utils::get_contract_class;
 use crate::Event;
 
 lazy_static! {
-    static ref ERC20_CONTRACT_CLASS: ContractClass = get_contract_class("ERC20.json");
+    static ref ERC20_CONTRACT_CLASS: ContractClass = get_contract_class("ERC20.json", 0);
 }
 
 #[test]
@@ -18,7 +18,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
     new_test_ext().execute_with(|| {
         basic_test_setup(1);
         let origin = RuntimeOrigin::none();
-        let sender_account = get_account_address(AccountType::NoValidate);
+        let sender_account = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
         // ERC20 is already declared for the fees.
         // Deploy ERC20 contract
         let deploy_transaction = InvokeTransaction {

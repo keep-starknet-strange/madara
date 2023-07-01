@@ -182,7 +182,7 @@ fn get_storage_read_write_dummy() -> Transaction {
     }
     .from_invoke(Starknet::chain_id());
 
-    tx.contract_class = Some(get_contract_class("NoValidateAccount.json"));
+    tx.contract_class = Some(get_contract_class("NoValidateAccount.json", 0));
 
     tx
 }
