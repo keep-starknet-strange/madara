@@ -7,10 +7,10 @@ use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
-    STARKNET_NONCE, STARKNET_STORAGE, SYSTEM_EVENTS,
+    STARKNET_NONCE, STARKNET_STATE_COMMITMENTS, STARKNET_STORAGE, SYSTEM_EVENTS,
 };
 use mp_starknet::transaction::types::EventWrapper;
-use pallet_starknet::types::NonceWrapper;
+use pallet_starknet::types::{NonceWrapper, StateCommitments};
 use pallet_starknet::Event;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -147,6 +147,16 @@ where
                 })
                 .collect()
         })
+    }
+
+    fn state_commitments(&self, block_hash: <B as BlockT>::Hash) -> Option<StateCommitments> {
+        let state_key = storage_prefix_build(PALLET_STARKNET, STARKNET_STATE_COMMITMENTS);
+        let commitments = self.query_storage::<StateCommitments>(block_hash, &StorageKey(state_key));
+
+        match commitments {
+            Some(commitments) => Some(commitments),
+            None => Some(StateCommitments::default()),
+        }
     }
 
     fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {

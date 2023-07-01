@@ -209,7 +209,6 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.into();
 
         let value = self
@@ -869,6 +868,19 @@ where
             })?;
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+
+        let global_state_root = block.header().global_state_root;
+
+        let state_commitments = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .get_state_commitments(substrate_block_hash)
+            .ok_or_else(|| {
+                error!("Failed to retrieve state commitments");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+
     }
 }
 

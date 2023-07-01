@@ -1,6 +1,7 @@
 use mp_starknet::crypto::merkle_patricia_tree::merkle_tree::ProofNode;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
+use starknet_core::types::{BlockId, FieldElement};
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct RpcGetProofInput {

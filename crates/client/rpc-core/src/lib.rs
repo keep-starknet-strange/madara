@@ -25,6 +25,8 @@ use starknet_core::types::{
     StateUpdate, SyncStatusType, Transaction,
 };
 
+use crate::types::{RpcGetProofInput, RpcGetProofOutput};
+
 #[serde_as]
 #[derive(Serialize, Deserialize)]
 pub struct Felt(#[serde_as(as = "UfeHex")] pub FieldElement);

@@ -26,6 +26,8 @@ pub const STARKNET_NONCE: &[u8] = b"Nonces";
 pub const STARKNET_CHAIN_ID: &[u8] = b"ChainId";
 /// Starknet storage
 pub const STARKNET_STORAGE: &[u8] = b"StorageView";
+/// Starknet state committment tries
+pub const STARKNET_STATE_COMMITMENTS: &[u8] = b"StarknetStateCommitments";
 
 /// The schema version for Pallet Starknet's storage.
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]

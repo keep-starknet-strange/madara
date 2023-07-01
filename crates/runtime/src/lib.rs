@@ -277,6 +277,10 @@ impl_runtime_apis! {
             Starknet::get_system_hash().into()
         }
 
+        fn get_state_commitments() -> StateCommitments {
+            Starknet::starknet_state_commitments()
+        }
+
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
             let chain_id  = Starknet::chain_id();
 

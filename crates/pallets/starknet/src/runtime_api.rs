@@ -15,7 +15,7 @@ use alloc::vec::Vec;
 
 use sp_runtime::DispatchError;
 
-use crate::types::NonceWrapper;
+use crate::types::{NonceWrapper, StateCommitments};
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
@@ -37,6 +37,8 @@ sp_api::decl_runtime_apis! {
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
         /// Returns the hasher used by the runtime.
         fn get_hasher() -> Hasher;
+        /// Returns state commitments
+        fn get_state_commitments() -> StateCommitments;
         /// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic
