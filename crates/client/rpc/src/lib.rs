@@ -909,8 +909,7 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        let storage_commitment = Some(state_commitments.storage_commitment.commit().into());
-        let class_commitment = Some(state_commitments.class_commitment.commit().into());
+        let class_commitment: Option<FieldElement> = Some(state_commitments.class_commitment.commit().into());
 
         // Generate a proof for this contract. If the contract does not exist, this will
         // be a "non membership" proof.
