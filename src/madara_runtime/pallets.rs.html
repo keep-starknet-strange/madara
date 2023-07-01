@@ -164,6 +164,9 @@
 <a href="#164" id="164">164</a>
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
@@ -202,7 +205,10 @@
     <span class="kw">type </span>TimestampProvider = Timestamp;
     <span class="kw">type </span>UnsignedPriority = UnsignedPriority;
     <span class="kw">type </span>TransactionLongevity = TransactionLongevity;
-    <span class="kw">type </span>EnableStateRoot = ConstBool&lt;<span class="bool-val">false</span>&gt;;
+    <span class="attr">#[cfg(not(feature = <span class="string">&quot;madara-state-root&quot;</span>))]
+    </span><span class="kw">type </span>EnableStateRoot = ConstBool&lt;<span class="bool-val">false</span>&gt;;
+    <span class="attr">#[cfg(feature = <span class="string">&quot;madara-state-root&quot;</span>)]
+    </span><span class="kw">type </span>EnableStateRoot = ConstBool&lt;<span class="bool-val">true</span>&gt;;
     <span class="kw">type </span>InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     <span class="kw">type </span>ValidateMaxNSteps = ValidateMaxNSteps;
     <span class="kw">type </span>ProtocolVersion = ProtocolVersion;
