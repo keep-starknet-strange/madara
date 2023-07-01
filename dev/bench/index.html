@@ -87,11 +87,45 @@
       .benchmark-chart {
         max-width: 1000px;
       }
-    </style>
+      nav {
+        background-color: #f2f2f2;
+        padding: 10px;
+      }
+
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      li {
+        display: inline;
+        margin-right: 10px;
+      }
+
+      a {
+        text-decoration: none;
+        color: #333;
+        padding: 5px;
+      }
+
+      a:hover {
+        background-color: #333;
+        color: #fff;
+      }
+        </style>
     <title>Benchmarks</title>
   </head>
 
   <body>
+    <nav>
+      <ul>
+        <li><a href="../bench/index.html">Default</a></li>
+        <li><a href="../bench-with-state-root/index.html">State root</a></li>
+      </ul>
+    </nav>
+    </br>
+
     <header id="header">
       <div class="header-item">
         <strong class="header-label">Last Update:</strong>
