@@ -93,4 +93,5 @@ jobs:
           summary-always: ${{ github.ref == 'refs/heads/main' }}
           comment-always: false
           comment-on-alert: false
+          benchmark-data-dir-path: "dev/bench-with-state-root"
           auto-push: ${{ github.ref == 'refs/heads/main' }}
