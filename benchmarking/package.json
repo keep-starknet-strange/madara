@@ -21,7 +21,7 @@
     "chain:dev-state-root": "../scripts/run_node.sh --with-state-root",
     "test:ci-state-root:erc20": "concurrently -k --success 'command-1' 'npm run chain:dev-state-root' 'npm run test:erc20-transfer'",
     "test:ci-state-root:erc721": "concurrently -k --success 'command-1' 'npm run chain:dev-state-root' 'npm run test:erc721-mint'",
-    "test:ci-state-root": "npm run test:ci-state-root:erc20 && npm run test:ci-state-root:erc721 && node ./scripts/combine-metrics.js"
+    "test:ci-state-root": "npm run test:ci-state-root:erc20 && npm run test:ci-state-root:erc721 && node ./scripts/combine-metrics-state-root.js"
   },
   "keywords": [
     "madara",

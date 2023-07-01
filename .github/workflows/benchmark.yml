@@ -86,7 +86,7 @@ jobs:
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: "customBiggerIsBetter"
-          output-file-path: ./benchmarking/reports/metrics.json
+          output-file-path: ./benchmarking/reports/metrics-state-root.json
           alert-threshold: "120%"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-alert: true
