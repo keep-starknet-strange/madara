@@ -104,6 +104,7 @@ try-runtime = [
   "pallet-starknet/try-runtime",
 ]
 default = ["std"]
+madara-state-root = []
 runtime-benchmarks = [
   "frame-benchmarking/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
