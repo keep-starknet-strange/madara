@@ -58,9 +58,10 @@ fn test_declare_tx_hash() {
         nonce: Felt252Wrapper::ZERO,
         signature: bounded_vec!(),
         max_fee: Felt252Wrapper::ONE,
-        compiled_class_hash: Felt252Wrapper::THREE,
+        class_hash: Felt252Wrapper::THREE,
         // Arbitrary choice to pick v1 vs v0.
         contract_class: ContractClass::from(ContractClassV1::default()),
+        compiled_class_hash: None,
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }

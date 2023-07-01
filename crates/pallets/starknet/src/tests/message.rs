@@ -24,6 +24,7 @@ fn test_try_into_transaction_correct_message_should_work() {
             storage_address: felt_one,
             caller_address: ContractAddressWrapper::default(),
             initial_gas: Felt252Wrapper::default(),
+            compiled_class_hash: None,
         },
         ..Transaction::default()
     };

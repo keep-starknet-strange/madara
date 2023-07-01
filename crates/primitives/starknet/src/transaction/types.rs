@@ -9,7 +9,6 @@ use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
-use cairo_vm::types::program::Program;
 use frame_support::BoundedVec;
 use sp_core::{ConstU32, U256};
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
@@ -167,7 +166,9 @@ pub struct DeclareTransaction {
     /// Transaction sender address.
     pub sender_address: ContractAddressWrapper,
     /// Class hash to declare.
-    pub compiled_class_hash: Felt252Wrapper,
+    pub compiled_class_hash: Option<Felt252Wrapper>,
+    /// Sierra class hash used in V2.
+    pub class_hash: Felt252Wrapper,
     /// Contract to declare.
     pub contract_class: ContractClass,
     /// Account contract nonce.
@@ -189,13 +190,14 @@ impl DeclareTransaction {
             sender_address: self.sender_address,
             nonce: self.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(self.compiled_class_hash),
+                Some(self.class_hash),
                 EntryPointTypeWrapper::External,
                 None,
                 BoundedVec::default(),
                 self.sender_address,
                 self.sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710
+                self.compiled_class_hash,
             ),
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
@@ -270,6 +272,7 @@ impl DeployAccountTransaction {
                 sender_address,
                 sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                None,
             ),
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
@@ -285,9 +288,15 @@ pub enum TransactionConversionError {
     /// Class hash is missing from the object of type [Transaction]
     #[error("Class hash is missing from the object of type [Transaction]")]
     MissingClassHash,
+    /// Casm class hash is missing from the object of type [Transaction]
+    #[error("Casm class hash is missing from the object of type [Transaction]")]
+    MissingCasmClassHash,
     /// Class is missing from the object of type [Transaction]
     #[error("Class is missing from the object of type [Transaction]")]
     MissingClass,
+    /// Casm class hash must be None in [Transaction] for version <=1
+    #[error("Casm class hash must be None in [Transaction] for version <=1")]
+    CasmClashHashNotNone,
     /// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
     #[error("Impossible to derive the contract address from the object of type [DeployAccountTransaction]")]
     ContractAddressDerivationError,
@@ -295,16 +304,20 @@ pub enum TransactionConversionError {
 impl TryFrom<Transaction> for DeclareTransaction {
     type Error = TransactionConversionError;
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
+        let casm_class_hash = value.call_entrypoint.compiled_class_hash;
+        if value.version <= 1 && casm_class_hash.is_some() {
+            return Err(TransactionConversionError::CasmClashHashNotNone);
+        } else if value.version == 2 && casm_class_hash.is_none() {
+            return Err(TransactionConversionError::MissingCasmClassHash);
+        }
         Ok(Self {
             version: value.version,
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
             contract_class: value.contract_class.ok_or(TransactionConversionError::MissingClass)?,
-            compiled_class_hash: value
-                .call_entrypoint
-                .class_hash
-                .ok_or(TransactionConversionError::MissingClassHash)?,
+            compiled_class_hash: casm_class_hash,
+            class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
         })
     }
@@ -369,6 +382,7 @@ impl InvokeTransaction {
                 self.sender_address,
                 self.sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                None,
             ),
             contract_class: None,
             contract_address_salt: None,
@@ -543,26 +557,16 @@ pub enum StateDiffError {
 
 #[cfg(feature = "std")]
 mod reexport_private_types {
-    use std::collections::HashMap;
 
-    use blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
-    use flate2::read::GzDecoder;
-    use starknet_api::api_core::EntryPointSelector;
-    use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
-    use starknet_core::types::contract::legacy::{
-        LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
-    };
     use starknet_core::types::contract::ComputeClassHashError;
     use starknet_core::types::{
-        BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-        DeclareTransaction as RPCDeclareTransaction, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
-        DeclareTransactionV1 as RPCDeclareTransactionV1, DeclareTransactionV2 as RPCDeclareTransactionV2,
-        DeployAccountTransaction as RPCDeployAccountTransaction,
+        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
+        DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
+        DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
         DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
         InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
         InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
         L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
-        LegacyContractEntryPoint, LegacyEntryPointsByType,
         MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError,
         Transaction as RPCTransaction, TransactionReceipt as RPCTransactionReceipt,
         TransactionStatus as RPCTransactionStatus,
@@ -593,6 +597,15 @@ mod reexport_private_types {
         /// Failed to bound calldata Vec<U256> by MaxCalldataSize
         #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
         CalldataBoundError,
+        /// Failed to compile Sierra to Casm
+        #[error("failed to compile Sierra to Casm")]
+        SierraCompilationError,
+        /// Failed to convert Casm contract class to ContractClassV1
+        #[error("failed to convert Casm contract class to ContractClassV1")]
+        CasmContractClassConversionError,
+        /// Computed compiled class hash doesn't match with the request
+        #[error("compiled class hash does not match sierra code")]
+        CompiledClassHashError,
         /// Starknet Error
         #[error(transparent)]
         StarknetError(#[from] StarknetError),
@@ -602,122 +615,6 @@ mod reexport_private_types {
         /// Failed to compute the contract class hash.
         #[error(transparent)]
         ClassHashComputationError(#[from] ComputeClassHashError),
-    }
-
-    fn to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -> RawLegacyEntryPoints {
-        RawLegacyEntryPoints {
-            constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
-            external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
-            l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
-        }
-    }
-
-    fn to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -> RawLegacyEntryPoint {
-        RawLegacyEntryPoint {
-            offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset),
-            selector: entry_point.selector,
-        }
-    }
-
-    impl TryFrom<BroadcastedDeclareTransaction> for DeclareTransaction {
-        type Error = BroadcastedTransactionConversionErrorWrapper;
-        fn try_from(tx: BroadcastedDeclareTransaction) -> Result<DeclareTransaction, Self::Error> {
-            match tx {
-                BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
-                    let signature = declare_tx_v1
-                        .signature
-                        .iter()
-                        .map(|f| (*f).into())
-                        .collect::<Vec<Felt252Wrapper>>()
-                        .try_into()
-                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
-
-                    // Create a GzipDecoder to decompress the bytes
-                    let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
-
-                    // Read the decompressed bytes into a Vec<u8>
-                    let mut decompressed_bytes = Vec::new();
-                    std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes).map_err(|_| {
-                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
-                    })?;
-
-                    // Deserialize it then
-                    let program: Program = Program::from_bytes(&decompressed_bytes, None).map_err(|_| {
-                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
-                    })?;
-                    let legacy_contract_class = LegacyContractClass {
-                        program: serde_json::from_slice(decompressed_bytes.as_slice())
-                            .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
-                        abi: match declare_tx_v1.contract_class.abi.as_ref() {
-                            Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
-                            None => vec![],
-                        },
-                        entry_points_by_type: to_raw_legacy_entry_points(
-                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        ),
-                    };
-                    let mut entry_points_by_type = <HashMap<EntryPointType, Vec<EntryPoint>>>::new();
-                    entry_points_by_type.insert(
-                        EntryPointType::Constructor,
-                        declare_tx_v1
-                            .contract_class
-                            .entry_points_by_type
-                            .constructor
-                            .iter()
-                            .map(|entry_point| -> EntryPoint {
-                                EntryPoint {
-                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                                    offset: EntryPointOffset(entry_point.offset as usize),
-                                }
-                            })
-                            .collect::<Vec<EntryPoint>>(),
-                    );
-                    entry_points_by_type.insert(
-                        EntryPointType::External,
-                        declare_tx_v1
-                            .contract_class
-                            .entry_points_by_type
-                            .external
-                            .iter()
-                            .map(|entry_point| -> EntryPoint {
-                                EntryPoint {
-                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                                    offset: EntryPointOffset(entry_point.offset as usize),
-                                }
-                            })
-                            .collect::<Vec<EntryPoint>>(),
-                    );
-                    entry_points_by_type.insert(
-                        EntryPointType::L1Handler,
-                        declare_tx_v1
-                            .contract_class
-                            .entry_points_by_type
-                            .l1_handler
-                            .iter()
-                            .map(|entry_point| -> EntryPoint {
-                                EntryPoint {
-                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                                    offset: EntryPointOffset(entry_point.offset as usize),
-                                }
-                            })
-                            .collect::<Vec<EntryPoint>>(),
-                    );
-                    Ok(DeclareTransaction {
-                        version: 1_u8,
-                        sender_address: declare_tx_v1.sender_address.into(),
-                        nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                        max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                        signature,
-                        contract_class: ContractClass::V0(ContractClassV0(Arc::new(ContractClassV0Inner {
-                            program,
-                            entry_points_by_type,
-                        }))),
-                        compiled_class_hash: legacy_contract_class.class_hash()?.into(),
-                    })
-                }
-                BroadcastedDeclareTransaction::V2(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
-            }
-        }
     }
 
     impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {

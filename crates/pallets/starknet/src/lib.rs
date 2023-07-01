@@ -121,6 +121,8 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
+    use mp_starknet::execution::types::CompiledClassHashWrapper;
+
     use super::*;
 
     #[pallet::pallet]
@@ -265,6 +267,13 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
     pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
+
+    /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
+    /// Safe to use `Identity` as the key is already a hash.
+    #[pallet::storage]
+    #[pallet::getter(fn compiled_class_hash_by_class_hash)]
+    pub(super) type CompiledClassHashes<T: Config> =
+        StorageMap<_, Identity, ClassHashWrapper, CompiledClassHashWrapper, OptionQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -945,7 +954,8 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas,
+            None,
         );
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {

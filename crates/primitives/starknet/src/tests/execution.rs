@@ -35,6 +35,7 @@ fn test_call_entry_point_execute_works() {
         address,
         ContractAddressWrapper::default(),
         Felt252Wrapper::default(),
+        None,
     );
 
     let block_context = BlockContext {
@@ -68,6 +69,7 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
         address,
         ContractAddressWrapper::default(),
         Felt252Wrapper::default(),
+        None,
     );
 
     let block_context = BlockContext {
@@ -102,6 +104,7 @@ fn test_try_into_entrypoint_works() {
         storage_address: Felt252Wrapper::from_hex_be("0x1").unwrap(),
         caller_address: Felt252Wrapper::from_hex_be("0x2").unwrap(),
         initial_gas: Felt252Wrapper::from(3_u8),
+        compiled_class_hash: None,
     };
     let entrypoint: CallEntryPoint = entrypoint_wrapper.try_into().unwrap();
     let expected_entrypoint = CallEntryPoint {
