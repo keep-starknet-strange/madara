@@ -11,13 +11,17 @@ use starknet_crypto::{sign, FieldElement};
 
 use super::constants::{ACCOUNT_PRIVATE_KEY, K};
 
-pub fn get_contract_class(resource_path: &str) -> ContractClass {
+pub fn get_contract_class(resource_path: &str, version: u8) -> ContractClass {
     let cargo_dir = String::from(env!("CARGO_MANIFEST_DIR"));
-    let full_path = cargo_dir + "/../../../cairo-contracts/build/" + resource_path;
+    let build_path = match version {
+        0 => "/../../../cairo-contracts/build/",
+        1 => "/../../../cairo-contracts/build/cairo_1/",
+        _ => unimplemented!("Unsupported version {} to get contract class", version),
+    };
+    let full_path = cargo_dir + build_path + resource_path;
     let full_path: PathBuf = [full_path].iter().collect();
     let raw_contract_class = fs::read_to_string(full_path).unwrap();
-    // FIXME 707
-    ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap())
+    mp_starknet::starknet_serde::get_contract_class(&raw_contract_class, version)
 }
 
 pub fn sign_message_hash(hash: Felt252Wrapper) -> BoundedVec<Felt252Wrapper, MaxArraySize> {

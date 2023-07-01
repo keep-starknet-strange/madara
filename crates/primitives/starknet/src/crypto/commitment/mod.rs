@@ -274,6 +274,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt25
         transaction.version,
         b"invoke",
         chain_id,
+        None,
     )
 }
 
@@ -285,12 +286,13 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt25
 pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         transaction.sender_address,
-        &[transaction.compiled_class_hash],
+        &[transaction.class_hash],
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
         b"declare",
         chain_id,
+        transaction.compiled_class_hash,
     )
 }
 
@@ -312,10 +314,12 @@ pub fn calculate_deploy_account_tx_hash(
         transaction.version,
         b"deploy_account",
         chain_id,
+        None,
     )
 }
 
 /// Computes the transaction hash using a hash function of type T
+#[allow(clippy::too_many_arguments)]
 pub fn calculate_transaction_hash_common<T>(
     sender_address: Felt252Wrapper,
     calldata: &[Felt252Wrapper],
@@ -324,6 +328,7 @@ pub fn calculate_transaction_hash_common<T>(
     version: u8,
     tx_prefix: &[u8],
     chain_id: Felt252Wrapper,
+    compiled_class_hash: Option<Felt252Wrapper>,
 ) -> Felt252Wrapper
 where
     T: CryptoHasherT,
@@ -338,16 +343,13 @@ where
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
     let tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
 
-    let tx_hash = <T as CryptoHasherT>::compute_hash_on_elements(&vec![
-        tx_prefix,
-        version,
-        sender_address,
-        FieldElement::ZERO,
-        calldata_hash,
-        max_fee,
-        chain_id.0,
-        nonce,
-    ]);
+    let mut elements =
+        vec![tx_prefix, version, sender_address, FieldElement::ZERO, calldata_hash, max_fee, chain_id.0, nonce];
+    if let Some(compiled_class_hash) = compiled_class_hash {
+        elements.push(FieldElement::from_bytes_be(&compiled_class_hash.into()).unwrap())
+    }
+
+    let tx_hash = <T as CryptoHasherT>::compute_hash_on_elements(&elements);
 
     tx_hash.into()
 }

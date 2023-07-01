@@ -66,7 +66,7 @@
     "mocha": "^10.1.0",
     "npm-watch": "^0.11.0",
     "rimraf": "^5.0.1",
-    "starknet": "^4.22.0",
+    "starknet": "^5.14.1",
     "tcp-port-used": "^1.0.2",
     "ts-node": "^10.9.1"
   },
