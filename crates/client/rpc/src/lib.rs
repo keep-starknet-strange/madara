@@ -14,7 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
+pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
@@ -23,8 +23,7 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError,
-    Transaction as MPTransaction, TxType,
+    DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
 };
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -677,11 +676,11 @@ where
     /// Returns all events matching the given filter
     async fn get_events(&self, filter: EventFilterWithPage) -> RpcResult<EventsPage> {
         let continuation_token = match filter.result_page_request.continuation_token {
-            Some(token) => token.parse::<usize>().map_err(|e| {
+            Some(token) => types::ContinuationToken::parse(token).map_err(|e| {
                 error!("Failed to parse continuation token: {:?}", e);
                 StarknetRpcApiError::InvalidContinuationToken
             })?,
-            None => 0usize,
+            None => types::ContinuationToken::default(),
         };
         let from_address = filter.event_filter.address.map(Felt252Wrapper::from);
         let keys = filter.event_filter.keys.unwrap_or_default();
@@ -742,7 +741,7 @@ where
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let declare_tx = DeclareTransaction::try_from(declare_transaction).map_err(|e| {
+        let declare_tx = to_declare_transaction(declare_transaction).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
@@ -751,7 +750,7 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), current_block_hash)
-            .contract_class_by_class_hash(current_block_hash, declare_tx.compiled_class_hash);
+            .contract_class_by_class_hash(current_block_hash, declare_tx.class_hash);
         if let Some(contract_class) = contract_class {
             error!("Contract class already exists: {:?}", contract_class);
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
@@ -766,7 +765,7 @@ where
 
         Ok(DeclareTransactionResult {
             transaction_hash: transaction.hash.into(),
-            class_hash: declare_tx.compiled_class_hash.into(),
+            class_hash: declare_tx.class_hash.into(),
         })
     }
 

@@ -23,6 +23,8 @@ sp-std = { workspace = true }
 blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
+cairo-lang-casm = { workspace = true, default-features = false }
+cairo-lang-casm-contract-class = { workspace = true }
 cairo-vm = { workspace = true }
 starknet-core = { workspace = true, optional = true }
 starknet-crypto = { workspace = true, default-features = false, features = [
