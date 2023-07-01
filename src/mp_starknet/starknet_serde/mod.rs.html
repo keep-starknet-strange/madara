@@ -347,12 +347,57 @@
 <a href="#347" id="347">347</a>
 <a href="#348" id="348">348</a>
 <a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the serialization and deserialization functions for the StarkNet types.
 </span><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::string::{String, ToString};
 <span class="kw">use </span>alloc::vec::Vec;
 
-<span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
+<span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV1};
+<span class="kw">use </span>cairo_lang_casm_contract_class::CasmContractClass;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_core::U256;
@@ -382,6 +427,8 @@
 </span><span class="kw">pub struct </span>DeserializeCallEntrypoint {
     <span class="doccomment">/// The class hash
     </span><span class="kw">pub </span>class_hash: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="doccomment">/// The casm class hash for declare v2
+    </span><span class="kw">pub </span>casm_class_hash: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="doccomment">/// The entrypoint type
     </span><span class="kw">pub </span>entrypoint_type: String,
     <span class="doccomment">/// The entrypoint selector
@@ -403,6 +450,9 @@
     <span class="doccomment">/// InvalidClassHash error
     </span><span class="attr">#[error(<span class="string">&quot;Invalid class hash format: {0}&quot;</span>)]
     </span>InvalidClassHash(Felt252WrapperError),
+    <span class="doccomment">/// InvalidCasmClassHash error
+    </span><span class="attr">#[error(<span class="string">&quot;Invalid casm class hash format: {0}&quot;</span>)]
+    </span>InvalidCasmClassHash(Felt252WrapperError),
     <span class="doccomment">/// InvalidCalldata error
     </span><span class="attr">#[error(<span class="string">&quot;Invalid calldata format: {0}&quot;</span>)]
     </span>InvalidCalldata(String),
@@ -568,6 +618,15 @@
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         };
 
+        <span class="comment">// Convert casm_class_hash to Option&lt;Felt252Wrapper&gt; if present
+        </span><span class="kw">let </span>casm_class_hash = <span class="kw">match </span>d.casm_class_hash {
+            <span class="prelude-val">Some</span>(hash_str) =&gt; <span class="kw">match </span>Felt252Wrapper::from_hex_be(hash_str.as_str()) {
+                <span class="prelude-val">Ok</span>(felt) =&gt; <span class="prelude-val">Some</span>(felt),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeCallEntrypointError::InvalidCasmClassHash(e)),
+            },
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
+        };
+
         <span class="comment">// Convert entrypoint_type to EntryPointTypeWrapper
         </span><span class="kw">let </span>entrypoint_type = <span class="kw">match </span>d.entrypoint_type.as_str() {
             <span class="string">&quot;Constructor&quot; </span>=&gt; EntryPointTypeWrapper::Constructor,
@@ -619,6 +678,7 @@
             storage_address,
             caller_address,
             initial_gas,
+            compiled_class_hash: casm_class_hash,
         })
     }
 }
@@ -684,17 +744,45 @@
     <span class="kw">let </span><span class="kw-2">mut </span>transaction = Transaction::try_from(deserialized_transaction)<span class="question-mark">?</span>;
 
     <span class="comment">// Set the contract_class field based on contract_content
-    </span><span class="kw">if </span>!contract_content.is_empty() {
-        <span class="comment">// FIXME 707
-        </span>transaction.contract_class =
-            <span class="prelude-val">Some</span>(ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
-                DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content: {:?}&quot;</span>, e))
-            })<span class="question-mark">?</span>));
-    } <span class="kw">else </span>{
+    </span><span class="kw">if </span>contract_content.is_empty() {
         transaction.contract_class = <span class="prelude-val">None</span>;
+    } <span class="kw">else </span>{
+        <span class="kw">let </span>raw_contract_class: ContractClass;
+        <span class="kw">if </span>transaction.version == <span class="number">1 </span>{
+            raw_contract_class = ContractClass::V0(serde_json::from_slice(contract_content).map_err(|e| {
+                DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content for V0: {:?}&quot;</span>, e))
+            })<span class="question-mark">?</span>);
+        } <span class="kw">else if </span>transaction.version == <span class="number">2 </span>{
+            raw_contract_class = ContractClass::V1(serde_json::from_slice(contract_content).map_err(|e| {
+                DeserializeTransactionError::FailedToParse(<span class="macro">format!</span>(<span class="string">&quot;invalid contract content for V1: {:?}&quot;</span>, e))
+            })<span class="question-mark">?</span>);
+        } <span class="kw">else </span>{
+            <span class="macro">unimplemented!</span>(<span class="string">&quot;version {} is not supported&quot;</span>, transaction.version);
+        }
+
+        transaction.contract_class = <span class="prelude-val">Some</span>(raw_contract_class);
     }
 
     <span class="prelude-val">Ok</span>(transaction)
+}
+
+<span class="doccomment">/// Create a `ContractClass` from a JSON string
+///
+/// This function takes a JSON string (`json_str`) containing the JSON representation of a
+/// ContractClass
+///
+/// `ContractClassV0` can be read directly from the JSON because the Serde methods have been
+/// implemented in the blockifier
+///
+/// `ContractClassV1` needs to be read in Casm and then converted to Contract Class V1
+</span><span class="kw">pub fn </span>get_contract_class(json_str: <span class="kw-2">&amp;</span>str, version: u8) -&gt; ContractClass {
+    <span class="kw">if </span>version == <span class="number">0 </span>{
+        <span class="kw">return </span>ContractClass::V0(serde_json::from_str(json_str).unwrap());
+    } <span class="kw">else if </span>version == <span class="number">1 </span>{
+        <span class="kw">let </span>casm_contract_class: CasmContractClass = serde_json::from_str(json_str).unwrap();
+        <span class="kw">return </span>ContractClass::V1(ContractClassV1::try_from(casm_contract_class).unwrap());
+    }
+    <span class="macro">unimplemented!</span>(<span class="string">&quot;version {} is not supported to get contract class from JSON&quot;</span>, version);
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

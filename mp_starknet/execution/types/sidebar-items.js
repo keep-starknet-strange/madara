@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"type":["ClassHashWrapper","ContractAddressWrapper","StorageKeyWrapper"]};
+window.SIDEBAR_ITEMS = {"type":["ClassHashWrapper","CompiledClassHashWrapper","ContractAddressWrapper","StorageKeyWrapper"]};

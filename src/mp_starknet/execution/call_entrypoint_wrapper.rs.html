@@ -162,6 +162,12 @@
 <a href="#162" id="162">162</a>
 <a href="#163" id="163">163</a>
 <a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::sync::Arc;
 
@@ -206,6 +212,8 @@
 </span><span class="kw">pub struct </span>CallEntryPointWrapper {
     <span class="doccomment">/// The class hash
     </span><span class="kw">pub </span>class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
+    <span class="doccomment">/// The casm class hash used in declare v2
+    </span><span class="kw">pub </span>compiled_class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
     <span class="doccomment">/// The entrypoint type
     </span><span class="kw">pub </span>entrypoint_type: EntryPointTypeWrapper,
     <span class="doccomment">/// The entrypoint selector
@@ -223,6 +231,7 @@
 <span class="comment">// Regular implementation.
 </span><span class="kw">impl </span>CallEntryPointWrapper {
     <span class="doccomment">/// Creates a new instance of a call entrypoint.
+    </span><span class="attr">#[allow(clippy::too_many_arguments)]
     </span><span class="kw">pub fn </span>new(
         class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
         entrypoint_type: EntryPointTypeWrapper,
@@ -231,6 +240,7 @@
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
         initial_gas: Felt252Wrapper,
+        casm_class_hash: <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             class_hash,
@@ -240,6 +250,7 @@
             storage_address,
             caller_address,
             initial_gas,
+            compiled_class_hash: casm_class_hash,
         }
     }
 
@@ -285,6 +296,7 @@
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
             initial_gas: Felt252Wrapper::default(),
+            compiled_class_hash: <span class="prelude-val">None</span>,
         }
     }
 }

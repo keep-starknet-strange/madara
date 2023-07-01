@@ -1176,6 +1176,16 @@
 <a href="#1176" id="1176">1176</a>
 <a href="#1177" id="1177">1177</a>
 <a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1298,6 +1308,8 @@
 
 <span class="attr">#[frame_support::pallet]
 </span><span class="kw">pub mod </span>pallet {
+
+    <span class="kw">use </span>mp_starknet::execution::types::CompiledClassHashWrapper;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -1443,6 +1455,13 @@
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>contract_class_by_class_hash)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractClasses&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, ClassHashWrapper, ContractClass, OptionQuery&gt;;
+
+    <span class="doccomment">/// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
+    /// Safe to use `Identity` as the key is already a hash.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>compiled_class_hash_by_class_hash)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>CompiledClassHashes&lt;T: Config&gt; =
+        StorageMap&lt;<span class="kw">_</span>, Identity, ClassHashWrapper, CompiledClassHashWrapper, OptionQuery&gt;;
 
     <span class="doccomment">/// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -2123,8 +2142,9 @@
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
-        </span>);
+            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas,
+            </span><span class="prelude-val">None</span>,
+        );
 
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {
             <span class="prelude-val">Ok</span>(v) =&gt; {

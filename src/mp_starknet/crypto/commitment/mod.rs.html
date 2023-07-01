@@ -354,6 +354,8 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
@@ -618,6 +620,7 @@
         transaction.version,
         <span class="string">b&quot;invoke&quot;</span>,
         chain_id,
+        <span class="prelude-val">None</span>,
     )
 }
 
@@ -629,12 +632,13 @@
 </span><span class="kw">pub fn </span>calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt252Wrapper) -&gt; Felt252Wrapper {
     calculate_transaction_hash_common::&lt;PedersenHasher&gt;(
         transaction.sender_address,
-        <span class="kw-2">&amp;</span>[transaction.compiled_class_hash],
+        <span class="kw-2">&amp;</span>[transaction.class_hash],
         transaction.max_fee,
         transaction.nonce,
         transaction.version,
         <span class="string">b&quot;declare&quot;</span>,
         chain_id,
+        transaction.compiled_class_hash,
     )
 }
 
@@ -656,10 +660,12 @@
         transaction.version,
         <span class="string">b&quot;deploy_account&quot;</span>,
         chain_id,
+        <span class="prelude-val">None</span>,
     )
 }
 
 <span class="doccomment">/// Computes the transaction hash using a hash function of type T
+</span><span class="attr">#[allow(clippy::too_many_arguments)]
 </span><span class="kw">pub fn </span>calculate_transaction_hash_common&lt;T&gt;(
     sender_address: Felt252Wrapper,
     calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
@@ -668,6 +674,7 @@
     version: u8,
     tx_prefix: <span class="kw-2">&amp;</span>[u8],
     chain_id: Felt252Wrapper,
+    compiled_class_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
 ) -&gt; Felt252Wrapper
 <span class="kw">where
     </span>T: CryptoHasherT,
@@ -682,16 +689,13 @@
     <span class="kw">let </span>version = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>version.to_be_bytes()).unwrap();
     <span class="kw">let </span>tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
 
-    <span class="kw">let </span>tx_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[
-        tx_prefix,
-        version,
-        sender_address,
-        FieldElement::ZERO,
-        calldata_hash,
-        max_fee,
-        chain_id.<span class="number">0</span>,
-        nonce,
-    ]);
+    <span class="kw">let </span><span class="kw-2">mut </span>elements =
+        <span class="macro">vec!</span>[tx_prefix, version, sender_address, FieldElement::ZERO, calldata_hash, max_fee, chain_id.<span class="number">0</span>, nonce];
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(compiled_class_hash) = compiled_class_hash {
+        elements.push(FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>compiled_class_hash.into()).unwrap())
+    }
+
+    <span class="kw">let </span>tx_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span>elements);
 
     tx_hash.into()
 }

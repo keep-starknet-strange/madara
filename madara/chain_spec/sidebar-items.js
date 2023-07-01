@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["CHAIN_ID_STARKNET_TESTNET"],"fn":["authority_keys_from_seed","development_config","get_contract_class","get_from_seed","get_storage_key","local_testnet_config","testnet_genesis"],"struct":["DevGenesisExt"],"type":["ChainSpec","DevChainSpec"]};
+window.SIDEBAR_ITEMS = {"constant":["CHAIN_ID_STARKNET_TESTNET"],"fn":["authority_keys_from_seed","development_config","get_from_seed","get_storage_key","local_testnet_config","read_file_to_string","testnet_genesis"],"struct":["DevGenesisExt"],"type":["ChainSpec","DevChainSpec"]};

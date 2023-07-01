@@ -198,6 +198,25 @@
 <a href="#198" id="198">198</a>
 <a href="#199" id="199">199</a>
 <a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -207,7 +226,9 @@
 <span class="kw">use </span>blockifier::state::state_api::{State, StateReader, StateResult};
 <span class="kw">use </span>indexmap::IndexMap;
 <span class="kw">use </span>mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
-<span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+<span class="kw">use </span>mp_starknet::execution::types::{
+    ClassHashWrapper, CompiledClassHashWrapper, ContractAddressWrapper, Felt252Wrapper,
+};
 <span class="kw">use </span>mp_starknet::state::StateChanges;
 <span class="kw">use </span>sp_core::Get;
 <span class="kw">use </span>starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
@@ -281,9 +302,18 @@
             .ok_or(StateError::UndeclaredClassHash(<span class="kw-2">*</span>class_hash))
     }
 
-    <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
-        <span class="comment">// FIXME 708
-        </span><span class="prelude-val">Ok</span>(CompiledClassHash::default())
+    <span class="kw">fn </span>get_compiled_class_hash(<span class="kw-2">&amp;mut </span><span class="self">self</span>, class_hash: ClassHash) -&gt; StateResult&lt;CompiledClassHash&gt; {
+        <span class="kw">let </span>wrapped_class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
+        <span class="kw">let </span>compiled_class_hash = CompiledClassHash(
+            StarkFelt::try_from(
+                Pallet::&lt;T&gt;::compiled_class_hash_by_class_hash(wrapped_class_hash)
+                    .ok_or(StateError::UndeclaredClassHash(class_hash))
+                    .unwrap()
+                    .<span class="number">0</span>,
+            )
+            .unwrap(),
+        );
+        <span class="prelude-val">Ok</span>(compiled_class_hash)
     }
 }
 
@@ -379,10 +409,18 @@
 
     <span class="kw">fn </span>set_compiled_class_hash(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _class_hash: ClassHash,
-        _compiled_class_hash: CompiledClassHash,
+        class_hash: ClassHash,
+        compiled_class_hash: CompiledClassHash,
     ) -&gt; StateResult&lt;()&gt; {
         <span class="comment">// FIXME 708
+        </span><span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
+        <span class="kw">let </span>compiled_class_hash: CompiledClassHashWrapper = compiled_class_hash.<span class="number">0</span>.into();
+
+        <span class="kw">crate</span>::CompiledClassHashes::&lt;T&gt;::insert(class_hash, compiled_class_hash);
+
+        <span class="comment">// This is called in declare V2 when set_contract_class has already been called
+        // so we don&#39;t need to update the state trie again
+
         </span><span class="prelude-val">Ok</span>(())
     }
 

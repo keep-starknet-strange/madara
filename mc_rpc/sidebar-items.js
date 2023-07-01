@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Starknet"],"trait":["StarknetRpcApiServer"]};
+window.SIDEBAR_ITEMS = {"fn":["casm_contract_class_to_compiled_class","flattened_sierra_to_casm_contract_class","get_block_by_block_hash","get_casm_cotract_class_hash","to_declare_transaction","to_rpc_contract_class","to_tx"],"struct":["Starknet"],"trait":["StarknetRpcApiServer"]};

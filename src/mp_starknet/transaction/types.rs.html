@@ -892,109 +892,6 @@
 <a href="#892" id="892">892</a>
 <a href="#893" id="893">893</a>
 <a href="#894" id="894">894</a>
-<a href="#895" id="895">895</a>
-<a href="#896" id="896">896</a>
-<a href="#897" id="897">897</a>
-<a href="#898" id="898">898</a>
-<a href="#899" id="899">899</a>
-<a href="#900" id="900">900</a>
-<a href="#901" id="901">901</a>
-<a href="#902" id="902">902</a>
-<a href="#903" id="903">903</a>
-<a href="#904" id="904">904</a>
-<a href="#905" id="905">905</a>
-<a href="#906" id="906">906</a>
-<a href="#907" id="907">907</a>
-<a href="#908" id="908">908</a>
-<a href="#909" id="909">909</a>
-<a href="#910" id="910">910</a>
-<a href="#911" id="911">911</a>
-<a href="#912" id="912">912</a>
-<a href="#913" id="913">913</a>
-<a href="#914" id="914">914</a>
-<a href="#915" id="915">915</a>
-<a href="#916" id="916">916</a>
-<a href="#917" id="917">917</a>
-<a href="#918" id="918">918</a>
-<a href="#919" id="919">919</a>
-<a href="#920" id="920">920</a>
-<a href="#921" id="921">921</a>
-<a href="#922" id="922">922</a>
-<a href="#923" id="923">923</a>
-<a href="#924" id="924">924</a>
-<a href="#925" id="925">925</a>
-<a href="#926" id="926">926</a>
-<a href="#927" id="927">927</a>
-<a href="#928" id="928">928</a>
-<a href="#929" id="929">929</a>
-<a href="#930" id="930">930</a>
-<a href="#931" id="931">931</a>
-<a href="#932" id="932">932</a>
-<a href="#933" id="933">933</a>
-<a href="#934" id="934">934</a>
-<a href="#935" id="935">935</a>
-<a href="#936" id="936">936</a>
-<a href="#937" id="937">937</a>
-<a href="#938" id="938">938</a>
-<a href="#939" id="939">939</a>
-<a href="#940" id="940">940</a>
-<a href="#941" id="941">941</a>
-<a href="#942" id="942">942</a>
-<a href="#943" id="943">943</a>
-<a href="#944" id="944">944</a>
-<a href="#945" id="945">945</a>
-<a href="#946" id="946">946</a>
-<a href="#947" id="947">947</a>
-<a href="#948" id="948">948</a>
-<a href="#949" id="949">949</a>
-<a href="#950" id="950">950</a>
-<a href="#951" id="951">951</a>
-<a href="#952" id="952">952</a>
-<a href="#953" id="953">953</a>
-<a href="#954" id="954">954</a>
-<a href="#955" id="955">955</a>
-<a href="#956" id="956">956</a>
-<a href="#957" id="957">957</a>
-<a href="#958" id="958">958</a>
-<a href="#959" id="959">959</a>
-<a href="#960" id="960">960</a>
-<a href="#961" id="961">961</a>
-<a href="#962" id="962">962</a>
-<a href="#963" id="963">963</a>
-<a href="#964" id="964">964</a>
-<a href="#965" id="965">965</a>
-<a href="#966" id="966">966</a>
-<a href="#967" id="967">967</a>
-<a href="#968" id="968">968</a>
-<a href="#969" id="969">969</a>
-<a href="#970" id="970">970</a>
-<a href="#971" id="971">971</a>
-<a href="#972" id="972">972</a>
-<a href="#973" id="973">973</a>
-<a href="#974" id="974">974</a>
-<a href="#975" id="975">975</a>
-<a href="#976" id="976">976</a>
-<a href="#977" id="977">977</a>
-<a href="#978" id="978">978</a>
-<a href="#979" id="979">979</a>
-<a href="#980" id="980">980</a>
-<a href="#981" id="981">981</a>
-<a href="#982" id="982">982</a>
-<a href="#983" id="983">983</a>
-<a href="#984" id="984">984</a>
-<a href="#985" id="985">985</a>
-<a href="#986" id="986">986</a>
-<a href="#987" id="987">987</a>
-<a href="#988" id="988">988</a>
-<a href="#989" id="989">989</a>
-<a href="#990" id="990">990</a>
-<a href="#991" id="991">991</a>
-<a href="#992" id="992">992</a>
-<a href="#993" id="993">993</a>
-<a href="#994" id="994">994</a>
-<a href="#995" id="995">995</a>
-<a href="#996" id="996">996</a>
-<a href="#997" id="997">997</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1006,7 +903,6 @@
 <span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::transaction_types::TransactionType;
-<span class="kw">use </span>cairo_vm::types::program::Program;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::{ConstU32, U256};
 <span class="kw">use </span>starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
@@ -1164,7 +1060,9 @@
     <span class="doccomment">/// Transaction sender address.
     </span><span class="kw">pub </span>sender_address: ContractAddressWrapper,
     <span class="doccomment">/// Class hash to declare.
-    </span><span class="kw">pub </span>compiled_class_hash: Felt252Wrapper,
+    </span><span class="kw">pub </span>compiled_class_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
+    <span class="doccomment">/// Sierra class hash used in V2.
+    </span><span class="kw">pub </span>class_hash: Felt252Wrapper,
     <span class="doccomment">/// Contract to declare.
     </span><span class="kw">pub </span>contract_class: ContractClass,
     <span class="doccomment">/// Account contract nonce.
@@ -1186,14 +1084,15 @@
             sender_address: <span class="self">self</span>.sender_address,
             nonce: <span class="self">self</span>.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
-                <span class="prelude-val">Some</span>(<span class="self">self</span>.compiled_class_hash),
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.class_hash),
                 EntryPointTypeWrapper::External,
                 <span class="prelude-val">None</span>,
                 BoundedVec::default(),
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
                 Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710
-            </span>),
+                </span><span class="self">self</span>.compiled_class_hash,
+            ),
             contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,
@@ -1267,7 +1166,8 @@
                 sender_address,
                 sender_address,
                 Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
-            </span>),
+                </span><span class="prelude-val">None</span>,
+            ),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt.into()),
             max_fee: <span class="self">self</span>.max_fee,
@@ -1282,9 +1182,15 @@
     <span class="doccomment">/// Class hash is missing from the object of type [Transaction]
     </span><span class="attr">#[error(<span class="string">&quot;Class hash is missing from the object of type [Transaction]&quot;</span>)]
     </span>MissingClassHash,
+    <span class="doccomment">/// Casm class hash is missing from the object of type [Transaction]
+    </span><span class="attr">#[error(<span class="string">&quot;Casm class hash is missing from the object of type [Transaction]&quot;</span>)]
+    </span>MissingCasmClassHash,
     <span class="doccomment">/// Class is missing from the object of type [Transaction]
     </span><span class="attr">#[error(<span class="string">&quot;Class is missing from the object of type [Transaction]&quot;</span>)]
     </span>MissingClass,
+    <span class="doccomment">/// Casm class hash must be None in [Transaction] for version &lt;=1
+    </span><span class="attr">#[error(<span class="string">&quot;Casm class hash must be None in [Transaction] for version &lt;=1&quot;</span>)]
+    </span>CasmClashHashNotNone,
     <span class="doccomment">/// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
     </span><span class="attr">#[error(<span class="string">&quot;Impossible to derive the contract address from the object of type [DeployAccountTransaction]&quot;</span>)]
     </span>ContractAddressDerivationError,
@@ -1292,16 +1198,20 @@
 <span class="kw">impl </span>TryFrom&lt;Transaction&gt; <span class="kw">for </span>DeclareTransaction {
     <span class="kw">type </span>Error = TransactionConversionError;
     <span class="kw">fn </span>try_from(value: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+        <span class="kw">let </span>casm_class_hash = value.call_entrypoint.compiled_class_hash;
+        <span class="kw">if </span>value.version &lt;= <span class="number">1 </span>&amp;&amp; casm_class_hash.is_some() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionConversionError::CasmClashHashNotNone);
+        } <span class="kw">else if </span>value.version == <span class="number">2 </span>&amp;&amp; casm_class_hash.is_none() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(TransactionConversionError::MissingCasmClassHash);
+        }
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             version: value.version,
             signature: value.signature,
             sender_address: value.sender_address,
             nonce: value.nonce,
             contract_class: value.contract_class.ok_or(TransactionConversionError::MissingClass)<span class="question-mark">?</span>,
-            compiled_class_hash: value
-                .call_entrypoint
-                .class_hash
-                .ok_or(TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>,
+            compiled_class_hash: casm_class_hash,
+            class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>,
             max_fee: value.max_fee,
         })
     }
@@ -1366,7 +1276,8 @@
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
                 Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
-            </span>),
+                </span><span class="prelude-val">None</span>,
+            ),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,
@@ -1540,26 +1451,16 @@
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
 </span><span class="kw">mod </span>reexport_private_types {
-    <span class="kw">use </span>std::collections::HashMap;
 
-    <span class="kw">use </span>blockifier::execution::contract_class::{ContractClass, ContractClassV0, ContractClassV0Inner};
-    <span class="kw">use </span>flate2::read::GzDecoder;
-    <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
-    <span class="kw">use </span>starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
-    <span class="kw">use </span>starknet_core::types::contract::legacy::{
-        LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
-    };
     <span class="kw">use </span>starknet_core::types::contract::ComputeClassHashError;
     <span class="kw">use </span>starknet_core::types::{
-        BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-        DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction, DeclareTransactionReceipt <span class="kw">as </span>RPCDeclareTransactionReceipt,
-        DeclareTransactionV1 <span class="kw">as </span>RPCDeclareTransactionV1, DeclareTransactionV2 <span class="kw">as </span>RPCDeclareTransactionV2,
-        DeployAccountTransaction <span class="kw">as </span>RPCDeployAccountTransaction,
+        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction <span class="kw">as </span>RPCDeclareTransaction,
+        DeclareTransactionReceipt <span class="kw">as </span>RPCDeclareTransactionReceipt, DeclareTransactionV1 <span class="kw">as </span>RPCDeclareTransactionV1,
+        DeclareTransactionV2 <span class="kw">as </span>RPCDeclareTransactionV2, DeployAccountTransaction <span class="kw">as </span>RPCDeployAccountTransaction,
         DeployAccountTransactionReceipt <span class="kw">as </span>RPCDeployAccountTransactionReceipt, Event <span class="kw">as </span>RPCEvent, FieldElement,
         InvokeTransaction <span class="kw">as </span>RPCInvokeTransaction, InvokeTransactionReceipt <span class="kw">as </span>RPCInvokeTransactionReceipt,
         InvokeTransactionV0 <span class="kw">as </span>RPCInvokeTransactionV0, InvokeTransactionV1 <span class="kw">as </span>RPCInvokeTransactionV1,
         L1HandlerTransaction <span class="kw">as </span>RPCL1HandlerTransaction, L1HandlerTransactionReceipt <span class="kw">as </span>RPCL1HandlerTransactionReceipt,
-        LegacyContractEntryPoint, LegacyEntryPointsByType,
         MaybePendingTransactionReceipt <span class="kw">as </span>RPCMaybePendingTransactionReceipt, StarknetError,
         Transaction <span class="kw">as </span>RPCTransaction, TransactionReceipt <span class="kw">as </span>RPCTransactionReceipt,
         TransactionStatus <span class="kw">as </span>RPCTransactionStatus,
@@ -1590,6 +1491,15 @@
         <span class="doccomment">/// Failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize
         </span><span class="attr">#[error(<span class="string">&quot;failed to bound calldata Vec&lt;U256&gt; by MaxCalldataSize&quot;</span>)]
         </span>CalldataBoundError,
+        <span class="doccomment">/// Failed to compile Sierra to Casm
+        </span><span class="attr">#[error(<span class="string">&quot;failed to compile Sierra to Casm&quot;</span>)]
+        </span>SierraCompilationError,
+        <span class="doccomment">/// Failed to convert Casm contract class to ContractClassV1
+        </span><span class="attr">#[error(<span class="string">&quot;failed to convert Casm contract class to ContractClassV1&quot;</span>)]
+        </span>CasmContractClassConversionError,
+        <span class="doccomment">/// Computed compiled class hash doesn&#39;t match with the request
+        </span><span class="attr">#[error(<span class="string">&quot;compiled class hash does not match sierra code&quot;</span>)]
+        </span>CompiledClassHashError,
         <span class="doccomment">/// Starknet Error
         </span><span class="attr">#[error(transparent)]
         </span>StarknetError(<span class="attr">#[from] </span>StarknetError),
@@ -1599,122 +1509,6 @@
         <span class="doccomment">/// Failed to compute the contract class hash.
         </span><span class="attr">#[error(transparent)]
         </span>ClassHashComputationError(<span class="attr">#[from] </span>ComputeClassHashError),
-    }
-
-    <span class="kw">fn </span>to_raw_legacy_entry_points(entry_points: LegacyEntryPointsByType) -&gt; RawLegacyEntryPoints {
-        RawLegacyEntryPoints {
-            constructor: entry_points.constructor.into_iter().map(to_raw_legacy_entry_point).collect(),
-            external: entry_points.external.into_iter().map(to_raw_legacy_entry_point).collect(),
-            l1_handler: entry_points.l1_handler.into_iter().map(to_raw_legacy_entry_point).collect(),
-        }
-    }
-
-    <span class="kw">fn </span>to_raw_legacy_entry_point(entry_point: LegacyContractEntryPoint) -&gt; RawLegacyEntryPoint {
-        RawLegacyEntryPoint {
-            offset: LegacyEntrypointOffset::U64AsInt(entry_point.offset),
-            selector: entry_point.selector,
-        }
-    }
-
-    <span class="kw">impl </span>TryFrom&lt;BroadcastedDeclareTransaction&gt; <span class="kw">for </span>DeclareTransaction {
-        <span class="kw">type </span>Error = BroadcastedTransactionConversionErrorWrapper;
-        <span class="kw">fn </span>try_from(tx: BroadcastedDeclareTransaction) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
-            <span class="kw">match </span>tx {
-                BroadcastedDeclareTransaction::V1(declare_tx_v1) =&gt; {
-                    <span class="kw">let </span>signature = declare_tx_v1
-                        .signature
-                        .iter()
-                        .map(|f| (<span class="kw-2">*</span>f).into())
-                        .collect::&lt;Vec&lt;Felt252Wrapper&gt;&gt;()
-                        .try_into()
-                        .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)<span class="question-mark">?</span>;
-
-                    <span class="comment">// Create a GzipDecoder to decompress the bytes
-                    </span><span class="kw">let </span><span class="kw-2">mut </span>gz = GzDecoder::new(<span class="kw-2">&amp;</span>declare_tx_v1.contract_class.program[..]);
-
-                    <span class="comment">// Read the decompressed bytes into a Vec&lt;u8&gt;
-                    </span><span class="kw">let </span><span class="kw-2">mut </span>decompressed_bytes = Vec::new();
-                    std::io::Read::read_to_end(<span class="kw-2">&amp;mut </span>gz, <span class="kw-2">&amp;mut </span>decompressed_bytes).map_err(|<span class="kw">_</span>| {
-                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
-                    })<span class="question-mark">?</span>;
-
-                    <span class="comment">// Deserialize it then
-                    </span><span class="kw">let </span>program: Program = Program::from_bytes(<span class="kw-2">&amp;</span>decompressed_bytes, <span class="prelude-val">None</span>).map_err(|<span class="kw">_</span>| {
-                        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError
-                    })<span class="question-mark">?</span>;
-                    <span class="kw">let </span>legacy_contract_class = LegacyContractClass {
-                        program: serde_json::from_slice(decompressed_bytes.as_slice())
-                            .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)<span class="question-mark">?</span>,
-                        abi: <span class="kw">match </span>declare_tx_v1.contract_class.abi.as_ref() {
-                            <span class="prelude-val">Some</span>(abi) =&gt; abi.iter().cloned().map(|entry| entry.into()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
-                            <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
-                        },
-                        entry_points_by_type: to_raw_legacy_entry_points(
-                            declare_tx_v1.contract_class.entry_points_by_type.clone(),
-                        ),
-                    };
-                    <span class="kw">let </span><span class="kw-2">mut </span>entry_points_by_type = &lt;HashMap&lt;EntryPointType, Vec&lt;EntryPoint&gt;&gt;&gt;::new();
-                    entry_points_by_type.insert(
-                        EntryPointType::Constructor,
-                        declare_tx_v1
-                            .contract_class
-                            .entry_points_by_type
-                            .constructor
-                            .iter()
-                            .map(|entry_point| -&gt; EntryPoint {
-                                EntryPoint {
-                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                                    offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
-                                }
-                            })
-                            .collect::&lt;Vec&lt;EntryPoint&gt;&gt;(),
-                    );
-                    entry_points_by_type.insert(
-                        EntryPointType::External,
-                        declare_tx_v1
-                            .contract_class
-                            .entry_points_by_type
-                            .external
-                            .iter()
-                            .map(|entry_point| -&gt; EntryPoint {
-                                EntryPoint {
-                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                                    offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
-                                }
-                            })
-                            .collect::&lt;Vec&lt;EntryPoint&gt;&gt;(),
-                    );
-                    entry_points_by_type.insert(
-                        EntryPointType::L1Handler,
-                        declare_tx_v1
-                            .contract_class
-                            .entry_points_by_type
-                            .l1_handler
-                            .iter()
-                            .map(|entry_point| -&gt; EntryPoint {
-                                EntryPoint {
-                                    selector: EntryPointSelector(StarkFelt(entry_point.selector.to_bytes_be())),
-                                    offset: EntryPointOffset(entry_point.offset <span class="kw">as </span>usize),
-                                }
-                            })
-                            .collect::&lt;Vec&lt;EntryPoint&gt;&gt;(),
-                    );
-                    <span class="prelude-val">Ok</span>(DeclareTransaction {
-                        version: <span class="number">1_u8</span>,
-                        sender_address: declare_tx_v1.sender_address.into(),
-                        nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                        max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                        signature,
-                        contract_class: ContractClass::V0(ContractClassV0(Arc::new(ContractClassV0Inner {
-                            program,
-                            entry_points_by_type,
-                        }))),
-                        compiled_class_hash: legacy_contract_class.class_hash()<span class="question-mark">?</span>.into(),
-                    })
-                }
-                BroadcastedDeclareTransaction::V2(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(StarknetError::FailedToReceiveTransaction.into()),
-            }
-        }
     }
 
     <span class="kw">impl </span>TryFrom&lt;BroadcastedInvokeTransaction&gt; <span class="kw">for </span>InvokeTransaction {

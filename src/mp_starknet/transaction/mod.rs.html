@@ -818,6 +818,19 @@
 <a href="#818" id="818">818</a>
 <a href="#819" id="819">819</a>
 <a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -846,13 +859,15 @@
 <span class="kw">use </span>cairo_vm::felt::Felt252;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::U256;
-<span class="kw">use </span>starknet_api::api_core::{ClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce};
+<span class="kw">use </span>starknet_api::api_core::{
+    ClassHash, CompiledClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce,
+};
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::transaction::{
-    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeployAccountTransaction, EventContent,
-    Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction, TransactionHash, TransactionOutput,
-    TransactionReceipt, TransactionSignature, TransactionVersion,
+    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2,
+    DeployAccountTransaction, EventContent, Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction,
+    TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature, TransactionVersion,
 };
 <span class="kw">use </span>starknet_api::{calldata, StarknetApiError};
 
@@ -1077,25 +1092,36 @@
 
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;DeclareTransaction, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
+        <span class="kw">let </span>transaction_hash = TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>);
+        <span class="kw">let </span>max_fee = Fee(<span class="number">2</span>);
+        <span class="kw">let </span>signature = TransactionSignature(
+            <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
+        );
+        <span class="kw">let </span>nonce = Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>);
+        <span class="kw">let </span>sender_address = StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>class_hash = entrypoint.class_hash.unwrap_or_default();
 
-        <span class="kw">let </span>tx = DeclareTransactionV0V1 {
-            transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
-            max_fee: Fee(<span class="number">2</span>),
-            signature: TransactionSignature(
-                <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
-            sender_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            class_hash: entrypoint.class_hash.unwrap_or_default(),
-        };
-
-        <span class="prelude-val">Ok</span>(<span class="kw">if </span><span class="self">self</span>.version == <span class="number">0_u8 </span>{
-            DeclareTransaction::V0(tx)
-        } <span class="kw">else if </span><span class="self">self</span>.version == <span class="number">1_u8 </span>{
-            DeclareTransaction::V1(tx)
-        } <span class="kw">else </span>{
-            <span class="macro">unimplemented!</span>(<span class="string">&quot;DeclareTransactionV2 required the compiled class hash. I don&#39;t know how to get it&quot;</span>);
-        })
+        <span class="kw">if </span><span class="self">self</span>.version &lt;= <span class="number">1_u8 </span>{
+            <span class="kw">let </span>tx = DeclareTransactionV0V1 { transaction_hash, max_fee, signature, nonce, sender_address, class_hash };
+            <span class="kw">if </span><span class="self">self</span>.version == <span class="number">0_u8 </span>{
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(DeclareTransaction::V0(tx));
+            } <span class="kw">else </span>{
+                <span class="kw">return </span><span class="prelude-val">Ok</span>(DeclareTransaction::V1(tx));
+            }
+        } <span class="kw">else if </span><span class="self">self</span>.version == <span class="number">2_u8 </span>{
+            <span class="kw">let </span>tx = DeclareTransactionV2 {
+                transaction_hash,
+                max_fee,
+                signature,
+                nonce,
+                sender_address,
+                class_hash,
+                <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/796
+                </span>compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().<span class="number">0</span>),
+            };
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(DeclareTransaction::V2(tx));
+        }
+        <span class="macro">unimplemented!</span>(<span class="string">&quot;DeclareTransaction version {} is not supported&quot;</span>, <span class="self">self</span>.version)
     }
 }
 
