@@ -923,7 +923,7 @@ where
                 None => {
                     // Contract not found: return the proof of non membership that we generated earlier.
                     return Ok(RpcGetProofOutput {
-                        state_commitment: storage_commitment,
+                        state_commitment: global_state_root,
                         class_commitment,
                         contract_proof,
                         contract_data: None,
@@ -947,7 +947,7 @@ where
         };
 
         Ok(RpcGetProofOutput {
-            state_commitment: storage_commitment,
+            state_commitment: global_state_root,
             class_commitment,
             contract_proof,
             contract_data: Some(contract_data),
