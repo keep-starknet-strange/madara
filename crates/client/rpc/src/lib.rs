@@ -14,12 +14,13 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::types::{RpcGetProofInput, RpcGetProofOutput};
+use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput};
 use mc_rpc_core::utils::{get_block_by_block_hash, to_rpc_contract_class, to_tx};
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
+use mp_starknet::crypto::merkle_patricia_tree::merkle_tree::ProofNode;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -861,6 +862,17 @@ where
     }
 
     fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput> {
+        const MAX_KEYS: usize = 100;
+        if get_proof_input.keys.len() > MAX_KEYS {
+            error!(
+                "Too many keys requested! limit: {:?},
+				requested: {:?}",
+                MAX_KEYS,
+                get_proof_input.keys.len() as u32
+            );
+            return Err(StarknetRpcApiError::ProofLimitExceeded.into());
+        }
+
         let substrate_block_hash =
             self.substrate_block_hash_from_starknet_block(get_proof_input.block_id).map_err(|e| {
                 error!("'{e}'");
@@ -871,16 +883,76 @@ where
 
         let global_state_root = block.header().global_state_root;
 
-        let state_commitments = self
+        let mut state_commitments = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .get_state_commitments(substrate_block_hash)
+            .state_commitments(substrate_block_hash)
             .ok_or_else(|| {
                 error!("Failed to retrieve state commitments");
                 StarknetRpcApiError::InternalServerError
             })?;
 
+        let class_hash = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .contract_class_hash_by_address(substrate_block_hash, get_proof_input.contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to retrieve contract class hash at '{0}'", get_proof_input.contract_address);
+                StarknetRpcApiError::ContractNotFound
+            })?;
 
+        let nonce = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .nonce(substrate_block_hash, get_proof_input.contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to get nonce at '{0}'", get_proof_input.contract_address);
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        let storage_commitment = Some(state_commitments.storage_commitment.commit().into());
+        let class_commitment = Some(state_commitments.class_commitment.commit().into());
+
+        // Generate a proof for this contract. If the contract does not exist, this will
+        // be a "non membership" proof.
+        let contract_proof =
+            state_commitments.storage_commitment.get_proof(Felt252Wrapper(get_proof_input.contract_address));
+
+        let contract_state_hash =
+            match state_commitments.storage_commitment.get(get_proof_input.contract_address.into()) {
+                Some(contract_state_hash) => contract_state_hash,
+                None => {
+                    // Contract not found: return the proof of non membership that we generated earlier.
+                    return Ok(RpcGetProofOutput {
+                        state_commitment: storage_commitment,
+                        class_commitment,
+                        contract_proof,
+                        contract_data: None,
+                    });
+                }
+            };
+
+        let storage_proofs: Vec<Vec<ProofNode>> = get_proof_input
+            .keys
+            .iter()
+            .map(|k| state_commitments.storage_commitment.get_proof(Felt252Wrapper(*k)))
+            .collect();
+
+        let contract_data = ContractData {
+            class_hash: class_hash.into(),
+            nonce: nonce.into(),
+            root: contract_state_hash.into(), // TODO: double check if it's the state root
+            contract_state_hash_version: FieldElement::ZERO, /* Currently, this is defined as 0. Might change in the
+                                               * future. */
+            storage_proofs,
+        };
+
+        Ok(RpcGetProofOutput {
+            state_commitment: storage_commitment,
+            class_commitment,
+            contract_proof,
+            contract_data: Some(contract_data),
+        })
     }
 }
 

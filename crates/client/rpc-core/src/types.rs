@@ -18,33 +18,33 @@ pub struct RpcGetProofOutput {
     /// The global state commitment for Starknet 0.11.0 blocks onwards, if absent the hash
     /// of the first node in the [contract_proof](GetProofOutput#contract_proof) is the global state
     /// commitment.
-    state_commitment: Option<FieldElement>,
+    pub state_commitment: Option<FieldElement>,
     /// Required to verify that the hash of the class commitment and the root of the
     /// [contract_proof](GetProofOutput::contract_proof) matches the
     /// [state_commitment](Self#state_commitment). Present only for Starknet blocks 0.11.0 onwards.
-    class_commitment: Option<FieldElement>,
+    pub class_commitment: Option<FieldElement>,
 
     /// Membership / Non-membership proof for the queried contract
-    contract_proof: Vec<ProofNode>,
+    pub contract_proof: Vec<ProofNode>,
 
     /// Additional contract data if it exists.
-    contract_data: Option<FieldElement>,
+    pub contract_data: Option<ContractData>,
 }
 
 /// Holds the data and proofs for a specific contract.
 #[derive(Debug, Serialize)]
 pub struct ContractData {
     /// Required to verify the contract state hash to contract root calculation.
-    class_hash: FieldElement,
+    pub class_hash: FieldElement,
     /// Required to verify the contract state hash to contract root calculation.
-    nonce: FieldElement,
+    pub nonce: FieldElement,
 
     /// Root of the Contract state tree
-    root: FieldElement,
+    pub root: FieldElement,
 
     /// This is currently just a constant = 0, however it might change in the future.
-    contract_state_hash_version: FieldElement,
+    pub contract_state_hash_version: FieldElement,
 
     /// The proofs associated with the queried storage values
-    storage_proofs: Vec<Vec<ProofNode>>,
+    pub storage_proofs: Vec<Vec<ProofNode>>,
 }

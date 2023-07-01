@@ -1,8 +1,6 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use bitvec::prelude::Msb0;
-use bitvec::slice::BitSlice;
 use bitvec::vec::BitVec;
 use starknet_crypto::FieldElement;
 
@@ -88,8 +86,23 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
     }
 
     /// Generates a proof for `key`. See [`MerkleTree::get_proof`].
-    pub fn get_proof(&self, key: &BitSlice<u8, Msb0>) -> Vec<ProofNode> {
-        self.tree.get_proof(key)
+    pub fn get_proof(&self, key: Felt252Wrapper) -> Vec<ProofNode> {
+        let key = &key.0.to_bytes_be()[..31];
+        self.tree.get_proof(&BitVec::from_vec(key.to_vec()))
+    }
+
+    /// Returns a leaf of the tree stored at key `key`
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key of the value to retrieve.
+    ///
+    /// # Returns
+    ///
+    /// `Some(value)` - Value stored at the given key.
+    pub fn get(&self, key: Felt252Wrapper) -> Option<Felt252Wrapper> {
+        let key = &key.0.to_bytes_be()[..31];
+        self.tree.get(&BitVec::from_vec(key.to_vec()))
     }
 }
 
