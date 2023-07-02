@@ -4,6 +4,7 @@ import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import {
   Account,
+  AccountInvocationItem,
   LibraryError,
   RpcProvider,
   constants,
@@ -748,7 +749,7 @@ describeDevMadara("Starknet RPC", (context) => {
   //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estimateAccountDeployFee
   describe("estimateFee", async () => {
     it("should estimate fee to 0", async function () {
-      const tx1 = {
+      const tx = {
         contractAddress: ACCOUNT_CONTRACT,
         calldata: [
           TEST_CONTRACT_ADDRESS,
@@ -758,36 +759,28 @@ describeDevMadara("Starknet RPC", (context) => {
         signature: [],
       };
 
-      const nonce1 = await providerRPC.getNonceForAddress(
+      const nonce = await providerRPC.getNonceForAddress(
         ACCOUNT_CONTRACT,
         "latest"
       );
 
-      const nonce2 = (parseInt(nonce1, 16) + 1).toString(16);
-
-      const txDetails1 = {
-        nonce: nonce1,
+      const txDetails = {
+        nonce: nonce,
         version: "0x1",
       };
 
-      const txDetails2 = {
-        nonce: nonce2,
-        version: "0x1",
+      const invocation: AccountInvocationItem = {
+        type: "INVOKE_FUNCTION",
+        ...tx,
+        ...txDetails,
       };
 
-      const fee_estimate = providerRPC.getEstimateFee(
-        tx1,
-        txDetails1,
-        "latest"
-      );
+      const fee_estimates = await providerRPC.getEstimateFeeBulk([invocation], {
+        blockIdentifier: "latest",
+      });
 
-      expect(fee_estimate).to.eventually.be.rejectedWith(
-        "invalid type: map, expected variant identifier"
-      );
-
-      // FIXME: https://github.com/keep-starknet-strange/madara/issues/795
-      // expect(fee_estimate.overall_fee === 0n).to.be.equal(1);
-      // expect(fee_estimate.gas_consumed === 0n).to.be.equal(1);
+      expect(fee_estimates[0].overall_fee === 0n).to.be.greaterThan(0);
+      expect(fee_estimates[0].gas_consumed === 0n).to.be.greaterThan(0);
     });
 
     it("should raise if contract does not exist", async function () {
@@ -811,15 +804,24 @@ describeDevMadara("Starknet RPC", (context) => {
         version: "0x1",
       };
 
-      const estimate = providerRPC.getEstimateFee(tx, txDetails, "latest");
-      expect(estimate).to.eventually.be.rejectedWith(
-        "invalid type: map, expected variant identifier"
-      );
+      const invocation: AccountInvocationItem = {
+        type: "INVOKE_FUNCTION",
+        ...tx,
+        ...txDetails,
+      };
 
-      // FIXME: https://github.com/keep-starknet-strange/madara/issues/795
-      // await expect(estimate)
-      //   .to.eventually.be.rejectedWith("40: Contract error")
-      //   .and.be.an.instanceOf(LibraryError);
+      const fee_estimates = providerRPC.getEstimateFeeBulk([invocation], {
+        blockIdentifier: "latest",
+      });
+
+      //    TODO: once starknet-js supports estimateFee using array
+      //   expect(estimate).to.eventually.be.rejectedWith(
+      //     "invalid type: map, expected variant identifier"
+      //   );
+
+      expect(fee_estimates)
+        .to.eventually.be.rejectedWith("40: Contract error")
+        .and.be.an.instanceOf(LibraryError);
     });
   });
 
