@@ -779,8 +779,8 @@ describeDevMadara("Starknet RPC", (context) => {
         blockIdentifier: "latest",
       });
 
-      expect(fee_estimates[0].overall_fee === 0n).to.be.greaterThan(0);
-      expect(fee_estimates[0].gas_consumed === 0n).to.be.greaterThan(0);
+      expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
+      expect(fee_estimates[0].gas_consumed > 0n).to.be.equal(true);
     });
 
     it("should raise if contract does not exist", async function () {
