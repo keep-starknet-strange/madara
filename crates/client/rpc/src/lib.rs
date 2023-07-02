@@ -46,7 +46,7 @@ use starknet_core::types::{
     Transaction, TransactionStatus,
 };
 
-use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
+use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS, MAX_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -861,7 +861,6 @@ where
     }
 
     fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput> {
-        const MAX_KEYS: usize = 100;
         if get_proof_input.keys.len() > MAX_KEYS {
             error!(
                 "Too many keys requested! limit: {:?},
@@ -917,7 +916,7 @@ where
             state_commitments.storage_commitment.get_proof(Felt252Wrapper(get_proof_input.contract_address));
 
         let contract_state_hash =
-            match state_commitments.storage_commitment.get(get_proof_input.contract_address.into()) {
+            match state_commitments.storage_commitment.get(Felt252Wrapper(get_proof_input.contract_address)) {
                 Some(contract_state_hash) => contract_state_hash,
                 None => {
                     // Contract not found: return the proof of non membership that we generated earlier.
@@ -929,6 +928,8 @@ where
                     });
                 }
             };
+
+        // Get contract root from runtime
 
         let storage_proofs: Vec<Vec<ProofNode>> = get_proof_input
             .keys

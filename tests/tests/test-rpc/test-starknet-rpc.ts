@@ -73,7 +73,7 @@ chai.use(chaiAsPromised);
 let ARGENT_CONTRACT_NONCE = { value: 0 };
 const CAIRO_1_NO_VALIDATE_ACCOUNT = { value: 0 };
 
-describeDevMadara("Starknet RPC", (context) => {
+describeDevMadara("Starknet RPC - Public Starknet", (context) => {
   let providerRPC: RpcProvider;
 
   before(async function () {
@@ -1944,8 +1944,11 @@ describeDevMadara("Starknet RPC", (context) => {
 
   describe("state root", async () => {
     it("should return default when disabled", async function () {
+      await jumpBlocks(context, 1);
+
       const latestBlock = await providerRPC.getBlock("latest");
       expect(latestBlock.new_root).to.eq("0x0");
     });
   });
-});
+
+}, "madara");

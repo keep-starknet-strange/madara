@@ -116,9 +116,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
             // We will end up with only the latest storage slot update
             // TODO: Estimate overhead of this approach
             crate::PendingStorageChanges::<T>::mutate(contract_address, |storage_slots| {
-                if let Some(storage_slots) = storage_slots {
-                    storage_slots.try_push((key, value)).unwrap(); // TODO: unwrap safu ??
-                }
+                storage_slots.try_push((key, value)).unwrap(); // TODO: unwrap safu ??
             });
         }
     }
