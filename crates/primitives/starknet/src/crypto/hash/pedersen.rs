@@ -1,6 +1,7 @@
 //! Pedersen hash module.
 use alloc::vec::Vec;
 
+use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::{pedersen_hash, FieldElement};
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
@@ -55,14 +56,7 @@ impl HasherT for PedersenHasher {
     /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
     #[inline]
     fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
-        let mut current_hash = FieldElement::ZERO;
-
-        for item in elements.iter() {
-            current_hash = pedersen_hash(&current_hash, item);
-        }
-
-        let data_len = FieldElement::from(elements.len());
-        pedersen_hash(&current_hash, &data_len)
+        compute_hash_on_elements(elements)
     }
 }
 
