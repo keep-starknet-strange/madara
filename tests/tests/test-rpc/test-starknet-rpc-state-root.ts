@@ -64,5 +64,4 @@ describeDevMadara(
       });
     });
   },
-  "madara-state-root"
 );

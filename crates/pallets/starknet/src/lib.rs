@@ -75,7 +75,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
-use mp_starknet::crypto::commitment::{self, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
+use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -379,13 +379,15 @@ pub mod pallet {
 
                 // Update state tries if enabled in the runtime configuration
                 if T::EnableStateRoot::get() {
-                    // Update classes trie
-                    let mut tree = StarknetStateCommitments::<T>::get().class_commitment;
-                    let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(*class_hash);
-                    tree.set(*class_hash, final_hash);
+                    // Update contracts trie
+                    let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
+                    let nonce = Pallet::<T>::nonce(address);
+                    let contract_root = Pallet::<T>::contract_state_root_by_address(address).unwrap_or_default();
+                    let hash = calculate_contract_state_hash::<T::SystemHash>(*class_hash, contract_root, nonce);
+                    tree.set(*address, hash);
 
-                    StarknetStateCommitments::<T>::mutate(|state| {
-                        state.class_commitment = tree;
+                    crate::StarknetStateCommitments::<T>::mutate(|state| {
+                        state.storage_commitment = tree;
                     })
                 }
             }
