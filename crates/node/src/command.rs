@@ -201,6 +201,14 @@ pub fn run() -> sc_cli::Result<()> {
                     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                 }
 
+                // We need to do this:
+                // cli.run.run_cmd.rpc_cors = All
+                // but the Cors is not exported in substrate
+                cli.run.run_cmd.shared_params.dev = true;
+                cli.run.run_cmd.force_authoring = false;
+                cli.run.run_cmd.alice = false;
+                cli.run.run_cmd.tmp = false;
+
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
