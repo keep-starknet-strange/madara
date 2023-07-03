@@ -22,4 +22,4 @@ scenarios:
     flow:
       - loop:
           - function: "executeERC721Mint"
-        count: 10000
+        count: 15000
