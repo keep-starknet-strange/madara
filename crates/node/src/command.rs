@@ -210,7 +210,7 @@ pub fn run() -> sc_cli::Result<()> {
                         }
                         None => {}
                     };
-                  
+
                     // We need to do this:
                     // cli.run.run_cmd.rpc_cors = All
                     // but the Cors is not exported in substrate
