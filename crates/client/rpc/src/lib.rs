@@ -930,6 +930,14 @@ where
             };
 
         // Get contract root from runtime
+        let contract_root = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .contract_state_root_by_address(substrate_block_hash, get_proof_input.contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to get contract root at '{0}'", get_proof_input.contract_address);
+                StarknetRpcApiError::ContractNotFound
+            })?;
 
         let storage_proofs: Vec<Vec<ProofNode>> = get_proof_input
             .keys
@@ -940,9 +948,9 @@ where
         let contract_data = ContractData {
             class_hash: class_hash.into(),
             nonce: nonce.into(),
-            root: contract_state_hash.into(), // TODO: double check if it's the state root
+            root: contract_root.into(),
             contract_state_hash_version: FieldElement::ZERO, /* Currently, this is defined as 0. Might change in the
-                                               * future. */
+                                                              * future. */
             storage_proofs,
         };
 

@@ -261,6 +261,10 @@ impl_runtime_apis! {
             Starknet::contract_class_hash_by_address(address)
         }
 
+        fn contract_state_root_by_address(address: ContractAddressWrapper) -> Option<ClassHashWrapper> {
+            Starknet::contract_state_root_by_address(address)
+        }
+
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass> {
             Starknet::contract_class_by_class_hash(class_hash)
         }

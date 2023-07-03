@@ -28,6 +28,8 @@ pub const STARKNET_CHAIN_ID: &[u8] = b"ChainId";
 pub const STARKNET_STORAGE: &[u8] = b"StorageView";
 /// Starknet state commitment tries
 pub const STARKNET_STATE_COMMITMENTS: &[u8] = b"StarknetStateCommitments";
+/// Starknet contract roots
+pub const STARKNET_CONTRACT_STATE_ROOT: &[u8] = b"ContractStateRoots";
 
 /// The schema version for Pallet Starknet's storage.
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]

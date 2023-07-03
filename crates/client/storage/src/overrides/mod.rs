@@ -86,6 +86,12 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
     /// Returns the state commitments for a provider block hash
     fn state_commitments(&self, block_hash: B::Hash) -> Option<StateCommitments>;
+    /// Returns the state root at a provided contract address for the provided block.
+    fn contract_state_root_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<Felt252Wrapper>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -229,5 +235,21 @@ where
     /// * `Some(commitments)` - The state commitments for the provided block hash
     fn state_commitments(&self, block_hash: <B as BlockT>::Hash) -> Option<StateCommitments> {
         self.client.runtime_api().get_state_commitments(block_hash).ok()
+    }
+
+    /// Return the contract root for a provided block hash
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(contract_root)` - The contract root for the provided block hash
+    fn contract_state_root_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<Felt252Wrapper> {
+        self.client.runtime_api().contract_state_root_by_address(block_hash, address).ok()?
     }
 }
