@@ -36,7 +36,10 @@ impl pallet_starknet::Config for Runtime {
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
+    #[cfg(not(feature = "madara-state-root"))]
     type EnableStateRoot = ConstBool<false>;
+    #[cfg(feature = "madara-state-root")]
+    type EnableStateRoot = ConstBool<true>;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;

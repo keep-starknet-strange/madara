@@ -42,6 +42,8 @@ pub type MaxCalldataSize = ConstU32<100>;
 pub struct CallEntryPointWrapper {
     /// The class hash
     pub class_hash: Option<ClassHashWrapper>,
+    /// The casm class hash used in declare v2
+    pub compiled_class_hash: Option<ClassHashWrapper>,
     /// The entrypoint type
     pub entrypoint_type: EntryPointTypeWrapper,
     /// The entrypoint selector
@@ -59,6 +61,7 @@ pub struct CallEntryPointWrapper {
 // Regular implementation.
 impl CallEntryPointWrapper {
     /// Creates a new instance of a call entrypoint.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         class_hash: Option<ClassHashWrapper>,
         entrypoint_type: EntryPointTypeWrapper,
@@ -67,6 +70,7 @@ impl CallEntryPointWrapper {
         storage_address: ContractAddressWrapper,
         caller_address: ContractAddressWrapper,
         initial_gas: Felt252Wrapper,
+        casm_class_hash: Option<ClassHashWrapper>,
     ) -> Self {
         Self {
             class_hash,
@@ -76,6 +80,7 @@ impl CallEntryPointWrapper {
             storage_address,
             caller_address,
             initial_gas,
+            compiled_class_hash: casm_class_hash,
         }
     }
 
@@ -121,6 +126,7 @@ impl Default for CallEntryPointWrapper {
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
             initial_gas: Felt252Wrapper::default(),
+            compiled_class_hash: None,
         }
     }
 }

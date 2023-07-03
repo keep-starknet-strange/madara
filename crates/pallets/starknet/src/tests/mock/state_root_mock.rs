@@ -90,52 +90,52 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<MockStateRootRuntime>().unwrap();
 
     // ARGENT CLASSES
-    let blockifier_account_class = get_contract_class("NoValidateAccount.json");
+    let blockifier_account_class = get_contract_class("NoValidateAccount.json", 0);
     let blockifier_account_class_hash = Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_CLASS).unwrap();
     let blockifier_account_address = Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap();
 
     // TEST CLASSES
-    let erc20_class = get_contract_class("ERC20.json");
+    let erc20_class = get_contract_class("ERC20.json", 0);
 
     // ACCOUNT CONTRACT
 
     // OPENZEPPELIN ACCOUNT CONTRACT
-    let openzeppelin_account_class = get_contract_class("OpenzeppelinAccount.json");
-    let openzeppelin_account_class_hash = Felt252Wrapper::from_hex_be(OPENZEPPELIN_ACCOUNT_CLASS_HASH).unwrap();
-    let openzeppelin_account_address = get_account_address(AccountType::Openzeppelin);
+    let openzeppelin_account_class = get_contract_class("OpenzeppelinAccount.json", 0);
+    let openzeppelin_account_class_hash = Felt252Wrapper::from_hex_be(OPENZEPPELIN_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
+    let openzeppelin_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
     // ARGENT ACCOUNT CONTRACT
-    let argent_account_class = get_contract_class("ArgentAccount.json");
-    let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
-    let argent_account_address = get_account_address(AccountType::Argent);
+    let argent_account_class = get_contract_class("ArgentAccount.json", 0);
+    let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
+    let argent_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::Argent));
 
     // BRAAVOS ACCOUNT CONTRACT
-    let braavos_account_class = get_contract_class("BraavosAccount.json");
-    let braavos_account_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
-    let braavos_account_address = get_account_address(AccountType::Braavos);
+    let braavos_account_class = get_contract_class("BraavosAccount.json", 0);
+    let braavos_account_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
+    let braavos_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::Braavos));
 
-    let braavos_proxy_class = get_contract_class("Proxy.json");
-    let braavos_proxy_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_PROXY_CLASS_HASH).unwrap();
-    let braavos_proxy_address = get_account_address(AccountType::BraavosProxy);
+    let braavos_proxy_class = get_contract_class("Proxy.json", 0);
+    let braavos_proxy_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_PROXY_CLASS_HASH_CAIRO_0).unwrap();
+    let braavos_proxy_address = get_account_address(AccountType::V0(AccountTypeV0Inner::BraavosProxy));
 
     // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
-    let inner_call_account_class = get_contract_class("UnauthorizedInnerCallAccount.json");
+    let inner_call_account_class = get_contract_class("UnauthorizedInnerCallAccount.json", 0);
     let inner_call_account_class_hash =
-        Felt252Wrapper::from_hex_be(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH).unwrap();
-    let inner_call_account_address = get_account_address(AccountType::InnerCall);
+        Felt252Wrapper::from_hex_be(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
+    let inner_call_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::InnerCall));
 
     // NO VALIDATE ACCOUNT CONTRACT
-    let no_validate_class = get_contract_class("NoValidateAccount.json");
-    let no_validate_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
-    let no_validate_address = get_account_address(AccountType::NoValidate);
+    let no_validate_class = get_contract_class("NoValidateAccount.json", 0);
+    let no_validate_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
+    let no_validate_address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
 
     // TEST CONTRACT
-    let test_contract_class = get_contract_class("test.json");
+    let test_contract_class = get_contract_class("test.json", 0);
     let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CLASS_HASH).unwrap();
     let test_contract_address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
 
     // L1 HANDLER CONTRACT
-    let l1_handler_class = get_contract_class("l1_handler.json");
+    let l1_handler_class = get_contract_class("l1_handler.json", 0);
     let l1_handler_contract_address = Felt252Wrapper::from_hex_be(L1_HANDLER_CONTRACT_ADDRESS).unwrap();
     let l1_handler_class_hash = Felt252Wrapper::from_hex_be(L1_HANDLER_CLASS_HASH).unwrap();
 
@@ -144,11 +144,11 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
     let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
     // SINGLE/MULTIPLE EVENT EMITTING CONTRACT
-    let single_event_emitting_class = get_contract_class("emit_single_event.json");
+    let single_event_emitting_class = get_contract_class("emit_single_event.json", 0);
     let single_event_emitting_contract_class_hash = Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CLASS_HASH).unwrap();
     let single_event_emitting_contract_address =
         Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap();
-    let multiple_event_emitting_class = get_contract_class("emit_multiple_events_across_contracts.json");
+    let multiple_event_emitting_class = get_contract_class("emit_multiple_events_across_contracts.json", 0);
     let multiple_event_emitting_class_hash = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CLASS_HASH).unwrap();
     let multiple_event_emitting_contract_address =
         Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();

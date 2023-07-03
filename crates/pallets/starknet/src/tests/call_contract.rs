@@ -13,7 +13,7 @@ fn given_call_contract_call_works() {
         basic_test_setup(1);
 
         let origin = RuntimeOrigin::none();
-        let sender_account = get_account_address(AccountType::NoValidate);
+        let sender_account = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         // Deploy ERC20 Contract, as it is already declared in fixtures
         // Deploy ERC20 contract
