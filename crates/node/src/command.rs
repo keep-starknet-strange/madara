@@ -184,7 +184,8 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            if cli.run.testnet.is_some() {
+            // when using the --dev flag, every future config should be ignored
+            if !cli.run.run_cmd.shared_params.dev {
                 let madara_path = if cli.run.madara_path.is_some() {
                     cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
                 } else {
@@ -192,26 +193,37 @@ pub fn run() -> sc_cli::Result<()> {
                     format!("{}/.madara", home_path)
                 };
 
-                copy_chain_spec(madara_path.clone());
-
                 cli.run.run_cmd.network_params.node_key_params.node_key_file =
                     Some((madara_path.clone() + "/p2p-key.ed25519").into());
                 cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
-                if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+
+                if cli.run.testnet.is_some() {
+                    copy_chain_spec(madara_path.clone());
+
+                    match cli.run.testnet {
+                        Some(Testnet::Local) => {
+                            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
+                        }
+                        Some(Testnet::Sharingan) => {
+                            cli.run.run_cmd.shared_params.chain =
+                                Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                        }
+                        None => {}
+                    };
+                  
+                    // We need to do this:
+                    // cli.run.run_cmd.rpc_cors = All
+                    // but the Cors is not exported in substrate
+                    cli.run.run_cmd.shared_params.dev = true;
+                    cli.run.run_cmd.force_authoring = false;
+                    cli.run.run_cmd.alice = false;
+                    cli.run.run_cmd.tmp = false;
+
+                    cli.run.run_cmd.rpc_external = true;
+                    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
                 }
-
-                // We need to do this:
-                // cli.run.run_cmd.rpc_cors = All
-                // but the Cors is not exported in substrate
-                cli.run.run_cmd.shared_params.dev = true;
-                cli.run.run_cmd.force_authoring = false;
-                cli.run.run_cmd.alice = false;
-                cli.run.run_cmd.tmp = false;
-
-                cli.run.run_cmd.rpc_external = true;
-                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
                 service::new_full(config, cli.sealing).map_err(sc_cli::Error::Service)

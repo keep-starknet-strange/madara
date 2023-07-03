@@ -1,6 +1,9 @@
-use blockifier::execution::contract_class::ContractClass;
+use std::fs;
+use std::path::PathBuf;
+
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-use mp_starknet::execution::types::{ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::starknet_serde::get_contract_class;
 use pallet_starknet::types::ContractStorageKeyWrapper;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -102,14 +105,8 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
             testnet_genesis(
                 wasm_binary,
                 // Initial PoA authorities
-                vec![
-                    authority_keys_from_seed("Alice"),
-                    authority_keys_from_seed("Bob"),
-                    authority_keys_from_seed("Charlie"),
-                    authority_keys_from_seed("Dave"),
-                    authority_keys_from_seed("Eve"),
-                    authority_keys_from_seed("Ferdie"),
-                ],
+                // Intended to be only 2
+                vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
                 true,
             )
         },
@@ -125,11 +122,6 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         // Extensions
         None,
     ))
-}
-
-pub fn get_contract_class(contract_content: &'static [u8]) -> ContractClass {
-    // FIXME 707
-    ContractClass::V0(serde_json::from_slice(contract_content).unwrap())
 }
 
 /// Returns the storage key for a given storage name, keys and offset.
@@ -152,6 +144,12 @@ pub fn get_storage_key(
     (*address, storage_key.into())
 }
 
+fn read_file_to_string(path: &str) -> String {
+    let cargo_dir = String::from(env!("CARGO_MANIFEST_DIR"));
+    let path: PathBuf = [cargo_dir + "/" + path].iter().collect();
+    fs::read_to_string(path).unwrap()
+}
+
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
@@ -160,30 +158,33 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     // ACCOUNT CONTRACT
     let no_validate_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/NoValidateAccount.json")).try_into().unwrap();
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/NoValidateAccount.json"), 0);
     let no_validate_account_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
     let no_validate_account_address = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();
 
     // ARGENT ACCOUNT CONTRACT
     let argent_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ArgentAccount.json")).try_into().unwrap();
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/ArgentAccount.json"), 0);
     let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH).unwrap();
     let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
-    let argent_proxy_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/Proxy.json")).try_into().unwrap();
+    let argent_proxy_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/Proxy.json"), 0);
     let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
     // OZ ACCOUNT CONTRACT
     let oz_account_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/OpenzeppelinAccount.json"))
-            .try_into()
-            .unwrap();
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/OpenzeppelinAccount.json"), 0);
     let oz_account_class_hash = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_CLASS_HASH).unwrap();
     let oz_account_address = Felt252Wrapper::from_hex_be(OZ_ACCOUNT_ADDRESS).unwrap();
 
+    // CAIRO 1 ACCOUNT CONTRACT
+    let cairo_1_no_validate_account_class =
+        get_contract_class(&read_file_to_string("../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json"), 1);
+    let cairo_1_no_validate_account_class_hash =
+        Felt252Wrapper::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_CLASS_HASH).unwrap();
+    let cairo_1_no_validate_account_address = Felt252Wrapper::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS).unwrap();
+
     // TEST CONTRACT
-    let test_contract_class =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/test.json")).try_into().unwrap();
+    let test_contract_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/test.json"), 0);
     let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CONTRACT_CLASS_HASH).unwrap();
     let test_contract_address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
 
@@ -192,20 +193,17 @@ fn testnet_genesis(
     let fee_token_class_hash = Felt252Wrapper::from_hex_be(FEE_TOKEN_CLASS_HASH).unwrap();
 
     // ERC20 CONTRACT
-    let erc20_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC20.json")).try_into().unwrap();
+    let erc20_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/ERC20.json"), 0);
     let token_class_hash = Felt252Wrapper::from_hex_be(ERC20_CLASS_HASH).unwrap();
     let token_contract_address = Felt252Wrapper::from_hex_be(ERC20_ADDRESS).unwrap();
 
     // ERC721 CONTRACT
-    let erc721_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/ERC721.json")).try_into().unwrap();
+    let erc721_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/ERC721.json"), 0);
     let nft_class_hash = Felt252Wrapper::from_hex_be(ERC721_CLASS_HASH).unwrap();
     let nft_contract_address = Felt252Wrapper::from_hex_be(ERC721_ADDRESS).unwrap();
 
     // UDC CONTRACT
-    let udc_class: ContractClassWrapper =
-        get_contract_class(include_bytes!("../../../cairo-contracts/build/UniversalDeployer.json")).try_into().unwrap();
+    let udc_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/UniversalDeployer.json"), 0);
     let udc_class_hash = Felt252Wrapper::from_hex_be(UDC_CLASS_HASH).unwrap();
     let udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
 
@@ -225,8 +223,8 @@ fn testnet_genesis(
         starknet: madara_runtime::pallet_starknet::GenesisConfig {
             contracts: vec![
                 (no_validate_account_address, no_validate_account_class_hash),
+                (cairo_1_no_validate_account_address, cairo_1_no_validate_account_class_hash),
                 (test_contract_address, test_contract_class_hash),
-                (token_contract_address, token_class_hash),
                 (token_contract_address, token_class_hash),
                 (nft_contract_address, nft_class_hash),
                 (fee_token_address, fee_token_class_hash),
@@ -236,6 +234,7 @@ fn testnet_genesis(
             ],
             contract_classes: vec![
                 (no_validate_account_class_hash, no_validate_account_class),
+                (cairo_1_no_validate_account_class_hash, cairo_1_no_validate_account_class),
                 (argent_account_class_hash, argent_account_class),
                 (oz_account_class_hash, oz_account_class),
                 (argent_proxy_class_hash, argent_proxy_class),
@@ -252,6 +251,14 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_account_address], 1),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 0),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
+                    get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 1),
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (

@@ -1,0 +1,30 @@
+{
+  // Launch configuration for debugging Rust code inside VS Code with LLDB
+  // This configuration is used by the extension 'LLDB Debugger'
+  //
+  // The necessary extension may be downloaded at: https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb
+  // Alternatively, the repository for it may be found at: https://github.com/vadimcn/vscode-lldb.git
+
+  "version": "0.1.0",
+  "configurations": [
+    {
+      "name": "Debug Madara",
+      "type": "lldb",
+      "request": "launch",
+      // The following configuration option, 'program', may in some cases need to be modified.
+      // This is so that the correct executable is targeted.
+      // For example, on non-Windows systems, the ".exe" suffix must be removed.
+      // Alternatively, the directory that rustc/cargo outputs debug builds may change in future
+      // As such, this path would have to change accordingly.
+      "program": "${workspaceFolder}/target/debug/madara",
+      // If you wish to supply arguments/parameters to the program, supply them below:
+      "args": ["--dev", "--sealing=instant"],
+      // Working folder for execution. Change as necessary if program requires a different value:
+      "cwd": "${workspaceFolder}",
+      "terminal": "integrated",
+      "stopOnEntry": false,
+      // Instructs LLVM to apply special Rust-language-specific functionality to its analysis:
+      "sourceLanguages": ["rust"]
+    }
+  ]
+}

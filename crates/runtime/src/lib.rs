@@ -17,6 +17,7 @@ mod pallets;
 mod runtime_tests;
 mod types;
 
+use blockifier::execution::contract_class::ContractClass;
 pub use config::*;
 pub use frame_support::traits::{ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo};
 pub use frame_support::weights::constants::{
@@ -27,9 +28,7 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::EventRecord;
 use mp_starknet::crypto::hash::Hasher;
-use mp_starknet::execution::types::{
-    ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper, StorageKeyWrapper,
-};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
@@ -262,7 +261,7 @@ impl_runtime_apis! {
             Starknet::contract_class_hash_by_address(address)
         }
 
-        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClassWrapper> {
+        fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass> {
             Starknet::contract_class_by_class_hash(class_hash)
         }
 

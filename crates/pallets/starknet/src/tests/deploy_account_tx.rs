@@ -17,7 +17,8 @@ fn given_contract_run_deploy_account_tx_works() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (test_addr, account_class_hash, calldata) = account_helper(salt, AccountType::NoValidate);
+        let (test_addr, account_class_hash, calldata) =
+            account_helper(salt, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         set_infinite_tokens(test_addr);
 
@@ -38,8 +39,6 @@ fn given_contract_run_deploy_account_tx_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
-        let transaction_hash = mp_transaction.hash;
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(test_addr).unwrap(), account_class_hash);
@@ -55,7 +54,6 @@ fn given_contract_run_deploy_account_tx_works() {
                 Felt252Wrapper::ZERO,                           // Amount high
             ),
             from_address: Starknet::fee_token_address(),
-            transaction_hash,
         })
         .into();
         System::assert_last_event(expected_fee_transfer_event)
@@ -67,7 +65,8 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
     new_test_ext().execute_with(|| {
         basic_test_setup(2);
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (address, account_class_hash, calldata) = account_helper(salt, AccountType::NoValidate);
+        let (address, account_class_hash, calldata) =
+            account_helper(salt, AccountType::V0(AccountTypeV0Inner::NoValidate));
         set_infinite_tokens(address);
 
         // TEST ACCOUNT CONTRACT
@@ -103,7 +102,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
     new_test_ext().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
-        let account_class_hash = get_account_class_hash(AccountType::Argent);
+        let account_class_hash = get_account_class_hash(AccountType::V0(AccountTypeV0Inner::Argent));
         let transaction = DeployAccountTransaction {
             account_class_hash,
             version: 1,
@@ -130,7 +129,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::Argent);
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::V0(AccountTypeV0Inner::Argent));
 
         let wrong_tx_version = 50_u8;
 
@@ -167,7 +166,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::Openzeppelin);
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         let mut transaction = DeployAccountTransaction {
             account_class_hash,
@@ -192,7 +191,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 
         let address = mp_transaction.sender_address;
         set_infinite_tokens(address);
-        set_signer(address, AccountType::Openzeppelin);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), account_class_hash);
@@ -208,7 +207,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::Openzeppelin);
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -228,7 +227,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
         };
 
         let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
-        set_signer(address, AccountType::Openzeppelin);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
@@ -246,7 +245,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::Argent);
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::V0(AccountTypeV0Inner::Argent));
 
         let mut transaction = DeployAccountTransaction {
             account_class_hash,
@@ -272,7 +271,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
         let address = mp_transaction.sender_address;
         set_infinite_tokens(address);
-        set_signer(address, AccountType::Argent);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), account_class_hash);
@@ -288,7 +287,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::Argent);
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::V0(AccountTypeV0Inner::Argent));
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -308,7 +307,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
         };
 
         let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
-        set_signer(address, AccountType::Argent);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
@@ -326,7 +325,8 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, proxy_class_hash, mut calldata) = account_helper(salt, AccountType::BraavosProxy);
+        let (_, proxy_class_hash, mut calldata) =
+            account_helper(salt, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
         calldata.push("0x1");
         calldata.push(ACCOUNT_PUBLIC_KEY);
 
@@ -356,7 +356,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 
         let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
         set_infinite_tokens(address);
-        set_signer(address, AccountType::Braavos);
+        set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), proxy_class_hash);
@@ -372,12 +372,13 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (test_addr, proxy_class_hash, mut calldata) = account_helper(salt, AccountType::BraavosProxy);
+        let (test_addr, proxy_class_hash, mut calldata) =
+            account_helper(salt, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
         calldata.push("0x1");
         calldata.push(ACCOUNT_PUBLIC_KEY);
 
         set_infinite_tokens(test_addr);
-        set_signer(test_addr, AccountType::Braavos);
+        set_signer(test_addr, AccountType::V0(AccountTypeV0Inner::Braavos));
 
         let transaction = DeployAccountTransaction {
             account_class_hash: proxy_class_hash,
@@ -410,7 +411,7 @@ fn test_verify_tx_longevity() {
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
-        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::NoValidate);
+        let (_, account_class_hash, calldata) = account_helper(salt, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
@@ -449,9 +450,9 @@ fn set_infinite_tokens(address: Felt252Wrapper) {
 
 fn set_signer(address: Felt252Wrapper, account_type: AccountType) {
     let (var_name, args) = match account_type {
-        AccountType::Argent => ("_signer", vec![]),
-        AccountType::Braavos => ("Account_signers", vec![Felt252Wrapper::ZERO]),
-        AccountType::Openzeppelin => ("Account_public_key", vec![]),
+        AccountType::V0(AccountTypeV0Inner::Argent) => ("_signer", vec![]),
+        AccountType::V0(AccountTypeV0Inner::Braavos) => ("Account_signers", vec![Felt252Wrapper::ZERO]),
+        AccountType::V0(AccountTypeV0Inner::Openzeppelin) => ("Account_public_key", vec![]),
         _ => return,
     };
     StorageView::<MockRuntime>::insert(
