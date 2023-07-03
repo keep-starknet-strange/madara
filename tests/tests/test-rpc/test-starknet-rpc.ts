@@ -4,6 +4,7 @@ import chai, { expect } from "chai";
 import deepEqualInAnyOrder from "deep-equal-in-any-order";
 import {
   Account,
+  AccountInvocationItem,
   LibraryError,
   RpcProvider,
   constants,
@@ -202,18 +203,40 @@ describeDevMadara(
       });
     });
 
-    describe("getClassAt", async () => {
-      it("should not be undefined", async function () {
-        const contract_class = await providerRPC.getClassAt(
+  // TODO:
+  //    - once starknet-rs supports query tx version
+  //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estimateAccountDeployFee
+  describe("estimateFee", async () => {
+    it("should estimate fee", async function () {
+      const tx = {
+        contractAddress: ACCOUNT_CONTRACT,
+        calldata: [
           TEST_CONTRACT_ADDRESS,
           "latest"
         );
 
-        expect(contract_class).to.not.be.undefined;
-        expect(contract_class.entry_points_by_type).to.deep.equal(
-          TEST_CONTRACT.entry_points_by_type
-        );
+      const nonce = await providerRPC.getNonceForAddress(
+        ACCOUNT_CONTRACT,
+        "latest"
+      );
+
+      const txDetails = {
+        nonce: nonce,
+        version: "0x1",
+      };
+
+      const invocation: AccountInvocationItem = {
+        type: "INVOKE_FUNCTION",
+        ...tx,
+        ...txDetails,
+      };
+
+      const fee_estimates = await providerRPC.getEstimateFeeBulk([invocation], {
+        blockIdentifier: "latest",
       });
+
+      expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
+      expect(fee_estimates[0].gas_consumed > 0n).to.be.equal(true);
     });
 
     describe("getClassHashAt", async () => {
@@ -233,22 +256,74 @@ describeDevMadara(
           "latest"
         );
 
-        expect(test_contract_class_hash).to.not.be.undefined;
-        expect(validateAndParseAddress(test_contract_class_hash)).to.be.equal(
-          TEST_CONTRACT_CLASS_HASH
-        );
+      const invocation: AccountInvocationItem = {
+        type: "INVOKE_FUNCTION",
+        ...tx,
+        ...txDetails,
+      };
+
+      const fee_estimates = providerRPC.getEstimateFeeBulk([invocation], {
+        blockIdentifier: "latest",
       });
 
-      it("should raise with invalid block id", async () => {
-        // Invalid block id
-        const classHash = providerRPC.getClassHashAt(
+      //    TODO: once starknet-js supports estimateFee using array
+      //   expect(estimate).to.eventually.be.rejectedWith(
+      //     "invalid type: map, expected variant identifier"
+      //   );
+
+      expect(fee_estimates)
+        .to.eventually.be.rejectedWith("40: Contract error")
+        .and.be.an.instanceOf(LibraryError);
+    });
+
+    it("should estimate fees for multiple invocations", async function () {
+      const tx = {
+        contractAddress: ACCOUNT_CONTRACT,
+        calldata: [
           TEST_CONTRACT_ADDRESS,
-          "0x123"
-        );
-        await expect(classHash)
-          .to.eventually.be.rejectedWith("24: Block not found")
-          .and.be.an.instanceOf(LibraryError);
+          "0x36fa6de2810d05c3e1a0ebe23f60b9c2f4629bbead09e5a9704e1c5632630d5",
+          "0x0",
+        ],
+        signature: [],
+      };
+
+      const nonce = await providerRPC.getNonceForAddress(
+        ACCOUNT_CONTRACT,
+        "latest"
+      );
+
+      const txDetails = {
+        nonce: nonce,
+        version: "0x1",
+      };
+
+      const invocation: AccountInvocationItem = {
+        type: "INVOKE_FUNCTION",
+        ...tx,
+        ...txDetails,
+      };
+
+      const fee_estimates = await providerRPC.getEstimateFeeBulk(
+        [invocation, invocation],
+        {
+          blockIdentifier: "latest",
+        }
+      );
+
+      expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
+      expect(fee_estimates[0].gas_consumed > 0n).to.be.equal(true);
+      expect(fee_estimates[1].overall_fee > 0n).to.be.equal(true);
+      expect(fee_estimates[1].gas_consumed > 0n).to.be.equal(true);
+    });
+
+    it("should return empty array if no invocations", async function () {
+      const fee_estimates = await providerRPC.getEstimateFeeBulk([], {
+        blockIdentifier: "latest",
       });
+
+      expect(fee_estimates.length == 0).to.be.equal(true);
+    });
+  });
 
       it("should raise with invalid contract address", async () => {
         // Invalid/un-deployed contract address
