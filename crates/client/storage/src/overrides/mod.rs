@@ -250,6 +250,7 @@ where
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
     ) -> Option<Felt252Wrapper> {
-        self.client.runtime_api().contract_state_root_by_address(block_hash, address).ok()?
+        let api = self.client.runtime_api();
+        api.contract_state_root_by_address(block_hash, address).ok()?
     }
 }

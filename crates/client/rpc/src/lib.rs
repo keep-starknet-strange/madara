@@ -890,24 +890,6 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let class_hash = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_hash_by_address(substrate_block_hash, get_proof_input.contract_address.into())
-            .ok_or_else(|| {
-                error!("Failed to retrieve contract class hash at '{0}'", get_proof_input.contract_address);
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
-        let nonce = self
-            .overrides
-            .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .nonce(substrate_block_hash, get_proof_input.contract_address.into())
-            .ok_or_else(|| {
-                error!("Failed to get nonce at '{0}'", get_proof_input.contract_address);
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
         let class_commitment: Option<FieldElement> = Some(state_commitments.class_commitment.commit().into());
 
         // Generate a proof for this contract. If the contract does not exist, this will
@@ -929,15 +911,34 @@ where
                 }
             };
 
-        // Get contract root from runtime
-        let contract_root = self
+        // At this point we know the contract exists, so errors should never be thrown!
+        let class_hash = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_state_root_by_address(substrate_block_hash, get_proof_input.contract_address.into())
+            .contract_class_hash_by_address(substrate_block_hash, get_proof_input.contract_address.into())
             .ok_or_else(|| {
-                error!("Failed to get contract root at '{0}'", get_proof_input.contract_address);
+                error!("Failed to retrieve contract class hash at '{0}'", get_proof_input.contract_address);
                 StarknetRpcApiError::ContractNotFound
             })?;
+
+        let nonce = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .nonce(substrate_block_hash, get_proof_input.contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to get nonce at '{0}'", get_proof_input.contract_address);
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        // Get contract root from runtime
+        // let contract_root = self
+        //     .overrides
+        //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
+        //     .contract_state_root_by_address(substrate_block_hash,
+        // get_proof_input.contract_address.into())     .ok_or_else(|| {
+        //         error!("Failed to get contract root at '{0}'", get_proof_input.contract_address);
+        //         StarknetRpcApiError::ContractNotFound
+        //     })?;
 
         let storage_proofs: Vec<Vec<ProofNode>> = get_proof_input
             .keys
@@ -948,7 +949,7 @@ where
         let contract_data = ContractData {
             class_hash: class_hash.into(),
             nonce: nonce.into(),
-            root: contract_root.into(),
+            root: contract_state_hash.into(),
             contract_state_hash_version: FieldElement::ZERO, /* Currently, this is defined as 0. Might change in the
                                                               * future. */
             storage_proofs,

@@ -5,7 +5,7 @@ use bitvec::vec::BitVec;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
-use super::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
+use super::merkle_patricia_tree::merkle_tree::{MerkleTree, NodesMapping, ProofNode};
 use super::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
@@ -103,6 +103,11 @@ impl<T: CryptoHasherT> StateCommitmentTree<T> {
     pub fn get(&self, key: Felt252Wrapper) -> Option<Felt252Wrapper> {
         let key = &key.0.to_bytes_be()[..31];
         self.tree.get(&BitVec::from_vec(key.to_vec()))
+    }
+
+    /// Returns the tree's nodes
+    pub fn nodes(&self) -> NodesMapping {
+        NodesMapping(self.tree.nodes())
     }
 }
 

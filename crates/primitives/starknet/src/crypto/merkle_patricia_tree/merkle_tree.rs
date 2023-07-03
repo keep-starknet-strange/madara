@@ -167,6 +167,11 @@ impl<H: CryptoHasherT> MerkleTree<H> {
         Self::new(Felt252Wrapper::ZERO)
     }
 
+    /// Returns the nodes mapping
+    pub fn nodes(&self) -> HashMap<NodeId, Node> {
+        self.nodes.0.clone()
+    }
+
     /// Persists all changes to storage and returns the new root hash.
     ///
     /// Note that the root is reference counted in storage. Committing the
@@ -217,13 +222,12 @@ impl<H: CryptoHasherT> MerkleTree<H> {
 
             Edge(edge) => {
                 self.commit_subtree(&edge.child);
-                // This will succeed as `commit_subtree` will set the child's hash.
                 edge.calculate_hash::<H>(&self.nodes.0.clone());
             }
         }
 
         // Update internal nodes mapping
-        self.nodes.0 = nodes.clone();
+        self.nodes.0.insert(*node_id, node.clone());
     }
 
     /// Sets the value of a key. To delete a key, set the value to [Felt252Wrapper::ZERO].
