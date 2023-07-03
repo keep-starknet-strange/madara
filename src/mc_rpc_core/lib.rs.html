@@ -133,6 +133,10 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -235,7 +239,11 @@
 
     <span class="doccomment">/// Estimate the fee associated with transaction
     </span><span class="attr">#[method(name = <span class="string">&quot;estimateFee&quot;</span>)]
-    </span><span class="kw">async fn </span>estimate_fee(<span class="kw-2">&amp;</span><span class="self">self</span>, request: BroadcastedTransaction, block_id: BlockId) -&gt; RpcResult&lt;FeeEstimate&gt;;
+    </span><span class="kw">async fn </span>estimate_fee(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        request: Vec&lt;BroadcastedTransaction&gt;,
+        block_id: BlockId,
+    ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt;;
 
     <span class="doccomment">/// Get the details of a transaction by a given block id and index
     </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionByBlockIdAndIndex&quot;</span>)]

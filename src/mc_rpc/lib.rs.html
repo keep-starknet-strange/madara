@@ -900,6 +900,14 @@
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1425,7 +1433,11 @@
     /// # Returns
     ///
     /// * `fee_estimate` - fee estimate in gwei
-    </span><span class="kw">async fn </span>estimate_fee(<span class="kw-2">&amp;</span><span class="self">self</span>, request: BroadcastedTransaction, block_id: BlockId) -&gt; RpcResult&lt;FeeEstimate&gt; {
+    </span><span class="kw">async fn </span>estimate_fee(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        request: Vec&lt;BroadcastedTransaction&gt;,
+        block_id: BlockId,
+    ) -&gt; RpcResult&lt;Vec&lt;FeeEstimate&gt;&gt; {
         <span class="comment">// TODO:
         //      - modify BroadcastedTransaction to assert versions == &quot;0x100000000000000000000000000000001&quot;
         //      - to ensure broadcasted query signatures aren&#39;t valid on mainnet
@@ -1437,24 +1449,28 @@
         <span class="kw">let </span>best_block_hash = <span class="self">self</span>.client.info().best_hash;
         <span class="kw">let </span>chain_id = Felt252Wrapper(<span class="self">self</span>.chain_id()<span class="question-mark">?</span>.<span class="number">0</span>);
 
-        <span class="kw">let </span>tx = to_tx(request, chain_id).map_err(|e| {
-            <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
-            StarknetRpcApiError::InternalServerError
-        })<span class="question-mark">?</span>;
-        <span class="kw">let </span>(actual_fee, gas_usage) = <span class="self">self
-            </span>.client
-            .runtime_api()
-            .estimate_fee(substrate_block_hash, tx)
-            .map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>estimates = <span class="macro">vec!</span>[];
+        <span class="kw">for </span>tx <span class="kw">in </span>request {
+            <span class="kw">let </span>tx = to_tx(tx, chain_id).map_err(|e| {
+                <span class="macro">error!</span>(<span class="string">&quot;{e}&quot;</span>);
                 StarknetRpcApiError::InternalServerError
-            })<span class="question-mark">?
-            </span>.map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
-                StarknetRpcApiError::ContractError
             })<span class="question-mark">?</span>;
+            <span class="kw">let </span>(actual_fee, gas_usage) = <span class="self">self
+                </span>.client
+                .runtime_api()
+                .estimate_fee(substrate_block_hash, tx)
+                .map_err(|e| {
+                    <span class="macro">error!</span>(<span class="string">&quot;Request parameters error: {e}&quot;</span>);
+                    StarknetRpcApiError::InternalServerError
+                })<span class="question-mark">?
+                </span>.map_err(|e| {
+                    <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
+                    StarknetRpcApiError::ContractError
+                })<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(FeeEstimate { gas_price: <span class="number">0</span>, gas_consumed: gas_usage, overall_fee: actual_fee })
+            estimates.push(FeeEstimate { gas_price: <span class="number">0</span>, gas_consumed: gas_usage, overall_fee: actual_fee });
+        }
+        <span class="prelude-val">Ok</span>(estimates)
     }
 
     <span class="comment">// Returns the details of a transaction by a given block id and index
