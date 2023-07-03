@@ -30,7 +30,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
 
       const query = {
         jsonrpc: "2.0",
-        method: "pathfinder_getProof",
+        method: "starknet_getProof",
         params: {
           block_id: "latest",
           contract_address:
@@ -39,7 +39,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
         },
         id: 0,
       };
-      const storage_proof = providerRPC.fetch("POST", query);
+      const storage_proof = await providerRPC.fetch("POST", query);
       console.log(storage_proof);
     });
 
@@ -48,7 +48,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
 
       const query = {
         jsonrpc: "2.0",
-        method: "pathfinder_getProof",
+        method: "starknet_getProof",
         params: {
           block_id: "latest",
           contract_address:
@@ -57,7 +57,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
         },
         id: 0,
       };
-      const storage_proof = providerRPC.fetch("POST", query);
+      const storage_proof = await providerRPC.fetch("POST", query);
       console.log(storage_proof);
     });
   });
