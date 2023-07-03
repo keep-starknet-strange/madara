@@ -1501,6 +1501,7 @@ describeDevMadara(
           address: FEE_TOKEN_ADDRESS,
           chunk_size: 7,
           continuation_token: null,
+          keys: [[]],
         };
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -1686,7 +1687,9 @@ describeDevMadara(
           address: FEE_TOKEN_ADDRESS,
           chunk_size: 10,
           continuation_token: null,
+          keys: [[]],
         };
+
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         let { events, continuation_token } = await providerRPC.getEvents(
@@ -1790,7 +1793,9 @@ describeDevMadara(
           address: FEE_TOKEN_ADDRESS,
           chunk_size: 10,
           continuation_token: null,
+          keys: [[]],
         };
+
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         let { events, continuation_token } = await providerRPC.getEvents(
