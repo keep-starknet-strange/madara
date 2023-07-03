@@ -1185,15 +1185,17 @@ impl<T: Config> Pallet<T> {
             commitments.storage_commitment.set(contract_address, hash);
         });
 
+        // Compute the final state root
+        let global_state_root = StateCommitment::<T::SystemHash>::calculate(
+            commitments.storage_commitment.commit(),
+            commitments.class_commitment.commit(),
+        );
+
         // Finally update the contracts trie in runtime storage.
         StarknetStateCommitments::<T>::mutate(|state| {
             state.storage_commitment = commitments.clone().storage_commitment;
         });
 
-        // Compute the final state root
-        StateCommitment::<T::SystemHash>::calculate(
-            commitments.storage_commitment.commit(),
-            commitments.class_commitment.commit(),
-        )
+        global_state_root
     }
 }
