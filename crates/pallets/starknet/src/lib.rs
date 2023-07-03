@@ -1177,7 +1177,7 @@ impl<T: Config> Pallet<T> {
             let state_root = state_tree.commit();
 
             // Update contracts' states root mapping
-            ContractsStateRoots::<T>::set(contract_address, Some(state_root.clone()));
+            ContractsStateRoots::<T>::set(contract_address, Some(state_root));
 
             let nonce = Self::nonce(contract_address);
             let class_hash = Self::contract_class_hash_by_address(contract_address).unwrap_or_default();
