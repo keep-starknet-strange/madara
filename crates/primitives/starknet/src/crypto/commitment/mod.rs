@@ -46,7 +46,7 @@ impl<T: CryptoHasherT> CommitmentTree<T> {
     }
 
     /// Get the merkle root of the tree.
-    pub fn commit(self) -> Felt252Wrapper {
+    pub fn commit(&mut self) -> Felt252Wrapper {
         self.tree.commit()
     }
 }

@@ -7,7 +7,6 @@ import {
   LibraryError,
   RpcProvider,
   constants,
-  ec,
   hash,
   validateAndParseAddress,
   json,
