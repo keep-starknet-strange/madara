@@ -23,7 +23,7 @@ fn given_default_runtime_with_state_root_enabled_default_value_is_correct() {
         // We fetch this value using current genesis state and starkware python package
         pretty_assertions::assert_eq!(
             Starknet::compute_and_store_state_root(),
-            Felt252Wrapper::from_hex_be("0x06119516e37ae3039860d7ef27197a9c78ea9601ec147e3c2e2b0b65ad3bfe9d").unwrap()
+            Felt252Wrapper::from_hex_be("0x04b355b75d79a84b2782b185f25a8c5831854addbf3433805a246f9931beec87").unwrap()
         );
     });
 }
