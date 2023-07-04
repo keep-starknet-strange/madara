@@ -8,6 +8,7 @@ mod chain_spec;
 mod cli;
 mod command;
 mod constants;
+mod genesis_block;
 mod rpc;
 mod starknet;
 
