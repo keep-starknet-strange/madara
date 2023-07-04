@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 use bitvec::vec::BitVec;
 use starknet_crypto::FieldElement;
 
-use super::hash::pedersen::PedersenHasher;
+use super::hash::poseidon::PoseidonHasher;
 use super::merkle_patricia_tree::merkle_tree::{MerkleTree, NodesMapping, ProofNode};
 use super::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 use crate::execution::types::Felt252Wrapper;
@@ -271,7 +271,7 @@ where
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
 pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
-    calculate_transaction_hash_common::<PedersenHasher>(
+    calculate_transaction_hash_common::<PoseidonHasher>(
         transaction.sender_address,
         transaction.calldata.as_slice(),
         transaction.max_fee,
@@ -289,7 +289,7 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt25
 ///
 /// * `transaction` - The declare transaction to get the hash of.
 pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
-    calculate_transaction_hash_common::<PedersenHasher>(
+    calculate_transaction_hash_common::<PoseidonHasher>(
         transaction.sender_address,
         &[transaction.class_hash],
         transaction.max_fee,
@@ -311,7 +311,7 @@ pub fn calculate_deploy_account_tx_hash(
     chain_id: Felt252Wrapper,
     address: Felt252Wrapper,
 ) -> Felt252Wrapper {
-    calculate_transaction_hash_common::<PedersenHasher>(
+    calculate_transaction_hash_common::<PoseidonHasher>(
         address,
         &vec![vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,

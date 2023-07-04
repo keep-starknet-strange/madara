@@ -1,7 +1,6 @@
 //! Starknet pallet custom types.
 use blockifier::execution::contract_class::ContractClass;
 use mp_starknet::crypto::commitment::StateCommitmentTree;
-use mp_starknet::crypto::hash::pedersen::PedersenHasher;
 use mp_starknet::crypto::hash::poseidon::PoseidonHasher;
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use sp_core::ConstU32;
@@ -26,7 +25,7 @@ pub type ContractClassMapping = HashMap<ClassHash, ContractClass>;
 pub type StorageSlotWrapper = (StorageKeyWrapper, Felt252Wrapper);
 
 /// State trie type.
-pub type StateTrie = StateCommitmentTree<PedersenHasher>;
+pub type StateTrie = StateCommitmentTree<PoseidonHasher>;
 
 /// Declare Transaction Output
 #[derive(
@@ -52,7 +51,7 @@ pub struct DeployAccountTransactionOutput {
 #[derive(Default, Clone, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct StateCommitments {
     /// Storage Commitment
-    pub storage_commitment: StateCommitmentTree<PedersenHasher>,
+    pub storage_commitment: StateCommitmentTree<PoseidonHasher>,
     /// Class Commitment
     pub class_commitment: StateCommitmentTree<PoseidonHasher>,
 }

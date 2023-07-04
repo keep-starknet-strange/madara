@@ -32,7 +32,7 @@ use crate::*;
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
+    type SystemHash = mp_starknet::crypto::hash::poseidon::PoseidonHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;

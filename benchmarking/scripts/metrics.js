@@ -3,7 +3,7 @@ const fs = require("fs");
 const os = require("os");
 const { parseArgs } = require("util");
 
-const BLOCK_TIME = 6; // in seconds
+const BLOCK_TIME = 1; // in seconds
 
 function hostSpec() {
   // Retrieve the CPU information
