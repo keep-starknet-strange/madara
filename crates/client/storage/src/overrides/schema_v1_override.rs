@@ -4,10 +4,10 @@ use std::sync::Arc;
 use blockifier::execution::contract_class::ContractClass;
 use frame_system::EventRecord;
 use madara_runtime::{Hash, RuntimeEvent};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, SierraContractClass};
 use mp_starknet::storage::{
-    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
-    STARKNET_NONCE, STARKNET_STORAGE, SYSTEM_EVENTS,
+    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CASM_CONTRACT_CLASS, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS_HASH,
+    STARKNET_NONCE, STARKNET_SIERRA_CONTRACT_CLASS, STARKNET_STORAGE, SYSTEM_EVENTS,
 };
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::NonceWrapper;
@@ -86,15 +86,6 @@ where
         }
     }
 
-    fn contract_class_by_address(
-        &self,
-        block_hash: <B as BlockT>::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ContractClass> {
-        let class_hash = self.contract_class_hash_by_address(block_hash, address)?;
-        self.contract_class_by_class_hash(block_hash, class_hash)
-    }
-
     fn contract_class_hash_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
@@ -107,16 +98,50 @@ where
         )
     }
 
-    fn contract_class_by_class_hash(
+    fn casm_contract_class_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ContractClass> {
+        let class_hash = self.contract_class_hash_by_address(block_hash, address)?;
+        self.casm_contract_class_by_class_hash(block_hash, class_hash)
+    }
+
+    fn casm_contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
         contract_class_hash: ClassHashWrapper,
     ) -> Option<ContractClass> {
-        let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS);
+        let storage_contract_class_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CASM_CONTRACT_CLASS);
         self.query_storage::<ContractClass>(
             block_hash,
             &StorageKey(storage_key_build(
                 storage_contract_class_prefix,
+                &self.encode_storage_key(&contract_class_hash),
+            )),
+        )
+    }
+
+    fn sierra_contract_class_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<SierraContractClass> {
+        let class_hash = self.contract_class_hash_by_address(block_hash, address)?;
+        self.sierra_contract_class_by_class_hash(block_hash, class_hash)
+    }
+
+    fn sierra_contract_class_by_class_hash(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<SierraContractClass> {
+        let storage_sierra_contract_class_prefix =
+            storage_prefix_build(PALLET_STARKNET, STARKNET_SIERRA_CONTRACT_CLASS);
+        self.query_storage::<SierraContractClass>(
+            block_hash,
+            &StorageKey(storage_key_build(
+                storage_sierra_contract_class_prefix,
                 &self.encode_storage_key(&contract_class_hash),
             )),
         )

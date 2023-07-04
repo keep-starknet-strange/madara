@@ -28,7 +28,9 @@ pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use frame_system::EventRecord;
 use mp_starknet::crypto::hash::Hasher;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
+use mp_starknet::execution::types::{
+    ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, SierraContractClass, StorageKeyWrapper,
+};
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
@@ -262,7 +264,7 @@ impl_runtime_apis! {
         }
 
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass> {
-            Starknet::contract_class_by_class_hash(class_hash)
+            Starknet::casm_contract_class_by_class_hash(class_hash)
         }
 
         fn chain_id() -> Felt252Wrapper {
@@ -277,13 +279,17 @@ impl_runtime_apis! {
             Starknet::get_system_hash().into()
         }
 
+        fn get_sierra_program_by_class_hash(class_hash: ClassHashWrapper) -> Option<SierraContractClass> {
+            Starknet::sierra_contract_class_by_class_hash(class_hash)
+        }
+
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
             let chain_id  = Starknet::chain_id();
 
             xts.into_iter().filter_map(|xt| match xt.function {
-                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
-                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
-                RuntimeCall::Starknet( deploy_account { transaction }) => transaction.from_deploy(chain_id).ok(),
+                RuntimeCall::Starknet( invoke { transaction }) => Some((transaction, chain_id).into()),
+                RuntimeCall::Starknet( declare { transaction }) => Some((transaction, chain_id).into()),
+                RuntimeCall::Starknet( deploy_account { transaction }) => (transaction, chain_id).try_into().ok(),
                 _ => None
             }).collect::<Vec<Transaction>>()
         }

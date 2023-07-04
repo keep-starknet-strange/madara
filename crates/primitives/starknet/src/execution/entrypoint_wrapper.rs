@@ -5,7 +5,6 @@ use starknet_api::api_core::EntryPointSelector;
 use starknet_api::deprecated_contract_class::{EntryPoint, EntryPointOffset, EntryPointType};
 use starknet_api::hash::StarkFelt;
 use starknet_api::StarknetApiError;
-use starknet_ff::{FieldElement, FromByteArrayError};
 use thiserror_no_std::Error;
 
 use crate::scale_codec::{Decode, Encode, Error, Input, MaxEncodedLen, Output};
@@ -123,6 +122,7 @@ pub enum EntryPointExecutionErrorWrapper {
 #[cfg(feature = "std")]
 mod reexport_std_types {
     use starknet_core::types::LegacyContractEntryPoint;
+    use starknet_ff::{FieldElement, FromByteArrayError};
 
     use super::*;
     impl From<LegacyContractEntryPoint> for EntryPointWrapper {

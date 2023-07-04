@@ -79,7 +79,7 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 
     fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
         let wrapped_class_hash: ClassHashWrapper = class_hash.0.into();
-        Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash)
+        Pallet::<T>::casm_contract_class_by_class_hash(wrapped_class_hash)
             .ok_or(StateError::UndeclaredClassHash(*class_hash))
     }
 
@@ -171,7 +171,7 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
         let class_hash: ClassHashWrapper = class_hash.0.into();
 
-        crate::ContractClasses::<T>::insert(class_hash, contract_class);
+        crate::CasmContractClasses::<T>::insert(class_hash, contract_class);
 
         // Update state tries if enabled in the runtime configuration
         if T::EnableStateRoot::get() {

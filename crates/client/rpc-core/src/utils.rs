@@ -17,8 +17,7 @@ use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{
-    BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
-    Transaction,
+    BroadcastedTransactionConversionError, DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction,
 };
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
@@ -29,7 +28,9 @@ use starknet_api::hash::StarkFelt;
 use starknet_core::types::contract::legacy::{
     LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
 };
-use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList};
+use starknet_core::types::contract::{
+    CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList, ComputeClassHashError,
+};
 use starknet_core::types::{
     BroadcastedDeclareTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass,
     EntryPointsByType, FieldElement, FlattenedSierraClass, FromByteArrayError, LegacyContractEntryPoint,
@@ -37,7 +38,9 @@ use starknet_core::types::{
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
-pub fn to_rpc_contract_class(contract_class: BlockifierContractClass) -> Result<ContractClass> {
+pub fn try_blockifier_contract_class_into_rpc_contract_class(
+    contract_class: BlockifierContractClass,
+) -> Result<ContractClass> {
     match contract_class {
         BlockifierContractClass::V0(contract_class) => {
             let entry_points_by_type = to_legacy_entry_points_by_type(&contract_class.entry_points_by_type)?;
@@ -78,19 +81,17 @@ pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
 pub fn to_tx(
     request: BroadcastedTransaction,
     chain_id: Felt252Wrapper,
-) -> Result<Transaction, BroadcastedTransactionConversionErrorWrapper> {
+) -> Result<Transaction, BroadcastedTransactionConversionError> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => {
-            InvokeTransaction::try_from(invoke_tx).map(|inner| inner.from_invoke(chain_id))
+            InvokeTransaction::try_from(invoke_tx).map(|inner| (inner, chain_id).into())
         }
         BroadcastedTransaction::Declare(declare_tx) => {
-            to_declare_transaction(declare_tx).map(|inner| inner.from_declare(chain_id))
+            to_declare_transaction(declare_tx).map(|inner| (inner, chain_id).into())
         }
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
             DeployAccountTransaction::try_from(deploy_account_tx).and_then(|inner| {
-                inner
-                    .from_deploy(chain_id)
-                    .map_err(BroadcastedTransactionConversionErrorWrapper::TransactionConversionError)
+                (inner, chain_id).try_into().map_err(BroadcastedTransactionConversionError::TransactionConversionError)
             })
         }
     }
@@ -140,12 +141,14 @@ where
 }
 
 // This code was previously inside primitives/starknet/src/transaction/types.rs
+// directly implemented onto the `DeclareTransaction` type
 // However, for V2 version we need to compile Sierra into Casm and we need to
 // import cairo-lang-starknet which currently doesn't support no_std.
-// So we moved this code to rpc-core/src/utils.rs
+// Due to Rust orphan rules, we cannot implement it onto `BroadcastedDeclareTransaction` either.
+// Until a better solution is found, it will live here, as a standalone function
 pub fn to_declare_transaction(
     tx: BroadcastedDeclareTransaction,
-) -> Result<DeclareTransaction, BroadcastedTransactionConversionErrorWrapper> {
+) -> Result<DeclareTransaction, BroadcastedTransactionConversionError> {
     match tx {
         BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
             let signature = declare_tx_v1
@@ -154,7 +157,7 @@ pub fn to_declare_transaction(
                 .map(|f| (*f).into())
                 .collect::<Vec<Felt252Wrapper>>()
                 .try_into()
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::VecTooBigForBound)?;
 
             // Create a GzipDecoder to decompress the bytes
             let mut gz = GzDecoder::new(&declare_tx_v1.contract_class.program[..]);
@@ -162,14 +165,14 @@ pub fn to_declare_transaction(
             // Read the decompressed bytes into a Vec<u8>
             let mut decompressed_bytes = Vec::new();
             std::io::Read::read_to_end(&mut gz, &mut decompressed_bytes)
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::ContractClassProgramDecompression)?;
 
             // Deserialize it then
             let program: Program = Program::from_bytes(&decompressed_bytes, None)
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDeserializationError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::ContractClassProgramDeserialization)?;
             let legacy_contract_class = LegacyContractClass {
                 program: serde_json::from_slice(decompressed_bytes.as_slice())
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::ProgramConversionError)?,
+                    .map_err(|_| BroadcastedTransactionConversionError::ProgramConversion)?,
                 abi: match declare_tx_v1.contract_class.abi.as_ref() {
                     Some(abi) => abi.iter().cloned().map(|entry| entry.into()).collect::<Vec<_>>(),
                     None => vec![],
@@ -236,25 +239,27 @@ pub fn to_declare_transaction(
                 }))),
                 class_hash: legacy_contract_class.class_hash()?.into(),
                 compiled_class_hash: None,
+                sierra_contract: None,
             })
         }
         BroadcastedDeclareTransaction::V2(declare_tx_v2) => {
+            // TODO: uses transmute to improve performances
             let signature = declare_tx_v2
                 .signature
                 .iter()
-                .map(|f| (*f).into())
+                .map(|&f| Felt252Wrapper::from(f))
                 .collect::<Vec<Felt252Wrapper>>()
                 .try_into()
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::VecTooBigForBound)?;
 
             let casm_constract_class = flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class.clone())
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SierraCompilationError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::SierraCompilationError)?;
             let contract_class = ContractClassV1::try_from(casm_constract_class.clone())
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CasmContractClassConversionError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::CasmContractClassConversionError)?;
 
             // ensuring that the user has signed the correct class hash
-            if get_casm_cotract_class_hash(&casm_constract_class) != declare_tx_v2.compiled_class_hash {
-                return Err(BroadcastedTransactionConversionErrorWrapper::CompiledClassHashError);
+            if get_casm_contract_class_hash(&casm_constract_class)? != declare_tx_v2.compiled_class_hash {
+                return Err(BroadcastedTransactionConversionError::InvalidCompiledClassHash);
             }
 
             Ok(DeclareTransaction {
@@ -266,6 +271,7 @@ pub fn to_declare_transaction(
                 contract_class: BlockifierContractClass::V1(contract_class),
                 compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash)),
                 class_hash: declare_tx_v2.contract_class.class_hash().into(),
+                sierra_contract: Some((*declare_tx_v2.contract_class).clone().into()),
             })
         }
     }
@@ -328,21 +334,18 @@ fn entry_points_by_type_to_contract_entry_points(value: EntryPointsByType) -> Co
 }
 
 // Utils to convert Casm contract class to Compiled class
-pub fn get_casm_cotract_class_hash(casm_contract_class: &CasmContractClass) -> FieldElement {
-    let compiled_class = casm_contract_class_to_compiled_class(casm_contract_class);
-    compiled_class.class_hash().unwrap()
-}
-
-/// Converts a [CasmContractClass] to a [CompiledClass]
-pub fn casm_contract_class_to_compiled_class(casm_contract_class: &CasmContractClass) -> CompiledClass {
-    CompiledClass {
+pub fn get_casm_contract_class_hash(
+    casm_contract_class: &CasmContractClass,
+) -> Result<FieldElement, ComputeClassHashError> {
+    let compiled_class = CompiledClass {
         prime: casm_contract_class.prime.to_string(),
         compiler_version: casm_contract_class.compiler_version.clone(),
         bytecode: casm_contract_class.bytecode.iter().map(|x| biguint_to_field_element(&x.value)).collect(),
         entry_points_by_type: casm_entry_points_to_compiled_entry_points(&casm_contract_class.entry_points_by_type),
         hints: vec![],        // not needed to get class hash so ignoring this
         pythonic_hints: None, // not needed to get class hash so ignoring this
-    }
+    };
+    compiled_class.class_hash()
 }
 
 /// Converts a [CasmContractEntryPoints] to a [CompiledClassEntrypointList]

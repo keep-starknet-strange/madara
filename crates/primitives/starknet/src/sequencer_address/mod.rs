@@ -1,5 +1,3 @@
-use core::array::TryFromSliceError;
-
 use scale_codec::{Decode, Encode};
 use sp_inherents::{InherentData, InherentIdentifier, IsFatalError};
 use thiserror_no_std::Error;
@@ -45,11 +43,6 @@ impl SequencerAddressInherentData for InherentData {
     }
 }
 
-/// Helper function to convert storage value.
-fn slice_to_arr(slice: &[u8]) -> Result<[u8; 32], TryFromSliceError> {
-    slice.try_into()
-}
-
 #[cfg(feature = "std")]
 mod reexport_std_types {
     use super::*;
@@ -89,7 +82,7 @@ mod reexport_std_types {
     impl TryFrom<Vec<u8>> for InherentDataProvider {
         type Error = InherentError;
         fn try_from(storage_val: Vec<u8>) -> Result<Self, InherentError> {
-            match slice_to_arr(&storage_val) {
+            match storage_val.try_into() {
                 Ok(addr) => Ok(InherentDataProvider { sequencer_address: addr }),
                 Err(_) => Err(InherentError::WrongAddressFormat),
             }

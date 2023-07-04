@@ -1,6 +1,6 @@
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::crypto::commitment::calculate_declare_tx_hash;
-use mp_starknet::execution::types::Felt252Wrapper;
+use mp_starknet::execution::types::{EntryPointsByType, Felt252Wrapper, SierraContractClass, SierraEntryPoint};
 use mp_starknet::transaction::types::DeclareTransaction;
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction};
@@ -30,6 +30,7 @@ fn given_contract_declare_tx_works_once_not_twice() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         assert_ok!(Starknet::declare(none_origin.clone(), transaction.clone()));
@@ -63,6 +64,7 @@ fn given_contract_declare_tx_fails_sender_not_deployed() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
@@ -93,6 +95,7 @@ fn given_contract_declare_tx_fails_wrong_tx_version() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::TransactionExecutionFailed);
@@ -120,6 +123,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         let chain_id = Starknet::chain_id();
@@ -134,7 +138,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
 
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
-            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            Starknet::casm_contract_class_by_class_hash(erc20_class_hash).unwrap(),
             get_contract_class("ERC20.json", 0)
         );
     });
@@ -161,6 +165,7 @@ fn given_contract_declare_on_openzeppelin_account_with_incorrect_signature_then_
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
+            sierra_contract: None,
         };
 
         let validate_result = Starknet::validate_unsigned(
@@ -194,6 +199,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         let chain_id = Starknet::chain_id();
@@ -208,7 +214,7 @@ fn given_contract_declare_on_braavos_account_then_it_works() {
 
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
-            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            Starknet::casm_contract_class_by_class_hash(erc20_class_hash).unwrap(),
             get_contract_class("ERC20.json", 0)
         );
     });
@@ -235,6 +241,7 @@ fn given_contract_declare_on_braavos_account_with_incorrect_signature_then_it_fa
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
+            sierra_contract: None,
         };
 
         let validate_result = Starknet::validate_unsigned(
@@ -268,6 +275,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         let chain_id = Starknet::chain_id();
@@ -282,7 +290,7 @@ fn given_contract_declare_on_argent_account_then_it_works() {
 
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
-            Starknet::contract_class_by_class_hash(erc20_class_hash).unwrap(),
+            Starknet::casm_contract_class_by_class_hash(erc20_class_hash).unwrap(),
             get_contract_class("ERC20.json", 0)
         );
     });
@@ -309,6 +317,7 @@ fn given_contract_declare_on_argent_account_with_incorrect_signature_then_it_fai
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ZERO, Felt252Wrapper::ONE),
+            sierra_contract: None,
         };
 
         let validate_result = Starknet::validate_unsigned(
@@ -344,6 +353,7 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         let chain_id = Starknet::chain_id();
@@ -358,14 +368,14 @@ fn given_contract_declare_on_cairo_1_no_validate_account_then_it_works() {
 
         assert_ok!(Starknet::declare(none_origin, transaction));
         assert_eq!(
-            Starknet::contract_class_by_class_hash(hello_starknet_class_hash).unwrap(),
+            Starknet::casm_contract_class_by_class_hash(hello_starknet_class_hash).unwrap(),
             get_contract_class("HelloStarknet.casm.json", 1)
         );
     });
 }
 
 #[test]
-fn test_verify_tx_longevity() {
+fn verify_tx_longevity() {
     new_test_ext().execute_with(|| {
         basic_test_setup(2);
         let account_addr = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
@@ -383,6 +393,7 @@ fn test_verify_tx_longevity() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::declare { transaction });
@@ -392,7 +403,7 @@ fn test_verify_tx_longevity() {
 }
 
 #[test]
-fn test_verify_no_require_tag() {
+fn verify_no_require_tag() {
     new_test_ext().execute_with(|| {
         basic_test_setup(2);
 
@@ -411,6 +422,7 @@ fn test_verify_no_require_tag() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         let validate_result = Starknet::validate_unsigned(
@@ -430,7 +442,7 @@ fn test_verify_no_require_tag() {
 }
 
 #[test]
-fn test_verify_require_tag() {
+fn verify_require_tag() {
     new_test_ext().execute_with(|| {
         basic_test_setup(2);
 
@@ -449,6 +461,7 @@ fn test_verify_require_tag() {
             nonce: Felt252Wrapper::ONE,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            sierra_contract: None,
         };
 
         let validate_result = Starknet::validate_unsigned(
@@ -465,5 +478,56 @@ fn test_verify_require_tag() {
             .build();
 
         assert_eq!(validate_result.unwrap(), valid_transaction_expected.unwrap())
+    });
+}
+
+#[test]
+fn given_a_declare_tx_with_a_sierra_program_when_executed_then_the_sierra_program_is_stored() {
+    new_test_ext().execute_with(|| {
+        basic_test_setup(2);
+        let none_origin = RuntimeOrigin::none();
+        let account_addr = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
+
+        let erc20_class = get_contract_class("ERC20.json", 0);
+        let erc20_class_hash =
+            Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+        let sierra_contract = SierraContractClass {
+            sierra_program: vec![FieldElement::ZERO.into(), FieldElement::ONE.into(), FieldElement::MAX.into()],
+            contract_class_version: "0.1.0".to_string().into_bytes(),
+            entry_points_by_type: EntryPointsByType {
+                constructor: vec![
+                    SierraEntryPoint { selector: FieldElement::ZERO.into(), function_idx: 0 },
+                    SierraEntryPoint { selector: FieldElement::ONE.into(), function_idx: 1 },
+                    SierraEntryPoint { selector: FieldElement::MAX.into(), function_idx: u64::MAX },
+                ],
+                external: vec![
+                    SierraEntryPoint { selector: FieldElement::MAX.into(), function_idx: u64::MAX },
+                    SierraEntryPoint { selector: FieldElement::ZERO.into(), function_idx: 0 },
+                    SierraEntryPoint { selector: FieldElement::ONE.into(), function_idx: 1 },
+                ],
+                l1_handler: vec![
+                    SierraEntryPoint { selector: FieldElement::ONE.into(), function_idx: 1 },
+                    SierraEntryPoint { selector: FieldElement::MAX.into(), function_idx: u64::MAX },
+                    SierraEntryPoint { selector: FieldElement::ZERO.into(), function_idx: 0 },
+                ],
+            },
+            abi: "some_abi".to_string().into_bytes(),
+        };
+
+        let transaction = DeclareTransaction {
+            sender_address: account_addr,
+            version: 1,
+            class_hash: erc20_class_hash,
+            compiled_class_hash: None,
+            contract_class: erc20_class,
+            nonce: Felt252Wrapper::ZERO,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+            signature: bounded_vec!(),
+            sierra_contract: Some(sierra_contract.clone()),
+        };
+
+        assert_ok!(Starknet::declare(none_origin, transaction));
+        assert_eq!(Starknet::sierra_contract_class_by_class_hash(erc20_class_hash), Some(sierra_contract));
     });
 }

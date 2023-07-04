@@ -62,6 +62,7 @@ fn test_declare_tx_hash() {
         // Arbitrary choice to pick v1 vs v0.
         contract_class: ContractClass::from(ContractClassV1::default()),
         compiled_class_hash: None,
+        sierra_contract: None,
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }

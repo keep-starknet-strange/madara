@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mp_starknet::transaction::types::{BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, MaxArraySize};
+use mp_starknet::transaction::types::{BroadcastedTransactionConversionError, DeclareTransaction, MaxArraySize};
 use sp_core::TypedGet;
 use starknet_core::types::contract::legacy::LegacyContractClass;
 use starknet_core::types::contract::SierraClass;
@@ -81,7 +81,7 @@ fn test_try_into_declare_transaction_v1_max_signature() {
 
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
-    assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureBoundError));
+    assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionError::VecTooBigForBound));
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn test_try_into_declare_transaction_v1_bad_gzip() {
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
     assert!(matches!(
         output_result.unwrap_err(),
-        BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
+        BroadcastedTransactionConversionError::ContractClassProgramDecompression
     ));
 }
 
@@ -147,7 +147,7 @@ fn test_try_into_declare_transaction_v2_with_incorrect_compiled_class_hash() {
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
 
-    assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CompiledClassHashError));
+    assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionError::InvalidCompiledClassHash));
 }
 
 fn get_compressed_legacy_contract_class() -> CompressedLegacyContractClass {

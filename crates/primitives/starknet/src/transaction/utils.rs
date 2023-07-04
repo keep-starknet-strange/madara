@@ -1,14 +1,11 @@
-use alloc::vec::Vec;
-
-use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};
-
 #[cfg(feature = "std")]
 mod reexport_std_types {
+    use alloc::vec::Vec;
     use std::collections::HashMap;
 
     use starknet_core::types::{LegacyContractEntryPoint, LegacyEntryPointsByType};
 
-    use super::*;
+    use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};
     /// Returns a [HashMap<EntryPointTypeWrapper, Vec<EntryPointWrapper>>] from
     /// [LegacyEntryPointsByType]
     pub fn to_hash_map_entrypoints(

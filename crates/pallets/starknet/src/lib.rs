@@ -77,7 +77,8 @@ use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
 use mp_starknet::crypto::commitment::{self, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
-    CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
+    CallEntryPointWrapper, ClassHashWrapper, CompiledClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper,
+    Felt252Wrapper, SierraContractClass,
 };
 use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
@@ -120,8 +121,6 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
-
-    use mp_starknet::execution::types::CompiledClassHashWrapper;
 
     use super::*;
 
@@ -262,11 +261,20 @@ pub mod pallet {
     pub(super) type ContractClassHashes<T: Config> =
         StorageMap<_, Identity, ContractAddressWrapper, ClassHashWrapper, OptionQuery>;
 
-    /// Mapping from Starknet class hash to contract class.
+    /// Mapping from a Starknet class hash to its Sierra contract class.
     /// Safe to use `Identity` as the key is already a hash.
     #[pallet::storage]
-    #[pallet::getter(fn contract_class_by_class_hash)]
-    pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
+    #[pallet::unbounded]
+    #[pallet::getter(fn sierra_contract_class_by_class_hash)]
+    pub(super) type SierraContractClasses<T: Config> =
+        StorageMap<_, Identity, ClassHashWrapper, SierraContractClass, OptionQuery>;
+
+    /// Mapping from a Starknet class hash to its Casm contract class.
+    /// Safe to use `Identity` as the key is already a hash.
+    #[pallet::storage]
+    #[pallet::getter(fn casm_contract_class_by_class_hash)]
+    pub(super) type CasmContractClasses<T: Config> =
+        StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
 
     /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
     /// Safe to use `Identity` as the key is already a hash.
@@ -383,7 +391,7 @@ pub mod pallet {
             }
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
-                ContractClasses::<T>::insert(class_hash, contract_class);
+                CasmContractClasses::<T>::insert(class_hash, contract_class);
             }
 
             for (key, value) in self.storage.iter() {
@@ -507,7 +515,7 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
             let chain_id = Self::chain_id();
-            let transaction: Transaction = transaction.from_invoke(chain_id);
+            let transaction: Transaction = (transaction, chain_id).into();
             let call_info =
                 transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
             let receipt = match call_info {
@@ -557,10 +565,11 @@ pub mod pallet {
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
+            let sierra_program = transaction.sierra_contract.clone();
 
             let chain_id = Self::chain_id();
 
-            let transaction: Transaction = transaction.from_declare(chain_id);
+            let transaction: Transaction = (transaction, chain_id).into();
             // Check that contract class is not None
             let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
@@ -571,7 +580,11 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             // Check class hash is not already declared
-            ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
+            ensure!(!CasmContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
+
+            if let Some(sierra_class) = sierra_program {
+                SierraContractClasses::<T>::insert(class_hash, sierra_class);
+            }
 
             // Get current block context
             let block_context = Self::get_block_context();
@@ -636,7 +649,7 @@ pub mod pallet {
 
             let chain_id = Self::chain_id();
             let transaction: Transaction =
-                transaction.from_deploy(chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
+                (transaction, chain_id).try_into().map_err(|_| Error::<T>::TransactionConversionError)?;
 
             // Check if contract is deployed
             ensure!(
@@ -833,9 +846,9 @@ impl<T: Config> Pallet<T> {
     /// The transaction
     fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
         match call {
-            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(Self::chain_id())),
-            Call::<T>::declare { transaction } => Ok(transaction.from_declare(Self::chain_id())),
-            Call::<T>::deploy_account { transaction } => transaction.from_deploy(Self::chain_id()).map_err(|_| ()),
+            Call::<T>::invoke { transaction } => Ok((transaction, Self::chain_id()).into()),
+            Call::<T>::declare { transaction } => Ok((transaction, Self::chain_id()).into()),
+            Call::<T>::deploy_account { transaction } => (transaction, Self::chain_id()).try_into().map_err(|_| ()),
             Call::<T>::consume_l1_message { transaction } => Ok(transaction),
             _ => Err(()),
         }

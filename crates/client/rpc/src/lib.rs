@@ -257,19 +257,26 @@ where
         })?;
 
         let contract_address_wrapped = contract_address.into();
-        let contract_class = self
+        if let Some(sierra_contract_class) = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_address(substrate_block_hash, contract_address_wrapped)
-            .ok_or_else(|| {
-                error!("Failed to retrieve contract class at '{contract_address}'");
-                StarknetRpcApiError::ContractNotFound
-            })?;
-
-        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
-            error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
-            StarknetRpcApiError::ContractNotFound
-        })?)
+            .sierra_contract_class_by_address(substrate_block_hash, contract_address_wrapped)
+        {
+            Ok(ContractClass::Sierra(sierra_contract_class.into()))
+        } else {
+            let casm_contract_class = self
+                .overrides
+                .for_block_hash(self.client.as_ref(), substrate_block_hash)
+                .casm_contract_class_by_address(substrate_block_hash, contract_address_wrapped)
+                .ok_or_else(|| {
+                    error!("Failed to retrieve contract class at '{contract_address}'");
+                    StarknetRpcApiError::ContractNotFound
+                })?;
+            try_blockifier_contract_class_into_rpc_contract_class(casm_contract_class).map_err(|e| {
+                error!("Failed to convert contract class at '{contract_address}' to RPC contract class: {e}");
+                StarknetRpcApiError::ContractNotFound.into()
+            })
+        }
     }
 
     /// Get the contract class hash in the given block for the contract deployed at the given
@@ -373,13 +380,13 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
-            .contract_class_by_class_hash(substrate_block_hash, class_hash.into())
+            .casm_contract_class_by_class_hash(substrate_block_hash, class_hash.into())
             .ok_or_else(|| {
                 error!("Failed to retrieve contract class from hash '{class_hash}'");
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        Ok(to_rpc_contract_class(contract_class).map_err(|e| {
+        Ok(try_blockifier_contract_class_into_rpc_contract_class(contract_class).map_err(|e| {
             error!("Failed to convert contract class from hash '{class_hash}' to RPC contract class: {e}");
             StarknetRpcApiError::ContractNotFound
         })?)
@@ -463,7 +470,7 @@ where
         })?;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction: MPTransaction = invoke_tx.from_invoke(chain_id);
+        let transaction: MPTransaction = (invoke_tx, chain_id).into();
 
         let extrinsic =
             convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::Invoke).await?;
@@ -496,7 +503,7 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.from_deploy(chain_id).map_err(|e| {
+        let transaction: MPTransaction = (deploy_account_transaction, chain_id).try_into().map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
@@ -750,13 +757,13 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), current_block_hash)
-            .contract_class_by_class_hash(current_block_hash, declare_tx.class_hash);
+            .casm_contract_class_by_class_hash(current_block_hash, declare_tx.class_hash);
         if let Some(contract_class) = contract_class {
             error!("Contract class already exists: {:?}", contract_class);
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        let transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
+        let transaction: MPTransaction = (declare_tx.clone(), chain_id).into();
 
         let extrinsic =
             convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::Declare).await?;

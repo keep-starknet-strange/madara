@@ -1,18 +1,13 @@
 //! Starknet execution functionality.
 
-use alloc::collections::BTreeMap;
-
-use frame_support::BoundedBTreeMap;
-use serde::de::Error as DeserializationError;
-use serde::{Deserialize, Deserializer, Serializer};
-use sp_core::Get;
-
 /// Call Entrypoint Wrapper related types
 pub mod call_entrypoint_wrapper;
 /// Entrypoint Wrapper related types
 pub mod entrypoint_wrapper;
 /// Felt252Wrapper type
 pub mod felt252_wrapper;
+/// SierraClass type;
+pub mod sierra_contract_class;
 
 /// All the types related to the execution of a transaction.
 pub mod types {
@@ -31,13 +26,17 @@ pub mod types {
     pub use super::call_entrypoint_wrapper::*;
     pub use super::entrypoint_wrapper::*;
     pub use super::felt252_wrapper::*;
+    pub use super::sierra_contract_class::*;
 }
 
 #[cfg(feature = "std")]
 mod reexport_private_types {
-    use frame_support::Serialize;
+    use alloc::collections::BTreeMap;
 
-    use super::*;
+    use frame_support::{BoundedBTreeMap, Serialize};
+    use serde::de::Error as DeserializationError;
+    use serde::{Deserialize, Deserializer, Serializer};
+    use sp_core::Get;
 
     /// Serialization of [BoundedBTreeMap].
     /// This is needed for the genesis config.

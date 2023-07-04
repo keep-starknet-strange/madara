@@ -18,8 +18,10 @@ pub const PALLET_STARKNET: &[u8] = b"Starknet";
 pub const STARKNET_CURRENT_BLOCK: &[u8] = b"CurrentBlock";
 /// Starknet contract class hash storage item.
 pub const STARKNET_CONTRACT_CLASS_HASH: &[u8] = b"ContractClassHashes";
-/// Starknet contract class storage item.
-pub const STARKNET_CONTRACT_CLASS: &[u8] = b"ContractClasses";
+/// Starknet Casm contract class storage item.
+pub const STARKNET_CASM_CONTRACT_CLASS: &[u8] = b"CasmContractClasses";
+/// Starknet Sierra contract class storage item.
+pub const STARKNET_SIERRA_CONTRACT_CLASS: &[u8] = b"SierraContractClasses";
 /// Starknet nonce storage item.
 pub const STARKNET_NONCE: &[u8] = b"Nonces";
 /// Starknet chain id storage item.

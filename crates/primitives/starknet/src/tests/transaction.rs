@@ -21,8 +21,8 @@ use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCallda
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
-    BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper,
-    InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
+    BroadcastedTransactionConversionError, DeployAccountTransaction, EventError, EventWrapper, InvokeTransaction,
+    MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
 };
 
 #[test]
@@ -388,10 +388,10 @@ fn test_try_into_deploy_account_transaction() {
     pretty_assertions::assert_eq!(max_len.0, max_len.1);
 
     let array_outbound = get_try_into_and_expected_value(max_array_size + 1, max_calldata_size);
-    assert!(matches!(array_outbound.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureBoundError));
+    assert!(matches!(array_outbound.unwrap_err(), BroadcastedTransactionConversionError::VecTooBigForBound));
 
     let calldata_outbound = get_try_into_and_expected_value(max_array_size, max_calldata_size + 1);
-    assert!(matches!(calldata_outbound.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataBoundError));
+    assert!(matches!(calldata_outbound.unwrap_err(), BroadcastedTransactionConversionError::VecTooBigForBound));
 }
 
 #[test]
@@ -411,7 +411,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v0() {
     assert!(invoke_txn.is_err());
     assert!(matches!(
         invoke_txn.unwrap_err(),
-        BroadcastedTransactionConversionErrorWrapper::StarknetError(StarknetError::FailedToReceiveTransaction)
+        BroadcastedTransactionConversionError::StarknetError(StarknetError::FailedToReceiveTransaction)
     ))
 }
 
@@ -457,7 +457,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_sig_size() {
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
-    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureConversionError));
+    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionError::SignatureConversion));
 }
 
 #[test]
@@ -476,7 +476,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
-    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataConversionError));
+    assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionError::CalldataConversion));
 }
 
 // This helper methods either returns result of `TryInto::try_into()` and expected result or the
@@ -484,7 +484,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
 fn get_try_into_and_expected_value(
     array_size: usize,
     calldata_size: usize,
-) -> Result<(DeployAccountTransaction, DeployAccountTransaction), BroadcastedTransactionConversionErrorWrapper> {
+) -> Result<(DeployAccountTransaction, DeployAccountTransaction), BroadcastedTransactionConversionError> {
     let signature: Vec<FieldElement> = vec![FieldElement::default(); array_size];
     let constructor_calldata: Vec<FieldElement> = vec![FieldElement::default(); calldata_size];
 

@@ -36,15 +36,18 @@ pub fn get_invoke_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     );
 
-    InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id())
+    (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into()
 }
 
 // ref: https://github.com/argentlabs/argent-contracts-starknet/blob/develop/contracts/account/ArgentAccount.cairo
@@ -66,15 +69,18 @@ fn get_invoke_argent_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     );
 
-    InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id())
+    (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into()
 }
 
 // ref: https://github.com/myBraavos/braavos-account-cairo/blob/develop/src/account/Account.cairo
@@ -96,15 +102,18 @@ fn get_invoke_braavos_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     );
 
-    InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id())
+    (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into()
 }
 
 // ref: https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/token/erc20/IERC20.cairo
@@ -122,15 +131,18 @@ fn get_invoke_emit_event_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap(), /* amount */
     );
 
-    InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id())
+    (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into()
 }
 
 // ref: https://github.com/tdelabro/blockifier/blob/no_std-support/crates/blockifier/feature_contracts/account_without_validations.cairo
@@ -148,15 +160,18 @@ fn get_invoke_nonce_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     );
 
-    InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id())
+    (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into()
 }
 
 // ref: https://github.com/keep-starknet-strange/madara/blob/main/cairo-contracts/src/accounts/NoValidateAccount.cairo
@@ -172,15 +187,18 @@ fn get_storage_read_write_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000001").unwrap(), /* calldata[1] */
     );
 
-    let mut tx = InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id());
+    let mut tx: Transaction = (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into();
 
     tx.contract_class = Some(get_contract_class("NoValidateAccount.json", 0));
 
@@ -206,13 +224,16 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         Felt252Wrapper::from_hex_be("0x0000000000000000000000000000000000000000000000000000000000000019").unwrap(), /* calldata[0] */
     );
 
-    InvokeTransaction {
-        version: 1,
-        sender_address,
-        calldata,
-        nonce,
-        signature,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-    }
-    .from_invoke(Starknet::chain_id())
+    (
+        InvokeTransaction {
+            version: 1,
+            sender_address,
+            calldata,
+            nonce,
+            signature,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+        },
+        Starknet::chain_id(),
+    )
+        .into()
 }

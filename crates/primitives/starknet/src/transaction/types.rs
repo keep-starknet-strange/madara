@@ -22,7 +22,7 @@ use crate::crypto::commitment::{
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper, Felt252WrapperError};
+use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper, SierraContractClass};
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -149,17 +149,7 @@ impl From<TxType> for TransactionType {
 }
 
 /// Declare transaction.
-#[derive(
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    scale_codec::Encode,
-    scale_codec::Decode,
-    scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen,
-)]
-#[cfg_attr(feature = "std", derive(serde::Deserialize))]
+#[derive(Clone, Debug, scale_codec::Encode, PartialEq, Eq, scale_codec::Decode, scale_info::TypeInfo)]
 pub struct DeclareTransaction {
     /// Transaction version.
     pub version: u8,
@@ -177,31 +167,34 @@ pub struct DeclareTransaction {
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// Sierra class
+    pub sierra_contract: Option<SierraContractClass>,
 }
 
-impl DeclareTransaction {
-    /// converts the transaction to a [Transaction] object
-    pub fn from_declare(self, chain_id: Felt252Wrapper) -> Transaction {
+impl From<(DeclareTransaction, Felt252Wrapper)> for Transaction {
+    fn from(value: (DeclareTransaction, Felt252Wrapper)) -> Self {
+        let declare_tx = value.0;
+        let chain_id = value.1;
         Transaction {
             tx_type: TxType::Declare,
-            version: self.version,
-            hash: calculate_declare_tx_hash(self.clone(), chain_id),
-            signature: self.signature,
-            sender_address: self.sender_address,
-            nonce: self.nonce,
+            version: declare_tx.version,
+            hash: calculate_declare_tx_hash(declare_tx.clone(), chain_id),
+            signature: declare_tx.signature,
+            sender_address: declare_tx.sender_address,
+            nonce: declare_tx.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(self.class_hash),
+                Some(declare_tx.class_hash),
                 EntryPointTypeWrapper::External,
                 None,
                 BoundedVec::default(),
-                self.sender_address,
-                self.sender_address,
+                declare_tx.sender_address,
+                declare_tx.sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710
-                self.compiled_class_hash,
+                declare_tx.compiled_class_hash,
             ),
-            contract_class: Some(self.contract_class),
+            contract_class: Some(declare_tx.contract_class),
             contract_address_salt: None,
-            max_fee: self.max_fee,
+            max_fee: declare_tx.max_fee,
         }
     }
 }
@@ -236,11 +229,15 @@ pub struct DeployAccountTransaction {
     pub max_fee: Felt252Wrapper,
 }
 
-impl DeployAccountTransaction {
-    /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self, chain_id: Felt252Wrapper) -> Result<Transaction, TransactionConversionError> {
-        let salt_as_felt: StarkFelt = StarkFelt(self.salt.into());
-        let stark_felt_vec: Vec<StarkFelt> = self.calldata.clone()
+impl TryFrom<(DeployAccountTransaction, Felt252Wrapper)> for Transaction {
+    type Error = TransactionConversionError;
+
+    fn try_from(value: (DeployAccountTransaction, Felt252Wrapper)) -> Result<Self, Self::Error> {
+        let deploy_account_tx = value.0;
+        let chain_id = value.1;
+
+        let salt_as_felt: StarkFelt = StarkFelt(deploy_account_tx.salt.into());
+        let stark_felt_vec: Vec<StarkFelt> = deploy_account_tx.calldata.clone()
             .into_inner()
             .into_iter()
             .map(|felt_wrapper| felt_wrapper.try_into().unwrap()) // Here, we are assuming that the conversion will not fail.
@@ -248,7 +245,12 @@ impl DeployAccountTransaction {
 
         let sender_address: ContractAddressWrapper = calculate_contract_address(
             ContractAddressSalt(salt_as_felt),
-            ClassHash(self.account_class_hash.try_into().map_err(|_| TransactionConversionError::MissingClassHash)?),
+            ClassHash(
+                deploy_account_tx
+                    .account_class_hash
+                    .try_into()
+                    .map_err(|_| TransactionConversionError::MissingClassHash)?,
+            ),
             &Calldata(Arc::new(stark_felt_vec)),
             ContractAddress::default(),
         )
@@ -259,24 +261,24 @@ impl DeployAccountTransaction {
 
         Ok(Transaction {
             tx_type: TxType::DeployAccount,
-            version: self.version,
-            hash: calculate_deploy_account_tx_hash(self.clone(), chain_id, sender_address),
-            signature: self.signature,
+            version: deploy_account_tx.version,
+            hash: calculate_deploy_account_tx_hash(deploy_account_tx.clone(), chain_id, sender_address),
+            signature: deploy_account_tx.signature,
             sender_address,
-            nonce: self.nonce,
+            nonce: deploy_account_tx.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
-                Some(self.account_class_hash),
+                Some(deploy_account_tx.account_class_hash),
                 EntryPointTypeWrapper::External,
                 None,
-                self.calldata,
+                deploy_account_tx.calldata,
                 sender_address,
                 sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
                 None,
             ),
             contract_class: None,
-            contract_address_salt: Some(self.salt.into()),
-            max_fee: self.max_fee,
+            contract_address_salt: Some(deploy_account_tx.salt.into()),
+            max_fee: deploy_account_tx.max_fee,
         })
     }
 }
@@ -319,6 +321,7 @@ impl TryFrom<Transaction> for DeclareTransaction {
             compiled_class_hash: casm_class_hash,
             class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
+            sierra_contract: None,
         })
     }
 }
@@ -364,29 +367,30 @@ impl From<Transaction> for InvokeTransaction {
     }
 }
 
-impl InvokeTransaction {
-    /// converts the transaction to a [Transaction] object
-    pub fn from_invoke(self, chain_id: Felt252Wrapper) -> Transaction {
+impl From<(InvokeTransaction, Felt252Wrapper)> for Transaction {
+    fn from(value: (InvokeTransaction, Felt252Wrapper)) -> Self {
+        let invoke_tx = value.0;
+        let chain_id = value.1;
         Transaction {
             tx_type: TxType::Invoke,
-            version: self.version,
-            hash: calculate_invoke_tx_hash(self.clone(), chain_id),
-            signature: self.signature,
-            sender_address: self.sender_address,
-            nonce: self.nonce,
+            version: invoke_tx.version,
+            hash: calculate_invoke_tx_hash(invoke_tx.clone(), chain_id),
+            signature: invoke_tx.signature,
+            sender_address: invoke_tx.sender_address,
+            nonce: invoke_tx.nonce,
             call_entrypoint: CallEntryPointWrapper::new(
                 None,
                 EntryPointTypeWrapper::External,
                 None,
-                self.calldata,
-                self.sender_address,
-                self.sender_address,
+                invoke_tx.calldata,
+                invoke_tx.sender_address,
+                invoke_tx.sender_address,
                 Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
                 None,
             ),
             contract_class: None,
             contract_address_salt: None,
-            max_fee: self.max_fee,
+            max_fee: invoke_tx.max_fee,
         }
     }
 }
@@ -573,30 +577,28 @@ mod reexport_private_types {
     };
 
     use super::*;
+    use crate::execution::felt252_wrapper::Felt252WrapperError;
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
-    pub enum BroadcastedTransactionConversionErrorWrapper {
+    pub enum BroadcastedTransactionConversionError {
         /// Failed to decompress the contract class program
-        #[error("Failed to decompress the contract class program")]
-        ContractClassProgramDecompressionError,
+        #[error("failed to decompress the contract class program")]
+        ContractClassProgramDecompression,
         /// Failed to deserialize the contract class program
-        #[error("Failed to deserialize the contract class program")]
-        ContractClassProgramDeserializationError,
+        #[error("failed to deserialize the contract class program")]
+        ContractClassProgramDeserialization,
         /// Failed to convert signature
-        #[error("Failed to convert signature")]
-        SignatureConversionError,
+        #[error("failed to convert signature")]
+        SignatureConversion,
         /// Failed to convert calldata
-        #[error("Failed to convert calldata")]
-        CalldataConversionError,
+        #[error("failed to convert calldata")]
+        CalldataConversion,
         /// Failed to convert program to program wrapper"
-        #[error("Failed to convert program to program wrapper")]
-        ProgramConversionError,
-        /// Failed to bound signatures Vec<H256> by MaxArraySize
-        #[error("failed to bound signatures Vec<H256> by MaxArraySize")]
-        SignatureBoundError,
-        /// Failed to bound calldata Vec<U256> by MaxCalldataSize
-        #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
-        CalldataBoundError,
+        #[error("failed to convert program to program wrapper")]
+        ProgramConversion,
+        /// Input vector is longer than the runtime bound
+        #[error("input vector is longer than the runtime bound")]
+        VecTooBigForBound,
         /// Failed to compile Sierra to Casm
         #[error("failed to compile Sierra to Casm")]
         SierraCompilationError,
@@ -605,7 +607,7 @@ mod reexport_private_types {
         CasmContractClassConversionError,
         /// Computed compiled class hash doesn't match with the request
         #[error("compiled class hash does not match sierra code")]
-        CompiledClassHashError,
+        InvalidCompiledClassHash,
         /// Starknet Error
         #[error(transparent)]
         StarknetError(#[from] StarknetError),
@@ -618,7 +620,7 @@ mod reexport_private_types {
     }
 
     impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
-        type Error = BroadcastedTransactionConversionErrorWrapper;
+        type Error = BroadcastedTransactionConversionError;
         fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
             match tx {
                 BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
@@ -627,14 +629,14 @@ mod reexport_private_types {
                     signature: BoundedVec::try_from(
                         invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                     )
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
+                    .map_err(|_| BroadcastedTransactionConversionError::SignatureConversion)?,
 
                     sender_address: invoke_tx_v1.sender_address.into(),
                     nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
                     calldata: BoundedVec::try_from(
                         invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                     )
-                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
+                    .map_err(|_| BroadcastedTransactionConversionError::CalldataConversion)?,
                     max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
                 }),
             }
@@ -642,7 +644,7 @@ mod reexport_private_types {
     }
 
     impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
-        type Error = BroadcastedTransactionConversionErrorWrapper;
+        type Error = BroadcastedTransactionConversionError;
         fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction, Self::Error> {
             let contract_address_salt = tx.contract_address_salt.into();
 
@@ -654,7 +656,7 @@ mod reexport_private_types {
                 .map(|f| (*f).into())
                 .collect::<Vec<Felt252Wrapper>>()
                 .try_into()
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::VecTooBigForBound)?;
 
             let calldata = tx
                 .constructor_calldata
@@ -662,7 +664,7 @@ mod reexport_private_types {
                 .map(|f| (*f).into())
                 .collect::<Vec<Felt252Wrapper>>()
                 .try_into()
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
+                .map_err(|_| BroadcastedTransactionConversionError::VecTooBigForBound)?;
 
             let nonce = Felt252Wrapper::from(tx.nonce);
             let max_fee = Felt252Wrapper::from(tx.max_fee);

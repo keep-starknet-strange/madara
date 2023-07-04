@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, SierraContractClass};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -70,14 +70,30 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
         block_hash: B::Hash,
         address: ContractAddressWrapper,
     ) -> Option<ClassHashWrapper>;
-    /// Return the contract class at the provided address for the provided block.
-    fn contract_class_by_address(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClass>;
-    /// Return the contract class for a provided class_hash and block hash.
-    fn contract_class_by_class_hash(
+    /// Return the contract class at the provided address and block.
+    fn casm_contract_class_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<ContractClass>;
+    /// Return the contract class for a provided [ClassHash](ClassHashWrapper) and block hash.
+    fn casm_contract_class_by_class_hash(
         &self,
         block_hash: B::Hash,
         contract_class_hash: ClassHashWrapper,
     ) -> Option<ContractClass>;
+    /// Returns the Sierra contract class at the provided address and block
+    fn sierra_contract_class_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<SierraContractClass>;
+    /// Returns the Sierra contract class for the provided [ClassHash](ClassHashWrapper)and block
+    fn sierra_contract_class_by_class_hash(
+        &self,
+        block_hash: B::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<SierraContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
@@ -132,7 +148,7 @@ where
         }
     }
 
-    fn contract_class_by_address(
+    fn casm_contract_class_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
@@ -172,12 +188,35 @@ where
     ///
     /// # Returns
     /// * `Some(contract_class)` - The contract class for the provided class hash and block hash
-    fn contract_class_by_class_hash(
+    fn casm_contract_class_by_class_hash(
         &self,
         block_hash: <B as BlockT>::Hash,
         contract_class_hash: ClassHashWrapper,
     ) -> Option<ContractClass> {
         self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
+    }
+
+    fn sierra_contract_class_by_class_hash(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        contract_class_hash: ClassHashWrapper,
+    ) -> Option<SierraContractClass> {
+        let api = self.client.runtime_api();
+        api.get_sierra_program_by_class_hash(block_hash, contract_class_hash).ok()?
+    }
+
+    fn sierra_contract_class_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<SierraContractClass> {
+        let api = self.client.runtime_api();
+        let contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()?;
+
+        match contract_class_hash {
+            None => None,
+            Some(contract_class_hash) => api.get_sierra_program_by_class_hash(block_hash, contract_class_hash).ok()?,
+        }
     }
 
     /// Return the nonce for a provided contract address and block hash.

@@ -1,6 +1,6 @@
 use frame_support::{assert_err, assert_ok, bounded_vec, BoundedVec};
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
+use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper, Transaction};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
 
@@ -184,7 +184,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
         };
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
+        let mp_transaction: Transaction = (transaction.clone(), get_chain_id()).try_into().unwrap();
 
         let tx_hash = mp_transaction.hash;
         transaction.signature = sign_message_hash(tx_hash);
@@ -226,7 +226,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = TryInto::<Transaction>::try_into((transaction.clone(), get_chain_id())).unwrap().sender_address;
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         assert_err!(
@@ -264,7 +264,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             signature: bounded_vec!(),
         };
 
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
+        let mp_transaction: Transaction = (transaction.clone(), get_chain_id()).try_into().unwrap();
 
         let tx_hash = mp_transaction.hash;
         transaction.signature = sign_message_hash(tx_hash);
@@ -306,7 +306,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = TryInto::<Transaction>::try_into((transaction.clone(), get_chain_id())).unwrap().sender_address;
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
         assert_err!(
@@ -354,7 +354,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             signature: signatures.try_into().unwrap(),
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = TryInto::<Transaction>::try_into((transaction.clone(), get_chain_id())).unwrap().sender_address;
         set_infinite_tokens(address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 
