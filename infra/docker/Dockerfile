@@ -25,5 +25,5 @@ COPY --from=builder /madara/crates/node/chain-specs /chain-specs
 # 9444 JSON-RPC server
 # 9615 Prometheus exporter
 # 30333 P2P communication
-EXPOSE 9933 9944 9615 30333
+EXPOSE 9944 9615 30333
 ENTRYPOINT ["/madara-bin"]
