@@ -28,37 +28,38 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
     it("should return proof of non-membership", async function () {
       await jumpBlocks(context, 1);
 
-      const query = {
-        jsonrpc: "2.0",
-        method: "starknet_getProof",
-        params: {
+      const params = {
+        get_proof_input: {
           block_id: "latest",
-          contract_address:
-            "0x23371b227eaecd8e8920cd429d2cd0f3fee6abaacca08d3ab82a7cdd",
+          contract_address: "0x111222333",
           keys: ["0x1", "0xfffffffff"],
         },
-        id: 0,
       };
-      const storage_proof = await providerRPC.fetch("POST", query);
-      console.log(storage_proof);
+      let storage_proof = await providerRPC.fetch("starknet_getProof", params);
+      storage_proof = await storage_proof.json();
+
+      // Check contract root
+      expect(storage_proof["result"]["contract_data"]).to.be.null;
     });
 
     it("should return proof of membership", async function () {
       await jumpBlocks(context, 1);
 
-      const query = {
-        jsonrpc: "2.0",
-        method: "starknet_getProof",
-        params: {
+      const params = {
+        get_proof_input: {
           block_id: "latest",
-          contract_address:
-            "0x23371b227eaecd8e8920cd429d2cd0f3fee6abaacca08d3ab82a7cdd",
+          contract_address: "0x2",
           keys: ["0x1", "0xfffffffff"],
         },
-        id: 0,
       };
-      const storage_proof = await providerRPC.fetch("POST", query);
-      console.log(storage_proof);
+      let storage_proof = await providerRPC.fetch("starknet_getProof", params);
+      storage_proof = await storage_proof.json();
+
+      // Check contract root
+      expect(storage_proof["result"]["contract_data"]["root"]).to.be.eq(
+        "1245075994121459795339981889219606020533793304969303161130350131342227964700"
+      );
     });
   });
 });
+
