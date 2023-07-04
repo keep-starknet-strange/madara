@@ -16,11 +16,11 @@ pub struct RpcGetProofInput {
 #[skip_serializing_none]
 pub struct RpcGetProofOutput {
     /// The global state commitment for Starknet 0.11.0 blocks onwards, if absent the hash
-    /// of the first node in the [contract_proof](GetProofOutput#contract_proof) is the global state
-    /// commitment.
+    /// of the first node in the [contract_proof](RpcGetProofOutput#contract_proof) is the global
+    /// state commitment.
     pub state_commitment: Option<FieldElement>,
     /// Required to verify that the hash of the class commitment and the root of the
-    /// [contract_proof](GetProofOutput::contract_proof) matches the
+    /// [contract_proof](RpcGetProofOutput::contract_proof) matches the
     /// [state_commitment](Self#state_commitment). Present only for Starknet blocks 0.11.0 onwards.
     pub class_commitment: Option<FieldElement>,
 

@@ -46,7 +46,7 @@ use starknet_core::types::{
     Transaction, TransactionStatus,
 };
 
-use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS, MAX_KEYS};
+use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS, MAX_STORAGE_PROOF_KEYS_BY_QUERY};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -868,12 +868,26 @@ where
         }
     }
 
+    /// This endpoint aims to do the same as [EIP-1186](https://eips.ethereum.org/EIPS/eip-1186)
+    /// It should provide all the data necessary for someone to verify some storage
+    /// within a starknet smart contract thanks to its merkle proof.
+    ///
+    /// It takes advantages from the facts that the whole state is built as 2 tries:
+    /// 1. The contracts trie : stores state data of the contracts based on their address
+    /// 2. The classes trie : associates class hashes with classes
+    ///
+    /// More information on Starknet's state [here](https://docs.starknet.io/documentation/architecture_and_concepts/State/starknet-state/)
+    ///
+    /// A storage proof is *just* a merkle proof of the subtree which you can find the root within
+    /// the contracts trie
+    ///
+    /// This implementation is highly inspired by previous work on [pathfinder](https://github.com/eqlabs/pathfinder/pull/726)
     fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput> {
-        if get_proof_input.keys.len() > MAX_KEYS {
+        if get_proof_input.keys.len() > MAX_STORAGE_PROOF_KEYS_BY_QUERY {
             error!(
                 "Too many keys requested! limit: {:?},
 				requested: {:?}",
-                MAX_KEYS,
+                MAX_STORAGE_PROOF_KEYS_BY_QUERY,
                 get_proof_input.keys.len() as u32
             );
             return Err(StarknetRpcApiError::ProofLimitExceeded.into());
@@ -898,7 +912,14 @@ where
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let class_commitment: Option<FieldElement> = Some(state_commitments.class_commitment.commit().into());
+        let class_commitment: FieldElement = state_commitments.class_commitment.commit().into();
+        let storage_commitment: FieldElement = state_commitments.storage_commitment.commit().into();
+
+        let (state_commitment, class_commitment) = if class_commitment == FieldElement::ZERO {
+            (None, None)
+        } else {
+            (Some(global_state_root.0), Some(class_commitment))
+        };
 
         // Generate a proof for this contract. If the contract does not exist, this will
         // be a "non membership" proof.
@@ -911,7 +932,7 @@ where
                 None => {
                     // Contract not found: return the proof of non membership that we generated earlier.
                     return Ok(RpcGetProofOutput {
-                        state_commitment: Some(global_state_root.0),
+                        state_commitment,
                         class_commitment,
                         contract_proof,
                         contract_data: None,
@@ -938,7 +959,7 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        // Get contract root from runtime
+        // TODO: Get contract root from runtime
         // let contract_root = self
         //     .overrides
         //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
@@ -958,17 +979,12 @@ where
             class_hash: class_hash.into(),
             nonce: nonce.into(),
             root: contract_state_hash.into(),
-            contract_state_hash_version: FieldElement::ZERO, /* Currently, this is defined as 0. Might change in the
-                                                              * future. */
+            // Currently, this is defined as 0. Might change in the future
+            contract_state_hash_version: FieldElement::ZERO,
             storage_proofs,
         };
 
-        Ok(RpcGetProofOutput {
-            state_commitment: Some(global_state_root.0),
-            class_commitment,
-            contract_proof,
-            contract_data: Some(contract_data),
-        })
+        Ok(RpcGetProofOutput { state_commitment, class_commitment, contract_proof, contract_data: Some(contract_data) })
     }
 }
 
