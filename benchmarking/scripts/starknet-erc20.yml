@@ -10,7 +10,7 @@ config:
         - duration: 4
           arrivalCount: 1 # Number of users
           name: Users Connection
-        - pause: 120
+        - pause: 60
           name: Performance Testing
   variables:
     nonce: 0
