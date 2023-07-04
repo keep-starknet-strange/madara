@@ -14,11 +14,13 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
+use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
 use mc_storage::OverrideHandle;
 use mc_transaction_pool::{ChainApi, Pool};
+use mp_starknet::crypto::merkle_patricia_tree::merkle_tree::ProofNode;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
@@ -44,7 +46,7 @@ use starknet_core::types::{
     Transaction, TransactionStatus,
 };
 
-use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS};
+use crate::constants::{MAX_EVENTS_CHUNK_SIZE, MAX_EVENTS_KEYS, MAX_KEYS};
 use crate::types::RpcEventFilter;
 
 /// A Starknet RPC server for Madara
@@ -207,7 +209,6 @@ where
             StarknetRpcApiError::BlockNotFound
         })?;
 
-        let runtime_api = self.client.runtime_api();
         let hex_address = contract_address.into();
 
         let value = self
@@ -865,6 +866,109 @@ where
             Some(receipt) => Ok(receipt),
             None => Err(StarknetRpcApiError::TxnHashNotFound.into()),
         }
+    }
+
+    fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput> {
+        if get_proof_input.keys.len() > MAX_KEYS {
+            error!(
+                "Too many keys requested! limit: {:?},
+				requested: {:?}",
+                MAX_KEYS,
+                get_proof_input.keys.len() as u32
+            );
+            return Err(StarknetRpcApiError::ProofLimitExceeded.into());
+        }
+
+        let substrate_block_hash =
+            self.substrate_block_hash_from_starknet_block(get_proof_input.block_id).map_err(|e| {
+                error!("'{e}'");
+                StarknetRpcApiError::BlockNotFound
+            })?;
+
+        let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
+
+        let global_state_root = block.header().global_state_root;
+
+        let mut state_commitments = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .state_commitments(substrate_block_hash)
+            .ok_or_else(|| {
+                error!("Failed to retrieve state commitments");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let class_commitment: Option<FieldElement> = Some(state_commitments.class_commitment.commit().into());
+
+        // Generate a proof for this contract. If the contract does not exist, this will
+        // be a "non membership" proof.
+        let contract_proof =
+            state_commitments.storage_commitment.get_proof(Felt252Wrapper(get_proof_input.contract_address));
+
+        let contract_state_hash =
+            match state_commitments.storage_commitment.get(Felt252Wrapper(get_proof_input.contract_address)) {
+                Some(contract_state_hash) => contract_state_hash,
+                None => {
+                    // Contract not found: return the proof of non membership that we generated earlier.
+                    return Ok(RpcGetProofOutput {
+                        state_commitment: Some(global_state_root.0),
+                        class_commitment,
+                        contract_proof,
+                        contract_data: None,
+                    });
+                }
+            };
+
+        // At this point we know the contract exists, so errors should never be thrown!
+        let class_hash = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .contract_class_hash_by_address(substrate_block_hash, get_proof_input.contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to retrieve contract class hash at '{0}'", get_proof_input.contract_address);
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        let nonce = self
+            .overrides
+            .for_block_hash(self.client.as_ref(), substrate_block_hash)
+            .nonce(substrate_block_hash, get_proof_input.contract_address.into())
+            .ok_or_else(|| {
+                error!("Failed to get nonce at '{0}'", get_proof_input.contract_address);
+                StarknetRpcApiError::ContractNotFound
+            })?;
+
+        // Get contract root from runtime
+        // let contract_root = self
+        //     .overrides
+        //     .for_block_hash(self.client.as_ref(), substrate_block_hash)
+        //     .contract_state_root_by_address(substrate_block_hash,
+        // get_proof_input.contract_address.into())     .ok_or_else(|| {
+        //         error!("Failed to get contract root at '{0}'", get_proof_input.contract_address);
+        //         StarknetRpcApiError::ContractNotFound
+        //     })?;
+
+        let storage_proofs: Vec<Vec<ProofNode>> = get_proof_input
+            .keys
+            .iter()
+            .map(|k| state_commitments.storage_commitment.get_proof(Felt252Wrapper(*k)))
+            .collect();
+
+        let contract_data = ContractData {
+            class_hash: class_hash.into(),
+            nonce: nonce.into(),
+            root: contract_state_hash.into(),
+            contract_state_hash_version: FieldElement::ZERO, /* Currently, this is defined as 0. Might change in the
+                                                              * future. */
+            storage_proofs,
+        };
+
+        Ok(RpcGetProofOutput {
+            state_commitment: Some(global_state_root.0),
+            class_commitment,
+            contract_proof,
+            contract_data: Some(contract_data),
+        })
     }
 }
 

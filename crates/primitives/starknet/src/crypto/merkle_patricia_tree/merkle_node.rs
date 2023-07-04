@@ -176,7 +176,9 @@ impl BinaryNode {
             None => unreachable!("right child not found"),
         };
 
-        self.hash = Some(Felt252Wrapper(H::hash(left.0, right.0)));
+        let hash = Felt252Wrapper(H::hash(left.0, right.0));
+
+        self.hash = Some(hash);
     }
 }
 
@@ -288,7 +290,9 @@ impl EdgeNode {
         length[31] = self.path.len() as u8;
 
         let length = Felt252Wrapper::try_from(&length).unwrap();
+
         let hash = Felt252Wrapper(H::hash(child.0, path.0) + length.0);
+
         self.hash = Some(hash);
     }
 }
