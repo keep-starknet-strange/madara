@@ -30,7 +30,7 @@ pub trait HasherT: Default {
     /// # Returns
     ///
     /// The hash of the 2 values.
-    fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement;
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement;
 
     /// Computes a hash chain over the data, in the following order:
     /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
@@ -45,7 +45,7 @@ pub trait HasherT: Default {
     /// # Returns
     ///
     /// The hash of the array.
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement;
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement;
 }
 
 /// A trait for default hashing instance.

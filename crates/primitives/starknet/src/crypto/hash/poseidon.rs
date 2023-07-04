@@ -36,10 +36,10 @@ impl HasherT for PoseidonHasher {
         Felt252Wrapper(poseidon_hash_many(&data))
     }
 
-    fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement {
         poseidon_hash(a, b)
     }
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement {
         poseidon_hash_many(elements)
     }
 }

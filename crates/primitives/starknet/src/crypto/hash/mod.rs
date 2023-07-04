@@ -36,12 +36,18 @@ impl HasherT for Hasher {
         }
     }
 
-    fn hash_elements(_a: FieldElement, _b: FieldElement) -> FieldElement {
-        todo!()
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement {
+        match self {
+            Self::Pedersen(p) => p.hash_elements(a, b),
+            Self::Poseidon(p) => p.hash_elements(a, b),
+        }
     }
 
-    fn compute_hash_on_elements(_elements: &[FieldElement]) -> FieldElement {
-        todo!()
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement {
+        match self {
+            Self::Pedersen(p) => p.compute_hash_on_elements(elements),
+            Self::Poseidon(p) => p.compute_hash_on_elements(elements),
+        }
     }
 }
 

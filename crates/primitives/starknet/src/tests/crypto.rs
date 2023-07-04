@@ -212,11 +212,11 @@ impl HasherT for TestHasher {
         unimplemented!()
     }
 
-    fn hash_elements(a: FieldElement, b: FieldElement) -> FieldElement {
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement {
         a + b
     }
 
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement {
         if elements.is_empty() {
             FieldElement::ZERO
         } else {

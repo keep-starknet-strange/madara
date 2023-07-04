@@ -173,7 +173,7 @@ pub fn calculate_class_commitment_leaf_hash<T: HasherT>(
 ) -> ClassCommitmentLeafHash {
     let contract_class_hash_version = Felt252Wrapper::try_from("CONTRACT_CLASS_LEAF_V0".as_bytes()).unwrap(); // Unwrap safu
 
-    let hash = <T>::compute_hash_on_elements(&[contract_class_hash_version.0, compiled_class_hash.0]);
+    let hash = <T>::default().compute_hash_on_elements(&[contract_class_hash_version.0, compiled_class_hash.0]);
 
     hash.into()
 }
@@ -219,7 +219,7 @@ pub fn calculate_contract_state_hash<T: HasherT>(
     const CONTRACT_STATE_HASH_VERSION: Felt252Wrapper = Felt252Wrapper::ZERO;
 
     // The contract state hash is defined as H(H(H(hash, root), nonce), CONTRACT_STATE_HASH_VERSION)
-    let hash = <T>::compute_hash_on_elements(&[hash.0, root.0, nonce.0, CONTRACT_STATE_HASH_VERSION.0]);
+    let hash = <T>::default().compute_hash_on_elements(&[hash.0, root.0, nonce.0, CONTRACT_STATE_HASH_VERSION.0]);
 
     // Compare this with the HashChain construction used in the contract_hash: the number of
     // elements is not hashed to this hash, and this is supposed to be different.
@@ -243,10 +243,10 @@ fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> FieldElemen
 where
     T: HasherT,
 {
-    let signature_hash = <T as HasherT>::compute_hash_on_elements(
+    let signature_hash = <T>::default().compute_hash_on_elements(
         &tx.signature.iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
     );
-    <T as HasherT>::hash_elements(FieldElement::from(tx.hash), signature_hash)
+    <T>::default().hash_elements(FieldElement::from(tx.hash), signature_hash)
 }
 /// Computes the transaction hash of an invoke transaction.
 ///
@@ -323,9 +323,8 @@ where
 {
     // All the values are validated before going through this function so it's safe to unwrap.
     let sender_address = FieldElement::from_bytes_be(&sender_address.into()).unwrap();
-    let calldata_hash = <T as HasherT>::compute_hash_on_elements(
-        &calldata.iter().map(|&val| FieldElement::from(val)).collect::<Vec<FieldElement>>(),
-    );
+    let calldata_hash = <T>::default()
+        .compute_hash_on_elements(&calldata.iter().map(|&val| FieldElement::from(val)).collect::<Vec<FieldElement>>());
     let max_fee = FieldElement::from_bytes_be(&max_fee.into()).unwrap();
     let nonce = FieldElement::from_bytes_be(&nonce.into()).unwrap();
     let version = FieldElement::from_byte_slice_be(&version.to_be_bytes()).unwrap();
@@ -337,7 +336,7 @@ where
         elements.push(FieldElement::from_bytes_be(&compiled_class_hash.into()).unwrap())
     }
 
-    let tx_hash = <T as HasherT>::compute_hash_on_elements(&elements);
+    let tx_hash = <T>::default().compute_hash_on_elements(&elements);
 
     tx_hash.into()
 }
@@ -347,12 +346,13 @@ where
 /// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
 /// for details.
 pub fn calculate_event_hash<T: HasherT>(event: &EventWrapper) -> FieldElement {
-    let keys_hash = T::compute_hash_on_elements(
+    let hasher = T::default();
+    let keys_hash = hasher.compute_hash_on_elements(
         &event.keys.iter().map(|key| FieldElement::from(*key)).collect::<Vec<FieldElement>>(),
     );
-    let data_hash = T::compute_hash_on_elements(
+    let data_hash = hasher.compute_hash_on_elements(
         &event.data.iter().map(|data| FieldElement::from(*data)).collect::<Vec<FieldElement>>(),
     );
     let from_address = FieldElement::from(event.from_address);
-    T::compute_hash_on_elements(&[from_address, keys_hash, data_hash])
+    hasher.compute_hash_on_elements(&[from_address, keys_hash, data_hash])
 }
