@@ -13,7 +13,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
     }); // substrate node
   });
 
-  describe.only("state root", async () => {
+  describe("state root", async () => {
     it("should return default when enabled", async function () {
       await jumpBlocks(context, 1);
 

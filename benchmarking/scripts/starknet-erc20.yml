@@ -10,7 +10,7 @@ config:
         - duration: 4
           arrivalCount: 1 # Number of users
           name: Users Connection
-        - pause: 60
+        - pause: 120
           name: Performance Testing
   variables:
     nonce: 0
@@ -22,4 +22,4 @@ scenarios:
     flow:
       - loop:
           - function: "executeERC20Transfer"
-        count: 15000
+        count: 10000
