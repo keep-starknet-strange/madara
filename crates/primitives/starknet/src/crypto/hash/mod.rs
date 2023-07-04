@@ -53,7 +53,8 @@ impl HasherT for Hasher {
 
 impl Default for Hasher {
     fn default() -> Self {
-        Hasher::Pedersen(pedersen::PedersenHasher::default()) // Here we choose `Variant2` with a value of `0` as the default.
+        // To avoid ambiguity, the user has to explicitely choose a hasher.
+        unreachable!("Hasher::default() should never be called");
     }
 }
 
