@@ -3,12 +3,9 @@ import {
   BigNumberish,
   InvokeFunctionResponse,
   RpcProvider,
-  ec,
   hash,
   num,
-  number,
 } from "starknet";
-import BN__default from "bn.js";
 import {
   ARGENT_CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
@@ -33,7 +30,7 @@ export function starknetKeccak(value: string) {
 
 // Clean a hex string, remove leading 0's
 export function cleanHex(value: string) {
-  const cleaned = number.cleanHex(value);
+  const cleaned = num.cleanHex(value);
   if (cleaned === "0x") {
     return "0x0";
   }
