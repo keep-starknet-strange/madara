@@ -140,6 +140,5 @@ fn build_event_wrapper_for_test(keys: &[&str], address_int: u64) -> EventWrapper
         keys: BoundedVec::try_from(keys_felt).unwrap(),
         data: bounded_vec!(),
         from_address: ContractAddressWrapper::from(address_int),
-        transaction_hash: Felt252Wrapper::from(1_u64),
     }
 }

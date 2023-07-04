@@ -2,7 +2,7 @@
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 if [ ! -f "$SCRIPT_DIR/nodes.ips" ]; then
-    echo "nodes ips not foun, try to run terraform first"
+    echo "nodes ips not found, try to run terraform first"
     exit 1
 fi
 if [ ! -f "$SCRIPT_DIR/madara.pem" ]; then

@@ -1,6 +1,6 @@
 ---
-- name: Run Madara Dev Node
+- name: Run Madara Full Node
   hosts: madara_node_cluster
   strategy: free
   roles:
-    - "../roles/node-dev"
+    - "../roles/full-node"
