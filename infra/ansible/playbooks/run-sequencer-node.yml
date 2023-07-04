@@ -1,0 +1,6 @@
+---
+- name: Run Madara Sequencer Node
+  hosts: madara_node_cluster
+  strategy: free
+  roles:
+    - "../roles/sequencer-node"
