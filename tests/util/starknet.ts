@@ -317,8 +317,11 @@ export function mintERC721(
     sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
       NFT_CONTRACT_ADDRESS,
       "0x" + hash.getSelectorFromName("mint").slice(2).padStart(64, "0"),
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
       "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
       recipientAddress,
       tokenID,

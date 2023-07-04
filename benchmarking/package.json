@@ -36,6 +36,6 @@
     "wait-on": "^7.0.1"
   },
   "dependencies": {
-    "starknet": "^4.22.0"
+    "starknet": "^5.14.1"
   }
 }
