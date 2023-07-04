@@ -240,17 +240,18 @@ export async function mint(
 
 export function transfer(
   api: ApiPromise,
-  contractAddress: string,
+  senderAddress: string,
   tokenAddress: string,
   recipientAddress: string,
   transferAmount: string,
-  nonce?: number
-): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
+  nonce?: number,
+  signature?: string[], 
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {  
   // Initialize contract
   const tx_transfer = {
     version: 1, // version of the transaction
-    signature: [], // leave empty for now, will be filled in when signing the transaction
-    sender_address: contractAddress, // address of the sender contract
+    signature: (signature ? signature : []), // empty when no signature is provided
+    sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [
       tokenAddress, // CONTRACT ADDRESS
@@ -263,22 +264,26 @@ export function transfer(
   };
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
+  console.log(
+    `- extrisinc_transfer: ${extrisinc_transfer.method.section}.${extrisinc_transfer.method.method}(${extrisinc_transfer.args}) | ${extrisinc_transfer.signature}`
+  )
 
   return extrisinc_transfer;
 }
 
 export function batchTransfer(
   api: ApiPromise,
-  contractAddress: string,
+  senderAddress: string,
   tokenAddress: string,
   recipientAddress: string,
-  transferAmount: string
+  transferAmount: string,
+  signature?: number[]
 ): Array<SubmittableExtrinsic<ApiTypes, ISubmittableResult>> {
   // Initialize contract
   const tx_transfer = {
     version: 1, // version of the transaction
-    signature: [], // leave empty for now, will be filled in when signing the transaction
-    sender_address: contractAddress, // address of the sender contract
+    signature: (signature ? signature : []), // empty when no signature is provided
+    sender_address: senderAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
     calldata: [
       tokenAddress, // CONTRACT ADDRESS
@@ -302,12 +307,13 @@ export function mintERC721(
   senderAddress: string,
   recipientAddress: string,
   tokenID: string,
-  nonce?: number
+  nonce?: number,
+  signature?: number[]
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   const tx_mint = {
     version: 1, // version of the transaction
-    signature: [], // leave empty for now, will be filled in when signing the transaction
+    signature: (signature ? signature : []), // empty when no signature is provided
     sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [

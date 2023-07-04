@@ -19,9 +19,11 @@ The following benchmarks are available :
   storage overhead
 - `npm run test:execution` : Executes fib500 cairo programs
 - `npm run test:transfer` : Executes ERC20 transfers
+- `npm run test:erc721mint` : Executes ERC721 mints
 
-Or simply run `npm run test` to run default benchmark and display metrics at the
+Simply run `npm run test` to run default benchmark and display metrics at the
 end.
+You can also run `npm run` to see a list of the available scripts.
 
 ## References
 

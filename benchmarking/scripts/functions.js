@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-
-const { ACCOUNT_CONTRACT } = require("../../tests/build/tests/tests/constants");
+const { ACCOUNT_CONTRACT, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, ERC20_CONTRACT_ADDRESS} = require("../../tests/build/tests/tests/constants");
 const {
   initialize,
   mint,
@@ -11,6 +10,7 @@ const {
 } = require("../../tests/build/tests/util/starknet");
 
 const { numberToHex } = require("@polkadot/util");
+const { Account, RpcProvider, ec, hash, number, constants } = require("starknet");
 
 module.exports = {
   rpcMethods,
@@ -26,22 +26,61 @@ function rpcMethods(userContext, events, done) {
 }
 
 async function executeERC20Transfer(userContext, events, done) {
+  // const { target } = userContext.vars;
+  // console.log("RPC :", target.replace("ws", "http"));
+
+  // let providerRPC = new RpcProvider({
+  //   nodeUrl: target.replace("ws", "http"),
+  //   retries: 3,
+  // }); // substrate node
+
   const { nonce } = userContext.vars;
-  const contractAddress =
-    "0x0000000000000000000000000000000000000000000000000000000000000001";
   const amount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
 
   // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
+    
+  const calldata = [
+    ERC20_CONTRACT_ADDRESS, // CONTRACT ADDRESS
+    "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+    "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+    ACCOUNT_CONTRACT,
+    amount,
+    "0x0000000000000000000000000000000000000000000000000000000000000000",
+  ];
 
+  const txHash = hash.calculateTransactionHashCommon(
+    constants.TransactionHashPrefix.INVOKE,
+    1,
+    ARGENT_CONTRACT_ADDRESS,
+    0,
+    calldata,
+    0,
+    constants.StarknetChainId.TESTNET,
+    [nonce]
+  );
+
+  const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
+  const signature = ec.sign(keyPair, txHash);
+  console.log("KEY PAIR :", keyPair);
+  // const account = new Account(
+  //   providerRPC,
+  //   ARGENT_CONTRACT_ADDRESS,
+  //   keyPair
+  // );
   transfer(
     userContext.api,
-    contractAddress,
-    "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
-    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    ARGENT_CONTRACT_ADDRESS,
+    ERC20_CONTRACT_ADDRESS,
+    ACCOUNT_CONTRACT,
     amount,
-    nonce
+    nonce,
+    [
+      "0x" + number.toHexString(signature[0]).slice(2).padStart(64, "0"), 
+      "0x" + number.toHexString(signature[1]).slice(2).padStart(64, "0")
+    ]
   ).send();
+  // ).signAndSend(keyPair);
 
   // Update userContext nonce
   userContext.vars.nonce = nonce + 1;
@@ -54,8 +93,8 @@ async function executeERC721Mint(userContext, events, done) {
 
   mintERC721(
     userContext.api,
-    ACCOUNT_CONTRACT,
-    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    ARGENT_CONTRACT_ADDRESS,
+    CONTRACT_ADDRESS,
     numberToHex(nonce, 256),
     nonce
   ).send();

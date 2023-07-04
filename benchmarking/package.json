@@ -31,5 +31,8 @@
     "artillery-engine-substrate": "^1.0.7",
     "concurrently": "^8.1.0",
     "wait-on": "^7.0.1"
+  },
+  "dependencies": {
+    "starknet": "^4.22.0"
   }
 }
