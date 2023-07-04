@@ -93,7 +93,7 @@ use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 use starknet_api::stdlib::collections::HashMap;
-use starknet_api::transaction::{EventContent, TransactionHash};
+use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
 use crate::alloc::string::ToString;
@@ -120,6 +120,8 @@ macro_rules! log {
 
 #[frame_support::pallet]
 pub mod pallet {
+
+    use mp_starknet::execution::types::CompiledClassHashWrapper;
 
     use super::*;
 
@@ -157,6 +159,8 @@ pub mod pallet {
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ValidateMaxNSteps: Get<u32>;
+        #[pallet::constant]
+        type ProtocolVersion: Get<u8>;
     }
 
     /// The Starknet pallet hooks.
@@ -263,6 +267,13 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn contract_class_by_class_hash)]
     pub(super) type ContractClasses<T: Config> = StorageMap<_, Identity, ClassHashWrapper, ContractClass, OptionQuery>;
+
+    /// Mapping from Starknet Sierra class hash to  Casm compiled contract class.
+    /// Safe to use `Identity` as the key is already a hash.
+    #[pallet::storage]
+    #[pallet::getter(fn compiled_class_hash_by_class_hash)]
+    pub(super) type CompiledClassHashes<T: Config> =
+        StorageMap<_, Identity, ClassHashWrapper, CompiledClassHashWrapper, OptionQuery>;
 
     /// Mapping from Starknet contract address to its nonce.
     /// Safe to use `Identity` as the key is already a hash.
@@ -509,11 +520,7 @@ pub mod pallet {
                 }) => {
                     log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let events = Self::emit_events_for_calls(
-                        TransactionHash(transaction.hash.into()),
-                        execute_call_info,
-                        fee_transfer_call_info,
-                    )?;
+                    let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -586,11 +593,7 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let events = Self::emit_events_for_calls(
-                        TransactionHash(transaction.hash.into()),
-                        execute_call_info,
-                        fee_transfer_call_info,
-                    )?;
+                    let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -661,11 +664,7 @@ pub mod pallet {
                 }) => {
                     log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
 
-                    let events = Self::emit_events_for_calls(
-                        TransactionHash(transaction.hash.into()),
-                        execute_call_info,
-                        fee_transfer_call_info,
-                    )?;
+                    let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
@@ -955,7 +954,8 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas,
+            None,
         );
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {
@@ -1009,7 +1009,7 @@ impl<T: Config> Pallet<T> {
         let events = Self::pending_events();
         let (transaction_commitment, event_commitment) =
             commitment::calculate_commitments::<T::SystemHash>(&transactions, &events);
-        let protocol_version = None;
+        let protocol_version = T::ProtocolVersion::get();
         let extra_data = None;
 
         let block = StarknetBlock::new(
@@ -1053,17 +1053,17 @@ impl<T: Config> Pallet<T> {
     ///
     /// The result of the operation.
     #[inline(always)]
-    fn emit_events(call_info: &mut CallInfo, tx_hash: TransactionHash) -> Result<Vec<StarknetEventType>, EventError> {
+    fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
         let mut events = Vec::new();
 
         call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
         for ordered_event in &call_info.execution.events {
-            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address, tx_hash)?;
+            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
             events.push(event_type);
         }
 
         for inner_call in &mut call_info.inner_calls {
-            let inner_events = Self::emit_events(inner_call, tx_hash)?;
+            let inner_events = Self::emit_events(inner_call)?;
             if !inner_events.is_empty() {
                 events.extend(inner_events);
             }
@@ -1082,17 +1082,10 @@ impl<T: Config> Pallet<T> {
     ///
     /// Returns an error if the event construction fails.
     #[inline(always)]
-    fn emit_event(
-        event: &EventContent,
-        from_address: ContractAddress,
-        tx_hash: TransactionHash,
-    ) -> Result<StarknetEventType, EventError> {
+    fn emit_event(event: &EventContent, from_address: ContractAddress) -> Result<StarknetEventType, EventError> {
         log!(debug, "Transaction event: {:?}", event);
-        let sn_event = StarknetEventType::builder()
-            .with_event_content(event.clone())
-            .with_from_address(from_address)
-            .with_transaction_hash(tx_hash)
-            .build()?;
+        let sn_event =
+            StarknetEventType::builder().with_event_content(event.clone()).with_from_address(from_address).build()?;
         Self::deposit_event(Event::StarknetEvent(sn_event.clone()));
 
         PendingEvents::<T>::try_append(sn_event.clone()).map_err(|_| EventError::TooManyEvents)?;
@@ -1131,17 +1124,16 @@ impl<T: Config> Pallet<T> {
     }
 
     pub fn emit_events_for_calls(
-        tx_hash: TransactionHash,
         execute_call_info: Option<CallInfo>,
         fee_transfer_call_info: Option<CallInfo>,
     ) -> Result<Vec<StarknetEventType>, Error<T>> {
         let events = match (execute_call_info, fee_transfer_call_info) {
             (Some(mut exec), Some(mut fee)) => {
-                let mut events = Self::emit_events(&mut exec, tx_hash).map_err(|_| Error::<T>::EmitEventError)?;
-                events.append(&mut Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?);
+                let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
+                events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
                 events
             }
-            (_, Some(mut fee)) => Self::emit_events(&mut fee, tx_hash).map_err(|_| Error::<T>::EmitEventError)?,
+            (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
             _ => Vec::default(),
         };
         Ok(events)

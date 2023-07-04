@@ -12,6 +12,7 @@ use jsonrpsee::proc_macros::rpc;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
+mod constants;
 pub mod utils;
 
 use starknet_core::serde::unsigned_field_element::UfeHex;
@@ -99,7 +100,11 @@ pub trait StarknetRpcApi {
 
     /// Estimate the fee associated with transaction
     #[method(name = "estimateFee")]
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate>;
+    async fn estimate_fee(
+        &self,
+        request: Vec<BroadcastedTransaction>,
+        block_id: BlockId,
+    ) -> RpcResult<Vec<FeeEstimate>>;
 
     /// Get the details of a transaction by a given block id and index
     #[method(name = "getTransactionByBlockIdAndIndex")]

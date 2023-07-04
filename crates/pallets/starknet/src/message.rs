@@ -88,6 +88,7 @@ impl Message {
             caller_address: ContractAddressWrapper::default(),
             // FIXME 710
             initial_gas: Felt252Wrapper::from(0_u8),
+            compiled_class_hash: None,
         };
         Ok(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
     }

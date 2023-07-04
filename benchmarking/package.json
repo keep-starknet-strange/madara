@@ -15,10 +15,13 @@
     "test:erc721-mint": "wait-on tcp:9944 && npm run test:erc721mint && node scripts/metrics.js --type erc721 && npm run check",
     "test:erc20-transfer": "wait-on tcp:9944 && npm run test:transfer && node scripts/metrics.js --type erc20 && npm run check",
     "chain:dev": "../scripts/run_node.sh",
-    "chain:dev-error": "../scripts/run_node.sh error",
-    "test:ci:erc20": "concurrently -k --success 'command-1' 'npm run chain:dev-error' 'npm run test:erc20-transfer'",
-    "test:ci:erc721": "concurrently -k --success 'command-1' 'npm run chain:dev-error' 'npm run test:erc721-mint'",
-    "test:ci": "npm run test:ci:erc20 && npm run test:ci:erc721 && node ./scripts/combine-metrics.js"
+    "test:ci:erc20": "concurrently -k --success 'command-1' 'npm run chain:dev' 'npm run test:erc20-transfer'",
+    "test:ci:erc721": "concurrently -k --success 'command-1' 'npm run chain:dev' 'npm run test:erc721-mint'",
+    "test:ci": "npm run test:ci:erc20 && npm run test:ci:erc721 && node ./scripts/combine-metrics.js",
+    "chain:dev-state-root": "../scripts/run_node.sh --with-state-root",
+    "test:ci-state-root:erc20": "concurrently -k --success 'command-1' 'npm run chain:dev-state-root' 'npm run test:erc20-transfer'",
+    "test:ci-state-root:erc721": "concurrently -k --success 'command-1' 'npm run chain:dev-state-root' 'npm run test:erc721-mint'",
+    "test:ci-state-root": "npm run test:ci-state-root:erc20 && npm run test:ci-state-root:erc721 && node ./scripts/combine-metrics-state-root.js"
   },
   "keywords": [
     "madara",
