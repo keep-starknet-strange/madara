@@ -26,14 +26,6 @@ function rpcMethods(userContext, events, done) {
 }
 
 async function executeERC20Transfer(userContext, events, done) {
-  // const { target } = userContext.vars;
-  // console.log("RPC :", target.replace("ws", "http"));
-
-  // let providerRPC = new RpcProvider({
-  //   nodeUrl: target.replace("ws", "http"),
-  //   retries: 3,
-  // }); // substrate node
-
   const { nonce } = userContext.vars;
   const amount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -41,12 +33,15 @@ async function executeERC20Transfer(userContext, events, done) {
   // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
     
   const calldata = [
-    ERC20_CONTRACT_ADDRESS, // CONTRACT ADDRESS
+    "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
+    ERC20_CONTRACT_ADDRESS,                                               // TO
     "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
-    "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+    "0x0000000000000000000000000000000000000000000000000000000000000000", // DATA OFFSET
+    "0x0000000000000000000000000000000000000000000000000000000000000003", // DATA LEN
+    "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA LEN
     ACCOUNT_CONTRACT,
     amount,
-    "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "0x0000000000000000000000000000000000000000000000000000000000000000"
   ];
 
   const txHash = hash.calculateTransactionHashCommon(
@@ -62,12 +57,7 @@ async function executeERC20Transfer(userContext, events, done) {
 
   const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
   const signature = ec.sign(keyPair, txHash);
-  console.log("KEY PAIR :", keyPair);
-  // const account = new Account(
-  //   providerRPC,
-  //   ARGENT_CONTRACT_ADDRESS,
-  //   keyPair
-  // );
+
   transfer(
     userContext.api,
     ARGENT_CONTRACT_ADDRESS,
@@ -80,7 +70,6 @@ async function executeERC20Transfer(userContext, events, done) {
       "0x" + number.toHexString(signature[1]).slice(2).padStart(64, "0")
     ]
   ).send();
-  // ).signAndSend(keyPair);
 
   // Update userContext nonce
   userContext.vars.nonce = nonce + 1;

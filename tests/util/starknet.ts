@@ -254,8 +254,11 @@ export function transfer(
     sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
     calldata: [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
       tokenAddress, // CONTRACT ADDRESS
       "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
       "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
       recipientAddress,
       transferAmount,
@@ -264,9 +267,6 @@ export function transfer(
   };
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
-  console.log(
-    `- extrisinc_transfer: ${extrisinc_transfer.method.section}.${extrisinc_transfer.method.method}(${extrisinc_transfer.args}) | ${extrisinc_transfer.signature}`
-  )
 
   return extrisinc_transfer;
 }
