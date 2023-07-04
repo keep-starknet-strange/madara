@@ -1,0 +1,13 @@
+[Unit]
+Description=Madara Full Node
+
+[Service]
+WorkingDirectory=/home/admin/madara
+Restart=on-failure
+ExecStart=/home/admin/madara/target/release/madara --testnet sharingan
+
+ExecReload=/bin/kill -HUP
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
