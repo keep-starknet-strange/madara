@@ -223,10 +223,10 @@ where
                 // and some time for block production (75%).
                 // We need to benchmark and tune this value.
                 // Open question: should we make this configurable?
-				#[cfg(not(feature = "madara-state-root"))]
-				let deadline = (self.now)() + max_duration - max_duration / 5;
-				#[cfg(feature = "madara-state-root")]
-                let deadline = (self.now)() + max_duration - max_duration / 4;
+                #[cfg(not(feature = "madara-state-root"))]
+                let deadline = (self.now)() + max_duration - max_duration / 5;
+                #[cfg(feature = "madara-state-root")]
+                let deadline = (self.now)() + max_duration - max_duration / 3;
                 let res = self.propose_with(inherent_data, inherent_digests, deadline, block_size_limit).await;
                 if tx.send(res).is_err() {
                     trace!("Could not send block production result to proposer!");

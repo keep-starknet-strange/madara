@@ -62,4 +62,3 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
     });
   });
 });
-
