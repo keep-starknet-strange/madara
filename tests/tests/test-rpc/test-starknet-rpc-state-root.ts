@@ -15,11 +15,11 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
 
   describe("state root", async () => {
     it("should return default when enabled", async function () {
-      await jumpBlocks(context, 1);
+      await jumpBlocks(context, 2);
 
       const latestBlock = await providerRPC.getBlock("latest");
       expect(latestBlock.new_root).to.eq(
-        "0x46369f2573a77b6d4b4f3f14d3eab964b52886b55c3f5ece1a5ae6cb1f81e7b"
+        "0x4e65560d4b1751b0c3455f9f4e3e0ae0c41c4929796659ceec256f1aea08e28"
       );
     });
   });
