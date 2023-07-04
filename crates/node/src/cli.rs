@@ -17,6 +17,7 @@ pub enum Sealing {
 pub enum Testnet {
     Local,
     Sharingan,
+    Rinnegan,
 }
 
 #[derive(Debug, clap::Parser)]
