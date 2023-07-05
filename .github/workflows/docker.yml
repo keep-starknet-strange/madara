@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY_IMAGE:
-    ghcr.io/${{github.repository }}:${{ github.event.release.tag_name }}
+    ghcr.io/${{ github.repository }}
 
 jobs:
   build:
@@ -17,8 +17,6 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/arm/v6
-          - linux/arm/v7
           - linux/arm64
     steps:
       - name: Checkout
@@ -29,6 +27,8 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            type=raw,value=${{ github.event.release.tag_name }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
