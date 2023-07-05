@@ -282,6 +282,10 @@ fn testnet_genesis(
                     Felt252Wrapper::from(u128::MAX),
                 ),
                 (
+                    get_storage_key(&token_contract_address, "ERC20_balances", &[argent_account_address], 0),
+                    Felt252Wrapper::from(u128::MAX),
+                ),
+                (
                     get_storage_key(&fee_token_address, "ERC20_balances", &[public_key], 0),
                     Felt252Wrapper::from(u128::MAX),
                 ),
@@ -295,7 +299,7 @@ fn testnet_genesis(
                 ),
                 (
                     get_storage_key(&nft_contract_address, "Ownable_owner", &[], 0),
-                    Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_ADDRESS).unwrap(),
+                    Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap(),
                 ),
             ],
             fee_token_address,

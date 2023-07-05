@@ -11,13 +11,16 @@ import {
   deployTokenContractUDC,
   mintERC721,
   transfer,
+  calculateHexSignature,
 } from "../../util/starknet";
 import {
   CONTRACT_ADDRESS,
+  ARGENT_CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
   MINT_AMOUNT,
   NFT_CONTRACT_ADDRESS,
   TOKEN_CLASS_HASH,
+  SIGNER_PRIVATE,
 } from "../constants";
 import { RpcProvider, hash } from "starknet";
 
@@ -48,14 +51,14 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     const {
       result: { events },
     } = await context.createBlock(
-      declare(context.polkadotApi, CONTRACT_ADDRESS, TOKEN_CLASS_HASH)
+      declare(context.polkadotApi, CONTRACT_ADDRESS, TOKEN_CLASS_HASH),
     );
 
     expect(
       events.find(
         ({ event: { section, method } }) =>
-          section == "system" && method == "ExtrinsicSuccess"
-      )
+          section == "system" && method == "ExtrinsicSuccess",
+      ),
     ).to.exist;
   });
 
@@ -71,7 +74,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply high
         "0x0000000000000000000000000000000000000000000000000000000000001111", // recipient
       ],
-      0
+      0,
     );
     // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
     const storageAddress =
@@ -80,32 +83,32 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     const {
       result: { events },
     } = await context.createBlock(
-      deploy(context.polkadotApi, CONTRACT_ADDRESS, TOKEN_CLASS_HASH)
+      deploy(context.polkadotApi, CONTRACT_ADDRESS, TOKEN_CLASS_HASH),
     );
 
     const classHash = await providerRPC.getClassHashAt(
       deployedContractAddress,
-      "latest"
+      "latest",
     );
     expect(hexFixLength(classHash, 256, true)).to.equal(TOKEN_CLASS_HASH);
 
     const balance = await providerRPC.getStorageAt(
       deployedContractAddress,
       storageAddress,
-      "latest"
+      "latest",
     );
     expect(balance).to.equal("0xfffffffffffffffffffffffffffffff");
 
     expect(
       events.find(
         ({ event: { section, method } }) =>
-          section == "system" && method == "ExtrinsicSuccess"
-      )
+          section == "system" && method == "ExtrinsicSuccess",
+      ),
     ).to.exist;
   });
 
   it("should execute a transfer", async function () {
-    const recepientAddress =
+    const recipientAddress =
       "0x00000000000000000000000000000000000000000000000000000000deadbeef";
     // ERC20_balances(0xdeadbeef).low = 0x4c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016
     const storageKey =
@@ -114,7 +117,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     const balanceBefore = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
       storageKey,
-      "latest"
+      "latest",
     );
     expect(balanceBefore).to.equal("0x0");
 
@@ -126,29 +129,30 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         context.polkadotApi,
         CONTRACT_ADDRESS,
         FEE_TOKEN_ADDRESS,
-        recepientAddress,
+        recipientAddress,
         MINT_AMOUNT,
-        nonce
-      )
+        nonce,
+      ),
     );
 
     const balanceAfter = await providerRPC.getStorageAt(
       FEE_TOKEN_ADDRESS,
       storageKey,
-      "latest"
+      "latest",
     );
     expect(balanceAfter).to.equal("0x1");
 
     expect(
       events.find(
         ({ event: { section, method } }) =>
-          section == "system" && method == "ExtrinsicSuccess"
-      )
+          section == "system" && method == "ExtrinsicSuccess",
+      ),
     ).to.exist;
   });
 
-  it("mint NFTs", async function () {
-    const recepientAddress =
+  it("mint NFTs signed", async function () {
+    const tokenID = numberToHex(1, 256);
+    const recipientAddress =
       "0x00000000000000000000000000000000000000000000000000000000deadbeef";
     // ERC721_balances(0xdeadbeef).low = 0x1a564c2a8ac0aa99f656ca20cae9b7ed3aff27fa129aea20969feb46dd94e73
     const storageKey =
@@ -158,34 +162,53 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
     const balanceBefore = await providerRPC.getStorageAt(
       NFT_CONTRACT_ADDRESS,
       storageKey,
-      "latest"
+      "latest",
     );
     expect(balanceBefore).to.equal("0x0");
 
+    const calldata = [
+      "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
+      NFT_CONTRACT_ADDRESS, // TO
+      "0x02f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354", // SELECTOR (mint)
+      "0x0000000000000000000000000000000000000000000000000000000000000000", // DATA OFFSET
+      "0x0000000000000000000000000000000000000000000000000000000000000003", // DATA LEN
+      "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA LEN
+      recipientAddress,
+      tokenID,
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+    ];
+
+    const nonce = 0;
     const {
       result: { events },
     } = await context.createBlock(
       mintERC721(
         context.polkadotApi, // api
-        CONTRACT_ADDRESS, // senderAddress
-        recepientAddress, // recipientAddress
-        numberToHex(1, 256), // tokenID
-        2 // nonce
-      )
+        ARGENT_CONTRACT_ADDRESS, // senderAddress
+        recipientAddress, // recipientAddress
+        tokenID, // tokenID
+        nonce, // nonce
+        calculateHexSignature(
+          ARGENT_CONTRACT_ADDRESS,
+          calldata,
+          nonce,
+          SIGNER_PRIVATE,
+        ),
+      ),
     );
 
     const balanceAfter = await providerRPC.getStorageAt(
       NFT_CONTRACT_ADDRESS,
       storageKey,
-      "latest"
+      "latest",
     );
     expect(balanceAfter).to.equal("0x1");
 
     expect(
       events.find(
         ({ event: { section, method } }) =>
-          section == "system" && method == "ExtrinsicSuccess"
-      )
+          section == "system" && method == "ExtrinsicSuccess",
+      ),
     ).to.exist;
   });
 
@@ -201,7 +224,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         "0x000000000000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", // Initial supply high
         "0x0000000000000000000000000000000000000000000000000000000000001111", // recipient
       ],
-      0
+      0,
     );
 
     const {
@@ -213,8 +236,8 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         "0x0000000000000000000000000000000000000000000000000000000000010000",
         "0x0000000000000000000000000000000000000000000000000000000000000001",
         false,
-        3
-      )
+        3,
+      ),
     );
     // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
     const storageAddress =
@@ -222,22 +245,22 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
 
     const classHash = await providerRPC.getClassHashAt(
       deployedContractAddress,
-      "latest"
+      "latest",
     );
     expect(hexFixLength(classHash, 256, true)).to.equal(TOKEN_CLASS_HASH);
 
     const balance = await providerRPC.getStorageAt(
       deployedContractAddress,
       storageAddress,
-      "latest"
+      "latest",
     );
     expect(balance).to.equal("0xfffffffffffffffffffffffffffffff");
 
     expect(
       events.find(
         ({ event: { section, method } }) =>
-          section == "system" && method == "ExtrinsicSuccess"
-      )
+          section == "system" && method == "ExtrinsicSuccess",
+      ),
     ).to.exist;
   });
 });

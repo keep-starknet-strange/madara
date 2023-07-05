@@ -59,7 +59,7 @@ function stringToArrayBuffer(s: string): Uint8Array {
 function decompressProgram(base64: CompressedProgram) {
   if (Array.isArray(base64)) return base64;
   const decompressed = encode.arrayBufferToString(
-    ungzip(atobUniversal(base64))
+    ungzip(atobUniversal(base64)),
   );
   return json.parse(decompressed);
 }
@@ -121,11 +121,11 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
+          MINT_AMOUNT,
         ),
         {
           finalize: true,
-        }
+        },
       );
 
       const transactionCount = await providerRPC.getTransactionCount("latest");
@@ -146,7 +146,7 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should increase after a transaction", async function () {
       let nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
 
       await context.createBlock(
@@ -154,13 +154,13 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
 
       expect(nonce).to.not.be.undefined;
@@ -176,7 +176,7 @@ describeDevMadara("Starknet RPC", (context) => {
           entrypoint: "return_result",
           calldata: ["0x19"],
         },
-        "latest"
+        "latest",
       );
 
       expect(call.result).to.contain("0x19");
@@ -189,7 +189,7 @@ describeDevMadara("Starknet RPC", (context) => {
           entrypoint: "return_result_WRONG",
           calldata: ["0x19"],
         },
-        "latest"
+        "latest",
       );
       await expect(callResult)
         .to.eventually.be.rejectedWith("40: Contract error")
@@ -201,12 +201,12 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should not be undefined", async function () {
       const contract_class = await providerRPC.getClassAt(
         TEST_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
 
       expect(contract_class).to.not.be.undefined;
       expect(contract_class.entry_points_by_type).to.deep.equal(
-        TEST_CONTRACT.entry_points_by_type
+        TEST_CONTRACT.entry_points_by_type,
       );
     });
   });
@@ -215,22 +215,22 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should return correct class hashes for account and test contract", async function () {
       const account_contract_class_hash = await providerRPC.getClassHashAt(
         ACCOUNT_CONTRACT,
-        "latest"
+        "latest",
       );
 
       expect(account_contract_class_hash).to.not.be.undefined;
       expect(validateAndParseAddress(account_contract_class_hash)).to.be.equal(
-        ACCOUNT_CONTRACT_CLASS_HASH
+        ACCOUNT_CONTRACT_CLASS_HASH,
       );
 
       const test_contract_class_hash = await providerRPC.getClassHashAt(
         TEST_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
 
       expect(test_contract_class_hash).to.not.be.undefined;
       expect(validateAndParseAddress(test_contract_class_hash)).to.be.equal(
-        TEST_CONTRACT_CLASS_HASH
+        TEST_CONTRACT_CLASS_HASH,
       );
     });
 
@@ -238,7 +238,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // Invalid block id
       const classHash = providerRPC.getClassHashAt(
         TEST_CONTRACT_ADDRESS,
-        "0x123"
+        "0x123",
       );
       await expect(classHash)
         .to.eventually.be.rejectedWith("24: Block not found")
@@ -266,10 +266,10 @@ describeDevMadara("Starknet RPC", (context) => {
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(parseInt(status["current_block_num"])).to.be.equal(
-        current_block["block_number"]
+        current_block["block_number"],
       );
       expect(parseInt(status["highest_block_num"])).to.be.equal(
-        current_block["block_number"]
+        current_block["block_number"],
       );
 
       // the starknet block hash for number 0 starts with "0x31eb" with this test setup
@@ -277,10 +277,10 @@ describeDevMadara("Starknet RPC", (context) => {
       // starknet current and highest block number should be equal to
       // the current block with this test setup
       expect(status["current_block_hash"]).to.be.equal(
-        current_block["block_hash"]
+        current_block["block_hash"],
       );
       expect(status["highest_block_hash"]).to.be.equal(
-        current_block["block_hash"]
+        current_block["block_hash"],
       );
     });
   });
@@ -289,16 +289,16 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should return ERC_20 contract at class 0x10000", async function () {
       const contract_class = (await providerRPC.getClass(
         TOKEN_CLASS_HASH,
-        "latest"
+        "latest",
       )) as LegacyContractClass;
       // https://github.com/keep-starknet-strange/madara/issues/652
       // TODO: Compare program as well
       expect(contract_class.entry_points_by_type).to.deep.equal(
-        ERC20_CONTRACT.entry_points_by_type
+        ERC20_CONTRACT.entry_points_by_type,
       );
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const program = json.parse(
-        encode.arrayBufferToString(decompressProgram(contract_class.program))
+        encode.arrayBufferToString(decompressProgram(contract_class.program)),
       );
       // starknet js parses the values in the identifiers as negative numbers (maybe it's in madara).
       // FIXME: https://github.com/keep-starknet-strange/madara/issues/664
@@ -315,7 +315,7 @@ describeDevMadara("Starknet RPC", (context) => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
-        "latest"
+        "latest",
       );
       expect(latestBlock).to.not.be.undefined;
       expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
@@ -328,14 +328,14 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const blockWithTxHashes: Block = await providerRPC.getBlockWithTxHashes(
-        "latest"
+        "latest",
       );
       expect(blockWithTxHashes).to.not.be.undefined;
       expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
@@ -370,15 +370,15 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       const blockHash = await providerRPC.getBlockHashAndNumber();
       await jumpBlocks(context, 10);
 
       const blockWithTxHashes = await providerRPC.getBlockWithTxs(
-        blockHash.block_hash
+        blockHash.block_hash,
       );
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -398,7 +398,7 @@ describeDevMadara("Starknet RPC", (context) => {
           ARGENT_CONTRACT_ADDRESS,
           MINT_AMOUNT,
           0,
-        ].map(toHex)
+        ].map(toHex),
       );
     });
 
@@ -416,7 +416,7 @@ describeDevMadara("Starknet RPC", (context) => {
         FEE_TOKEN_ADDRESS,
         // ERC20_balances(0x02).low
         "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
-        "latest"
+        "latest",
       );
       // fees were paid du to the transfer in the previous test so the value should be < u128::MAX
       expect(value).to.be.equal("0xfffffffffffffffffffffffffff97f4f");
@@ -426,7 +426,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const value = await providerRPC.getStorageAt(
         FEE_TOKEN_ADDRESS,
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "latest"
+        "latest",
       );
       expect(value).to.be.equal("0x0");
     });
@@ -435,7 +435,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const storage = providerRPC.getStorageAt(
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "latest"
+        "latest",
       );
       await expect(storage)
         .to.eventually.be.rejectedWith("20: Contract not found")
@@ -460,8 +460,8 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -482,14 +482,14 @@ describeDevMadara("Starknet RPC", (context) => {
           ARGENT_CONTRACT_ADDRESS,
           MINT_AMOUNT,
           0,
-        ].map(toHex)
+        ].map(toHex),
       );
     });
 
     it("should throws block not found error", async function () {
       const transaction = providerRPC.getTransactionByBlockIdAndIndex(
         "0x123",
-        2
+        2,
       );
       await expect(transaction)
         .to.eventually.be.rejectedWith("24: Block not found")
@@ -504,11 +504,11 @@ describeDevMadara("Starknet RPC", (context) => {
       const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
       const transaction = providerRPC.getTransactionByBlockIdAndIndex(
         latestBlockCreated.block_hash,
-        2
+        2,
       );
       await expect(transaction)
         .to.eventually.be.rejectedWith(
-          "27: Invalid transaction index in a block"
+          "27: Invalid transaction index in a block",
         )
         .and.be.an.instanceOf(LibraryError);
     });
@@ -521,11 +521,11 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
+          MINT_AMOUNT,
         ),
         {
           finalize: true,
-        }
+        },
       );
       const stateUpdate = await providerRPC.getStateUpdate("latest");
 
@@ -536,7 +536,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(stateUpdate).to.not.be.undefined;
       assert(
         "block_hash" in stateUpdate,
-        "block_hash is not in stateUpdate which means it's still pending"
+        "block_hash is not in stateUpdate which means it's still pending",
       );
       expect(stateUpdate.block_hash).to.be.equal(latestBlock.block_hash);
       expect(stateUpdate.state_diff).to.deep.equal({
@@ -557,14 +557,14 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
+          MINT_AMOUNT,
         ),
         {
           finalize: true,
-        }
+        },
       );
       const stateUpdate = await providerRPC.getStateUpdate(
-        anteriorBlock.block_hash
+        anteriorBlock.block_hash,
       );
 
       // TODO: Add real values
@@ -572,7 +572,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(stateUpdate).to.not.be.undefined;
       assert(
         "block_hash" in stateUpdate,
-        "block_hash is not in stateUpdate which means it's still pending"
+        "block_hash is not in stateUpdate which means it's still pending",
       );
       expect(stateUpdate.block_hash).to.be.equal(anteriorBlock.block_hash);
       expect(stateUpdate.state_diff).to.deep.equal({
@@ -598,7 +598,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        SIGNER_PRIVATE
+        SIGNER_PRIVATE,
       );
 
       await account.execute(
@@ -611,7 +611,7 @@ describeDevMadara("Starknet RPC", (context) => {
         {
           nonce: ARGENT_CONTRACT_NONCE.value,
           maxFee: "123456",
-        }
+        },
       );
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
@@ -620,7 +620,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const balance = await providerRPC.getStorageAt(
         FEE_TOKEN_ADDRESS,
         "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
-        "latest"
+        "latest",
       );
       expect(toHex(balance)).to.be.equal("0x123");
     });
@@ -629,7 +629,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        SIGNER_PRIVATE
+        SIGNER_PRIVATE,
       );
 
       const calldata = [
@@ -645,7 +645,7 @@ describeDevMadara("Starknet RPC", (context) => {
         SALT,
         TOKEN_CLASS_HASH,
         calldata,
-        0
+        0,
       );
 
       await account.execute(
@@ -658,7 +658,7 @@ describeDevMadara("Starknet RPC", (context) => {
         {
           nonce: ARGENT_CONTRACT_NONCE.value,
           maxFee: "123456",
-        }
+        },
       );
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
@@ -667,7 +667,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const balance = await providerRPC.getStorageAt(
         deployedContractAddress,
         "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
-        "latest"
+        "latest",
       );
       expect(toHex(balance)).to.be.equal("0x2a");
     });
@@ -689,14 +689,14 @@ describeDevMadara("Starknet RPC", (context) => {
         SALT,
         ARGENT_PROXY_CLASS_HASH,
         calldata,
-        0
+        0,
       );
       // fund address
       await rpcTransfer(
         providerRPC,
         ARGENT_CONTRACT_NONCE,
         deployedContractAddress,
-        DEPLOY_ACCOUNT_COST
+        DEPLOY_ACCOUNT_COST,
       );
       await jumpBlocks(context, 1);
 
@@ -729,16 +729,16 @@ describeDevMadara("Starknet RPC", (context) => {
 
       await providerRPC.deployAccountContract(
         txDeployAccount,
-        invocationDetails
+        invocationDetails,
       );
       await createAndFinalizeBlock(context.polkadotApi);
 
       const accountContractClassHash = await providerRPC.getClassHashAt(
-        deployedContractAddress
+        deployedContractAddress,
       );
 
       expect(validateAndParseAddress(accountContractClassHash)).to.be.equal(
-        ARGENT_PROXY_CLASS_HASH
+        ARGENT_PROXY_CLASS_HASH,
       );
     });
   });
@@ -760,7 +760,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const nonce = await providerRPC.getNonceForAddress(
         ACCOUNT_CONTRACT,
-        "latest"
+        "latest",
       );
 
       const txDetails = {
@@ -795,7 +795,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const nonce = await providerRPC.getNonceForAddress(
         ACCOUNT_CONTRACT,
-        "latest"
+        "latest",
       );
 
       const txDetails = {
@@ -836,7 +836,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const nonce = await providerRPC.getNonceForAddress(
         ACCOUNT_CONTRACT,
-        "latest"
+        "latest",
       );
 
       const txDetails = {
@@ -854,7 +854,7 @@ describeDevMadara("Starknet RPC", (context) => {
         [invocation, invocation],
         {
           blockIdentifier: "latest",
-        }
+        },
       );
 
       expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
@@ -877,7 +877,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        SIGNER_PRIVATE
+        SIGNER_PRIVATE,
       );
       // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
       // the above command should be used at project root
@@ -888,17 +888,17 @@ describeDevMadara("Starknet RPC", (context) => {
           classHash: classHash,
           contract: ERC20_CONTRACT,
         },
-        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
+        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
       );
       ARGENT_CONTRACT_NONCE.value += 1;
       await jumpBlocks(context, 1);
 
       const contractClassActual = await providerRPC.getClass(
         classHash,
-        "latest"
+        "latest",
       );
       expect(contractClassActual.entry_points_by_type).to.deep.equal(
-        ERC20_CONTRACT.entry_points_by_type
+        ERC20_CONTRACT.entry_points_by_type,
       );
       // TODO compare the program as well
       // expect(contractClassActual.program).to.be.equal(
@@ -911,7 +911,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const account = new Account(
         providerRPC,
         CAIRO_1_ACCOUNT_CONTRACT,
-        "0x123" // it's the no validate account
+        "0x123", // it's the no validate account
       );
       // computed via: starknetjs 5.14.1
       const classHash =
@@ -925,14 +925,14 @@ describeDevMadara("Starknet RPC", (context) => {
           nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
           version: 1,
           maxFee: "123456",
-        }
+        },
       );
       CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
       await jumpBlocks(context, 1);
 
       const contractClassActual = await providerRPC.getClass(
         classHash,
-        "latest"
+        "latest",
       );
       // TODO: (Apoorv) make these checks better once we to_rpc_contract_class is fixed #775 and #790
       expect(contractClassActual).to.have.property("entry_points_by_type");
@@ -946,7 +946,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        SIGNER_PRIVATE
+        SIGNER_PRIVATE,
       );
 
       // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
@@ -960,8 +960,8 @@ describeDevMadara("Starknet RPC", (context) => {
             classHash: classHash,
             contract: ERC20_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
-        )
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
+        ),
       ).to.be.rejectedWith("51: Class already declared");
     });
   });
@@ -973,7 +973,7 @@ describeDevMadara("Starknet RPC", (context) => {
         providerRPC,
         ARGENT_CONTRACT_NONCE,
         ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
+        MINT_AMOUNT,
       );
 
       const txs = await providerRPC.getPendingTransactions();
@@ -999,7 +999,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const account = new Account(
         providerRPC,
         ARGENT_CONTRACT_ADDRESS,
-        SIGNER_PRIVATE
+        SIGNER_PRIVATE,
       );
 
       // computed via: starkli class-hash ./cairo-contracts/build/ERC721.json
@@ -1011,7 +1011,7 @@ describeDevMadara("Starknet RPC", (context) => {
           classHash: classHash,
           contract: ERC721_CONTRACT,
         },
-        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" }
+        { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
       );
 
       const txs = await providerRPC.getPendingTransactions();
@@ -1048,7 +1048,7 @@ describeDevMadara("Starknet RPC", (context) => {
         SALT,
         ARGENT_PROXY_CLASS_HASH,
         calldata,
-        0
+        0,
       );
 
       const invocationDetails = {
@@ -1080,7 +1080,7 @@ describeDevMadara("Starknet RPC", (context) => {
 
       await providerRPC.deployAccountContract(
         txDeployAccount,
-        invocationDetails
+        invocationDetails,
       );
 
       const txs = await providerRPC.getPendingTransactions();
@@ -1109,7 +1109,7 @@ describeDevMadara("Starknet RPC", (context) => {
         providerRPC,
         ARGENT_CONTRACT_NONCE,
         ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
+        MINT_AMOUNT,
       );
       // future transaction
       // add a high number to the nonce to make sure the transaction is added to the future queue
@@ -1117,7 +1117,7 @@ describeDevMadara("Starknet RPC", (context) => {
         providerRPC,
         { value: ARGENT_CONTRACT_NONCE.value + transactionNonceOffset },
         ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
+        MINT_AMOUNT,
       );
 
       // the pendingExtrinsics endpoint returns only the ready transactions
@@ -1168,11 +1168,11 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
+          MINT_AMOUNT,
         ),
         {
           finalize: true,
-        }
+        },
       );
 
       const r = await providerRPC.getTransactionByHash(b.result.hash);
@@ -1186,8 +1186,8 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       const transaction = providerRPC.getTransactionByHash("0x1234");
@@ -1204,7 +1204,7 @@ describeDevMadara("Starknet RPC", (context) => {
         providerRPC,
         ARGENT_CONTRACT_NONCE,
         ARGENT_CONTRACT_ADDRESS,
-        MINT_AMOUNT
+        MINT_AMOUNT,
       );
 
       const transaction = providerRPC.getTransactionByHash(b.transaction_hash);
@@ -1224,18 +1224,18 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
+          MINT_AMOUNT,
         ),
         {
           finalize: true,
-        }
+        },
       );
 
       const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const r: TransactionReceipt = await providerRPC.getTransactionReceipt(
-        b.result.hash
+        b.result.hash,
       );
       expect(r).to.not.be.undefined;
       expect(r.block_hash).to.be.equal(block_hash_and_number.block_hash);
@@ -1249,8 +1249,8 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       const transaction = providerRPC.getTransactionReceipt("0x1234");
@@ -1273,7 +1273,7 @@ describeDevMadara("Starknet RPC", (context) => {
       let events = providerRPC.getEvents(filter);
       await expect(events)
         .to.eventually.be.rejectedWith(
-          "33: The supplied continuation token is invalid or unknown"
+          "33: The supplied continuation token is invalid or unknown",
         )
         .and.be.an.instanceOf(LibraryError);
 
@@ -1285,8 +1285,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1303,7 +1303,7 @@ describeDevMadara("Starknet RPC", (context) => {
       events = providerRPC.getEvents(filter2);
       await expect(events)
         .to.eventually.be.rejectedWith(
-          "33: The supplied continuation token is invalid or unknown"
+          "33: The supplied continuation token is invalid or unknown",
         )
         .and.be.an.instanceOf(LibraryError);
 
@@ -1319,7 +1319,7 @@ describeDevMadara("Starknet RPC", (context) => {
       events = providerRPC.getEvents(filter2);
       await expect(events)
         .to.eventually.be.rejectedWith(
-          "33: The supplied continuation token is invalid or unknown"
+          "33: The supplied continuation token is invalid or unknown",
         )
         .and.be.an.instanceOf(LibraryError);
     });
@@ -1363,8 +1363,8 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1386,7 +1386,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(events.continuation_token).to.be.null;
       for (const event of events.events) {
         expect(validateAndParseAddress(event.from_address)).to.be.equal(
-          FEE_TOKEN_ADDRESS
+          FEE_TOKEN_ADDRESS,
         );
         expect(event.transaction_hash).to.be.equal(tx.transaction_hash);
       }
@@ -1431,8 +1431,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1445,8 +1445,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions2);
@@ -1472,19 +1472,19 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             firstBlockCreated.block_hash,
-            i
+            i,
           );
         expect(
-          validateAndParseAddress(events.events[2 * i].from_address)
+          validateAndParseAddress(events.events[2 * i].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[2 * i].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
         expect(
-          validateAndParseAddress(events.events[2 * i + 1].from_address)
+          validateAndParseAddress(events.events[2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[2 * i + 1].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
       for (let i = 0; i < 2; i++) {
@@ -1493,19 +1493,19 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx_second_block: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             secondBlockCreated.block_hash,
-            i
+            i,
           );
         expect(
-          validateAndParseAddress(events.events[10 + 2 * i].from_address)
+          validateAndParseAddress(events.events[10 + 2 * i].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[10 + 2 * i].transaction_hash).to.be.equal(
-          tx_second_block.transaction_hash
+          tx_second_block.transaction_hash,
         );
         expect(
-          validateAndParseAddress(events.events[10 + 2 * i + 1].from_address)
+          validateAndParseAddress(events.events[10 + 2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[10 + 2 * i + 1].transaction_hash).to.be.equal(
-          tx_second_block.transaction_hash
+          tx_second_block.transaction_hash,
         );
       }
     });
@@ -1519,8 +1519,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1533,8 +1533,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions2);
@@ -1562,17 +1562,17 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             firstBlockCreated.block_hash,
-            i
+            i,
           );
         expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
-          FEE_TOKEN_ADDRESS
+          FEE_TOKEN_ADDRESS,
         );
         expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
         expect(
-          validateAndParseAddress(events[2 * i + 1].from_address)
+          validateAndParseAddress(events[2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i + 1].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1580,10 +1580,10 @@ describeDevMadara("Starknet RPC", (context) => {
       const tx3: InvokeTransaction =
         await providerRPC.getTransactionByBlockIdAndIndex(
           firstBlockCreated.block_hash,
-          3
+          3,
         );
       expect(validateAndParseAddress(events[6].from_address)).to.be.equal(
-        FEE_TOKEN_ADDRESS
+        FEE_TOKEN_ADDRESS,
       );
       expect(events[6].transaction_hash).to.be.equal(tx3.transaction_hash);
 
@@ -1604,7 +1604,7 @@ describeDevMadara("Starknet RPC", (context) => {
       expect(continuation_token).to.be.equal("1,1,3");
 
       expect(validateAndParseAddress(events[0].from_address)).to.be.equal(
-        FEE_TOKEN_ADDRESS
+        FEE_TOKEN_ADDRESS,
       );
       expect(events[0].transaction_hash).to.be.equal(tx3.transaction_hash);
 
@@ -1613,14 +1613,14 @@ describeDevMadara("Starknet RPC", (context) => {
       const tx4: InvokeTransaction =
         await providerRPC.getTransactionByBlockIdAndIndex(
           firstBlockCreated.block_hash,
-          4
+          4,
         );
       expect(validateAndParseAddress(events[1].from_address)).to.be.equal(
-        FEE_TOKEN_ADDRESS
+        FEE_TOKEN_ADDRESS,
       );
       expect(events[1].transaction_hash).to.be.equal(tx4.transaction_hash);
       expect(validateAndParseAddress(events[2].from_address)).to.be.equal(
-        FEE_TOKEN_ADDRESS
+        FEE_TOKEN_ADDRESS,
       );
       expect(events[2].transaction_hash).to.be.equal(tx4.transaction_hash);
 
@@ -1630,19 +1630,19 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             secondBlockCreated.block_hash,
-            i
+            i,
           );
         expect(
-          validateAndParseAddress(events[2 * i + 3].from_address)
+          validateAndParseAddress(events[2 * i + 3].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i + 3].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
         expect(
-          validateAndParseAddress(events[2 * i + 4].from_address)
+          validateAndParseAddress(events[2 * i + 4].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i + 4].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
 
@@ -1668,19 +1668,19 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             secondBlockCreated.block_hash,
-            i
+            i,
           );
         expect(
-          validateAndParseAddress(events[2 * i - 4].from_address)
+          validateAndParseAddress(events[2 * i - 4].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i - 4].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
         expect(
-          validateAndParseAddress(events[2 * i - 3].from_address)
+          validateAndParseAddress(events[2 * i - 3].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i - 3].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
     });
@@ -1694,8 +1694,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1714,8 +1714,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions2);
@@ -1743,17 +1743,17 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             firstBlockCreated.block_hash,
-            i
+            i,
           );
         expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
-          FEE_TOKEN_ADDRESS
+          FEE_TOKEN_ADDRESS,
         );
         expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
         expect(
-          validateAndParseAddress(events[2 * i + 1].from_address)
+          validateAndParseAddress(events[2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i + 1].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
 
@@ -1779,17 +1779,17 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex(
             fifthBlockCreated.block_hash,
-            i
+            i,
           );
         expect(validateAndParseAddress(events[2 * i].from_address)).to.be.equal(
-          FEE_TOKEN_ADDRESS
+          FEE_TOKEN_ADDRESS,
         );
         expect(events[2 * i].transaction_hash).to.be.equal(tx.transaction_hash);
         expect(
-          validateAndParseAddress(events[2 * i + 1].from_address)
+          validateAndParseAddress(events[2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events[2 * i + 1].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
     });
@@ -1803,8 +1803,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1861,8 +1861,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1884,16 +1884,16 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex("latest", i);
         expect(
-          validateAndParseAddress(events.events[2 * i].from_address)
+          validateAndParseAddress(events.events[2 * i].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[2 * i].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
         expect(
-          validateAndParseAddress(events.events[2 * i + 1].from_address)
+          validateAndParseAddress(events.events[2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[2 * i + 1].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
     });
@@ -1907,8 +1907,8 @@ describeDevMadara("Starknet RPC", (context) => {
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT
-          )
+            MINT_AMOUNT,
+          ),
         );
       }
       await context.createBlock(transactions);
@@ -1932,16 +1932,16 @@ describeDevMadara("Starknet RPC", (context) => {
         const tx: InvokeTransaction =
           await providerRPC.getTransactionByBlockIdAndIndex("latest", skip + i);
         expect(
-          validateAndParseAddress(events.events[2 * i].from_address)
+          validateAndParseAddress(events.events[2 * i].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[2 * i].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
         expect(
-          validateAndParseAddress(events.events[2 * i + 1].from_address)
+          validateAndParseAddress(events.events[2 * i + 1].from_address),
         ).to.be.equal(FEE_TOKEN_ADDRESS);
         expect(events.events[2 * i + 1].transaction_hash).to.be.equal(
-          tx.transaction_hash
+          tx.transaction_hash,
         );
       }
     });
@@ -1953,8 +1953,8 @@ describeDevMadara("Starknet RPC", (context) => {
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT
-        )
+          MINT_AMOUNT,
+        ),
       );
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -1988,7 +1988,7 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should support 'pending' block id", async function () {
       const nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "pending"
+        "pending",
       );
       expect(nonce).to.not.be.undefined;
     });
@@ -1996,7 +1996,7 @@ describeDevMadara("Starknet RPC", (context) => {
     it("should support 'latest' block id", async function () {
       const nonce = await providerRPC.getNonceForAddress(
         ARGENT_CONTRACT_ADDRESS,
-        "latest"
+        "latest",
       );
       expect(nonce).to.not.be.undefined;
     });

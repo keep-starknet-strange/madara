@@ -3,26 +3,29 @@ import { type ApiPromise } from "@polkadot/api";
 import { type ApiTypes, type SubmittableExtrinsic } from "@polkadot/api/types";
 import { type ISubmittableResult } from "@polkadot/types/types";
 import { numberToHex, stringify, u8aWrapBytes } from "@polkadot/util";
-import { hash } from "starknet";
+import { ec, hash, num, constants } from "starknet";
 import erc20Json from "../../cairo-contracts/build/ERC20.json";
-import { NFT_CONTRACT_ADDRESS, UDC_CONTRACT_ADDRESS } from "../tests/constants";
+import {
+  NFT_CONTRACT_ADDRESS,
+  UDC_CONTRACT_ADDRESS,
+} from "../tests/constants";
 import { numberToU832Bytes } from "./utils";
 export async function sendTransactionNoValidation(
-  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
 ): Promise<void> {
   await transaction.send();
 }
 
 export async function sendTransactionBatchNoValidation(
   api: ApiPromise,
-  transactions: Array<SubmittableExtrinsic<"promise", ISubmittableResult>>
+  transactions: Array<SubmittableExtrinsic<"promise", ISubmittableResult>>,
 ): Promise<void> {
   await api.tx.utility.batch(transactions).send();
 }
 
 export async function sendTransaction(
   api: ApiPromise,
-  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     let unsubscribe;
@@ -62,7 +65,7 @@ export async function sendTransaction(
               "\t",
               phase.toString(),
               `: ${section}.${method}`,
-              data.toString()
+              data.toString(),
             );
 
             if (section == "system" && method == "ExtrinsicSuccess") {
@@ -93,7 +96,7 @@ export async function sendTransaction(
 export function declare(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string
+  tokenClassHash: string,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
@@ -111,7 +114,7 @@ export function declare(
     contractClass: {
       program: u8aWrapBytes(Buffer.from(stringify(erc20Json.program))),
       entryPointsByType: u8aWrapBytes(
-        Buffer.from(stringify(erc20Json.entry_points_by_type))
+        Buffer.from(stringify(erc20Json.entry_points_by_type)),
       ),
     },
   };
@@ -124,7 +127,7 @@ export function declare(
 export function deploy(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string
+  tokenClassHash: string,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Compute contract address
   // const deployedContractAddress = hash.calculateContractAddressFromHash(
@@ -168,7 +171,7 @@ export function deploy(
 export async function initialize(
   api: ApiPromise,
   contractAddress: string,
-  tokenAddress: string
+  tokenAddress: string,
 ): Promise<string> {
   // Initialize contract
   const tx_initialize = {
@@ -206,7 +209,7 @@ export async function mint(
   api: ApiPromise,
   contractAddress: string,
   tokenAddress: string,
-  mintAmount: string
+  mintAmount: string,
 ): Promise<string> {
   // Initialize contract
   const tx_mint = {
@@ -245,29 +248,37 @@ export function transfer(
   recipientAddress: string,
   transferAmount: string,
   nonce?: number,
-  signature?: string[], 
-): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {  
+  signature?: string[],
+): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   const tx_transfer = {
     version: 1, // version of the transaction
-    signature: (signature ? signature : []), // empty when no signature is provided
+    signature: signature ? signature : [], // empty when no signature is provided
     sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
-    calldata: [
-      "0x0000000000000000000000000000000000000000000000000000000000000001",
-      tokenAddress, // CONTRACT ADDRESS
-      "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "0x0000000000000000000000000000000000000000000000000000000000000003",
-      "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
-      recipientAddress,
-      transferAmount,
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-    ],
+    calldata: signature
+      ? [
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          tokenAddress, // CONTRACT ADDRESS
+          "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+          recipientAddress,
+          transferAmount,
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ]
+      : [
+          tokenAddress, // CONTRACT ADDRESS
+          "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
+          "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+          recipientAddress,
+          transferAmount,
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
   };
 
   const extrisinc_transfer = api.tx.starknet.invoke(tx_transfer);
-
   return extrisinc_transfer;
 }
 
@@ -277,12 +288,12 @@ export function batchTransfer(
   tokenAddress: string,
   recipientAddress: string,
   transferAmount: string,
-  signature?: number[]
+  signature?: string[],
 ): Array<SubmittableExtrinsic<ApiTypes, ISubmittableResult>> {
   // Initialize contract
   const tx_transfer = {
     version: 1, // version of the transaction
-    signature: (signature ? signature : []), // empty when no signature is provided
+    signature: signature ? signature : [], // empty when no signature is provided
     sender_address: senderAddress, // address of the sender contract
     nonce: 0, // nonce of the transaction
     calldata: [
@@ -308,28 +319,38 @@ export function mintERC721(
   recipientAddress: string,
   tokenID: string,
   nonce?: number,
-  signature?: number[]
+  signature?: string[],
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   const tx_mint = {
     version: 1, // version of the transaction
-    signature: (signature ? signature : []), // empty when no signature is provided
+    signature: signature ? signature : [], // empty when no signature is provided
     sender_address: senderAddress, // address of the sender contract
     nonce: numberToU832Bytes(nonce ? nonce : 0), // nonce of the transaction
-    calldata: [
-      "0x0000000000000000000000000000000000000000000000000000000000000001",
-      NFT_CONTRACT_ADDRESS,
-      "0x" + hash.getSelectorFromName("mint").slice(2).padStart(64, "0"),
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "0x0000000000000000000000000000000000000000000000000000000000000003",
-      "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
-      recipientAddress,
-      tokenID,
-      "0x0000000000000000000000000000000000000000000000000000000000000000",
-    ],
+    calldata: signature
+      ? [
+          "0x0000000000000000000000000000000000000000000000000000000000000001",
+          NFT_CONTRACT_ADDRESS,
+          "0x" + hash.getSelectorFromName("mint").slice(2).padStart(64, "0"),
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000000000000000000000000000000000000000000003",
+          "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+          recipientAddress,
+          tokenID,
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ]
+      : [
+          NFT_CONTRACT_ADDRESS,
+          "0x" + hash.getSelectorFromName("mint").slice(2).padStart(64, "0"),
+          "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA SIZE
+          recipientAddress,
+          tokenID,
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
   };
 
-  return api.tx.starknet.invoke(tx_mint);
+  const extrisinc_mint = api.tx.starknet.invoke(tx_mint);
+  return extrisinc_mint;
 }
 
 // deploy ERC20 contract via UDC
@@ -339,7 +360,7 @@ export function deployTokenContractUDC(
   classHash: string,
   salt: string,
   unique: boolean,
-  nonce?: number
+  nonce?: number,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
 
@@ -368,4 +389,29 @@ export function deployTokenContractUDC(
 
   const extrisinc_udc_deploy = api.tx.starknet.invoke(tx_udc_deploy);
   return extrisinc_udc_deploy;
+}
+
+export function calculateHexSignature(
+  sender_address: string,
+  calldata: string[],
+  nonce: number,
+  sender_signer: string,
+) {
+  const txHash = hash.calculateTransactionHashCommon(
+    constants.TransactionHashPrefix.INVOKE,
+    1,
+    sender_address,
+    0,
+    calldata,
+    0,
+    constants.StarknetChainId.SN_GOERLI,
+    [nonce],
+  );
+
+  const signature = ec.starkCurve.sign(txHash, sender_signer);
+
+  return [
+    "0x" + num.toHexString(signature.r.toString()).slice(2).padStart(64, "0"),
+    "0x" + num.toHexString(signature.s.toString()).slice(2).padStart(64, "0"),
+  ];
 }
