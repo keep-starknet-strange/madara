@@ -6,7 +6,7 @@ on:
   workflow_call:
 
 jobs:
-  # FIXME: check why this is rebuilding the project everytime
+  # FIXME: check why this is rebuilding the project every time
   cargo-lint:
     runs-on: ubuntu-latest-32-cores
     steps:
