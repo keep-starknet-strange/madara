@@ -1,5 +1,5 @@
 ---
-name: Workflow - Daily Cron
+name: Workflow - Weekly Cron
 
 on:
   workflow_dispatch:
@@ -7,8 +7,6 @@ on:
     - cron: "0 0 * * 0"
 
 jobs:
-  weekly_pre_release:
+  weekly_pre-release:
     name: Weekly pre-release
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      release_tag_name: nightly-${{ dateFormat(now(), 'YYYY-MM-DD') }}
+    uses: ./.github/workflows/pre-release.yml

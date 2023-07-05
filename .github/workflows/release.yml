@@ -13,3 +13,9 @@ jobs:
     uses: ./.github/workflows/docker-build.yml
     with:
       release_tag_name: ${{ github.event.release.tag_name }}
+
+  binaries_release_build:
+    name: Build binaries (release)
+    uses: ./.github/workflows/binaries-build.yml
+    with:
+      release_tag_name: ${{ github.event.release.tag_name }}
