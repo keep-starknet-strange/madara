@@ -940,7 +940,10 @@ where
                 }
             };
 
-        // At this point we know the contract exists, so errors should never be thrown!
+        // In theory we got some state hash in the tree that means the contract's state
+        // has been committed already so it exists and no error should be thrown.
+        // If an error is still thrown it's fine and handy for debugging.
+
         let class_hash = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
