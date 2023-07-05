@@ -2,7 +2,7 @@ version: "3.2"
 
 services:
   madara:
-    image: ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.7.1.experimental
+    image: ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.7.1.experimental.4
     ports:
       - "9615:9615"
       - "9944:9944"
