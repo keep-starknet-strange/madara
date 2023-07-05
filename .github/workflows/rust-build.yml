@@ -22,6 +22,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          enableCrossOsArchive: true
           lookup-only: true
 
       - name: Setup rust toolchain

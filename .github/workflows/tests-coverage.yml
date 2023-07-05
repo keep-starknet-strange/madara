@@ -27,6 +27,7 @@ jobs:
             ~/.cargo/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          enableCrossOsArchive: true
           fail-on-cache-miss: true
       - name: Run test
         run: |-
