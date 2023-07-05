@@ -19,11 +19,13 @@ jobs:
           npm run build
           cd ../benchmarking
           npm i
-      - name: Retrieve cached build
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           fail-on-cache-miss: true
@@ -57,8 +59,16 @@ jobs:
           npm run build
           cd ../benchmarking
           npm i
-      - name: Build madara in release mode
-        run: cargo build --workspace --release --features madara-state-root
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
       - name: Run benchmark
         run: |
           cd benchmarking
