@@ -1,0 +1,13 @@
+[Unit]
+Description=Madara Sequencer Node
+
+[Service]
+WorkingDirectory=/home/admin/madara
+Restart=on-failure
+ExecStart=/home/admin/madara/target/release/madara --testnet sharingan --{{keypair}} --validator 
+
+ExecReload=/bin/kill -HUP
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
