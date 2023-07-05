@@ -14,10 +14,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          enableCrossOsArchive: true
           fail-on-cache-miss: true
       - name: Format and clippy
         run: |

@@ -22,7 +22,6 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          enableCrossOsArchive: true
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'
