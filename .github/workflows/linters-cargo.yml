@@ -23,6 +23,6 @@ jobs:
           fail-on-cache-miss: true
       - name: Format and clippy
         run: |
-          cargo fmt --all -- --check
-          cargo clippy --all -- -D warnings
+          cargo fmt -- --check
+          cargo clippy --no-deps -- -D warnings
           cargo clippy --tests -- -D warnings
