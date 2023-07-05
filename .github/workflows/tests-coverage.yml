@@ -63,4 +63,5 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           files: codecov.json
-          fail_ci_if_error: true
+          # FIXME: usually we have errors on the upload
+          fail_ci_if_error: false
