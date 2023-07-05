@@ -2012,7 +2012,7 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("Cairo 1 full flow", async () => {
-    it("should declare erc20 contract", async () => {
+    it("should declare and deploy erc20 contract then transfer some tokens", async () => {
       const account = new Account(
         providerRPC,
         CAIRO_1_ACCOUNT_CONTRACT,
@@ -2098,12 +2098,14 @@ describeDevMadara("Starknet RPC", (context) => {
 
       const balanceSender = await providerRPC.getStorageAt(
         deployRes.contract_address[0],
+        //  hex(get_storage_var_address("balances", 0x4))
         "0x617243ac31335377b9d26d1a6b02f47b419ad593e1ae67660dd27ec77635906",
         "latest"
       );
       expect(toHex(balanceSender)).to.be.equal("0x0");
       const balanceRecipient = await providerRPC.getStorageAt(
         deployRes.contract_address[0],
+        // hex(get_storage_var_address("balances", 0x1))
         "0x753d37842b9cfa00ee311ab2564951681d89ee4d5596e84e74030de35018c8a",
         "latest"
       );
