@@ -46,6 +46,7 @@ import {
   CAIRO_1_ACCOUNT_CONTRACT,
   ERC20_CAIRO_1_CASM,
   ERC20_CAIRO_1_SIERRA,
+  CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
 } from "../constants";
 import { Block, InvokeTransaction } from "./types";
 import { assert, numberToHex } from "@polkadot/util";
@@ -2012,6 +2013,47 @@ describeDevMadara("Starknet RPC", (context) => {
   });
 
   describe("Cairo 1 full flow", async () => {
+    it("should deploy a Cairo 1 account", async () => {
+      const CONSTRUCTOR_CALLDATA = ["0x123"];
+      const accountAddress = hash.calculateContractAddressFromHash(
+        SALT,
+        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
+        CONSTRUCTOR_CALLDATA,
+        0
+      );
+
+      const account = new Account(
+        providerRPC,
+        accountAddress,
+        SIGNER_PRIVATE,
+        "1"
+      );
+
+      // transfer native token to allow deployment
+      await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        accountAddress,
+        "0xfffffffffffffffffffffffff"
+      );
+      await jumpBlocks(context, 1);
+
+      // deploy the account
+      await account.deploySelf(
+        {
+          classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
+          addressSalt: SALT,
+          constructorCalldata: CONSTRUCTOR_CALLDATA,
+        },
+        { maxFee: "123456" }
+      );
+      await jumpBlocks(context, 1);
+
+      expect(await providerRPC.getClassHashAt(accountAddress)).to.be.equal(
+        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH
+      );
+    });
+
     it("should declare and deploy erc20 contract then transfer some tokens", async () => {
       const account = new Account(
         providerRPC,
