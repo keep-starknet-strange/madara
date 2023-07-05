@@ -23,7 +23,6 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           enableCrossOsArchive: true
-          lookup-only: true
 
       - name: Setup rust toolchain
         if: steps.cache.outputs.cache-hit != 'true'
