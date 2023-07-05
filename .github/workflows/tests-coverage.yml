@@ -30,7 +30,6 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          enableCrossOsArchive: true
           fail-on-cache-miss: true
       - name: Run test
         run: |-
@@ -38,7 +37,8 @@ jobs:
           npm run test
 
   coverage:
-    runs-on: ubuntu-latest
+    # sadly, for now we have to "rebuild" for the coverage
+    runs-on: ubuntu-latest-32-cores
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -50,8 +50,11 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          enableCrossOsArchive: true
           fail-on-cache-miss: true
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
       - name: Coverage
