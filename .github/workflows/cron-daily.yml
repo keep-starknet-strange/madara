@@ -18,9 +18,3 @@ jobs:
   security_audit:
     name: Security audit
     uses: ./.github/workflows/security-audit.yml
-
-  docker_nightly_build:
-    name: Docker nightly build
-    uses: ./.github/workflows/docker-build.yml
-    with:
-      release_tag_name: nightly-${{ dateFormat(now(), 'YYYY-MM-DD') }}
