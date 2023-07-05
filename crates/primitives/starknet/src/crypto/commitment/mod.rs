@@ -2,16 +2,16 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use bitvec::vec::BitVec;
+use frame_support::BoundedVec;
 use sp_core::H256;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
 use super::merkle_patricia_tree::merkle_tree::MerkleTree;
+use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
-use crate::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
-};
+use crate::transaction::types::{EventWrapper, GettingAttributeError, Transaction};
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -121,27 +121,35 @@ pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> 
 /// # Returns
 ///
 /// The transaction hash with signature.
-fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> FieldElement
+fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> Result<FieldElement, GettingAttributeError>
 where
     T: CryptoHasherT,
 {
+    let signature = tx.get_signature()?;
     let signature_hash = <T as CryptoHasherT>::compute_hash_on_elements(
-        &tx.signature.iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
+        &signature.iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
     );
-    <T as CryptoHasherT>::hash(FieldElement::from(tx.hash), signature_hash)
+    Ok(<T as CryptoHasherT>::hash(FieldElement::from(tx.get_hash()), signature_hash))
 }
 /// Computes the transaction hash of an invoke transaction.
 ///
 /// # Argument
 ///
 /// * `transaction` - The invoke transaction to get the hash of.
-pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
+pub fn calculate_invoke_tx_hash(
+    sender_address: Felt252Wrapper,
+    calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+    max_fee: Felt252Wrapper,
+    nonce: Felt252Wrapper,
+    version: u64,
+    chain_id: Felt252Wrapper,
+) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
-        transaction.sender_address,
-        transaction.calldata.as_slice(),
-        transaction.max_fee,
-        transaction.nonce,
-        transaction.version,
+        sender_address,
+        calldata.as_slice(),
+        max_fee,
+        nonce,
+        version,
         b"invoke",
         chain_id,
     )
@@ -152,13 +160,20 @@ pub fn calculate_invoke_tx_hash(transaction: InvokeTransaction, chain_id: Felt25
 /// # Argument
 ///
 /// * `transaction` - The declare transaction to get the hash of.
-pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt252Wrapper) -> Felt252Wrapper {
+pub fn calculate_declare_tx_hash(
+    sender_address: Felt252Wrapper,
+    max_fee: Felt252Wrapper,
+    nonce: Felt252Wrapper,
+    version: u64,
+    compiled_class_hash: Felt252Wrapper,
+    chain_id: Felt252Wrapper,
+) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
-        transaction.sender_address,
-        &[transaction.compiled_class_hash],
-        transaction.max_fee,
-        transaction.nonce,
-        transaction.version,
+        sender_address,
+        &[compiled_class_hash],
+        max_fee,
+        nonce,
+        version,
         b"declare",
         chain_id,
     )
@@ -170,16 +185,21 @@ pub fn calculate_declare_tx_hash(transaction: DeclareTransaction, chain_id: Felt
 ///
 /// * `transaction` - The deploy account transaction to get the hash of.
 pub fn calculate_deploy_account_tx_hash(
-    transaction: DeployAccountTransaction,
+    constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
+    max_fee: Felt252Wrapper,
+    class_hash: Felt252Wrapper,
+    contract_address_salt: Felt252Wrapper,
+    nonce: Felt252Wrapper,
+    version: u64,
     chain_id: Felt252Wrapper,
     address: Felt252Wrapper,
 ) -> Felt252Wrapper {
     calculate_transaction_hash_common::<PedersenHasher>(
         address,
-        &vec![vec![transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
-        transaction.max_fee,
-        transaction.nonce,
-        transaction.version,
+        &vec![vec![class_hash, contract_address_salt], constructor_calldata.to_vec()].concat(),
+        max_fee,
+        nonce,
+        version,
         b"deploy_account",
         chain_id,
     )
@@ -191,7 +211,7 @@ pub fn calculate_transaction_hash_common<T>(
     calldata: &[Felt252Wrapper],
     max_fee: Felt252Wrapper,
     nonce: Felt252Wrapper,
-    version: u8,
+    version: u64,
     tx_prefix: &[u8],
     chain_id: Felt252Wrapper,
 ) -> Felt252Wrapper
