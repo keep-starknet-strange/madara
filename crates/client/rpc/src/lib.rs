@@ -375,13 +375,13 @@ where
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
             .contract_class_by_class_hash(substrate_block_hash, class_hash.into())
             .ok_or_else(|| {
-                error!("Failed to retrieve contract class from hash '{class_hash}'");
-                StarknetRpcApiError::ContractNotFound
+                error!("Failed to retrieve contract class from hash '{class_hash:x}'");
+                StarknetRpcApiError::ClassHashNotFound
             })?;
 
         Ok(to_rpc_contract_class(contract_class).map_err(|e| {
             error!("Failed to convert contract class from hash '{class_hash}' to RPC contract class: {e}");
-            StarknetRpcApiError::ContractNotFound
+            StarknetRpcApiError::InternalServerError
         })?)
     }
 
@@ -523,7 +523,11 @@ where
     /// # Returns
     ///
     /// * `fee_estimate` - fee estimate in gwei
-    async fn estimate_fee(&self, request: BroadcastedTransaction, block_id: BlockId) -> RpcResult<FeeEstimate> {
+    async fn estimate_fee(
+        &self,
+        request: Vec<BroadcastedTransaction>,
+        block_id: BlockId,
+    ) -> RpcResult<Vec<FeeEstimate>> {
         // TODO:
         //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
         //      - to ensure broadcasted query signatures aren't valid on mainnet
@@ -535,24 +539,28 @@ where
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let tx = to_tx(request, chain_id).map_err(|e| {
-            error!("{e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
-        let (actual_fee, gas_usage) = self
-            .client
-            .runtime_api()
-            .estimate_fee(substrate_block_hash, tx)
-            .map_err(|e| {
-                error!("Request parameters error: {e}");
+        let mut estimates = vec![];
+        for tx in request {
+            let tx = to_tx(tx, chain_id).map_err(|e| {
+                error!("{e}");
                 StarknetRpcApiError::InternalServerError
-            })?
-            .map_err(|e| {
-                error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
             })?;
+            let (actual_fee, gas_usage) = self
+                .client
+                .runtime_api()
+                .estimate_fee(substrate_block_hash, tx)
+                .map_err(|e| {
+                    error!("Request parameters error: {e}");
+                    StarknetRpcApiError::InternalServerError
+                })?
+                .map_err(|e| {
+                    error!("Failed to call function: {:#?}", e);
+                    StarknetRpcApiError::ContractError
+                })?;
 
-        Ok(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee })
+            estimates.push(FeeEstimate { gas_price: 0, gas_consumed: gas_usage, overall_fee: actual_fee });
+        }
+        Ok(estimates)
     }
 
     // Returns the details of a transaction by a given block id and index
