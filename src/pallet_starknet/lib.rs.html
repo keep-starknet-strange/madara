@@ -2288,8 +2288,8 @@
         <span class="kw">match </span>transaction.execute(
             <span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(),
             <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
-            TxType::Invoke,
-            <span class="prelude-val">None</span>,
+            transaction.tx_type.clone(),
+            transaction.contract_class.clone(),
         ) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
                 <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
