@@ -45,7 +45,7 @@ jobs:
           cd ../benchmarking
           npm i
       - name: Build madara in release mode
-        run: cargo build --workspace --release
+        run: cargo build --profile production -p madara
       - name: Run benchmark
         run: |
           cd benchmarking

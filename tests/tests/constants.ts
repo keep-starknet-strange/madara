@@ -71,8 +71,18 @@ export const TEST_CAIRO_1_SIERRA: CompiledContract = json.parse(
     .readFileSync("../cairo-contracts/build/cairo_1/HelloStarknet.sierra.json")
     .toString("ascii")
 );
+export const ERC20_CAIRO_1_SIERRA: CompiledContract = json.parse(
+  fs
+    .readFileSync("../cairo-contracts/build/cairo_1/erc20.sierra.json")
+    .toString("ascii")
+);
 export const TEST_CAIRO_1_CASM: CompiledSierraCasm = json.parse(
   fs
     .readFileSync("../cairo-contracts/build/cairo_1/HelloStarknet.casm.json")
+    .toString("ascii")
+);
+export const ERC20_CAIRO_1_CASM: CompiledSierraCasm = json.parse(
+  fs
+    .readFileSync("../cairo-contracts/build/cairo_1/erc20.casm.json")
     .toString("ascii")
 );

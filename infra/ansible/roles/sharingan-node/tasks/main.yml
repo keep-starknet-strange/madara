@@ -22,7 +22,7 @@
   ansible.builtin.debug:
     msg: "{{ rust_install_output.stdout_lines }}"
 
-- name: Compile madara node
+- name: Compile madara
   ansible.builtin.shell: |
     . $HOME/.cargo/env
     rm -rf madara
@@ -34,26 +34,6 @@
 - name: Print substrate compilation output
   ansible.builtin.debug:
     msg: "{{ substrate_compile_output.stdout_lines }}"
-
-- name: Wait for bootstrap_node
-  wait_for: host={{ bootstrap_node }} port=9944 delay=1 timeout=300
-  when: bootstrap_node is defined
-
-- name: Get bootstrap peer id
-  ansible.builtin.uri:
-    url: http://{{bootstrap_node}}:9944
-    method: POST
-    return_content: yes
-    headers:
-      Content-Type: "application/json"
-    body:
-      '{"jsonrpc": "2.0","method": "system_localPeerId","params": [],"id": 1}'
-  register: bootstrap_peerid
-  when: bootstrap_node is defined
-
-- name: print bootstrap peer id
-  ansible.builtin.debug:
-    msg: "{{ bootstrap_peerid }}"
 
 - name: Enable systemd linger for {{ ansible_user }} user
   become: true
@@ -68,6 +48,10 @@
 
 - name: Install systemd service
   ansible.builtin.template:
+    # TODO depending on the setting set full or sequencer
+    # also don't forget to add multiple chains instead of only sharingan
+    # (e.g. local), in that case need a step to generate the chain spec
+    # and add the bootnodes there
     src: madara.service.j2
     dest: /home/{{ ansible_user }}/.config/systemd/user/madara.service
 

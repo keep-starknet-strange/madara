@@ -2,25 +2,24 @@ version: "3.2"
 
 services:
   madara:
-    image: ghcr.io/keep-starknet-strange/madara:latest
+    image: ghcr.io/keep-starknet-strange/madara:v0.1.0-testnet-sharingan-beta.7.1.experimental
     ports:
-      - "9933:9933"
       - "9615:9615"
       - "9944:9944"
       - "30333:30333"
-    platform: linux/x86_64
     command:
-      - "--prometheus-external"
-      - "--rpc-cors=all"
       - "--rpc-external"
-      - "--ws-external"
+      - "--rpc-methods=unsafe"
+      - "--dev"
+    networks:
+      - internal
 
   madara-app:
     image: ghcr.io/keep-starknet-strange/madara-app:latest
     ports:
       - "8080:80"
     environment:
-      WS_URL: "ws://0.0.0.0:9944"
+      WS_URL: "ws://127.0.0.1:9944"
 
   starkcet-front:
     image: ghcr.io/zizou0x/starkcet-frontend:latest
@@ -29,7 +28,7 @@ services:
     depends_on:
       - starkcet-back
     networks:
-      - faucet
+      - internal
 
   starkcet-back:
     image: ghcr.io/zizou0x/starkcet-backend:latest
@@ -37,10 +36,11 @@ services:
       - PRIVATE_KEY=0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d
       - STARKNET_ACCOUNT_ADDRESS=0x2
       - TOKEN_ADDRESS=0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
-      - RPC_URL=http://host.docker.internal:9944
+      - RPC_URL=http://madara:9944
       - AMOUNT_TRANSFERED=1000000000000000
+    restart: on-failure
     networks:
-      - faucet
+      - internal
 
 networks:
-  faucet:
+  internal:
