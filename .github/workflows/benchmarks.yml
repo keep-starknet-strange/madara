@@ -69,6 +69,16 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           fail-on-cache-miss: true
+      - name: Setup rust toolchain
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: rustup show
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Build the project
+        run: |
+          cargo build --release --workspace --features madara-state-root
       - name: Run benchmark
         run: |
           cd benchmarking
