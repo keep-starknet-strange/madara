@@ -5,10 +5,7 @@ import { type ISubmittableResult } from "@polkadot/types/types";
 import { numberToHex, stringify, u8aWrapBytes } from "@polkadot/util";
 import { ec, hash, num, constants } from "starknet";
 import erc20Json from "../../cairo-contracts/build/ERC20.json";
-import {
-  NFT_CONTRACT_ADDRESS,
-  UDC_CONTRACT_ADDRESS,
-} from "../tests/constants";
+import { NFT_CONTRACT_ADDRESS, UDC_CONTRACT_ADDRESS } from "../tests/constants";
 import { numberToU832Bytes } from "./utils";
 export async function sendTransactionNoValidation(
   transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
