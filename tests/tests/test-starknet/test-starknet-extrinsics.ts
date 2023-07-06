@@ -213,6 +213,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
   });
 
   it("deploys ERC20 contract via UDC", async function () {
+    const nonce = 2;
     const deployedContractAddress = hash.calculateContractAddressFromHash(
       "0x0000000000000000000000000000000000000000000000000000000000000001",
       "0x0000000000000000000000000000000000000000000000000000000000010000",
@@ -236,7 +237,7 @@ describeDevMadara("Pallet Starknet - Extrinsics", (context) => {
         "0x0000000000000000000000000000000000000000000000000000000000010000",
         "0x0000000000000000000000000000000000000000000000000000000000000001",
         false,
-        3,
+        nonce,
       ),
     );
     // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
