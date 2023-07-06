@@ -5,8 +5,16 @@ use starknet_core::types::{BlockId, FieldElement};
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct RpcGetProofInput {
+    /// Block to prove
     pub block_id: BlockId,
+    /// Address of the contract to prove the storage of
     pub contract_address: FieldElement,
+    /// Storage keys to be proven
+    /// More info can be found [here](https://docs.starknet.io/documentation/architecture_and_concepts/Contracts/contract-storage/)
+    /// storage_var address is the sn_keccak of the name hashed with the pedersen hash of the keys
+    ///
+    /// e.g balance_of(key1: felt, key2: felt) -> pedersen("balance_of", pedersen("key1",
+    /// pedersen("key2")))
     pub keys: Vec<FieldElement>,
 }
 
