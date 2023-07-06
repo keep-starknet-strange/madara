@@ -1100,8 +1100,8 @@ impl<T: Config> Pallet<T> {
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
-            TxType::Invoke,
-            None,
+            transaction.tx_type.clone(),
+            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
