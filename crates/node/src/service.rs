@@ -245,7 +245,11 @@ where
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    sealing: Option<Sealing>,
+    l1_node: Option<String>,
+) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -370,17 +374,19 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
         .for_each(|()| future::ready(())),
     );
 
-    task_manager.spawn_essential_handle().spawn(
-        "da-worker-prove",
-        Some("madara"),
-        DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend.clone()),
-    );
+    if let Some(node) = l1_node {
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-prove",
+            Some("madara"),
+            DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend.clone()),
+        );
 
-    task_manager.spawn_essential_handle().spawn(
-        "da-worker-update",
-        Some("madara"),
-        DataAvailabilityWorker::update_state(client.clone(), madara_backend),
-    );
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-update",
+            Some("madara"),
+            DataAvailabilityWorker::update_state(client.clone(), madara_backend, node),
+        );
+    };
 
     if role.is_authority() {
         // manual-seal authorship

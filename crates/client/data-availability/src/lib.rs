@@ -1,3 +1,4 @@
+mod ethereum;
 mod sharp_utils;
 
 use std::collections::HashMap;
@@ -5,11 +6,10 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
-use ethers::prelude::abigen;
-use ethers::providers::{Http, Provider};
-use ethers::types::{Address, U256};
+use ethers::types::U256;
 use futures::StreamExt;
 use lazy_static::lazy_static;
+use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use mp_starknet::storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
@@ -59,8 +59,6 @@ where
                 }
 
                 if prefix == *SN_NONCE_PREFIX {
-                    log::info!("NONCE: {:?}", prefix);
-                    log::info!("KEY: {:?}", key);
                     if let Some(data) = event.2 {
                         nonces.insert(key, data.0.as_slice());
                     }
@@ -103,74 +101,38 @@ where
     C: ProvideRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
 {
-    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
+    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>, l1_node: String) {
         let mut notification_st = client.import_notification_stream();
 
         while let Some(notification) = notification_st.next().await {
             // Query last proven block
-            // let res = madara_backend.da().last_proved_block().unwrap();
-            starknet_last_proven_block().await;
-            // log::info!("Last proved block: {}", res);
+            if let Ok(last_block) = ethereum::last_proven_block(&l1_node).await {
+                match madara_backend.da().last_proved_block() {
+                    Ok(last_local_block) => log::info!("Last onchain: {last_block}, Last Local: {last_local_block}"),
+                    Err(e) => log::debug!("could not pull last local block: {e}"),
+                };
+            }
 
             // Check the associated job status
             if let Ok(job_resp) = sharp_utils::get_status(sharp_utils::TEST_JOB_ID) {
-                // TODO: use fact db enum type
                 if let Some(status) = job_resp.status {
                     if status == "ONCHAIN" {
-                        // Fetch DA Facts for block
-                        let _res = madara_backend.da().state_diff(&notification.hash).unwrap();
+                        match madara_backend.da().state_diff(&notification.hash) {
+                            Ok(state_diff) => {
+                                // publish state diff to Layer 1
+                                ethereum::publish_data(&l1_node, &DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
+
+                                // save last proven block
+                                if let Err(db_err) = madara_backend.da().update_last_proved_block(&notification.hash) {
+                                    log::debug!("could not save last proved block: {db_err}");
+                                };
+                            }
+                            Err(e) => log::debug!("could not pull state diff: {e}"),
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-// async fn publish_data(sender_id: &[u8], state_diff: Vec<String>) {
-//     abigen!(
-//         STARKNET,
-//         r#"[
-//             function updateState(uint256[] calldata programOutput, uint256 onchainDataHash,
-// uint256 onchainDataSize) external         ]"#,
-//     );
-
-// const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
-// pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
-// pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
-
-// let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
-// let client = Arc::new(provider);
-
-// let address: Address = STARKNET_MAINNET_CC_ADDRESS.parse().unwrap();
-// let signer = Arc::new(SignerMiddleware::new(provider,
-// from_wallet.with_chain_id(anvil.chain_id()))); let contract = STARKNET::new(address, client,
-// signer);
-
-// let tx = contract.update_state(state_diff, U256::default(), U256::default());
-// let pending_tx = tx.send().await.unwrap();
-// let _minted_tx = pending_tx.await.unwrap();
-// log::info!("State Update: {pending_tx:?}");
-// }
-
-pub async fn starknet_last_proven_block() {
-    abigen!(
-        STARKNET,
-        r#"[
-            function stateBlockNumber() external view returns (int256)
-        ]"#,
-    );
-
-    const RPC_URL: &str = "https://eth-mainnet.g.alchemy.com/v2/<TODO: config>";
-    pub const STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
-    // pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
-
-    let provider = Provider::<Http>::try_from(RPC_URL).unwrap();
-    let client = Arc::new(provider);
-
-    let address: Address = STARKNET_MAINNET_CC_ADDRESS.parse().unwrap();
-    let contract = STARKNET::new(address, client);
-    if let Ok(state_block_number) = contract.state_block_number().call().await {
-        log::info!("State Block Number {state_block_number:?}");
     }
 }
 
@@ -196,11 +158,3 @@ pub fn pre_0_11_0_state_diff(storage_diffs: HashMap<&[u8], StorageWrites>, nonce
     }
     state_diff
 }
-
-// #[test]
-// fn decode_raw_change_set() {
-//     let mut nonces: HashMap<&[u8], &[u8]> = HashMap::new();
-//     let mut storage_diffs: HashMap<&[u8], StorageWrites> = HashMap::new();
-//     let test_val: &[u8] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1];
-//     nonces.push(())
-// }
