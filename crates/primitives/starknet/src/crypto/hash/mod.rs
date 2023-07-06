@@ -53,7 +53,7 @@ impl HasherT for Hasher {
 
 impl Default for Hasher {
     fn default() -> Self {
-        // To avoid ambiguity, the user has to explicitely choose a hasher.
+        // To avoid ambiguity, the user has to explicitly choose a hasher.
         unreachable!("Hasher::default() should never be called");
     }
 }
