@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use blockifier::execution::contract_class::ContractClass;
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
@@ -70,17 +71,13 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
         address: ContractAddressWrapper,
     ) -> Option<ClassHashWrapper>;
     /// Return the contract class at the provided address for the provided block.
-    fn contract_class_by_address(
-        &self,
-        block_hash: B::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ContractClassWrapper>;
+    fn contract_class_by_address(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClass>;
     /// Return the contract class for a provided class_hash and block hash.
     fn contract_class_by_class_hash(
         &self,
         block_hash: B::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -> Option<ContractClassWrapper>;
+    ) -> Option<ContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
@@ -139,7 +136,7 @@ where
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
-    ) -> Option<ContractClassWrapper> {
+    ) -> Option<ContractClass> {
         let api = self.client.runtime_api();
         let contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()?;
 
@@ -179,7 +176,7 @@ where
         &self,
         block_hash: <B as BlockT>::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -> Option<ContractClassWrapper> {
+    ) -> Option<ContractClass> {
         self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
     }
 

@@ -23,8 +23,9 @@ sp-std = { workspace = true }
 blockifier = { workspace = true, default-features = false, features = [
   "testing",
 ] }
+cairo-lang-casm = { workspace = true, default-features = false }
+cairo-lang-casm-contract-class = { workspace = true }
 cairo-vm = { workspace = true }
-poseidon_hash = { workspace = true, default-features = false }
 starknet-core = { workspace = true, optional = true }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
@@ -44,8 +45,9 @@ lazy_static = { workspace = true }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
   "max-encoded-len",
+  "bit-vec",
 ] }
-scale-info = { workspace = true, features = ["derive"] }
+scale-info = { workspace = true, features = ["derive", "bit-vec", "decode"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { version = "1.0.99", default-features = false }
 thiserror-no-std = { workspace = true }
@@ -70,7 +72,6 @@ std = [
   "starknet-core",
   "blockifier/std",
   "starknet_api/std",
-  "poseidon_hash/std",
   # Substrate
   "frame-support/std",
   "sp-core/std",
