@@ -368,7 +368,7 @@
 <span class="kw">use </span><span class="kw">super</span>::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
 <span class="kw">use </span><span class="kw">super</span>::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasherT;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 <span class="kw">use </span><span class="kw">crate</span>::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
 };
@@ -383,17 +383,17 @@
 /// of the index of the transaction / event within the block.
 ///
 /// The tree height is 64 in our case since our set operation takes u64 index values.
-</span><span class="kw">struct </span>CommitmentTree&lt;T: CryptoHasherT&gt; {
+</span><span class="kw">struct </span>CommitmentTree&lt;T: HasherT&gt; {
     tree: RefMerkleTree&lt;T&gt;,
 }
 
-<span class="kw">impl</span>&lt;T: CryptoHasherT&gt; Default <span class="kw">for </span>CommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: HasherT&gt; Default <span class="kw">for </span>CommitmentTree&lt;T&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ tree: RefMerkleTree::empty() }
     }
 }
 
-<span class="kw">impl</span>&lt;T: CryptoHasherT&gt; CommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: HasherT&gt; CommitmentTree&lt;T&gt; {
     <span class="doccomment">/// Sets the value of a key in the merkle tree.
     ///
     /// # Arguments
@@ -418,17 +418,17 @@
 ///
 /// The tree height is 251 in our case since our set operation takes Fieldelement index values.
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
-</span><span class="kw">pub struct </span>StateCommitmentTree&lt;T: CryptoHasherT&gt; {
+</span><span class="kw">pub struct </span>StateCommitmentTree&lt;T: HasherT&gt; {
     tree: MerkleTree&lt;T&gt;,
 }
 
-<span class="kw">impl</span>&lt;T: CryptoHasherT&gt; Default <span class="kw">for </span>StateCommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: HasherT&gt; Default <span class="kw">for </span>StateCommitmentTree&lt;T&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{ tree: MerkleTree::empty() }
     }
 }
 
-<span class="kw">impl</span>&lt;T: CryptoHasherT&gt; StateCommitmentTree&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: HasherT&gt; StateCommitmentTree&lt;T&gt; {
     <span class="doccomment">/// Sets the value of a key in the merkle tree.
     ///
     /// # Arguments
@@ -461,7 +461,7 @@
 /// # Returns
 ///
 /// The transaction commitment, the event commitment and the event count.
-</span><span class="kw">pub fn </span>calculate_commitments&lt;T: CryptoHasherT&gt;(
+</span><span class="kw">pub fn </span>calculate_commitments&lt;T: HasherT&gt;(
     transactions: <span class="kw-2">&amp;</span>[Transaction],
     events: <span class="kw-2">&amp;</span>[EventWrapper],
 ) -&gt; (Felt252Wrapper, Felt252Wrapper) {
@@ -481,7 +481,7 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions.
-</span><span class="kw">pub fn </span>calculate_transaction_commitment&lt;T: CryptoHasherT&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction]) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_transaction_commitment&lt;T: HasherT&gt;(transactions: <span class="kw-2">&amp;</span>[Transaction]) -&gt; Felt252Wrapper {
     <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;T&gt;::default();
 
     transactions.iter().enumerate().for_each(|(idx, tx)| {
@@ -506,7 +506,7 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the transactions and the number of events.
-</span><span class="kw">pub fn </span>calculate_event_commitment&lt;T: CryptoHasherT&gt;(events: <span class="kw-2">&amp;</span>[EventWrapper]) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_event_commitment&lt;T: HasherT&gt;(events: <span class="kw-2">&amp;</span>[EventWrapper]) -&gt; Felt252Wrapper {
     <span class="kw">let </span><span class="kw-2">mut </span>tree = CommitmentTree::&lt;T&gt;::default();
     events.iter().enumerate().for_each(|(id, event)| {
         <span class="kw">let </span>final_hash = calculate_event_hash::&lt;T&gt;(event);
@@ -526,12 +526,12 @@
 /// # Returns
 ///
 /// The hash of the class commitment tree leaf.
-</span><span class="kw">pub fn </span>calculate_class_commitment_leaf_hash&lt;T: CryptoHasherT&gt;(
+</span><span class="kw">pub fn </span>calculate_class_commitment_leaf_hash&lt;T: HasherT&gt;(
     compiled_class_hash: Felt252Wrapper,
 ) -&gt; ClassCommitmentLeafHash {
     <span class="kw">let </span>contract_class_hash_version = Felt252Wrapper::try_from(<span class="string">&quot;CONTRACT_CLASS_LEAF_V0&quot;</span>.as_bytes()).unwrap(); <span class="comment">// Unwrap safu
 
-    </span><span class="kw">let </span>hash = &lt;T&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span>[contract_class_hash_version.<span class="number">0</span>, compiled_class_hash.<span class="number">0</span>]);
+    </span><span class="kw">let </span>hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>[contract_class_hash_version.<span class="number">0</span>, compiled_class_hash.<span class="number">0</span>]);
 
     hash.into()
 }
@@ -548,7 +548,7 @@
 /// # Returns
 ///
 /// The merkle root of the merkle tree built from the classes.
-</span><span class="kw">pub fn </span>calculate_class_commitment_tree_root_hash&lt;T: CryptoHasherT&gt;(class_hashes: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+</span><span class="kw">pub fn </span>calculate_class_commitment_tree_root_hash&lt;T: HasherT&gt;(class_hashes: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
     <span class="kw">let </span><span class="kw-2">mut </span>tree = StateCommitmentTree::&lt;T&gt;::default();
     class_hashes.iter().for_each(|class_hash| {
         <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;T&gt;(<span class="kw-2">*</span>class_hash);
@@ -569,7 +569,7 @@
 /// # Returns
 ///
 /// The contract state hash.
-</span><span class="kw">pub fn </span>calculate_contract_state_hash&lt;T: CryptoHasherT&gt;(
+</span><span class="kw">pub fn </span>calculate_contract_state_hash&lt;T: HasherT&gt;(
     hash: Felt252Wrapper,
     root: Felt252Wrapper,
     nonce: Felt252Wrapper,
@@ -577,7 +577,7 @@
     <span class="kw">const </span>CONTRACT_STATE_HASH_VERSION: Felt252Wrapper = Felt252Wrapper::ZERO;
 
     <span class="comment">// The contract state hash is defined as H(H(H(hash, root), nonce), CONTRACT_STATE_HASH_VERSION)
-    </span><span class="kw">let </span>hash = &lt;T&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span>[hash.<span class="number">0</span>, root.<span class="number">0</span>, nonce.<span class="number">0</span>, CONTRACT_STATE_HASH_VERSION.<span class="number">0</span>]);
+    </span><span class="kw">let </span>hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>[hash.<span class="number">0</span>, root.<span class="number">0</span>, nonce.<span class="number">0</span>, CONTRACT_STATE_HASH_VERSION.<span class="number">0</span>]);
 
     <span class="comment">// Compare this with the HashChain construction used in the contract_hash: the number of
     // elements is not hashed to this hash, and this is supposed to be different.
@@ -599,12 +599,12 @@
 /// The transaction hash with signature.
 </span><span class="kw">fn </span>calculate_transaction_hash_with_signature&lt;T&gt;(tx: <span class="kw-2">&amp;</span>Transaction) -&gt; FieldElement
 <span class="kw">where
-    </span>T: CryptoHasherT,
+    </span>T: HasherT,
 {
-    <span class="kw">let </span>signature_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(
+    <span class="kw">let </span>signature_hash = &lt;T&gt;::default().compute_hash_on_elements(
         <span class="kw-2">&amp;</span>tx.signature.iter().map(|elt| FieldElement::from(<span class="kw-2">*</span>elt)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    &lt;T <span class="kw">as </span>CryptoHasherT&gt;::hash(FieldElement::from(tx.hash), signature_hash)
+    &lt;T&gt;::default().hash_elements(FieldElement::from(tx.hash), signature_hash)
 }
 <span class="doccomment">/// Computes the transaction hash of an invoke transaction.
 ///
@@ -677,13 +677,12 @@
     compiled_class_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
 ) -&gt; Felt252Wrapper
 <span class="kw">where
-    </span>T: CryptoHasherT,
+    </span>T: HasherT,
 {
     <span class="comment">// All the values are validated before going through this function so it&#39;s safe to unwrap.
     </span><span class="kw">let </span>sender_address = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>sender_address.into()).unwrap();
-    <span class="kw">let </span>calldata_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(
-        <span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from(val)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
-    );
+    <span class="kw">let </span>calldata_hash = &lt;T&gt;::default()
+        .compute_hash_on_elements(<span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from(val)).collect::&lt;Vec&lt;FieldElement&gt;&gt;());
     <span class="kw">let </span>max_fee = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>max_fee.into()).unwrap();
     <span class="kw">let </span>nonce = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>nonce.into()).unwrap();
     <span class="kw">let </span>version = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>version.to_be_bytes()).unwrap();
@@ -695,7 +694,7 @@
         elements.push(FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>compiled_class_hash.into()).unwrap())
     }
 
-    <span class="kw">let </span>tx_hash = &lt;T <span class="kw">as </span>CryptoHasherT&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span>elements);
+    <span class="kw">let </span>tx_hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>elements);
 
     tx_hash.into()
 }
@@ -704,15 +703,16 @@
 ///
 /// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
 /// for details.
-</span><span class="kw">pub fn </span>calculate_event_hash&lt;T: CryptoHasherT&gt;(event: <span class="kw-2">&amp;</span>EventWrapper) -&gt; FieldElement {
-    <span class="kw">let </span>keys_hash = T::compute_hash_on_elements(
+</span><span class="kw">pub fn </span>calculate_event_hash&lt;T: HasherT&gt;(event: <span class="kw-2">&amp;</span>EventWrapper) -&gt; FieldElement {
+    <span class="kw">let </span>hasher = T::default();
+    <span class="kw">let </span>keys_hash = hasher.compute_hash_on_elements(
         <span class="kw-2">&amp;</span>event.keys.iter().map(|key| FieldElement::from(<span class="kw-2">*</span>key)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
-    <span class="kw">let </span>data_hash = T::compute_hash_on_elements(
+    <span class="kw">let </span>data_hash = hasher.compute_hash_on_elements(
         <span class="kw-2">&amp;</span>event.data.iter().map(|data| FieldElement::from(<span class="kw-2">*</span>data)).collect::&lt;Vec&lt;FieldElement&gt;&gt;(),
     );
     <span class="kw">let </span>from_address = FieldElement::from(event.from_address);
-    T::compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
+    hasher.compute_hash_on_elements(<span class="kw-2">&amp;</span>[from_address, keys_hash, data_hash])
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="mp_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

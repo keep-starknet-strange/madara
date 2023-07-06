@@ -68,8 +68,33 @@
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
 <a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module contains the hash functions used in the StarkNet protocol.
-</span><span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
+</span><span class="kw">use </span>starknet_ff::FieldElement;
+
+<span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 <span class="kw">use </span><span class="kw">crate</span>::traits::ThreadSafeCopy;
 
@@ -90,18 +115,39 @@
 
 <span class="doccomment">/// Implement the `HasherT` trait for the `Hasher` enum.
 </span><span class="kw">impl </span>HasherT <span class="kw">for </span>Hasher {
-    <span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>hash_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Pedersen(p) =&gt; p.hash(data),
-            <span class="self">Self</span>::Poseidon(p) =&gt; p.hash(data),
+            <span class="self">Self</span>::Pedersen(p) =&gt; p.hash_bytes(data),
+            <span class="self">Self</span>::Poseidon(p) =&gt; p.hash_bytes(data),
         }
     }
 
-    <span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+    <span class="kw">fn </span>compute_hash_on_wrappers(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Pedersen(p) =&gt; p.hash_elements(data),
-            <span class="self">Self</span>::Poseidon(p) =&gt; p.hash_elements(data),
+            <span class="self">Self</span>::Pedersen(p) =&gt; p.compute_hash_on_wrappers(data),
+            <span class="self">Self</span>::Poseidon(p) =&gt; p.compute_hash_on_wrappers(data),
         }
+    }
+
+    <span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, a: FieldElement, b: FieldElement) -&gt; FieldElement {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Pedersen(p) =&gt; p.hash_elements(a, b),
+            <span class="self">Self</span>::Poseidon(p) =&gt; p.hash_elements(a, b),
+        }
+    }
+
+    <span class="kw">fn </span>compute_hash_on_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
+        <span class="kw">match </span><span class="self">self </span>{
+            <span class="self">Self</span>::Pedersen(p) =&gt; p.compute_hash_on_elements(elements),
+            <span class="self">Self</span>::Poseidon(p) =&gt; p.compute_hash_on_elements(elements),
+        }
+    }
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>Hasher {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="comment">// To avoid ambiguity, the user has to explicitly choose a hasher.
+        </span><span class="macro">unreachable!</span>(<span class="string">&quot;Hasher::default() should never be called&quot;</span>);
     }
 }
 
@@ -134,8 +180,8 @@
 /// The hash of the data.
 </span><span class="kw">pub fn </span>hash(hasher: Hasher, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
     <span class="kw">match </span>hasher {
-        Hasher::Pedersen(p) =&gt; p.hash(data),
-        Hasher::Poseidon(p) =&gt; p.hash(data),
+        Hasher::Pedersen(p) =&gt; p.hash_bytes(data),
+        Hasher::Poseidon(p) =&gt; p.hash_bytes(data),
     }
 }
 </code></pre></div>

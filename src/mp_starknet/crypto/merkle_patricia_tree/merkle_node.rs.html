@@ -305,7 +305,7 @@
 <span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasherT;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
 <span class="doccomment">/// Id of a Node within the tree
 </span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
@@ -449,7 +449,7 @@
     ///
     /// If either child&#39;s hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_hash&lt;H: CryptoHasherT&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, nodes: <span class="kw-2">&amp;</span>HashMap&lt;NodeId, Node&gt;) {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, nodes: <span class="kw-2">&amp;</span>HashMap&lt;NodeId, Node&gt;) {
         <span class="kw">if </span><span class="self">self</span>.hash.is_some() {
             <span class="kw">return</span>;
         }
@@ -470,7 +470,7 @@
             <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;right child not found&quot;</span>),
         };
 
-        <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(Felt252Wrapper(H::hash(left.<span class="number">0</span>, right.<span class="number">0</span>)));
+        <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(Felt252Wrapper(H::default().hash_elements(left.<span class="number">0</span>, right.<span class="number">0</span>)));
     }
 }
 
@@ -560,7 +560,7 @@
     ///
     /// If the child&#39;s hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_hash&lt;H: CryptoHasherT&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, nodes: <span class="kw-2">&amp;</span>HashMap&lt;NodeId, Node&gt;) {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>calculate_hash&lt;H: HasherT&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, nodes: <span class="kw-2">&amp;</span>HashMap&lt;NodeId, Node&gt;) {
         <span class="kw">if </span><span class="self">self</span>.hash.is_some() {
             <span class="kw">return</span>;
         }
@@ -582,7 +582,7 @@
         </span>length[<span class="number">31</span>] = <span class="self">self</span>.path.len() <span class="kw">as </span>u8;
 
         <span class="kw">let </span>length = Felt252Wrapper::try_from(<span class="kw-2">&amp;</span>length).unwrap();
-        <span class="kw">let </span>hash = Felt252Wrapper(H::hash(child.<span class="number">0</span>, path.<span class="number">0</span>) + length.<span class="number">0</span>);
+        <span class="kw">let </span>hash = Felt252Wrapper(H::default().hash_elements(child.<span class="number">0</span>, path.<span class="number">0</span>) + length.<span class="number">0</span>);
         <span class="self">self</span>.hash = <span class="prelude-val">Some</span>(hash);
     }
 }

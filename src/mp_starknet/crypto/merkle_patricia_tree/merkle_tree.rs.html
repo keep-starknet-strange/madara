@@ -571,7 +571,7 @@
 
 <span class="kw">use </span><span class="kw">crate</span>::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasherT;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
 <span class="doccomment">/// Wrapper type for a [HashMap&lt;NodeId, Node&gt;] object. (It&#39;s not really a wrapper it&#39;s a
 /// copy of the type but we implement the necessary traits.)
@@ -664,14 +664,14 @@
 ///
 /// For more information on how this functions internally, see [here](super::merkle_node).
 </span><span class="attr">#[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
-</span><span class="kw">pub struct </span>MerkleTree&lt;H: CryptoHasherT&gt; {
+</span><span class="kw">pub struct </span>MerkleTree&lt;H: HasherT&gt; {
     root: NodeId,
     nodes: NodesMapping,
     latest_node_id: NodeId,
     _hasher: PhantomData&lt;H&gt;,
 }
 
-<span class="kw">impl</span>&lt;H: CryptoHasherT&gt; MerkleTree&lt;H&gt; {
+<span class="kw">impl</span>&lt;H: HasherT&gt; MerkleTree&lt;H&gt; {
     <span class="doccomment">/// Less visible initialization for `MerkleTree&lt;T&gt;` as the main entry points should be
     /// [`MerkleTree::&lt;RcNodeStorage&gt;::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.

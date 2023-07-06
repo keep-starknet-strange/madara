@@ -30,10 +30,13 @@
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
 </pre><pre class="rust"><code><span class="kw">use </span>core::marker::PhantomData;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::CryptoHasherT;
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
 
 <span class="doccomment">/// Root of the Merkle-Patricia tree whose leaves are the contracts states
 </span><span class="kw">pub type </span>StorageCommitment = Felt252Wrapper;
@@ -41,9 +44,9 @@
 </span><span class="kw">pub type </span>ClassCommitment = Felt252Wrapper;
 
 <span class="doccomment">/// Global Starknet State Commitment
-</span><span class="kw">pub struct </span>StateCommitment&lt;T: CryptoHasherT&gt;(Felt252Wrapper, PhantomData&lt;T&gt;);
+</span><span class="kw">pub struct </span>StateCommitment&lt;T: HasherT&gt;(Felt252Wrapper, PhantomData&lt;T&gt;);
 
-<span class="kw">impl</span>&lt;T: CryptoHasherT&gt; StateCommitment&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: HasherT&gt; StateCommitment&lt;T&gt; {
     <span class="doccomment">/// Calculates  global state commitment by combining the storage and class commitment.
     ///
     /// See
@@ -55,8 +58,11 @@
         } <span class="kw">else </span>{
             <span class="kw">let </span>global_state_version = Felt252Wrapper::try_from(<span class="string">&quot;STARKNET_STATE_V0&quot;</span>.as_bytes()).unwrap(); <span class="comment">// Unwrap is safu here
 
-            </span><span class="kw">let </span>hash =
-                &lt;T&gt;::compute_hash_on_elements(<span class="kw-2">&amp;</span>[global_state_version.<span class="number">0</span>, storage_commitment.<span class="number">0</span>, class_commitment.<span class="number">0</span>]);
+            </span><span class="kw">let </span>hash = &lt;T&gt;::default().compute_hash_on_elements(<span class="kw-2">&amp;</span>[
+                global_state_version.<span class="number">0</span>,
+                storage_commitment.<span class="number">0</span>,
+                class_commitment.<span class="number">0</span>,
+            ]);
 
             hash.into()
         }

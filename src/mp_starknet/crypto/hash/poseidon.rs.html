@@ -49,17 +49,13 @@
 <a href="#49" id="49">49</a>
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
-<a href="#52" id="52">52</a>
-<a href="#53" id="53">53</a>
-<a href="#54" id="54">54</a>
-<a href="#55" id="55">55</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Poseidon hash module.
 </span><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>starknet_crypto::{poseidon_hash, poseidon_hash_many, poseidon_hash_single, FieldElement};
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::felt252_wrapper::Felt252Wrapper;
-<span class="kw">use </span><span class="kw">crate</span>::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
+<span class="kw">use </span><span class="kw">crate</span>::traits::hash::{DefaultHasher, HasherT};
 
 <span class="doccomment">/// The poseidon hasher.
 </span><span class="attr">#[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
@@ -72,7 +68,7 @@
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    </span><span class="kw">fn </span>hash(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
+    </span><span class="kw">fn </span>hash_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[u8]) -&gt; Felt252Wrapper {
         <span class="kw">let </span>data = FieldElement::from_byte_slice_be(data).unwrap();
         Felt252Wrapper(poseidon_hash_single(data))
     }
@@ -86,26 +82,22 @@
     /// # Returns
     ///
     /// The hash of the data.
-    </span><span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
+    </span><span class="kw">fn </span>compute_hash_on_wrappers(<span class="kw-2">&amp;</span><span class="self">self</span>, data: <span class="kw-2">&amp;</span>[Felt252Wrapper]) -&gt; Felt252Wrapper {
         <span class="kw">let </span>data = data.iter().map(|x| x.<span class="number">0</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         Felt252Wrapper(poseidon_hash_many(<span class="kw-2">&amp;</span>data))
+    }
+
+    <span class="kw">fn </span>hash_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, a: FieldElement, b: FieldElement) -&gt; FieldElement {
+        poseidon_hash(a, b)
+    }
+    <span class="kw">fn </span>compute_hash_on_elements(<span class="kw-2">&amp;</span><span class="self">self</span>, elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
+        poseidon_hash_many(elements)
     }
 }
 
 <span class="kw">impl </span>DefaultHasher <span class="kw">for </span>PoseidonHasher {
     <span class="kw">fn </span>hasher() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::default()
-    }
-}
-
-<span class="doccomment">/// The poseidon CryptoHasher implementation.
-</span><span class="kw">impl </span>CryptoHasherT <span class="kw">for </span>PoseidonHasher {
-    <span class="kw">fn </span>hash(a: FieldElement, b: FieldElement) -&gt; FieldElement {
-        poseidon_hash(a, b)
-    }
-
-    <span class="kw">fn </span>compute_hash_on_elements(elements: <span class="kw-2">&amp;</span>[FieldElement]) -&gt; FieldElement {
-        poseidon_hash_many(elements)
     }
 }
 </code></pre></div>
