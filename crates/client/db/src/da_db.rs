@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use ethers::types::U256;
 // Substrate
 use scale_codec::{Decode, Encode};
 use sp_database::Database;
@@ -21,7 +22,7 @@ pub enum CairoJobStatus {
     Failed,
 }
 
-#[allow(dead_code)]`
+#[allow(dead_code)]
 impl CairoJobStatus {
     fn as_str(&self) -> &'static str {
         match self {
@@ -44,14 +45,14 @@ pub struct DaDb<B: BlockT> {
 
 // TODO: business logic for last proven and purge
 impl<B: BlockT> DaDb<B> {
-    pub fn state_diff(&self, block_hash: &B::Hash) -> Result<Vec<String>, String> {
+    pub fn state_diff(&self, block_hash: &B::Hash) -> Result<Vec<U256>, String> {
         match self.db.get(crate::columns::DA, &block_hash.encode()) {
-            Some(raw) => Ok(Vec::<String>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
+            Some(raw) => Ok(Vec::<U256>::decode(&mut &raw[..]).map_err(|e| format!("{:?}", e))?),
             None => Ok(Vec::new()),
         }
     }
 
-    pub fn store_state_diff(&self, block_hash: &B::Hash, diffs: Vec<String>) -> Result<(), String> {
+    pub fn store_state_diff(&self, block_hash: &B::Hash, diffs: Vec<U256>) -> Result<(), String> {
         let mut transaction = sp_database::Transaction::new();
 
         transaction.set(crate::columns::DA, &block_hash.encode(), &diffs.encode());
