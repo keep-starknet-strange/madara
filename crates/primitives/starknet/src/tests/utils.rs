@@ -9,6 +9,7 @@ use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::{patricia_key, stark_felt};
 
 use crate::block::Block;
+use crate::starknet_serde;
 use crate::state::DictStateReader;
 
 // Addresses.
@@ -42,8 +43,8 @@ impl Block {
 
 pub fn create_test_state() -> CachedState<DictStateReader> {
     let class_hash_to_class = HashMap::from([
-        (ClassHash(stark_felt!(TEST_CLASS_HASH)), get_contract_class(TEST_CONTRACT_PATH)),
-        (ClassHash(stark_felt!(SECURITY_TEST_CLASS_HASH)), get_contract_class(SECURITY_TEST_CONTRACT_PATH)),
+        (ClassHash(stark_felt!(TEST_CLASS_HASH)), get_contract_class(TEST_CONTRACT_PATH, 0)),
+        (ClassHash(stark_felt!(SECURITY_TEST_CLASS_HASH)), get_contract_class(SECURITY_TEST_CONTRACT_PATH, 0)),
     ]);
 
     // Two instances of a test contract and one instance of another (different) test contract.
@@ -59,9 +60,8 @@ pub fn create_test_state() -> CachedState<DictStateReader> {
     CachedState::new(DictStateReader { class_hash_to_class, address_to_class_hash, ..Default::default() })
 }
 
-pub fn get_contract_class(contract_path: &str) -> ContractClass {
+pub fn get_contract_class(contract_path: &str, version: u8) -> ContractClass {
     let path: PathBuf = [contract_path].iter().collect();
     let raw_contract_class = fs::read_to_string(path).unwrap();
-    // FIXME 707
-    ContractClass::V0(serde_json::from_str(&raw_contract_class).unwrap())
+    starknet_serde::get_contract_class(&raw_contract_class, version)
 }

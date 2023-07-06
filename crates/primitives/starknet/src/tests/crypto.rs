@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use frame_support::bounded_vec;
 use starknet_api::stdlib::collections::HashMap;
 use starknet_core::crypto::compute_hash_on_elements;
@@ -14,7 +15,6 @@ use crate::crypto::hash::poseidon::PoseidonHasher;
 use crate::crypto::hash::{hash, Hasher};
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, Node, NodeId};
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
-use crate::execution::contract_class_wrapper::ContractClassWrapper;
 use crate::execution::types::Felt252Wrapper;
 use crate::tests::utils::PEDERSEN_ZERO_HASH;
 use crate::traits::hash::{CryptoHasherT, HasherT};
@@ -58,8 +58,10 @@ fn test_declare_tx_hash() {
         nonce: Felt252Wrapper::ZERO,
         signature: bounded_vec!(),
         max_fee: Felt252Wrapper::ONE,
-        compiled_class_hash: Felt252Wrapper::THREE,
-        contract_class: ContractClassWrapper::default(),
+        class_hash: Felt252Wrapper::THREE,
+        // Arbitrary choice to pick v1 vs v0.
+        contract_class: ContractClass::from(ContractClassV1::default()),
+        compiled_class_hash: None,
     };
     assert_eq!(calculate_declare_tx_hash(transaction, chain_id), expected_tx_hash);
 }
@@ -160,8 +162,7 @@ fn test_event_hash() {
     let keys = bounded_vec![Felt252Wrapper::from(2_u128), Felt252Wrapper::from(3_u128),];
     let data = bounded_vec![Felt252Wrapper::from(4_u128), Felt252Wrapper::from(5_u128), Felt252Wrapper::from(6_u128)];
     let from_address = Felt252Wrapper::from(10_u128);
-    let transaction_hash = Felt252Wrapper::from(0_u128);
-    let event = EventWrapper::new(keys, data, from_address, transaction_hash);
+    let event = EventWrapper::new(keys, data, from_address);
     assert_eq!(
         calculate_event_hash::<PedersenHasher>(&event),
         FieldElement::from_str("0x3f44fb0516121d225664058ecc7e415c4725d6a7a11fd7d515c55c34ef8270b").unwrap()

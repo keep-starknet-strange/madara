@@ -9,8 +9,6 @@ use sp_core::Get;
 
 /// Call Entrypoint Wrapper related types
 pub mod call_entrypoint_wrapper;
-/// Contract Class Wrapper related types
-pub mod contract_class_wrapper;
 /// Entrypoint Wrapper related types
 pub mod entrypoint_wrapper;
 /// Felt252Wrapper type
@@ -27,8 +25,10 @@ pub mod types {
     /// Wrapper type for class hash field.
     pub type ClassHashWrapper = Felt252Wrapper;
 
+    /// Wrapper type for compiled class hash field.
+    pub type CompiledClassHashWrapper = Felt252Wrapper;
+
     pub use super::call_entrypoint_wrapper::*;
-    pub use super::contract_class_wrapper::*;
     pub use super::entrypoint_wrapper::*;
     pub use super::felt252_wrapper::*;
 }
