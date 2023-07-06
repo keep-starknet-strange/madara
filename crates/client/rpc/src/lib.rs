@@ -375,13 +375,13 @@ where
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
             .contract_class_by_class_hash(substrate_block_hash, class_hash.into())
             .ok_or_else(|| {
-                error!("Failed to retrieve contract class from hash '{class_hash}'");
-                StarknetRpcApiError::ContractNotFound
+                error!("Failed to retrieve contract class from hash '{class_hash:x}'");
+                StarknetRpcApiError::ClassHashNotFound
             })?;
 
         Ok(to_rpc_contract_class(contract_class).map_err(|e| {
             error!("Failed to convert contract class from hash '{class_hash}' to RPC contract class: {e}");
-            StarknetRpcApiError::ContractNotFound
+            StarknetRpcApiError::InternalServerError
         })?)
     }
 

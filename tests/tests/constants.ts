@@ -10,6 +10,9 @@ export const ACCOUNT_CONTRACT =
 export const CAIRO_1_ACCOUNT_CONTRACT =
   "0x0000000000000000000000000000000000000000000000000000000000000004";
 
+export const CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH =
+  "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276";
+
 // https://github.com/keep-starknet-strange/madara/blob/main/crates/node/src/chain_spec.rs#L185-L186
 export const ACCOUNT_CONTRACT_CLASS_HASH =
   "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
@@ -74,8 +77,18 @@ export const TEST_CAIRO_1_SIERRA: CompiledContract = json.parse(
     .readFileSync("../cairo-contracts/build/cairo_1/HelloStarknet.sierra.json")
     .toString("ascii"),
 );
+export const ERC20_CAIRO_1_SIERRA: CompiledContract = json.parse(
+  fs
+    .readFileSync("../cairo-contracts/build/cairo_1/erc20.sierra.json")
+    .toString("ascii")
+);
 export const TEST_CAIRO_1_CASM: CompiledSierraCasm = json.parse(
   fs
     .readFileSync("../cairo-contracts/build/cairo_1/HelloStarknet.casm.json")
     .toString("ascii"),
+);
+export const ERC20_CAIRO_1_CASM: CompiledSierraCasm = json.parse(
+  fs
+    .readFileSync("../cairo-contracts/build/cairo_1/erc20.casm.json")
+    .toString("ascii")
 );
