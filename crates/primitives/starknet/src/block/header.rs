@@ -117,6 +117,6 @@ impl Header {
             self.parent_block_hash,
         ];
 
-        <H as HasherT>::hash_elements(&hasher, data)
+        <H as HasherT>::compute_hash_on_wrappers(&hasher, data)
     }
 }
