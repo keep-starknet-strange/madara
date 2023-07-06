@@ -3,12 +3,10 @@ import {
   BigNumberish,
   InvokeFunctionResponse,
   RpcProvider,
-  ec,
   hash,
   num,
   number,
 } from "starknet";
-import BN__default from "bn.js";
 import {
   ARGENT_CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,

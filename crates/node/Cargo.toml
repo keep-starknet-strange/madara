@@ -25,7 +25,6 @@ clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
 log = { workspace = true }
 serde = { workspace = true }
-tokio = "1.24.2"
 
 frame-system = { workspace = true }
 sc-cli = { workspace = true }
