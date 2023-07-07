@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Block","Header"],"type":["BlockTransactionReceipts","BlockTransactions","MaxTransactions"]};
+window.SIDEBAR_ITEMS = {"struct":["Block","Header"],"type":["BlockTransactionReceipts","BlockTransactions","MaxStorageSlots","MaxTransactions"]};

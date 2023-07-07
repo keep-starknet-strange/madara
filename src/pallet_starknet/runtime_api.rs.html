@@ -53,6 +53,13 @@
 <a href="#53" id="53">53</a>
 <a href="#54" id="54">54</a>
 <a href="#55" id="55">55</a>
+<a href="#56" id="56">56</a>
+<a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Definition of the runtime API for the StarkNet pallet.
 
 </span><span class="comment">// Adding allow unused type parameters to avoid clippy errors
@@ -70,7 +77,8 @@
 
 <span class="kw">use </span>sp_runtime::DispatchError;
 
-<span class="kw">use </span><span class="kw">crate</span>::types::NonceWrapper;
+<span class="kw">use </span><span class="kw">crate</span>::types::{NonceWrapper, StateCommitments};
+<span class="kw">use </span><span class="kw">crate</span>::StateTrie;
 
 <span class="macro">sp_api::decl_runtime_apis! </span>{
     <span class="kw">pub trait </span>StarknetRuntimeApi {
@@ -86,12 +94,18 @@
         </span><span class="kw">fn </span>contract_class_hash_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ClassHashWrapper&gt;;
         <span class="doccomment">/// Returns the contract class for the given class hash.
         </span><span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt;;
+        <span class="doccomment">/// Returns the contract root for the given address
+        </span><span class="kw">fn </span>contract_state_root_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;;
+        <span class="doccomment">/// Returns the contract state trie for the given address
+        </span><span class="kw">fn </span>contract_state_trie_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;StateTrie&gt;;
         <span class="doccomment">/// Returns the chain id.
         </span><span class="kw">fn </span>chain_id() -&gt; Felt252Wrapper;
         <span class="doccomment">/// Returns fee estimate
         </span><span class="kw">fn </span>estimate_fee(transaction: Transaction) -&gt; <span class="prelude-ty">Result</span>&lt;(u64, u64), DispatchError&gt;;
         <span class="doccomment">/// Returns the hasher used by the runtime.
         </span><span class="kw">fn </span>get_hasher() -&gt; Hasher;
+        <span class="doccomment">/// Returns state commitments
+        </span><span class="kw">fn </span>get_state_commitments() -&gt; StateCommitments;
         <span class="doccomment">/// Filters extrinsic transactions to return only Starknet transactions
         ///
         /// To support runtime upgrades, the client must be unaware of the specific extrinsic

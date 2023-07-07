@@ -374,6 +374,18 @@
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
 </pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -411,7 +423,7 @@
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
-<span class="kw">use </span>pallet_starknet::types::NonceWrapper;
+<span class="kw">use </span>pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 <span class="kw">use </span>pallet_starknet::Call::{declare, deploy_account, invoke};
 <span class="kw">use </span>pallet_starknet::Event;
 <span class="kw">pub use </span>pallet_timestamp::Call <span class="kw">as </span>TimestampCall;
@@ -637,6 +649,14 @@
             Starknet::contract_class_hash_by_address(address)
         }
 
+        <span class="kw">fn </span>contract_state_root_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt; {
+            Starknet::contract_state_root_by_address(address)
+        }
+
+        <span class="kw">fn </span>contract_state_trie_by_address(address: ContractAddressWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;StateTrie&gt; {
+            Starknet::contract_state_trie_by_address(address)
+        }
+
         <span class="kw">fn </span>contract_class_by_class_hash(class_hash: ClassHashWrapper) -&gt; <span class="prelude-ty">Option</span>&lt;ContractClass&gt; {
             Starknet::contract_class_by_class_hash(class_hash)
         }
@@ -651,6 +671,10 @@
 
         <span class="kw">fn </span>get_hasher() -&gt; Hasher {
             Starknet::get_system_hash().into()
+        }
+
+        <span class="kw">fn </span>get_state_commitments() -&gt; StateCommitments {
+            Starknet::starknet_state_commitments()
         }
 
         <span class="kw">fn </span>extrinsic_filter(xts: Vec&lt;&lt;Block <span class="kw">as </span>BlockT&gt;::Extrinsic&gt;) -&gt; Vec&lt;Transaction&gt; {

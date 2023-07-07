@@ -215,8 +215,6 @@
 <a href="#215" id="215">215</a>
 <a href="#216" id="216">216</a>
 <a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -335,10 +333,8 @@
             // We will end up with only the latest storage slot update
             // TODO: Estimate overhead of this approach
             </span><span class="kw">crate</span>::PendingStorageChanges::&lt;T&gt;::mutate(contract_address, |storage_slots| {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(storage_slots) = storage_slots {
-                    storage_slots.try_push((key, value)).unwrap(); <span class="comment">// TODO: unwrap safu ??
-                </span>}
-            });
+                storage_slots.try_push((key, value)).unwrap(); <span class="comment">// TODO: unwrap safu ??
+            </span>});
         }
     }
 
@@ -354,7 +350,8 @@
             <span class="comment">// Update contracts trie
             </span><span class="kw">let </span><span class="kw-2">mut </span>tree = <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::get().storage_commitment;
             <span class="kw">let </span>class_hash = Pallet::&lt;T&gt;::contract_class_hash_by_address(contract_address).unwrap_or_default();
-            <span class="kw">let </span>hash = calculate_contract_state_hash::&lt;T::SystemHash&gt;(class_hash, Felt252Wrapper::ZERO, new_nonce);
+            <span class="kw">let </span>contract_root = Pallet::&lt;T&gt;::contract_state_root_by_address(contract_address).unwrap_or_default();
+            <span class="kw">let </span>hash = calculate_contract_state_hash::&lt;T::SystemHash&gt;(class_hash, contract_root, new_nonce);
             tree.set(contract_address, hash);
 
             <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
@@ -374,13 +371,15 @@
 
         <span class="comment">// Update state tries if enabled in the runtime configuration
         </span><span class="kw">if </span>T::EnableStateRoot::get() {
-            <span class="comment">// Update classes trie
-            </span><span class="kw">let </span><span class="kw-2">mut </span>tree = <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::get().class_commitment;
-            <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;T::SystemHash&gt;(Felt252Wrapper::ZERO);
-            tree.set(class_hash, final_hash);
+            <span class="comment">// Update contracts trie
+            </span><span class="kw">let </span><span class="kw-2">mut </span>tree = <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::get().storage_commitment;
+            <span class="kw">let </span>nonce = Pallet::&lt;T&gt;::nonce(contract_address);
+            <span class="kw">let </span>contract_root = Pallet::&lt;T&gt;::contract_state_root_by_address(contract_address).unwrap_or_default();
+            <span class="kw">let </span>hash = calculate_contract_state_hash::&lt;T::SystemHash&gt;(class_hash, contract_root, nonce);
+            tree.set(contract_address, hash);
 
             <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
-                state.class_commitment = tree;
+                state.storage_commitment = tree;
             })
         }
 
@@ -391,18 +390,6 @@
         <span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
 
         <span class="kw">crate</span>::ContractClasses::&lt;T&gt;::insert(class_hash, contract_class);
-
-        <span class="comment">// Update state tries if enabled in the runtime configuration
-        </span><span class="kw">if </span>T::EnableStateRoot::get() {
-            <span class="comment">// Update classes trie
-            </span><span class="kw">let </span><span class="kw-2">mut </span>tree = <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::get().class_commitment;
-            <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;T::SystemHash&gt;(class_hash);
-            tree.set(class_hash, final_hash);
-
-            <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
-                state.class_commitment = tree;
-            })
-        }
 
         <span class="prelude-val">Ok</span>(())
     }
@@ -418,10 +405,19 @@
 
         <span class="kw">crate</span>::CompiledClassHashes::&lt;T&gt;::insert(class_hash, compiled_class_hash);
 
-        <span class="comment">// This is called in declare V2 when set_contract_class has already been called
-        // so we don&#39;t need to update the state trie again
+        <span class="comment">// Update state tries if enabled in the runtime configuration
+        </span><span class="kw">if </span>T::EnableStateRoot::get() {
+            <span class="comment">// Update classes trie
+            </span><span class="kw">let </span><span class="kw-2">mut </span>tree = <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::get().class_commitment;
+            <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;T::SystemHash&gt;(compiled_class_hash);
+            tree.set(class_hash, final_hash);
 
-        </span><span class="prelude-val">Ok</span>(())
+            <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
+                state.class_commitment = tree;
+            })
+        }
+
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// As the state is updated during the execution, return an empty [StateDiff]

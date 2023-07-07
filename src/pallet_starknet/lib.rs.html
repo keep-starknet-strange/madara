@@ -1186,6 +1186,19 @@
 <a href="#1186" id="1186">1186</a>
 <a href="#1187" id="1187">1187</a>
 <a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
+<a href="#1201" id="1201">1201</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1262,8 +1275,8 @@
 <span class="kw">use </span>frame_support::traits::Time;
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
-<span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxTransactions};
-<span class="kw">use </span>mp_starknet::crypto::commitment::{<span class="self">self</span>, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
+<span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxStorageSlots, MaxTransactions};
+<span class="kw">use </span>mp_starknet::crypto::commitment::{<span class="self">self</span>, calculate_contract_state_hash};
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -1417,8 +1430,16 @@
     /// Mapping of contract address to state trie.
     </span><span class="attr">#[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(<span class="kw">fn </span>contract_tries)]
+    #[pallet::getter(<span class="kw">fn </span>contract_state_trie_by_address)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractTries&lt;T: Config&gt; = StorageMap&lt;<span class="kw">_</span>, Identity, ContractAddressWrapper, StateTrie, OptionQuery&gt;;
+
+    <span class="doccomment">/// The Starknet pallet storage items.
+    /// STORAGE
+    /// Mapping of contract address to state root.
+    </span><span class="attr">#[pallet::storage]
+    #[pallet::getter(<span class="kw">fn </span>contract_state_root_by_address)]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ContractsStateRoots&lt;T: Config&gt; =
+        StorageMap&lt;<span class="kw">_</span>, Identity, ContractAddressWrapper, Felt252Wrapper, OptionQuery&gt;;
 
     <span class="doccomment">/// Pending storage slot updates
     /// STORAGE
@@ -1426,7 +1447,7 @@
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>pending_storage_changes)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>PendingStorageChanges&lt;T: Config&gt; =
-        StorageMap&lt;<span class="kw">_</span>, Identity, ContractAddressWrapper, BoundedVec&lt;StorageSlotWrapper, MaxTransactions&gt;, OptionQuery&gt;;
+        StorageMap&lt;<span class="kw">_</span>, Identity, ContractAddressWrapper, BoundedVec&lt;StorageSlotWrapper, MaxStorageSlots&gt;, ValueQuery&gt;;
 
     <span class="doccomment">/// Current building block&#39;s events.
     </span><span class="comment">// TODO: This is redundant information but more performant
@@ -1559,13 +1580,15 @@
 
                 <span class="comment">// Update state tries if enabled in the runtime configuration
                 </span><span class="kw">if </span>T::EnableStateRoot::get() {
-                    <span class="comment">// Update classes trie
-                    </span><span class="kw">let </span><span class="kw-2">mut </span>tree = StarknetStateCommitments::&lt;T&gt;::get().class_commitment;
-                    <span class="kw">let </span>final_hash = calculate_class_commitment_leaf_hash::&lt;T::SystemHash&gt;(<span class="kw-2">*</span>class_hash);
-                    tree.set(<span class="kw-2">*</span>class_hash, final_hash);
+                    <span class="comment">// Update contracts trie
+                    </span><span class="kw">let </span><span class="kw-2">mut </span>tree = <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::get().storage_commitment;
+                    <span class="kw">let </span>nonce = Pallet::&lt;T&gt;::nonce(address);
+                    <span class="kw">let </span>contract_root = Pallet::&lt;T&gt;::contract_state_root_by_address(address).unwrap_or_default();
+                    <span class="kw">let </span>hash = calculate_contract_state_hash::&lt;T::SystemHash&gt;(<span class="kw-2">*</span>class_hash, contract_root, nonce);
+                    tree.set(<span class="kw-2">*</span>address, hash);
 
-                    StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
-                        state.class_commitment = tree;
+                    <span class="kw">crate</span>::StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
+                        state.storage_commitment = tree;
                     })
                 }
             }
@@ -1584,10 +1607,8 @@
                     // We will end up with only the latest storage slot update
                     // TODO: Estimate overhead of this approach
                     </span>PendingStorageChanges::&lt;T&gt;::mutate(key.<span class="number">0</span>, |storage_slots| {
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(storage_slots) = storage_slots {
-                            storage_slots.try_push((key.<span class="number">1</span>, <span class="kw-2">*</span>value)).unwrap(); <span class="comment">// TODO: unwrap safu ??
-                        </span>}
-                    });
+                        storage_slots.try_push((key.<span class="number">1</span>, <span class="kw-2">*</span>value)).unwrap(); <span class="comment">// TODO: unwrap safu ??
+                    </span>});
                 }
             }
 
@@ -2356,22 +2377,27 @@
             // And update the storage trie
             </span><span class="kw">let </span>state_root = state_tree.commit();
 
+            <span class="comment">// Update contracts&#39; states root mapping
+            </span>ContractsStateRoots::&lt;T&gt;::set(contract_address, <span class="prelude-val">Some</span>(state_root));
+
             <span class="kw">let </span>nonce = <span class="self">Self</span>::nonce(contract_address);
             <span class="kw">let </span>class_hash = <span class="self">Self</span>::contract_class_hash_by_address(contract_address).unwrap_or_default();
             <span class="kw">let </span>hash = calculate_contract_state_hash::&lt;T::SystemHash&gt;(class_hash, state_root, nonce);
             commitments.storage_commitment.set(contract_address, hash);
         });
 
+        <span class="comment">// Compute the final state root
+        </span><span class="kw">let </span>global_state_root = StateCommitment::&lt;T::SystemHash&gt;::calculate(
+            commitments.storage_commitment.commit(),
+            commitments.class_commitment.commit(),
+        );
+
         <span class="comment">// Finally update the contracts trie in runtime storage.
         </span>StarknetStateCommitments::&lt;T&gt;::mutate(|state| {
             state.storage_commitment = commitments.clone().storage_commitment;
         });
 
-        <span class="comment">// Compute the final state root
-        </span>StateCommitment::&lt;T::SystemHash&gt;::calculate(
-            commitments.storage_commitment.commit(),
-            commitments.class_commitment.commit(),
-        )
+        global_state_root
     }
 }
 </code></pre></div>

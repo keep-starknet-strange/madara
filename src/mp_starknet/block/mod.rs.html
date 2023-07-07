@@ -78,6 +78,9 @@
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
 </pre><pre class="rust"><code><span class="doccomment">//! StarkNet block primitives.
 
 </span><span class="kw">mod </span>header;
@@ -93,6 +96,9 @@
 <span class="doccomment">/// Block transactions max size
 </span><span class="comment">// TODO: add real value (#250)
 </span><span class="kw">pub type </span>MaxTransactions = ConstU32&lt;<span class="number">4294967295</span>&gt;;
+
+<span class="doccomment">/// Maximum number of storage slots per contract
+</span><span class="kw">pub type </span>MaxStorageSlots = ConstU32&lt;{ u32::MAX }&gt;;
 
 <span class="doccomment">/// Block Transactions
 </span><span class="kw">pub type </span>BlockTransactions = BoundedVec&lt;Transaction, MaxTransactions&gt;;

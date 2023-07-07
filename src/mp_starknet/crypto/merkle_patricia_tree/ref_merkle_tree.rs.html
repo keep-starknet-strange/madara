@@ -570,7 +570,7 @@
     ///
     /// Note that the root is reference counted in storage. Committing the
     /// same tree again will therefore increment the count again.
-    </span><span class="kw">pub fn </span>commit(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; Felt252Wrapper {
+    </span><span class="kw">pub fn </span>commit(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Felt252Wrapper {
         <span class="self">self</span>.commit_mut()
     }
     <span class="doccomment">/// Return the state root.

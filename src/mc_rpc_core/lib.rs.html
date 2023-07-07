@@ -137,6 +137,15 @@
 <a href="#137" id="137">137</a>
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC API trait and types
 //!
 //! Starkware maintains [a description of the Starknet API](https://github.com/starkware-libs/starknet-specs/blob/master/api/starknet_api_openrpc.json)
@@ -154,6 +163,8 @@
 <span class="kw">mod </span>constants;
 <span class="kw">pub mod </span>utils;
 
+<span class="kw">pub mod </span>types;
+
 <span class="kw">use </span>starknet_core::serde::unsigned_field_element::UfeHex;
 <span class="kw">use </span>starknet_core::types::{
     BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
@@ -162,6 +173,8 @@
     InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
     StateUpdate, SyncStatusType, Transaction,
 };
+
+<span class="kw">use </span><span class="kw">crate</span>::types::{RpcGetProofInput, RpcGetProofOutput};
 
 <span class="attr">#[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -275,6 +288,11 @@
     <span class="doccomment">/// Returns the receipt of a transaction by transaction hash.
     </span><span class="attr">#[method(name = <span class="string">&quot;getTransactionReceipt&quot;</span>)]
     </span><span class="kw">fn </span>get_transaction_receipt(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction_hash: FieldElement) -&gt; RpcResult&lt;MaybePendingTransactionReceipt&gt;;
+
+    <span class="doccomment">/// Returns all the necessary data to trustlessly verify storage slots for a particular
+    /// contract.
+    </span><span class="attr">#[method(name = <span class="string">&quot;getProof&quot;</span>)]
+    </span><span class="kw">fn </span>get_proof(<span class="kw-2">&amp;</span><span class="self">self</span>, get_proof_input: RpcGetProofInput) -&gt; RpcResult&lt;RpcGetProofOutput&gt;;
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mc_rpc_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
