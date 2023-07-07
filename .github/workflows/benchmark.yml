@@ -81,7 +81,7 @@ jobs:
       - name: Run benchmark
         run: |
           cd benchmarking
-          npm run test:ci-state-root
+          npm run test:ci-state-root:erc20
       - name: Compare result
         uses: benchmark-action/github-action-benchmark@v1
         with:
