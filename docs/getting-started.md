@@ -204,11 +204,11 @@ docker run --rm [TAG] --dev
 ```
 
 This command will firstly compile your code, and then start a local development
-network.
-The TAGS are available [here](https://github.com/keep-starknet-strange/madara/pkgs/container/madara).
+network. The TAGS are available
+[here](https://github.com/keep-starknet-strange/madara/pkgs/container/madara).
 
-You can also use the command appending your own options.
-A few useful ones are as follow.
+You can also use the command appending your own options. A few useful ones are
+as follow.
 
 ```bash
 # Run Substrate node without re-compiling
