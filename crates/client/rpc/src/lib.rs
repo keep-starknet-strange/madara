@@ -621,21 +621,25 @@ where
 
         let block = get_block_by_block_hash(self.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        let parent_block_hash = (TryInto::<FieldElement>::try_into(block.header().parent_block_hash)).unwrap();
+        let old_root = if block.header().block_number > 0 {
+            let parent_block_hash = (TryInto::<FieldElement>::try_into(block.header().parent_block_hash)).unwrap();
+            let substrate_parent_block_hash =
+                self.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
+                    error!("'{e}'");
+                    StarknetRpcApiError::BlockNotFound
+                })?;
 
-        let substrate_parent_block_hash =
-            self.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
-                error!("'{e}'");
-                StarknetRpcApiError::BlockNotFound
-            })?;
-
-        let parent_block =
-            get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+            let parent_block =
+                get_block_by_block_hash(self.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+            parent_block.header().global_state_root.into()
+        } else {
+            FieldElement::default()
+        };
 
         Ok(StateUpdate {
             block_hash: block.header().hash(*self.hasher).into(),
             new_root: block.header().global_state_root.into(),
-            old_root: parent_block.header().global_state_root.into(),
+            old_root,
             state_diff: StateDiff {
                 storage_diffs: Vec::new(),
                 deprecated_declared_classes: Vec::new(),
