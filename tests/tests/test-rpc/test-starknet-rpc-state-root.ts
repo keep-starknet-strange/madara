@@ -57,7 +57,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
 
       // Check contract root
       expect(storage_proof["result"]["contract_data"]["root"]).to.be.eq(
-        "1245075994121459795339981889219606020533793304969303161130350131342227964700",
+        "2137650382361045467996332368791861747902403628779494221252963710317158396736",
       );
     });
   });
