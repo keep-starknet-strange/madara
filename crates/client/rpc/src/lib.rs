@@ -977,7 +977,7 @@ where
         let contract_data = ContractData {
             class_hash: class_hash.into(),
             nonce: nonce.into(),
-            root: contract_state_trie.commit(),
+            root: contract_state_trie.commit().into(),
             // Currently, this is defined as 0. Might change in the future
             contract_state_hash_version: FieldElement::ZERO,
             storage_proofs,
