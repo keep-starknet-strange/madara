@@ -14,6 +14,8 @@ const { numberToHex } = require("@polkadot/util");
 
 module.exports = {
   rpcMethods,
+  presignTransferTransactions,
+  presignMintTransactions,
   executeERC20Transfer,
   executeERC721Mint,
 };
@@ -25,13 +27,11 @@ function rpcMethods(userContext, events, done) {
   return done();
 }
 
-async function executeERC20Transfer(userContext, events, done) {
-  const { nonce } = userContext.vars;
+function presignTransferTransactions(userContext, events, done) {
+  console.log("presignTransferTransactions");
+  console.log(userContext.vars);
   const amount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
-
-  // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
-    
   const calldata = [
     "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
     ERC20_CONTRACT_ADDRESS,                                               // TO
@@ -44,6 +44,50 @@ async function executeERC20Transfer(userContext, events, done) {
     "0x0000000000000000000000000000000000000000000000000000000000000000"
   ];
 
+  const signature = [];
+  // i acts as nonce, starts from 0 and goes to the number of iterations for the benchmark
+  for(let i = 0; i < 10000; i++) {
+    signature[i] = calculateHexSignature(ARGENT_CONTRACT_ADDRESS, calldata, i, SIGNER_PRIVATE);
+  }
+
+  userContext.vars.signature = signature;
+  return done();
+}
+
+function presignMintTransactions(userContext, events, done) {
+  console.log("presignMintTransactions");
+  const calldata = [
+    "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
+    NFT_CONTRACT_ADDRESS,                                                 // TO
+    "0x02f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354", // SELECTOR (mint)
+    "0x0000000000000000000000000000000000000000000000000000000000000000", // DATA OFFSET
+    "0x0000000000000000000000000000000000000000000000000000000000000003", // DATA LEN
+    "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA LEN
+    TEST_CONTRACT_ADDRESS,
+    0,
+    "0x0000000000000000000000000000000000000000000000000000000000000000"
+  ];
+
+  const signature = [];
+  // i acts as nonce, starts from 0 and goes to the number of iterations for the benchmark
+  for(let i = 0; i < 10000; i++) {
+    // tokenID
+    calldata[7] = numberToHex(i, 256);
+    signature[i] = calculateHexSignature(ARGENT_CONTRACT_ADDRESS, calldata, i, SIGNER_PRIVATE);
+  }
+
+  userContext.vars.signature = signature;
+  return done();
+}
+
+async function executeERC20Transfer(userContext, events, done) {
+  const { signature } = userContext.vars;
+  const { nonce } = userContext.vars;
+  const amount =
+    "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+  // TODO: Once declare bug fixed we can call _setupToken and remove hardcoded address
+
   transfer(
     userContext.api,
     ARGENT_CONTRACT_ADDRESS,
@@ -51,7 +95,7 @@ async function executeERC20Transfer(userContext, events, done) {
     TEST_CONTRACT_ADDRESS,
     amount,
     nonce,
-    calculateHexSignature(ARGENT_CONTRACT_ADDRESS, calldata, nonce, SIGNER_PRIVATE)
+    signature[nonce]
   ).send();
 
   // Update userContext nonce
@@ -61,20 +105,9 @@ async function executeERC20Transfer(userContext, events, done) {
 }
 
 async function executeERC721Mint(userContext, events, done) {
+  const { signature } = userContext.vars;
   const { nonce } = userContext.vars;
   const tokenID = numberToHex(nonce, 256);
-    
-  const calldata = [
-    "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
-    NFT_CONTRACT_ADDRESS,                                                 // TO
-    "0x02f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354", // SELECTOR (mint)
-    "0x0000000000000000000000000000000000000000000000000000000000000000", // DATA OFFSET
-    "0x0000000000000000000000000000000000000000000000000000000000000003", // DATA LEN
-    "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA LEN
-    TEST_CONTRACT_ADDRESS,
-    tokenID,
-    "0x0000000000000000000000000000000000000000000000000000000000000000"
-  ];
 
   mintERC721(
     userContext.api,
@@ -82,7 +115,7 @@ async function executeERC721Mint(userContext, events, done) {
     TEST_CONTRACT_ADDRESS,
     tokenID,
     nonce,
-    calculateHexSignature(ARGENT_CONTRACT_ADDRESS, calldata, nonce, SIGNER_PRIVATE)
+    signature[nonce]
   ).send();
 
   // Update userContext nonce

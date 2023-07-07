@@ -16,9 +16,12 @@ config:
     nonce: 0
   engines:
     substrate: {}
+before: 
+  flow:
+    - function: "presignMintTransactions"
 scenarios:
-  - engine: substrate
-    name: starknet_mint
+  - name: starknet_mint
+    engine: substrate
     flow:
       - loop:
           - function: "executeERC721Mint"

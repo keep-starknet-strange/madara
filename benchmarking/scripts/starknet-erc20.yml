@@ -16,6 +16,9 @@ config:
     nonce: 0
   engines:
     substrate: {}
+before: 
+  flow:
+    - function: "presignTransferTransactions"
 scenarios:
   - engine: substrate
     name: starknet_transfer
