@@ -8,21 +8,21 @@ import erc20Json from "../../cairo-contracts/build/ERC20.json";
 import { NFT_CONTRACT_ADDRESS, UDC_CONTRACT_ADDRESS } from "../tests/constants";
 import { numberToU832Bytes } from "./utils";
 export async function sendTransactionNoValidation(
-  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
 ): Promise<void> {
   await transaction.send();
 }
 
 export async function sendTransactionBatchNoValidation(
   api: ApiPromise,
-  transactions: Array<SubmittableExtrinsic<"promise", ISubmittableResult>>
+  transactions: Array<SubmittableExtrinsic<"promise", ISubmittableResult>>,
 ): Promise<void> {
   await api.tx.utility.batch(transactions).send();
 }
 
 export async function sendTransaction(
   api: ApiPromise,
-  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>
+  transaction: SubmittableExtrinsic<"promise", ISubmittableResult>,
 ): Promise<string> {
   return await new Promise((resolve, reject) => {
     let unsubscribe;
@@ -62,7 +62,7 @@ export async function sendTransaction(
               "\t",
               phase.toString(),
               `: ${section}.${method}`,
-              data.toString()
+              data.toString(),
             );
 
             if (section == "system" && method == "ExtrinsicSuccess") {
@@ -93,7 +93,7 @@ export async function sendTransaction(
 export function declare(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string
+  tokenClassHash: string,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   const tx_declare = {
     version: 1, // version of the transaction
@@ -111,7 +111,7 @@ export function declare(
     contractClass: {
       program: u8aWrapBytes(Buffer.from(stringify(erc20Json.program))),
       entryPointsByType: u8aWrapBytes(
-        Buffer.from(stringify(erc20Json.entry_points_by_type))
+        Buffer.from(stringify(erc20Json.entry_points_by_type)),
       ),
     },
   };
@@ -124,7 +124,7 @@ export function declare(
 export function deploy(
   api: ApiPromise,
   contractAddress: string,
-  tokenClassHash: string
+  tokenClassHash: string,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Compute contract address
   // const deployedContractAddress = hash.calculateContractAddressFromHash(
@@ -168,7 +168,7 @@ export function deploy(
 export async function initialize(
   api: ApiPromise,
   contractAddress: string,
-  tokenAddress: string
+  tokenAddress: string,
 ): Promise<string> {
   // Initialize contract
   const tx_initialize = {
@@ -206,7 +206,7 @@ export async function mint(
   api: ApiPromise,
   contractAddress: string,
   tokenAddress: string,
-  mintAmount: string
+  mintAmount: string,
 ): Promise<string> {
   // Initialize contract
   const tx_mint = {
@@ -244,7 +244,7 @@ export function transfer(
   tokenAddress: string,
   recipientAddress: string,
   transferAmount: string,
-  nonce?: number
+  nonce?: number,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   const tx_transfer = {
@@ -272,7 +272,7 @@ export function batchTransfer(
   contractAddress: string,
   tokenAddress: string,
   recipientAddress: string,
-  transferAmount: string
+  transferAmount: string,
 ): Array<SubmittableExtrinsic<ApiTypes, ISubmittableResult>> {
   // Initialize contract
   const tx_transfer = {
@@ -302,7 +302,7 @@ export function mintERC721(
   senderAddress: string,
   recipientAddress: string,
   tokenID: string,
-  nonce?: number
+  nonce?: number,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
   const tx_mint = {
@@ -330,7 +330,7 @@ export function deployTokenContractUDC(
   classHash: string,
   salt: string,
   unique: boolean,
-  nonce?: number
+  nonce?: number,
 ): SubmittableExtrinsic<ApiTypes, ISubmittableResult> {
   // Initialize contract
 
