@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1688761954780,
+  "lastUpdate": 1688761957069,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -1319,6 +1319,54 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/keep-starknet-strange/madara/commit/14dc2b9b9f780f389291d56c7afeea87fb7ba8c2"
         },
         "date": 1688760754089,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 417,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 69.5,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average Extrinsics per block (ERC721 mints)",
+            "value": 382.25,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS (ERC721 mints)",
+            "value": 63.708333333333336,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "francesco@ceccon.me",
+            "name": "Francesco Ceccon",
+            "username": "fracek"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2aee82567510954e35c042621a78ed18ae05e1e8",
+          "message": "Handle starknet_getStateUpdate for genesis block (#834)",
+          "timestamp": "2023-07-07T22:12:50+02:00",
+          "tree_id": "aa6ea90e0621fb6b79231af3c239407c13e4c4db",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/2aee82567510954e35c042621a78ed18ae05e1e8"
+        },
+        "date": 1688761954142,
         "tool": "customBiggerIsBetter",
         "benches": [
           {
