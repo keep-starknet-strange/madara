@@ -7,10 +7,11 @@ use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
     PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
-    STARKNET_CONTRACT_STATE_ROOT, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS, STARKNET_STORAGE, SYSTEM_EVENTS,
+    STARKNET_CONTRACT_STATE_ROOT, STARKNET_CONTRACT_STATE_TRIES, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS,
+    STARKNET_STORAGE, SYSTEM_EVENTS,
 };
 use mp_starknet::transaction::types::EventWrapper;
-use pallet_starknet::types::{NonceWrapper, StateCommitments};
+use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 use pallet_starknet::Event;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -102,6 +103,18 @@ where
     ) -> Option<ClassHashWrapper> {
         let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_CLASS_HASH);
         self.query_storage::<ClassHashWrapper>(
+            block_hash,
+            &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &self.encode_storage_key(&address))),
+        )
+    }
+
+    fn contract_state_trie_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<StateTrie> {
+        let storage_contract_class_hash_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CONTRACT_STATE_TRIES);
+        self.query_storage::<StateTrie>(
             block_hash,
             &StorageKey(storage_key_build(storage_contract_class_hash_prefix, &self.encode_storage_key(&address))),
         )

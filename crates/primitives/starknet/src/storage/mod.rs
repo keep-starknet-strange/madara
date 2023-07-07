@@ -30,6 +30,8 @@ pub const STARKNET_STORAGE: &[u8] = b"StorageView";
 pub const STARKNET_STATE_COMMITMENTS: &[u8] = b"StarknetStateCommitments";
 /// Starknet contract roots
 pub const STARKNET_CONTRACT_STATE_ROOT: &[u8] = b"ContractStateRoots";
+/// Starknet contract state tries
+pub const STARKNET_CONTRACT_STATE_TRIES: &[u8] = b"ContractTries";
 
 /// The schema version for Pallet Starknet's storage.
 #[derive(Clone, Copy, Debug, Encode, Decode, PartialEq, Eq, PartialOrd, Ord)]

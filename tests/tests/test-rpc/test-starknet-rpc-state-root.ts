@@ -19,7 +19,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
 
       const latestBlock = await providerRPC.getBlock("latest");
       expect(latestBlock.new_root).to.eq(
-        "0x4e65560d4b1751b0c3455f9f4e3e0ae0c41c4929796659ceec256f1aea08e28"
+        "0x4e65560d4b1751b0c3455f9f4e3e0ae0c41c4929796659ceec256f1aea08e28",
       );
     });
   });
@@ -57,7 +57,7 @@ describeDevMadara("Starknet RPC - State Root Enabled", (context) => {
 
       // Check contract root
       expect(storage_proof["result"]["contract_data"]["root"]).to.be.eq(
-        "1245075994121459795339981889219606020533793304969303161130350131342227964700"
+        "1245075994121459795339981889219606020533793304969303161130350131342227964700",
       );
     });
   });

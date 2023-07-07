@@ -35,7 +35,7 @@ use mp_starknet::transaction::types::{
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
-use pallet_starknet::types::{NonceWrapper, StateCommitments};
+use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 use pallet_starknet::Call::{declare, deploy_account, invoke};
 use pallet_starknet::Event;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -263,6 +263,10 @@ impl_runtime_apis! {
 
         fn contract_state_root_by_address(address: ContractAddressWrapper) -> Option<Felt252Wrapper> {
             Starknet::contract_state_root_by_address(address)
+        }
+
+        fn contract_state_trie_by_address(address: ContractAddressWrapper) -> Option<StateTrie> {
+            Starknet::contract_state_trie_by_address(address)
         }
 
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass> {

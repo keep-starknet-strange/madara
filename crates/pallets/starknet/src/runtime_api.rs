@@ -16,6 +16,7 @@ use alloc::vec::Vec;
 use sp_runtime::DispatchError;
 
 use crate::types::{NonceWrapper, StateCommitments};
+use crate::StateTrie;
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
@@ -33,6 +34,8 @@ sp_api::decl_runtime_apis! {
         fn contract_class_by_class_hash(class_hash: ClassHashWrapper) -> Option<ContractClass>;
         /// Returns the contract root for the given address
         fn contract_state_root_by_address(address: ContractAddressWrapper) -> Option<Felt252Wrapper>;
+        /// Returns the contract state trie for the given address
+        fn contract_state_trie_by_address(address: ContractAddressWrapper) -> Option<StateTrie>;
         /// Returns the chain id.
         fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate

@@ -8,7 +8,7 @@ use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Fe
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
-use pallet_starknet::types::{NonceWrapper, StateCommitments};
+use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
@@ -92,6 +92,9 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
         block_hash: B::Hash,
         address: ContractAddressWrapper,
     ) -> Option<Felt252Wrapper>;
+    /// Returns the contract state trie at a provided contract address for the provided block.
+    fn contract_state_trie_by_address(&self, block_hash: B::Hash, address: ContractAddressWrapper)
+    -> Option<StateTrie>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -252,5 +255,22 @@ where
     ) -> Option<Felt252Wrapper> {
         let api = self.client.runtime_api();
         api.contract_state_root_by_address(block_hash, address).ok()?
+    }
+
+    /// Return the contract state trie for a provided block hash
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(state_trie)` - The contract state trie for the provided block hash
+    fn contract_state_trie_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<StateTrie> {
+        let api = self.client.runtime_api();
+        api.contract_state_trie_by_address(block_hash, address).ok()?
     }
 }

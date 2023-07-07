@@ -229,12 +229,12 @@ pub mod pallet {
     /// Mapping of contract address to state trie.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn contract_tries)]
+    #[pallet::getter(fn contract_state_trie_by_address)]
     pub(super) type ContractTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
 
     /// The Starknet pallet storage items.
     /// STORAGE
-    /// Mapping of contract address to state trie.
+    /// Mapping of contract address to state root.
     #[pallet::storage]
     #[pallet::getter(fn contract_state_root_by_address)]
     pub(super) type ContractsStateRoots<T: Config> =

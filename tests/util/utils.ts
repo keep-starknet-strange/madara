@@ -43,12 +43,12 @@ export async function rpcTransfer(
   nonce: { value: number },
   recipient: string,
   transferAmount: string,
-  maxFee?: number
+  maxFee?: number,
 ): Promise<InvokeFunctionResponse> {
   const account = new Account(
     providerRPC,
     ARGENT_CONTRACT_ADDRESS,
-    SIGNER_PRIVATE
+    SIGNER_PRIVATE,
   );
 
   const invokeResponse = account.execute(
@@ -61,7 +61,7 @@ export async function rpcTransfer(
     {
       nonce: nonce.value,
       maxFee: maxFee ?? "123456",
-    }
+    },
   );
 
   nonce.value++;
