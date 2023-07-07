@@ -305,6 +305,23 @@
 <a href="#305" id="305">305</a>
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs;
 <span class="kw">use </span>std::path::PathBuf;
 
@@ -477,6 +494,19 @@
     <span class="kw">let </span>argent_proxy_class = get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;../../cairo-contracts/build/Proxy.json&quot;</span>), <span class="number">0</span>);
     <span class="kw">let </span>argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
+    <span class="comment">// BRAAVOS ACCOUNT CONTRACT
+    </span><span class="kw">let </span>braavos_account_class = get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;src/genesis_assets/Account.json&quot;</span>), <span class="number">0</span>);
+    <span class="kw">let </span>braavos_account_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
+    <span class="kw">let </span>braavos_account_base_impl_class =
+        get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;src/genesis_assets/AccountBaseImpl.json&quot;</span>), <span class="number">0</span>);
+    <span class="kw">let </span>braavos_account_base_impl_class_hash =
+        Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_BASE_IMPL_CLASS_HASH).unwrap();
+    <span class="kw">let </span>braavos_call_aggregator_class =
+        get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;src/genesis_assets/CallAggregator.json&quot;</span>), <span class="number">0</span>);
+    <span class="kw">let </span>braavos_call_aggregator_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_CALL_AGGREGATOR_CLASS_HASH).unwrap();
+    <span class="kw">let </span>braavos_proxy_class = get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;../../cairo-contracts/build/Proxy.json&quot;</span>), <span class="number">0</span>);
+    <span class="kw">let </span>braavos_proxy_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_PROXY_CLASS_HASH).unwrap();
+
     <span class="comment">// OZ ACCOUNT CONTRACT
     </span><span class="kw">let </span>oz_account_class =
         get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;../../cairo-contracts/build/OpenzeppelinAccount.json&quot;</span>), <span class="number">0</span>);
@@ -550,6 +580,10 @@
                 (fee_token_class_hash, erc20_class),
                 (nft_class_hash, erc721_class),
                 (udc_class_hash, udc_class),
+                (braavos_account_class_hash, braavos_account_class),
+                (braavos_account_base_impl_class_hash, braavos_account_base_impl_class),
+                (braavos_call_aggregator_class_hash, braavos_call_aggregator_class),
+                (braavos_proxy_class_hash, braavos_proxy_class),
             ],
             storage: <span class="macro">vec!</span>[
                 (
