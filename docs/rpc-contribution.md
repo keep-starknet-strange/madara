@@ -25,10 +25,9 @@ There are two ways you can build madara to quickly test it:
    Some libraries that you may require on linux before running `cargo build`
    command (not exhaustive): `protobuf-compiler build-essential g++ clang`.
 
-2. Using docker as exposed in the
-   [README](https://github.com/keep-starknet-strange/madara#run-in-docker). With
-   the command `docker-compose -f infra/docker/docker-compose.yml up`, you start
-   madara with a genesis block already configured + some accounts + some peers.
+2. Using docker, with the command `docker run [TAG] --dev`, you start madara.
+   The TAGS are available
+   [here](https://github.com/keep-starknet-strange/madara/pkgs/container/madara).
    This is very useful if you want to test RPC methods that are targeting the
    transactions / blocks / etc...
 

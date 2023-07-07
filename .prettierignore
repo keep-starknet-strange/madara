@@ -1,4 +1,3 @@
 target
 typescript-api
-./infra/chain-specs
 cairo-contracts/build
