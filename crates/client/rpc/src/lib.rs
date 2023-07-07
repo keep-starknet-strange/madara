@@ -962,7 +962,7 @@ where
                 StarknetRpcApiError::ContractNotFound
             })?;
 
-        let contract_state_trie = self
+        let mut contract_state_trie = self
             .overrides
             .for_block_hash(self.client.as_ref(), substrate_block_hash)
             .contract_state_trie_by_address(substrate_block_hash, get_proof_input.contract_address.into())
