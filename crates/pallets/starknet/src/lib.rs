@@ -518,7 +518,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(debug, "Invoke Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
@@ -530,7 +530,7 @@ pub mod pallet {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Invoke Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
@@ -591,7 +591,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(trace, "Declare Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
@@ -603,7 +603,7 @@ pub mod pallet {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Declare Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
@@ -662,7 +662,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(trace, "Deploy_account Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
@@ -674,7 +674,7 @@ pub mod pallet {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Deploy_account Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
@@ -718,10 +718,10 @@ pub mod pallet {
                 None,
             ) {
                 Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v);
+                    log!(debug, "Successfully consumed a message from L1: {:?}", v);
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Failed to consume a message from L1: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
@@ -960,12 +960,12 @@ impl<T: Config> Pallet<T> {
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {
             Ok(v) => {
-                log!(debug, "Transaction executed successfully: {:?}", v);
+                log!(debug, "Successfully called a smart contract function: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
                 Ok(result)
             }
             Err(e) => {
-                log!(error, "Transaction execution failed: {:?}", e);
+                log!(error, "Failed to call a smart contract function: {:?}", e);
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
@@ -1104,7 +1104,7 @@ impl<T: Config> Pallet<T> {
             transaction.contract_class.clone(),
         ) {
             Ok(v) => {
-                log!(debug, "Transaction executed successfully: {:?}", v);
+                log!(debug, "Successfully estimated fee: {:?}", v);
                 if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
                     Ok((v.actual_fee.0 as u64, *gas_usage as u64))
                 } else {
@@ -1112,7 +1112,7 @@ impl<T: Config> Pallet<T> {
                 }
             }
             Err(e) => {
-                log!(error, "Transaction execution failed: {:?}", e);
+                log!(error, "Failed to estimate fee: {:?}", e);
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }

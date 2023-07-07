@@ -47,7 +47,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: infra/docker/Dockerfile
+          file: Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs:
