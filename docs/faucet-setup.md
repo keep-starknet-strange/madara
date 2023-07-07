@@ -35,7 +35,8 @@ use frontend and backend for your local build. You can start the frontend and
 backend using Docker like this
 
 ```bash
-cd infra/starknet-stack/
+git clone https://github.com/keep-starknet-strange/madara-infra
+cd madara-infra/starknet-stack/
 docker-compose up -d starkcet-front starkcet-back
 ```
 
