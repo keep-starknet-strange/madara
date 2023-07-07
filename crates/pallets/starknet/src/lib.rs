@@ -1094,9 +1094,6 @@ impl<T: Config> Pallet<T> {
 
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
-        // Check if contract is deployed
-        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
-
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
@@ -1108,6 +1105,7 @@ impl<T: Config> Pallet<T> {
                 if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
                     Ok((v.actual_fee.0 as u64, *gas_usage as u64))
                 } else {
+                    log!(error, "Failed to get gas usage.");
                     Err(Error::<T>::TransactionExecutionFailed.into())
                 }
             }

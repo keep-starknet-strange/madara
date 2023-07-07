@@ -62,7 +62,7 @@ fn test_try_into_declare_transaction_v1_valid() {
         sender_address: FieldElement::default(),
     };
 
-    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
+    let input: BroadcastedDeclareTransactionWrapper = BroadcastedDeclareTransactionWrapper::V1(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
     assert!(output_result.is_ok());
 }
@@ -79,7 +79,7 @@ fn test_try_into_declare_transaction_v1_max_signature() {
         sender_address: FieldElement::default(),
     };
 
-    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
+    let input: BroadcastedDeclareTransactionWrapper = BroadcastedDeclareTransactionWrapper::V1(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
     assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureBoundError));
 }
@@ -104,7 +104,7 @@ fn test_try_into_declare_transaction_v1_bad_gzip() {
         sender_address: FieldElement::default(),
     };
 
-    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
+    let input: BroadcastedDeclareTransactionWrapper = BroadcastedDeclareTransactionWrapper::V1(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
     assert!(matches!(
         output_result.unwrap_err(),
@@ -125,7 +125,7 @@ fn test_try_into_declare_transaction_v2_with_correct_compiled_class_hash() {
         compiled_class_hash: FieldElement::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_COMPILED_CLASS_HASH).unwrap(),
     };
 
-    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
+    let input: BroadcastedDeclareTransactionWrapper = BroadcastedDeclareTransactionWrapper::V2(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
 
     assert!(output_result.is_ok());
@@ -144,7 +144,7 @@ fn test_try_into_declare_transaction_v2_with_incorrect_compiled_class_hash() {
         compiled_class_hash: FieldElement::from_hex_be("0x1").unwrap(), // incorrect compiled class hash
     };
 
-    let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
+    let input: BroadcastedDeclareTransactionWrapper = BroadcastedDeclareTransactionWrapper::V2(txn);
     let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
 
     assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CompiledClassHashError));

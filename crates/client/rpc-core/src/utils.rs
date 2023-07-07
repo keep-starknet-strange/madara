@@ -17,8 +17,8 @@ use mp_digest_log::find_starknet_block;
 use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{
-    BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
-    Transaction,
+    BroadcastedDeclareTransactionWrapper, BroadcastedTransactionConversionErrorWrapper, BroadcastedTransactionWrapper,
+    DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction,
 };
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
@@ -31,9 +31,8 @@ use starknet_core::types::contract::legacy::{
 };
 use starknet_core::types::contract::{CompiledClass, CompiledClassEntrypoint, CompiledClassEntrypointList};
 use starknet_core::types::{
-    BroadcastedDeclareTransaction, BroadcastedTransaction, CompressedLegacyContractClass, ContractClass,
-    EntryPointsByType, FieldElement, FlattenedSierraClass, FromByteArrayError, LegacyContractEntryPoint,
-    LegacyEntryPointsByType, SierraEntryPoint,
+    CompressedLegacyContractClass, ContractClass, EntryPointsByType, FieldElement, FlattenedSierraClass,
+    FromByteArrayError, LegacyContractEntryPoint, LegacyEntryPointsByType, SierraEntryPoint,
 };
 
 /// Returns a [`ContractClass`] from a [`BlockifierContractClass`]
@@ -76,17 +75,17 @@ pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
 ///
 /// * `Transaction` - The converted transaction
 pub fn to_tx(
-    request: BroadcastedTransaction,
+    request: BroadcastedTransactionWrapper,
     chain_id: Felt252Wrapper,
 ) -> Result<Transaction, BroadcastedTransactionConversionErrorWrapper> {
     match request {
-        BroadcastedTransaction::Invoke(invoke_tx) => {
+        BroadcastedTransactionWrapper::Invoke(invoke_tx) => {
             InvokeTransaction::try_from(invoke_tx).map(|inner| inner.from_invoke(chain_id))
         }
-        BroadcastedTransaction::Declare(declare_tx) => {
+        BroadcastedTransactionWrapper::Declare(declare_tx) => {
             to_declare_transaction(declare_tx).map(|inner| inner.from_declare(chain_id))
         }
-        BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
+        BroadcastedTransactionWrapper::DeployAccount(deploy_account_tx) => {
             DeployAccountTransaction::try_from(deploy_account_tx).and_then(|inner| {
                 inner
                     .from_deploy(chain_id)
@@ -144,10 +143,10 @@ where
 // import cairo-lang-starknet which currently doesn't support no_std.
 // So we moved this code to rpc-core/src/utils.rs
 pub fn to_declare_transaction(
-    tx: BroadcastedDeclareTransaction,
+    tx: BroadcastedDeclareTransactionWrapper,
 ) -> Result<DeclareTransaction, BroadcastedTransactionConversionErrorWrapper> {
     match tx {
-        BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
+        BroadcastedDeclareTransactionWrapper::V1(declare_tx_v1) => {
             let signature = declare_tx_v1
                 .signature
                 .iter()
@@ -238,7 +237,7 @@ pub fn to_declare_transaction(
                 compiled_class_hash: None,
             })
         }
-        BroadcastedDeclareTransaction::V2(declare_tx_v2) => {
+        BroadcastedDeclareTransactionWrapper::V2(declare_tx_v2) => {
             let signature = declare_tx_v2
                 .signature
                 .iter()
@@ -259,6 +258,37 @@ pub fn to_declare_transaction(
 
             Ok(DeclareTransaction {
                 version: 2_u8,
+                sender_address: declare_tx_v2.sender_address.into(),
+                nonce: Felt252Wrapper::from(declare_tx_v2.nonce),
+                max_fee: Felt252Wrapper::from(declare_tx_v2.max_fee),
+                signature,
+                contract_class: BlockifierContractClass::V1(contract_class),
+                compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash)),
+                class_hash: declare_tx_v2.contract_class.class_hash().into(),
+            })
+        }
+        BroadcastedDeclareTransactionWrapper::Query(declare_tx_v2) => {
+            let signature = declare_tx_v2
+                .signature
+                .iter()
+                .map(|f| (*f).into())
+                .collect::<Vec<Felt252Wrapper>>()
+                .try_into()
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+
+            let casm_constract_class = flattened_sierra_to_casm_contract_class(declare_tx_v2.contract_class.clone())
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SierraCompilationError)?;
+            let contract_class = ContractClassV1::try_from(casm_constract_class.clone())
+                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CasmContractClassConversionError)?;
+
+            // ensuring that the user has signed the correct class hash
+            if get_casm_cotract_class_hash(&casm_constract_class) != declare_tx_v2.compiled_class_hash {
+                return Err(BroadcastedTransactionConversionErrorWrapper::CompiledClassHashError);
+            }
+
+            Ok(DeclareTransaction {
+                // https://github.com/starkware-libs/cairo-lang/blob/00ee90123c0bbaffe13dd05a79d2d57b0cb747be/src/starkware/starknet/definitions/constants.py#L65
+                version: 2_u8.pow(128_u32) + 2_u8,
                 sender_address: declare_tx_v2.sender_address.into(),
                 nonce: Felt252Wrapper::from(declare_tx_v2.nonce),
                 max_fee: Felt252Wrapper::from(declare_tx_v2.max_fee),

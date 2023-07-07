@@ -23,7 +23,9 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
-    DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
+    BroadcastedDeclareTransactionWrapper, BroadcastedDeployAccountTransactionWrapper,
+    BroadcastedInvokeTransactionWrapper, BroadcastedTransactionWrapper, DeployAccountTransaction, InvokeTransaction,
+    RPCTransactionConversionError, Transaction as MPTransaction, TxType,
 };
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -36,8 +38,7 @@ use sp_core::H256;
 use sp_runtime::generic::BlockId as SPBlockId;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
 use starknet_core::types::{
-    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, BroadcastedDeclareTransaction,
-    BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass,
+    BlockHashAndNumber, BlockId, BlockStatus, BlockTag, BlockWithTxHashes, BlockWithTxs, ContractClass,
     DeclareTransactionResult, DeployAccountTransactionResult, EmittedEvent, EventFilterWithPage, EventsPage,
     FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult, MaybePendingBlockWithTxHashes,
     MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateDiff, StateUpdate, SyncStatus, SyncStatusType,
@@ -454,7 +455,7 @@ where
     /// * `transaction_hash` - transaction hash corresponding to the invocation
     async fn add_invoke_transaction(
         &self,
-        invoke_transaction: BroadcastedInvokeTransaction,
+        invoke_transaction: BroadcastedInvokeTransactionWrapper,
     ) -> RpcResult<InvokeTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
         let invoke_tx = InvokeTransaction::try_from(invoke_transaction).map_err(|e| {
@@ -485,7 +486,7 @@ where
     /// * `contract_address` - address of the deployed contract account
     async fn add_deploy_account_transaction(
         &self,
-        deploy_account_transaction: BroadcastedDeployAccountTransaction,
+        deploy_account_transaction: BroadcastedDeployAccountTransactionWrapper,
     ) -> RpcResult<DeployAccountTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
@@ -525,13 +526,9 @@ where
     /// * `fee_estimate` - fee estimate in gwei
     async fn estimate_fee(
         &self,
-        request: Vec<BroadcastedTransaction>,
+        request: Vec<BroadcastedTransactionWrapper>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
-        // TODO:
-        //      - modify BroadcastedTransaction to assert versions == "0x100000000000000000000000000000001"
-        //      - to ensure broadcasted query signatures aren't valid on mainnet
-
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
@@ -744,7 +741,7 @@ where
     /// * `declare_transaction_result` - the result of the declare transaction
     async fn add_declare_transaction(
         &self,
-        declare_transaction: BroadcastedDeclareTransaction,
+        declare_transaction: BroadcastedDeclareTransactionWrapper,
     ) -> RpcResult<DeclareTransactionResult> {
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);

@@ -21,6 +21,7 @@ use crate::execution::call_entrypoint_wrapper::{CallEntryPointWrapper, MaxCallda
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
+    BroadcastedDeployAccountTransactionWrapper, BroadcastedInvokeTransactionWrapper,
     BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper,
     InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
 };
@@ -405,7 +406,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v0() {
         calldata: vec![FieldElement::default()],
     };
 
-    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V0(broadcasted_invoke_txn_v0);
+    let broadcasted_invoke_txn = BroadcastedInvokeTransactionWrapper::V0(broadcasted_invoke_txn_v0);
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
@@ -425,7 +426,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1() {
         calldata: vec![FieldElement::default()],
     };
 
-    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
+    let broadcasted_invoke_txn = BroadcastedInvokeTransactionWrapper::V1(broadcasted_invoke_txn_v1);
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn).unwrap();
 
     let expected_sig: BoundedVec<Felt252Wrapper, MaxArraySize> =
@@ -453,7 +454,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_sig_size() {
         calldata: vec![FieldElement::default()],
     };
 
-    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
+    let broadcasted_invoke_txn = BroadcastedInvokeTransactionWrapper::V1(broadcasted_invoke_txn_v1);
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
@@ -472,7 +473,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
         calldata: calldata_size_maxed,
     };
 
-    let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
+    let broadcasted_invoke_txn = BroadcastedInvokeTransactionWrapper::V1(broadcasted_invoke_txn_v1);
     let invoke_txn = InvokeTransaction::try_from(broadcasted_invoke_txn);
 
     assert!(invoke_txn.is_err());
@@ -488,7 +489,7 @@ fn get_try_into_and_expected_value(
     let signature: Vec<FieldElement> = vec![FieldElement::default(); array_size];
     let constructor_calldata: Vec<FieldElement> = vec![FieldElement::default(); calldata_size];
 
-    let input = BroadcastedDeployAccountTransaction {
+    let input = BroadcastedDeployAccountTransactionWrapper::V1(BroadcastedDeployAccountTransaction {
         signature,
         constructor_calldata,
         // `FieldElement` can be trivially converted to `Felt252Wrapper` so no need to test them
@@ -496,7 +497,7 @@ fn get_try_into_and_expected_value(
         nonce: FieldElement::default(),
         contract_address_salt: FieldElement::default(),
         class_hash: FieldElement::default(),
-    };
+    });
 
     let output: DeployAccountTransaction = input.try_into()?;
 

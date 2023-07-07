@@ -557,10 +557,11 @@ pub enum StateDiffError {
 
 #[cfg(feature = "std")]
 mod reexport_private_types {
-
+    use serde::Deserialize;
     use starknet_core::types::contract::ComputeClassHashError;
     use starknet_core::types::{
-        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
+        BroadcastedDeclareTransactionV1, BroadcastedDeclareTransactionV2, BroadcastedDeployAccountTransaction,
+        BroadcastedInvokeTransactionV0, BroadcastedInvokeTransactionV1, DeclareTransaction as RPCDeclareTransaction,
         DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
         DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
         DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
@@ -573,6 +574,49 @@ mod reexport_private_types {
     };
 
     use super::*;
+
+    #[derive(Debug, Clone, Deserialize)]
+    #[serde(tag = "type")]
+    pub enum BroadcastedTransactionWrapper {
+        #[serde(rename = "INVOKE")]
+        Invoke(BroadcastedInvokeTransactionWrapper),
+        #[serde(rename = "DECLARE")]
+        Declare(BroadcastedDeclareTransactionWrapper),
+        #[serde(rename = "DEPLOY_ACCOUNT")]
+        DeployAccount(BroadcastedDeployAccountTransactionWrapper),
+    }
+
+    #[derive(Debug, Clone, Deserialize)]
+    #[serde(tag = "version")]
+    pub enum BroadcastedInvokeTransactionWrapper {
+        #[serde(rename = "0x0")]
+        V0(BroadcastedInvokeTransactionV0),
+        #[serde(rename = "0x1")]
+        V1(BroadcastedInvokeTransactionV1),
+        #[serde(rename = "0x100000000000000000000000000000001")]
+        Query(BroadcastedInvokeTransactionV1),
+    }
+
+    #[derive(Debug, Clone, Deserialize)]
+    #[serde(tag = "version")]
+    pub enum BroadcastedDeclareTransactionWrapper {
+        #[serde(rename = "0x1")]
+        V1(BroadcastedDeclareTransactionV1),
+        #[serde(rename = "0x2")]
+        V2(BroadcastedDeclareTransactionV2),
+        #[serde(rename = "0x100000000000000000000000000000002")]
+        Query(BroadcastedDeclareTransactionV2),
+    }
+
+    #[derive(Debug, Clone, Deserialize)]
+    #[serde(tag = "version")]
+    pub enum BroadcastedDeployAccountTransactionWrapper {
+        #[serde(rename = "0x1")]
+        V1(BroadcastedDeployAccountTransaction),
+        #[serde(rename = "0x100000000000000000000000000000001")]
+        Query(BroadcastedDeployAccountTransaction),
+    }
+
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
     pub enum BroadcastedTransactionConversionErrorWrapper {
@@ -617,13 +661,29 @@ mod reexport_private_types {
         ClassHashComputationError(#[from] ComputeClassHashError),
     }
 
-    impl TryFrom<BroadcastedInvokeTransaction> for InvokeTransaction {
+    impl TryFrom<BroadcastedInvokeTransactionWrapper> for InvokeTransaction {
         type Error = BroadcastedTransactionConversionErrorWrapper;
-        fn try_from(tx: BroadcastedInvokeTransaction) -> Result<InvokeTransaction, Self::Error> {
+        fn try_from(tx: BroadcastedInvokeTransactionWrapper) -> Result<InvokeTransaction, Self::Error> {
             match tx {
-                BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
-                BroadcastedInvokeTransaction::V1(invoke_tx_v1) => Ok(InvokeTransaction {
+                BroadcastedInvokeTransactionWrapper::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
+                BroadcastedInvokeTransactionWrapper::V1(invoke_tx_v1) => Ok(InvokeTransaction {
                     version: 1_u8,
+                    signature: BoundedVec::try_from(
+                        invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
+                    )
+                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureConversionError)?,
+
+                    sender_address: invoke_tx_v1.sender_address.into(),
+                    nonce: Felt252Wrapper::from(invoke_tx_v1.nonce),
+                    calldata: BoundedVec::try_from(
+                        invoke_tx_v1.calldata.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
+                    )
+                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
+                    max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
+                }),
+                BroadcastedInvokeTransactionWrapper::Query(invoke_tx_v1) => Ok(InvokeTransaction {
+                    // https://github.com/starkware-libs/cairo-lang/blob/00ee90123c0bbaffe13dd05a79d2d57b0cb747be/src/starkware/starknet/definitions/constants.py#L64C1-L64C1
+                    version: 2_u8.pow(128_u32) + 1_u8,
                     signature: BoundedVec::try_from(
                         invoke_tx_v1.signature.iter().map(|x| (*x).into()).collect::<Vec<Felt252Wrapper>>(),
                     )
@@ -641,41 +701,80 @@ mod reexport_private_types {
         }
     }
 
-    impl TryFrom<BroadcastedDeployAccountTransaction> for DeployAccountTransaction {
+    impl TryFrom<BroadcastedDeployAccountTransactionWrapper> for DeployAccountTransaction {
         type Error = BroadcastedTransactionConversionErrorWrapper;
-        fn try_from(tx: BroadcastedDeployAccountTransaction) -> Result<DeployAccountTransaction, Self::Error> {
-            let contract_address_salt = tx.contract_address_salt.into();
+        fn try_from(tx: BroadcastedDeployAccountTransactionWrapper) -> Result<DeployAccountTransaction, Self::Error> {
+            match tx {
+                BroadcastedDeployAccountTransactionWrapper::V1(tx) => {
+                    let contract_address_salt = tx.contract_address_salt.into();
 
-            let account_class_hash = tx.class_hash;
+                    let account_class_hash = tx.class_hash;
 
-            let signature = tx
-                .signature
-                .iter()
-                .map(|f| (*f).into())
-                .collect::<Vec<Felt252Wrapper>>()
-                .try_into()
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+                    let signature = tx
+                        .signature
+                        .iter()
+                        .map(|f| (*f).into())
+                        .collect::<Vec<Felt252Wrapper>>()
+                        .try_into()
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
 
-            let calldata = tx
-                .constructor_calldata
-                .iter()
-                .map(|f| (*f).into())
-                .collect::<Vec<Felt252Wrapper>>()
-                .try_into()
-                .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
+                    let calldata = tx
+                        .constructor_calldata
+                        .iter()
+                        .map(|f| (*f).into())
+                        .collect::<Vec<Felt252Wrapper>>()
+                        .try_into()
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
 
-            let nonce = Felt252Wrapper::from(tx.nonce);
-            let max_fee = Felt252Wrapper::from(tx.max_fee);
+                    let nonce = Felt252Wrapper::from(tx.nonce);
+                    let max_fee = Felt252Wrapper::from(tx.max_fee);
 
-            Ok(DeployAccountTransaction {
-                version: 1_u8,
-                calldata,
-                salt: contract_address_salt,
-                signature,
-                account_class_hash: account_class_hash.into(),
-                nonce,
-                max_fee,
-            })
+                    Ok(DeployAccountTransaction {
+                        version: 1_u8,
+                        calldata,
+                        salt: contract_address_salt,
+                        signature,
+                        account_class_hash: account_class_hash.into(),
+                        nonce,
+                        max_fee,
+                    })
+                }
+                BroadcastedDeployAccountTransactionWrapper::Query(tx) => {
+                    let contract_address_salt = tx.contract_address_salt.into();
+
+                    let account_class_hash = tx.class_hash;
+
+                    let signature = tx
+                        .signature
+                        .iter()
+                        .map(|f| (*f).into())
+                        .collect::<Vec<Felt252Wrapper>>()
+                        .try_into()
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+
+                    let calldata = tx
+                        .constructor_calldata
+                        .iter()
+                        .map(|f| (*f).into())
+                        .collect::<Vec<Felt252Wrapper>>()
+                        .try_into()
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
+
+                    let nonce = Felt252Wrapper::from(tx.nonce);
+                    let max_fee = Felt252Wrapper::from(tx.max_fee);
+
+                    Ok(DeployAccountTransaction {
+                        // https://github.com/starkware-libs/cairo-lang/blob/00ee90123c0bbaffe13dd05a79d2d57b0cb747be/src/starkware/starknet/cli/starknet_cli_utils.py#L620
+                        version: 2_u8.pow(128_u32) + 1_u8,
+                        calldata,
+                        salt: contract_address_salt,
+                        signature,
+                        account_class_hash: account_class_hash.into(),
+                        nonce,
+                        max_fee,
+                    })
+                }
+            }
         }
     }
 

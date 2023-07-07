@@ -15,13 +15,16 @@ use serde_with::serde_as;
 mod constants;
 pub mod utils;
 
+use mp_starknet::transaction::types::{
+    BroadcastedDeclareTransactionWrapper, BroadcastedDeployAccountTransactionWrapper,
+    BroadcastedInvokeTransactionWrapper, BroadcastedTransactionWrapper,
+};
 use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_core::types::{
-    BlockHashAndNumber, BlockId, BroadcastedDeclareTransaction, BroadcastedDeployAccountTransaction,
-    BroadcastedInvokeTransaction, BroadcastedTransaction, ContractClass, DeclareTransactionResult,
-    DeployAccountTransactionResult, EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall,
-    InvokeTransactionResult, MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt,
-    StateUpdate, SyncStatusType, Transaction,
+    BlockHashAndNumber, BlockId, ContractClass, DeclareTransactionResult, DeployAccountTransactionResult,
+    EventFilterWithPage, EventsPage, FeeEstimate, FieldElement, FunctionCall, InvokeTransactionResult,
+    MaybePendingBlockWithTxHashes, MaybePendingBlockWithTxs, MaybePendingTransactionReceipt, StateUpdate,
+    SyncStatusType, Transaction,
 };
 
 #[serde_as]
@@ -88,21 +91,21 @@ pub trait StarknetRpcApi {
     #[method(name = "addInvokeTransaction")]
     async fn add_invoke_transaction(
         &self,
-        invoke_transaction: BroadcastedInvokeTransaction,
+        invoke_transaction: BroadcastedInvokeTransactionWrapper,
     ) -> RpcResult<InvokeTransactionResult>;
 
     /// Add a Deploy Account Transaction
     #[method(name = "addDeployAccountTransaction")]
     async fn add_deploy_account_transaction(
         &self,
-        deploy_account_transaction: BroadcastedDeployAccountTransaction,
+        deploy_account_transaction: BroadcastedDeployAccountTransactionWrapper,
     ) -> RpcResult<DeployAccountTransactionResult>;
 
     /// Estimate the fee associated with transaction
     #[method(name = "estimateFee")]
     async fn estimate_fee(
         &self,
-        request: Vec<BroadcastedTransaction>,
+        request: Vec<BroadcastedTransactionWrapper>,
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>>;
 
@@ -126,7 +129,7 @@ pub trait StarknetRpcApi {
     #[method(name = "addDeclareTransaction")]
     async fn add_declare_transaction(
         &self,
-        declare_transaction: BroadcastedDeclareTransaction,
+        declare_transaction: BroadcastedDeclareTransactionWrapper,
     ) -> RpcResult<DeclareTransactionResult>;
 
     /// Returns the information about a transaction by transaction hash.
