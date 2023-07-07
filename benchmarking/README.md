@@ -22,8 +22,7 @@ The following benchmarks are available :
 - `npm run test:erc721mint` : Executes ERC721 mints
 
 Simply run `npm run test` to run default benchmark and display metrics at the
-end.
-You can also run `npm run` to see a list of the available scripts.
+end. You can also run `npm run` to see a list of the available scripts.
 
 ## References
 

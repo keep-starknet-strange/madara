@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-const { TEST_CONTRACT_ADDRESS, ARGENT_CONTRACT_ADDRESS, SIGNER_PRIVATE, ERC20_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS, CHAIN_ID_STARKNET_TESTNET} = require("../../tests/build/tests/tests/constants");
+const {
+  TEST_CONTRACT_ADDRESS,
+  ARGENT_CONTRACT_ADDRESS,
+  SIGNER_PRIVATE,
+  ERC20_CONTRACT_ADDRESS,
+  NFT_CONTRACT_ADDRESS,
+  CHAIN_ID_STARKNET_TESTNET,
+} = require("../../tests/build/tests/tests/constants");
 const {
   initialize,
   mint,
@@ -7,7 +14,7 @@ const {
   deploy,
   transfer,
   mintERC721,
-  calculateHexSignature
+  calculateHexSignature,
 } = require("../../tests/build/tests/util/starknet");
 
 const { numberToHex } = require("@polkadot/util");
@@ -32,20 +39,25 @@ function presignTransferTransactions(userContext, events, done) {
     "0x0000000000000000000000000000000000000000000000000000000000000001";
   const calldata = [
     "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
-    ERC20_CONTRACT_ADDRESS,                                               // TO
+    ERC20_CONTRACT_ADDRESS, // TO
     "0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e", // SELECTOR (transfer)
     "0x0000000000000000000000000000000000000000000000000000000000000000", // DATA OFFSET
     "0x0000000000000000000000000000000000000000000000000000000000000003", // DATA LEN
     "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA LEN
     TEST_CONTRACT_ADDRESS,
     amount,
-    "0x0000000000000000000000000000000000000000000000000000000000000000"
+    "0x0000000000000000000000000000000000000000000000000000000000000000",
   ];
 
   const signature = [];
   // i acts as nonce, starts from 0 and goes to the number of iterations for the benchmark
-  for(let i = 0; i < 10000; i++) {
-    signature[i] = calculateHexSignature(ARGENT_CONTRACT_ADDRESS, calldata, i, SIGNER_PRIVATE);
+  for (let i = 0; i < 10000; i++) {
+    signature[i] = calculateHexSignature(
+      ARGENT_CONTRACT_ADDRESS,
+      calldata,
+      i,
+      SIGNER_PRIVATE,
+    );
   }
 
   userContext.vars.signature = signature;
@@ -55,22 +67,27 @@ function presignTransferTransactions(userContext, events, done) {
 function presignMintTransactions(userContext, events, done) {
   const calldata = [
     "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
-    NFT_CONTRACT_ADDRESS,                                                 // TO
+    NFT_CONTRACT_ADDRESS, // TO
     "0x02f0b3c5710379609eb5495f1ecd348cb28167711b73609fe565a72734550354", // SELECTOR (mint)
     "0x0000000000000000000000000000000000000000000000000000000000000000", // DATA OFFSET
     "0x0000000000000000000000000000000000000000000000000000000000000003", // DATA LEN
     "0x0000000000000000000000000000000000000000000000000000000000000003", // CALLDATA LEN
     TEST_CONTRACT_ADDRESS,
     0,
-    "0x0000000000000000000000000000000000000000000000000000000000000000"
+    "0x0000000000000000000000000000000000000000000000000000000000000000",
   ];
 
   const signature = [];
   // i acts as nonce, starts from 0 and goes to the number of iterations for the benchmark
-  for(let i = 0; i < 10000; i++) {
+  for (let i = 0; i < 10000; i++) {
     // tokenID
     calldata[7] = numberToHex(i, 256);
-    signature[i] = calculateHexSignature(ARGENT_CONTRACT_ADDRESS, calldata, i, SIGNER_PRIVATE);
+    signature[i] = calculateHexSignature(
+      ARGENT_CONTRACT_ADDRESS,
+      calldata,
+      i,
+      SIGNER_PRIVATE,
+    );
   }
 
   userContext.vars.signature = signature;
@@ -92,7 +109,7 @@ async function executeERC20Transfer(userContext, events, done) {
     TEST_CONTRACT_ADDRESS,
     amount,
     nonce,
-    signature[nonce]
+    signature[nonce],
   ).send();
 
   // Update userContext nonce
@@ -112,7 +129,7 @@ async function executeERC721Mint(userContext, events, done) {
     TEST_CONTRACT_ADDRESS,
     tokenID,
     nonce,
-    signature[nonce]
+    signature[nonce],
   ).send();
 
   // Update userContext nonce

@@ -16,7 +16,7 @@ config:
     nonce: 0
   engines:
     substrate: {}
-before: 
+before:
   flow:
     - function: "presignTransferTransactions"
 scenarios:
