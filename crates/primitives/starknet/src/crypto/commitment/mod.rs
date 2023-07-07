@@ -1,13 +1,11 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use bitvec::prelude::Msb0;
-use bitvec::slice::BitSlice;
 use bitvec::vec::BitVec;
 use starknet_crypto::FieldElement;
 
 use super::hash::pedersen::PedersenHasher;
-use super::merkle_patricia_tree::merkle_tree::{MerkleTree, ProofNode};
+use super::merkle_patricia_tree::merkle_tree::{MerkleTree, NodesMapping, ProofNode};
 use super::merkle_patricia_tree::ref_merkle_tree::RefMerkleTree;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::HasherT;
@@ -48,7 +46,7 @@ impl<T: HasherT> CommitmentTree<T> {
     }
 
     /// Get the merkle root of the tree.
-    pub fn commit(self) -> Felt252Wrapper {
+    pub fn commit(&mut self) -> Felt252Wrapper {
         self.tree.commit()
     }
 }
@@ -87,10 +85,29 @@ impl<T: HasherT> StateCommitmentTree<T> {
         self.tree.commit()
     }
 
-    #[allow(dead_code)]
     /// Generates a proof for `key`. See [`MerkleTree::get_proof`].
-    pub fn get_proof(&self, key: &BitSlice<u8, Msb0>) -> Vec<ProofNode> {
-        self.tree.get_proof(key)
+    pub fn get_proof(&self, key: Felt252Wrapper) -> Vec<ProofNode> {
+        let key = &key.0.to_bytes_be()[..31];
+        self.tree.get_proof(&BitVec::from_vec(key.to_vec()))
+    }
+
+    /// Returns a leaf of the tree stored at key `key`
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The key of the value to retrieve.
+    ///
+    /// # Returns
+    ///
+    /// `Some(value)` - Value stored at the given key.
+    pub fn get(&self, key: Felt252Wrapper) -> Option<Felt252Wrapper> {
+        let key = &key.0.to_bytes_be()[..31];
+        self.tree.get(&BitVec::from_vec(key.to_vec()))
+    }
+
+    /// Returns the tree's nodes
+    pub fn nodes(&self) -> NodesMapping {
+        NodesMapping(self.tree.nodes())
     }
 }
 

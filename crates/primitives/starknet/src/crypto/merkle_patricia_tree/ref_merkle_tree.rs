@@ -88,7 +88,7 @@ impl<H: HasherT> RefMerkleTree<H> {
     ///
     /// Note that the root is reference counted in storage. Committing the
     /// same tree again will therefore increment the count again.
-    pub fn commit(mut self) -> Felt252Wrapper {
+    pub fn commit(&mut self) -> Felt252Wrapper {
         self.commit_mut()
     }
     /// Return the state root.
