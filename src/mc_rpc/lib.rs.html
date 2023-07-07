@@ -1027,6 +1027,10 @@
 <a href="#1027" id="1027">1027</a>
 <a href="#1028" id="1028">1028</a>
 <a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1651,21 +1655,25 @@
 
         <span class="kw">let </span>block = get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_block_hash).unwrap_or_default();
 
-        <span class="kw">let </span>parent_block_hash = (TryInto::&lt;FieldElement&gt;::try_into(block.header().parent_block_hash)).unwrap();
+        <span class="kw">let </span>old_root = <span class="kw">if </span>block.header().block_number &gt; <span class="number">0 </span>{
+            <span class="kw">let </span>parent_block_hash = (TryInto::&lt;FieldElement&gt;::try_into(block.header().parent_block_hash)).unwrap();
+            <span class="kw">let </span>substrate_parent_block_hash =
+                <span class="self">self</span>.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
+                    <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
+                    StarknetRpcApiError::BlockNotFound
+                })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>substrate_parent_block_hash =
-            <span class="self">self</span>.substrate_block_hash_from_starknet_block(BlockId::Hash(parent_block_hash)).map_err(|e| {
-                <span class="macro">error!</span>(<span class="string">&quot;&#39;{e}&#39;&quot;</span>);
-                StarknetRpcApiError::BlockNotFound
-            })<span class="question-mark">?</span>;
-
-        <span class="kw">let </span>parent_block =
-            get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+            <span class="kw">let </span>parent_block =
+                get_block_by_block_hash(<span class="self">self</span>.client.as_ref(), substrate_parent_block_hash).unwrap_or_default();
+            parent_block.header().global_state_root.into()
+        } <span class="kw">else </span>{
+            FieldElement::default()
+        };
 
         <span class="prelude-val">Ok</span>(StateUpdate {
             block_hash: block.header().hash(<span class="kw-2">*</span><span class="self">self</span>.hasher).into(),
             new_root: block.header().global_state_root.into(),
-            old_root: parent_block.header().global_state_root.into(),
+            old_root,
             state_diff: StateDiff {
                 storage_diffs: Vec::new(),
                 deprecated_declared_classes: Vec::new(),
