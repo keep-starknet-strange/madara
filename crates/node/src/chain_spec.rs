@@ -170,6 +170,19 @@ fn testnet_genesis(
     let argent_proxy_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/Proxy.json"), 0);
     let argent_proxy_class_hash = Felt252Wrapper::from_hex_be(ARGENT_PROXY_CLASS_HASH).unwrap();
 
+    // BRAAVOS ACCOUNT CONTRACT
+    let braavos_account_class = get_contract_class(&read_file_to_string("src/genesis_assets/Account.json"), 0);
+    let braavos_account_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_CLASS_HASH).unwrap();
+    let braavos_account_base_impl_class =
+        get_contract_class(&read_file_to_string("src/genesis_assets/AccountBaseImpl.json"), 0);
+    let braavos_account_base_impl_class_hash =
+        Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_BASE_IMPL_CLASS_HASH).unwrap();
+    let braavos_call_aggregator_class =
+        get_contract_class(&read_file_to_string("src/genesis_assets/CallAggregator.json"), 0);
+    let braavos_call_aggregator_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_CALL_AGGREGATOR_CLASS_HASH).unwrap();
+    let braavos_proxy_class = get_contract_class(&read_file_to_string("../../cairo-contracts/build/Proxy.json"), 0);
+    let braavos_proxy_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_PROXY_CLASS_HASH).unwrap();
+
     // OZ ACCOUNT CONTRACT
     let oz_account_class =
         get_contract_class(&read_file_to_string("../../cairo-contracts/build/OpenzeppelinAccount.json"), 0);
@@ -243,6 +256,10 @@ fn testnet_genesis(
                 (fee_token_class_hash, erc20_class),
                 (nft_class_hash, erc721_class),
                 (udc_class_hash, udc_class),
+                (braavos_account_class_hash, braavos_account_class),
+                (braavos_account_base_impl_class_hash, braavos_account_base_impl_class),
+                (braavos_call_aggregator_class_hash, braavos_call_aggregator_class),
+                (braavos_proxy_class_hash, braavos_proxy_class),
             ],
             storage: vec![
                 (
