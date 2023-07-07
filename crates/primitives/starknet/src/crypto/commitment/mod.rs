@@ -18,7 +18,7 @@ pub type ClassCommitmentLeafHash = Felt252Wrapper;
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
-/// According to the [documentation](https://docs.starknet.io/docs/Blocks/header/#block-header)
+/// According to the [documentation](https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/header/)
 /// the commitment trees are of height 64, because the key used is the 64 bit representation
 /// of the index of the transaction / event within the block.
 ///
@@ -51,9 +51,9 @@ impl<T: HasherT> CommitmentTree<T> {
     }
 }
 
-/// A Patricia Merkle tree with height 251 used to compute transaction and event commitments.
+/// A Patricia Merkle tree with height 251 used to compute contract and class tree commitments.
 ///
-/// According to the [documentation](https://docs.starknet.io/docs/Blocks/header/#block-header)
+/// According to the [documentation](https://docs.starknet.io/documentation/architecture_and_concepts/State/starknet-state/)
 /// the commitment trees are of height 251, because the key used is a Field Element.
 ///
 /// The tree height is 251 in our case since our set operation takes Fieldelement index values.
@@ -360,7 +360,7 @@ where
 
 /// Calculate the hash of an event.
 ///
-/// See the [documentation](https://docs.starknet.io/docs/Events/starknet-events#event-hash)
+/// See the [documentation](https://docs.starknet.io/documentation/architecture_and_concepts/Events/starknet-events/#event_hash)
 /// for details.
 pub fn calculate_event_hash<T: HasherT>(event: &EventWrapper) -> FieldElement {
     let hasher = T::default();
