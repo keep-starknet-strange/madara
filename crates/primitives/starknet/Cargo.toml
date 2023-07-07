@@ -26,7 +26,7 @@ blockifier = { workspace = true, default-features = false, features = [
 cairo-lang-casm = { workspace = true, default-features = false }
 cairo-lang-casm-contract-class = { workspace = true }
 cairo-vm = { workspace = true }
-starknet-core = { workspace = true, optional = true }
+starknet-core = { workspace = true, default-features = false }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
@@ -69,7 +69,7 @@ std = [
   "starknet-crypto/std",
   "starknet-ff/std",
   "starknet-ff/serde",
-  "starknet-core",
+  "starknet-core/std",
   "blockifier/std",
   "starknet_api/std",
   # Substrate

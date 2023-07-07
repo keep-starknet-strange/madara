@@ -9,7 +9,7 @@ use bitvec::prelude::{BitSlice, BitVec, Msb0};
 
 use crate::crypto::merkle_patricia_tree::ref_merkle_node::{BinaryNode, Direction, EdgeNode, Node};
 use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::CryptoHasherT;
+use crate::traits::hash::HasherT;
 
 /// Lightweight representation of [BinaryNode]. Only holds left and right hashes.
 #[derive(Debug, PartialEq, Eq)]
@@ -65,12 +65,12 @@ pub enum ProofNode {
 ///
 /// For more information on how this functions internally, see [here](super::ref_merkle_tree).
 #[derive(Debug, Clone)]
-pub struct RefMerkleTree<H: CryptoHasherT> {
+pub struct RefMerkleTree<H: HasherT> {
     root: Rc<RefCell<Node>>,
     _hasher: PhantomData<H>,
 }
 
-impl<H: CryptoHasherT> RefMerkleTree<H> {
+impl<H: HasherT> RefMerkleTree<H> {
     /// Less visible initialization for `MerkleTree<T>` as the main entry points should be
     /// [`MerkleTree::<RcNodeStorage>::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.

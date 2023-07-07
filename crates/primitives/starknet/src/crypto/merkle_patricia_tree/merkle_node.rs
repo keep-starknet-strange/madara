@@ -11,7 +11,7 @@ use scale_codec::{Decode, Encode};
 use starknet_api::stdlib::collections::HashMap;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::CryptoHasherT;
+use crate::traits::hash::HasherT;
 
 /// Id of a Node within the tree
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Default, Encode, Decode, scale_info::TypeInfo, PartialOrd, Ord, Hash)]
@@ -155,7 +155,7 @@ impl BinaryNode {
     ///
     /// If either child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
+    pub(crate) fn calculate_hash<H: HasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
         if self.hash.is_some() {
             return;
         }
@@ -176,9 +176,7 @@ impl BinaryNode {
             None => unreachable!("right child not found"),
         };
 
-        let hash = Felt252Wrapper(H::hash(left.0, right.0));
-
-        self.hash = Some(hash);
+        self.hash = Some(Felt252Wrapper(H::default().hash_elements(left.0, right.0)));
     }
 }
 
@@ -268,7 +266,7 @@ impl EdgeNode {
     ///
     /// If the child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
+    pub(crate) fn calculate_hash<H: HasherT>(&mut self, nodes: &HashMap<NodeId, Node>) {
         if self.hash.is_some() {
             return;
         }
@@ -290,9 +288,7 @@ impl EdgeNode {
         length[31] = self.path.len() as u8;
 
         let length = Felt252Wrapper::try_from(&length).unwrap();
-
-        let hash = Felt252Wrapper(H::hash(child.0, path.0) + length.0);
-
+        let hash = Felt252Wrapper(H::default().hash_elements(child.0, path.0) + length.0);
         self.hash = Some(hash);
     }
 }

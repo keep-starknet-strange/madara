@@ -15,7 +15,7 @@ use starknet_api::stdlib::collections::HashMap;
 
 use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, EdgeNode, Node, NodeId};
 use crate::execution::types::Felt252Wrapper;
-use crate::traits::hash::CryptoHasherT;
+use crate::traits::hash::HasherT;
 
 /// Wrapper type for a [HashMap<NodeId, Node>] object. (It's not really a wrapper it's a
 /// copy of the type but we implement the necessary traits.)
@@ -142,14 +142,14 @@ impl Serialize for ProofNode {
 ///
 /// For more information on how this functions internally, see [here](super::merkle_node).
 #[derive(Debug, Clone, PartialEq, scale_codec::Encode, scale_info::TypeInfo, scale_codec::Decode)]
-pub struct MerkleTree<H: CryptoHasherT> {
+pub struct MerkleTree<H: HasherT> {
     root: NodeId,
     nodes: NodesMapping,
     latest_node_id: NodeId,
     _hasher: PhantomData<H>,
 }
 
-impl<H: CryptoHasherT> MerkleTree<H> {
+impl<H: HasherT> MerkleTree<H> {
     /// Less visible initialization for `MerkleTree<T>` as the main entry points should be
     /// [`MerkleTree::<RcNodeStorage>::load`] for persistent trees and [`MerkleTree::empty`] for
     /// transient ones.

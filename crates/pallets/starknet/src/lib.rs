@@ -81,7 +81,7 @@ use mp_starknet::execution::types::{
 };
 use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
+use mp_starknet::traits::hash::{DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
@@ -136,7 +136,7 @@ pub mod pallet {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The hashing function to use.
-        type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
+        type SystemHash: HasherT + DefaultHasher;
         /// The time idk what.
         type TimestampProvider: Time;
         /// A configuration for base priority of unsigned transactions.
@@ -1108,8 +1108,8 @@ impl<T: Config> Pallet<T> {
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
-            TxType::Invoke,
-            None,
+            transaction.tx_type.clone(),
+            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Transaction executed successfully: {:?}", v);
