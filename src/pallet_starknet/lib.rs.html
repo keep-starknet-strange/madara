@@ -1706,7 +1706,7 @@
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) =&gt; {
-                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Invoke Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
 
                     <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(execute_call_info, fee_transfer_call_info)<span class="question-mark">?</span>;
 
@@ -1718,7 +1718,7 @@
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                    <span class="macro">log!</span>(error, <span class="string">&quot;Invoke Transaction execution failed: {:?}&quot;</span>, e);
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             };
@@ -1779,7 +1779,7 @@
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) =&gt; {
-                    <span class="macro">log!</span>(trace, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
+                    <span class="macro">log!</span>(trace, <span class="string">&quot;Declare Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
 
                     <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(execute_call_info, fee_transfer_call_info)<span class="question-mark">?</span>;
 
@@ -1791,7 +1791,7 @@
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                    <span class="macro">log!</span>(error, <span class="string">&quot;Declare Transaction execution failed: {:?}&quot;</span>, e);
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             };
@@ -1850,7 +1850,7 @@
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) =&gt; {
-                    <span class="macro">log!</span>(trace, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
+                    <span class="macro">log!</span>(trace, <span class="string">&quot;Deploy_account Transaction executed successfully: {:?}&quot;</span>, execute_call_info);
 
                     <span class="kw">let </span>events = <span class="self">Self</span>::emit_events_for_calls(execute_call_info, fee_transfer_call_info)<span class="question-mark">?</span>;
 
@@ -1862,7 +1862,7 @@
                     }
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                    <span class="macro">log!</span>(error, <span class="string">&quot;Deploy_account Transaction execution failed: {:?}&quot;</span>, e);
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             };
@@ -1906,10 +1906,10 @@
                 <span class="prelude-val">None</span>,
             ) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
-                    <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
+                    <span class="macro">log!</span>(debug, <span class="string">&quot;Successfully consumed a message from L1: {:?}&quot;</span>, v);
                 }
                 <span class="prelude-val">Err</span>(e) =&gt; {
-                    <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                    <span class="macro">log!</span>(error, <span class="string">&quot;Failed to consume a message from L1: {:?}&quot;</span>, e);
                     <span class="kw">return </span><span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into());
                 }
             }
@@ -2148,12 +2148,12 @@
 
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
-                <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
+                <span class="macro">log!</span>(debug, <span class="string">&quot;Successfully called a smart contract function: {:?}&quot;</span>, v);
                 <span class="kw">let </span>result = v.execution.retdata.<span class="number">0</span>.iter().map(|x| (<span class="kw-2">*</span>x).into()).collect();
                 <span class="prelude-val">Ok</span>(result)
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                <span class="macro">log!</span>(error, <span class="string">&quot;Failed to call a smart contract function: {:?}&quot;</span>, e);
                 <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
             }
         }
@@ -2292,7 +2292,7 @@
             transaction.contract_class.clone(),
         ) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
-                <span class="macro">log!</span>(debug, <span class="string">&quot;Transaction executed successfully: {:?}&quot;</span>, v);
+                <span class="macro">log!</span>(debug, <span class="string">&quot;Successfully estimated fee: {:?}&quot;</span>, v);
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(gas_usage) = v.actual_resources.get(<span class="string">&quot;l1_gas_usage&quot;</span>) {
                     <span class="prelude-val">Ok</span>((v.actual_fee.<span class="number">0 </span><span class="kw">as </span>u64, <span class="kw-2">*</span>gas_usage <span class="kw">as </span>u64))
                 } <span class="kw">else </span>{
@@ -2300,7 +2300,7 @@
                 }
             }
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">log!</span>(error, <span class="string">&quot;Transaction execution failed: {:?}&quot;</span>, e);
+                <span class="macro">log!</span>(error, <span class="string">&quot;Failed to estimate fee: {:?}&quot;</span>, e);
                 <span class="prelude-val">Err</span>(Error::&lt;T&gt;::TransactionExecutionFailed.into())
             }
         }
