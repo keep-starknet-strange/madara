@@ -31,7 +31,7 @@ export async function findAvailablePorts() {
         throw new Error("No available port");
       }
       return selectedPort;
-    })
+    }),
   );
 
   return {
@@ -53,7 +53,7 @@ let nodeStarted = false;
 export async function startMadaraDevNode(
   withWasm?: boolean,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  runtime: RuntimeChain = "madara"
+  runtime: RuntimeChain = "madara",
 ): Promise<{
   p2pPort: number;
   rpcPort: number;
@@ -126,7 +126,7 @@ export async function startMadaraDevNode(
     if ((err as any).errno == "ENOENT") {
       console.error(
         "\x1b[31mMissing Madara binary " +
-          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
+          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`,
       );
     } else {
       console.error(err);
@@ -226,7 +226,7 @@ export async function startMadaraForkedNode(rpcPort: number): Promise<{
     if ((err as any).errno == "ENOENT") {
       console.error(
         "\x1b[31mMissing Madara binary " +
-          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`
+          `(${BINARY_PATH}).\nPlease compile the Madara project\x1b[0m`,
       );
     } else {
       console.error(err);
