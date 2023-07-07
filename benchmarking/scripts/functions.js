@@ -28,8 +28,6 @@ function rpcMethods(userContext, events, done) {
 }
 
 function presignTransferTransactions(userContext, events, done) {
-  console.log("presignTransferTransactions");
-  console.log(userContext.vars);
   const amount =
     "0x0000000000000000000000000000000000000000000000000000000000000001";
   const calldata = [
@@ -55,7 +53,6 @@ function presignTransferTransactions(userContext, events, done) {
 }
 
 function presignMintTransactions(userContext, events, done) {
-  console.log("presignMintTransactions");
   const calldata = [
     "0x0000000000000000000000000000000000000000000000000000000000000001", // CALL ARRAY LEN
     NFT_CONTRACT_ADDRESS,                                                 // TO

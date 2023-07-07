@@ -2019,14 +2019,14 @@ describeDevMadara("Starknet RPC", (context) => {
         SALT,
         CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
         CONSTRUCTOR_CALLDATA,
-        0
+        0,
       );
 
       const account = new Account(
         providerRPC,
         accountAddress,
         SIGNER_PRIVATE,
-        "1"
+        "1",
       );
 
       // transfer native token to allow deployment
@@ -2034,7 +2034,7 @@ describeDevMadara("Starknet RPC", (context) => {
         providerRPC,
         ARGENT_CONTRACT_NONCE,
         accountAddress,
-        "0xfffffffffffffffffffffffff"
+        "0xfffffffffffffffffffffffff",
       );
       await jumpBlocks(context, 1);
 
@@ -2045,12 +2045,12 @@ describeDevMadara("Starknet RPC", (context) => {
           addressSalt: SALT,
           constructorCalldata: CONSTRUCTOR_CALLDATA,
         },
-        { maxFee: "123456" }
+        { maxFee: "123456" },
       );
       await jumpBlocks(context, 1);
 
       expect(await providerRPC.getClassHashAt(accountAddress)).to.be.equal(
-        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH
+        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
       );
     });
 
@@ -2059,7 +2059,7 @@ describeDevMadara("Starknet RPC", (context) => {
         providerRPC,
         CAIRO_1_ACCOUNT_CONTRACT,
         SIGNER_PRIVATE, // it's the no validate account
-        "1"
+        "1",
       );
       // computed via: starknetjs 5.14.1
       const classHash =
@@ -2073,14 +2073,14 @@ describeDevMadara("Starknet RPC", (context) => {
           nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
           version: 1,
           maxFee: "123456",
-        }
+        },
       );
       CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
       await jumpBlocks(context, 1);
 
       const contractClassActual = await providerRPC.getClass(
         classHash,
-        "latest"
+        "latest",
       );
       // TODO: (Apoorv) make these checks better once we to_rpc_contract_class is fixed #775 and #790
       expect(contractClassActual).to.have.property("entry_points_by_type");
@@ -2105,7 +2105,7 @@ describeDevMadara("Starknet RPC", (context) => {
           maxFee: "123456",
           nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
           version: 1,
-        }
+        },
       );
       CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
       await jumpBlocks(context, 1);
@@ -2113,7 +2113,7 @@ describeDevMadara("Starknet RPC", (context) => {
       const balance = await providerRPC.getStorageAt(
         deployRes.contract_address[0],
         "0x617243ac31335377b9d26d1a6b02f47b419ad593e1ae67660dd27ec77635906",
-        "latest"
+        "latest",
       );
       expect(toHex(balance)).to.be.equal("0xffffffffffffffffffffffffffffffff");
 
@@ -2134,7 +2134,7 @@ describeDevMadara("Starknet RPC", (context) => {
           maxFee: "123456",
           nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
           version: 1,
-        }
+        },
       );
       await jumpBlocks(context, 1);
 
@@ -2142,17 +2142,17 @@ describeDevMadara("Starknet RPC", (context) => {
         deployRes.contract_address[0],
         //  hex(get_storage_var_address("balances", 0x4))
         "0x617243ac31335377b9d26d1a6b02f47b419ad593e1ae67660dd27ec77635906",
-        "latest"
+        "latest",
       );
       expect(toHex(balanceSender)).to.be.equal("0x0");
       const balanceRecipient = await providerRPC.getStorageAt(
         deployRes.contract_address[0],
         // hex(get_storage_var_address("balances", 0x1))
         "0x753d37842b9cfa00ee311ab2564951681d89ee4d5596e84e74030de35018c8a",
-        "latest"
+        "latest",
       );
       expect(toHex(balanceRecipient)).to.be.equal(
-        "0xffffffffffffffffffffffffffffffff"
+        "0xffffffffffffffffffffffffffffffff",
       );
     });
   });
