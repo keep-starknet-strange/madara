@@ -5,30 +5,21 @@ use starknet_crypto::FieldElement;
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 
 /// A trait for hashing.
-pub trait HasherT {
+pub trait HasherT: Default {
     /// Hashes the given data.
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    fn hash(&self, data: &[u8]) -> Felt252Wrapper;
+    fn hash_bytes(&self, data: &[u8]) -> Felt252Wrapper;
 
     // Hashes the given data.
     /// # Arguments
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper;
-}
+    fn compute_hash_on_wrappers(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper;
 
-/// A trait for default hashing instance.
-pub trait DefaultHasher {
-    /// Get Hasher default instance.
-    fn hasher() -> Self;
-}
-
-/// A trait for hashing with pedersen.
-pub trait CryptoHasherT {
     /// Hashes the 2 felts sent.
     ///
     /// # Arguments
@@ -39,7 +30,7 @@ pub trait CryptoHasherT {
     /// # Returns
     ///
     /// The hash of the 2 values.
-    fn hash(a: FieldElement, b: FieldElement) -> FieldElement;
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement;
 
     /// Computes a hash chain over the data, in the following order:
     /// h(h(h(h(0, data\[0\]), data\[1\]), ...), data\[n-1\]), n).
@@ -54,5 +45,11 @@ pub trait CryptoHasherT {
     /// # Returns
     ///
     /// The hash of the array.
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement;
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement;
+}
+
+/// A trait for default hashing instance.
+pub trait DefaultHasher {
+    /// Get Hasher default instance.
+    fn hasher() -> Self;
 }

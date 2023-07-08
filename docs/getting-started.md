@@ -141,19 +141,13 @@ Build custom chain spec:
 
 ```bash
 # Build plain chain spec
-cargo run --release -- build-spec --chain local > infra/chain-specs/madara-local-testnet-plain.json
+cargo run --release -- build-spec --chain local > chain-specs/madara-local-testnet-plain.json
 # Build final raw chain spec
-cargo run --release -- build-spec --chain infra/chain-specs/madara-local-testnet-plain.json --raw > infra/chain-specs/madara-local-testnet.json
+cargo run --release -- build-spec --chain chain-specs/madara-local-testnet-plain.json --raw > chain-specs/madara-local-testnet.json
 ```
 
 See more details about
 [custom chain specs](https://docs.substrate.io/reference/how-to-guides/basics/customize-a-chain-specification/).
-
-Run the local testnet:
-
-```bash
-./infra/local-testnet/run.sh
-```
 
 ### Testing Madara RPC Endpoints
 
@@ -206,20 +200,20 @@ First, install [Docker](https://docs.docker.com/get-docker/) and
 Then run the following command to start a single node development chain.
 
 ```bash
-docker-compose -f infra/docker/docker-compose.yml up -d
+docker run --rm [TAG] --dev
 ```
 
 This command will firstly compile your code, and then start a local development
-network. You can also use the `docker_run.sh` script appending your own command.
-A few useful ones are as follow.
+network. The TAGS are available
+[here](https://github.com/keep-starknet-strange/madara/pkgs/container/madara).
+
+You can also use the command appending your own options. A few useful ones are
+as follow.
 
 ```bash
 # Run Substrate node without re-compiling
-./infra/docker/docker_run.sh ./target/release/madara --dev --ws-external
+docker run --rm [TAG] --dev --ws-external
 
 # Purge the local dev chain
-./infra/docker/docker_run.sh ./target/release/madara purge-chain --dev
-
-# Check whether the code is compilable
-./infra/docker/docker_run.sh cargo check
+docker run --rm [TAG] purge-chain --dev
 ```
