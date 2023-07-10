@@ -17,7 +17,7 @@ use crate::crypto::merkle_patricia_tree::merkle_node::{BinaryNode, Direction, No
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::types::Felt252Wrapper;
 use crate::tests::utils::PEDERSEN_ZERO_HASH;
-use crate::traits::hash::{CryptoHasherT, HasherT};
+use crate::traits::hash::HasherT;
 use crate::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
 };
@@ -177,7 +177,7 @@ fn test_event_hash() {
 #[test]
 fn test_pedersen_hash() {
     let pedersen_hasher = PedersenHasher::default();
-    let hash_result = pedersen_hasher.hash(&test_data());
+    let hash_result = pedersen_hasher.hash_bytes(&test_data());
     let expected_hash = hash(Hasher::Pedersen(PedersenHasher::default()), &test_data());
 
     assert_eq!(hash_result, expected_hash);
@@ -186,7 +186,7 @@ fn test_pedersen_hash() {
 #[test]
 fn test_poseidon_hash() {
     let poseidon = PoseidonHasher::default();
-    let hash_result = poseidon.hash(&test_data());
+    let hash_result = poseidon.hash_bytes(&test_data());
     let expected_hash = hash(Hasher::Poseidon(PoseidonHasher::default()), &test_data());
 
     assert_eq!(hash_result, expected_hash);
@@ -200,14 +200,23 @@ fn test_data() -> Vec<u8> {
     ]
 }
 
-struct TestCryptoHasher;
+#[derive(Default)]
+struct TestHasher;
 
-impl CryptoHasherT for TestCryptoHasher {
-    fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
+impl HasherT for TestHasher {
+    fn hash_bytes(&self, _data: &[u8]) -> Felt252Wrapper {
+        unimplemented!()
+    }
+
+    fn compute_hash_on_wrappers(&self, _data: &[Felt252Wrapper]) -> Felt252Wrapper {
+        unimplemented!()
+    }
+
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement {
         a + b
     }
 
-    fn compute_hash_on_elements(elements: &[FieldElement]) -> FieldElement {
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement {
         if elements.is_empty() {
             FieldElement::ZERO
         } else {
@@ -259,7 +268,7 @@ fn test_binary_node_calculate_hash() {
 
     let mut binary_node = BinaryNode { hash: None, height: 0, left: NodeId(0), right: NodeId(1) };
 
-    binary_node.calculate_hash::<TestCryptoHasher>(&nodes);
+    binary_node.calculate_hash::<TestHasher>(&nodes);
     assert_eq!(binary_node.hash, Some(Felt252Wrapper::from(5_u32)));
 }
 
@@ -285,7 +294,7 @@ fn test_pedersen_hash_elements_zero() {
     let elements = vec![Felt252Wrapper::ZERO, Felt252Wrapper::ONE];
 
     let expected_hash = compute_hash_on_elements(&[FieldElement::ZERO, FieldElement::ONE]);
-    assert_eq!(PedersenHasher::default().hash_elements(&elements), expected_hash.into());
+    assert_eq!(PedersenHasher::default().compute_hash_on_wrappers(&elements), expected_hash.into());
 }
 
 #[test]
@@ -293,7 +302,7 @@ fn test_pedersen_hash_elements_empty() {
     let elements = vec![];
 
     assert_eq!(
-        PedersenHasher::default().hash_elements(&elements),
+        PedersenHasher::default().compute_hash_on_wrappers(&elements),
         Felt252Wrapper::from_hex_be(PEDERSEN_ZERO_HASH).unwrap()
     );
 }

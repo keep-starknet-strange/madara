@@ -17,6 +17,12 @@ import { extractError, type ExtrinsicCreation } from "./substrate-rpc";
 import { type KeyringPair } from "@polkadot/keyring/types";
 import debugFactory from "debug";
 import { InvokeFunctionResponse } from "starknet";
+
+import chaiAsPromised from "chai-as-promised";
+import chai from "chai";
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
+import process from "process";
+
 const debug = debugFactory("test:setup");
 
 export interface BlockCreation {
@@ -29,7 +35,7 @@ export interface BlockCreationResponse<
   Call extends
     | SubmittableExtrinsic<ApiType>
     | string
-    | Array<SubmittableExtrinsic<ApiType> | string>
+    | Array<SubmittableExtrinsic<ApiType> | string>,
 > {
   block: {
     duration: number;
@@ -52,10 +58,10 @@ export interface DevTestContext {
       | string
       | Promise<string>
       | Promise<InvokeFunctionResponse>,
-    Calls extends Call | Call[]
+    Calls extends Call | Call[],
   >(
     transactions?: Calls,
-    options?: BlockCreation
+    options?: BlockCreation,
   ) => Promise<
     BlockCreationResponse<
       ApiType,
@@ -74,16 +80,27 @@ interface InternalDevTestContext extends DevTestContext {
   _polkadotApis: ApiPromise[];
 }
 
+interface DevMadaraOptions {
+  runNewNode?: boolean;
+  withWasm?: boolean;
+  forkedMode?: boolean;
+}
+
 export function describeDevMadara(
   title: string,
   cb: (context: DevTestContext) => void,
+  options: DevMadaraOptions = {
+    runNewNode: false,
+    forkedMode: false,
+  },
   runtime: RuntimeChain = "madara",
-  withWasm?: boolean,
-  forkedMode?: boolean
 ) {
   describe(title, function () {
     // Set timeout to 50000 for all tests.
     this.timeout(50000);
+
+    chai.use(deepEqualInAnyOrder);
+    chai.use(chaiAsPromised);
 
     // The context is initialized empty to allow passing a reference
     // and to be filled once the node information is retrieved
@@ -95,15 +112,8 @@ export function describeDevMadara(
     // Making sure the Madara node has started
     before("Starting Madara Test Node", async function () {
       this.timeout(SPAWNING_TIME);
-      const init = forkedMode
-        ? await startMadaraForkedNode(9933)
-        : !DEBUG_MODE
-        ? await startMadaraDevNode(withWasm, runtime)
-        : {
-            runningNode: null,
-            p2pPort: 19931,
-            rpcPort: 9933,
-          };
+
+      const init = await getRunningNode(runtime, options);
       madaraProcess = init.runningNode;
       context.rpcPort = init.rpcPort;
 
@@ -140,10 +150,10 @@ export function describeDevMadara(
           | string
           | Promise<string>
           | Promise<InvokeFunctionResponse>,
-        Calls extends Call | Call[]
+        Calls extends Call | Call[],
       >(
         transactions?: Calls,
-        options: BlockCreation = {}
+        options: BlockCreation = {},
       ) => {
         const results: Array<
           { type: "starknet"; hash: string } | { type: "sub"; hash: string }
@@ -180,7 +190,7 @@ export function describeDevMadara(
             debug(
               `- Signed: ${tx.method.section}.${tx.method.method}(${tx.args
                 .map((d) => d.toHuman())
-                .join("; ")}) [ nonce: ${tx.nonce}]`
+                .join("; ")}) [ nonce: ${tx.nonce}]`,
             );
             results.push({
               type: "sub",
@@ -191,7 +201,7 @@ export function describeDevMadara(
             debug(
               `- Unsigned: ${tx.method.section}.${tx.method.method}(${tx.args
                 .map((d) => d.toHuman())
-                .join("; ")}) [ nonce: ${tx.nonce}]`
+                .join("; ")}) [ nonce: ${tx.nonce}]`,
             );
             results.push({
               type: "sub",
@@ -204,7 +214,7 @@ export function describeDevMadara(
         const blockResult = await createAndFinalizeBlock(
           context.polkadotApi,
           parentHash,
-          finalize
+          finalize,
         );
 
         // No need to extract events if no transactions
@@ -222,7 +232,7 @@ export function describeDevMadara(
           .events()) as any;
         // We retrieve the block (including the extrinsics)
         const blockData = await context.polkadotApi.rpc.chain.getBlock(
-          blockResult.hash
+          blockResult.hash,
         );
 
         const result: ExtrinsicCreation[] = results.map((result) => {
@@ -234,17 +244,17 @@ export function describeDevMadara(
                       phase.isApplyExtrinsic &&
                       section == "starknet" &&
                       method == "Executed" &&
-                      data[2].toString() == result.hash
+                      data[2].toString() == result.hash,
                   )
                   ?.phase?.asApplyExtrinsic?.toNumber()
               : blockData.block.extrinsics.findIndex(
-                  (ext) => ext.hash.toHex() == result.hash
+                  (ext) => ext.hash.toHex() == result.hash,
                 );
           // We retrieve the events associated with the extrinsic
           const events = allRecords.filter(
             ({ phase }) =>
               phase.isApplyExtrinsic &&
-              phase.asApplyExtrinsic.toNumber() === extrinsicIndex
+              phase.asApplyExtrinsic.toNumber() === extrinsicIndex,
           );
           const failure = extractError(events);
           return {
@@ -281,7 +291,7 @@ export function describeDevMadara(
       await Promise.all(
         context._polkadotApis.map(async (p) => {
           await p.disconnect();
-        })
+        }),
       );
 
       if (madaraProcess) {
@@ -296,3 +306,32 @@ export function describeDevMadara(
     cb(context);
   });
 }
+
+const getRunningNode = async (
+  runtime: RuntimeChain,
+  options: DevMadaraOptions,
+) => {
+  if (options.forkedMode) {
+    return await startMadaraForkedNode(9933);
+  }
+
+  if (!DEBUG_MODE) {
+    if (!options.runNewNode) {
+      const p2pPort = parseInt(process.env.P2P_PORT);
+      const rpcPort = parseInt(process.env.RPC_PORT);
+      return {
+        runningNode: null,
+        p2pPort,
+        rpcPort,
+      };
+    }
+
+    return await startMadaraDevNode(options.withWasm, runtime);
+  }
+
+  return {
+    runningNode: null,
+    p2pPort: 19931,
+    rpcPort: 9933,
+  };
+};

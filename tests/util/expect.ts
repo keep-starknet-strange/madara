@@ -25,7 +25,7 @@ export async function expectOk<
   BlockCreation extends BlockCreationResponse<
     ApiType,
     Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
-  >
+  >,
 >(call: Promise<BlockCreation>): Promise<BlockCreation> {
   const block = await call;
   if (Array.isArray(block.result)) {
@@ -38,7 +38,7 @@ export async function expectOk<
                 r.extrinsic.method.method
               }(${r.extrinsic.args.map((d) => d.toHuman()).join("; ")})`
             : ""
-        }`
+        }`,
       ).to.be.true;
     });
   } else {
@@ -58,14 +58,14 @@ export function expectSubstrateEvent<
   Event extends AugmentedEvents<ApiType>,
   Section extends keyof Event,
   Method extends keyof Event[Section],
-  Tuple extends ExtractTuple<Event[Section][Method]>
+  Tuple extends ExtractTuple<Event[Section][Method]>,
 >(
   block: BlockCreationResponse<
     ApiType,
     Calls extends Call[] ? Array<Awaited<Call>> : Awaited<Call>
   >,
   section: Section,
-  method: Method
+  method: Method,
 ): IEvent<Tuple> {
   let event: EventRecord = null;
   if (Array.isArray(block.result)) {
@@ -73,16 +73,16 @@ export function expectSubstrateEvent<
       const foundEvents = r.events.filter(
         ({ event }) =>
           event.section.toString() == section &&
-          event.method.toString() == method
+          event.method.toString() == method,
       );
       if (foundEvents.length > 0) {
         expect(
           event,
-          `Event ${section.toString()}.${method.toString()} appeared multiple times`
+          `Event ${section.toString()}.${method.toString()} appeared multiple times`,
         ).to.be.null;
         expect(
           foundEvents,
-          `Event ${section.toString()}.${method.toString()} appeared multiple times`
+          `Event ${section.toString()}.${method.toString()} appeared multiple times`,
         ).to.be.length(1);
         event = foundEvents[0];
       }
@@ -90,12 +90,13 @@ export function expectSubstrateEvent<
   } else {
     const foundEvents = block.result.events.filter(
       ({ event }) =>
-        event.section.toString() == section && event.method.toString() == method
+        event.section.toString() == section &&
+        event.method.toString() == method,
     );
     if (foundEvents.length > 0) {
       expect(
         foundEvents,
-        `Event ${section.toString()}.${method.toString()} appeared multiple times`
+        `Event ${section.toString()}.${method.toString()} appeared multiple times`,
       ).to.be.length(1);
       event = foundEvents[0];
     }
@@ -116,7 +117,7 @@ export function expectSubstrateEvents<
   Event extends AugmentedEvents<ApiType>,
   Section extends keyof Event,
   Method extends keyof Event[Section],
-  Tuple extends ExtractTuple<Event[Section][Method]>
+  Tuple extends ExtractTuple<Event[Section][Method]>,
 >(
   block: BlockCreationResponse<
     ApiType,
@@ -124,7 +125,7 @@ export function expectSubstrateEvents<
   >,
   section: Section,
   method: Method,
-  count = 0 // if 0, doesn't check
+  count = 0, // if 0, doesn't check
 ): Array<IEvent<Tuple>> {
   const events: EventRecord[] = [];
   if (Array.isArray(block.result)) {
@@ -132,7 +133,7 @@ export function expectSubstrateEvents<
       const foundEvents = r.events.filter(
         ({ event }) =>
           event.section.toString() == section &&
-          event.method.toString() == method
+          event.method.toString() == method,
       );
       if (foundEvents.length > 0) {
         events.push(...foundEvents);
@@ -141,7 +142,8 @@ export function expectSubstrateEvents<
   } else {
     const foundEvents = block.result.events.filter(
       ({ event }) =>
-        event.section.toString() == section && event.method.toString() == method
+        event.section.toString() == section &&
+        event.method.toString() == method,
     );
     if (foundEvents.length > 0) {
       events.push(...foundEvents);
