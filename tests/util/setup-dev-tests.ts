@@ -17,6 +17,12 @@ import { extractError, type ExtrinsicCreation } from "./substrate-rpc";
 import { type KeyringPair } from "@polkadot/keyring/types";
 import debugFactory from "debug";
 import { InvokeFunctionResponse } from "starknet";
+
+import chaiAsPromised from "chai-as-promised";
+import chai from "chai";
+import deepEqualInAnyOrder from "deep-equal-in-any-order";
+import process from "process";
+
 const debug = debugFactory("test:setup");
 
 export interface BlockCreation {
@@ -74,16 +80,27 @@ interface InternalDevTestContext extends DevTestContext {
   _polkadotApis: ApiPromise[];
 }
 
+interface DevMadaraOptions {
+  runNewNode?: boolean;
+  withWasm?: boolean;
+  forkedMode?: boolean;
+}
+
 export function describeDevMadara(
   title: string,
   cb: (context: DevTestContext) => void,
+  options: DevMadaraOptions = {
+    runNewNode: false,
+    forkedMode: false,
+  },
   runtime: RuntimeChain = "madara",
-  withWasm?: boolean,
-  forkedMode?: boolean,
 ) {
   describe(title, function () {
     // Set timeout to 50000 for all tests.
     this.timeout(50000);
+
+    chai.use(deepEqualInAnyOrder);
+    chai.use(chaiAsPromised);
 
     // The context is initialized empty to allow passing a reference
     // and to be filled once the node information is retrieved
@@ -95,15 +112,8 @@ export function describeDevMadara(
     // Making sure the Madara node has started
     before("Starting Madara Test Node", async function () {
       this.timeout(SPAWNING_TIME);
-      const init = forkedMode
-        ? await startMadaraForkedNode(9933)
-        : !DEBUG_MODE
-        ? await startMadaraDevNode(withWasm, runtime)
-        : {
-            runningNode: null,
-            p2pPort: 19931,
-            rpcPort: 9933,
-          };
+
+      const init = await getRunningNode(runtime, options);
       madaraProcess = init.runningNode;
       context.rpcPort = init.rpcPort;
 
@@ -296,3 +306,32 @@ export function describeDevMadara(
     cb(context);
   });
 }
+
+const getRunningNode = async (
+  runtime: RuntimeChain,
+  options: DevMadaraOptions,
+) => {
+  if (options.forkedMode) {
+    return await startMadaraForkedNode(9933);
+  }
+
+  if (!DEBUG_MODE) {
+    if (!options.runNewNode) {
+      const p2pPort = parseInt(process.env.P2P_PORT);
+      const rpcPort = parseInt(process.env.RPC_PORT);
+      return {
+        runningNode: null,
+        p2pPort,
+        rpcPort,
+      };
+    }
+
+    return await startMadaraDevNode(options.withWasm, runtime);
+  }
+
+  return {
+    runningNode: null,
+    p2pPort: 19931,
+    rpcPort: 9933,
+  };
+};
