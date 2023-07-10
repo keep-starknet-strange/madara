@@ -152,7 +152,7 @@ cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git",
 anyhow = "1.0.71"
 flate2 = "1.0.26"
 scale-codec = { package = "parity-scale-codec", version = "3.2.2", default-features = false }
-scale-info = { version = "2.8.0", default-features = false }
+scale-info = { version = "2.9.0", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 log = { version = "0.4.19", default-features = false }
 hex = { version = "0.4.3", default-features = false }
