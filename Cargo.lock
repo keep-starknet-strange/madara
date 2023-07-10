@@ -5365,7 +5365,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "starknet-core",
- "starknet-crypto 0.5.1",
+ "starknet-crypto 0.6.0",
  "starknet-ff",
  "starknet_api",
  "thiserror-no-std",
@@ -6054,7 +6054,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "starknet-core",
- "starknet-crypto 0.5.1",
+ "starknet-crypto 0.6.0",
  "starknet_api",
  "test-case",
 ]
@@ -10776,7 +10776,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
