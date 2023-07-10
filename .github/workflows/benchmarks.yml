@@ -1,34 +1,9 @@
-name: Benchmark
+---
+name: Task - Benchmark
 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [main]
-    paths-ignore:
-      - ".github/**"
-      - "docs/**"
-      - "examples/**"
-      - ".*"
-      - "README.md"
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - ".github/**"
-      - "docs/**"
-      - "examples/**"
-      - ".*"
-      - "README.md"
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-permissions:
-  # deployments permission to deploy GitHub pages website
-  deployments: write
-  # contents permission to update benchmark contents in gh-pages branch
-  contents: write
-  # post on the pull-request page
-  pull-requests: write
+  workflow_call:
 
 jobs:
   benchmark:
@@ -44,8 +19,16 @@ jobs:
           npm run build
           cd ../benchmarking
           npm i
-      - name: Build madara in release mode
-        run: cargo build --profile production -p madara
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
       - name: Run benchmark
         run: |
           cd benchmarking
@@ -76,8 +59,26 @@ jobs:
           npm run build
           cd ../benchmarking
           npm i
-      - name: Build madara in release mode
-        run: cargo build --workspace --release --features madara-state-root
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
+      - name: Setup rust toolchain
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: rustup show
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Build the project
+        run: |
+          cargo build --release --workspace --features madara-state-root
       - name: Run benchmark
         run: |
           cd benchmarking
