@@ -33,6 +33,9 @@ use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 
+// Deoxys
+use mc_deoxys::fetch_block;
+
 use crate::cli::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
@@ -384,6 +387,10 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             )?;
 
             network_starter.start_network();
+
+            tokio::spawn(async move {
+                fetch_block(QUEUE.clone()).await;
+            });
 
             log::info!("Manual Seal Ready");
             return Ok(task_manager);
