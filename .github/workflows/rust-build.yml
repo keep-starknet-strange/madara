@@ -1,0 +1,37 @@
+---
+name: Task - Build Rust
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  rust_build:
+    runs-on: ubuntu-latest-32-cores
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Retrieve cached build
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+
+      - name: Setup rust toolchain
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: rustup show
+
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+
+      - name: Build the project
+        run: |
+          cargo build --release --workspace --features madara-state-root

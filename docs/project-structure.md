@@ -13,8 +13,6 @@ The Madara project consists of the following directories:
   - `primitives`: Stores primitives used by the pallets.
 - `docs`: Contains the project's documentation.
 - `examples`: Provides example implementations for the project.
-- `infra`: Houses infrastructure-related components, such as deployment scripts
-  and Dockerfiles.
 
 ### Node
 

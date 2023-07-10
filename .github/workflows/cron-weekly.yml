@@ -1,0 +1,12 @@
+---
+name: Workflow - Weekly Cron
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
+
+jobs:
+  weekly_pre-release:
+    name: Weekly pre-release
+    uses: ./.github/workflows/pre-release.yml

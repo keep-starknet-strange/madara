@@ -74,14 +74,14 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
-use mp_starknet::crypto::commitment::{self, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
 use mp_starknet::sequencer_address::{InherentError, InherentType, DEFAULT_SEQUENCER_ADDRESS, INHERENT_IDENTIFIER};
 use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA};
-use mp_starknet::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
+use mp_starknet::traits::hash::{DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
@@ -136,7 +136,7 @@ pub mod pallet {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// The hashing function to use.
-        type SystemHash: HasherT + DefaultHasher + CryptoHasherT;
+        type SystemHash: HasherT + DefaultHasher;
         /// The time idk what.
         type TimestampProvider: Time;
         /// A configuration for base priority of unsigned transactions.
@@ -229,8 +229,16 @@ pub mod pallet {
     /// Mapping of contract address to state trie.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn contract_tries)]
+    #[pallet::getter(fn contract_state_trie_by_address)]
     pub(super) type ContractTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
+
+    /// The Starknet pallet storage items.
+    /// STORAGE
+    /// Mapping of contract address to state root.
+    #[pallet::storage]
+    #[pallet::getter(fn contract_state_root_by_address)]
+    pub(super) type ContractsStateRoots<T: Config> =
+        StorageMap<_, Identity, ContractAddressWrapper, Felt252Wrapper, OptionQuery>;
 
     /// Pending storage slot updates
     /// STORAGE
@@ -238,7 +246,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn pending_storage_changes)]
     pub(super) type PendingStorageChanges<T: Config> =
-        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxTransactions>, OptionQuery>;
+        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxStorageSlots>, ValueQuery>;
 
     /// Current building block's events.
     // TODO: This is redundant information but more performant
@@ -371,13 +379,15 @@ pub mod pallet {
 
                 // Update state tries if enabled in the runtime configuration
                 if T::EnableStateRoot::get() {
-                    // Update classes trie
-                    let mut tree = StarknetStateCommitments::<T>::get().class_commitment;
-                    let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(*class_hash);
-                    tree.set(*class_hash, final_hash);
+                    // Update contracts trie
+                    let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
+                    let nonce = Pallet::<T>::nonce(address);
+                    let contract_root = Pallet::<T>::contract_state_root_by_address(address).unwrap_or_default();
+                    let hash = calculate_contract_state_hash::<T::SystemHash>(*class_hash, contract_root, nonce);
+                    tree.set(*address, hash);
 
-                    StarknetStateCommitments::<T>::mutate(|state| {
-                        state.class_commitment = tree;
+                    crate::StarknetStateCommitments::<T>::mutate(|state| {
+                        state.storage_commitment = tree;
                     })
                 }
             }
@@ -396,9 +406,7 @@ pub mod pallet {
                     // We will end up with only the latest storage slot update
                     // TODO: Estimate overhead of this approach
                     PendingStorageChanges::<T>::mutate(key.0, |storage_slots| {
-                        if let Some(storage_slots) = storage_slots {
-                            storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
-                        }
+                        storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
                     });
                 }
             }
@@ -518,7 +526,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(debug, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(debug, "Invoke Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
@@ -530,7 +538,7 @@ pub mod pallet {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Invoke Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
@@ -591,7 +599,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(trace, "Declare Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
@@ -603,7 +611,7 @@ pub mod pallet {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Declare Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
@@ -662,7 +670,7 @@ pub mod pallet {
                     actual_fee,
                     actual_resources: _actual_resources,
                 }) => {
-                    log!(trace, "Transaction executed successfully: {:?}", execute_call_info);
+                    log!(trace, "Deploy_account Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
@@ -674,7 +682,7 @@ pub mod pallet {
                     }
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Deploy_account Transaction execution failed: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             };
@@ -718,10 +726,10 @@ pub mod pallet {
                 None,
             ) {
                 Ok(v) => {
-                    log!(debug, "Transaction executed successfully: {:?}", v);
+                    log!(debug, "Successfully consumed a message from L1: {:?}", v);
                 }
                 Err(e) => {
-                    log!(error, "Transaction execution failed: {:?}", e);
+                    log!(error, "Failed to consume a message from L1: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
             }
@@ -960,12 +968,12 @@ impl<T: Config> Pallet<T> {
 
         match entrypoint.execute(&mut BlockifierStateAdapter::<T>::default(), block_context) {
             Ok(v) => {
-                log!(debug, "Transaction executed successfully: {:?}", v);
+                log!(debug, "Successfully called a smart contract function: {:?}", v);
                 let result = v.execution.retdata.0.iter().map(|x| (*x).into()).collect();
                 Ok(result)
             }
             Err(e) => {
-                log!(error, "Transaction execution failed: {:?}", e);
+                log!(error, "Failed to call a smart contract function: {:?}", e);
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
@@ -1100,11 +1108,11 @@ impl<T: Config> Pallet<T> {
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
-            TxType::Invoke,
-            None,
+            transaction.tx_type.clone(),
+            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
-                log!(debug, "Transaction executed successfully: {:?}", v);
+                log!(debug, "Successfully estimated fee: {:?}", v);
                 if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
                     Ok((v.actual_fee.0 as u64, *gas_usage as u64))
                 } else {
@@ -1112,7 +1120,7 @@ impl<T: Config> Pallet<T> {
                 }
             }
             Err(e) => {
-                log!(error, "Transaction execution failed: {:?}", e);
+                log!(error, "Failed to estimate fee: {:?}", e);
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
@@ -1168,21 +1176,26 @@ impl<T: Config> Pallet<T> {
             // And update the storage trie
             let state_root = state_tree.commit();
 
+            // Update contracts' states root mapping
+            ContractsStateRoots::<T>::set(contract_address, Some(state_root));
+
             let nonce = Self::nonce(contract_address);
             let class_hash = Self::contract_class_hash_by_address(contract_address).unwrap_or_default();
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
             commitments.storage_commitment.set(contract_address, hash);
         });
 
+        // Compute the final state root
+        let global_state_root = StateCommitment::<T::SystemHash>::calculate(
+            commitments.storage_commitment.commit(),
+            commitments.class_commitment.commit(),
+        );
+
         // Finally update the contracts trie in runtime storage.
         StarknetStateCommitments::<T>::mutate(|state| {
             state.storage_commitment = commitments.clone().storage_commitment;
         });
 
-        // Compute the final state root
-        StateCommitment::<T::SystemHash>::calculate(
-            commitments.storage_commitment.commit(),
-            commitments.class_commitment.commit(),
-        )
+        global_state_root
     }
 }

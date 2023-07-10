@@ -1,0 +1,33 @@
+---
+name: Task - Linters Cargo
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  # FIXME: check why this is rebuilding the project every time
+  cargo-lint:
+    runs-on: ubuntu-latest-32-cores
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retrieve cached build
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          fail-on-cache-miss: true
+      - name: Setup build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+      - name: Format and clippy
+        run: |
+          cargo fmt -- --check
+          cargo clippy --no-deps -- -D warnings
+          cargo clippy --tests --no-deps -- -D warnings
