@@ -4,8 +4,7 @@ name: Workflow - Release
 on:
   workflow_dispatch:
   release:
-    types:
-      - created
+    types: [published]
 
 jobs:
   docker_release_build:
