@@ -1,0 +1,29 @@
+[package]
+name = "mc-deoxys"
+version = "0.1.0"
+description = "Deoxys crate for Madara"
+authors = [
+	"Amine Mrad <https://github.com/sparqet>",
+    "Antiyro <https://github.com/antiyro>",
+]
+homepage = "https://github.com/KasarLabs/deoxys"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/KasarLabs/deoxys"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+sp-core = {workspace = true, features=["std"] }
+mp-starknet = { workspace = true, features=["std"] }
+starknet-gateway-types = { workspace = true }
+starknet-gateway-client = { workspace = true }
+log = { version = "0.4.14" }
+env_logger = "0.9.0"
+pathfinder-common = { workspace = true }
+pathfinder = { workspace = true }
+tokio = { workspace = true, features = ["macros", "test-util"] }
+reqwest = { workspace = true }
+serde_json = { workspace = true }
