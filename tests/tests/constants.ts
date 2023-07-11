@@ -61,31 +61,31 @@ export const UDC_CLASS_HASH = "0x90000";
 
 // Contract classes
 export const ERC20_CONTRACT: CompiledContract = json.parse(
-  fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii"),
+  fs.readFileSync("../cairo-contracts/build/ERC20.json").toString("ascii")
 );
 export const ERC721_CONTRACT: CompiledContract = json.parse(
-  fs.readFileSync("../cairo-contracts/build/ERC721.json").toString("ascii"),
+  fs.readFileSync("../cairo-contracts/build/ERC721.json").toString("ascii")
 );
 export const TEST_CONTRACT: CompiledContract = json.parse(
-  fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii"),
+  fs.readFileSync("../cairo-contracts/build/test.json").toString("ascii")
 );
 export const TEST_CAIRO_1_SIERRA: CompiledContract = json.parse(
   fs
     .readFileSync("../cairo-contracts/build/cairo_1/HelloStarknet.sierra.json")
-    .toString("ascii"),
+    .toString("ascii")
 );
 export const ERC20_CAIRO_1_SIERRA: CompiledContract = json.parse(
   fs
     .readFileSync("../cairo-contracts/build/cairo_1/erc20.sierra.json")
-    .toString("ascii"),
+    .toString("ascii")
 );
 export const TEST_CAIRO_1_CASM: CompiledSierraCasm = json.parse(
   fs
     .readFileSync("../cairo-contracts/build/cairo_1/HelloStarknet.casm.json")
-    .toString("ascii"),
+    .toString("ascii")
 );
 export const ERC20_CAIRO_1_CASM: CompiledSierraCasm = json.parse(
   fs
     .readFileSync("../cairo-contracts/build/cairo_1/erc20.casm.json")
-    .toString("ascii"),
+    .toString("ascii")
 );

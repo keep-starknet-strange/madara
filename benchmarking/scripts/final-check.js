@@ -23,7 +23,7 @@ async function main() {
         allRecords
           .filter(
             ({ phase }) =>
-              phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index),
+              phase.isApplyExtrinsic && phase.asApplyExtrinsic.eq(index)
           )
           .forEach(({ event }) => {
             // check for failed extrinsics
@@ -35,7 +35,7 @@ async function main() {
               // decode the error
               if (dispatchError.isModule) {
                 const decoded = api.registry.findMetaError(
-                  dispatchError.asModule,
+                  dispatchError.asModule
                 );
 
                 errorInfo = `${decoded.section}.${decoded.name}`;
@@ -50,7 +50,7 @@ async function main() {
               throw new Error(failed);
             }
           });
-      },
+      }
     );
   }
 }
