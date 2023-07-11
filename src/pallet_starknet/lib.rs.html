@@ -1199,6 +1199,9 @@
 <a href="#1199" id="1199">1199</a>
 <a href="#1200" id="1200">1200</a>
 <a href="#1201" id="1201">1201</a>
+<a href="#1202" id="1202">1202</a>
+<a href="#1203" id="1203">1203</a>
+<a href="#1204" id="1204">1204</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -2064,9 +2067,12 @@
         <span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
         <span class="kw">let </span><span class="kw-2">mut </span>state: BlockifierStateAdapter&lt;T&gt; = BlockifierStateAdapter::&lt;T&gt;::default();
         <span class="kw">let </span><span class="kw-2">mut </span>execution_resources = ExecutionResources::default();
-        transaction
-            .validate_account_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>tx_type)
-            .map_err(|<span class="kw">_</span>| TransactionValidityError::Invalid(InvalidTransaction::BadProof))<span class="question-mark">?</span>;
+        transaction.validate_account_tx(<span class="kw-2">&amp;mut </span>state, <span class="kw-2">&amp;mut </span>execution_resources, <span class="kw-2">&amp;</span>block_context, <span class="kw-2">&amp;</span>tx_type).map_err(
+            |e| {
+                <span class="macro">log!</span>(error, <span class="string">&quot;Transaction pool validation failed: {:?}&quot;</span>, e);
+                TransactionValidityError::Invalid(InvalidTransaction::BadProof)
+            },
+        )<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(())
     }
