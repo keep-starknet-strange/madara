@@ -39,7 +39,7 @@ use sp_inherents::InherentData;
 
 use lazy_static::lazy_static;
 // Deoxys
-use mc_deoxys::fetch_block;
+use mc_deoxys::{fetch_block, BlockQueue, create_block_queue};
 
 use crate::cli::Sealing;
 use crate::genesis_block::MadaraGenesisBlockBuilder;

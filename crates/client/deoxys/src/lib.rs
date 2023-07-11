@@ -133,11 +133,9 @@ pub fn from_gateway_to_starknet_block(_block: MaybePendingBlock) -> Block {
                 transaction_receipts.try_push(tx_receipt);
             }
 
-            let transactions = BlockTransactions::Full(transactions_vec);
-
             Block::new(
                 starknet_header,
-                transactions,
+                transactions_vec,
                 transaction_receipts
             )
         },
