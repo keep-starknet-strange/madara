@@ -1,6 +1,7 @@
-use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execution::types::{Felt252Wrapper, EntryPointTypeWrapper, ContractAddressWrapper, CallEntryPointWrapper, MaxCalldataSize, ContractClassWrapper, ClassHashWrapper}};
+use mp_starknet::{transaction::types::{Transaction, MaxArraySize, TxType}, execution::types::{Felt252Wrapper, EntryPointTypeWrapper, ContractAddressWrapper, CallEntryPointWrapper, MaxCalldataSize, ClassHashWrapper}};
 use sp_core::{bounded_vec::BoundedVec, U256};
 use starknet_gateway_types::reply::transaction::{DeclareTransaction, InvokeTransaction, DeployAccountTransaction, L1HandlerTransaction};
+use blockifier::execution::contract_class::ContractClass;
 
 pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Transaction {
     match declare_transaction {
@@ -32,7 +33,7 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 sender_address: Felt252Wrapper::try_from(declare_transactionv0v1.sender_address.get().as_be_bytes()).unwrap(),
                 nonce: ContractAddressWrapper::try_from(declare_transactionv0v1.nonce.0.as_be_bytes()).unwrap(),
                 call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClassWrapper>::default(),
+                contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
                 max_fee: Felt252Wrapper::try_from(declare_transactionv0v1.max_fee.0.as_be_bytes()).unwrap()
             };
@@ -67,7 +68,7 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 sender_address: Felt252Wrapper::try_from(declare_transactionv0v1.sender_address.get().as_be_bytes()).unwrap(),
                 nonce: ContractAddressWrapper::try_from(declare_transactionv0v1.nonce.0.as_be_bytes()).unwrap(),
                 call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClassWrapper>::default(),
+                contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
                 max_fee: Felt252Wrapper::try_from(declare_transactionv0v1.max_fee.0.as_be_bytes()).unwrap()
             };
@@ -102,7 +103,7 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 sender_address: Felt252Wrapper::try_from(declare_transactionv2.sender_address.get().as_be_bytes()).unwrap(),
                 nonce: ContractAddressWrapper::try_from(declare_transactionv2.nonce.0.as_be_bytes()).unwrap(),
                 call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClassWrapper>::default(),
+                contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
                 max_fee: Felt252Wrapper::try_from(declare_transactionv2.max_fee.0.as_be_bytes()).unwrap()
             };
@@ -143,7 +144,7 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
                 sender_address: Felt252Wrapper::try_from(invoke_transaction_v0.sender_address.get().as_be_bytes()).unwrap(),
                 nonce: ContractAddressWrapper::default(),
                 call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClassWrapper>::default(),
+                contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
                 max_fee: Felt252Wrapper::try_from(invoke_transaction_v0.max_fee.0.as_be_bytes()).unwrap()
             };
@@ -178,7 +179,7 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
                 sender_address: Felt252Wrapper::try_from(invoke_transaction_v1.sender_address.get().as_be_bytes()).unwrap(),
                 nonce: ContractAddressWrapper::default(),
                 call_entrypoint: call_entry_point,
-                contract_class: Option::<ContractClassWrapper>::default(),
+                contract_class: Option::<ContractClass>::default(),
                 contract_address_salt: Option::<U256>::default(),
                 max_fee: Felt252Wrapper::try_from(invoke_transaction_v1.max_fee.0.as_be_bytes()).unwrap()
             };
@@ -221,7 +222,7 @@ pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployA
         sender_address: Felt252Wrapper::try_from(deploy_account_transaction.contract_address.get().as_be_bytes()).unwrap(),
         nonce: ContractAddressWrapper::try_from(deploy_account_transaction.nonce.0.as_be_bytes()).unwrap(),
         call_entrypoint: call_entry_point,
-        contract_class: Option::<ContractClassWrapper>::default(),
+        contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Some(U256::try_from(deploy_account_transaction.contract_address_salt.0.as_be_bytes()).unwrap()),
         max_fee: Felt252Wrapper::try_from(deploy_account_transaction.max_fee.0.as_be_bytes()).unwrap()
     };
@@ -255,7 +256,7 @@ pub fn l1handler_tx_to_starknet_tx(mut l1hander_transaction : L1HandlerTransacti
         sender_address: Felt252Wrapper::try_from(l1hander_transaction.contract_address.get().as_be_bytes()).unwrap(),
         nonce: ContractAddressWrapper::try_from(l1hander_transaction.nonce.0.as_be_bytes()).unwrap(),
         call_entrypoint: call_entry_point,
-        contract_class: Option::<ContractClassWrapper>::default(),
+        contract_class: Option::<ContractClass>::default(),
         contract_address_salt: Option::<U256>::default(),
         max_fee: Felt252Wrapper::ONE
     };

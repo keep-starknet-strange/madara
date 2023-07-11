@@ -27,3 +27,6 @@ pathfinder = { workspace = true }
 tokio = { workspace = true, features = ["macros", "test-util"] }
 reqwest = { workspace = true }
 serde_json = { workspace = true }
+blockifier = { workspace = true, default-features = false, features = [
+  "testing",
+] }

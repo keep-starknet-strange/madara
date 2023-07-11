@@ -6208,6 +6208,7 @@ dependencies = [
  "madara-runtime",
  "mc-block-proposer",
  "mc-db",
+ "mc-deoxys",
  "mc-mapping-sync",
  "mc-rpc",
  "mc-storage",
@@ -6383,6 +6384,7 @@ dependencies = [
 name = "mc-deoxys"
 version = "0.1.0"
 dependencies = [
+ "blockifier",
  "env_logger 0.9.3",
  "log",
  "mp-starknet",

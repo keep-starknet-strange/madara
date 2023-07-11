@@ -178,6 +178,7 @@ indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80a
 num-traits = "0.2.8"
 
 # Deoxys
+mc-deoxys = { path = "crates/client/deoxys" }
 pathfinder-common = { git = "https://github.com/KasarLabs/pathfinder", branch = "main"}
 pathfinder = { git = "https://github.com/KasarLabs/pathfinder", branch = "main" }
 pathfinder-retry = { git = "https://github.com/KasarLabs/pathfinder", branch = "main"}
