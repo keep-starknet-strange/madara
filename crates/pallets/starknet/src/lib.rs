@@ -865,7 +865,7 @@ impl<T: Config> Pallet<T> {
         let mut execution_resources = ExecutionResources::default();
         transaction.validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type).map_err(
             |e| {
-                log::info!("Transaction pool validation failed: {:?}", e);
+                log!(error, "Transaction pool validation failed: {:?}", e);
                 TransactionValidityError::Invalid(InvalidTransaction::BadProof)
             },
         )?;
