@@ -20,7 +20,7 @@ describeDevMadara("Starknet RPC - Storage Test", (context) => {
         FEE_TOKEN_ADDRESS,
         // ERC20_balances(0x02).low
         "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f",
-        "latest"
+        "latest",
       );
       // fees were paid during the transfer in the previous test so the value should be < u128::MAX
       expect(parseInt(value, 16)).to.be.greaterThan(0);
@@ -30,7 +30,7 @@ describeDevMadara("Starknet RPC - Storage Test", (context) => {
       const value = await providerRPC.getStorageAt(
         FEE_TOKEN_ADDRESS,
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "latest"
+        "latest",
       );
       expect(value).to.be.equal("0x0");
     });
@@ -39,7 +39,7 @@ describeDevMadara("Starknet RPC - Storage Test", (context) => {
       const storage = providerRPC.getStorageAt(
         "0x0000000000000000000000000000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "latest"
+        "latest",
       );
       await expect(storage)
         .to.eventually.be.rejectedWith("20: Contract not found")

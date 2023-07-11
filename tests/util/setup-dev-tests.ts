@@ -35,7 +35,7 @@ export interface BlockCreationResponse<
   Call extends
     | SubmittableExtrinsic<ApiType>
     | string
-    | Array<SubmittableExtrinsic<ApiType> | string>
+    | Array<SubmittableExtrinsic<ApiType> | string>,
 > {
   block: {
     duration: number;
@@ -58,10 +58,10 @@ export interface DevTestContext {
       | string
       | Promise<string>
       | Promise<InvokeFunctionResponse>,
-    Calls extends Call | Call[]
+    Calls extends Call | Call[],
   >(
     transactions?: Calls,
-    options?: BlockCreation
+    options?: BlockCreation,
   ) => Promise<
     BlockCreationResponse<
       ApiType,
@@ -93,7 +93,7 @@ export function describeDevMadara(
     runNewNode: false,
     forkedMode: false,
   },
-  runtime: RuntimeChain = "madara"
+  runtime: RuntimeChain = "madara",
 ) {
   describe(title, function () {
     // Set timeout to 50000 for all tests.
@@ -150,10 +150,10 @@ export function describeDevMadara(
           | string
           | Promise<string>
           | Promise<InvokeFunctionResponse>,
-        Calls extends Call | Call[]
+        Calls extends Call | Call[],
       >(
         transactions?: Calls,
-        options: BlockCreation = {}
+        options: BlockCreation = {},
       ) => {
         const results: Array<
           { type: "starknet"; hash: string } | { type: "sub"; hash: string }
@@ -190,7 +190,7 @@ export function describeDevMadara(
             debug(
               `- Signed: ${tx.method.section}.${tx.method.method}(${tx.args
                 .map((d) => d.toHuman())
-                .join("; ")}) [ nonce: ${tx.nonce}]`
+                .join("; ")}) [ nonce: ${tx.nonce}]`,
             );
             results.push({
               type: "sub",
@@ -201,7 +201,7 @@ export function describeDevMadara(
             debug(
               `- Unsigned: ${tx.method.section}.${tx.method.method}(${tx.args
                 .map((d) => d.toHuman())
-                .join("; ")}) [ nonce: ${tx.nonce}]`
+                .join("; ")}) [ nonce: ${tx.nonce}]`,
             );
             results.push({
               type: "sub",
@@ -214,7 +214,7 @@ export function describeDevMadara(
         const blockResult = await createAndFinalizeBlock(
           context.polkadotApi,
           parentHash,
-          finalize
+          finalize,
         );
 
         // No need to extract events if no transactions
@@ -232,7 +232,7 @@ export function describeDevMadara(
           .events()) as any;
         // We retrieve the block (including the extrinsics)
         const blockData = await context.polkadotApi.rpc.chain.getBlock(
-          blockResult.hash
+          blockResult.hash,
         );
 
         const result: ExtrinsicCreation[] = results.map((result) => {
@@ -244,17 +244,17 @@ export function describeDevMadara(
                       phase.isApplyExtrinsic &&
                       section == "starknet" &&
                       method == "Executed" &&
-                      data[2].toString() == result.hash
+                      data[2].toString() == result.hash,
                   )
                   ?.phase?.asApplyExtrinsic?.toNumber()
               : blockData.block.extrinsics.findIndex(
-                  (ext) => ext.hash.toHex() == result.hash
+                  (ext) => ext.hash.toHex() == result.hash,
                 );
           // We retrieve the events associated with the extrinsic
           const events = allRecords.filter(
             ({ phase }) =>
               phase.isApplyExtrinsic &&
-              phase.asApplyExtrinsic.toNumber() === extrinsicIndex
+              phase.asApplyExtrinsic.toNumber() === extrinsicIndex,
           );
           const failure = extractError(events);
           return {
@@ -291,7 +291,7 @@ export function describeDevMadara(
       await Promise.all(
         context._polkadotApis.map(async (p) => {
           await p.disconnect();
-        })
+        }),
       );
 
       if (madaraProcess) {
@@ -309,7 +309,7 @@ export function describeDevMadara(
 
 const getRunningNode = async (
   runtime: RuntimeChain,
-  options: DevMadaraOptions
+  options: DevMadaraOptions,
 ) => {
   if (options.forkedMode) {
     return await startMadaraForkedNode(9933);

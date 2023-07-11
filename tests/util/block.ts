@@ -18,7 +18,7 @@ const debug = debugFactory("test:blocks");
 export async function createAndFinalizeBlock(
   api: ApiPromise,
   parentHash?: string,
-  finalize = true
+  finalize = true,
 ): Promise<{
   duration: number;
   hash: string;
@@ -71,7 +71,7 @@ const fetchBlockTime = async (api: ApiPromise, blockNum: number) => {
 export const fetchHistoricBlockNum = async (
   api: ApiPromise,
   blockNumber: number,
-  targetTime: number
+  targetTime: number,
 ) => {
   if (blockNumber <= 1) {
     return 1;
@@ -85,14 +85,14 @@ export const fetchHistoricBlockNum = async (
   return fetchHistoricBlockNum(
     api,
     blockNumber - Math.ceil((time - targetTime) / 30_000),
-    targetTime
+    targetTime,
   );
 };
 
 export const getBlockArray = async (
   api: ApiPromise,
   timePeriod: number,
-  limiter?: Bottleneck
+  limiter?: Bottleneck,
 ) => {
   /**
   @brief Returns an sequential array of block numbers from a given period of time in the past
@@ -105,10 +105,10 @@ export const getBlockArray = async (
     limiter = new Bottleneck({ maxConcurrent: 10, minTime: 100 });
   }
   const finalizedHead = await limiter.schedule(
-    async () => await api.rpc.chain.getFinalizedHead()
+    async () => await api.rpc.chain.getFinalizedHead(),
   );
   const signedBlock = await limiter.schedule(
-    async () => await api.rpc.chain.getBlock(finalizedHead)
+    async () => await api.rpc.chain.getBlock(finalizedHead),
   );
 
   const lastBlockNumber = signedBlock.block.header.number.toNumber();
@@ -119,7 +119,7 @@ export const getBlockArray = async (
   const firstBlockNumber = (await limiter.wrap(fetchHistoricBlockNum)(
     api,
     lastBlockNumber,
-    firstBlockTime
+    firstBlockTime,
   )) as number;
 
   const length = lastBlockNumber - firstBlockNumber;
@@ -137,7 +137,7 @@ export function extractPreimageDeposit(
         readonly deposit: Option<ITuple<[AccountId20, u128]>>;
         readonly count: u32;
         readonly len: Option<u32>;
-      }
+      },
 ) {
   const deposit = "deposit" in request ? request.deposit : request;
   if ("isSome" in deposit) {
