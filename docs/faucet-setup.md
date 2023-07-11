@@ -98,7 +98,7 @@ const provider = new starknet.RpcProvider({
   nodeUrl: "http://localhost:9944",
 });
 const starkKeyPair = starknet.ec.getKeyPair(
-  "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d",
+  "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d"
 );
 const address = "0x2";
 
@@ -128,7 +128,7 @@ async function transfer(to) {
     calldata,
     maxFee,
     chainId,
-    nonce,
+    nonce
   );
   const signature = starknet.ec.sign(starkKeyPair, txnHash);
   const invocationCall = {
@@ -145,7 +145,7 @@ async function transfer(to) {
   // if estimating fees passes without failures, the txn should go through
   const estimateFee = await provider.getEstimateFee(
     invocationCall,
-    invocationDetails,
+    invocationDetails
   );
   console.log("Estimate fee - ", estimateFee);
 
