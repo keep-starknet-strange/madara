@@ -863,9 +863,12 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
         let mut execution_resources = ExecutionResources::default();
-        transaction
-            .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
-            .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
+        transaction.validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type).map_err(
+            |e| {
+                log!(error, "Transaction pool validation failed: {:?}", e);
+                TransactionValidityError::Invalid(InvalidTransaction::BadProof)
+            },
+        )?;
 
         Ok(())
     }
