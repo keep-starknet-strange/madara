@@ -6203,6 +6203,7 @@ dependencies = [
  "futures",
  "hex",
  "jsonrpsee",
+ "lazy_static",
  "log",
  "madara-runtime",
  "mc-block-proposer",
@@ -6247,6 +6248,7 @@ dependencies = [
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
+ "tokio",
  "try-runtime-cli",
 ]
 

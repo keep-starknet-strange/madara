@@ -13,13 +13,15 @@ use mc_block_proposer::ProposerFactory;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
+use mp_starknet::block::{Block as StarknetBlock };
 use mp_starknet::sequencer_address::{
     InherentDataProvider as SeqAddrInherentDataProvider, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
-use sc_consensus::BasicQueue;
+use sc_consensus::{BasicQueue, block_import::BlockImportParams};
+use sc_consensus_manual_seal::{ConsensusDataProvider, Error};
 use sc_consensus_aura::{SlotProportion, StartAuraParams};
 use sc_consensus_grandpa::{GrandpaBlockImport, SharedVoterState};
 pub use sc_executor::NativeElseWasmExecutor;
@@ -30,9 +32,12 @@ use sp_api::offchain::OffchainStorage;
 use sp_api::{ConstructRuntimeApi, ProvideRuntimeApi, TransactionFor};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use sp_offchain::STORAGE_PREFIX;
-use sp_runtime::traits::BlakeTwo256;
+use sp_core::Encode;
+use sp_runtime::{traits::{BlakeTwo256, Block as BlockT}, generic::{Digest, DigestItem}};
 use sp_trie::PrefixedMemoryDB;
+use sp_inherents::InherentData;
 
+use lazy_static::lazy_static;
 // Deoxys
 use mc_deoxys::fetch_block;
 
@@ -246,8 +251,12 @@ where
     ))
 }
 
+lazy_static! {
+    static ref QUEUE: BlockQueue = create_block_queue();
+}
+
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub async fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -555,16 +564,47 @@ where
         Ok(timestamp)
     };
 
+	struct QueryBlockConsensusDataProvider<C> {
+		_client: Arc<C>,
+	}
+
+	impl<B, C> ConsensusDataProvider<B> for QueryBlockConsensusDataProvider<C>
+		where
+		B: BlockT,
+		C: ProvideRuntimeApi<B> + Send + Sync,{
+		type Transaction = TransactionFor<C, B>;
+		type Proof = ();
+
+		fn create_digest(&self, _parent: &B::Header, _inherents: &InherentData) -> Result<Digest, Error> {
+            let mut queue_guard = QUEUE.lock().unwrap();
+            let starknet_block = queue_guard.pop_front().unwrap_or_else(StarknetBlock::default);
+            println!("Synced block {:?}", starknet_block.header().block_number);
+            let block_digest_item: DigestItem = sp_runtime::DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID, Encode::encode(&starknet_block));
+            Ok(Digest { logs: vec![block_digest_item] })
+        }
+
+		fn append_block_import(
+			&self,
+			_parent: &B::Header,
+			params: &mut BlockImportParams<B, Self::Transaction>,
+			_inherents: &InherentData,
+			_proof: Self::Proof,
+		) -> Result<(), Error> {
+			params.post_digests.push(DigestItem::Other(vec![1]));
+			Ok(())
+		}
+	}
+
     let manual_seal = match sealing {
         Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
             sc_consensus_manual_seal::ManualSealParams {
                 block_import,
                 env: proposer_factory,
-                client,
+                client: client.clone(),
                 pool: transaction_pool,
                 commands_stream,
                 select_chain,
-                consensus_data_provider: None,
+                consensus_data_provider: Some(Box::new(QueryBlockConsensusDataProvider { _client: client})),
                 create_inherent_data_providers,
             },
         )),

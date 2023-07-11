@@ -20,7 +20,9 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 Some(Felt252Wrapper::default()),
                 calldata_vec,
                 ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+				Felt252Wrapper::ZERO,
+				Some(ClassHashWrapper::ZERO)
             );
             let tx = Transaction {
                 tx_type: TxType::Declare,
@@ -53,7 +55,9 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 Some(Felt252Wrapper::default()),
                 calldata_vec,
                 ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+				Felt252Wrapper::ZERO,
+				Some(ClassHashWrapper::ZERO)
             );
             let tx = Transaction {
                 tx_type: TxType::Declare,
@@ -86,7 +90,9 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
                 Some(Felt252Wrapper::default()),
                 calldata_vec,
                 ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+				Felt252Wrapper::ZERO,
+				Some(ClassHashWrapper::ZERO)
             );
             let tx = Transaction {
                 tx_type: TxType::Declare,
@@ -125,7 +131,9 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
                 Some(Felt252Wrapper::try_from(invoke_transaction_v0.entry_point_selector.0.as_be_bytes()).unwrap()),
                 calldata_vec,
                 ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+				Felt252Wrapper::ZERO,
+				Some(ClassHashWrapper::ZERO)
             );
             let tx = Transaction {
                 tx_type: TxType::Invoke,
@@ -158,7 +166,9 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
                 Some(Felt252Wrapper::default()),
                 calldata_vec,
                 ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-                ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+                ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+				Felt252Wrapper::ZERO,
+				Some(ClassHashWrapper::ZERO)
             );
             let tx = Transaction {
                 tx_type: TxType::Invoke,
@@ -196,7 +206,9 @@ pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployA
         Some(Felt252Wrapper::default()),
         calldata_vec,
         ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-        ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+        ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+		Felt252Wrapper::ZERO,
+		Some(ClassHashWrapper::ZERO)
     );
 
     let tx = Transaction {
@@ -221,16 +233,18 @@ pub fn l1handler_tx_to_starknet_tx(mut l1hander_transaction : L1HandlerTransacti
     for item in l1hander_transaction.calldata {
         calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
     }
-    
+
     let call_entry_point = CallEntryPointWrapper::new(
         Some(ClassHashWrapper::default()),   //class_hash: Option<ClassHashWrapper>,
         EntryPointTypeWrapper::L1Handler, //entrypoint_type: EntryPointTypeWrapper,
         Some(Felt252Wrapper::try_from(l1hander_transaction.entry_point_selector.0.as_be_bytes()).unwrap()),
         calldata_vec,
         ContractAddressWrapper::default(), //storage_address: ContractAddressWrapper,
-        ContractAddressWrapper::default() //caller_address: ContractAddressWrapper,
+        ContractAddressWrapper::default(), //caller_address: ContractAddressWrapper,
+		Felt252Wrapper::ZERO,
+		Some(ClassHashWrapper::ZERO)
     );
-    
+
     let tx = Transaction {
         tx_type: TxType::L1Handler,
         version: unsafe {
