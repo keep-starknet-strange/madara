@@ -38,7 +38,7 @@
 </a>
 </div>
 
-# ⚡ Madara: Starknet Sequencer on Substrate 🦀
+# ⚡ Madara: Starknet Sequencer 👉👈
 
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
@@ -59,6 +59,9 @@ growth within the Starknet ecosystem.
 
 ## 📣 Peripheral repositories
 
+- [Madara Explorer](https://github.com/lambdaclass/madara_explorer)
+by the great [LambdaClass](https://lambdaclass.com/) team 🫶:
+ A block explorer for Madara.
 - [Madara Infra](https://github.com/keep-starknet-strange/madara-app):
  A collection of scripts and tools to deploy and manage Madara
  on different environments (e.g. AWS, docker, ansible, etc.).
