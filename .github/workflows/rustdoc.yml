@@ -1,12 +1,9 @@
-name: Deploy Docs to GitHub Pages
+---
+name: Task - Deploy Docs to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   release:

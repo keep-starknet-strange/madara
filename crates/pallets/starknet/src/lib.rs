@@ -74,8 +74,8 @@ use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
-use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxTransactions};
-use mp_starknet::crypto::commitment::{self, calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
+use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -229,8 +229,16 @@ pub mod pallet {
     /// Mapping of contract address to state trie.
     #[pallet::storage]
     #[pallet::unbounded]
-    #[pallet::getter(fn contract_tries)]
+    #[pallet::getter(fn contract_state_trie_by_address)]
     pub(super) type ContractTries<T: Config> = StorageMap<_, Identity, ContractAddressWrapper, StateTrie, OptionQuery>;
+
+    /// The Starknet pallet storage items.
+    /// STORAGE
+    /// Mapping of contract address to state root.
+    #[pallet::storage]
+    #[pallet::getter(fn contract_state_root_by_address)]
+    pub(super) type ContractsStateRoots<T: Config> =
+        StorageMap<_, Identity, ContractAddressWrapper, Felt252Wrapper, OptionQuery>;
 
     /// Pending storage slot updates
     /// STORAGE
@@ -238,7 +246,7 @@ pub mod pallet {
     #[pallet::storage]
     #[pallet::getter(fn pending_storage_changes)]
     pub(super) type PendingStorageChanges<T: Config> =
-        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxTransactions>, OptionQuery>;
+        StorageMap<_, Identity, ContractAddressWrapper, BoundedVec<StorageSlotWrapper, MaxStorageSlots>, ValueQuery>;
 
     /// Current building block's events.
     // TODO: This is redundant information but more performant
@@ -371,13 +379,15 @@ pub mod pallet {
 
                 // Update state tries if enabled in the runtime configuration
                 if T::EnableStateRoot::get() {
-                    // Update classes trie
-                    let mut tree = StarknetStateCommitments::<T>::get().class_commitment;
-                    let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(*class_hash);
-                    tree.set(*class_hash, final_hash);
+                    // Update contracts trie
+                    let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
+                    let nonce = Pallet::<T>::nonce(address);
+                    let contract_root = Pallet::<T>::contract_state_root_by_address(address).unwrap_or_default();
+                    let hash = calculate_contract_state_hash::<T::SystemHash>(*class_hash, contract_root, nonce);
+                    tree.set(*address, hash);
 
-                    StarknetStateCommitments::<T>::mutate(|state| {
-                        state.class_commitment = tree;
+                    crate::StarknetStateCommitments::<T>::mutate(|state| {
+                        state.storage_commitment = tree;
                     })
                 }
             }
@@ -396,9 +406,7 @@ pub mod pallet {
                     // We will end up with only the latest storage slot update
                     // TODO: Estimate overhead of this approach
                     PendingStorageChanges::<T>::mutate(key.0, |storage_slots| {
-                        if let Some(storage_slots) = storage_slots {
-                            storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
-                        }
+                        storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
                     });
                 }
             }
@@ -855,9 +863,12 @@ impl<T: Config> Pallet<T> {
         let block_context = Self::get_block_context();
         let mut state: BlockifierStateAdapter<T> = BlockifierStateAdapter::<T>::default();
         let mut execution_resources = ExecutionResources::default();
-        transaction
-            .validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type)
-            .map_err(|_| TransactionValidityError::Invalid(InvalidTransaction::BadProof))?;
+        transaction.validate_account_tx(&mut state, &mut execution_resources, &block_context, &tx_type).map_err(
+            |e| {
+                log!(error, "Transaction pool validation failed: {:?}", e);
+                TransactionValidityError::Invalid(InvalidTransaction::BadProof)
+            },
+        )?;
 
         Ok(())
     }
@@ -1168,21 +1179,26 @@ impl<T: Config> Pallet<T> {
             // And update the storage trie
             let state_root = state_tree.commit();
 
+            // Update contracts' states root mapping
+            ContractsStateRoots::<T>::set(contract_address, Some(state_root));
+
             let nonce = Self::nonce(contract_address);
             let class_hash = Self::contract_class_hash_by_address(contract_address).unwrap_or_default();
             let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, state_root, nonce);
             commitments.storage_commitment.set(contract_address, hash);
         });
 
+        // Compute the final state root
+        let global_state_root = StateCommitment::<T::SystemHash>::calculate(
+            commitments.storage_commitment.commit(),
+            commitments.class_commitment.commit(),
+        );
+
         // Finally update the contracts trie in runtime storage.
         StarknetStateCommitments::<T>::mutate(|state| {
             state.storage_commitment = commitments.clone().storage_commitment;
         });
 
-        // Compute the final state root
-        StateCommitment::<T::SystemHash>::calculate(
-            commitments.storage_commitment.commit(),
-            commitments.class_commitment.commit(),
-        )
+        global_state_root
     }
 }

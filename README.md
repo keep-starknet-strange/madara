@@ -1,7 +1,7 @@
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <div align="center">
-  <img src="docs/images/madara-no-bg.png" height="256">
+  <img src="docs/images/madara-no-bg.png" height="128">
 </div>
 
 <div align="center">
@@ -9,7 +9,6 @@
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
 
-[![GitHub Workflow Status](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml/badge.svg)](https://github.com/keep-starknet-strange/madara/actions/workflows/test.yml)
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 <a href="https://twitter.com/MadaraStarknet">
@@ -18,39 +17,28 @@
 <a href="https://github.com/keep-starknet-strange/madara">
 <img src="https://img.shields.io/github/stars/keep-starknet-strange/madara?style=social"/>
 </a>
-</div>
-
-# ⚡ Madara: Starknet Sequencer on Substrate 🦀
-
-<a href="https://docs.madara.wtf/">
-<img src="https://img.shields.io/badge/Documentation-Website-yellow"
- height="50" />
+<a href="https://docs.madara.zone/">
+<img src="https://img.shields.io/badge/Documentation-Website-yellow"/>
 </a>
 
 <a href="https://www.youtube.com/playlist?list=PL1yL2_t7cTuJtzmMQWk4UZkmMpdNF-quN">
-<img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"
- height="50" />
+<img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"/>
 </a>
 
 <a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/contributor-starter-pack.md">
-<img src="https://img.shields.io/badge/Contributor%20starter%20pack-Doc-green?logo=github"
- height="50" />
-</a>
-
-<a href="https://github.com/keep-starknet-strange/madara/blob/main/docs/madara-coding-principles.md">
-<img src="https://img.shields.io/badge/Coding%20principles-Doc-green?logo=github"
- height="50" />
+<img src="https://img.shields.io/badge/Contributor%20starter%20pack-Doc-green?logo=github"/>
 </a>
 
 <a href="https://keep-starknet-strange.github.io/madara/pallet_starknet/index.html">
-<img src="https://img.shields.io/badge/Rust%20doc-%F0%9F%A6%80-pink?logo=rust"
- height="50" />
+<img src="https://img.shields.io/badge/Rust%20doc-%F0%9F%A6%80-pink?logo=rust"/>
 </a>
 
 <a href="https://keep-starknet-strange.github.io/madara/dev/bench/">
-<img src="https://img.shields.io/badge/Benchmark-Performance-blue?logo=github-actions"
- height="50" />
+<img src="https://img.shields.io/badge/Benchmark-Performance-blue?logo=github-actions"/>
 </a>
+</div>
+
+# ⚡ Madara: Starknet Sequencer on Substrate 🦀
 
 Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
  designed to make your projects soar!
@@ -68,6 +56,19 @@ Harness the prowess of Cairo, while maintaining complete control
 over your custom appchain, tailored to your specific requirements.
 Madara is designed to empower a multitude of projects, fueling
 growth within the Starknet ecosystem.
+
+## 📣 Peripheral repositories
+
+- [Madara Infra](https://github.com/keep-starknet-strange/madara-app):
+ A collection of scripts and tools to deploy and manage Madara
+ on different environments (e.g. AWS, docker, ansible, etc.).
+ It also contains
+ the [Starknet Stack](https://github.com/keep-starknet-strange/madara-infra/blob/main/starknet-stack/docker-compose.yml)
+ demo `docker-compose` file.
+- [Madara Kit Application](https://github.com/keep-starknet-strange/madara-app):
+ A simple application that demonstrates how to use Madara. Deployed on `https://app.madara.zone`.
+- [Madara Docsite](https://github.com/keep-starknet-strange/madara-app):
+ The source code of the Madara documentation website. Deployed on `https://docs.madara.zone`.
 
 ## 🌟 Features
 
@@ -132,12 +133,9 @@ Once you stop the node, the flamegraph will open in your browser.
 
 ## 🌐 Connect to the dev webapp
 
-Once your Madara node is up and running, you can connect to the Polkadot-JS Apps
-front-end to interact with your chain.
-[Connect here!](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
-
-You can also connect to our customized fork of the Polkadot-JS Apps front-end,
- deployed on [Madara dev webapp](https://starknet-madara.netlify.app/#/explorer).
+Once your Madara node is up and running, you can connect to
+our Dev Frontend App to interact with your chain.
+[Connect here!](https://explorer.madara.zone/)
 
 ## 🤝 Contribute
 
