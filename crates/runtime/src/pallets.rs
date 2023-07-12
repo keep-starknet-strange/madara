@@ -159,7 +159,7 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
-    pub const ChaindId: Felt252Wrapper = 0;
+    pub const ChainId: Felt252Wrapper = Felt252Wrapper::ZERO;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

@@ -414,8 +414,6 @@ pub mod pallet {
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
-            // Set the chain id from the genesis config.
-            ChainId::<T>::put(T::ChainId::get());
             SeqAddrUpdate::<T>::put(self.seq_addr_updated);
         }
     }
@@ -907,7 +905,7 @@ impl<T: Config> Pallet<T> {
     /// convert chain_id
     #[inline(always)]
     pub fn chain_id_str() -> String {
-        unsafe { from_utf8_unchecked(&Self::chain_id().0.to_bytes_be()).to_string() }
+        unsafe { from_utf8_unchecked(&T::ChainId::get().0.to_bytes_be()).to_string() }
     }
 
     /// Get the block hash of the previous block.
@@ -1197,5 +1195,9 @@ impl<T: Config> Pallet<T> {
         });
 
         global_state_root
+    }
+
+    pub fn get_chain_id() -> Felt252Wrapper {
+        T::ChainId::get()
     }
 }

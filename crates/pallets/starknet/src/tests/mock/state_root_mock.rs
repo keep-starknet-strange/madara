@@ -71,7 +71,7 @@ parameter_types! {
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const EnableStateRoot: bool = true;
     pub const ProtocolVersion: u8 = 0;
-    pub const ChainId: Felt252Wrapper = 0;
+    pub const ChainId: Felt252Wrapper = Felt252Wrapper::ZERO;
 }
 
 impl pallet_starknet::Config for MockStateRootRuntime {
