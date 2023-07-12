@@ -47,6 +47,7 @@ impl pallet_starknet::Config for Runtime {
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
+    type ChainId = ChainId;
 }
 
 /// --------------------------------------
@@ -158,6 +159,7 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
+    pub const ChaindId: Felt252Wrapper = 0;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.
