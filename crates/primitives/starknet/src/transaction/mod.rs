@@ -43,6 +43,7 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
+use self::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
@@ -306,6 +307,7 @@ impl Transaction {
         contract_class: Option<ContractClass>,
         contract_address_salt: Option<U256>,
         max_fee: Felt252Wrapper,
+        is_query: bool,
     ) -> Self {
         Self {
             tx_type,
@@ -318,6 +320,7 @@ impl Transaction {
             contract_class,
             contract_address_salt,
             max_fee,
+            is_query,
         }
     }
 
@@ -732,7 +735,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: Fee::default(),
-            version: tx.version,
+            version: calculate_transaction_version(self.is_query, tx.version),
             signature: TransactionSignature::default(),
             nonce: tx.nonce,
             sender_address: tx.contract_address,
@@ -753,7 +756,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version: TransactionVersion(StarkFelt::from(1_u8)),
+            version: calculate_transaction_version_from_u8(self.is_query, 1_u8),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -774,7 +777,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: tx.max_fee,
-            version: tx.version,
+            version: calculate_transaction_version(self.is_query, tx.version),
             signature: tx.signature.clone(),
             nonce: tx.nonce,
             sender_address: tx.contract_address,
@@ -795,7 +798,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version: tx.version(),
+            version: calculate_transaction_version(self.is_query, tx.version()),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -817,6 +820,7 @@ impl Default for Transaction {
             contract_class: None,
             contract_address_salt: None,
             max_fee: Felt252Wrapper::from(u128::MAX),
+            is_query: false,
         }
     }
 }

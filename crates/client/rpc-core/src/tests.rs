@@ -60,6 +60,7 @@ fn test_try_into_declare_transaction_v1_valid() {
         nonce: FieldElement::default(),
         contract_class: Arc::new(compressed_contract_class),
         sender_address: FieldElement::default(),
+        is_query: false,
     };
 
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
@@ -77,6 +78,7 @@ fn test_try_into_declare_transaction_v1_max_signature() {
         nonce: FieldElement::default(),
         contract_class: Arc::new(compressed_contract_class),
         sender_address: FieldElement::default(),
+        is_query: false,
     };
 
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
@@ -102,6 +104,7 @@ fn test_try_into_declare_transaction_v1_bad_gzip() {
         nonce: FieldElement::default(),
         contract_class: Arc::new(compressed_contract_class),
         sender_address: FieldElement::default(),
+        is_query: false,
     };
 
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
@@ -123,6 +126,7 @@ fn test_try_into_declare_transaction_v2_with_correct_compiled_class_hash() {
         contract_class: Arc::new(flattened_contract_class),
         sender_address: FieldElement::default(),
         compiled_class_hash: FieldElement::from_hex_be(CAIRO_1_NO_VALIDATE_ACCOUNT_COMPILED_CLASS_HASH).unwrap(),
+        is_query: false,
     };
 
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
@@ -142,6 +146,7 @@ fn test_try_into_declare_transaction_v2_with_incorrect_compiled_class_hash() {
         contract_class: Arc::new(flattened_contract_class),
         sender_address: FieldElement::default(),
         compiled_class_hash: FieldElement::from_hex_be("0x1").unwrap(), // incorrect compiled class hash
+        is_query: false,
     };
 
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);

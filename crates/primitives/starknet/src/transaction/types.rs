@@ -177,6 +177,8 @@ pub struct DeclareTransaction {
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl DeclareTransaction {
@@ -202,6 +204,7 @@ impl DeclareTransaction {
             contract_class: Some(self.contract_class),
             contract_address_salt: None,
             max_fee: self.max_fee,
+            is_query: self.is_query,
         }
     }
 }
@@ -234,6 +237,8 @@ pub struct DeployAccountTransaction {
     pub account_class_hash: Felt252Wrapper,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl DeployAccountTransaction {
@@ -277,6 +282,7 @@ impl DeployAccountTransaction {
             contract_class: None,
             contract_address_salt: Some(self.salt.into()),
             max_fee: self.max_fee,
+            is_query: self.is_query,
         })
     }
 }
@@ -319,6 +325,7 @@ impl TryFrom<Transaction> for DeclareTransaction {
             compiled_class_hash: casm_class_hash,
             class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         })
     }
 }
@@ -349,6 +356,8 @@ pub struct InvokeTransaction {
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl From<Transaction> for InvokeTransaction {
@@ -360,6 +369,7 @@ impl From<Transaction> for InvokeTransaction {
             nonce: value.nonce,
             calldata: value.call_entrypoint.calldata,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         }
     }
 }
@@ -387,6 +397,7 @@ impl InvokeTransaction {
             contract_class: None,
             contract_address_salt: None,
             max_fee: self.max_fee,
+            is_query: self.is_query,
         }
     }
 }
@@ -424,6 +435,8 @@ pub struct Transaction {
     pub contract_address_salt: Option<U256>,
     /// Max fee.
     pub max_fee: Felt252Wrapper,
+    /// If set to `true`, uses a query-only transaction version that's invalid for execution
+    pub is_query: bool,
 }
 
 impl TryFrom<Transaction> for DeployAccountTransaction {
@@ -439,6 +452,7 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
             salt: salt_as_felt_wrapper,
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)?,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         })
     }
 }
@@ -636,6 +650,7 @@ mod reexport_private_types {
                     )
                     .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)?,
                     max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
+                    is_query: invoke_tx_v1.is_query,
                 }),
             }
         }
@@ -675,6 +690,7 @@ mod reexport_private_types {
                 account_class_hash: account_class_hash.into(),
                 nonce,
                 max_fee,
+                is_query: tx.is_query,
             })
         }
     }

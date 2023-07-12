@@ -38,6 +38,7 @@ fn given_hardcoded_contract_run_invoke_tx_fails_sender_not_deployed() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_err!(Starknet::invoke(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
@@ -211,6 +212,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let none_origin = RuntimeOrigin::none();
@@ -236,6 +238,7 @@ fn given_hardcoded_contract_run_invoke_tx_then_multiple_events_is_emitted() {
             nonce: Felt252Wrapper::ONE,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let none_origin = RuntimeOrigin::none();
