@@ -1,18 +1,16 @@
-use mp_starknet::transaction::types::{Transaction, TxType, MaxArraySize, TransactionReceiptWrapper, EventWrapper};
+use mp_starknet::transaction::types::{Transaction, TxType, TransactionReceiptWrapper, EventWrapper};
 use pathfinder_lib::state::block_hash::{TransactionCommitmentFinalHashType, calculate_transaction_commitment, calculate_event_commitment};
 use sp_core::{U256, ConstU32};
 use mp_starknet::execution::types::{ Felt252Wrapper, ContractAddressWrapper };
-use mp_starknet::block::{Block, Header, BlockTransactions, MaxTransactions};
+use mp_starknet::block::{Block, Header, MaxTransactions};
 use reqwest::header::{HeaderMap, CONTENT_TYPE};
 use serde_json::json;
 use sp_core::bounded_vec::BoundedVec;
-use starknet_gateway_types::reply::transaction::{DeployAccountTransaction, InvokeTransaction, L1HandlerTransaction};
-use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction, transaction::DeclareTransaction};
+use starknet_gateway_types::reply::{MaybePendingBlock, transaction as EnumTransaction};
 use transactions::{deploy_account_tx_to_starknet_tx, declare_tx_to_starknet_tx, invoke_tx_to_starknet_tx, l1handler_tx_to_starknet_tx};
-use std::ops::Bound;
 use std::sync::{mpsc, Arc, Mutex};
 use std::collections::VecDeque;
-use std::{thread};
+use std::thread;
 use log::info;
 use pathfinder_common::{BlockId, BlockNumber};
 use starknet_gateway_client::{Client, GatewayApi};
@@ -110,7 +108,7 @@ pub fn from_gateway_to_starknet_block(_block: MaybePendingBlock) -> Block {
             }
 
             let mut transaction_receipts: BoundedVec<TransactionReceiptWrapper, MaxTransactions> = BoundedVec::new();
-            let mut events_receipt: BoundedVec<EventWrapper, ConstU32<10000>> = BoundedVec::new();
+            let events_receipt: BoundedVec<EventWrapper, ConstU32<10000>> = BoundedVec::new();
             for receipt in &block.transaction_receipts {
                 let tx_receipt = TransactionReceiptWrapper {
                     transaction_hash: Felt252Wrapper::try_from(receipt.transaction_hash.0.as_be_bytes()).unwrap(),
@@ -130,7 +128,13 @@ pub fn from_gateway_to_starknet_block(_block: MaybePendingBlock) -> Block {
                     //block_hash: Felt252Wrapper::try_from(block.block_hash.0.as_be_bytes()).unwrap(),
                     events: events_receipt.clone(),
                 };
-                transaction_receipts.try_push(tx_receipt);
+                match transaction_receipts.try_push(tx_receipt) {
+                    Ok(_) => (),
+                    Err(_) => {
+                        println!("Error: transaction_receipts is full");
+                        break;
+                    },
+                }
             }
 
             Block::new(

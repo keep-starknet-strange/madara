@@ -8,9 +8,15 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
         DeclareTransaction::V0(declare_transactionv0v1) => {
             let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
             for item in declare_transactionv0v1.signature {
-                signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Signature too long");
+                    }
+                }
+                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
-            let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
+            let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
             // for item in declare_transactionv0v1.calldata {
             //     calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             // }
@@ -42,10 +48,16 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
         DeclareTransaction::V1(declare_transactionv0v1) => {
             let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
             for item in declare_transactionv0v1.signature {
-                signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Signature too long");
+                    }
+                }
+                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
 
-            let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
+            let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
             // for item in declare_transactionv0v1.calldata {
             //     calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             // }
@@ -77,10 +89,16 @@ pub fn declare_tx_to_starknet_tx(declare_transaction : DeclareTransaction) -> Tr
         DeclareTransaction::V2(declare_transactionv2) => {
             let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
             for item in declare_transactionv2.signature {
-                signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Signature too long");
+                    }
+                }
+                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
 
-            let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
+            let calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
             // for item in declare_transactionv2.calldata {
             //     calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             // }
@@ -119,11 +137,23 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
         InvokeTransaction::V0(invoke_transaction_v0) => {
             let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
             for item in invoke_transaction_v0.signature {
-                signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Signature too long");
+                    }
+                }
+                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
             let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
             for item in invoke_transaction_v0.calldata {
-                calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Calldata too long");
+                    }
+                }
+                //calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
 
             let call_entry_point = CallEntryPointWrapper::new(
@@ -153,12 +183,24 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
         InvokeTransaction::V1(invoke_transaction_v1) => {
             let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
             for item in invoke_transaction_v1.signature {
-                signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Signature too long");
+                    }
+                }
+                //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
 
             let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
             for item in invoke_transaction_v1.calldata {
-                calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+                match calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+                    Ok(_) => {},
+                    Err(_) => {
+                        panic!("Calldata too long");
+                    }
+                }
+                //calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
             }
 
             let call_entry_point = CallEntryPointWrapper::new(
@@ -193,12 +235,24 @@ pub fn invoke_tx_to_starknet_tx(invoke_transaction : InvokeTransaction) -> Trans
 pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployAccountTransaction) -> Transaction {
     let mut signature_vec: BoundedVec<Felt252Wrapper, MaxArraySize> = BoundedVec::new();
     for item in deploy_account_transaction.signature {
-        signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+        match signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+            Ok(_) => {},
+            Err(_) => {
+                panic!("Signature too long");
+            }
+        }
+        //signature_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
     }
 
     let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
     for item in deploy_account_transaction.constructor_calldata {
-        calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+        match calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+            Ok(_) => {},
+            Err(_) => {
+                panic!("Calldata too long");
+            }
+        }
+        //calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
     }
 
     let call_entry_point = CallEntryPointWrapper::new(
@@ -232,7 +286,13 @@ pub fn deploy_account_tx_to_starknet_tx(mut deploy_account_transaction : DeployA
 pub fn l1handler_tx_to_starknet_tx(mut l1hander_transaction : L1HandlerTransaction) -> Transaction {
     let mut calldata_vec: BoundedVec<Felt252Wrapper, MaxCalldataSize> = BoundedVec::new();
     for item in l1hander_transaction.calldata {
-        calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
+        match calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap()) {
+            Ok(_) => {},
+            Err(_) => {
+                panic!("Calldata too long");
+            }
+        }
+        //calldata_vec.try_push(Felt252Wrapper::try_from(item.0.as_be_bytes()).unwrap());
     }
 
     let call_entry_point = CallEntryPointWrapper::new(
