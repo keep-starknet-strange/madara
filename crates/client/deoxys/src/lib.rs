@@ -207,7 +207,7 @@ pub async fn fetch_block(queue: BlockQueue) {
                 match call_rpc().await {
                     Ok(status) => {
                         if status.is_success() {
-                            info!("[DEOXYS] Block #{} synced correctly", i);
+                            info!("[👽] Block #{} synced correctly", i);
                             i += 1;
                         }
                     },
