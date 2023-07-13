@@ -823,12 +823,12 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/apoorvsadana/blockifier?branch=dev/query_tx_version#929abf006fb46db55caf877bf88550a89e9984e7"
+source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support#15c81976e72f76ab7b5b19e68b597f9ae583dcd8"
 dependencies = [
- "cairo-felt 0.6.0 (git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version)",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-casm-contract-class 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-felt",
+ "cairo-lang-casm",
+ "cairo-lang-casm-contract-class",
+ "cairo-lang-utils",
  "cairo-lang-vm-utils",
  "cairo-vm",
  "derive_more",
@@ -847,7 +847,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha3",
- "starknet-crypto 0.6.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
+ "starknet-crypto 0.5.1",
  "starknet_api",
  "strum",
  "strum_macros",
@@ -941,40 +941,13 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.6.0"
-source = "git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version#d3e99729afc5c586ee88b68033908146d6361177"
-dependencies = [
- "lazy_static",
- "num-bigint",
- "num-integer",
- "num-traits 0.2.15",
- "parity-scale-codec",
- "serde",
-]
-
-[[package]]
-name = "cairo-felt"
-version = "0.6.0"
 source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#3f406f4a335fd3a0bf22237e493be5a9947efa7d"
 dependencies = [
  "lazy_static",
  "num-bigint",
  "num-integer",
  "num-traits 0.2.15",
- "serde",
-]
-
-[[package]]
-name = "cairo-lang-casm"
-version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
-dependencies = [
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "hashbrown 0.14.0",
- "indoc",
- "num-bigint",
- "num-traits 0.2.15",
  "parity-scale-codec",
- "parity-scale-codec-derive",
  "serde",
 ]
 
@@ -983,7 +956,7 @@ name = "cairo-lang-casm"
 version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support)",
+ "cairo-lang-utils",
  "hashbrown 0.14.0",
  "indoc",
  "num-bigint",
@@ -996,21 +969,10 @@ dependencies = [
 [[package]]
 name = "cairo-lang-casm-contract-class"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
-dependencies = [
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "num-bigint",
- "serde",
-]
-
-[[package]]
-name = "cairo-lang-casm-contract-class"
-version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support)",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support)",
+ "cairo-lang-casm",
+ "cairo-lang-utils",
  "num-bigint",
  "serde",
 ]
@@ -1018,7 +980,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-compiler"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "anyhow",
  "cairo-lang-defs",
@@ -1032,7 +994,7 @@ dependencies = [
  "cairo-lang-sierra",
  "cairo-lang-sierra-generator",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "log",
  "salsa",
  "smol_str",
@@ -1042,22 +1004,22 @@ dependencies = [
 [[package]]
 name = "cairo-lang-debug"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
 ]
 
 [[package]]
 name = "cairo-lang-defs"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-parser",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "indexmap 2.0.0",
  "itertools",
  "salsa",
@@ -1067,10 +1029,10 @@ dependencies = [
 [[package]]
 name = "cairo-lang-diagnostics"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-filesystem",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "itertools",
  "salsa",
 ]
@@ -1078,9 +1040,9 @@ dependencies = [
 [[package]]
 name = "cairo-lang-eq-solver"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "good_lp",
  "indexmap 2.0.0",
  "itertools",
@@ -1089,10 +1051,10 @@ dependencies = [
 [[package]]
 name = "cairo-lang-filesystem"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "path-clean",
  "salsa",
  "serde",
@@ -1102,7 +1064,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-lowering"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1112,7 +1074,7 @@ dependencies = [
  "cairo-lang-proc-macros",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "id-arena",
  "indexmap 2.0.0",
  "itertools",
@@ -1126,13 +1088,13 @@ dependencies = [
 [[package]]
 name = "cairo-lang-parser"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-diagnostics",
  "cairo-lang-filesystem",
  "cairo-lang-syntax",
  "cairo-lang-syntax-codegen",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "colored",
  "itertools",
  "log",
@@ -1146,7 +1108,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-plugins"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1154,7 +1116,7 @@ dependencies = [
  "cairo-lang-parser",
  "cairo-lang-semantic",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "indoc",
  "itertools",
  "num-bigint",
@@ -1165,7 +1127,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-proc-macros"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
  "quote",
@@ -1175,10 +1137,10 @@ dependencies = [
 [[package]]
 name = "cairo-lang-project"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-filesystem",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "serde",
  "smol_str",
  "thiserror",
@@ -1188,7 +1150,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-semantic"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1197,7 +1159,7 @@ dependencies = [
  "cairo-lang-parser",
  "cairo-lang-proc-macros",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "id-arena",
  "itertools",
  "log",
@@ -1210,9 +1172,9 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "const-fnv1a-hash",
  "convert_case",
  "derivative",
@@ -1232,12 +1194,12 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-ap-change"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "itertools",
  "thiserror",
 ]
@@ -1245,12 +1207,12 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-gas"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-eq-solver",
  "cairo-lang-sierra",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "itertools",
  "thiserror",
 ]
@@ -1258,7 +1220,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-generator"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-defs",
@@ -1271,7 +1233,7 @@ dependencies = [
  "cairo-lang-semantic",
  "cairo-lang-sierra",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "id-arena",
  "indexmap 2.0.0",
  "itertools",
@@ -1283,16 +1245,16 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-to-casm"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "assert_matches",
- "cairo-felt 0.6.0 (git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version)",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-felt",
+ "cairo-lang-casm",
  "cairo-lang-sierra",
  "cairo-lang-sierra-ap-change",
  "cairo-lang-sierra-gas",
  "cairo-lang-sierra-type-size",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "indoc",
  "itertools",
  "log",
@@ -1304,21 +1266,21 @@ dependencies = [
 [[package]]
 name = "cairo-lang-sierra-type-size"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-sierra",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
 ]
 
 [[package]]
 name = "cairo-lang-starknet"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "anyhow",
- "cairo-felt 0.6.0 (git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version)",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-casm-contract-class 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-felt",
+ "cairo-lang-casm",
+ "cairo-lang-casm-contract-class",
  "cairo-lang-compiler",
  "cairo-lang-defs",
  "cairo-lang-diagnostics",
@@ -1333,7 +1295,7 @@ dependencies = [
  "cairo-lang-sierra-generator",
  "cairo-lang-sierra-to-casm",
  "cairo-lang-syntax",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "convert_case",
  "genco",
  "indoc",
@@ -1353,11 +1315,11 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "cairo-lang-debug",
  "cairo-lang-filesystem",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "num-bigint",
  "num-traits 0.2.15",
  "salsa",
@@ -1369,7 +1331,7 @@ dependencies = [
 [[package]]
 name = "cairo-lang-syntax-codegen"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "genco",
  "xshell",
@@ -1378,25 +1340,9 @@ dependencies = [
 [[package]]
 name = "cairo-lang-utils"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
-dependencies = [
- "cairo-felt 0.6.0 (git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version)",
- "hashbrown 0.14.0",
- "indexmap 2.0.0",
- "itertools",
- "num-bigint",
- "num-integer",
- "num-traits 0.2.15",
- "parity-scale-codec",
- "serde",
-]
-
-[[package]]
-name = "cairo-lang-utils"
-version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-felt 0.6.0 (git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1)",
+ "cairo-felt",
  "hashbrown 0.14.0",
  "indexmap 2.0.0",
  "itertools",
@@ -1410,13 +1356,13 @@ dependencies = [
 [[package]]
 name = "cairo-lang-vm-utils"
 version = "2.0.0-rc2"
-source = "git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version#88987c2f8bfc4817ec615a88ab5302a44cbd5b3e"
+source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "ark-ff",
  "ark-std 0.3.0",
- "cairo-felt 0.6.0 (git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version)",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-felt",
+ "cairo-lang-casm",
+ "cairo-lang-utils",
  "cairo-vm",
  "hashbrown 0.14.0",
  "num-bigint",
@@ -1427,7 +1373,7 @@ dependencies = [
 [[package]]
 name = "cairo-take_until_unbalanced"
 version = "0.29.0"
-source = "git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version#d3e99729afc5c586ee88b68033908146d6361177"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#3f406f4a335fd3a0bf22237e493be5a9947efa7d"
 dependencies = [
  "nom",
 ]
@@ -1435,16 +1381,16 @@ dependencies = [
 [[package]]
 name = "cairo-vm"
 version = "0.6.0"
-source = "git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version#d3e99729afc5c586ee88b68033908146d6361177"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#3f406f4a335fd3a0bf22237e493be5a9947efa7d"
 dependencies = [
  "anyhow",
  "ark-ff",
  "ark-std 0.3.0",
  "bincode 2.0.0-rc.2",
  "bitvec",
- "cairo-felt 0.6.0 (git+https://github.com/apoorvsadana/cairo-rs?branch=dev/query_tx_version)",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-casm-contract-class 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-felt",
+ "cairo-lang-casm",
+ "cairo-lang-casm-contract-class",
  "cairo-take_until_unbalanced",
  "generic-array 0.14.7",
  "hashbrown 0.13.2",
@@ -1464,7 +1410,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.7",
  "sha3",
- "starknet-crypto 0.6.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
+ "starknet-crypto 0.5.1",
  "thiserror",
  "thiserror-no-std",
 ]
@@ -5144,7 +5090,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "starknet-core",
- "starknet-ff 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-ff",
  "starknet_api",
  "thiserror",
 ]
@@ -5155,10 +5101,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "blockifier",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-casm-contract-class 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-casm",
+ "cairo-lang-casm-contract-class",
  "cairo-lang-starknet",
- "cairo-lang-utils 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-utils",
  "cairo-vm",
  "flate2",
  "frame-support",
@@ -5393,8 +5339,8 @@ dependencies = [
  "async-trait",
  "bitvec",
  "blockifier",
- "cairo-lang-casm 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
- "cairo-lang-casm-contract-class 2.0.0-rc2 (git+https://github.com/apoorvsadana/cairo-madara?branch=dev/query_tx_version)",
+ "cairo-lang-casm",
+ "cairo-lang-casm-contract-class",
  "cairo-vm",
  "derive_more",
  "flate2",
@@ -5412,8 +5358,8 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "starknet-core",
- "starknet-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "starknet-ff 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-crypto 0.6.0",
+ "starknet-ff",
  "starknet_api",
  "thiserror-no-std",
  "zstd 0.12.3+zstd.1.5.2",
@@ -6110,7 +6056,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "starknet-core",
- "starknet-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-crypto 0.6.0",
  "starknet_api",
  "test-case",
 ]
@@ -9753,8 +9699,28 @@ dependencies = [
  "serde_json_pythonic",
  "serde_with",
  "sha3",
- "starknet-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "starknet-ff 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-crypto 0.6.0",
+ "starknet-ff",
+]
+
+[[package]]
+name = "starknet-crypto"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "693e6362f150f9276e429a910481fb7f3bcb8d6aa643743f587cfece0b374874"
+dependencies = [
+ "crypto-bigint 0.5.2",
+ "hex",
+ "hmac 0.12.1",
+ "num-bigint",
+ "num-integer",
+ "num-traits 0.2.15",
+ "rfc6979 0.4.0",
+ "sha2 0.10.7",
+ "starknet-crypto-codegen",
+ "starknet-curve 0.3.0",
+ "starknet-ff",
+ "zeroize",
 ]
 
 [[package]]
@@ -9771,28 +9737,9 @@ dependencies = [
  "num-traits 0.2.15",
  "rfc6979 0.4.0",
  "sha2 0.10.7",
- "starknet-crypto-codegen 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "starknet-curve 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "starknet-ff 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "zeroize",
-]
-
-[[package]]
-name = "starknet-crypto"
-version = "0.6.0"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version#73151f51215acb26b2cdc79336f80bbee4fad3f4"
-dependencies = [
- "crypto-bigint 0.5.2",
- "hex",
- "hmac 0.12.1",
- "num-bigint",
- "num-integer",
- "num-traits 0.2.15",
- "rfc6979 0.4.0",
- "sha2 0.10.7",
- "starknet-crypto-codegen 0.3.2 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
- "starknet-curve 0.4.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
- "starknet-ff 0.3.4 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
+ "starknet-crypto-codegen",
+ "starknet-curve 0.4.0",
+ "starknet-ff",
  "zeroize",
 ]
 
@@ -9802,19 +9749,18 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af6527b845423542c8a16e060ea1bc43f67229848e7cd4c4d80be994a84220ce"
 dependencies = [
- "starknet-curve 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "starknet-ff 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "starknet-curve 0.4.0",
+ "starknet-ff",
  "syn 2.0.26",
 ]
 
 [[package]]
-name = "starknet-crypto-codegen"
-version = "0.3.2"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version#73151f51215acb26b2cdc79336f80bbee4fad3f4"
+name = "starknet-curve"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "252610baff59e4c4332ce3569f7469c5d3f9b415a2240d698fb238b2b4fc0942"
 dependencies = [
- "starknet-curve 0.4.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
- "starknet-ff 0.3.4 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
- "syn 2.0.26",
+ "starknet-ff",
 ]
 
 [[package]]
@@ -9823,15 +9769,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a68a0d87ae56572abf83ddbfd44259a7c90dbeeee1629a1ffe223e7f9a8f3052"
 dependencies = [
- "starknet-ff 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "starknet-curve"
-version = "0.4.0"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version#73151f51215acb26b2cdc79336f80bbee4fad3f4"
-dependencies = [
- "starknet-ff 0.3.4 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
+ "starknet-ff",
 ]
 
 [[package]]
@@ -9849,22 +9787,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "starknet-ff"
-version = "0.3.4"
-source = "git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version#73151f51215acb26b2cdc79336f80bbee4fad3f4"
-dependencies = [
- "ark-ff",
- "crypto-bigint 0.5.2",
- "getrandom 0.2.10",
- "hex",
-]
-
-[[package]]
 name = "starknet_api"
 version = "0.1.0"
-source = "git+https://github.com/apoorvsadana/starknet-api-madara?branch=dev/query_tx_version#b9984b0a0c9f5419edb009c7f90f46c9c492ab11"
+source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support#6a48e7c8636685b80515c6ab666c1ae9d01278a2"
 dependencies = [
- "cairo-lang-casm-contract-class 2.0.0-rc2 (git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support)",
+ "cairo-lang-casm-contract-class",
  "derive_more",
  "hashbrown 0.13.2",
  "hex",
@@ -9872,10 +9799,9 @@ dependencies = [
  "once_cell",
  "parity-scale-codec",
  "primitive-types",
- "scale-info",
  "serde",
  "serde_json",
- "starknet-crypto 0.6.0 (git+https://github.com/xJonathanLEI/starknet-rs?branch=dev/query_tx_version)",
+ "starknet-crypto 0.5.1",
  "thiserror-no-std",
 ]
 
