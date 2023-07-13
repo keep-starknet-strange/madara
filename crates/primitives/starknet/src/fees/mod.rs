@@ -107,8 +107,10 @@ pub fn charge_fee<S: State + StateChanges + FeeConfig>(
     resources: &BTreeMap<String, usize>,
     is_query: bool,
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
-    if state.is_transaction_fee_disabled() {
-        return Ok((Fee(0), None));
+    let no_fee = Fee::default();
+    if account_tx_context.max_fee == no_fee || state.is_transaction_fee_disabled() {
+        // Fee charging is not enforced in some tests.
+        return Ok((no_fee, None));
     }
     let actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
