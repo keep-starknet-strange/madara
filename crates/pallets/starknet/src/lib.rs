@@ -182,59 +182,56 @@ pub mod pallet {
         /// The block is being initialized. Implement to have something happen.
         fn on_initialize(_: T::BlockNumber) -> Weight {
 			//log!(info, "{:?}", Decode::decode(&mut frame_system::Pallet::<T>::digest().logs()[0]));
-			if frame_system::Pallet::<T>::digest().logs().len() == 1 {
+			// if frame_system::Pallet::<T>::digest().logs().len() == 1 {
 
-				match &frame_system::Pallet::<T>::digest().logs()[0] {
-					DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
+			// 	match &frame_system::Pallet::<T>::digest().logs()[0] {
+			// 		DigestItem::PreRuntime(mp_digest_log::MADARA_ENGINE_ID ,encoded_data) => {
 
-						if let Ok(block) = mp_starknet::block::Block::decode(&mut encoded_data.as_slice()) {
+			// 			if let Ok(block) = mp_starknet::block::Block::decode(&mut encoded_data.as_slice()) {
+			// 				let block_transactions = block.transactions();
+			// 				for tx in block_transactions {
+			// 				    let tx_type = tx.tx_type.clone();
+			// 				    let contract_class: Option<ContractClass> = match tx.contract_class.clone() {
+			// 				        Some(wrapper) => {
+			// 				            match ContractClass::try_from(wrapper) {
+			// 				                Ok(contract_class) => Some(contract_class),
+			// 				                Err(e) => {
+			// 				                    log!(info,"Error while converting ContractClassWrapper to ContractClass: {:?}", e);
+			// 				                    None
+			// 				                }
+			// 				            }
+			// 				        },
+			// 				        None => None,
+			// 				    };
 
-							let block_transactions = block.transactions();
-                            log!(info, "Full transactions");
-							for tx in block_transactions {
-                                log!(info, "In the for pattern");
-							    let tx_type = tx.tx_type.clone();
-							    let contract_class: Option<ContractClass> = match tx.contract_class.clone() {
-							        Some(wrapper) => {
-							            match ContractClass::try_from(wrapper) {
-							                Ok(contract_class) => Some(contract_class),
-							                Err(e) => {
-							                    log!(info,"Error while converting ContractClassWrapper to ContractClass: {:?}", e);
-							                    None
-							                }
-							            }
-							        },
-							        None => None,
-							    };
-
-							    // Self::validate_tx(tx.clone(), tx_type.clone()).expect(
-							    //     "pre-block transaction verification failed; the block cannot be built",
-							    // );
-                                let block_context = Self::get_block_context();
-							    match tx.execute(
-                                    &mut BlockifierStateAdapter::<T>::default(),
-                                    &block_context,
-                                    tx_type,
-                                    contract_class,
-                                ) {
-                                    Ok(v) => {
-                                        log!(debug, "Transaction executed successfully: {:?}", v);
-                                    }
-                                    Err(e) => {
-                                        log!(error, "Transaction execution failed: {:?}", e);
-                                        return Weight::zero(); //error
-                                    }
-                                }
-                            }
-                        } else {
-                            log!(info, "PreRuntime digest is not a block");
-                        }
-                    }
-                    _ => {
-                        log!(info, "No PreRuntime Digest found");
-                    }
-                }
-            }
+			// 				    // Self::validate_tx(tx.clone(), tx_type.clone()).expect(
+			// 				    //     "pre-block transaction verification failed; the block cannot be built",
+			// 				    // );
+            //                     // let block_context = Self::get_block_context();
+			// 				    // match tx.execute(
+            //                     //     &mut BlockifierStateAdapter::<T>::default(),
+            //                     //     &block_context,
+            //                     //     tx_type,
+            //                     //     contract_class,
+            //                     // ) {
+            //                     //     Ok(v) => {
+            //                     //         log!(debug, "Transaction executed successfully: {:?}", v);
+            //                     //     }
+            //                     //     Err(e) => {
+            //                     //         log!(error, "Transaction execution failed: {:?}", e);
+            //                     //         return Weight::zero(); //error
+            //                     //     }
+            //                     // }
+            //                 }
+            //             } else {
+            //                 log!(info, "PreRuntime digest is not a block");
+            //             }
+            //         }
+            //         _ => {
+            //             log!(info, "No PreRuntime Digest found");
+            //         }
+            //     }
+            // }
             Weight::zero()
         }
 
