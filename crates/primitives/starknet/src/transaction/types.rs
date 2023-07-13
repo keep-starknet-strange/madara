@@ -8,7 +8,7 @@ use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
-use cairo_vm::types::program::Program;
+
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
@@ -18,13 +18,12 @@ use starknet_api::StarknetApiError;
 use thiserror_no_std::Error;
 
 use crate::crypto::commitment::{
-    calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
+    calculate_deploy_account_tx_hash,
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
-use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
+
 use crate::execution::types::{
-    CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, EntrypointMapWrapper, Felt252Wrapper,
-    Felt252WrapperError,
+    ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper,
 };
 
 /// Max size of arrays.
@@ -337,8 +336,8 @@ impl TryFrom<Transaction> for DeclareTransaction {
 
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         match value {
-            Transaction::Invoke(invoke_tx) => Err(TransactionConversionError::InvokeType),
-            Transaction::DeployAccount(deploy_account_tx) => Err(TransactionConversionError::DeployAccountType),
+            Transaction::Invoke(_invoke_tx) => Err(TransactionConversionError::InvokeType),
+            Transaction::DeployAccount(_deploy_account_tx) => Err(TransactionConversionError::DeployAccountType),
             Transaction::Declare(declare_tx) => Ok(declare_tx),
         }
     }
@@ -463,8 +462,8 @@ impl TryFrom<Transaction> for InvokeTransaction {
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         match value {
             Transaction::Invoke(invoke_tx) => Ok(invoke_tx),
-            Transaction::DeployAccount(deploy_account_tx) => Err(TransactionConversionError::DeployAccountType),
-            Transaction::Declare(declare_tx) => Err(TransactionConversionError::DeclareType),
+            Transaction::DeployAccount(_deploy_account_tx) => Err(TransactionConversionError::DeployAccountType),
+            Transaction::Declare(_declare_tx) => Err(TransactionConversionError::DeclareType),
         }
     }
 }
@@ -525,7 +524,7 @@ impl Transaction {
     pub fn get_version(&self) -> u8 {
         match self {
             Transaction::Invoke(invoke_tx) => invoke_tx.version(),
-            Transaction::DeployAccount(deploy_account_tx) => 1_u8,
+            Transaction::DeployAccount(_deploy_account_tx) => 1_u8,
             Transaction::Declare(declare_tx) => declare_tx.version(),
         }
     }
@@ -535,9 +534,9 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
     type Error = TransactionConversionError;
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         match value {
-            Transaction::Invoke(invoke_tx) => Err(TransactionConversionError::InvokeType),
+            Transaction::Invoke(_invoke_tx) => Err(TransactionConversionError::InvokeType),
             Transaction::DeployAccount(deploy_account_tx) => Ok(deploy_account_tx),
-            Transaction::Declare(declare_tx) => Err(TransactionConversionError::DeclareType),
+            Transaction::Declare(_declare_tx) => Err(TransactionConversionError::DeclareType),
         }
     }
 }
@@ -658,27 +657,22 @@ pub enum StateDiffError {
 
 #[cfg(feature = "std")]
 mod reexport_private_types {
-    use flate2::read::GzDecoder;
+    
     use starknet_core::types::contract::legacy::{
-        LegacyContractClass, LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
+        LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
     };
     use starknet_core::types::contract::ComputeClassHashError;
     use starknet_core::types::{
-        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
-        DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
-        DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
-        DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
-        InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
+        BroadcastedDeployAccountTransaction, DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
+        DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction, Event as RPCEvent,
+        InvokeTransaction as RPCInvokeTransaction,
         InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
-        L1HandlerTransaction as RPCL1HandlerTransaction, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt,
-        LegacyContractEntryPoint, LegacyEntryPointsByType,
-        MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt, StarknetError,
-        Transaction as RPCTransaction, TransactionReceipt as RPCTransactionReceipt,
-        TransactionStatus as RPCTransactionStatus,
+        LegacyContractEntryPoint, LegacyEntryPointsByType, StarknetError,
+        Transaction as RPCTransaction,
     };
 
     use super::*;
-    use crate::transaction::utils::to_hash_map_entrypoints;
+    
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
     pub enum BroadcastedTransactionConversionErrorWrapper {

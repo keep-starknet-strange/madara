@@ -3,14 +3,14 @@ use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
-use blockifier::execution::contract_class::ContractClass;
+
 use frame_support::BoundedVec;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
 use thiserror_no_std::Error;
 
 use crate::execution::types::{
-    CallEntryPointWrapper, ContractClassWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
+    CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
     MaxCalldataSize,
 };
 use crate::transaction::types::{
@@ -703,7 +703,7 @@ pub fn transaction_from_json(json_str: &str) -> Result<Transaction, DeserializeT
     // Deserialize the JSON string into a DeserializeTransaction and convert it into a Transaction
     let deserialized_transaction: DeserializeTransaction =
         serde_json::from_str(json_str).map_err(|e| DeserializeTransactionError::FailedToParse(format!("{:?}", e)))?;
-    let mut transaction = Transaction::try_from(deserialized_transaction)?;
+    let transaction = Transaction::try_from(deserialized_transaction)?;
 
     Ok(transaction)
 }

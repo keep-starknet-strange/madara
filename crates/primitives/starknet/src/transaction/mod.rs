@@ -22,14 +22,14 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
 use blockifier::transaction::transaction_utils::{update_remaining_gas, verify_no_calls_to_other_contracts};
 use blockifier::transaction::transactions::{
-    DeclareTransaction as StarknetDeclareTransaction, Executable, L1HandlerTransaction as StarknetL1HandlerTransaction,
+    DeclareTransaction as StarknetDeclareTransaction, Executable,
 };
 use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::U256;
 use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::hash::{StarkFelt, StarkHash};
+use starknet_api::hash::{StarkFelt};
 use starknet_api::transaction::{
     Calldata, ContractAddressSalt, DeclareTransaction as DeclareTransactionAPI,
     DeclareTransactionV0V1 as DeclareTransactionAPIV0V1, DeployAccountTransaction as DeployAccountTransactionAPI,
@@ -41,11 +41,11 @@ use starknet_api::{calldata, StarknetApiError};
 
 use self::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper, InvokeTransaction, InvokeTransactionV1,
-    MaxArraySize, Transaction, TransactionConversionError, TransactionExecutionErrorWrapper,
+    MaxArraySize, Transaction, TransactionExecutionErrorWrapper,
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::StateChanges;
 
@@ -212,7 +212,7 @@ impl TryInto<DeployAccountTransactionAPI> for &Transaction {
     fn try_into(self) -> Result<DeployAccountTransactionAPI, Self::Error> {
         match &self {
             Transaction::DeployAccount(deploy_account_tx) => {
-                let stark_felt_vec: Vec<StarkFelt> = deploy_account_tx.constructor_calldata.clone()
+                let _stark_felt_vec: Vec<StarkFelt> = deploy_account_tx.constructor_calldata.clone()
             .into_inner()
             .into_iter()
             .map(|felt_wrapper| felt_wrapper.try_into().unwrap()) // Here, we are assuming that the conversion will not fail.
@@ -311,10 +311,10 @@ impl TryInto<InvokeTransactionAPI> for &Transaction {
                     Err(StarknetApiError::OutOfRange { string: String::from("InvalidTransactionType") })
                 }
             },
-            Transaction::Declare(declare_tx) => {
+            Transaction::Declare(_declare_tx) => {
                 Err(StarknetApiError::OutOfRange { string: String::from("InvalidTransactionType") })
             }
-            Transaction::DeployAccount(deploy_account_tx) => {
+            Transaction::DeployAccount(_deploy_account_tx) => {
                 Err(StarknetApiError::OutOfRange { string: String::from("InvalidTransactionType") })
             }
         }
