@@ -207,9 +207,9 @@ pub mod pallet {
 							        None => None,
 							    };
 
-							    Self::validate_tx(tx.clone(), tx_type.clone()).expect(
-							        "pre-block transaction verification failed; the block cannot be built",
-							    );
+							    // Self::validate_tx(tx.clone(), tx_type.clone()).expect(
+							    //     "pre-block transaction verification failed; the block cannot be built",
+							    // );
                                 let block_context = Self::get_block_context();
 							    match tx.execute(
                                     &mut BlockifierStateAdapter::<T>::default(),
