@@ -155,6 +155,9 @@ pub mod pallet {
         /// As this is a very time-consuming process we preferred to let it optional for now
         /// Not every application needs it but if you need to use it you can enable it
         type EnableStateRoot: Get<bool>;
+        /// A bool to disable transaction fees and make all transactions free
+        #[pallet::constant]
+        type DisableTransactionFee: Get<bool>;
         #[pallet::constant]
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]

@@ -70,6 +70,7 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const EnableStateRoot: bool = true;
+    pub const DisableTransactionFee: bool = false;
     pub const ProtocolVersion: u8 = 0;
 }
 
@@ -82,6 +83,7 @@ impl pallet_starknet::Config for MockStateRootRuntime {
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type EnableStateRoot = EnableStateRoot;
+    type DisableTransactionFee = DisableTransactionFee;
     type ProtocolVersion = ProtocolVersion;
 }
 

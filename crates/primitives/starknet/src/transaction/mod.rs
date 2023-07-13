@@ -46,7 +46,7 @@ use self::types::{
 use self::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
-use crate::state::StateChanges;
+use crate::state::{FeeConfig, StateChanges};
 
 impl EventWrapper {
     /// Creates a new instance of an event.
@@ -198,7 +198,7 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
 
         Ok(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
+            max_fee: Fee(self.max_fee.try_into().unwrap()),
             version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
@@ -243,7 +243,7 @@ impl TryInto<InvokeTransaction> for &Transaction {
 
         Ok(InvokeTransaction::V1(InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
+            max_fee: Fee(self.max_fee.try_into().unwrap()),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
             ),
@@ -261,7 +261,7 @@ impl TryInto<DeclareTransaction> for &Transaction {
     fn try_into(self) -> Result<DeclareTransaction, Self::Error> {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
         let transaction_hash = TransactionHash(StarkFelt::new(self.hash.into())?);
-        let max_fee = Fee(2);
+        let max_fee = Fee(self.max_fee.try_into().unwrap());
         let signature = TransactionSignature(
             self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
         );
@@ -528,7 +528,7 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
     ///   execution
-    pub fn execute<S: State + StateChanges>(
+    pub fn execute<S: State + StateChanges + FeeConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -674,7 +674,8 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, account_context, &tx_resources)?;
+        let (actual_fee, fee_transfer_call_info) =
+            charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?;
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
