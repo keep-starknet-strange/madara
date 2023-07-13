@@ -2,7 +2,7 @@
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
 pub use frame_support::traits::{
-    ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
+    ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, OnTimestampSet, Randomness, StorageInfo,
 };
 pub use frame_support::weights::constants::{
     BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
@@ -32,13 +32,17 @@ use crate::*;
 /// Configure the Starknet pallet in pallets/starknet.
 impl pallet_starknet::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type StateRoot = pallet_starknet::state_root::IntermediateStateRoot<Self>;
     type SystemHash = mp_starknet::crypto::hash::pedersen::PedersenHasher;
     type TimestampProvider = Timestamp;
     type UnsignedPriority = UnsignedPriority;
     type TransactionLongevity = TransactionLongevity;
+    #[cfg(not(feature = "madara-state-root"))]
+    type EnableStateRoot = ConstBool<false>;
+    #[cfg(feature = "madara-state-root")]
+    type EnableStateRoot = ConstBool<true>;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
+    type ProtocolVersion = ProtocolVersion;
 }
 
 /// --------------------------------------
@@ -149,6 +153,7 @@ parameter_types! {
     pub const TransactionLongevity: u64 = u64::MAX;
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
+    pub const ProtocolVersion: u8 = 0;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

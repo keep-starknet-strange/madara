@@ -1,12 +1,12 @@
 import {
   Account,
+  BigNumberish,
   InvokeFunctionResponse,
   RpcProvider,
-  ec,
   hash,
+  num,
   number,
 } from "starknet";
-import BN__default from "bn.js";
 import {
   ARGENT_CONTRACT_ADDRESS,
   FEE_TOKEN_ADDRESS,
@@ -14,16 +14,9 @@ import {
 } from "../tests/constants";
 import { numberToU8a } from "@polkadot/util";
 
-export type BigNumberish = string | number | BN__default;
-
 // Convert a BigNumberish to a hex string
 export function toHex(value: BigNumberish) {
-  return number.toHex(number.toBN(value));
-}
-
-// Convert a string or number to a BN
-export function toBN(value: BigNumberish) {
-  return number.toBN(value);
+  return num.toHex(value);
 }
 
 // Convert a BigNumberish to a 32 byte uint array
@@ -50,10 +43,13 @@ export async function rpcTransfer(
   nonce: { value: number },
   recipient: string,
   transferAmount: string,
-  maxFee?: number
+  maxFee?: number,
 ): Promise<InvokeFunctionResponse> {
-  const keyPair = ec.getKeyPair(SIGNER_PRIVATE);
-  const account = new Account(providerRPC, ARGENT_CONTRACT_ADDRESS, keyPair);
+  const account = new Account(
+    providerRPC,
+    ARGENT_CONTRACT_ADDRESS,
+    SIGNER_PRIVATE,
+  );
 
   const invokeResponse = account.execute(
     {
@@ -65,7 +61,7 @@ export async function rpcTransfer(
     {
       nonce: nonce.value,
       maxFee: maxFee ?? "123456",
-    }
+    },
   );
 
   nonce.value++;

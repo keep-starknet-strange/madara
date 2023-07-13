@@ -3,6 +3,7 @@ use alloc::string::String;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 
+use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::CallInfo;
 use blockifier::execution::errors::EntryPointExecutionError;
 use blockifier::state::errors::StateError;
@@ -21,6 +22,7 @@ use crate::crypto::commitment::{
     calculate_deploy_account_tx_hash,
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
+<<<<<<< HEAD
 
 use crate::execution::types::{
     ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper,
@@ -161,6 +163,7 @@ impl From<TxType> for TransactionType {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
+<<<<<<< HEAD
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[serde(tag = "version")]
 pub enum DeclareTransaction {
@@ -327,6 +330,9 @@ pub enum TransactionConversionError {
     /// Casm class hash is missing from the object of type [Transaction]
     #[error("Casm class hash is missing from the object of type [Transaction]")]
     MissingCasmClassHash,
+    /// Casm class hash must be None in [Transaction] for version <=1
+    #[error("Casm class hash must be None in [Transaction] for version <=1")]
+    CasmClashHashNotNone,
     /// Impossible to derive the contract address from the object of type [DeployAccountTransaction]
     #[error("Impossible to derive the contract address from the object of type [DeployAccountTransaction]")]
     ContractAddressDerivationError,
@@ -456,6 +462,7 @@ impl InvokeTransaction {
     }
 }
 
+<<<<<<< HEAD
 impl TryFrom<Transaction> for InvokeTransaction {
     type Error = TransactionConversionError;
 
@@ -486,6 +493,7 @@ impl From<InvokeTransaction> for Transaction {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
+<<<<<<< HEAD
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum Transaction {
     #[serde(rename = "INVOKE")]
@@ -585,8 +593,6 @@ pub struct EventWrapper {
     pub data: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// The address that emitted the event
     pub from_address: ContractAddressWrapper,
-    /// The hash of the transaction that emitted the event
-    pub transaction_hash: Felt252Wrapper,
 }
 
 /// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
@@ -656,8 +662,7 @@ pub enum StateDiffError {
 }
 
 #[cfg(feature = "std")]
-mod reexport_private_types {
-    
+mod reexport_private_types {    
     use starknet_core::types::contract::legacy::{
         LegacyEntrypointOffset, RawLegacyEntryPoint, RawLegacyEntryPoints,
     };
@@ -672,7 +677,6 @@ mod reexport_private_types {
     };
 
     use super::*;
-    
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
     pub enum BroadcastedTransactionConversionErrorWrapper {
@@ -697,6 +701,15 @@ mod reexport_private_types {
         /// Failed to bound calldata Vec<U256> by MaxCalldataSize
         #[error("failed to bound calldata Vec<U256> by MaxCalldataSize")]
         CalldataBoundError,
+        /// Failed to compile Sierra to Casm
+        #[error("failed to compile Sierra to Casm")]
+        SierraCompilationError,
+        /// Failed to convert Casm contract class to ContractClassV1
+        #[error("failed to convert Casm contract class to ContractClassV1")]
+        CasmContractClassConversionError,
+        /// Computed compiled class hash doesn't match with the request
+        #[error("compiled class hash does not match sierra code")]
+        CompiledClassHashError,
         /// Starknet Error
         #[error(transparent)]
         StarknetError(#[from] StarknetError),

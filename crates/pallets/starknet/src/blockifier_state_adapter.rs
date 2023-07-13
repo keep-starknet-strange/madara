@@ -6,14 +6,17 @@ use blockifier::state::cached_state::{CommitmentStateDiff, ContractStorageKey};
 use blockifier::state::errors::StateError;
 use blockifier::state::state_api::{State, StateReader, StateResult};
 use indexmap::IndexMap;
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::crypto::commitment::{calculate_class_commitment_leaf_hash, calculate_contract_state_hash};
+use mp_starknet::execution::types::{
+    ClassHashWrapper, CompiledClassHashWrapper, ContractAddressWrapper, Felt252Wrapper,
+};
 use mp_starknet::state::StateChanges;
+use sp_core::Get;
 use starknet_api::api_core::{ClassHash, CompiledClassHash, ContractAddress, Nonce};
 use starknet_api::hash::StarkFelt;
 use starknet_api::state::StorageKey;
 use starknet_crypto::FieldElement;
 
-use crate::alloc::string::ToString;
 use crate::types::{ContractStorageKeyWrapper, StorageKeyWrapper};
 use crate::{Config, Pallet};
 
@@ -76,17 +79,22 @@ impl<T: Config> StateReader for BlockifierStateAdapter<T> {
 
     fn get_compiled_contract_class(&mut self, class_hash: &ClassHash) -> StateResult<ContractClass> {
         let wrapped_class_hash: ClassHashWrapper = class_hash.0.into();
-        let opt_contract_class = Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash);
-        match opt_contract_class {
-            Some(contract_class) => Ok(TryInto::<ContractClass>::try_into(contract_class)
-                .map_err(|e| StateError::StateReadError(e.to_string()))?),
-            None => Err(StateError::UndeclaredClassHash(*class_hash)),
-        }
+        Pallet::<T>::contract_class_by_class_hash(wrapped_class_hash)
+            .ok_or(StateError::UndeclaredClassHash(*class_hash))
     }
 
-    fn get_compiled_class_hash(&mut self, _class_hash: ClassHash) -> StateResult<CompiledClassHash> {
-        // FIXME 708
-        Ok(CompiledClassHash::default())
+    fn get_compiled_class_hash(&mut self, class_hash: ClassHash) -> StateResult<CompiledClassHash> {
+        let wrapped_class_hash: ClassHashWrapper = class_hash.0.into();
+        let compiled_class_hash = CompiledClassHash(
+            StarkFelt::try_from(
+                Pallet::<T>::compiled_class_hash_by_class_hash(wrapped_class_hash)
+                    .ok_or(StateError::UndeclaredClassHash(class_hash))
+                    .unwrap()
+                    .0,
+            )
+            .unwrap(),
+        );
+        Ok(compiled_class_hash)
     }
 }
 
@@ -95,17 +103,44 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
         self.storage_update.insert((contract_address, key), value);
         let contract_address: ContractAddressWrapper = contract_address.0.0.into();
         let key: StorageKeyWrapper = key.0.0.into();
+        let value = Felt252Wrapper::from(value);
 
         let contract_storage_key: ContractStorageKeyWrapper = (contract_address, key);
 
-        crate::StorageView::<T>::insert(contract_storage_key, Felt252Wrapper::from(value));
+        crate::StorageView::<T>::insert(contract_storage_key, value);
+
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Store intermediary state updates
+            // As we update this mapping iteratively
+            // We will end up with only the latest storage slot update
+            // TODO: Estimate overhead of this approach
+            crate::PendingStorageChanges::<T>::mutate(contract_address, |storage_slots| {
+                storage_slots.try_push((key, value)).unwrap(); // TODO: unwrap safu ??
+            });
+        }
     }
 
     fn increment_nonce(&mut self, contract_address: ContractAddress) -> StateResult<()> {
         let contract_address: ContractAddressWrapper = contract_address.0.0.into();
         let current_nonce = Pallet::<T>::nonce(contract_address);
+        let new_nonce = Felt252Wrapper(current_nonce.0 + FieldElement::ONE);
 
-        crate::Nonces::<T>::insert(contract_address, Felt252Wrapper(current_nonce.0 + FieldElement::ONE));
+        crate::Nonces::<T>::insert(contract_address, new_nonce);
+
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update contracts trie
+            let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
+            let class_hash = Pallet::<T>::contract_class_hash_by_address(contract_address).unwrap_or_default();
+            let contract_root = Pallet::<T>::contract_state_root_by_address(contract_address).unwrap_or_default();
+            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, contract_root, new_nonce);
+            tree.set(contract_address, hash);
+
+            crate::StarknetStateCommitments::<T>::mutate(|state| {
+                state.storage_commitment = tree;
+            })
+        }
 
         Ok(())
     }
@@ -117,12 +152,25 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
         crate::ContractClassHashes::<T>::insert(contract_address, class_hash);
 
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update contracts trie
+            let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
+            let nonce = Pallet::<T>::nonce(contract_address);
+            let contract_root = Pallet::<T>::contract_state_root_by_address(contract_address).unwrap_or_default();
+            let hash = calculate_contract_state_hash::<T::SystemHash>(class_hash, contract_root, nonce);
+            tree.set(contract_address, hash);
+
+            crate::StarknetStateCommitments::<T>::mutate(|state| {
+                state.storage_commitment = tree;
+            })
+        }
+
         Ok(())
     }
 
     fn set_contract_class(&mut self, class_hash: &ClassHash, contract_class: ContractClass) -> StateResult<()> {
         let class_hash: ClassHashWrapper = class_hash.0.into();
-        let contract_class: ContractClassWrapper = ContractClassWrapper::try_from(contract_class).unwrap();
 
         crate::ContractClasses::<T>::insert(class_hash, contract_class);
 
@@ -131,10 +179,27 @@ impl<T: Config> State for BlockifierStateAdapter<T> {
 
     fn set_compiled_class_hash(
         &mut self,
-        _class_hash: ClassHash,
-        _compiled_class_hash: CompiledClassHash,
+        class_hash: ClassHash,
+        compiled_class_hash: CompiledClassHash,
     ) -> StateResult<()> {
         // FIXME 708
+        let class_hash: ClassHashWrapper = class_hash.0.into();
+        let compiled_class_hash: CompiledClassHashWrapper = compiled_class_hash.0.into();
+
+        crate::CompiledClassHashes::<T>::insert(class_hash, compiled_class_hash);
+
+        // Update state tries if enabled in the runtime configuration
+        if T::EnableStateRoot::get() {
+            // Update classes trie
+            let mut tree = crate::StarknetStateCommitments::<T>::get().class_commitment;
+            let final_hash = calculate_class_commitment_leaf_hash::<T::SystemHash>(compiled_class_hash);
+            tree.set(class_hash, final_hash);
+
+            crate::StarknetStateCommitments::<T>::mutate(|state| {
+                state.class_commitment = tree;
+            })
+        }
+
         Ok(())
     }
 

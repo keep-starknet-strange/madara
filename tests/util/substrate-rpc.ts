@@ -32,14 +32,14 @@ export interface ExtrinsicCreation {
 
 export async function waitOneBlock(
   api: ApiPromise,
-  numberOfBlocks = 1
+  numberOfBlocks = 1,
 ): Promise<void> {
   // eslint-disable-next-line no-async-promise-executor
   await new Promise<void>(async (res) => {
     let count = 0;
     const unsub = await api.derive.chain.subscribeNewHeads(async (header) => {
       console.log(
-        `One block elapsed : #${header.number}: author : ${header.author}`
+        `One block elapsed : #${header.number}: author : ${header.author}`,
       );
       count += 1;
       if (count === 1 + numberOfBlocks) {
@@ -54,7 +54,7 @@ export async function waitOneBlock(
 export async function logEvents(api: ApiPromise, name: string) {
   api.derive.chain.subscribeNewHeads(async (header) => {
     debug(
-      `------------- ${name} BLOCK#${header.number}: author ${header.author}, hash ${header.hash}`
+      `------------- ${name} BLOCK#${header.number}: author ${header.author}, hash ${header.hash}`,
     );
     const allRecords: EventRecord[] = (await (
       await api.at(header.hash)
@@ -69,7 +69,7 @@ export async function logEvents(api: ApiPromise, name: string) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (e.toHuman() as any).event.section,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (e.toHuman() as any).event.method
+        (e.toHuman() as any).event.method,
       );
     });
   });
@@ -77,7 +77,7 @@ export async function logEvents(api: ApiPromise, name: string) {
 
 async function lookForExtrinsicAndEvents(
   api: ApiPromise,
-  extrinsicHash: Uint8Array
+  extrinsicHash: Uint8Array,
 ) {
   // We retrieve the block (including the extrinsics)
   const signedBlock = await api.rpc.chain.getBlock();
@@ -94,7 +94,7 @@ async function lookForExtrinsicAndEvents(
   });
   if (extrinsicIndex < 0) {
     console.log(
-      `Extrinsic ${extrinsicHash} is missing in the block ${signedBlock.block.header.hash}`
+      `Extrinsic ${extrinsicHash} is missing in the block ${signedBlock.block.header.hash}`,
     );
   }
   const extrinsic = signedBlock.block.extrinsics[extrinsicIndex];
@@ -104,7 +104,7 @@ async function lookForExtrinsicAndEvents(
     .filter(
       ({ phase }) =>
         phase.isApplyExtrinsic &&
-        phase.asApplyExtrinsic.toNumber() === extrinsicIndex
+        phase.asApplyExtrinsic.toNumber() === extrinsicIndex,
     )
     .map(({ event }) => event);
   return { events, extrinsic };
@@ -112,12 +112,12 @@ async function lookForExtrinsicAndEvents(
 
 async function tryLookingForEvents(
   api: ApiPromise,
-  extrinsicHash: Uint8Array
+  extrinsicHash: Uint8Array,
 ): Promise<ReturnType<typeof lookForExtrinsicAndEvents>> {
   await waitOneBlock(api);
   const { extrinsic, events } = await lookForExtrinsicAndEvents(
     api,
-    extrinsicHash
+    extrinsicHash,
   );
   if (events.length > 0) {
     return {
@@ -131,16 +131,16 @@ async function tryLookingForEvents(
 
 export const createBlockWithExtrinsicParachain = async <
   Call extends SubmittableExtrinsic<ApiType>,
-  ApiType extends ApiTypes
+  ApiType extends ApiTypes,
 >(
   api: ApiPromise,
   sender: AddressOrPair,
-  polkadotCall: Call
+  polkadotCall: Call,
 ): Promise<{ extrinsic: GenericExtrinsic<AnyTuple>; events: Event[] }> => {
   console.log("-------------- EXTRINSIC CALL -------------------------------");
   // This should return a Uint8Array
   const extrinsicHash = (await polkadotCall.signAndSend(
-    sender
+    sender,
   )) as unknown as Uint8Array;
 
   // We create the block which is containing the extrinsic
@@ -152,11 +152,12 @@ export function filterAndApply<T>(
   events: EventRecord[],
   section: string,
   methods: string[],
-  onFound: (record: EventRecord) => T
+  onFound: (record: EventRecord) => T,
 ): T[] {
   return events
     .filter(
-      ({ event }) => section === event.section && methods.includes(event.method)
+      ({ event }) =>
+        section === event.section && methods.includes(event.method),
     )
     .map((record) => onFound(record));
 }
@@ -178,13 +179,13 @@ function getDispatchInfo({
 }
 
 export function extractError(
-  events: EventRecord[] = []
+  events: EventRecord[] = [],
 ): DispatchError | undefined {
   return filterAndApply(
     events,
     "system",
     ["ExtrinsicFailed"],
-    getDispatchError
+    getDispatchError,
   )[0];
 }
 
@@ -196,12 +197,12 @@ export function isExtrinsicSuccessful(events: EventRecord[] = []): boolean {
 }
 
 export function extractInfo(
-  events: EventRecord[] = []
+  events: EventRecord[] = [],
 ): DispatchInfo | undefined {
   return filterAndApply(
     events,
     "system",
     ["ExtrinsicFailed", "ExtrinsicSuccess"],
-    getDispatchInfo
+    getDispatchInfo,
   )[0];
 }

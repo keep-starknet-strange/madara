@@ -4,6 +4,9 @@ use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 
+use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
+use cairo_lang_casm_contract_class::CasmContractClass;
+>>>>>>> upstream/main
 use frame_support::BoundedVec;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
@@ -11,8 +14,7 @@ use thiserror_no_std::Error;
 
 use crate::execution::types::{
     CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
-    MaxCalldataSize,
-};
+    MaxCalldataSize,}
 use crate::transaction::types::{
     DeclareTransaction, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction, EventWrapper,
     InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, MaxArraySize, Transaction,
@@ -37,6 +39,8 @@ fn string_to_felt(hex_str: &str) -> Result<Felt252Wrapper, String> {
 pub struct DeserializeCallEntrypoint {
     /// The class hash
     pub class_hash: Option<String>,
+    /// The casm class hash for declare v2
+    pub casm_class_hash: Option<String>,
     /// The entrypoint type
     pub entrypoint_type: String,
     /// The entrypoint selector
@@ -93,8 +97,6 @@ pub struct DeserializeEventWrapper {
     pub data: Vec<String>,
     /// The address that emitted the event
     pub from_address: String,
-    /// The transaction hash that emitted the event
-    pub transaction_hash: String,
 }
 
 /// Error enum for Event deserialization
@@ -588,6 +590,15 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             None => None,
         };
 
+        // Convert casm_class_hash to Option<Felt252Wrapper> if present
+        let casm_class_hash = match d.casm_class_hash {
+            Some(hash_str) => match Felt252Wrapper::from_hex_be(hash_str.as_str()) {
+                Ok(felt) => Some(felt),
+                Err(e) => return Err(DeserializeCallEntrypointError::InvalidCasmClassHash(e)),
+            },
+            None => None,
+        };
+
         // Convert entrypoint_type to EntryPointTypeWrapper
         let entrypoint_type = match d.entrypoint_type.as_str() {
             "Constructor" => EntryPointTypeWrapper::Constructor,
@@ -639,6 +650,7 @@ impl TryFrom<DeserializeCallEntrypoint> for CallEntryPointWrapper {
             storage_address,
             caller_address,
             initial_gas,
+            compiled_class_hash: casm_class_hash,
         })
     }
 }
@@ -678,13 +690,8 @@ impl TryFrom<DeserializeEventWrapper> for EventWrapper {
             Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
         };
 
-        let transaction_hash = match Felt252Wrapper::from_hex_be(d.transaction_hash.as_str()) {
-            Ok(felt) => felt,
-            Err(e) => return Err(DeserializeEventError::InvalidFelt252(e)),
-        };
-
         // Create EventWrapper with validated and converted fields
-        Ok(Self { keys, data, from_address, transaction_hash })
+        Ok(Self { keys, data, from_address })
     }
 }
 
@@ -703,7 +710,26 @@ pub fn transaction_from_json(json_str: &str) -> Result<Transaction, DeserializeT
     // Deserialize the JSON string into a DeserializeTransaction and convert it into a Transaction
     let deserialized_transaction: DeserializeTransaction =
         serde_json::from_str(json_str).map_err(|e| DeserializeTransactionError::FailedToParse(format!("{:?}", e)))?;
-    let transaction = Transaction::try_from(deserialized_transaction)?;
 
+    let transaction = Transaction::try_from(deserialized_transaction)?;
     Ok(transaction)
+}
+
+/// Create a `ContractClass` from a JSON string
+///
+/// This function takes a JSON string (`json_str`) containing the JSON representation of a
+/// ContractClass
+///
+/// `ContractClassV0` can be read directly from the JSON because the Serde methods have been
+/// implemented in the blockifier
+///
+/// `ContractClassV1` needs to be read in Casm and then converted to Contract Class V1
+pub fn get_contract_class(json_str: &str, version: u8) -> ContractClass {
+    if version == 0 {
+        return ContractClass::V0(serde_json::from_str(json_str).unwrap());
+    } else if version == 1 {
+        let casm_contract_class: CasmContractClass = serde_json::from_str(json_str).unwrap();
+        return ContractClass::V1(ContractClassV1::try_from(casm_contract_class).unwrap());
+    }
+    unimplemented!("version {} is not supported to get contract class from JSON", version);
 }

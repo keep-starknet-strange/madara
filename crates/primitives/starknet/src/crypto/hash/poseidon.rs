@@ -1,13 +1,10 @@
 //! Poseidon hash module.
 use alloc::vec::Vec;
 
-use poseidon_hash::convert::{felts_from_u8s, u8s_from_felts};
-use poseidon_hash::hash_sw8;
-use poseidon_hash::parameters::sw8::GF;
-use starknet_crypto::FieldElement;
+use starknet_crypto::{poseidon_hash, poseidon_hash_many, poseidon_hash_single, FieldElement};
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::{CryptoHasherT, DefaultHasher, HasherT};
+use crate::traits::hash::{DefaultHasher, HasherT};
 
 /// The poseidon hasher.
 #[derive(Clone, Copy, Default, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
@@ -20,11 +17,9 @@ impl HasherT for PoseidonHasher {
     /// * `data` - The data to hash.
     /// # Returns
     /// The hash of the data.
-    fn hash(&self, data: &[u8]) -> Felt252Wrapper {
-        let input = felts_from_u8s::<GF>(data);
-        let binding = u8s_from_felts(&hash_sw8(&input));
-        let result = binding.as_slice();
-        result.try_into().unwrap() // TODO: remove unwrap
+    fn hash_bytes(&self, data: &[u8]) -> Felt252Wrapper {
+        let data = FieldElement::from_byte_slice_be(data).unwrap();
+        Felt252Wrapper(poseidon_hash_single(data))
     }
 
     /// Hashes a slice of field elements using the Poseido hash function.
@@ -36,27 +31,21 @@ impl HasherT for PoseidonHasher {
     /// # Returns
     ///
     /// The hash of the data.
-    fn hash_elements(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
-        let input = felts_from_u8s::<GF>(&data.iter().flat_map(|x| x.0.to_bytes_be()).collect::<Vec<u8>>());
-        let binding = u8s_from_felts(&hash_sw8(&input));
-        let result = binding.as_slice();
-        result.try_into().unwrap() // TODO: remove unwrap
+    fn compute_hash_on_wrappers(&self, data: &[Felt252Wrapper]) -> Felt252Wrapper {
+        let data = data.iter().map(|x| x.0).collect::<Vec<_>>();
+        Felt252Wrapper(poseidon_hash_many(&data))
+    }
+
+    fn hash_elements(&self, a: FieldElement, b: FieldElement) -> FieldElement {
+        poseidon_hash(a, b)
+    }
+    fn compute_hash_on_elements(&self, elements: &[FieldElement]) -> FieldElement {
+        poseidon_hash_many(elements)
     }
 }
 
 impl DefaultHasher for PoseidonHasher {
     fn hasher() -> Self {
         Self::default()
-    }
-}
-
-/// The poseidon CryptoHasher implementation.
-impl CryptoHasherT for PoseidonHasher {
-    fn hash(a: FieldElement, b: FieldElement) -> FieldElement {
-        let input = felts_from_u8s::<GF>(&[a.to_bytes_be(), b.to_bytes_be()].concat());
-        FieldElement::from_byte_slice_be(&u8s_from_felts(&poseidon_hash::hash_sw8(&input))).unwrap()
-    }
-    fn compute_hash_on_elements(_elements: &[FieldElement]) -> FieldElement {
-        todo!()
     }
 }

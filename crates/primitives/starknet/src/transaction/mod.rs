@@ -27,7 +27,9 @@ use blockifier::transaction::transactions::{
 use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{ClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce};
+use starknet_api::api_core::{
+    ClassHash, CompiledClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce,
+};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt};
 use starknet_api::transaction::{
@@ -35,8 +37,7 @@ use starknet_api::transaction::{
     DeclareTransactionV0V1 as DeclareTransactionAPIV0V1, DeployAccountTransaction as DeployAccountTransactionAPI,
     EventContent, Fee, InvokeTransaction as InvokeTransactionAPI, InvokeTransactionV1 as InvokeTransactionAPIV1,
     L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature,
-    TransactionVersion,
-};
+    TransactionVersion,}
 use starknet_api::{calldata, StarknetApiError};
 
 use self::types::{
@@ -62,9 +63,8 @@ impl EventWrapper {
         keys: BoundedVec<Felt252Wrapper, MaxArraySize>,
         data: BoundedVec<Felt252Wrapper, MaxArraySize>,
         from_address: ContractAddressWrapper,
-        transaction_hash: Felt252Wrapper,
     ) -> Self {
-        Self { keys, data, from_address, transaction_hash }
+        Self { keys, data, from_address }
     }
 
     /// Creates an empty event.
@@ -73,7 +73,6 @@ impl EventWrapper {
             keys: BoundedVec::try_from(vec![]).unwrap(),
             data: BoundedVec::try_from(vec![]).unwrap(),
             from_address: ContractAddressWrapper::default(),
-            transaction_hash: Felt252Wrapper::default(),
         }
     }
 
@@ -89,7 +88,6 @@ pub struct EventBuilder {
     keys: vec::Vec<Felt252Wrapper>,
     data: vec::Vec<Felt252Wrapper>,
     from_address: Option<StarknetContractAddress>,
-    transaction_hash: Option<TransactionHash>,
 }
 
 impl EventBuilder {
@@ -123,16 +121,6 @@ impl EventBuilder {
         self
     }
 
-    /// Sets the transaction hash of the event.
-    ///
-    /// # Arguments
-    ///
-    /// * `transaction_hash` - Transaction hash where the event was emitted from.
-    pub fn with_transaction_hash(mut self, transaction_hash: TransactionHash) -> Self {
-        self.transaction_hash = Some(transaction_hash);
-        self
-    }
-
     /// Sets keys and data from an event content.
     ///
     /// # Arguments
@@ -159,7 +147,6 @@ impl EventBuilder {
                 .bytes()
                 .try_into()
                 .map_err(|_| EventError::InvalidFromAddress)?,
-            transaction_hash: self.transaction_hash.unwrap_or_default().0.into(),
         })
     }
 }
@@ -171,7 +158,6 @@ impl Default for EventWrapper {
             keys: BoundedVec::try_from(vec![one, one]).unwrap(),
             data: BoundedVec::try_from(vec![one, one]).unwrap(),
             from_address: one,
-            transaction_hash: Felt252Wrapper::default(),
         }
     }
 }
@@ -358,7 +344,6 @@ impl TryInto<DeclareTransactionAPI> for &Transaction {
             }
             _ => Err(StarknetApiError::OutOfRange { string: String::from("InvalidTransactionType") }),
         }
-    }
 }
 
 impl Transaction {

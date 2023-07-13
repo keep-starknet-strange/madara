@@ -2,12 +2,13 @@ use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+use blockifier::execution::contract_class::ContractClass;
 use frame_support::{Identity, StorageHasher};
-use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper};
+use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::StarknetStorageSchemaVersion;
 use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::runtime_api::StarknetRuntimeApi;
-use pallet_starknet::types::NonceWrapper;
+use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 use sc_client_api::{Backend, HeaderBackend, StorageProvider};
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
@@ -70,23 +71,30 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
         address: ContractAddressWrapper,
     ) -> Option<ClassHashWrapper>;
     /// Return the contract class at the provided address for the provided block.
-    fn contract_class_by_address(
-        &self,
-        block_hash: B::Hash,
-        address: ContractAddressWrapper,
-    ) -> Option<ContractClassWrapper>;
+    fn contract_class_by_address(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<ContractClass>;
     /// Return the contract class for a provided class_hash and block hash.
     fn contract_class_by_class_hash(
         &self,
         block_hash: B::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -> Option<ContractClassWrapper>;
+    ) -> Option<ContractClass>;
     /// Returns the nonce for a provided contract address and block hash.
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
     /// Returns the storage value for a provided key and block hash.
     fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
+    /// Returns the state commitments for a provider block hash
+    fn state_commitments(&self, block_hash: B::Hash) -> Option<StateCommitments>;
+    /// Returns the state root at a provided contract address for the provided block.
+    fn contract_state_root_by_address(
+        &self,
+        block_hash: B::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<Felt252Wrapper>;
+    /// Returns the contract state trie at a provided contract address for the provided block.
+    fn contract_state_trie_by_address(&self, block_hash: B::Hash, address: ContractAddressWrapper)
+    -> Option<StateTrie>;
 }
 
 /// Returns the storage prefix given the pallet module name and the storage name
@@ -139,7 +147,7 @@ where
         &self,
         block_hash: <B as BlockT>::Hash,
         address: ContractAddressWrapper,
-    ) -> Option<ContractClassWrapper> {
+    ) -> Option<ContractClass> {
         let api = self.client.runtime_api();
         let contract_class_hash = api.contract_class_hash_by_address(block_hash, address).ok()?;
 
@@ -179,7 +187,7 @@ where
         &self,
         block_hash: <B as BlockT>::Hash,
         contract_class_hash: ClassHashWrapper,
-    ) -> Option<ContractClassWrapper> {
+    ) -> Option<ContractClass> {
         self.client.runtime_api().contract_class_by_class_hash(block_hash, contract_class_hash).ok()?
     }
 
@@ -218,5 +226,51 @@ where
     /// * `Some(chain_id)` - The chain id for the provided block hash
     fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
         self.client.runtime_api().chain_id(block_hash).ok()
+    }
+
+    /// Return the state commitments for a provided block hash
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(commitments)` - The state commitments for the provided block hash
+    fn state_commitments(&self, block_hash: <B as BlockT>::Hash) -> Option<StateCommitments> {
+        self.client.runtime_api().get_state_commitments(block_hash).ok()
+    }
+
+    /// Return the contract root for a provided block hash
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(contract_root)` - The contract root for the provided block hash
+    fn contract_state_root_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<Felt252Wrapper> {
+        let api = self.client.runtime_api();
+        api.contract_state_root_by_address(block_hash, address).ok()?
+    }
+
+    /// Return the contract state trie for a provided block hash
+    ///
+    /// # Arguments
+    ///
+    /// * `block_hash` - The block hash
+    ///
+    /// # Returns
+    /// * `Some(state_trie)` - The contract state trie for the provided block hash
+    fn contract_state_trie_by_address(
+        &self,
+        block_hash: <B as BlockT>::Hash,
+        address: ContractAddressWrapper,
+    ) -> Option<StateTrie> {
+        let api = self.client.runtime_api();
+        api.contract_state_trie_by_address(block_hash, address).ok()?
     }
 }
