@@ -30,7 +30,7 @@ pub trait FeeConfig {
     ///
     /// # Returns
     ///
-    /// * `bool` - Is the fee disbaled
+    /// * `bool` - Is the fee disabled
     fn is_transaction_fee_disabled(&self) -> bool;
 }
 
