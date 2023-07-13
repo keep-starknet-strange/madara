@@ -79,5 +79,5 @@ parameter_types! {
 
 // This storage item will be used to check if we are in the manual sealing mode
 parameter_types! {
-    pub storage EnableManualSeal: bool = false;
+    pub storage EnableManualSeal: bool = true;
 }
