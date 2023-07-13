@@ -563,6 +563,8 @@ pub mod pallet {
         #[pallet::call_index(2)]
         #[pallet::weight({0})]
         pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
+            log!(info, "declare: {:?}", transaction);
+            
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 

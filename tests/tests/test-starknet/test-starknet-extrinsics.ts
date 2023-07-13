@@ -45,8 +45,7 @@ describeDevMadara(
       await jumpBlocks(context, 10);
     });
 
-    // TODO: fix testing for declare
-    it.skip("should declare a new contract class", async function () {
+    it("should declare a new contract class", async function () {
       const {
         result: { events },
       } = await context.createBlock(

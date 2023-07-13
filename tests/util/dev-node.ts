@@ -212,7 +212,7 @@ export async function startMadaraForkedNode(rpcPort: number): Promise<{
   let runningNode: ChildProcess = null;
   process.once("exit", onProcessExit);
   process.once("SIGINT", onProcessInterrupt);
-  runningNode = spawn(cmd, args);
+  runningNode = spawn(cmd, args, {env: {RUST_BACKTRACE: "1", RUST_LOG: "debug"}});
 
   runningNode.once("exit", () => {
     process.removeListener("exit", onProcessExit);
