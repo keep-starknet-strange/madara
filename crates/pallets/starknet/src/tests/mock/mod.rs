@@ -9,3 +9,6 @@ pub use default_mock::*;
 
 /// Mock Runtime with global state root enabled
 pub mod state_root_mock;
+
+/// Mock Runtime with fees disabled
+pub mod fees_disabled_mock;
