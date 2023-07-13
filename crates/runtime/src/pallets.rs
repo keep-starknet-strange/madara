@@ -44,6 +44,7 @@ impl pallet_starknet::Config for Runtime {
     type DisableTransactionFee = ConstBool<false>;
     #[cfg(feature = "disable-transaction-fee")]
     type DisableTransactionFee = ConstBool<true>;
+    type EnableNonceValidation = ConstBool<true>;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
