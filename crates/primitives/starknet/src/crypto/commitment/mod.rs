@@ -11,7 +11,7 @@ use super::merkle_patricia_tree::merkle_tree::MerkleTree;
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
 use crate::execution::types::Felt252Wrapper;
 use crate::traits::hash::CryptoHasherT;
-use crate::transaction::types::{EventWrapper, GettingAttributeError, Transaction};
+use crate::transaction::types::{EventWrapper, Transaction};
 
 /// A Patricia Merkle tree with height 64 used to compute transaction and event commitments.
 ///
@@ -121,15 +121,15 @@ pub fn calculate_event_commitment<T: CryptoHasherT>(events: &[EventWrapper]) -> 
 /// # Returns
 ///
 /// The transaction hash with signature.
-fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> Result<FieldElement, GettingAttributeError>
+fn calculate_transaction_hash_with_signature<T>(tx: &Transaction) -> FieldElement
 where
     T: CryptoHasherT,
 {
-    let signature = tx.get_signature()?;
+    let signature = tx.get_signature();
     let signature_hash = <T as CryptoHasherT>::compute_hash_on_elements(
         &signature.iter().map(|elt| FieldElement::from(*elt)).collect::<Vec<FieldElement>>(),
     );
-    Ok(<T as CryptoHasherT>::hash(FieldElement::from(tx.get_hash()), signature_hash))
+    <T as CryptoHasherT>::hash(FieldElement::from(tx.get_hash()), signature_hash)
 }
 /// Computes the transaction hash of an invoke transaction.
 ///

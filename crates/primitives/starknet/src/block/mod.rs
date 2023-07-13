@@ -75,6 +75,6 @@ impl Block {
     /// Return a reference to all transaction hashes
     pub fn transactions_hashes(&self) -> Vec<Felt252Wrapper> {
         let transactions = &self.transactions;
-        transactions.into_iter().map(|tx| tx.hash).collect()
+        transactions.into_iter().map(|tx| tx.get_hash()).collect()
     }
 }

@@ -10,7 +10,7 @@ use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::transaction_types::TransactionType;
 use cairo_vm::types::program::Program;
 use frame_support::BoundedVec;
-use sp_core::{ConstU32};
+use sp_core::ConstU32;
 use starknet_api::api_core::{calculate_contract_address, ClassHash, ContractAddress};
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
@@ -162,7 +162,7 @@ impl From<TxType> for TransactionType {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-#[cfg_attr(feature = "std", derive(serde::Deserialize))]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 #[serde(tag = "version")]
 pub enum DeclareTransaction {
     #[serde(rename = "0x1")]
@@ -213,16 +213,59 @@ pub struct DeclareTransactionV1 {
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub struct DeclareTransactionV2 {
-    #[serde(flatten)]
-    pub declare_txn_v1: DeclareTransactionV1,
-    /// The hash of the cairo assembly resulting from the Sierra compilation
+    /// The hash identifying the transaction
+    pub transaction_hash: Felt252Wrapper,
+    /// The maximal fee that can be charged for including the transaction
+    pub max_fee: Felt252Wrapper,
+    /// Signaturecarg
+    pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
+    // Transaction nonce
+    pub nonce: Felt252Wrapper,
+    /// The contract class
+    pub contract_class: ContractClassWrapper,
+    /// The hash of the declared sierra class
+    pub class_hash: Felt252Wrapper,
+    /// The hash of the compiled
     pub compiled_class_hash: Felt252Wrapper,
+    /// The address of the account contract sending the declaration transaction
+    pub sender_address: Felt252Wrapper,
+}
+
+// From https://github.com/tdelabro/starknet-api/blob/main/src/transaction.rs
+macro_rules! implement_declare_tx_getters {
+    ($(($field:ident, $field_type:ty)),*) => {
+        $(pub fn $field(&self) -> $field_type {
+            match self {
+                Self::V1(tx) => tx.$field.clone(),
+                Self::V2(tx) => tx.$field.clone(),
+            }
+        })*
+    };
 }
 
 impl DeclareTransaction {
+    implement_declare_tx_getters!(
+        (transaction_hash, Felt252Wrapper),
+        (class_hash, Felt252Wrapper),
+        (nonce, Felt252Wrapper),
+        (sender_address, Felt252Wrapper),
+        (max_fee, Felt252Wrapper),
+        (signature, BoundedVec<Felt252Wrapper, MaxArraySize>),
+        (contract_class, ContractClassWrapper)
+    );
+
+    pub fn version(&self) -> u8 {
+        match self {
+            DeclareTransaction::V1(_) => 1u8,
+            DeclareTransaction::V2(_) => 2u8,
+        }
+    }
+}
+
+impl From<DeclareTransaction> for Transaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_declare(self) -> Transaction {
-        Transaction::Declare(self)
+    fn from(tx: DeclareTransaction) -> Transaction {
+        Transaction::Declare(tx)
     }
 }
 
@@ -243,8 +286,6 @@ pub struct DeployAccountTransaction {
     pub transaction_hash: Felt252Wrapper,
     /// The maximal fee that can be charged for including the transaction
     pub max_fee: Felt252Wrapper,
-    /// Version of the transaction scheme
-    pub version: u64,
     /// Signature
     pub signature: BoundedVec<Felt252Wrapper, MaxArraySize>,
     /// Nonce
@@ -255,12 +296,16 @@ pub struct DeployAccountTransaction {
     pub constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
     /// The hash of the deployed contract’s class
     pub class_hash: Felt252Wrapper,
+    /// The address of the account contract being deployed
+    pub sender_address: Felt252Wrapper,
+    // Version transaction scheme
+    pub version: u8,
 }
 
-impl DeployAccountTransaction {
+impl From<DeployAccountTransaction> for Transaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_deploy(self) -> Transaction {
-        Transaction::DeployAccount(self)
+    fn from(tx: DeployAccountTransaction) -> Transaction {
+        Transaction::DeployAccount(tx)
     }
 }
 
@@ -293,7 +338,6 @@ impl TryFrom<Transaction> for DeclareTransaction {
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         match value {
             Transaction::Invoke(invoke_tx) => Err(TransactionConversionError::InvokeType),
-            Transaction::L1Handler(l1handler_tx) => Err(TransactionConversionError::L1HanderType),
             Transaction::DeployAccount(deploy_account_tx) => Err(TransactionConversionError::DeployAccountType),
             Transaction::Declare(declare_tx) => Ok(declare_tx),
         }
@@ -377,23 +421,58 @@ pub struct InvokeTransactionV1 {
     pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
 }
 
+macro_rules! implement_invoke_tx_getters {
+    ($(($field:ident, $field_type:ty)),*) => {
+        $(pub fn $field(&self) -> $field_type {
+            match self {
+                Self::V0(tx) => tx.$field.clone(),
+                Self::V1(tx) => tx.$field.clone(),
+            }
+        })*
+    };
+}
+
+// From https://github.com/tdelabro/starknet-api/blob/main/src/transaction.rs
+impl InvokeTransaction {
+    implement_invoke_tx_getters!(
+        (transaction_hash, Felt252Wrapper),
+        (nonce, Felt252Wrapper),
+        (max_fee, Felt252Wrapper),
+        (signature, BoundedVec<Felt252Wrapper, MaxArraySize>),
+        (calldata, BoundedVec<Felt252Wrapper, MaxCalldataSize>)
+    );
+
+    pub fn version(&self) -> u8 {
+        match self {
+            InvokeTransaction::V0(_) => 0_u8,
+            InvokeTransaction::V1(_) => 1_u8,
+        }
+    }
+
+    pub fn sender_address(&self) -> Felt252Wrapper {
+        match self {
+            InvokeTransaction::V0(tx) => tx.contract_address,
+            InvokeTransaction::V1(tx) => tx.sender_address,
+        }
+    }
+}
+
 impl TryFrom<Transaction> for InvokeTransaction {
     type Error = TransactionConversionError;
 
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         match value {
             Transaction::Invoke(invoke_tx) => Ok(invoke_tx),
-            Transaction::L1Handler(l1handler_tx) => Err(TransactionConversionError::L1HanderType),
             Transaction::DeployAccount(deploy_account_tx) => Err(TransactionConversionError::DeployAccountType),
             Transaction::Declare(declare_tx) => Err(TransactionConversionError::DeclareType),
         }
     }
 }
 
-impl InvokeTransaction {
+impl From<InvokeTransaction> for Transaction {
     /// converts the transaction to a [Transaction] object
-    pub fn from_invoke(self) -> Transaction {
-        Transaction::Invoke(self)
+    fn from(tx: InvokeTransaction) -> Transaction {
+        Transaction::Invoke(tx)
     }
 }
 
@@ -412,50 +491,42 @@ impl InvokeTransaction {
 pub enum Transaction {
     #[serde(rename = "INVOKE")]
     Invoke(InvokeTransaction),
-    #[serde(rename = "L1_HANDLER")]
-    L1Handler(L1HandlerTransaction),
     #[serde(rename = "DECLARE")]
     Declare(DeclareTransaction),
     #[serde(rename = "DEPLOY_ACCOUNT")]
     DeployAccount(DeployAccountTransaction),
 }
 
-//Error when getting a [Transaction] specific attribute
-#[derive(Debug, Error)]
-pub enum GettingAttributeError {
-    /// Signature is missing from the object of type [Transaction]
-    #[error("Signature is missing as transaction is of type [L1Handler]")]
-    MissingSignature,
-}
-
 impl Transaction {
-    pub fn get_signature(&self) -> Result<BoundedVec<Felt252Wrapper, MaxArraySize>, GettingAttributeError> {
+    pub fn get_signature(&self) -> BoundedVec<Felt252Wrapper, MaxArraySize> {
         match self {
-            Transaction::Invoke(invoke_tx) => match invoke_tx {
-                InvokeTransaction::V0(invoke_tx_v0) => Ok(invoke_tx_v0.signature),
-                InvokeTransaction::V1(invoke_tx_v1) => Ok(invoke_tx_v1.signature),
-                },
-            Transaction::L1Handler(l1handler_tx) => Err(GettingAttributeError::MissingSignature),
-            Transaction::DeployAccount(deploy_account_tx)=> Ok(deploy_account_tx.signature),
-            Transaction::Declare(declare_tx) => match declare_tx{
-                DeclareTransaction::V1(declare_tx_v1) => Ok(declare_tx_v1.signature),
-                DeclareTransaction::V2(declare_tx_v2) => Ok(declare_tx_v2.declare_txn_v1.signature),
-            }, 
+            Transaction::Invoke(invoke_tx) => invoke_tx.signature(),
+            Transaction::DeployAccount(deploy_account_tx) => deploy_account_tx.signature.clone(),
+            Transaction::Declare(declare_tx) => declare_tx.signature(),
         }
     }
 
     pub fn get_hash(&self) -> Felt252Wrapper {
         match self {
-            Transaction::Invoke(invoke_tx) => match invoke_tx {
-                InvokeTransaction::V0(invoke_tx_v0) => invoke_tx_v0.transaction_hash.clone(),
-                InvokeTransaction::V1(invoke_tx_v1) => invoke_tx_v1.transaction_hash.clone(),
-                },
-            Transaction::L1Handler(l1handler_tx) => l1handler_tx.transaction_hash.clone(),
+            Transaction::Invoke(invoke_tx) => invoke_tx.transaction_hash(),
             Transaction::DeployAccount(deploy_account_tx) => deploy_account_tx.transaction_hash.clone(),
-            Transaction::Declare(declare_tx) => match declare_tx{
-                DeclareTransaction::V1(declare_tx_v1) => declare_tx_v1.transaction_hash.clone(),
-                DeclareTransaction::V2(declare_tx_v2) => declare_tx_v2.declare_txn_v1.transaction_hash.clone(),
-            }, 
+            Transaction::Declare(declare_tx) => declare_tx.transaction_hash(),
+        }
+    }
+
+    pub fn get_nonce(&self) -> Felt252Wrapper {
+        match self {
+            Transaction::Invoke(invoke_tx) => invoke_tx.nonce(),
+            Transaction::DeployAccount(deploy_account_tx) => deploy_account_tx.nonce.clone(),
+            Transaction::Declare(declare_tx) => declare_tx.nonce(),
+        }
+    }
+
+    pub fn get_version(&self) -> u8 {
+        match self {
+            Transaction::Invoke(invoke_tx) => invoke_tx.version(),
+            Transaction::DeployAccount(deploy_account_tx) => 1_u8,
+            Transaction::Declare(declare_tx) => declare_tx.version(),
         }
     }
 }
@@ -465,32 +536,10 @@ impl TryFrom<Transaction> for DeployAccountTransaction {
     fn try_from(value: Transaction) -> Result<Self, Self::Error> {
         match value {
             Transaction::Invoke(invoke_tx) => Err(TransactionConversionError::InvokeType),
-            Transaction::L1Handler(l1handler_tx) => Err(TransactionConversionError::L1HanderType),
             Transaction::DeployAccount(deploy_account_tx) => Ok(deploy_account_tx),
             Transaction::Declare(declare_tx) => Err(TransactionConversionError::DeclareType),
         }
     }
-}
-
-/// L1 Handler transaction.
-#[derive(Clone, Debug, Default, PartialEq, Eq, scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo,
-    scale_codec::MaxEncodedLen)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-/// Transaction calldata.
-pub struct L1HandlerTransaction {
-    /// The hash identifying the transaction
-    pub transaction_hash: Felt252Wrapper,
-    /// Version of the transaction scheme
-    pub version: u64,
-    /// The L1->L2 message nonce field of the sn core L1 contract at the time the transaction was
-    /// sent
-    pub nonce: u64,
-    /// Contract address
-    pub contract_address: Felt252Wrapper,
-    /// Entry point selector
-    pub entry_point_selector: Felt252Wrapper,
-    /// The parameters passed to the function
-    pub calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize>,
 }
 
 /// Representation of a Starknet transaction receipt.
@@ -615,10 +664,9 @@ mod reexport_private_types {
     };
     use starknet_core::types::contract::ComputeClassHashError;
     use starknet_core::types::{
-        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction,
-        DeclareTransaction as RPCDeclareTransaction, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
-        DeclareTransactionV1 as RPCDeclareTransactionV1, DeclareTransactionV2 as RPCDeclareTransactionV2,
-        DeployAccountTransaction as RPCDeployAccountTransaction,
+        BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, DeclareTransaction as RPCDeclareTransaction,
+        DeclareTransactionReceipt as RPCDeclareTransactionReceipt, DeclareTransactionV1 as RPCDeclareTransactionV1,
+        DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction,
         DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, Event as RPCEvent, FieldElement,
         InvokeTransaction as RPCInvokeTransaction, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
         InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
@@ -681,11 +729,11 @@ mod reexport_private_types {
         }
     }
 
-    
-
-   
     impl DeployAccountTransaction {
-        fn try_from(tx: BroadcastedDeployAccountTransaction, chain_id: Felt252Wrapper) -> Result<DeployAccountTransaction, BroadcastedTransactionConversionErrorWrapper> {
+        fn try_from(
+            tx: BroadcastedDeployAccountTransaction,
+            chain_id: Felt252Wrapper,
+        ) -> Result<DeployAccountTransaction, BroadcastedTransactionConversionErrorWrapper> {
             let version = 1_u64;
             let contract_address_salt = Felt252Wrapper::from(tx.contract_address_salt);
             let salt_as_felt = StarkFelt(contract_address_salt.into());
@@ -697,7 +745,7 @@ mod reexport_private_types {
                 .collect::<Vec<Felt252Wrapper>>()
                 .try_into()
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
-            let constructor_calldata:  BoundedVec<Felt252Wrapper, MaxCalldataSize> = tx
+            let constructor_calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize> = tx
                 .constructor_calldata
                 .iter()
                 .map(|f| (*f).into())
@@ -706,13 +754,13 @@ mod reexport_private_types {
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
             let nonce = Felt252Wrapper::from(tx.nonce);
             let max_fee = Felt252Wrapper::from(tx.max_fee);
-    
+
             let stark_felt_vec: Vec<StarkFelt> = constructor_calldata.clone()
                 .into_inner()
                 .into_iter()
                 .map(|felt_wrapper| felt_wrapper.try_into().unwrap()) // Here, we are assuming that the conversion will not fail.
                 .collect();
-    
+
             let sender_address: ContractAddressWrapper = calculate_contract_address(
                 ContractAddressSalt(salt_as_felt),
                 ClassHash(class_hash.try_into().map_err(|_| TransactionConversionError::MissingClassHash)?),
@@ -723,67 +771,72 @@ mod reexport_private_types {
             .0
             .0
             .into();
-    
-            let transaction_hash = calculate_deploy_account_tx_hash(constructor_calldata, max_fee, class_hash, contract_address_salt, nonce, version, chain_id, sender_address);
-            
+
+            let transaction_hash = calculate_deploy_account_tx_hash(
+                constructor_calldata.clone(),
+                max_fee,
+                class_hash,
+                contract_address_salt,
+                nonce,
+                version,
+                chain_id,
+                sender_address,
+            );
+
             Ok(DeployAccountTransaction {
+                version: 1_u8,
                 transaction_hash,
                 max_fee,
-                version: 1_u64,
                 signature,
                 nonce,
                 contract_address_salt,
                 constructor_calldata,
                 class_hash,
+                sender_address,
             })
         }
     }
-    
 
     impl From<Transaction> for RPCTransaction {
         fn from(value: Transaction) -> Self {
-
-        match value {
-                Transaction::Declare(declare_tx)=> {
-                    match declare_tx {
-                        DeclareTransaction::V1(declare_txn_v1) => {
-                            let transaction_hash = declare_txn_v1.transaction_hash.0;
-                            let max_fee = declare_txn_v1.max_fee.0;
-                            let signature = declare_txn_v1.signature.iter().map(|&f| f.0).collect();
-                            let nonce = declare_txn_v1.nonce.0;
-                            let class_hash = declare_txn_v1.class_hash.0;
-                            let sender_address = declare_txn_v1.sender_address.0;
-                            RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
-                                transaction_hash,
-                                max_fee,
-                                signature,
-                                nonce,
-                                class_hash,
-                                sender_address,
-                            }))
-                            },
-                        DeclareTransaction::V2(declare_txn_v2) => {
-                            let transaction_hash = declare_txn_v2.declare_txn_v1.transaction_hash.0;
-                            let max_fee = declare_txn_v2.declare_txn_v1.max_fee.0;
-                            let signature = declare_txn_v2.declare_txn_v1.signature.iter().map(|&f| f.0).collect();
-                            let nonce = declare_txn_v2.declare_txn_v1.nonce.0;
-                            let class_hash = declare_txn_v2.declare_txn_v1.class_hash.0;
-                            let sender_address = declare_txn_v2.declare_txn_v1.sender_address.0;
-                            let compiled_class_hash = declare_txn_v2.compiled_class_hash.0;
-                            RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
-                                transaction_hash,
-                                max_fee,
-                                signature,
-                                nonce,
-                                class_hash,
-                                sender_address,
-                                compiled_class_hash,
-                            }))
-                            }
+            match value {
+                Transaction::Declare(declare_tx) => match declare_tx {
+                    DeclareTransaction::V1(declare_txn_v1) => {
+                        let transaction_hash = declare_txn_v1.transaction_hash.0;
+                        let max_fee = declare_txn_v1.max_fee.0;
+                        let signature = declare_txn_v1.signature.iter().map(|&f| f.0).collect();
+                        let nonce = declare_txn_v1.nonce.0;
+                        let class_hash = declare_txn_v1.class_hash.0;
+                        let sender_address = declare_txn_v1.sender_address.0;
+                        RPCTransaction::Declare(RPCDeclareTransaction::V1(RPCDeclareTransactionV1 {
+                            transaction_hash,
+                            max_fee,
+                            signature,
+                            nonce,
+                            class_hash,
+                            sender_address,
+                        }))
                     }
-            },
-            Transaction::Invoke(invoke_tx) => {
-                match invoke_tx {
+                    DeclareTransaction::V2(declare_txn_v2) => {
+                        let transaction_hash = declare_txn_v2.transaction_hash.0;
+                        let max_fee = declare_txn_v2.max_fee.0;
+                        let signature = declare_txn_v2.signature.iter().map(|&f| f.0).collect();
+                        let nonce = declare_txn_v2.nonce.0;
+                        let class_hash = declare_txn_v2.class_hash.0;
+                        let sender_address = declare_txn_v2.sender_address.0;
+                        let compiled_class_hash = declare_txn_v2.compiled_class_hash.0;
+                        RPCTransaction::Declare(RPCDeclareTransaction::V2(RPCDeclareTransactionV2 {
+                            transaction_hash,
+                            max_fee,
+                            signature,
+                            nonce,
+                            class_hash,
+                            sender_address,
+                            compiled_class_hash,
+                        }))
+                    }
+                },
+                Transaction::Invoke(invoke_tx) => match invoke_tx {
                     InvokeTransaction::V0(invoke_txn_v0) => {
                         let transaction_hash = invoke_txn_v0.transaction_hash.0;
                         let max_fee = invoke_txn_v0.max_fee.0;
@@ -801,7 +854,7 @@ mod reexport_private_types {
                             entry_point_selector,
                             calldata,
                         }))
-                    },
+                    }
                     InvokeTransaction::V1(invoke_txn_v1) => {
                         let transaction_hash = invoke_txn_v1.transaction_hash.0;
                         let max_fee = invoke_txn_v1.max_fee.0;
@@ -818,42 +871,25 @@ mod reexport_private_types {
                             calldata,
                         }))
                     }
+                },
+                Transaction::DeployAccount(deploy_tx) => {
+                    let transaction_hash = deploy_tx.transaction_hash.0;
+                    let max_fee = deploy_tx.max_fee.0;
+                    let signature = deploy_tx.signature.iter().map(|&f| f.0).collect();
+                    let nonce = deploy_tx.nonce.0;
+                    let contract_address_salt = deploy_tx.contract_address_salt.0;
+                    let constructor_calldata = deploy_tx.constructor_calldata.iter().map(|&f| f.0).collect();
+                    let class_hash = deploy_tx.class_hash.0;
+                    RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
+                        transaction_hash,
+                        max_fee,
+                        signature,
+                        nonce,
+                        contract_address_salt,
+                        constructor_calldata,
+                        class_hash,
+                    })
                 }
-            },
-            Transaction::DeployAccount(deploy_tx) => {
-                let transaction_hash = deploy_tx.transaction_hash.0;
-                let max_fee = deploy_tx.max_fee.0;
-                let signature = deploy_tx.signature.iter().map(|&f| f.0).collect();
-                let nonce = deploy_tx.nonce.0;
-                let contract_address_salt = deploy_tx.contract_address_salt.0;
-                let constructor_calldata = deploy_tx.constructor_calldata.iter().map(|&f| f.0).collect();
-                let class_hash = deploy_tx.class_hash.0;
-                RPCTransaction::DeployAccount(RPCDeployAccountTransaction {
-                    transaction_hash,
-                    max_fee,
-                    signature,
-                    nonce,
-                    contract_address_salt,
-                    constructor_calldata,
-                    class_hash,
-                })
-            },
-            Transaction::L1Handler(l1handler_tx) => {
-                let transaction_hash = l1handler_tx.transaction_hash.0;
-                let version = l1handler_tx.version;
-                let nonce = l1handler_tx.nonce;
-                let contract_address = l1handler_tx.contract_address.0;
-                let entry_point_selector = l1handler_tx.entry_point_selector.0;
-                let calldata = l1handler_tx.calldata.iter().map(|&f| f.0).collect();
-                RPCTransaction::L1Handler(RPCL1HandlerTransaction {
-                    transaction_hash,
-                    version,
-                    nonce,
-                    contract_address,
-                    entry_point_selector,
-                    calldata,
-                })
-
             }
         }
     }
@@ -895,4 +931,3 @@ mod reexport_private_types {
 
 #[cfg(feature = "std")]
 pub use reexport_private_types::*;
-}
