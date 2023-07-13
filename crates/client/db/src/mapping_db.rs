@@ -66,12 +66,12 @@ impl<B: BlockT> MappingDb<B> {
         let substrate_hashes = match self.block_hash(&commitment.starknet_block_hash) {
             Ok(Some(mut data)) => {
                 data.push(commitment.block_hash);
-                log::warn!(
-                    target: "fc-db",
-                    "Possible equivocation at starknet block hash {} {:?}",
-                    &commitment.starknet_block_hash,
-                    &data
-                );
+                // log::warn!(
+                //     target: "fc-db",
+                //     "Possible equivocation at starknet block hash {} {:?}",
+                //     &commitment.starknet_block_hash,
+                //     &data
+                // );
                 data
             }
             _ => vec![commitment.block_hash],
