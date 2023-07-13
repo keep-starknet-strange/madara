@@ -1,26 +1,24 @@
-use frame_support::{assert_ok, bounded_vec};
+use frame_support::assert_ok;
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::InvokeTransaction;
 
 use super::constants::FEE_TOKEN_ADDRESS;
-use super::mock::fees_disabled_mock::{basic_test_setup_fees_disabled, new_test_ext_with_fees_disabled};
-use super::mock::*;
-use crate::tests::mock::fees_disabled_mock::{
-    MockFeesDisabledRuntime, RuntimeOrigin as FeesDisabledRuntimeOrigin, Starknet as FeesDisabledStarknet,
-};
+use super::mock::{default_mock, fees_disabled_mock, *};
+use super::utils::{build_get_balance_contract_call, build_transfer_invoke_transaction};
+use crate::types::BuildTransferInvokeTransaction;
 
 #[test]
 fn given_default_runtime_with_fees_enabled_txn_deducts_fee_token() {
-    new_test_ext().execute_with(|| {
-        basic_test_setup_fees_disabled::<MockRuntime>(2);
-        let origin = RuntimeOrigin::none();
+    new_test_ext::<default_mock::MockRuntime>().execute_with(|| {
+        default_mock::basic_test_setup(2);
+        let origin = default_mock::RuntimeOrigin::none();
 
         let address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
-        let (initial_balance_low, initial_balance_high) = get_balance(address);
+        let (initial_balance_low, initial_balance_high) = get_balance_default_mock(address);
 
         // transfer to zero fee token so that the only change in balance can happen because of fees
-        assert_ok!(Starknet::invoke(origin, build_invoke_transaction(address)));
-        let (final_balance_low, final_balance_high) = get_balance(address);
+        assert_ok!(default_mock::Starknet::invoke(origin, build_invoke_transaction(address)));
+        let (final_balance_low, final_balance_high) = get_balance_default_mock(address);
 
         // Check that the balance has changed because fees is reduced
         assert!(initial_balance_low > final_balance_low);
@@ -30,16 +28,16 @@ fn given_default_runtime_with_fees_enabled_txn_deducts_fee_token() {
 
 #[test]
 fn given_default_runtime_with_fees_disabled_txn_does_not_deduct_fee_token() {
-    new_test_ext_with_fees_disabled().execute_with(|| {
-        basic_test_setup_fees_disabled::<MockFeesDisabledRuntime>(2);
-        let origin = FeesDisabledRuntimeOrigin::none();
+    new_test_ext::<fees_disabled_mock::MockRuntime>().execute_with(|| {
+        fees_disabled_mock::basic_test_setup(2);
+        let origin = fees_disabled_mock::RuntimeOrigin::none();
 
         let address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
-        let (initial_balance_low, initial_balance_high) = get_balance(address);
+        let (initial_balance_low, initial_balance_high) = get_balance_fees_disabled_mock(address);
 
         // transfer to zero fee token so that the only change in balance can happen because of fees
-        assert_ok!(FeesDisabledStarknet::invoke(origin, build_invoke_transaction(address)));
-        let (final_balance_low, final_balance_high) = get_balance(address);
+        assert_ok!(fees_disabled_mock::Starknet::invoke(origin, build_invoke_transaction(address)));
+        let (final_balance_low, final_balance_high) = get_balance_fees_disabled_mock(address);
 
         // Check that the balance hasn't changed
         pretty_assertions::assert_eq!(initial_balance_low, final_balance_low);
@@ -48,32 +46,33 @@ fn given_default_runtime_with_fees_disabled_txn_does_not_deduct_fee_token() {
 }
 
 fn build_invoke_transaction(address: ContractAddressWrapper) -> InvokeTransaction {
-    InvokeTransaction {
-        version: 1,
+    build_transfer_invoke_transaction(BuildTransferInvokeTransaction {
         sender_address: address,
-        calldata: bounded_vec![
-            Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), // Token address
-            Felt252Wrapper::from_hex_be("0x0083afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e").unwrap(), /* transfer selector */
-            Felt252Wrapper::THREE, // Calldata len
-            address,               // recipient
-            Felt252Wrapper::ZERO,  // initial supply low
-            Felt252Wrapper::ZERO,  // initial supply high
-        ],
+        token_address: Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(),
+        recipient: address,
+        amount_low: Felt252Wrapper::ZERO,
+        amount_high: Felt252Wrapper::ZERO,
         nonce: Felt252Wrapper::ZERO,
-        max_fee: Felt252Wrapper::from(u128::MAX),
-        signature: bounded_vec!(),
-        is_query: false,
-    }
+    })
 }
 
-fn get_balance(account_address: ContractAddressWrapper) -> (Felt252Wrapper, Felt252Wrapper) {
-    let balance_of_selector =
-        Felt252Wrapper::from_hex_be("0x02e4263afad30923c891518314c3c95dbe830a16874e8abc5777a9a20b54c76e").unwrap();
-    let calldata = bounded_vec![
-        account_address // owner address
-    ];
-    let res =
-        Starknet::call_contract(Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap(), balance_of_selector, calldata)
+fn get_balance_default_mock(account_address: ContractAddressWrapper) -> (Felt252Wrapper, Felt252Wrapper) {
+    let get_balance_call = build_get_balance_call(account_address);
+    let result =
+        default_mock::Starknet::call_contract(get_balance_call.0, get_balance_call.1, get_balance_call.2).unwrap();
+    (result[0], result[1])
+}
+
+fn get_balance_fees_disabled_mock(account_address: ContractAddressWrapper) -> (Felt252Wrapper, Felt252Wrapper) {
+    let get_balance_call = build_get_balance_call(account_address);
+    let result =
+        fees_disabled_mock::Starknet::call_contract(get_balance_call.0, get_balance_call.1, get_balance_call.2)
             .unwrap();
-    (res[0], res[1])
+    (result[0], result[1])
+}
+
+fn build_get_balance_call(
+    account_address: ContractAddressWrapper,
+) -> (Felt252Wrapper, Felt252Wrapper, Vec<Felt252Wrapper>) {
+    build_get_balance_contract_call(account_address, Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap())
 }
