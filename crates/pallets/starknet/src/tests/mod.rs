@@ -247,6 +247,7 @@ pub fn get_declare_dummy(account_type: AccountType) -> DeclareTransaction {
         nonce: Felt252Wrapper::ZERO,
         max_fee: Felt252Wrapper::from(u128::MAX),
         signature: bounded_vec!(),
+        is_query: false,
     }
 }
 
@@ -268,6 +269,7 @@ pub fn get_deploy_account_dummy(salt: &str, account_type: AccountType) -> Deploy
         nonce: Felt252Wrapper::ZERO,
         max_fee: Felt252Wrapper::from(u128::MAX),
         signature: bounded_vec!(),
+        is_query: false,
     }
 }
 
