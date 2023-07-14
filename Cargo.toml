@@ -139,7 +139,7 @@ blockifier = { git = "https://github.com/keep-starknet-strange/blockifier", bran
 ] }
 starknet_api = { git = "https://github.com/keep-starknet-strange/starknet-api", branch = "no_std-support", features = [
   "testing",
-  "parity-scale-codec"
+  "parity-scale-codec",
 ], default-features = false }
 
 # Cairo lang
