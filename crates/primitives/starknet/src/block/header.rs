@@ -106,7 +106,7 @@ impl Header {
 		let first_07_block = 833;
 		if self.block_number >= first_07_block {
 			let data: &[Felt252Wrapper] = &[
-				self.block_number.into(), // TODO: remove unwrap
+				self.block_number.into(),
 				self.global_state_root,
 				self.sequencer_address,
 				self.block_timestamp.into(),
@@ -122,16 +122,17 @@ impl Header {
         	<H as HasherT>::compute_hash_on_wrappers(&hasher, data)
 		} else {
 			let data: &[Felt252Wrapper] = &[
-				self.block_number.into(), // TODO: remove unwrap
+				self.block_number.into(),
 				self.global_state_root,
-				Felt252Wrapper::from(0u32),
-				Felt252Wrapper::from(0u32),
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
 				self.transaction_count.into(),
 				self.transaction_commitment,
-				self.event_count.into(),
-				self.event_commitment,
-				self.protocol_version.into(),
 				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::ZERO,
+				Felt252Wrapper::from_hex_be("0x534e5f4d41494e").unwrap(),
 				self.parent_block_hash,
 			];
 
