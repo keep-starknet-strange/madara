@@ -274,7 +274,7 @@ impl_runtime_apis! {
         }
 
         fn chain_id() -> Felt252Wrapper {
-            Starknet::get_chain_id()
+            Starknet::chain_id()
         }
 
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
@@ -290,7 +290,7 @@ impl_runtime_apis! {
         }
 
         fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<Transaction> {
-            let chain_id  = Starknet::get_chain_id()
+            let chain_id  = Starknet::chain_id();
 
             xts.into_iter().filter_map(|xt| match xt.function {
                 RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),

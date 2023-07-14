@@ -345,8 +345,6 @@ pub mod pallet {
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddressWrapper,
         pub _phantom: PhantomData<T>,
-        /// The chain id.
-        pub chain_id: Felt252Wrapper,
         pub seq_addr_updated: bool,
     }
 
@@ -359,7 +357,6 @@ pub mod pallet {
                 storage: vec![],
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
-                chain_id: Default::default(),
                 seq_addr_updated: true,
             }
         }
@@ -1197,7 +1194,7 @@ impl<T: Config> Pallet<T> {
         global_state_root
     }
 
-    pub fn get_chain_id() -> Felt252Wrapper {
+    pub fn chain_id() -> Felt252Wrapper {
         T::ChainId::get()
     }
 }

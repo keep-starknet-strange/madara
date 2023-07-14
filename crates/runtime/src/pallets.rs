@@ -20,6 +20,7 @@ use sp_runtime::traits::{AccountIdLookup, BlakeTwo256};
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 use sp_std::marker::PhantomData;
+use starknet_ff::FieldElement;
 
 use crate::*;
 
@@ -159,7 +160,16 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
-    pub const ChainId: Felt252Wrapper = Felt252Wrapper::ZERO;
+    // Starknet testnet SN_GOERLI
+    // Need to use `from_mont` because this needs to be a constant function call
+    pub const ChainId: Felt252Wrapper = Felt252Wrapper(FieldElement::from_mont(
+        [
+            3753493103916128178,
+            18446744073709548950,
+            18446744073709551615,
+            398700013197595345,
+        ]
+    ));
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

@@ -71,7 +71,16 @@ parameter_types! {
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const EnableStateRoot: bool = true;
     pub const ProtocolVersion: u8 = 0;
-    pub const ChainId: Felt252Wrapper = Felt252Wrapper::ZERO;
+    // Starknet testnet SN_GOERLI
+    // Need to use `from_mont` because this needs to be a constant function call
+    pub const ChainId: Felt252Wrapper = Felt252Wrapper(FieldElement::from_mont(
+        [
+            3753493103916128178,
+            18446744073709548950,
+            18446744073709551615,
+            398700013197595345,
+        ]
+    ));
 }
 
 impl pallet_starknet::Config for MockStateRootRuntime {
@@ -243,7 +252,6 @@ pub fn new_test_ext_with_state_root() -> sp_io::TestExternalities {
                 Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap(),
             ),
         ],
-        chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
         seq_addr_updated: true,
         ..Default::default()
     }
@@ -278,6 +286,6 @@ pub(crate) fn basic_test_setup_state_root<T: Config>(n: u64) {
 /// Returns the chain id used by the mock runtime.
 /// # Returns
 /// The chain id of the mock runtime.
-pub fn _get_chain_id() -> Felt252Wrapper {
+pub fn _chain_id() -> Felt252Wrapper {
     Starknet::chain_id()
 }
