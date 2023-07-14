@@ -38,6 +38,7 @@ fn given_contract_run_deploy_account_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -86,6 +87,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_ok!(Starknet::deploy_account(RuntimeOrigin::none(), transaction.clone()));
@@ -111,6 +113,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_err!(
@@ -148,6 +151,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_err!(
@@ -183,6 +187,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
         let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
 
@@ -224,6 +229,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
+            is_query: false,
         };
 
         let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
@@ -262,6 +268,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
@@ -304,6 +311,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
+            is_query: false,
         };
 
         let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
@@ -352,6 +360,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: signatures.try_into().unwrap(),
+            is_query: false,
         };
 
         let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
@@ -395,6 +404,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
+            is_query: false,
         };
 
         assert_err!(
@@ -429,6 +439,7 @@ fn test_verify_tx_longevity() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::deploy_account { transaction });

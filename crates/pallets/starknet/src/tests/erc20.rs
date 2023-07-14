@@ -42,6 +42,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         let expected_erc20_address =
@@ -119,6 +120,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
             nonce: Felt252Wrapper::ONE,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         // Also asserts that the deployment has been saved.

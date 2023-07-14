@@ -30,6 +30,7 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
             signature: Default::default(),
             max_fee: Default::default(),
             class_hash: Default::default(),
+            is_query: false,
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);

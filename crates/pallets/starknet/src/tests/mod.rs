@@ -43,6 +43,7 @@ pub fn get_invoke_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -73,6 +74,7 @@ fn get_invoke_argent_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -103,6 +105,7 @@ fn get_invoke_braavos_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -129,6 +132,7 @@ fn get_invoke_emit_event_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -155,6 +159,7 @@ fn get_invoke_nonce_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -179,6 +184,7 @@ fn get_storage_read_write_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id());
 
@@ -213,6 +219,7 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
