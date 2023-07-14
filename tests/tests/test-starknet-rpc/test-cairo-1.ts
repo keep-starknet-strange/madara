@@ -58,13 +58,11 @@ describeDevMadara(
         await jumpBlocks(context, 1);
 
         // deploy the account
-        await account.deploySelf(
-          {
-            classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
-            addressSalt: SALT,
-            constructorCalldata: CONSTRUCTOR_CALLDATA,
-          },
-        );
+        await account.deploySelf({
+          classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
+          addressSalt: SALT,
+          constructorCalldata: CONSTRUCTOR_CALLDATA,
+        });
         await jumpBlocks(context, 1);
 
         expect(await providerRPC.getClassHashAt(accountAddress)).to.be.equal(
