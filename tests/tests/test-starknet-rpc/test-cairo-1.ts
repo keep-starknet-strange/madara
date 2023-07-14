@@ -64,7 +64,6 @@ describeDevMadara(
             addressSalt: SALT,
             constructorCalldata: CONSTRUCTOR_CALLDATA,
           },
-          { maxFee: "123456" },
         );
         await jumpBlocks(context, 1);
 
@@ -91,7 +90,6 @@ describeDevMadara(
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
-            maxFee: "123456",
           },
         );
         CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
@@ -121,7 +119,6 @@ describeDevMadara(
             ],
           },
           {
-            maxFee: "123456",
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
           },
@@ -152,7 +149,6 @@ describeDevMadara(
           ],
           undefined,
           {
-            maxFee: "123456",
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
           },

@@ -133,7 +133,6 @@ describeDevMadara(
           undefined,
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-            maxFee: "123456",
           },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
@@ -180,7 +179,6 @@ describeDevMadara(
           undefined,
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-            maxFee: "123456",
           },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
@@ -288,7 +286,6 @@ describeDevMadara(
 
         const txDetails = {
           nonce: nonce,
-          version: "0x1",
         };
 
         const invocation: AccountInvocationItem = {
@@ -367,7 +364,6 @@ describeDevMadara(
 
         const txDetails = {
           nonce: nonce,
-          version: "0x1",
         };
 
         const invocation: AccountInvocationItem = {
@@ -414,7 +410,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC20_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
         await jumpBlocks(context, 1);
@@ -450,7 +446,6 @@ describeDevMadara(
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
-            maxFee: "123456",
           },
         );
         CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
@@ -489,7 +484,6 @@ describeDevMadara(
             {
               nonce: ARGENT_CONTRACT_NONCE.value,
               version: 1,
-              maxFee: "123456",
             },
           ),
         ).to.be.rejectedWith("51: Class already declared");
@@ -541,7 +535,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC721_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, maxFee: "123456" },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1, },
         );
 
         const txs = await providerRPC.getPendingTransactions();

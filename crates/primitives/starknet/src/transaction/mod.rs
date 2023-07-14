@@ -560,7 +560,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -614,7 +614,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -646,7 +646,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Execute.
                 let transaction_execution = tx
@@ -699,6 +699,7 @@ impl Transaction {
     pub fn handle_nonce(
         state: &mut dyn State,
         account_tx_context: &AccountTransactionContext,
+        is_query: bool,
     ) -> TransactionExecutionResultWrapper<()> {
         if account_tx_context.version == TransactionVersion(StarkFelt::from(0_u8)) {
             return Ok(());
@@ -706,6 +707,13 @@ impl Transaction {
 
         let address = account_tx_context.sender_address;
         let current_nonce = state.get_nonce_at(address).map_err(TransactionExecutionErrorWrapper::StateError)?;
+
+        // if it's an estimate_fee transaction than as long as the nonce is greater then current nonce
+        // we are good to go
+        if is_query && account_tx_context.nonce >= current_nonce {
+            return Ok(());
+        }
+
         if current_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionErrorWrapper::TransactionExecution(
                 TransactionExecutionError::InvalidNonce {

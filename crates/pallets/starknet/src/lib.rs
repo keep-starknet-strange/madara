@@ -1108,9 +1108,6 @@ impl<T: Config> Pallet<T> {
 
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
-        // Check if contract is deployed
-        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
-
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
