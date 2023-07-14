@@ -405,6 +405,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "hel-kame",
+      "name": "hithem",
+      "avatar_url": "https://avatars.githubusercontent.com/u/117039823?v=4",
+      "profile": "https://github.com/hel-kame",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
