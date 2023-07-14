@@ -23,7 +23,7 @@ pub fn calculate_transaction_version(is_query: bool, version: TransactionVersion
 
 /// calls [calculate_transaction_version] after converting version to [TransactionVersion]
 pub fn calculate_transaction_version_from_u8(is_query: bool, version: u8) -> TransactionVersion {
-    return calculate_transaction_version(is_query, TransactionVersion(StarkFelt::from(version)));
+    calculate_transaction_version(is_query, TransactionVersion(StarkFelt::from(version)))
 }
 
 #[cfg(feature = "std")]
