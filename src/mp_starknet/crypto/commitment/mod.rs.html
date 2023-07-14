@@ -373,10 +373,13 @@
 <a href="#373" id="373">373</a>
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::vec;
 <span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span>bitvec::vec::BitVec;
+<span class="kw">use </span>starknet_api::transaction::TransactionVersion;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">super</span>::hash::pedersen::PedersenHasher;
@@ -387,6 +390,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
 };
+<span class="kw">use </span><span class="kw">crate</span>::transaction::utils::calculate_transaction_version_from_u8;
 
 <span class="doccomment">/// Hash of the leaf of the ClassCommitment tree
 </span><span class="kw">pub type </span>ClassCommitmentLeafHash = Felt252Wrapper;
@@ -651,7 +655,7 @@
         transaction.calldata.as_slice(),
         transaction.max_fee,
         transaction.nonce,
-        transaction.version,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
         <span class="string">b&quot;invoke&quot;</span>,
         chain_id,
         <span class="prelude-val">None</span>,
@@ -669,7 +673,7 @@
         <span class="kw-2">&amp;</span>[transaction.class_hash],
         transaction.max_fee,
         transaction.nonce,
-        transaction.version,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
         <span class="string">b&quot;declare&quot;</span>,
         chain_id,
         transaction.compiled_class_hash,
@@ -691,7 +695,7 @@
         <span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="macro">vec!</span>[transaction.account_class_hash, transaction.salt], transaction.calldata.to_vec()].concat(),
         transaction.max_fee,
         transaction.nonce,
-        transaction.version,
+        calculate_transaction_version_from_u8(transaction.is_query, transaction.version),
         <span class="string">b&quot;deploy_account&quot;</span>,
         chain_id,
         <span class="prelude-val">None</span>,
@@ -705,7 +709,7 @@
     calldata: <span class="kw-2">&amp;</span>[Felt252Wrapper],
     max_fee: Felt252Wrapper,
     nonce: Felt252Wrapper,
-    version: u8,
+    version: TransactionVersion,
     tx_prefix: <span class="kw-2">&amp;</span>[u8],
     chain_id: Felt252Wrapper,
     compiled_class_hash: <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt;,
@@ -719,7 +723,7 @@
         .compute_hash_on_elements(<span class="kw-2">&amp;</span>calldata.iter().map(|<span class="kw-2">&amp;</span>val| FieldElement::from(val)).collect::&lt;Vec&lt;FieldElement&gt;&gt;());
     <span class="kw">let </span>max_fee = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>max_fee.into()).unwrap();
     <span class="kw">let </span>nonce = FieldElement::from_bytes_be(<span class="kw-2">&amp;</span>nonce.into()).unwrap();
-    <span class="kw">let </span>version = FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>version.to_be_bytes()).unwrap();
+    <span class="kw">let </span>version = FieldElement::from(version.<span class="number">0</span>);
     <span class="kw">let </span>tx_prefix = FieldElement::from_byte_slice_be(tx_prefix).unwrap();
 
     <span class="kw">let </span><span class="kw-2">mut </span>elements =

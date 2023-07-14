@@ -892,6 +892,22 @@
 <a href="#892" id="892">892</a>
 <a href="#893" id="893">893</a>
 <a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -1071,6 +1087,8 @@
     </span><span class="kw">pub </span>signature: BoundedVec&lt;Felt252Wrapper, MaxArraySize&gt;,
     <span class="doccomment">/// Max fee.
     </span><span class="kw">pub </span>max_fee: Felt252Wrapper,
+    <span class="doccomment">/// If set to `true`, uses a query-only transaction version that&#39;s invalid for execution
+    </span><span class="kw">pub </span>is_query: bool,
 }
 
 <span class="kw">impl </span>DeclareTransaction {
@@ -1096,6 +1114,7 @@
             contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,
+            is_query: <span class="self">self</span>.is_query,
         }
     }
 }
@@ -1128,6 +1147,8 @@
     </span><span class="kw">pub </span>account_class_hash: Felt252Wrapper,
     <span class="doccomment">/// Max fee.
     </span><span class="kw">pub </span>max_fee: Felt252Wrapper,
+    <span class="doccomment">/// If set to `true`, uses a query-only transaction version that&#39;s invalid for execution
+    </span><span class="kw">pub </span>is_query: bool,
 }
 
 <span class="kw">impl </span>DeployAccountTransaction {
@@ -1171,6 +1192,7 @@
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt.into()),
             max_fee: <span class="self">self</span>.max_fee,
+            is_query: <span class="self">self</span>.is_query,
         })
     }
 }
@@ -1213,6 +1235,7 @@
             compiled_class_hash: casm_class_hash,
             class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         })
     }
 }
@@ -1243,6 +1266,8 @@
     </span><span class="kw">pub </span>signature: BoundedVec&lt;Felt252Wrapper, MaxArraySize&gt;,
     <span class="doccomment">/// Max fee.
     </span><span class="kw">pub </span>max_fee: Felt252Wrapper,
+    <span class="doccomment">/// If set to `true`, uses a query-only transaction version that&#39;s invalid for execution
+    </span><span class="kw">pub </span>is_query: bool,
 }
 
 <span class="kw">impl </span>From&lt;Transaction&gt; <span class="kw">for </span>InvokeTransaction {
@@ -1254,6 +1279,7 @@
             nonce: value.nonce,
             calldata: value.call_entrypoint.calldata,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         }
     }
 }
@@ -1281,6 +1307,7 @@
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: <span class="self">self</span>.max_fee,
+            is_query: <span class="self">self</span>.is_query,
         }
     }
 }
@@ -1318,6 +1345,8 @@
     </span><span class="kw">pub </span>contract_address_salt: <span class="prelude-ty">Option</span>&lt;U256&gt;,
     <span class="doccomment">/// Max fee.
     </span><span class="kw">pub </span>max_fee: Felt252Wrapper,
+    <span class="doccomment">/// If set to `true`, uses a query-only transaction version that&#39;s invalid for execution
+    </span><span class="kw">pub </span>is_query: bool,
 }
 
 <span class="kw">impl </span>TryFrom&lt;Transaction&gt; <span class="kw">for </span>DeployAccountTransaction {
@@ -1333,6 +1362,7 @@
             salt: salt_as_felt_wrapper,
             account_class_hash: value.call_entrypoint.class_hash.ok_or(TransactionConversionError::MissingClassHash)<span class="question-mark">?</span>,
             max_fee: value.max_fee,
+            is_query: value.is_query,
         })
     }
 }
@@ -1530,6 +1560,7 @@
                     )
                     .map_err(|<span class="kw">_</span>| BroadcastedTransactionConversionErrorWrapper::CalldataConversionError)<span class="question-mark">?</span>,
                     max_fee: Felt252Wrapper::from(invoke_tx_v1.max_fee),
+                    is_query: invoke_tx_v1.is_query,
                 }),
             }
         }
@@ -1569,6 +1600,7 @@
                 account_class_hash: account_class_hash.into(),
                 nonce,
                 max_fee,
+                is_query: tx.is_query,
             })
         }
     }

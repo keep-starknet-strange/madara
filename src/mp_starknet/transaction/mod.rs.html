@@ -831,6 +831,10 @@
 <a href="#831" id="831">831</a>
 <a href="#832" id="832">832</a>
 <a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -876,6 +880,7 @@
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
+<span class="kw">use </span><span class="self">self</span>::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::fees::{<span class="self">self</span>, charge_fee};
 <span class="kw">use </span><span class="kw">crate</span>::state::StateChanges;
@@ -1139,6 +1144,7 @@
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
         contract_address_salt: <span class="prelude-ty">Option</span>&lt;U256&gt;,
         max_fee: Felt252Wrapper,
+        is_query: bool,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             tx_type,
@@ -1151,6 +1157,7 @@
             contract_class,
             contract_address_salt,
             max_fee,
+            is_query,
         }
     }
 
@@ -1565,7 +1572,7 @@
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: Fee::default(),
-            version: tx.version,
+            version: calculate_transaction_version(<span class="self">self</span>.is_query, tx.version),
             signature: TransactionSignature::default(),
             nonce: tx.nonce,
             sender_address: tx.contract_address,
@@ -1586,7 +1593,7 @@
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version: TransactionVersion(StarkFelt::from(<span class="number">1_u8</span>)),
+            version: calculate_transaction_version_from_u8(<span class="self">self</span>.is_query, <span class="number">1_u8</span>),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -1607,7 +1614,7 @@
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: tx.max_fee,
-            version: tx.version,
+            version: calculate_transaction_version(<span class="self">self</span>.is_query, tx.version),
             signature: tx.signature.clone(),
             nonce: tx.nonce,
             sender_address: tx.contract_address,
@@ -1628,7 +1635,7 @@
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version: tx.version(),
+            version: calculate_transaction_version(<span class="self">self</span>.is_query, tx.version()),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -1650,6 +1657,7 @@
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
             max_fee: Felt252Wrapper::from(u128::MAX),
+            is_query: <span class="bool-val">false</span>,
         }
     }
 }

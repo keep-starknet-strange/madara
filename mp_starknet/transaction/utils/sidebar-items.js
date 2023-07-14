@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["to_hash_map_entrypoints"]};
+window.SIDEBAR_ITEMS = {"fn":["calculate_transaction_version","calculate_transaction_version_from_u8","to_hash_map_entrypoints"]};
