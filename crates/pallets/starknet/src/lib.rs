@@ -33,6 +33,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::large_enum_variant)]
 
+use frame_support::storage::with_transaction;
 use mp_starknet::crypto::state::StateCommitment;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
@@ -87,7 +88,7 @@ use mp_starknet::transaction::types::{
     Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_runtime::traits::UniqueSaturatedInto;
-use sp_runtime::DigestItem;
+use sp_runtime::{DigestItem, TransactionOutcome};
 use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
@@ -1105,15 +1106,22 @@ impl<T: Config> Pallet<T> {
 
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
-        // Check if contract is deployed
-        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+        match with_transaction(|| {
+            let r: Result<_, DispatchError> = {
+                {
+                    transaction
+                        .execute(
+                            &mut BlockifierStateAdapter::<T>::default(),
+                            &Self::get_block_context(),
+                            transaction.tx_type.clone(),
+                            transaction.contract_class.clone(),
+                        )
+                        .map_err(|_| Error::<T>::TransactionExecutionFailed.into())
+                }
+            };
 
-        match transaction.execute(
-            &mut BlockifierStateAdapter::<T>::default(),
-            &Self::get_block_context(),
-            transaction.tx_type.clone(),
-            transaction.contract_class.clone(),
-        ) {
+            TransactionOutcome::Rollback(r)
+        }) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);
                 if let Some(gas_usage) = v.actual_resources.get("l1_gas_usage") {
