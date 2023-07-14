@@ -192,6 +192,41 @@ describeDevMadara(
         );
         expect(toHex(balance)).to.be.equal("0x2a");
       });
+
+      it("should fail on invalid nonce", async function () {
+        let invalid_nonce = { value: 1_000 };
+
+        // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
+        let balance = await providerRPC.getStorageAt(
+          FEE_TOKEN_ADDRESS,
+          "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
+          "latest"
+        );
+
+        expect(toHex(balance)).to.be.equal("0x0");
+
+        await context.createBlock(
+          rpcTransfer(
+            providerRPC,
+            invalid_nonce,
+            CAIRO_1_ACCOUNT_CONTRACT,
+            MINT_AMOUNT
+          ),
+          {
+            parentHash: undefined,
+            finalize: true,
+          }
+        );
+
+        // ERC20_balances(0x1111).low = 0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f
+        balance = await providerRPC.getStorageAt(
+          FEE_TOKEN_ADDRESS,
+          "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
+          "latest"
+        );
+
+        expect(toHex(balance)).to.be.equal("0x0");
+      });
     });
 
     describe("addDeployAccountTransaction", async () => {
