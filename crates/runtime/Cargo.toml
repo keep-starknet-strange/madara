@@ -103,7 +103,7 @@ try-runtime = [
   # Madara pallets
   "pallet-starknet/try-runtime",
 ]
-default = ["std", "nonce-validation"]
+default = ["std"]
 madara-state-root = []
 disable-transaction-fee = []
 runtime-benchmarks = [

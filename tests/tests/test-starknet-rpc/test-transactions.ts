@@ -62,8 +62,8 @@ describeDevMadara(
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-          ),
+            MINT_AMOUNT
+          )
         );
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -84,14 +84,14 @@ describeDevMadara(
             ARGENT_CONTRACT_ADDRESS,
             MINT_AMOUNT,
             0,
-          ].map(toHex),
+          ].map(toHex)
         );
       });
 
       it("should throws block not found error", async function () {
         const transaction = providerRPC.getTransactionByBlockIdAndIndex(
           "0x123",
-          2,
+          2
         );
         await expect(transaction)
           .to.eventually.be.rejectedWith("24: Block not found")
@@ -106,11 +106,11 @@ describeDevMadara(
         const latestBlockCreated = await providerRPC.getBlockHashAndNumber();
         const transaction = providerRPC.getTransactionByBlockIdAndIndex(
           latestBlockCreated.block_hash,
-          2,
+          2
         );
         await expect(transaction)
           .to.eventually.be.rejectedWith(
-            "27: Invalid transaction index in a block",
+            "27: Invalid transaction index in a block"
           )
           .and.be.an.instanceOf(LibraryError);
       });
@@ -121,7 +121,7 @@ describeDevMadara(
         const account = new Account(
           providerRPC,
           ARGENT_CONTRACT_ADDRESS,
-          SIGNER_PRIVATE,
+          SIGNER_PRIVATE
         );
 
         await account.execute(
@@ -133,7 +133,7 @@ describeDevMadara(
           undefined,
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-          },
+          }
         );
         ARGENT_CONTRACT_NONCE.value += 1;
         await jumpBlocks(context, 1);
@@ -142,7 +142,7 @@ describeDevMadara(
         const balance = await providerRPC.getStorageAt(
           FEE_TOKEN_ADDRESS,
           "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
-          "latest",
+          "latest"
         );
         expect(toHex(balance)).to.be.equal("0x123");
       });
@@ -151,7 +151,7 @@ describeDevMadara(
         const account = new Account(
           providerRPC,
           ARGENT_CONTRACT_ADDRESS,
-          SIGNER_PRIVATE,
+          SIGNER_PRIVATE
         );
 
         const calldata = [
@@ -167,7 +167,7 @@ describeDevMadara(
           SALT,
           TOKEN_CLASS_HASH,
           calldata,
-          0,
+          0
         );
 
         await account.execute(
@@ -179,7 +179,7 @@ describeDevMadara(
           undefined,
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-          },
+          }
         );
         ARGENT_CONTRACT_NONCE.value += 1;
         await jumpBlocks(context, 1);
@@ -188,7 +188,7 @@ describeDevMadara(
         const balance = await providerRPC.getStorageAt(
           deployedContractAddress,
           "0x04c761778f11aa10fc40190ff3127637fe00dc59bfa557bd4c8beb30a178f016",
-          "latest",
+          "latest"
         );
         expect(toHex(balance)).to.be.equal("0x2a");
       });
@@ -200,7 +200,7 @@ describeDevMadara(
         let balance = await providerRPC.getStorageAt(
           FEE_TOKEN_ADDRESS,
           "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
-          "latest",
+          "latest"
         );
 
         expect(toHex(balance)).to.be.equal("0x0");
@@ -209,7 +209,7 @@ describeDevMadara(
           providerRPC,
           invalid_nonce,
           TEST_CONTRACT_ADDRESS,
-          MINT_AMOUNT,
+          MINT_AMOUNT
         ),
           await jumpBlocks(context, 1);
 
@@ -217,7 +217,7 @@ describeDevMadara(
         balance = await providerRPC.getStorageAt(
           FEE_TOKEN_ADDRESS,
           "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
-          "latest",
+          "latest"
         );
         expect(toHex(balance)).to.be.equal("0x0");
 
@@ -227,7 +227,7 @@ describeDevMadara(
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           TEST_CONTRACT_ADDRESS,
-          MINT_AMOUNT,
+          MINT_AMOUNT
         ),
           await jumpBlocks(context, 1);
 
@@ -235,7 +235,7 @@ describeDevMadara(
         balance = await providerRPC.getStorageAt(
           FEE_TOKEN_ADDRESS,
           "0x72943352085ed3fbe3b8ff53a6aef9da8d893ccdab99bd5223d765f1a22735f",
-          "latest",
+          "latest"
         );
         // The balance should be == MINT_AMOUNT * 2
         expect(toHex(balance)).to.be.equal("0x2");
@@ -260,14 +260,14 @@ describeDevMadara(
           SALT,
           ARGENT_PROXY_CLASS_HASH,
           calldata,
-          0,
+          0
         );
         // fund address
         await rpcTransfer(
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           deployedContractAddress,
-          DEPLOY_ACCOUNT_COST,
+          DEPLOY_ACCOUNT_COST
         );
         await jumpBlocks(context, 1);
 
@@ -300,16 +300,16 @@ describeDevMadara(
 
         await providerRPC.deployAccountContract(
           txDeployAccount,
-          invocationDetails,
+          invocationDetails
         );
         await createAndFinalizeBlock(context.polkadotApi);
 
         const accountContractClassHash = await providerRPC.getClassHashAt(
-          deployedContractAddress,
+          deployedContractAddress
         );
 
         expect(validateAndParseAddress(accountContractClassHash)).to.be.equal(
-          ARGENT_PROXY_CLASS_HASH,
+          ARGENT_PROXY_CLASS_HASH
         );
       });
     });
@@ -331,7 +331,7 @@ describeDevMadara(
 
         const nonce = await providerRPC.getNonceForAddress(
           ACCOUNT_CONTRACT,
-          "latest",
+          "latest"
         );
 
         const txDetails = {
@@ -348,7 +348,7 @@ describeDevMadara(
           [invocation],
           {
             blockIdentifier: "latest",
-          },
+          }
         );
 
         expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
@@ -368,7 +368,7 @@ describeDevMadara(
 
         const nonce = await providerRPC.getNonceForAddress(
           ACCOUNT_CONTRACT,
-          "latest",
+          "latest"
         );
 
         const txDetails = {
@@ -409,7 +409,7 @@ describeDevMadara(
 
         const nonce = await providerRPC.getNonceForAddress(
           ACCOUNT_CONTRACT,
-          "latest",
+          "latest"
         );
 
         const txDetails = {
@@ -426,7 +426,7 @@ describeDevMadara(
           [invocation, invocation],
           {
             blockIdentifier: "latest",
-          },
+          }
         );
 
         expect(fee_estimates[0].overall_fee > 0n).to.be.equal(true);
@@ -449,7 +449,7 @@ describeDevMadara(
         const account = new Account(
           providerRPC,
           ARGENT_CONTRACT_ADDRESS,
-          SIGNER_PRIVATE,
+          SIGNER_PRIVATE
         );
         // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
         // the above command should be used at project root
@@ -460,17 +460,17 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC20_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 }
         );
         ARGENT_CONTRACT_NONCE.value += 1;
         await jumpBlocks(context, 1);
 
         const contractClassActual = await providerRPC.getClass(
           classHash,
-          "latest",
+          "latest"
         );
         expect(contractClassActual.entry_points_by_type).to.deep.equal(
-          ERC20_CONTRACT.entry_points_by_type,
+          ERC20_CONTRACT.entry_points_by_type
         );
         // TODO compare the program as well
         // expect(contractClassActual.program).to.be.equal(
@@ -483,7 +483,7 @@ describeDevMadara(
         const account = new Account(
           providerRPC,
           CAIRO_1_ACCOUNT_CONTRACT,
-          "0x123", // it's the no validate account
+          "0x123" // it's the no validate account
         );
         // computed via: starknetjs 5.14.1
         const classHash =
@@ -496,14 +496,14 @@ describeDevMadara(
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
             version: 1,
-          },
+          }
         );
         CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
         await jumpBlocks(context, 1);
 
         const contractClassActual = await providerRPC.getClass(
           classHash,
-          "latest",
+          "latest"
         );
         // TODO: (Apoorv) make these checks better once we to_rpc_contract_class is fixed #775 and #790
         expect(contractClassActual).to.have.property("entry_points_by_type");
@@ -517,7 +517,7 @@ describeDevMadara(
         const account = new Account(
           providerRPC,
           ARGENT_CONTRACT_ADDRESS,
-          SIGNER_PRIVATE,
+          SIGNER_PRIVATE
         );
 
         // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
@@ -534,8 +534,8 @@ describeDevMadara(
             {
               nonce: ARGENT_CONTRACT_NONCE.value,
               version: 1,
-            },
-          ),
+            }
+          )
         ).to.be.rejectedWith("51: Class already declared");
       });
     });
@@ -547,7 +547,7 @@ describeDevMadara(
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT,
+          MINT_AMOUNT
         );
 
         const txs = await providerRPC.getPendingTransactions();
@@ -573,7 +573,7 @@ describeDevMadara(
         const account = new Account(
           providerRPC,
           ARGENT_CONTRACT_ADDRESS,
-          SIGNER_PRIVATE,
+          SIGNER_PRIVATE
         );
 
         // computed via: starkli class-hash ./cairo-contracts/build/ERC721.json
@@ -585,7 +585,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC721_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 }
         );
 
         const txs = await providerRPC.getPendingTransactions();
@@ -622,7 +622,7 @@ describeDevMadara(
           SALT,
           ARGENT_PROXY_CLASS_HASH,
           calldata,
-          0,
+          0
         );
 
         const invocationDetails = {
@@ -654,7 +654,7 @@ describeDevMadara(
 
         await providerRPC.deployAccountContract(
           txDeployAccount,
-          invocationDetails,
+          invocationDetails
         );
 
         const txs = await providerRPC.getPendingTransactions();
@@ -683,7 +683,7 @@ describeDevMadara(
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT,
+          MINT_AMOUNT
         );
         // future transaction
         // add a high number to the nonce to make sure the transaction is added to the future queue
@@ -691,7 +691,7 @@ describeDevMadara(
           providerRPC,
           { value: ARGENT_CONTRACT_NONCE.value + transactionNonceOffset },
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT,
+          MINT_AMOUNT
         );
 
         // the pendingExtrinsics endpoint returns only the ready transactions
@@ -742,11 +742,11 @@ describeDevMadara(
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT,
+            MINT_AMOUNT
           ),
           {
             finalize: true,
-          },
+          }
         );
 
         const r = await providerRPC.getTransactionByHash(b.result.hash);
@@ -760,8 +760,8 @@ describeDevMadara(
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-          ),
+            MINT_AMOUNT
+          )
         );
 
         const transaction = providerRPC.getTransactionByHash("0x1234");
@@ -778,11 +778,11 @@ describeDevMadara(
           providerRPC,
           ARGENT_CONTRACT_NONCE,
           ARGENT_CONTRACT_ADDRESS,
-          MINT_AMOUNT,
+          MINT_AMOUNT
         );
 
         const transaction = providerRPC.getTransactionByHash(
-          b.transaction_hash,
+          b.transaction_hash
         );
         await expect(transaction)
           .to.eventually.be.rejectedWith("25: Transaction hash not found")
@@ -800,18 +800,18 @@ describeDevMadara(
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT,
+            MINT_AMOUNT
           ),
           {
             finalize: true,
-          },
+          }
         );
 
         const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const r: TransactionReceipt = await providerRPC.getTransactionReceipt(
-          b.result.hash,
+          b.result.hash
         );
         expect(r).to.not.be.undefined;
         expect(r.block_hash).to.be.equal(block_hash_and_number.block_hash);
@@ -825,8 +825,8 @@ describeDevMadara(
             providerRPC,
             ARGENT_CONTRACT_NONCE,
             ARGENT_CONTRACT_ADDRESS,
-            MINT_AMOUNT,
-          ),
+            MINT_AMOUNT
+          )
         );
 
         const transaction = providerRPC.getTransactionReceipt("0x1234");
@@ -836,5 +836,5 @@ describeDevMadara(
       });
     });
   },
-  { runNewNode: true },
+  { runNewNode: true }
 );
