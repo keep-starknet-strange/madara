@@ -32,3 +32,8 @@ cairo_venv
 
 # idea
 .idea
+
+# local runs
+run.sh
+password.txt
+nohup.out
