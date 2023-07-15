@@ -162,12 +162,12 @@ pub fn process_blocks(queue: BlockQueue) -> mpsc::Sender<Block> {
     sender
 }
 
-async fn call_rpc() -> Result<reqwest::StatusCode, reqwest::Error> {
+async fn call_rpc(rpc_port: u16) -> Result<reqwest::StatusCode, reqwest::Error> {
     let client = reqwest::Client::new();
     let mut headers = HeaderMap::new();
     headers.insert(CONTENT_TYPE, "application/json".parse().unwrap());
 
-    let url = "http://localhost:9944/";
+    let url = format!("http://localhost:{}/", rpc_port);
     let payload = json!({
         "id": 1,
         "jsonrpc": "2.0",
@@ -190,7 +190,7 @@ async fn call_rpc() -> Result<reqwest::StatusCode, reqwest::Error> {
 }
 
 // Fetching blocks from gateway
-pub async fn fetch_block(queue: BlockQueue) {
+pub async fn fetch_block(queue: BlockQueue, rpc_port: u16) {
     let client: Client = Client::mainnet();
     let mut i = 0u64;
 
@@ -204,7 +204,7 @@ pub async fn fetch_block(queue: BlockQueue) {
                     let mut queue_guard = queue.lock().unwrap();
                     queue_guard.push_back(starknet_block);
                 } // MutexGuard is dropped here
-                match call_rpc().await {
+                match call_rpc(rpc_port).await {
                     Ok(status) => {
                         if status.is_success() {
                             info!("[👽] Block #{} synced correctly", i);

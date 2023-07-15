@@ -215,10 +215,9 @@ pub fn run() -> sc_cli::Result<()> {
                     cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
                 }
             }
-
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing).await.map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, cli.run.run_cmd.rpc_port.unwrap()).await.map_err(sc_cli::Error::Service)
             })
         }
     }
