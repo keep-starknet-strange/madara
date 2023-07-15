@@ -256,7 +256,7 @@ lazy_static! {
 }
 
 /// Builds a new service for a full client.
-pub async fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub async fn new_full(config: Configuration, sealing: Option<Sealing>, rpc_port: u16) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -398,7 +398,7 @@ pub async fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result
             network_starter.start_network();
 
             tokio::spawn(async move {
-                fetch_block(QUEUE.clone()).await;
+                fetch_block(QUEUE.clone(), rpc_port).await;
             });
 
             log::info!("Manual Seal Ready");
