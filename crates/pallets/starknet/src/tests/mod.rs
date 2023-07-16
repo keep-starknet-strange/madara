@@ -16,6 +16,7 @@ mod query_tx;
 mod sequencer_address;
 mod state_root;
 
+mod block;
 mod constants;
 mod message;
 mod mock;
