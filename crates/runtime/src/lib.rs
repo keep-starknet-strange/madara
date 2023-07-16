@@ -293,32 +293,29 @@ impl_runtime_apis! {
             let chain_id  = Starknet::chain_id();
 
             xts.into_iter().filter_map(|xt| match xt.function {
-                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.from_invoke(chain_id)),
-                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.from_declare(chain_id)),
-                RuntimeCall::Starknet( deploy_account { transaction }) => transaction.from_deploy(chain_id).ok(),
+                RuntimeCall::Starknet( invoke { transaction }) => Some(transaction.into()),
+                RuntimeCall::Starknet( declare { transaction }) => Some(transaction.into()),
+                RuntimeCall::Starknet( deploy_account { transaction }) => Some(transaction.into()),
                 _ => None
             }).collect::<Vec<Transaction>>()
         }
     }
 
     impl pallet_starknet::runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
-        fn convert_transaction(transaction: Transaction, tx_type: TxType) -> Result<UncheckedExtrinsic, DispatchError> {
-            let call = match tx_type {
-                TxType::DeployAccount => {
-                    let tx = DeployAccountTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to DeployAccountTransaction"))?;
+        fn convert_transaction(transaction: Transaction, tx_type:TxType) -> Result<UncheckedExtrinsic, DispatchError> {
+            let call = match transaction {
+                Transaction::DeployAccount(deploy_account_tx) => {
+                    let tx = deploy_account_tx;
                     pallet_starknet::Call::deploy_account{transaction: tx}
                 },
-                TxType::Invoke => {
-                    let tx = InvokeTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to InvokeTransaction"))?;
+                Transaction::Invoke(invoke_tx) => {
+                    let tx = invoke_tx;
                     pallet_starknet::Call::invoke{transaction: tx}
                 },
-                TxType::Declare => {
-                    let tx = DeclareTransaction::try_from(transaction).map_err(|_| DispatchError::Other("failed to convert transaction to DeclareTransaction"))?;
+                Transaction::Declare(declare_tx) => {
+                    let tx = declare_tx;
                     pallet_starknet::Call::declare{transaction: tx}
                 },
-                TxType::L1Handler => {
-                    pallet_starknet::Call::consume_l1_message{transaction}
-                }
             };
             Ok(UncheckedExtrinsic::new_unsigned(call.into()))
         }

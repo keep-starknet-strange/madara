@@ -62,8 +62,10 @@ fn test_try_into_declare_transaction_v1_valid() {
         sender_address: FieldElement::default(),
     };
 
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
+
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
-    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
+    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input, chain_id);
     assert!(output_result.is_ok());
 }
 
@@ -78,9 +80,10 @@ fn test_try_into_declare_transaction_v1_max_signature() {
         contract_class: Arc::new(compressed_contract_class),
         sender_address: FieldElement::default(),
     };
-
+    
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
-    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
+    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input, chain_id);
     assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::SignatureBoundError));
 }
 
@@ -104,8 +107,11 @@ fn test_try_into_declare_transaction_v1_bad_gzip() {
         sender_address: FieldElement::default(),
     };
 
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
+
+
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V1(txn);
-    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
+    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input, chain_id);
     assert!(matches!(
         output_result.unwrap_err(),
         BroadcastedTransactionConversionErrorWrapper::ContractClassProgramDecompressionError
@@ -144,8 +150,11 @@ fn test_try_into_declare_transaction_v2_with_incorrect_compiled_class_hash() {
         compiled_class_hash: FieldElement::from_hex_be("0x1").unwrap(), // incorrect compiled class hash
     };
 
+    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap());
+
     let input: BroadcastedDeclareTransaction = BroadcastedDeclareTransaction::V2(txn);
-    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input);
+
+    let output_result: Result<DeclareTransaction, _> = to_declare_transaction(input, chain_id);
 
     assert!(matches!(output_result.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CompiledClassHashError));
 }

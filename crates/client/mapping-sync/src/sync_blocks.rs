@@ -47,7 +47,7 @@ where
                             starknet_transaction_hashes: digest_starknet_block
                                 .transactions()
                                 .into_iter()
-                                .map(|tx| H256::from(tx.hash))
+                                .map(|tx| H256::from(tx.get_hash()))
                                 .collect(),
                         };
 

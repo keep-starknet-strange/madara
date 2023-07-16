@@ -9,6 +9,7 @@ pub mod utils;
 use alloc::string::{String, ToString};
 use alloc::sync::Arc;
 use alloc::vec;
+use alloc::vec::Vec;
 
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
@@ -37,7 +38,7 @@ use starknet_api::transaction::{
     DeclareTransactionV0V1 as DeclareTransactionAPIV0V1, DeployAccountTransaction as DeployAccountTransactionAPI,
     EventContent, Fee, InvokeTransaction as InvokeTransactionAPI, InvokeTransactionV1 as InvokeTransactionAPIV1,
     L1HandlerTransaction, TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature,
-    TransactionVersion,}
+    TransactionVersion};
 use starknet_api::{calldata, StarknetApiError};
 
 use self::types::{
@@ -222,7 +223,7 @@ impl TryInto<DeployAccountTransactionAPI> for &Transaction {
                         deploy_account_tx.sender_address.into(),
                     )?)),
                     class_hash: ClassHash(deploy_account_tx.class_hash.into()),
-                    constructor_calldata: Calldata(std::sync::Arc::new(
+                    constructor_calldata: Calldata(Arc::new(
                         deploy_account_tx
                             .constructor_calldata
                             .clone()
@@ -344,6 +345,7 @@ impl TryInto<DeclareTransactionAPI> for &Transaction {
             }
             _ => Err(StarknetApiError::OutOfRange { string: String::from("InvalidTransactionType") }),
         }
+    }
 }
 
 impl Transaction {

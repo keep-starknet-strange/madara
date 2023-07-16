@@ -510,12 +510,12 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
             // Check if contract is deployed
-            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address()), Error::<T>::AccountNotDeployed);
 
             // Get current block context
             let block_context = Self::get_block_context();
             let chain_id = Self::chain_id();
-            let transaction: Transaction = transaction.from_invoke(chain_id);
+            let transaction: Transaction = transaction.into();
             let call_info =
                 transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
             let receipt = match call_info {
@@ -532,7 +532,7 @@ pub mod pallet {
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
-                        transaction_hash: transaction.hash,
+                        transaction_hash: transaction.get_hash(),
                         tx_type: TxType::Invoke,
                         actual_fee: actual_fee.0.into(),
                     }
@@ -568,15 +568,12 @@ pub mod pallet {
 
             let chain_id = Self::chain_id();
 
-            let transaction: Transaction = transaction.from_declare(chain_id);
-            // Check that contract class is not None
-            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+            let contract_class = transaction.contract_class().clone();
 
-            // Check that the class hash is not None
-            let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
+            let class_hash = transaction.class_hash();
 
             // Check if contract is deployed
-            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address()), Error::<T>::AccountNotDeployed);
 
             // Check class hash is not already declared
             ensure!(!ContractClasses::<T>::contains_key(class_hash), Error::<T>::ClassHashAlreadyDeclared);
@@ -584,6 +581,7 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
 
+            let transaction: Transaction = transaction.into();
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
@@ -605,7 +603,7 @@ pub mod pallet {
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
-                        transaction_hash: transaction.hash,
+                        transaction_hash: transaction.get_hash(),
                         tx_type: TxType::Declare,
                         actual_fee: actual_fee.0.into(),
                     }
@@ -643,9 +641,6 @@ pub mod pallet {
             ensure_none(origin)?;
 
             let chain_id = Self::chain_id();
-            let transaction: Transaction =
-                transaction.from_deploy(chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
-
             // Check if contract is deployed
             ensure!(
                 !ContractClassHashes::<T>::contains_key(transaction.sender_address),
@@ -655,6 +650,7 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
 
+            let transaction: Transaction = transaction.into();
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
@@ -676,7 +672,7 @@ pub mod pallet {
 
                     TransactionReceiptWrapper {
                         events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
-                        transaction_hash: transaction.hash,
+                        transaction_hash: transaction.get_hash(),
                         tx_type: TxType::DeployAccount,
                         actual_fee: actual_fee.0.into(),
                     }
@@ -716,7 +712,7 @@ pub mod pallet {
             ensure_none(origin)?;
 
             // Check if contract is deployed
-            ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+            ensure!(ContractClassHashes::<T>::contains_key(transaction.get_sender_address()), Error::<T>::AccountNotDeployed);
 
             let block_context = Self::get_block_context();
             match transaction.execute(
@@ -782,23 +778,35 @@ pub mod pallet {
 
             let transaction = Self::get_call_transaction(call.clone()).map_err(|_| InvalidTransaction::Call)?;
 
-            let transaction_type = transaction.tx_type.clone();
-            let transaction_nonce = transaction.nonce;
-            let sender_address = transaction.sender_address;
+            let transaction_nonce = transaction.get_nonce();
 
             let nonce_for_priority: u64 =
                 transaction_nonce.try_into().map_err(|_| InvalidTransaction::Custom(NONCE_DECODE_FAILURE))?;
 
+            let sender_address = transaction.get_sender_address();
             let mut valid_transaction_builder = ValidTransaction::with_tag_prefix("starknet")
-                .priority(u64::MAX - nonce_for_priority)
-                .and_provides((sender_address, transaction_nonce))
-                .longevity(T::TransactionLongevity::get())
-                .propagate(true);
+            .priority(u64::MAX - nonce_for_priority)
+            .and_provides((sender_address, transaction_nonce))
+            .longevity(T::TransactionLongevity::get())
+            .propagate(true);
 
-            match transaction_type {
-                TxType::Invoke | TxType::Declare => {
+            match transaction.clone() {
+                Transaction::Invoke(invoke_tx) => {
                     // validate the transaction
-                    Self::validate_tx(transaction, transaction_type)?;
+                    Self::validate_tx(transaction, TxType::Invoke)?;
+                    // add the requires tag
+                    let sender_nonce = Pallet::<T>::nonce(sender_address);
+                    if transaction_nonce.0 > sender_nonce.0 {
+                        valid_transaction_builder = valid_transaction_builder
+                            .and_requires((sender_address, Felt252Wrapper(transaction_nonce.0 - FieldElement::ONE)));
+                    }
+
+                },
+                Transaction::Declare(declare_tx) => {
+                  
+
+                    // validate the transaction
+                    Self::validate_tx(transaction, TxType::Declare)?;
                     // add the requires tag
                     let sender_nonce = Pallet::<T>::nonce(sender_address);
                     if transaction_nonce.0 > sender_nonce.0 {
@@ -808,7 +816,6 @@ pub mod pallet {
                 }
                 _ => (),
             };
-
             valid_transaction_builder.build()
         }
 
@@ -841,9 +848,9 @@ impl<T: Config> Pallet<T> {
     /// The transaction
     fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
         match call {
-            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(Self::chain_id())),
-            Call::<T>::declare { transaction } => Ok(transaction.from_declare(Self::chain_id())),
-            Call::<T>::deploy_account { transaction } => transaction.from_deploy(Self::chain_id()).map_err(|_| ()),
+            Call::<T>::invoke { transaction } => Ok(transaction.into()),
+            Call::<T>::declare { transaction } => Ok(transaction.into()),
+            Call::<T>::deploy_account { transaction } => Ok(transaction.into()),
             Call::<T>::consume_l1_message { transaction } => Ok(transaction),
             _ => Err(()),
         }
@@ -1106,13 +1113,13 @@ impl<T: Config> Pallet<T> {
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
         // Check if contract is deployed
-        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
+        ensure!(ContractClassHashes::<T>::contains_key(transaction.get_sender_address()), Error::<T>::AccountNotDeployed);
 
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
-            transaction.tx_type.clone(),
-            transaction.contract_class.clone(),
+            transaction.get_tx_type().clone(),
+            transaction.get_contract_class().clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);

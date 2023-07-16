@@ -6,7 +6,6 @@ use alloc::vec::Vec;
 
 use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use cairo_lang_casm_contract_class::CasmContractClass;
->>>>>>> upstream/main
 use frame_support::BoundedVec;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
@@ -14,7 +13,7 @@ use thiserror_no_std::Error;
 
 use crate::execution::types::{
     CallEntryPointWrapper, EntryPointTypeWrapper, Felt252Wrapper, Felt252WrapperError,
-    MaxCalldataSize,}
+    MaxCalldataSize};
 use crate::transaction::types::{
     DeclareTransaction, DeclareTransactionV1, DeclareTransactionV2, DeployAccountTransaction, EventWrapper,
     InvokeTransaction, InvokeTransactionV0, InvokeTransactionV1, MaxArraySize, Transaction,
@@ -554,15 +553,15 @@ impl TryFrom<DeserializeTransaction> for Transaction {
     fn try_from(d: DeserializeTransaction) -> Result<Self, Self::Error> {
         match d {
             DeserializeTransaction::Invoke(d_invoke_tx) => {
-                let invoke_transaction = InvokeTransaction::try_from(d_invoke_tx)?;
+                let invoke_transaction = d_invoke_tx.try_into()?;
                 Ok(Transaction::Invoke(invoke_transaction))
             }
             DeserializeTransaction::Declare(d_declare_tx) => {
-                let declare_transaction = DeclareTransaction::try_from(d_declare_tx)?;
+                let declare_transaction = d_declare_tx.try_into()?;
                 Ok(Transaction::Declare(declare_transaction))
             }
             DeserializeTransaction::DeployAccount(d_deploy_account_tx) => {
-                let deploy_account = DeployAccountTransaction::try_from(d_deploy_account_tx)?;
+                let deploy_account = d_deploy_account_tx.try_into()?;
                 Ok(Transaction::DeployAccount(deploy_account))
             }
         }

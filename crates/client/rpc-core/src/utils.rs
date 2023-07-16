@@ -18,7 +18,13 @@ use mp_starknet::block::Block as StarknetBlock;
 use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeclareTransaction, DeployAccountTransaction, InvokeTransaction,
-    Transaction,
+    Transaction, DeclareTransactionV1,DeclareTransactionV2,
+};
+
+use std::convert::From;
+
+use mp_starknet::crypto::commitment::{
+    calculate_declare_tx_hash,
 };
 use num_bigint::{BigInt, BigUint, Sign};
 use sp_api::{BlockT, HeaderT};
@@ -81,16 +87,14 @@ pub fn to_tx(
 ) -> Result<Transaction, BroadcastedTransactionConversionErrorWrapper> {
     match request {
         BroadcastedTransaction::Invoke(invoke_tx) => {
-            InvokeTransaction::try_from(invoke_tx).map(|inner| inner.from_invoke(chain_id))
+            InvokeTransaction::try_from(invoke_tx, chain_id).map(|inner| inner.into())
         }
         BroadcastedTransaction::Declare(declare_tx) => {
-            to_declare_transaction(declare_tx).map(|inner| inner.from_declare(chain_id))
+            to_declare_transaction(declare_tx, chain_id).map(|inner| inner.into())
         }
         BroadcastedTransaction::DeployAccount(deploy_account_tx) => {
-            DeployAccountTransaction::try_from(deploy_account_tx).and_then(|inner| {
-                inner
-                    .from_deploy(chain_id)
-                    .map_err(BroadcastedTransactionConversionErrorWrapper::TransactionConversionError)
+            DeployAccountTransaction::try_from(deploy_account_tx, chain_id).map(|inner| {
+                inner.into()
             })
         }
     }
@@ -145,6 +149,7 @@ where
 // So we moved this code to rpc-core/src/utils.rs
 pub fn to_declare_transaction(
     tx: BroadcastedDeclareTransaction,
+    chain_id: Felt252Wrapper,
 ) -> Result<DeclareTransaction, BroadcastedTransactionConversionErrorWrapper> {
     match tx {
         BroadcastedDeclareTransaction::V1(declare_tx_v1) => {
@@ -224,21 +229,35 @@ pub fn to_declare_transaction(
                     })
                     .collect::<Vec<EntryPoint>>(),
             );
-            Ok(DeclareTransaction {
-                version: 1_u8,
-                sender_address: declare_tx_v1.sender_address.into(),
-                nonce: Felt252Wrapper::from(declare_tx_v1.nonce),
-                max_fee: Felt252Wrapper::from(declare_tx_v1.max_fee),
-                signature,
-                contract_class: BlockifierContractClass::V0(ContractClassV0(Arc::new(ContractClassV0Inner {
-                    program,
-                    entry_points_by_type,
-                }))),
-                class_hash: legacy_contract_class.class_hash()?.into(),
-                compiled_class_hash: None,
-            })
+
+            let sender_address = declare_tx_v1.sender_address.into();
+            let nonce = Felt252Wrapper::from(declare_tx_v1.nonce);
+            let max_fee = Felt252Wrapper::from(declare_tx_v1.max_fee);
+            let contract_class = BlockifierContractClass::V0(ContractClassV0(Arc::new(ContractClassV0Inner {
+                program,
+                entry_points_by_type,
+            })));
+            let class_hash = legacy_contract_class.class_hash()?.into();
+
+            let transaction_hash = calculate_declare_tx_hash(
+                sender_address, class_hash, max_fee, nonce, 1_u8, None, chain_id);
+            Ok(DeclareTransaction::V1(DeclareTransactionV1 {
+                transaction_hash: transaction_hash,
+                sender_address: sender_address,
+                nonce: nonce,
+                max_fee: max_fee,
+                signature: signature,
+                contract_class: contract_class,
+                class_hash: class_hash,
+            }))
         }
         BroadcastedDeclareTransaction::V2(declare_tx_v2) => {
+
+            let sender_address = declare_tx_v2.sender_address.into();
+            let nonce = Felt252Wrapper::from(declare_tx_v2.nonce);
+            let max_fee = Felt252Wrapper::from(declare_tx_v2.max_fee);
+            let compiled_class_hash = Felt252Wrapper::from(declare_tx_v2.compiled_class_hash);
+            let class_hash = declare_tx_v2.contract_class.class_hash().into();
             let signature = declare_tx_v2
                 .signature
                 .iter()
@@ -252,21 +271,26 @@ pub fn to_declare_transaction(
             let contract_class = ContractClassV1::try_from(casm_constract_class.clone())
                 .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CasmContractClassConversionError)?;
 
+            let contract_class = BlockifierContractClass::V1(contract_class);
+
             // ensuring that the user has signed the correct class hash
             if get_casm_cotract_class_hash(&casm_constract_class) != declare_tx_v2.compiled_class_hash {
                 return Err(BroadcastedTransactionConversionErrorWrapper::CompiledClassHashError);
             }
 
-            Ok(DeclareTransaction {
-                version: 2_u8,
-                sender_address: declare_tx_v2.sender_address.into(),
-                nonce: Felt252Wrapper::from(declare_tx_v2.nonce),
-                max_fee: Felt252Wrapper::from(declare_tx_v2.max_fee),
-                signature,
-                contract_class: BlockifierContractClass::V1(contract_class),
-                compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash)),
-                class_hash: declare_tx_v2.contract_class.class_hash().into(),
-            })
+            let transaction_hash = calculate_declare_tx_hash(
+                sender_address, class_hash, max_fee, nonce, 1_u8, Some(compiled_class_hash.clone()), chain_id);
+
+            Ok(DeclareTransaction::V2(DeclareTransactionV2 {
+                transaction_hash:transaction_hash,
+                sender_address: sender_address,
+                nonce: nonce,
+                max_fee: max_fee,
+                signature: signature,
+                contract_class: contract_class,
+                compiled_class_hash: compiled_class_hash,
+                class_hash: class_hash,
+            }))
         }
     }
 }

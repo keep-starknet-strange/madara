@@ -19,14 +19,15 @@ use starknet_api::StarknetApiError;
 use thiserror_no_std::Error;
 
 use crate::crypto::commitment::{
-    calculate_deploy_account_tx_hash,
+    calculate_deploy_account_tx_hash, calculate_invoke_tx_hash
 };
 use crate::execution::call_entrypoint_wrapper::MaxCalldataSize;
-<<<<<<< HEAD
 
 use crate::execution::types::{
-    ContractAddressWrapper, ContractClassWrapper, Felt252Wrapper,
+    ContractAddressWrapper, Felt252Wrapper,Felt252WrapperError,
 };
+
+
 
 /// Max size of arrays.
 /// TODO: add real value (#250)
@@ -163,13 +164,9 @@ impl From<TxType> for TransactionType {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-<<<<<<< HEAD
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-#[serde(tag = "version")]
 pub enum DeclareTransaction {
-    #[serde(rename = "0x1")]
     V1(DeclareTransactionV1),
-    #[serde(rename = "0x2")]
     V2(DeclareTransactionV2),
 }
 
@@ -195,7 +192,7 @@ pub struct DeclareTransactionV1 {
     // Transaction nonce
     pub nonce: Felt252Wrapper,
     /// Contract to declare.
-    pub contract_class: ContractClassWrapper,
+    pub contract_class: ContractClass,
     /// The hash of the declared class
     pub class_hash: Felt252Wrapper,
     /// The address of the account contract sending the declaration transaction
@@ -224,7 +221,7 @@ pub struct DeclareTransactionV2 {
     // Transaction nonce
     pub nonce: Felt252Wrapper,
     /// The contract class
-    pub contract_class: ContractClassWrapper,
+    pub contract_class: ContractClass,
     /// The hash of the declared sierra class
     pub class_hash: Felt252Wrapper,
     /// The hash of the compiled
@@ -253,7 +250,7 @@ impl DeclareTransaction {
         (sender_address, Felt252Wrapper),
         (max_fee, Felt252Wrapper),
         (signature, BoundedVec<Felt252Wrapper, MaxArraySize>),
-        (contract_class, ContractClassWrapper)
+        (contract_class, ContractClass)
     );
 
     pub fn version(&self) -> u8 {
@@ -361,11 +358,8 @@ impl TryFrom<Transaction> for DeclareTransaction {
     scale_codec::MaxEncodedLen,
 )]
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-#[serde(tag = "version")]
 pub enum InvokeTransaction {
-    #[serde(rename = "0x0")]
     V0(InvokeTransactionV0),
-    #[serde(rename = "0x1")]
     V1(InvokeTransactionV1),
 }
 
@@ -462,7 +456,6 @@ impl InvokeTransaction {
     }
 }
 
-<<<<<<< HEAD
 impl TryFrom<Transaction> for InvokeTransaction {
     type Error = TransactionConversionError;
 
@@ -493,14 +486,10 @@ impl From<InvokeTransaction> for Transaction {
     scale_info::TypeInfo,
     scale_codec::MaxEncodedLen,
 )]
-<<<<<<< HEAD
 #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum Transaction {
-    #[serde(rename = "INVOKE")]
     Invoke(InvokeTransaction),
-    #[serde(rename = "DECLARE")]
     Declare(DeclareTransaction),
-    #[serde(rename = "DEPLOY_ACCOUNT")]
     DeployAccount(DeployAccountTransaction),
 }
 
@@ -532,10 +521,35 @@ impl Transaction {
     pub fn get_version(&self) -> u8 {
         match self {
             Transaction::Invoke(invoke_tx) => invoke_tx.version(),
-            Transaction::DeployAccount(_deploy_account_tx) => 1_u8,
+            Transaction::DeployAccount(deploy_account_tx) => 1_u8,
             Transaction::Declare(declare_tx) => declare_tx.version(),
         }
     }
+
+     pub fn get_sender_address(&self) -> Felt252Wrapper {
+        match self {
+            Transaction::Invoke(invoke_tx) => invoke_tx.sender_address(),
+            Transaction::DeployAccount(deploy_account_tx) => deploy_account_tx.sender_address,
+            Transaction::Declare(declare_tx) => declare_tx.sender_address(),
+        }
+    }
+
+    pub fn get_tx_type(&self) -> TxType {
+        match self {
+            Transaction::Invoke(invoke_tx) => TxType::Invoke,
+            Transaction::DeployAccount(deploy_account_tx) => TxType::DeployAccount,
+            Transaction::Declare(declare_tx) => TxType::Declare,
+        }
+    }
+
+    pub fn get_contract_class(&self) -> Option<ContractClass> {
+        match self {
+            Transaction::Invoke(invoke_tx) => None,
+            Transaction::DeployAccount(deploy_account_tx) => None,
+            Transaction::Declare(declare_tx) => Some(declare_tx.contract_class()),
+        }
+    }
+
 }
 
 impl TryFrom<Transaction> for DeployAccountTransaction {
@@ -668,15 +682,18 @@ mod reexport_private_types {
     };
     use starknet_core::types::contract::ComputeClassHashError;
     use starknet_core::types::{
-        BroadcastedDeployAccountTransaction, DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
+        BroadcastedInvokeTransaction, BroadcastedDeployAccountTransaction, DeclareTransaction as RPCDeclareTransaction, DeclareTransactionV1 as RPCDeclareTransactionV1,
         DeclareTransactionV2 as RPCDeclareTransactionV2, DeployAccountTransaction as RPCDeployAccountTransaction, Event as RPCEvent,
-        InvokeTransaction as RPCInvokeTransaction,
+        InvokeTransaction as RPCInvokeTransaction, FieldElement, TransactionStatus as RPCTransactionStatus,
         InvokeTransactionV0 as RPCInvokeTransactionV0, InvokeTransactionV1 as RPCInvokeTransactionV1,
-        LegacyContractEntryPoint, LegacyEntryPointsByType, StarknetError,
-        Transaction as RPCTransaction,
+        LegacyContractEntryPoint, LegacyEntryPointsByType, StarknetError, MaybePendingTransactionReceipt as RPCMaybePendingTransactionReceipt,
+        Transaction as RPCTransaction, TransactionReceipt as RPCTransactionReceipt, L1HandlerTransactionReceipt as RPCL1HandlerTransactionReceipt, InvokeTransactionReceipt as RPCInvokeTransactionReceipt,
+        DeployAccountTransactionReceipt as RPCDeployAccountTransactionReceipt, DeclareTransactionReceipt as RPCDeclareTransactionReceipt,
     };
 
     use super::*;
+
+
     /// Wrapper type for broadcasted transaction conversion errors.
     #[derive(Debug, Error)]
     pub enum BroadcastedTransactionConversionErrorWrapper {
@@ -737,11 +754,11 @@ mod reexport_private_types {
     }
 
     impl DeployAccountTransaction {
-        fn try_from(
+        pub fn try_from(
             tx: BroadcastedDeployAccountTransaction,
             chain_id: Felt252Wrapper,
         ) -> Result<DeployAccountTransaction, BroadcastedTransactionConversionErrorWrapper> {
-            let version = 1_u64;
+            let version = 1_u8;
             let contract_address_salt = Felt252Wrapper::from(tx.contract_address_salt);
             let salt_as_felt = StarkFelt(contract_address_salt.into());
             let class_hash = Felt252Wrapper::from(tx.class_hash);
@@ -801,6 +818,55 @@ mod reexport_private_types {
                 class_hash,
                 sender_address,
             })
+        }
+    }
+
+    impl InvokeTransaction {
+        pub fn try_from(
+            tx: BroadcastedInvokeTransaction,
+            chain_id: Felt252Wrapper,
+        ) -> Result<InvokeTransaction, BroadcastedTransactionConversionErrorWrapper> {
+            match tx {
+                BroadcastedInvokeTransaction::V0(_) => Err(StarknetError::FailedToReceiveTransaction.into()),
+                BroadcastedInvokeTransaction::V1(tx) => {
+                    let version = 1_u8;
+                    let signature = tx
+                    .signature
+                    .iter()
+                    .map(|f| (*f).into())
+                    .collect::<Vec<Felt252Wrapper>>()
+                    .try_into()
+                    .map_err(|_| BroadcastedTransactionConversionErrorWrapper::SignatureBoundError)?;
+                    let calldata: BoundedVec<Felt252Wrapper, MaxCalldataSize> = tx
+                        .calldata
+                        .iter()
+                        .map(|f| (*f).into())
+                        .collect::<Vec<Felt252Wrapper>>()
+                        .try_into()
+                        .map_err(|_| BroadcastedTransactionConversionErrorWrapper::CalldataBoundError)?;
+                    let nonce = Felt252Wrapper::from(tx.nonce);
+                    let max_fee = Felt252Wrapper::from(tx.max_fee);
+        
+                    let sender_address = Felt252Wrapper::from(tx.sender_address);
+        
+                    let transaction_hash = calculate_invoke_tx_hash(
+                        sender_address,
+                        calldata.clone(),
+                        max_fee,
+                        nonce,
+                        version,
+                        chain_id,
+                    );
+                    Ok(InvokeTransaction::V1(InvokeTransactionV1 {
+                        transaction_hash: transaction_hash,
+                        signature : signature,
+                        max_fee: max_fee,
+                        sender_address: sender_address,
+                        nonce: nonce,
+                        calldata: calldata,
+                    })
+                    )}
+            }
         }
     }
 
@@ -901,28 +967,83 @@ mod reexport_private_types {
         }
     }
 
-    /// Different tx types.
-    /// See `https://docs.starknet.io/documentation/architecture_and_concepts/Blocks/transactions/` for more details.
-    #[derive(
-        Clone,
-        Debug,
-        PartialEq,
-        Eq,
-        scale_codec::Encode,
-        scale_codec::Decode,
-        scale_info::TypeInfo,
-        scale_codec::MaxEncodedLen,
-    )]
-    #[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
-    pub enum TxType {
-        /// Regular invoke transaction.
-        Invoke,
-        /// Declare transaction.
-        Declare,
-        /// Deploy account transaction.
-        DeployAccount,
-        /// Message sent from ethereum.
-        L1Handler,
+   
+
+    impl TransactionReceiptWrapper {
+        /// Converts a [`TransactionReceiptWrapper`] to [`RPCMaybePendingTransactionReceipt`].
+        ///
+        /// This conversion is done in a function and not `From` trait due to the need
+        /// to pass some arguments like the [`RPCTransactionStatus`] or the block hash and number
+        /// which are unknown in the [`TransactionReceiptWrapper`].
+        ///
+        /// Maybe extended later for other missing fields like messages sent to L1
+        /// and the contract class for the deploy.
+        pub fn into_maybe_pending_transaction_receipt(
+            self,
+            status: RPCTransactionStatus,
+            block_hash_and_number: (FieldElement, u64),
+        ) -> RPCMaybePendingTransactionReceipt {
+            let transaction_hash = self.transaction_hash.into();
+            let actual_fee = self.actual_fee.into();
+            let status = status;
+            let block_hash = block_hash_and_number.0;
+            let block_number = block_hash_and_number.1;
+            let events = self.events.iter().map(|e| (*e).clone().into()).collect();
+
+            // TODO: from where those message must be taken?
+            let messages_sent = vec![];
+
+            match self.tx_type {
+                TxType::DeployAccount => {
+                    RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::DeployAccount(
+                        RPCDeployAccountTransactionReceipt {
+                            transaction_hash,
+                            actual_fee,
+                            status,
+                            block_hash,
+                            block_number,
+                            messages_sent,
+                            events,
+                            // TODO: from where can I get this one?
+                            contract_address: FieldElement::ZERO,
+                        },
+                    ))
+                }
+                TxType::Declare => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Declare(
+                    RPCDeclareTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+                TxType::Invoke => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::Invoke(
+                    RPCInvokeTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+                TxType::L1Handler => RPCMaybePendingTransactionReceipt::Receipt(RPCTransactionReceipt::L1Handler(
+                    RPCL1HandlerTransactionReceipt {
+                        transaction_hash,
+                        actual_fee,
+                        status,
+                        block_hash,
+                        block_number,
+                        messages_sent,
+                        events,
+                    },
+                )),
+            }
+        }
     }
 
     impl From<EventWrapper> for RPCEvent {

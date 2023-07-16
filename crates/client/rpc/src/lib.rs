@@ -25,7 +25,7 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
-    DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
+    DeployAccountTransaction, InvokeTransaction, Transaction as MPTransaction, TxType,
 };
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -457,21 +457,22 @@ where
         &self,
         invoke_transaction: BroadcastedInvokeTransaction,
     ) -> RpcResult<InvokeTransactionResult> {
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
         let best_block_hash = self.client.info().best_hash;
-        let invoke_tx = InvokeTransaction::try_from(invoke_transaction).map_err(|e| {
+        let invoke_tx = InvokeTransaction::try_from(invoke_transaction, chain_id).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
-        let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let transaction: MPTransaction = invoke_tx.from_invoke(chain_id);
+        let transaction: MPTransaction = invoke_tx.into();
 
         let extrinsic =
             convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::Invoke).await?;
 
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
-        Ok(InvokeTransactionResult { transaction_hash: transaction.hash.into() })
+        Ok(InvokeTransactionResult { transaction_hash: transaction.get_hash().into() })
     }
 
     /// Add an Deploy Account Transaction
@@ -492,15 +493,12 @@ where
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
         let deploy_account_transaction =
-            DeployAccountTransaction::try_from(deploy_account_transaction).map_err(|e| {
+            DeployAccountTransaction::try_from(deploy_account_transaction, chain_id).map_err(|e| {
                 error!("{e}");
                 StarknetRpcApiError::InternalServerError
             })?;
 
-        let transaction: MPTransaction = deploy_account_transaction.from_deploy(chain_id).map_err(|e| {
-            error!("{e}");
-            StarknetRpcApiError::InternalServerError
-        })?;
+        let transaction: MPTransaction = deploy_account_transaction.into();
 
         let extrinsic =
             convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::DeployAccount)
@@ -509,8 +507,8 @@ where
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
         Ok(DeployAccountTransactionResult {
-            transaction_hash: transaction.hash.into(),
-            contract_address: transaction.sender_address.into(),
+            transaction_hash: transaction.get_hash().into(),
+            contract_address: transaction.get_sender_address().into(),
         })
     }
 
@@ -602,12 +600,8 @@ where
                 .transactions()
                 .iter()
                 .cloned()
-                .map(Transaction::try_from)
-                .collect::<Result<Vec<_>, RPCTransactionConversionError>>()
-                .map_err(|e| {
-                    error!("{:#?}", e);
-                    StarknetRpcApiError::InternalServerError
-                })?,
+                .map(Transaction::from)
+                .collect::<Vec<_>>()
         };
 
         Ok(MaybePendingBlockWithTxs::Block(block_with_txs))
@@ -754,7 +748,7 @@ where
         let best_block_hash = self.client.info().best_hash;
         let chain_id = Felt252Wrapper(self.chain_id()?.0);
 
-        let declare_tx = to_declare_transaction(declare_transaction).map_err(|e| {
+        let declare_tx = to_declare_transaction(declare_transaction, chain_id).map_err(|e| {
             error!("{e}");
             StarknetRpcApiError::InternalServerError
         })?;
@@ -763,13 +757,13 @@ where
         let contract_class = self
             .overrides
             .for_block_hash(self.client.as_ref(), current_block_hash)
-            .contract_class_by_class_hash(current_block_hash, declare_tx.class_hash);
+            .contract_class_by_class_hash(current_block_hash, declare_tx.class_hash());
         if let Some(contract_class) = contract_class {
             error!("Contract class already exists: {:?}", contract_class);
             return Err(StarknetRpcApiError::ClassAlreadyDeclared.into());
         }
 
-        let transaction: MPTransaction = declare_tx.clone().from_declare(chain_id);
+        let transaction: MPTransaction = declare_tx.clone().into();
 
         let extrinsic =
             convert_transaction(self.client.clone(), best_block_hash, transaction.clone(), TxType::Declare).await?;
@@ -777,8 +771,8 @@ where
         submit_extrinsic(self.pool.clone(), best_block_hash, extrinsic).await?;
 
         Ok(DeclareTransactionResult {
-            transaction_hash: transaction.hash.into(),
-            class_hash: declare_tx.class_hash.into(),
+            transaction_hash: transaction.get_hash().into(),
+            class_hash: declare_tx.class_hash().into(),
         })
     }
 
@@ -811,7 +805,7 @@ where
         let find_tx = block
             .transactions()
             .into_iter()
-            .find(|tx| tx.hash == transaction_hash.into())
+            .find(|tx| tx.get_hash() == transaction_hash.into())
             .map(|tx| Transaction::try_from(tx.clone()));
 
         match find_tx {

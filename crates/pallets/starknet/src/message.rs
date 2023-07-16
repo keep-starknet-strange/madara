@@ -2,7 +2,7 @@ use frame_support::BoundedVec;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
-use mp_starknet::transaction::types::Transaction;
+use mp_starknet::transaction::types::{Transaction, InvokeTransaction, InvokeTransactionV1};
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
 
@@ -79,17 +79,17 @@ impl Message {
             })
         }
         let calldata = BoundedVec::try_from(calldata).map_err(|_| OffchainWorkerError::ToTransactionError)?;
-        let call_entrypoint = CallEntryPointWrapper {
-            class_hash: None,
-            entrypoint_type: EntryPointTypeWrapper::L1Handler,
-            entrypoint_selector: Some(selector),
-            calldata,
-            storage_address: sender_address,
-            caller_address: ContractAddressWrapper::default(),
-            // FIXME 710
-            initial_gas: Felt252Wrapper::from(0_u8),
-            compiled_class_hash: None,
-        };
-        Ok(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })
+        
+        let one = Felt252Wrapper::ONE;
+
+        Ok(Transaction::Invoke(InvokeTransaction::V1(InvokeTransactionV1 {
+            sender_address: sender_address,
+            calldata: calldata,
+            transaction_hash: one,
+            max_fee: Felt252Wrapper::from(u128::MAX),
+            signature: BoundedVec::try_from(vec![one, one]).unwrap(),
+            nonce: Felt252Wrapper::default(),
+        }
+        )))
     }
 }
