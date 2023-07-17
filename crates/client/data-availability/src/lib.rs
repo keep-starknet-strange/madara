@@ -84,13 +84,13 @@ where
             };
 
             // Submit the StarkNet OS PIE
-            if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {
+            /*if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {
                 log::info!("Job Submitted: {}", job_resp.cairo_job_key);
                 // Store the cairo job key
                 let _res = madara_backend
                     .da()
                     .update_cairo_job(&storage_event.block, Uuid::from_str(sharp_utils::TEST_JOB_ID).unwrap());
-            }
+            }*/
         }
     }
 }
@@ -106,32 +106,35 @@ where
 
         while let Some(notification) = notification_st.next().await {
             // Query last proven block
-            if let Ok(last_block) = ethereum::last_proven_block(&l1_node).await {
+            /*  if let Ok(last_block) = ethereum::last_proven_block(&l1_node).await {
                 match madara_backend.da().last_proved_block() {
                     Ok(last_local_block) => log::info!("Last onchain: {last_block}, Last Local: {last_local_block}"),
                     Err(e) => log::debug!("could not pull last local block: {e}"),
                 };
-            }
+            }*/
 
             // Check the associated job status
-            if let Ok(job_resp) = sharp_utils::get_status(sharp_utils::TEST_JOB_ID) {
-                if let Some(status) = job_resp.status {
-                    if status == "ONCHAIN" {
-                        match madara_backend.da().state_diff(&notification.hash) {
-                            Ok(state_diff) => {
-                                // publish state diff to Layer 1
-                                ethereum::publish_data(&l1_node, &DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
+            // remove sharp status checking, we publish anyway
 
-                                // save last proven block
-                                if let Err(db_err) = madara_backend.da().update_last_proved_block(&notification.hash) {
-                                    log::debug!("could not save last proved block: {db_err}");
-                                };
-                            }
-                            Err(e) => log::debug!("could not pull state diff: {e}"),
-                        }
-                    }
+            match madara_backend.da().state_diff(&notification.hash) {
+                Ok(state_diff) => {
+                    // publish state diff to Layer 1
+                    //TODO :celestia
+                    ethereum::publish_data(&l1_node, &DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
+
+                    // save last proven block
+                    /*if let Err(db_err) = madara_backend.da().update_last_proved_block(&notification.hash) {
+                        log::debug!("could not save last proved block: {db_err}");
+                    };*/
                 }
+                Err(e) => log::debug!("could not pull state diff: {e}"),
             }
+            
+            /*if let Ok(job_resp) = sharp_utils::get_status(sharp_utils::TEST_JOB_ID) {
+                if let Some(status) = job_resp.status {
+                    
+                }
+            }*/
         }
     }
 }
