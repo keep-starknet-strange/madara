@@ -1,5 +1,6 @@
 mod ethereum;
 mod sharp_utils;
+mod celestia;
 
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -120,7 +121,7 @@ where
                 Ok(state_diff) => {
                     // publish state diff to Layer 1
                     //TODO :celestia
-                    ethereum::publish_data(&l1_node, &DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
+                    celestia::publish_data(&l1_node, &DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
 
                     // save last proven block
                     /*if let Err(db_err) = madara_backend.da().update_last_proved_block(&notification.hash) {
