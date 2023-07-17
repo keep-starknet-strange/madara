@@ -64,11 +64,11 @@ fn given_deploy_account_tx_with_invalid_nonce_then_it_works() {
         basic_test_setup_without_nonce_validation::<MockWithoutNonceValidationRuntime>(2);
         let none_origin = RuntimeOrigin::none();
 
-        let mut transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
         transaction.nonce = Felt252Wrapper::MAX; // modify nonce to be invalid
         let account_class_hash = transaction.account_class_hash;
 
-        let (address, _, _) = account_helper(SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let (address, _, _) = account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
         set_infinite_tokens::<MockWithoutNonceValidationRuntime>(address);
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));

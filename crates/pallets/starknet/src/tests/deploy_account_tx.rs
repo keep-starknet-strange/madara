@@ -18,7 +18,8 @@ fn given_contract_run_deploy_account_tx_works() {
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
-        let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
+        let salt =
+            Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap();
         let (test_addr, account_class_hash, calldata) =
             account_helper(salt, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
@@ -26,7 +27,7 @@ fn given_contract_run_deploy_account_tx_works() {
 
         let transaction = DeployAccountTransaction {
             account_class_hash,
-            salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
+            salt,
             version: 1,
             // Calldata is hex so this works fine
             calldata: BoundedVec::try_from(
@@ -68,10 +69,10 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
         let account_class_hash = transaction.account_class_hash;
 
-        let (address, _, _) = account_helper(SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let (address, _, _) = account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         set_infinite_tokens::<MockRuntime>(address);
 
@@ -116,7 +117,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::Argent));
+        let transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Argent));
 
         assert_err!(
             Starknet::deploy_account(none_origin, transaction),
@@ -132,7 +133,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let mut transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
+        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
         let account_class_hash = transaction.account_class_hash;
 
         let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
@@ -156,7 +157,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
 
         let none_origin = RuntimeOrigin::none();
 
-        let mut transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
+        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
@@ -176,7 +177,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
         let none_origin = RuntimeOrigin::none();
 
-        let mut transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::Argent));
+        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Argent));
         let account_class_hash = transaction.account_class_hash;
 
         let mp_transaction = transaction.clone().from_deploy(Starknet::chain_id()).unwrap();
@@ -199,7 +200,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
-        let mut transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::Argent));
+        let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Argent));
         transaction.signature = bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE);
 
         let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
@@ -219,7 +220,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 
         let none_origin = RuntimeOrigin::none();
         let (_, proxy_class_hash, mut calldata) =
-            account_helper(SALT, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
+            account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
         calldata.push("0x1");
         calldata.push(ACCOUNT_PUBLIC_KEY);
 
@@ -232,7 +233,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 
         let transaction = DeployAccountTransaction {
             account_class_hash: proxy_class_hash,
-            salt: Felt252Wrapper::from_hex_be(SALT).unwrap(),
+            salt: *SALT,
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -264,7 +265,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 
         let none_origin = RuntimeOrigin::none();
         let (test_addr, proxy_class_hash, mut calldata) =
-            account_helper(SALT, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
+            account_helper(*SALT, AccountType::V0(AccountTypeV0Inner::BraavosProxy));
         calldata.push("0x1");
         calldata.push(ACCOUNT_PUBLIC_KEY);
 
@@ -273,7 +274,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 
         let transaction = DeployAccountTransaction {
             account_class_hash: proxy_class_hash,
-            salt: Felt252Wrapper::from_hex_be(SALT).unwrap(),
+            salt: *SALT,
             version: 1,
             calldata: BoundedVec::try_from(
                 calldata
@@ -301,7 +302,7 @@ fn test_verify_tx_longevity() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
-        let transaction = get_deploy_account_dummy(SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::NoValidate));
 
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::deploy_account { transaction });

@@ -231,6 +231,9 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
     .from_invoke(Starknet::chain_id())
 }
 
+/// Returns a dummy declare transaction for the given account type.
+/// The declared class hash is a ERC20 contract, class hash calculated
+/// with starkli.
 pub fn get_declare_dummy(account_type: AccountType) -> DeclareTransaction {
     let account_addr = get_account_address(account_type);
 
@@ -251,12 +254,13 @@ pub fn get_declare_dummy(account_type: AccountType) -> DeclareTransaction {
     }
 }
 
-pub fn get_deploy_account_dummy(salt: &str, account_type: AccountType) -> DeployAccountTransaction {
+/// Returns a dummy deploy account transaction for the given salt and account type
+pub fn get_deploy_account_dummy(salt: Felt252Wrapper, account_type: AccountType) -> DeployAccountTransaction {
     let (_, account_class_hash, calldata) = account_helper(salt, account_type);
 
     DeployAccountTransaction {
         account_class_hash,
-        salt: Felt252Wrapper::from_hex_be(salt).unwrap(),
+        salt,
         version: 1,
         calldata: BoundedVec::try_from(
             calldata
@@ -273,6 +277,7 @@ pub fn get_deploy_account_dummy(salt: &str, account_type: AccountType) -> Deploy
     }
 }
 
+/// Sets the balance of the given address to infinite.
 pub fn set_infinite_tokens<T: Config>(address: Felt252Wrapper) {
     StorageView::<T>::insert(
         get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 0),
