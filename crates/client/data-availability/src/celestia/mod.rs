@@ -2,6 +2,8 @@ use std::sync::Arc;
 
 use ethers::types::{Address, I256, U256};
 
+use celestia_rpc::client::{new_http};
+
 //pub const _STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
 //pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
 
@@ -12,18 +14,6 @@ use ethers::types::{Address, I256, U256};
 pub async fn publish_data(eth_node: &str, _sequencer_address: &[u8], state_diff: Vec<U256>) {
     log::info!("publish_data: {:?}", state_diff);
 
-    /*let provider = Provider::<Http>::try_from(eth_node).unwrap();
-
-    let anvil = Anvil::new().spawn();
-    let from_wallet: LocalWallet = anvil.keys()[0].clone().into();
-
-    let address: Address = STARKNET_GOERLI_CC_ADDRESS.parse().unwrap();
-    let signer = Arc::new(SignerMiddleware::new(provider, from_wallet.with_chain_id(anvil.chain_id())));
-    let contract = STARKNET::new(address, signer);
-
-    let tx = contract.update_state(state_diff, U256::default(), U256::default());
-    let pending_tx = tx.send().await.unwrap();
-    let minted_tx = pending_tx.await.unwrap();*/
-    //log::info!("State Update: {:?}", minted_tx);
+    let client = new_http("https://hooper.au.ngrok.io", Some("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdfQ.qiOWaA7iUn3tuUSn8RklXGpu8Zo6REDErZZhDt75VOU"));
 }
 

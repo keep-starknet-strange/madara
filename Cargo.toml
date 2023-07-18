@@ -42,7 +42,7 @@ frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = 
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
 # celestia rust dependency
-celestia-rust = { git = "https://github.com/eigerco/celestia-node-rs", default-features = false }
+celestia-rpc = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
 
 # Substrate primitives dependencies
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }

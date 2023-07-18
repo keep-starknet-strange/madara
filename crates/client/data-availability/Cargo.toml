@@ -22,6 +22,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { version = "1.4.0", features = ["v4"] }
 
+# celestia rust dependency
+celestia-rpc = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
+
+
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-blockchain = { workspace = true }
