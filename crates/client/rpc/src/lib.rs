@@ -440,8 +440,8 @@ where
     fn chain_id(&self) -> RpcResult<Felt> {
         let best_block_hash = self.client.info().best_hash;
 
-        let chain_id = self.overrides.for_block_hash(self.client.as_ref(), best_block_hash).chain_id(best_block_hash);
-        Ok(Felt(chain_id.ok_or(StarknetRpcApiError::InternalServerError)?.into()))
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash);
+        Ok(Felt(chain_id.map_err(|_| StarknetRpcApiError::InternalServerError)?.into()))
     }
 
     /// Add an Invoke Transaction to invoke a contract function
