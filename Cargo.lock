@@ -5889,12 +5889,14 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "celestia-rpc",
+ "celestia-types",
  "ethers",
  "futures",
  "lazy_static",
  "log",
  "mc-db",
  "mp-starknet",
+ "rand 0.8.5",
  "reqwest",
  "sc-client-api",
  "serde",
@@ -5905,6 +5907,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "starknet_api",
+ "tokio",
  "uuid 1.4.0",
 ]
 
