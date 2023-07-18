@@ -167,6 +167,10 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Configuration of the pallets used in the runtime.
 //! The pallets used in the runtime are configured here.
 //! This file is used to generate the `construct_runtime!` macro.
@@ -209,6 +213,10 @@
     </span><span class="kw">type </span>EnableStateRoot = ConstBool&lt;<span class="bool-val">false</span>&gt;;
     <span class="attr">#[cfg(feature = <span class="string">&quot;madara-state-root&quot;</span>)]
     </span><span class="kw">type </span>EnableStateRoot = ConstBool&lt;<span class="bool-val">true</span>&gt;;
+    <span class="attr">#[cfg(not(feature = <span class="string">&quot;disable-transaction-fee&quot;</span>))]
+    </span><span class="kw">type </span>DisableTransactionFee = ConstBool&lt;<span class="bool-val">false</span>&gt;;
+    <span class="attr">#[cfg(feature = <span class="string">&quot;disable-transaction-fee&quot;</span>)]
+    </span><span class="kw">type </span>DisableTransactionFee = ConstBool&lt;<span class="bool-val">true</span>&gt;;
     <span class="kw">type </span>InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     <span class="kw">type </span>ValidateMaxNSteps = ValidateMaxNSteps;
     <span class="kw">type </span>ProtocolVersion = ProtocolVersion;

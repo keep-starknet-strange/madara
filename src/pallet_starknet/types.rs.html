@@ -56,6 +56,16 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet pallet custom types.
 </span><span class="kw">use </span>blockifier::execution::contract_class::ContractClass;
 <span class="kw">use </span>mp_starknet::crypto::commitment::StateCommitmentTree;
@@ -113,6 +123,16 @@
     </span><span class="kw">pub </span>storage_commitment: StateCommitmentTree&lt;PedersenHasher&gt;,
     <span class="doccomment">/// Class Commitment
     </span><span class="kw">pub </span>class_commitment: StateCommitmentTree&lt;PoseidonHasher&gt;,
+}
+
+<span class="doccomment">/// Build invoke transaction for transfer utils
+</span><span class="kw">pub struct </span>BuildTransferInvokeTransaction {
+    <span class="kw">pub </span>sender_address: Felt252Wrapper,
+    <span class="kw">pub </span>token_address: Felt252Wrapper,
+    <span class="kw">pub </span>recipient: Felt252Wrapper,
+    <span class="kw">pub </span>amount_low: Felt252Wrapper,
+    <span class="kw">pub </span>amount_high: Felt252Wrapper,
+    <span class="kw">pub </span>nonce: Felt252Wrapper,
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pallet_starknet" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0-nightly (34e6673a0 2023-02-25)" data-search-js="search-14421e1532aead08.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
