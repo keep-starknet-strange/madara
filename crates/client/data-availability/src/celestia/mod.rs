@@ -4,7 +4,8 @@ use ethers::types::{Address, I256, U256};
 
 use celestia_rpc::client::{new_http};
 use celestia_types::{Blob, nmt::Namespace};
-use blake3::Hasher;
+use rand::Rng;
+
 
 //pub const _STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
 //pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
@@ -24,19 +25,16 @@ pub async fn publish_data(eth_node: &str, _sequencer_address: &[u8], state_diff:
         state_diff[i].to_big_endian(&mut bytes);
         state_diff_bytes.extend_from_slice(&bytes);
     }
-    log::info!("state_diff_bytes: {:?}", state_diff_bytes);
 
     //define namespace
-    // namespace is a hash of state_diff
-    let mut hash = [0 as u8; 32];
-    let mut hasher = blake3::Hasher::new();
-    hasher.update(&state_diff_bytes);
-    hasher.finalize_xof().fill(&mut hash);
+    let mut rng = rand::thread_rng();
+    let mut array: [u8; 10] = [0; 10];
 
-    let nid = Namespace::new_v0(&hash[..10]).unwrap();
+    for i in 0..10 {
+        array[i] = rng.gen();
+    }
 
-    log::info!("namespace: {:?}", nid);
-
+    let nid = Namespace::new_v0(&array).unwrap();
 
     //define a new blob
     let blob = Blob::new(nid, state_diff_bytes);
