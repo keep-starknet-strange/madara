@@ -136,7 +136,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
         let mut transaction = get_deploy_account_dummy(*SALT, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
         let account_class_hash = transaction.account_class_hash;
 
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
+        let mp_transaction = transaction.clone().from_deploy(Starknet::chain_id()).unwrap();
 
         let tx_hash = mp_transaction.hash;
         transaction.signature = sign_message_hash(tx_hash);
@@ -249,7 +249,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             is_query: false,
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
         set_infinite_tokens::<MockRuntime>(address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 

@@ -3,7 +3,8 @@ use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransacti
 use sp_core::bounded_vec;
 use sp_runtime::BoundedVec;
 
-use self::mock::{get_account_address, get_storage_key, AccountType, Starknet};
+use self::mock::default_mock::Starknet;
+use self::mock::{get_account_address, get_storage_key, AccountType};
 use self::utils::get_contract_class;
 use crate::tests::mock::account_helper;
 use crate::tests::utils::sign_message_hash;

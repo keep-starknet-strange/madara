@@ -304,6 +304,7 @@ pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
     t.into()
 }
 
-mock_runtime!(default_mock, false, false);
-mock_runtime!(state_root_mock, true, false);
-mock_runtime!(fees_disabled_mock, false, true);
+mock_runtime!(default_mock, false, false, true);
+mock_runtime!(state_root_mock, true, false, true);
+mock_runtime!(fees_disabled_mock, false, true, true);
+mock_runtime!(no_nonce_validation_mock, false, true, false);
