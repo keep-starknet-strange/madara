@@ -14,6 +14,7 @@ use serde_with::serde_as;
 
 mod constants;
 pub mod utils;
+pub mod trace;
 
 pub mod types;
 
@@ -26,7 +27,7 @@ use starknet_core::types::{
     StateUpdate, SyncStatusType, Transaction,
 };
 
-use crate::types::{RpcGetProofInput, RpcGetProofOutput};
+use crate::types::{RpcGetProofInput, RpcGetProofOutput, SimulateTransactionResult};
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -145,4 +146,15 @@ pub trait StarknetRpcApi {
     /// contract.
     #[method(name = "getProof")]
     fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput>;
+
+    /// Simulate a given sequence of transactions on the requested state, and generate the execution
+    /// traces. If one of the transactions is reverted, raises error.
+    #[method(name = "simulateTransactions")]
+    fn simulate_transactions(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        skip_validate: bool,
+        skip_fee_charge: bool,
+    ) -> RpcResult<Vec<SimulateTransactionResult>>;
 }

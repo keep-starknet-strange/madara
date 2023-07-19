@@ -84,7 +84,7 @@ use mp_starknet::storage::{StarknetStorageSchemaVersion, PALLET_STARKNET_SCHEMA}
 use mp_starknet::traits::hash::{DefaultHasher, HasherT};
 use mp_starknet::transaction::types::{
     DeclareTransaction, DeployAccountTransaction, EventError, EventWrapper as StarknetEventType, InvokeTransaction,
-    Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
+    Transaction, TransactionExecutionErrorWrapper, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 use sp_runtime::traits::UniqueSaturatedInto;
 use sp_runtime::DigestItem;
@@ -516,8 +516,14 @@ pub mod pallet {
             let block_context = Self::get_block_context();
             let chain_id = Self::chain_id();
             let transaction: Transaction = transaction.from_invoke(chain_id);
-            let call_info =
-                transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
+            let call_info = transaction.execute(
+                &mut BlockifierStateAdapter::<T>::default(),
+                &block_context,
+                TxType::Invoke,
+                None,
+                false,
+                false,
+            );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
@@ -590,6 +596,8 @@ pub mod pallet {
                 &block_context,
                 TxType::Declare,
                 Some(contract_class),
+                false,
+                false,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -661,6 +669,8 @@ pub mod pallet {
                 &block_context,
                 TxType::DeployAccount,
                 None,
+                false,
+                false,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -724,6 +734,8 @@ pub mod pallet {
                 &block_context,
                 TxType::L1Handler,
                 None,
+                false,
+                false,
             ) {
                 Ok(v) => {
                     log!(debug, "Successfully consumed a message from L1: {:?}", v);
@@ -1113,6 +1125,8 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             transaction.tx_type.clone(),
             transaction.contract_class.clone(),
+            false,
+            false,
         ) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);
@@ -1127,6 +1141,34 @@ impl<T: Config> Pallet<T> {
                 Err(Error::<T>::TransactionExecutionFailed.into())
             }
         }
+    }
+
+    /// Simulate transaction batch execution
+    pub fn simulate_transactions(
+        transactions: Vec<Transaction>,
+        skip_validate: bool,
+        skip_fee_charge: bool,
+    ) -> Result<Vec<TransactionExecutionInfoWrapper>, DispatchError> {
+        let mut state = BlockifierStateAdapter::<T>::default();
+        let context = Self::get_block_context();
+
+        transactions
+            .into_iter()
+            .map(|tx| {
+                tx.execute(
+                    &mut state,
+                    &context,
+                    tx.tx_type.clone(),
+                    tx.contract_class.clone(),
+                    skip_validate,
+                    skip_fee_charge,
+                )
+            })
+            .collect::<Result<Vec<_>, TransactionExecutionErrorWrapper>>()
+            .map_err(|e| {
+                log!(error, "Failed to simulate transaction: {:?}", e);
+                Error::<T>::TransactionExecutionFailed.into()
+            })
     }
 
     /// Returns the hasher used by the runtime.

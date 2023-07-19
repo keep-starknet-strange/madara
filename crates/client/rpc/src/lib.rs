@@ -14,7 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput};
+use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput, SimulateTransactionResult};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
@@ -25,7 +25,8 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
-    DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
+    DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction,
+    TransactionExecutionInfoWrapper, TxType, BroadcastedTransactionConversionErrorWrapper,
 };
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -989,6 +990,61 @@ where
 
         Ok(RpcGetProofOutput { state_commitment, class_commitment, contract_proof, contract_data: Some(contract_data) })
     }
+
+    /// Returns simulation results for a batch of transactions
+    ///
+    /// # Arguments
+    ///
+    /// * `block_id` - The hash, height, or tag of the block referencing the state
+    /// * `transactions` - A sequence of transactions to simulate, running each transaction on the
+    ///   state resulting from applying all the previous ones
+    /// * `skip_validate` - Skip transaction validation
+    /// * `skip_fee_charge` - Set to true, otherwise fee will be deducted from the balance before
+    ///   the simulation of the next transaction
+    ///
+    /// # Returns
+    ///
+    /// * `Vec<SimulateTransactionResult>` - Simulation results for transactions that were validated
+    ///   & executed successfully
+    fn simulate_transactions(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        skip_validate: bool,
+        skip_fee_charge: bool,
+    ) -> RpcResult<Vec<SimulateTransactionResult>> {
+        let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
+            error!("'{e}'");
+            StarknetRpcApiError::BlockNotFound
+        })?;
+        let chain_id = Felt252Wrapper(self.chain_id()?.0);
+
+        let transactions: Vec<MPTransaction> = transactions
+            .into_iter()
+            .map(|tx| to_tx(tx, chain_id))
+            .collect::<Result<Vec<_>, BroadcastedTransactionConversionErrorWrapper>>()
+            .map_err(|e| {
+                error!("{e}");
+                StarknetRpcApiError::InternalServerError
+            })?;
+
+        let execution_info: Vec<TransactionExecutionInfoWrapper> = self.client
+            .runtime_api()
+            .simulate_transactions(substrate_block_hash, transactions, skip_validate, skip_fee_charge)
+            .map_err(|e| {
+                error!("Request parameters error: {e}");
+                StarknetRpcApiError::InternalServerError
+            })?
+            .map_err(|e| {
+                error!("Failed to call function: {:#?}", e);
+                StarknetRpcApiError::ContractError
+            })?;
+
+        Ok(execution_info
+            .into_iter()
+            .map(|exec_info| exec_info.into())
+            .collect::<Vec<SimulateTransactionResult>>())
+    }
 }
 
 async fn submit_extrinsic<P, B>(
@@ -1031,3 +1087,4 @@ where
         }
     }
 }
+

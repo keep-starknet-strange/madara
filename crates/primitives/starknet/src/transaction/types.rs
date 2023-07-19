@@ -504,7 +504,7 @@ pub struct EventWrapper {
 }
 
 /// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
-#[derive(Debug)]
+#[derive(Debug, scale_codec::Encode, scale_codec::Decode)]
 pub struct TransactionExecutionInfoWrapper {
     /// Transaction validation call info; [None] for `L1Handler`.
     pub validate_call_info: Option<CallInfo>,
@@ -516,7 +516,21 @@ pub struct TransactionExecutionInfoWrapper {
     pub actual_fee: Fee,
     /// Actual execution resources the transaction is charged for,
     /// including L1 gas and additional OS resources estimation.
+    #[codec(skip)]
     pub actual_resources: BTreeMap<String, usize>,
+}
+
+impl scale_info::TypeInfo for TransactionExecutionInfoWrapper {
+    type Identity = Self;
+
+    fn type_info() -> scale_info::Type {
+        scale_info::Type::builder()
+            .path(scale_info::Path::new("TransactionExecutionInfoWrapper", module_path!()))
+            .composite(
+                scale_info::build::Fields::unnamed()
+                    .field(|f| f.ty::<[u8]>().type_name("TransactionExecutionInfoWrapper")),
+            )
+    }
 }
 
 /// Error enum wrapper for events.

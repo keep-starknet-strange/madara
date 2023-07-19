@@ -523,6 +523,8 @@ impl Transaction {
     /// * `tx_type` - The type of the transaction to execute.
     /// * `contract_class` - The contract class to execute the transaction on.
     /// * `fee_token_address` - The fee token address.
+    /// * `skip_validate` - Skip transaction validation (simulation case)
+    /// * `skip_fee_charge` - Do not subtract fees (simulation case)
     ///
     /// # Returns
     ///
@@ -534,6 +536,8 @@ impl Transaction {
         block_context: &BlockContext,
         tx_type: TxType,
         contract_class: Option<ContractClass>,
+        skip_validate: bool,
+        skip_fee_charge: bool,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
@@ -563,14 +567,18 @@ impl Transaction {
                 Self::handle_nonce(state, &account_context)?;
 
                 // Validate.
-                let validate_call_info = self.validate_tx(
-                    state,
-                    execution_resources,
-                    block_context,
-                    &account_context,
-                    &tx_type,
-                    &mut initial_gas,
-                )?;
+                let validate_call_info = if !skip_validate {
+                    self.validate_tx(
+                        state,
+                        execution_resources,
+                        block_context,
+                        &account_context,
+                        &tx_type,
+                        &mut initial_gas,
+                    )?
+                } else {
+                    None
+                };
 
                 // Execute.
                 (
@@ -674,7 +682,13 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, account_context, &tx_resources)?;
+
+        let (actual_fee, fee_transfer_call_info) = if !skip_fee_charge {
+            charge_fee(state, block_context, account_context, &tx_resources)?
+        } else {
+            (Fee(0u128), None)
+        };
+
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,

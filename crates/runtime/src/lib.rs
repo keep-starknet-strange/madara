@@ -30,7 +30,7 @@ use frame_system::EventRecord;
 use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 use mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType,
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType, TransactionExecutionInfoWrapper,
 };
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.
@@ -279,6 +279,10 @@ impl_runtime_apis! {
 
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
             Starknet::estimate_fee(transaction)
+        }
+
+        fn simulate_transactions(transactions: Vec<Transaction>, skip_validate: bool, skip_fee_charge: bool) -> Result<Vec<TransactionExecutionInfoWrapper>, DispatchError> {
+            Starknet::simulate_transactions(transactions, skip_validate, skip_fee_charge)
         }
 
         fn get_hasher() -> Hasher {

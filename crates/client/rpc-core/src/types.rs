@@ -1,7 +1,8 @@
 use mp_starknet::crypto::merkle_patricia_tree::merkle_tree::ProofNode;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use starknet_core::types::{BlockId, FieldElement};
+use starknet_core::types::{BlockId, Event, FeeEstimate, FieldElement, MsgToL1};
+use starknet_api::deprecated_contract_class::EntryPointType;
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct RpcGetProofInput {
@@ -55,4 +56,64 @@ pub struct ContractData {
 
     /// The proofs associated with the queried storage values
     pub storage_proofs: Vec<Vec<ProofNode>>,
+}
+
+/// TODO: remove the following types once they are implemented in starknet-rs/starknet-api
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[cfg_attr(feature = "no_unknown_fields", serde(deny_unknown_fields))]
+pub enum CallType {
+    LibraryCall,
+    Call,
+}
+
+#[derive(Debug, Serialize)]
+pub struct FunctionInvocation {
+    pub caller_address: FieldElement,
+    pub class_hash: Option<FieldElement>,
+    pub entry_point_type: Option<EntryPointType>,
+    pub call_type: Option<CallType>,
+    pub result: Vec<FieldElement>,
+
+    pub contract_address: FieldElement,
+    pub entry_point_selector: FieldElement,
+    pub calldata: Vec<FieldElement>,
+
+    pub calls: Vec<FunctionInvocation>,
+    pub events: Vec<Event>,
+    pub messages: Vec<MsgToL1>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ExecutionError {
+    pub revert_reason: String,
+}
+
+#[derive(Debug, Serialize)]
+pub enum ExecuteInvocation {
+    FunctionInvocation(FunctionInvocation),
+    ExecutionError(ExecutionError)
+}
+
+#[derive(Debug, Serialize)]
+pub struct InvokeTransactionTrace {
+    pub validate_invocation: Option<FunctionInvocation>,
+    pub execute_invocation: Option<ExecuteInvocation>,
+    pub fee_transfer_invocation: Option<FunctionInvocation>,
+}
+
+#[derive(Debug, Serialize)]
+pub enum TransactionTrace {
+    InvokeTransactionTrace(InvokeTransactionTrace),
+    // DeclareTransactionTrace(DeclareTransactionTrace),
+    // DeployAccountTransactionTrace(DeployAccountTransactionTrace),
+    // L1HandlerTransactionTrace(L1HandlerTransactionTrace),
+}
+
+/// The execution trace and consumed resources of the required transactions
+#[derive(Debug, Serialize)]
+pub struct SimulateTransactionResult {
+    pub transaction_trace: TransactionTrace,
+    pub fee_estimation: FeeEstimate,
 }
