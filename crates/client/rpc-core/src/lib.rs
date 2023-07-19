@@ -27,7 +27,7 @@ use starknet_core::types::{
     StateUpdate, SyncStatusType, Transaction,
 };
 
-use crate::types::{RpcGetProofInput, RpcGetProofOutput, SimulateTransactionResult};
+use crate::types::{RpcGetProofInput, RpcGetProofOutput, SimulateTransactionFlag, SimulateTransactionResult};
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]
@@ -149,12 +149,22 @@ pub trait StarknetRpcApi {
 
     /// Simulate a given sequence of transactions on the requested state, and generate the execution
     /// traces. If one of the transactions is reverted, raises error.
+    /// Spec version 0.4.0-rc2
     #[method(name = "simulateTransactions")]
     fn simulate_transactions(
         &self,
         block_id: BlockId,
         transactions: Vec<BroadcastedTransaction>,
-        skip_validate: bool,
-        skip_fee_charge: bool,
+        simulation_flags: Vec<SimulateTransactionFlag>,
+    ) -> RpcResult<Vec<SimulateTransactionResult>>;
+
+    /// Compatibility with Starknet.js
+    /// See https://github.com/0xs34n/starknet.js/blob/829f5f4375a63c7c269e34dad22c9cd8874a64ba/src/provider/rpc.ts#L546
+    #[method(name = "simulateTransaction")]
+    fn simulate_transaction(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        simulation_flags: Vec<SimulateTransactionFlag>,
     ) -> RpcResult<Vec<SimulateTransactionResult>>;
 }

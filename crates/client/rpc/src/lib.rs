@@ -14,7 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput, SimulateTransactionResult};
+use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput, SimulateTransactionFlag, SimulateTransactionResult};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
@@ -1010,8 +1010,7 @@ where
         &self,
         block_id: BlockId,
         transactions: Vec<BroadcastedTransaction>,
-        skip_validate: bool,
-        skip_fee_charge: bool,
+        simulation_flags: Vec<SimulateTransactionFlag>,
     ) -> RpcResult<Vec<SimulateTransactionResult>> {
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
@@ -1027,6 +1026,16 @@ where
                 error!("{e}");
                 StarknetRpcApiError::InternalServerError
             })?;
+
+        let mut skip_validate = false;
+        let mut skip_fee_charge = false;
+        simulation_flags.iter().for_each(|flag| {
+            match flag {
+                SimulateTransactionFlag::SkipValidate => skip_validate = true,
+                SimulateTransactionFlag::SkipFeeCharge => skip_fee_charge = true,
+                SimulateTransactionFlag::SkipExecute => unimplemented!("Removed in spec v0.4.0")
+            }
+        });
 
         let execution_info: Vec<TransactionExecutionInfoWrapper> = self.client
             .runtime_api()
@@ -1044,6 +1053,16 @@ where
             .into_iter()
             .map(|exec_info| exec_info.into())
             .collect::<Vec<SimulateTransactionResult>>())
+    }
+
+    /// Compatibility with starknet.js
+    fn simulate_transaction(
+        &self,
+        block_id: BlockId,
+        transactions: Vec<BroadcastedTransaction>,
+        simulation_flags: Vec<SimulateTransactionFlag>,
+    ) -> RpcResult<Vec<SimulateTransactionResult>> {
+        self.simulate_transactions(block_id, transactions, simulation_flags)
     }
 }
 

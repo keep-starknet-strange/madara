@@ -117,3 +117,11 @@ pub struct SimulateTransactionResult {
     pub transaction_trace: TransactionTrace,
     pub fee_estimation: FeeEstimate,
 }
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum SimulateTransactionFlag {
+    SkipValidate,
+    SkipExecute,  // removed in 0.4.0
+    SkipFeeCharge,  // added in 0.4.0
+}
