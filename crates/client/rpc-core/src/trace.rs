@@ -1,14 +1,18 @@
-// These are conversion utils for going from StarknetApi/Blockifier (used in runtime) to StarknetCore (used for rpc)
+// These are conversion utils for going from StarknetApi/Blockifier (used in runtime) to
+// StarknetCore (used for rpc)
 
-use mp_starknet::transaction::types::{TransactionExecutionInfoWrapper};
-use starknet_core::types::{FeeEstimate, FieldElement, MsgToL1, Event};
-use starknet_api::hash::StarkFelt;
+use blockifier::execution::entry_point::{CallInfo, CallType as BlockifierCallType, MessageToL1, Retdata};
+use mp_starknet::transaction::types::TransactionExecutionInfoWrapper;
+use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
 use starknet_api::deprecated_contract_class::EntryPointType;
-use starknet_api::api_core::{ContractAddress, ClassHash, EntryPointSelector};
-use starknet_api::transaction::{Calldata, EventContent, EthAddress};
-use blockifier::execution::entry_point::{CallInfo, CallType as BlockifierCallType, Retdata, MessageToL1};
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::{Calldata, EthAddress, EventContent};
+use starknet_core::types::{Event, FeeEstimate, FieldElement, MsgToL1};
 
-use crate::types::{SimulateTransactionResult, TransactionTrace, InvokeTransactionTrace, DeployAccountTransactionTrace, L1HandlerTransactionTrace, DeclareTransactionTrace, FunctionInvocation, ExecuteInvocation, ExecutionError, CallType};
+use crate::types::{
+    CallType, DeclareTransactionTrace, DeployAccountTransactionTrace, ExecuteInvocation, ExecutionError,
+    FunctionInvocation, InvokeTransactionTrace, L1HandlerTransactionTrace, SimulateTransactionResult, TransactionTrace,
+};
 
 /// Aggregates fee estimation from execution info (similar to what estimate_fee does)
 pub fn get_fee_estimate(execution_info: &TransactionExecutionInfoWrapper) -> FeeEstimate {
@@ -23,8 +27,7 @@ pub fn get_fee_estimate(execution_info: &TransactionExecutionInfoWrapper) -> Fee
 
 /// Converts StarkFelt used in Blockifier/StarknetAPI to FieldElement from starknet-rs
 pub fn convert_felt(felt: StarkFelt) -> FieldElement {
-    FieldElement::from_byte_slice_be(felt.bytes())
-        .expect("Expected just to be diff representations of [u8; 32]")
+    FieldElement::from_byte_slice_be(felt.bytes()).expect("Expected just to be diff representations of [u8; 32]")
 }
 
 /// Converts ContractAddress used in Blockifier/StarknetAPI to FieldElement from starknet-rs
@@ -37,20 +40,18 @@ pub fn convert_class_hash(class_hash: ClassHash) -> FieldElement {
     convert_felt(class_hash.0)
 }
 
-/// Converts CallType used in Blockifier/StarknetAPI to a local type compliant with the JSON-RPC spec
+/// Converts CallType used in Blockifier/StarknetAPI to a local type compliant with the JSON-RPC
+/// spec
 pub fn convert_call_type(call_type: BlockifierCallType) -> CallType {
     match call_type {
         BlockifierCallType::Call => CallType::Call,
-        BlockifierCallType::Delegate => CallType::LibraryCall
+        BlockifierCallType::Delegate => CallType::LibraryCall,
     }
 }
 
 /// Converts Retdata used in Blockifier/StarknetAPI to an array of field elements
 pub fn convert_execution_result(retdata: Retdata) -> Vec<FieldElement> {
-    retdata.0
-        .into_iter()
-        .map(convert_felt)
-        .collect::<Vec<FieldElement>>()
+    retdata.0.into_iter().map(convert_felt).collect::<Vec<FieldElement>>()
 }
 
 /// Converts EntryPointSelector used in Blockifier/StarknetAPI to FieldElement from starknet-rs
@@ -60,10 +61,7 @@ pub fn convert_entry_point_selector(entry_point_selector: EntryPointSelector) ->
 
 /// Converts Calldata used in Blockifier/StarknetAPI to an array of FieldElement
 pub fn convert_calldata(calldata: Calldata) -> Vec<FieldElement> {
-    calldata.0
-        .iter()
-        .map(|felt| convert_felt(felt.clone()))
-        .collect::<Vec<FieldElement>>()
+    calldata.0.iter().map(|felt| convert_felt(felt.clone())).collect::<Vec<FieldElement>>()
 }
 
 /// Converts EventContent from Blockifier/StarknetAPI to Event from starknet-rs
@@ -77,9 +75,7 @@ pub fn convert_event(content: EventContent, from_address: FieldElement) -> Event
 
 /// Converts EthAddress from StarknetApi to FieldElement
 pub fn convert_eth_address(address: EthAddress) -> FieldElement {
-    FieldElement::from_byte_slice_be(address.0.as_bytes())
-        .expect("Failed to cast Eth address to field element")
-    
+    FieldElement::from_byte_slice_be(address.0.as_bytes()).expect("Failed to cast Eth address to field element")
 }
 
 /// Converts MessageToL1 from Blockifier/StarknetAPI to MsgToL1 from starknet-rs
@@ -104,15 +100,16 @@ impl From<CallInfo> for FunctionInvocation {
             contract_address: contract_address.clone(),
             entry_point_selector: convert_entry_point_selector(call_info.call.entry_point_selector),
             calldata: convert_calldata(call_info.call.calldata),
-            calls: call_info.inner_calls
-                .into_iter()
-                .map(|call| call.into())
-                .collect::<Vec<_>>(),
-            events: call_info.execution.events
+            calls: call_info.inner_calls.into_iter().map(|call| call.into()).collect::<Vec<_>>(),
+            events: call_info
+                .execution
+                .events
                 .into_iter()
                 .map(|e| convert_event(e.event, contract_address.clone()))
                 .collect::<Vec<_>>(),
-            messages: call_info.execution.l2_to_l1_messages
+            messages: call_info
+                .execution
+                .l2_to_l1_messages
                 .into_iter()
                 .map(|m| convert_message(m.message, contract_address.clone()))
                 .collect::<Vec<_>>(),
@@ -123,9 +120,7 @@ impl From<CallInfo> for FunctionInvocation {
 impl From<CallInfo> for ExecuteInvocation {
     fn from(call_info: CallInfo) -> Self {
         if call_info.execution.failed {
-            Self::ExecutionError(ExecutionError {
-                revert_reason: format!("TODO: revert reason")
-            })
+            Self::ExecutionError(ExecutionError { revert_reason: format!("TODO: revert reason") })
         } else {
             Self::FunctionInvocation(call_info.into())
         }
@@ -154,9 +149,7 @@ impl From<TransactionExecutionInfoWrapper> for DeployAccountTransactionTrace {
 
 impl From<TransactionExecutionInfoWrapper> for L1HandlerTransactionTrace {
     fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
-        L1HandlerTransactionTrace {
-            function_invocation: execution_info.execute_call_info.map(|info| info.into()),
-        }
+        L1HandlerTransactionTrace { function_invocation: execution_info.execute_call_info.map(|info| info.into()) }
     }
 }
 
@@ -172,16 +165,12 @@ impl From<TransactionExecutionInfoWrapper> for DeclareTransactionTrace {
 impl From<TransactionExecutionInfoWrapper> for TransactionTrace {
     fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
         match &execution_info.execute_call_info {
-            Some(info) => {
-                match info.call.entry_point_type {
-                    EntryPointType::Constructor => Self::DeployAccountTransactionTrace(execution_info.into()),
-                    EntryPointType::External => Self::InvokeTransactionTrace(execution_info.into()),
-                    EntryPointType::L1Handler => Self::L1HandlerTransactionTrace(execution_info.into()),
-                }
+            Some(info) => match info.call.entry_point_type {
+                EntryPointType::Constructor => Self::DeployAccountTransactionTrace(execution_info.into()),
+                EntryPointType::External => Self::InvokeTransactionTrace(execution_info.into()),
+                EntryPointType::L1Handler => Self::L1HandlerTransactionTrace(execution_info.into()),
             },
-            None => {
-                Self::DeclareTransactionTrace(execution_info.into())
-            }
+            None => Self::DeclareTransactionTrace(execution_info.into()),
         }
     }
 }
@@ -189,9 +178,6 @@ impl From<TransactionExecutionInfoWrapper> for TransactionTrace {
 impl From<TransactionExecutionInfoWrapper> for SimulateTransactionResult {
     fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
         let fee_estimate = get_fee_estimate(&execution_info);
-        SimulateTransactionResult {
-            transaction_trace: execution_info.into(),
-            fee_estimation: fee_estimate
-        }
+        SimulateTransactionResult { transaction_trace: execution_info.into(), fee_estimation: fee_estimate }
     }
 }

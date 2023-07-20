@@ -30,7 +30,8 @@ use frame_system::EventRecord;
 use mp_starknet::crypto::hash::Hasher;
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper, StorageKeyWrapper};
 use mp_starknet::transaction::types::{
-    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction, TxType, TransactionExecutionInfoWrapper,
+    DeclareTransaction, DeployAccountTransaction, EventWrapper, InvokeTransaction, Transaction,
+    TransactionExecutionInfoWrapper, TxType,
 };
 use pallet_grandpa::{fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
 /// Import the StarkNet pallet.

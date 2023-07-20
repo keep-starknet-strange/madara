@@ -14,7 +14,9 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput, SimulateTransactionFlag, SimulateTransactionResult};
+use mc_rpc_core::types::{
+    ContractData, RpcGetProofInput, RpcGetProofOutput, SimulateTransactionFlag, SimulateTransactionResult,
+};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
 pub use mc_rpc_core::StarknetRpcApiServer;
@@ -25,8 +27,8 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::traits::hash::HasherT;
 use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
-    DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction,
-    TransactionExecutionInfoWrapper, TxType, BroadcastedTransactionConversionErrorWrapper,
+    BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, InvokeTransaction,
+    RPCTransactionConversionError, Transaction as MPTransaction, TransactionExecutionInfoWrapper, TxType,
 };
 use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
@@ -1029,15 +1031,14 @@ where
 
         let mut skip_validate = false;
         let mut skip_fee_charge = false;
-        simulation_flags.iter().for_each(|flag| {
-            match flag {
-                SimulateTransactionFlag::SkipValidate => skip_validate = true,
-                SimulateTransactionFlag::SkipFeeCharge => skip_fee_charge = true,
-                SimulateTransactionFlag::SkipExecute => unimplemented!("Removed in spec v0.4.0")
-            }
+        simulation_flags.iter().for_each(|flag| match flag {
+            SimulateTransactionFlag::SkipValidate => skip_validate = true,
+            SimulateTransactionFlag::SkipFeeCharge => skip_fee_charge = true,
+            SimulateTransactionFlag::SkipExecute => unimplemented!("Removed in spec v0.4.0"),
         });
 
-        let execution_info: Vec<TransactionExecutionInfoWrapper> = self.client
+        let execution_info: Vec<TransactionExecutionInfoWrapper> = self
+            .client
             .runtime_api()
             .simulate_transactions(substrate_block_hash, transactions, skip_validate, skip_fee_charge)
             .map_err(|e| {
@@ -1049,10 +1050,7 @@ where
                 StarknetRpcApiError::ContractError
             })?;
 
-        Ok(execution_info
-            .into_iter()
-            .map(|exec_info| exec_info.into())
-            .collect::<Vec<SimulateTransactionResult>>())
+        Ok(execution_info.into_iter().map(|exec_info| exec_info.into()).collect::<Vec<SimulateTransactionResult>>())
     }
 
     /// Compatibility with starknet.js
@@ -1106,4 +1104,3 @@ where
         }
     }
 }
-

@@ -678,7 +678,7 @@ impl Transaction {
                     tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
                         .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
                     validate_call_info,
-                    account_context
+                    account_context,
                 )
             }
         };

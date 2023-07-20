@@ -1,8 +1,8 @@
 use mp_starknet::crypto::merkle_patricia_tree::merkle_tree::ProofNode;
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use starknet_core::types::{BlockId, Event, FeeEstimate, FieldElement, MsgToL1};
 use starknet_api::deprecated_contract_class::EntryPointType;
+use starknet_core::types::{BlockId, Event, FeeEstimate, FieldElement, MsgToL1};
 
 #[derive(Deserialize, Debug, PartialEq, Eq)]
 pub struct RpcGetProofInput {
@@ -97,7 +97,7 @@ pub struct ExecutionError {
 #[serde(untagged)]
 pub enum ExecuteInvocation {
     FunctionInvocation(FunctionInvocation),
-    ExecutionError(ExecutionError)
+    ExecutionError(ExecutionError),
 }
 
 #[derive(Debug, Serialize)]
@@ -154,6 +154,6 @@ pub struct SimulateTransactionResult {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum SimulateTransactionFlag {
     SkipValidate,
-    SkipExecute,  // removed in 0.4.0
-    SkipFeeCharge,  // added in 0.4.0
+    SkipExecute,   // removed in 0.4.0
+    SkipFeeCharge, // added in 0.4.0
 }
