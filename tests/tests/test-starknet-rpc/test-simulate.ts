@@ -14,15 +14,10 @@ import {
   TEST_CONTRACT_CLASS_HASH,
 } from "../constants";
 
-// keep "let" over "const" as the nonce is passed by reference
-// to abstract the increment
-// eslint-disable-next-line prefer-const
-let ARGENT_CONTRACT_NONCE = { value: 0 };
-
 // In order to run just this test suite:
 // MADARA_LOG=jsonrpsee_core=trace DISPLAY_LOG=1 npx mocha -r ts-node/register --require 'tests/setup-tests.ts' 'tests/test-starknet-rpc/test-simulate.ts'
 
-describeDevMadara("Starknet RPC - Transactions Test", (context) => {
+describeDevMadara("Starknet RPC - Simulation Test", (context) => {
   let providerRPC: RpcProvider;
 
   before(async function () {
@@ -72,16 +67,11 @@ describeDevMadara("Starknet RPC - Transactions Test", (context) => {
       // fund address
       await rpcTransfer(
         providerRPC,
-        ARGENT_CONTRACT_NONCE,
+        { value: 0 },
         deployedContractAddress,
         DEPLOY_ACCOUNT_COST,
       );
       await jumpBlocks(context, 1);
-
-      const nonce = await providerRPC.getNonceForAddress(
-        ACCOUNT_CONTRACT,
-        "latest",
-      );
 
       const invocation: AccountInvocationItem = {
         type: "DEPLOY_ACCOUNT",
@@ -89,7 +79,7 @@ describeDevMadara("Starknet RPC - Transactions Test", (context) => {
         classHash: TEST_CONTRACT_CLASS_HASH,
         addressSalt: SALT,
         signature: [],
-        nonce,
+        nonce: 0,
         version: 1,
       };
 

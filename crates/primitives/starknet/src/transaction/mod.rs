@@ -679,11 +679,7 @@ impl Transaction {
                     None
                 };
 
-                (
-                    execute_call_info,
-                    validate_call_info,
-                    account_context,
-                )
+                (execute_call_info, validate_call_info, account_context)
             }
         };
         let tx_resources = fees::get_transaction_resources(
@@ -695,7 +691,7 @@ impl Transaction {
         )?;
 
         let (actual_fee, fee_transfer_call_info) =
-            charge_fee(state, block_context, account_context, &tx_resources, skip_fee_charge)?;
+            charge_fee(state, block_context, account_context, &tx_resources, self.is_query || skip_fee_charge)?;
 
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
