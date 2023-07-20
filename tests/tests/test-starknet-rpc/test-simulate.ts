@@ -1,46 +1,31 @@
 import "@keep-starknet-strange/madara-api-augment";
-import { expect } from "chai";
 import {
   Account,
   AccountInvocationItem,
-  LibraryError,
   RpcProvider,
-  constants,
   hash,
-  validateAndParseAddress,
-  Signer,
 } from "starknet";
-import { createAndFinalizeBlock, jumpBlocks } from "../../util/block";
+import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
-import { rpcTransfer, toHex } from "../../util/utils";
+import { rpcTransfer } from "../../util/utils";
 import {
   ACCOUNT_CONTRACT,
-  ARGENT_ACCOUNT_CLASS_HASH,
   ARGENT_CONTRACT_ADDRESS,
-  ARGENT_PROXY_CLASS_HASH,
-  ERC721_CONTRACT,
   ERC20_CONTRACT,
-  FEE_TOKEN_ADDRESS,
-  MINT_AMOUNT,
   SALT,
   SIGNER_PRIVATE,
-  SIGNER_PUBLIC,
   TEST_CONTRACT_ADDRESS,
-  TOKEN_CLASS_HASH,
-  UDC_CONTRACT_ADDRESS,
   DEPLOY_ACCOUNT_COST,
-  TEST_CAIRO_1_SIERRA,
-  TEST_CAIRO_1_CASM,
-  CAIRO_1_ACCOUNT_CONTRACT,
+  TEST_CONTRACT_CLASS_HASH,
 } from "../constants";
-import { InvokeTransaction } from "./types";
-import { numberToHex } from "@polkadot/util";
 
 // keep "let" over "const" as the nonce is passed by reference
 // to abstract the increment
 // eslint-disable-next-line prefer-const
 let ARGENT_CONTRACT_NONCE = { value: 0 };
-const CAIRO_1_NO_VALIDATE_ACCOUNT = { value: 0 };
+
+// In order to run just this test suite:
+// MADARA_LOG=jsonrpsee_core=trace DISPLAY_LOG=1 npx mocha -r ts-node/register --require 'tests/setup-tests.ts' 'tests/test-starknet-rpc/test-simulate.ts'
 
 describeDevMadara("Starknet RPC - Transactions Test", (context) => {
   let providerRPC: RpcProvider;
@@ -50,11 +35,20 @@ describeDevMadara("Starknet RPC - Transactions Test", (context) => {
       nodeUrl: `http://127.0.0.1:${context.rpcPort}/`,
       retries: 3,
     }); // substrate node
+
+    // Otherwise we get "ERC20: cannot transfer to the zero address"
+    await context.createBlock();
   });
 
   describe("simulateTransaction", async () => {
     it("should simulate invoke transaction successfully", async function () {
-      const tx = {
+      const nonce = await providerRPC.getNonceForAddress(
+        ACCOUNT_CONTRACT,
+        "latest",
+      );
+
+      const invocation: AccountInvocationItem = {
+        type: "INVOKE_FUNCTION",
         contractAddress: ACCOUNT_CONTRACT,
         calldata: [
           TEST_CONTRACT_ADDRESS,
@@ -62,28 +56,76 @@ describeDevMadara("Starknet RPC - Transactions Test", (context) => {
           "0x0",
         ],
         signature: [],
+        nonce,
+        version: 1,
       };
+
+      await providerRPC.getSimulateTransaction([invocation], {
+        blockIdentifier: "latest",
+        // skipValidate: true,
+      });
+    });
+
+    it("should simulate account deploy transaction successfully", async function () {
+      const deployedContractAddress = hash.calculateContractAddressFromHash(
+        SALT,
+        TEST_CONTRACT_CLASS_HASH,
+        [],
+        0,
+      );
+
+      // fund address
+      await rpcTransfer(
+        providerRPC,
+        ARGENT_CONTRACT_NONCE,
+        deployedContractAddress,
+        DEPLOY_ACCOUNT_COST,
+      );
+      await jumpBlocks(context, 1);
 
       const nonce = await providerRPC.getNonceForAddress(
         ACCOUNT_CONTRACT,
         "latest",
       );
 
-      const txDetails = {
-        nonce: nonce,
-        version: "0x1",
-      };
-
       const invocation: AccountInvocationItem = {
-        type: "INVOKE_FUNCTION",
-        ...tx,
-        ...txDetails,
+        type: "DEPLOY_ACCOUNT",
+        constructorCalldata: [],
+        classHash: TEST_CONTRACT_CLASS_HASH,
+        addressSalt: SALT,
+        signature: [],
+        nonce,
+        version: 1,
       };
 
-      const simulationResults = await providerRPC.getSimulateTransaction([invocation], {
+      await providerRPC.getSimulateTransaction([invocation], {
         blockIdentifier: "latest",
+        // skipValidate: true,
       });
-      console.log(simulationResults);
+    });
+
+    it("should should simulate declare transaction", async function () {
+      // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
+      // the above command should be used at project root
+      const classHash =
+        "0x372ee6669dc86563007245ed7343d5180b96221ce28f44408cff2898038dbd4";
+
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        SIGNER_PRIVATE,
+      );
+
+      await account.simulateTransaction(
+        [{
+          type: "DECLARE",
+          contract: ERC20_CONTRACT, 
+          classHash
+        }], 
+        {
+          blockIdentifier: "latest"
+        }
+      );
     });
   });
 });

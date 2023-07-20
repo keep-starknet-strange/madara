@@ -70,6 +70,8 @@ First, revise the
 from madara project to check what are the parameters and return value that are
 assigned to the endpoint you will implement.
 
+If the endpoint you want to implement is not there (e.g. was recently introduced) check out the [specification](https://github.com/starkware-libs/starknet-specs/tree/v0.4.0-rc2/api) document from Starkware.
+
 In the `crates/client` we can find two RPC related packages.
 
 1. `rpc-core`: exposes a trait that defines `StarknetRpcApi`. This is where we
@@ -153,6 +155,13 @@ use alloc::vec::Vec;
 use sp_runtime::DispatchError;
 
 // /!\ You should be using runtime types here.
+//
+// In particular, they need to implement Encode, Decode, and TypeInfo traits from SCALE
+// More information here: https://docs.substrate.io/reference/scale-codec/
+//
+// TypeInfo can be implemented just for top-level type (see examples in the code)
+//
+// Encode and Decode can be derived, if you depend on types from starknet_api or blockifier it makes sense to do derivation directly in those repos (make changes for the types you need and make a PR)
 
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
@@ -241,6 +250,14 @@ able to target your new endpoint.
 
 To run the tests, simply run `npm run test-seq` in the `tests/` folder. Make
 sure you've ran `npm install` in the `tests/` folder before running the tests.
+
+### Debug requests
+
+In order to run a particular test suite with logged HTTP requests run the following command:
+
+```sh
+MADARA_LOG=jsonrpsee_core=trace DISPLAY_LOG=1 npx mocha -r ts-node/register --require 'tests/setup-tests.ts' 'tests/test-starknet-rpc/name-of-your-suite.ts'
+```
 
 ### Test locally
 

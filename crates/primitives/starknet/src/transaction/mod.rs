@@ -625,14 +625,18 @@ impl Transaction {
                 Self::handle_nonce(state, &account_context)?;
 
                 // Validate.
-                let validate_call_info = self.validate_tx(
-                    state,
-                    execution_resources,
-                    block_context,
-                    &account_context,
-                    &tx_type,
-                    &mut initial_gas,
-                )?;
+                let validate_call_info = if !skip_validate {
+                    self.validate_tx(
+                        state,
+                        execution_resources,
+                        block_context,
+                        &account_context,
+                        &tx_type,
+                        &mut initial_gas,
+                    )?
+                } else {
+                    None
+                };
 
                 // Execute.
                 (
@@ -656,13 +660,7 @@ impl Transaction {
                 // Update nonce
                 Self::handle_nonce(state, &account_context)?;
 
-                // Execute.
-                let transaction_execution = tx
-                    .run_execute(state, execution_resources, &mut context, &mut initial_gas)
-                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
-
-                (
-                    transaction_execution,
+                let validate_call_info = if !skip_validate {
                     self.validate_tx(
                         state,
                         execution_resources,
@@ -670,8 +668,17 @@ impl Transaction {
                         &account_context,
                         &tx_type,
                         &mut initial_gas,
-                    )?,
-                    account_context,
+                    )?
+                } else {
+                    None
+                };
+
+                // Execute.
+                (
+                    tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
+                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
+                    validate_call_info,
+                    account_context
                 )
             }
         };

@@ -1,12 +1,16 @@
+// These are conversion utils for going from StarknetApi/Blockifier (used in runtime) to StarknetCore (used for rpc)
+
 use mp_starknet::transaction::types::{TransactionExecutionInfoWrapper};
 use starknet_core::types::{FeeEstimate, FieldElement, MsgToL1, Event};
 use starknet_api::hash::StarkFelt;
+use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::api_core::{ContractAddress, ClassHash, EntryPointSelector};
 use starknet_api::transaction::{Calldata, EventContent, EthAddress};
 use blockifier::execution::entry_point::{CallInfo, CallType as BlockifierCallType, Retdata, MessageToL1};
 
-use crate::types::{SimulateTransactionResult, TransactionTrace, InvokeTransactionTrace, FunctionInvocation, ExecuteInvocation, ExecutionError, CallType};
+use crate::types::{SimulateTransactionResult, TransactionTrace, InvokeTransactionTrace, DeployAccountTransactionTrace, L1HandlerTransactionTrace, DeclareTransactionTrace, FunctionInvocation, ExecuteInvocation, ExecutionError, CallType};
 
+/// Aggregates fee estimation from execution info (similar to what estimate_fee does)
 pub fn get_fee_estimate(execution_info: &TransactionExecutionInfoWrapper) -> FeeEstimate {
     FeeEstimate {
         overall_fee: execution_info.actual_fee.0 as u64,
@@ -54,6 +58,7 @@ pub fn convert_entry_point_selector(entry_point_selector: EntryPointSelector) ->
     convert_felt(entry_point_selector.0)
 }
 
+/// Converts Calldata used in Blockifier/StarknetAPI to an array of FieldElement
 pub fn convert_calldata(calldata: Calldata) -> Vec<FieldElement> {
     calldata.0
         .iter()
@@ -61,6 +66,7 @@ pub fn convert_calldata(calldata: Calldata) -> Vec<FieldElement> {
         .collect::<Vec<FieldElement>>()
 }
 
+/// Converts EventContent from Blockifier/StarknetAPI to Event from starknet-rs
 pub fn convert_event(content: EventContent, from_address: FieldElement) -> Event {
     Event {
         from_address,
@@ -69,12 +75,14 @@ pub fn convert_event(content: EventContent, from_address: FieldElement) -> Event
     }
 }
 
+/// Converts EthAddress from StarknetApi to FieldElement
 pub fn convert_eth_address(address: EthAddress) -> FieldElement {
     FieldElement::from_byte_slice_be(address.0.as_bytes())
         .expect("Failed to cast Eth address to field element")
     
 }
 
+/// Converts MessageToL1 from Blockifier/StarknetAPI to MsgToL1 from starknet-rs
 pub fn convert_message(message: MessageToL1, from_address: FieldElement) -> MsgToL1 {
     MsgToL1 {
         from_address,
@@ -134,15 +142,45 @@ impl From<TransactionExecutionInfoWrapper> for InvokeTransactionTrace {
     }
 }
 
+impl From<TransactionExecutionInfoWrapper> for DeployAccountTransactionTrace {
+    fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
+        DeployAccountTransactionTrace {
+            validate_invocation: execution_info.validate_call_info.map(|info| info.into()),
+            constructor_invocation: execution_info.execute_call_info.map(|info| info.into()),
+            fee_transfer_invocation: execution_info.fee_transfer_call_info.map(|info| info.into()),
+        }
+    }
+}
+
+impl From<TransactionExecutionInfoWrapper> for L1HandlerTransactionTrace {
+    fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
+        L1HandlerTransactionTrace {
+            function_invocation: execution_info.execute_call_info.map(|info| info.into()),
+        }
+    }
+}
+
+impl From<TransactionExecutionInfoWrapper> for DeclareTransactionTrace {
+    fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
+        DeclareTransactionTrace {
+            validate_invocation: execution_info.validate_call_info.map(|info| info.into()),
+            fee_transfer_invocation: execution_info.fee_transfer_call_info.map(|info| info.into()),
+        }
+    }
+}
+
 impl From<TransactionExecutionInfoWrapper> for TransactionTrace {
     fn from(execution_info: TransactionExecutionInfoWrapper) -> Self {
         match &execution_info.execute_call_info {
-            Some(_) => {
-                // TODO: handle DeployTransactionCall (constructor call)
-                Self::InvokeTransactionTrace(execution_info.into())
+            Some(info) => {
+                match info.call.entry_point_type {
+                    EntryPointType::Constructor => Self::DeployAccountTransactionTrace(execution_info.into()),
+                    EntryPointType::External => Self::InvokeTransactionTrace(execution_info.into()),
+                    EntryPointType::L1Handler => Self::L1HandlerTransactionTrace(execution_info.into()),
+                }
             },
             None => {
-                unimplemented!("DeclareTransactionTrace")
+                Self::DeclareTransactionTrace(execution_info.into())
             }
         }
     }

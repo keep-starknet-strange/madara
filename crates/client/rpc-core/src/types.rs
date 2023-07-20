@@ -71,8 +71,11 @@ pub enum CallType {
 #[derive(Debug, Serialize)]
 pub struct FunctionInvocation {
     pub caller_address: FieldElement,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub class_hash: Option<FieldElement>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub entry_point_type: Option<EntryPointType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub call_type: Option<CallType>,
     pub result: Vec<FieldElement>,
 
@@ -91,6 +94,7 @@ pub struct ExecutionError {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(untagged)]
 pub enum ExecuteInvocation {
     FunctionInvocation(FunctionInvocation),
     ExecutionError(ExecutionError)
@@ -98,17 +102,45 @@ pub enum ExecuteInvocation {
 
 #[derive(Debug, Serialize)]
 pub struct InvokeTransactionTrace {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub validate_invocation: Option<FunctionInvocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub execute_invocation: Option<ExecuteInvocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fee_transfer_invocation: Option<FunctionInvocation>,
 }
 
 #[derive(Debug, Serialize)]
+pub struct DeployAccountTransactionTrace {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validate_invocation: Option<FunctionInvocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub constructor_invocation: Option<FunctionInvocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fee_transfer_invocation: Option<FunctionInvocation>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct L1HandlerTransactionTrace {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub function_invocation: Option<FunctionInvocation>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DeclareTransactionTrace {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validate_invocation: Option<FunctionInvocation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fee_transfer_invocation: Option<FunctionInvocation>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
 pub enum TransactionTrace {
     InvokeTransactionTrace(InvokeTransactionTrace),
-    // DeclareTransactionTrace(DeclareTransactionTrace),
-    // DeployAccountTransactionTrace(DeployAccountTransactionTrace),
-    // L1HandlerTransactionTrace(L1HandlerTransactionTrace),
+    DeployAccountTransactionTrace(DeployAccountTransactionTrace),
+    L1HandlerTransactionTrace(L1HandlerTransactionTrace),
+    DeclareTransactionTrace(DeclareTransactionTrace),
 }
 
 /// The execution trace and consumed resources of the required transactions
