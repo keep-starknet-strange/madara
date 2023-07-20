@@ -660,6 +660,12 @@ impl Transaction {
                 // Update nonce
                 Self::handle_nonce(state, &account_context, self.is_query)?;
 
+                // First you need to deploy your contract and only after that you can run validation
+                // https://docs.starknet.io/documentation/architecture_and_concepts/Account_Abstraction/deploying_new_accounts/#transaction_flow
+                let execute_call_info = tx
+                    .run_execute(state, execution_resources, &mut context, &mut initial_gas)
+                    .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?;
+
                 let validate_call_info = if !skip_validate {
                     self.validate_tx(
                         state,
@@ -673,10 +679,8 @@ impl Transaction {
                     None
                 };
 
-                // Execute.
                 (
-                    tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
-                        .map_err(TransactionExecutionErrorWrapper::TransactionExecution)?,
+                    execute_call_info,
                     validate_call_info,
                     account_context,
                 )
