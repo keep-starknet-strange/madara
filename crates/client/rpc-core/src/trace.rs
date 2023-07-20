@@ -61,7 +61,7 @@ pub fn convert_entry_point_selector(entry_point_selector: EntryPointSelector) ->
 
 /// Converts Calldata used in Blockifier/StarknetAPI to an array of FieldElement
 pub fn convert_calldata(calldata: Calldata) -> Vec<FieldElement> {
-    calldata.0.iter().map(|felt| convert_felt(felt.clone())).collect::<Vec<FieldElement>>()
+    calldata.0.iter().map(|felt| convert_felt(*felt)).collect::<Vec<FieldElement>>()
 }
 
 /// Converts EventContent from Blockifier/StarknetAPI to Event from starknet-rs
@@ -69,7 +69,7 @@ pub fn convert_event(content: EventContent, from_address: FieldElement) -> Event
     Event {
         from_address,
         keys: content.keys.into_iter().map(|k| convert_felt(k.0)).collect::<Vec<_>>(),
-        data: content.data.0.into_iter().map(|v| convert_felt(v)).collect::<Vec<_>>(),
+        data: content.data.0.into_iter().map(convert_felt).collect::<Vec<_>>(),
     }
 }
 
@@ -97,7 +97,7 @@ impl From<CallInfo> for FunctionInvocation {
             entry_point_type: Some(call_info.call.entry_point_type),
             call_type: Some(convert_call_type(call_info.call.call_type)),
             result: convert_execution_result(call_info.execution.retdata),
-            contract_address: contract_address.clone(),
+            contract_address,
             entry_point_selector: convert_entry_point_selector(call_info.call.entry_point_selector),
             calldata: convert_calldata(call_info.call.calldata),
             calls: call_info.inner_calls.into_iter().map(|call| call.into()).collect::<Vec<_>>(),
@@ -105,13 +105,13 @@ impl From<CallInfo> for FunctionInvocation {
                 .execution
                 .events
                 .into_iter()
-                .map(|e| convert_event(e.event, contract_address.clone()))
+                .map(|e| convert_event(e.event, contract_address))
                 .collect::<Vec<_>>(),
             messages: call_info
                 .execution
                 .l2_to_l1_messages
                 .into_iter()
-                .map(|m| convert_message(m.message, contract_address.clone()))
+                .map(|m| convert_message(m.message, contract_address))
                 .collect::<Vec<_>>(),
         }
     }
@@ -120,7 +120,7 @@ impl From<CallInfo> for FunctionInvocation {
 impl From<CallInfo> for ExecuteInvocation {
     fn from(call_info: CallInfo) -> Self {
         if call_info.execution.failed {
-            Self::ExecutionError(ExecutionError { revert_reason: format!("TODO: revert reason") })
+            Self::ExecutionError(ExecutionError { revert_reason: "TODO: revert reason".to_string() })
         } else {
             Self::FunctionInvocation(call_info.into())
         }
