@@ -155,6 +155,9 @@ pub mod pallet {
         /// As this is a very time-consuming process we preferred to let it optional for now
         /// Not every application needs it but if you need to use it you can enable it
         type EnableStateRoot: Get<bool>;
+        /// A bool to disable transaction fees and make all transactions free
+        #[pallet::constant]
+        type DisableTransactionFee: Get<bool>;
         #[pallet::constant]
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]
@@ -1117,9 +1120,6 @@ impl<T: Config> Pallet<T> {
 
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
-        // Check if contract is deployed
-        ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
-
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),

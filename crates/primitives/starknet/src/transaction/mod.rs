@@ -46,7 +46,7 @@ use self::types::{
 use self::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
-use crate::state::StateChanges;
+use crate::state::{FeeConfig, StateChanges};
 
 impl EventWrapper {
     /// Creates a new instance of an event.
@@ -198,7 +198,7 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
 
         Ok(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
+            max_fee: Fee(self.max_fee.try_into().unwrap()),
             version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
@@ -243,7 +243,7 @@ impl TryInto<InvokeTransaction> for &Transaction {
 
         Ok(InvokeTransaction::V1(InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
+            max_fee: Fee(self.max_fee.try_into().unwrap()),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
             ),
@@ -261,7 +261,7 @@ impl TryInto<DeclareTransaction> for &Transaction {
     fn try_into(self) -> Result<DeclareTransaction, Self::Error> {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
         let transaction_hash = TransactionHash(StarkFelt::new(self.hash.into())?);
-        let max_fee = Fee(2);
+        let max_fee = Fee(self.max_fee.try_into().unwrap());
         let signature = TransactionSignature(
             self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
         );
@@ -530,7 +530,7 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
     ///   execution
-    pub fn execute<S: State + StateChanges>(
+    pub fn execute<S: State + StateChanges + FeeConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -564,7 +564,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = if !skip_validate {
@@ -622,7 +622,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = if !skip_validate {
@@ -658,7 +658,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 let validate_call_info = if !skip_validate {
                     self.validate_tx(
@@ -719,6 +719,7 @@ impl Transaction {
     pub fn handle_nonce(
         state: &mut dyn State,
         account_tx_context: &AccountTransactionContext,
+        is_query: bool,
     ) -> TransactionExecutionResultWrapper<()> {
         if account_tx_context.version == TransactionVersion(StarkFelt::from(0_u8)) {
             return Ok(());
@@ -726,6 +727,13 @@ impl Transaction {
 
         let address = account_tx_context.sender_address;
         let current_nonce = state.get_nonce_at(address).map_err(TransactionExecutionErrorWrapper::StateError)?;
+
+        // if it's an estimate_fee transaction than as long as the nonce is greater then current nonce
+        // we are good to go
+        if is_query && account_tx_context.nonce >= current_nonce {
+            return Ok(());
+        }
+
         if current_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionErrorWrapper::TransactionExecution(
                 TransactionExecutionError::InvalidNonce {
