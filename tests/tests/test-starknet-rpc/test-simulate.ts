@@ -1,10 +1,5 @@
 import "@keep-starknet-strange/madara-api-augment";
-import {
-  Account,
-  AccountInvocationItem,
-  RpcProvider,
-  hash,
-} from "starknet";
+import { Account, AccountInvocationItem, RpcProvider, hash } from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { rpcTransfer } from "../../util/utils";
@@ -117,14 +112,16 @@ describeDevMadara("Starknet RPC - Transactions Test", (context) => {
       );
 
       await account.simulateTransaction(
-        [{
-          type: "DECLARE",
-          contract: ERC20_CONTRACT, 
-          classHash
-        }], 
+        [
+          {
+            type: "DECLARE",
+            contract: ERC20_CONTRACT,
+            classHash,
+          },
+        ],
         {
-          blockIdentifier: "latest"
-        }
+          blockIdentifier: "latest",
+        },
       );
     });
   });

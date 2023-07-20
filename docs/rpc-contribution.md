@@ -70,7 +70,8 @@ First, revise the
 from madara project to check what are the parameters and return value that are
 assigned to the endpoint you will implement.
 
-If the endpoint you want to implement is not there (e.g. was recently introduced) check out the [specification](https://github.com/starkware-libs/starknet-specs/tree/v0.4.0-rc2/api) document from Starkware.
+If the endpoint you want to implement is not there (e.g. was recently introduced) 
+check out the Starkware [specification](https://github.com/starkware-libs/starknet-specs/tree/v0.4.0-rc2/api).
 
 In the `crates/client` we can find two RPC related packages.
 
@@ -256,7 +257,9 @@ sure you've ran `npm install` in the `tests/` folder before running the tests.
 In order to run a particular test suite with logged HTTP requests run the following command:
 
 ```sh
-MADARA_LOG=jsonrpsee_core=trace DISPLAY_LOG=1 npx mocha -r ts-node/register --require 'tests/setup-tests.ts' 'tests/test-starknet-rpc/name-of-your-suite.ts'
+MADARA_LOG=jsonrpsee_core=trace DISPLAY_LOG=1 npx mocha \
+  -r ts-node/register \
+  --require 'tests/setup-tests.ts' 'tests/test-starknet-rpc/name-of-your-suite.ts'
 ```
 
 ### Test locally
