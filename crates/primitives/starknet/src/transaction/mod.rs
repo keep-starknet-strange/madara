@@ -690,11 +690,8 @@ impl Transaction {
             tx_type,
         )?;
 
-        let (actual_fee, fee_transfer_call_info) = if !skip_fee_charge {
-            charge_fee(state, block_context, account_context, &tx_resources)?
-        } else {
-            (Fee(0u128), None)
-        };
+        let (actual_fee, fee_transfer_call_info) =
+            charge_fee(state, block_context, account_context, &tx_resources, skip_fee_charge)?;
 
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
