@@ -533,7 +533,7 @@ impl Transaction {
         state: &mut S,
         block_context: &BlockContext,
         tx_type: TxType,
-        nonce_validation: bool,
+        disable_nonce_validation: bool,
         contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Initialize the execution resources.
@@ -561,7 +561,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, nonce_validation, &account_context, self.is_query)?;
+                Self::handle_nonce(state, disable_nonce_validation, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -615,7 +615,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, nonce_validation, &account_context, self.is_query)?;
+                Self::handle_nonce(state, disable_nonce_validation, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -647,7 +647,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, nonce_validation, &account_context, self.is_query)?;
+                Self::handle_nonce(state, disable_nonce_validation, &account_context, self.is_query)?;
 
                 // Execute.
                 let transaction_execution = tx
@@ -700,7 +700,7 @@ impl Transaction {
     /// * `TransactionExecutionResult<()>` - The result of the nonce handling
     pub fn handle_nonce(
         state: &mut dyn State,
-        nonce_validation: bool,
+        disable_nonce_validation: bool,
         account_tx_context: &AccountTransactionContext,
         is_query: bool,
     ) -> TransactionExecutionResultWrapper<()> {
@@ -717,7 +717,7 @@ impl Transaction {
             return Ok(());
         }
 
-        if nonce_validation && current_nonce != account_tx_context.nonce {
+        if !disable_nonce_validation && current_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionErrorWrapper::TransactionExecution(
                 TransactionExecutionError::InvalidNonce {
                     address,

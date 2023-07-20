@@ -160,7 +160,7 @@ pub mod pallet {
         type DisableTransactionFee: Get<bool>;
         /// A bool to enable/disable Nonce validation
         /// It has been requested by certain apps to allow for nonce validation to be disabled
-        type EnableNonceValidation: Get<bool>;
+        type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]
@@ -521,13 +521,13 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
             let chain_id = Self::chain_id();
-            let nonce_validation_flag = T::EnableNonceValidation::get();
+            let disable_nonce_validation = T::DisableNonceValidation::get();
             let transaction: Transaction = transaction.from_invoke(chain_id);
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::Invoke,
-                nonce_validation_flag,
+                disable_nonce_validation,
                 None,
             );
             let receipt = match call_info {
@@ -596,14 +596,14 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
 
-            let nonce_validation_flag = T::EnableNonceValidation::get();
+            let disable_nonce_validation = T::DisableNonceValidation::get();
 
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::Declare,
-                nonce_validation_flag,
+                disable_nonce_validation,
                 Some(contract_class),
             );
             let receipt = match call_info {
@@ -670,14 +670,14 @@ pub mod pallet {
             // Get current block context
             let block_context = Self::get_block_context();
 
-            let nonce_validation_flag = T::EnableNonceValidation::get();
+            let disable_nonce_validation = T::DisableNonceValidation::get();
 
             // Execute transaction
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::DeployAccount,
-                nonce_validation_flag,
+                disable_nonce_validation,
                 None,
             );
             let receipt = match call_info {
@@ -1124,13 +1124,13 @@ impl<T: Config> Pallet<T> {
 
     /// Estimate the fee associated with transaction
     pub fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError> {
-        let nonce_validation_flag = T::EnableNonceValidation::get();
+        let disable_nonce_validation = T::DisableNonceValidation::get();
 
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
             transaction.tx_type.clone(),
-            nonce_validation_flag,
+            disable_nonce_validation,
             transaction.contract_class.clone(),
         ) {
             Ok(v) => {
