@@ -28,8 +28,8 @@ use mp_starknet::traits::ThreadSafeCopy;
 use mp_starknet::transaction::types::{
     DeployAccountTransaction, InvokeTransaction, RPCTransactionConversionError, Transaction as MPTransaction, TxType,
 };
-use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use pallet_starknet::pallet::Error as PalletError;
+use pallet_starknet::runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_network_sync::SyncingService;
 use sc_transaction_pool_api::{InPoolTransaction, TransactionPool, TransactionSource};
@@ -247,7 +247,7 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                if e == PalletError::<Runtime>::ContractNotFound.into(){
+                if e == PalletError::<Runtime>::ContractNotFound.into() {
                     return StarknetRpcApiError::ContractNotFound;
                 }
                 StarknetRpcApiError::ContractError
