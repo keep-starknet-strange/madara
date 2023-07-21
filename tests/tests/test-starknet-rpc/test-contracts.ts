@@ -75,6 +75,20 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
         .to.eventually.be.rejectedWith("40: Contract error")
         .and.be.an.instanceOf(LibraryError);
     });
+
+    it("should raise with contract not found", async () => {
+      const callResult = providerRPC.callContract(
+        {
+          contractAddress: NON_EXISTING_CONTRACT,
+          entrypoint: "return_result_WRONG",
+          calldata: ["0x19"],
+        },
+        "latest",
+      );
+      await expect(callResult)
+        .to.eventually.be.rejectedWith("20: Contract not found")
+        .and.be.an.instanceOf(LibraryError);
+    });
   });
 
   describe("getClassAt", async () => {
@@ -129,20 +143,6 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
       // Invalid/un-deployed contract address
       const classHash = providerRPC.getClassHashAt("0x123", "latest");
       await expect(classHash)
-        .to.eventually.be.rejectedWith("20: Contract not found")
-        .and.be.an.instanceOf(LibraryError);
-    });
-
-    it("should raise with contract not found", async () => {
-      const callResult = providerRPC.callContract(
-        {
-          contractAddress: NON_EXISTING_CONTRACT,
-          entrypoint: "return_result_WRONG",
-          calldata: ["0x19"],
-        },
-        "latest",
-      );
-      await expect(callResult)
         .to.eventually.be.rejectedWith("20: Contract not found")
         .and.be.an.instanceOf(LibraryError);
     });
