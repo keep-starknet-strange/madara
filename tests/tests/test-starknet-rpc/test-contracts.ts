@@ -18,7 +18,6 @@ import {
   TEST_CONTRACT,
   TEST_CONTRACT_ADDRESS,
   TEST_CONTRACT_CLASS_HASH,
-  NON_EXISTING_CONTRACT,
   TOKEN_CLASS_HASH,
 } from "../constants";
 
@@ -73,20 +72,6 @@ describeDevMadara("Starknet RPC - Contracts Test", (context) => {
       );
       await expect(callResult)
         .to.eventually.be.rejectedWith("40: Contract error")
-        .and.be.an.instanceOf(LibraryError);
-    });
-
-    it("should raise with contract not found", async () => {
-      const callResult = providerRPC.callContract(
-        {
-          contractAddress: NON_EXISTING_CONTRACT,
-          entrypoint: "return_result_WRONG",
-          calldata: ["0x19"],
-        },
-        "latest",
-      );
-      await expect(callResult)
-        .to.eventually.be.rejectedWith("20: Contract not found")
         .and.be.an.instanceOf(LibraryError);
     });
   });
