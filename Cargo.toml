@@ -158,7 +158,7 @@ log = { version = "0.4.19", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
-clap = { version = "4.3.11", default-features = false }
+clap = { version = "4.3.19", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
 serde = { version = "1.0.171", default-features = false }
