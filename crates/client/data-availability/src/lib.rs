@@ -83,6 +83,9 @@ where
                 log::error!("db err: {db_err}");
             };
 
+            // Run the StarkNet OS + Submit PIE(blocked):
+            // - https://github.com/lambdaclass/cairo-vm/issues/1305
+
             // Submit the StarkNet OS PIE
             if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {
                 log::info!("Job Submitted: {}", job_resp.cairo_job_key);
