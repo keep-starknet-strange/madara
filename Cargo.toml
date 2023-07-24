@@ -165,7 +165,7 @@ serde = { version = "1.0.171", default-features = false }
 serde_json = { version = "1.0.100", default-features = false }
 serde_with = "2.3.3"
 bitvec = { version = "1", default-features = false }
-thiserror = "1.0.40"
+thiserror = "1.0.44"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
 rstest = "0.17.0"
