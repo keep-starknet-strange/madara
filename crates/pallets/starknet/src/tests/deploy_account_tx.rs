@@ -4,6 +4,7 @@ use mp_starknet::transaction::types::{DeployAccountTransaction, EventWrapper};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
 
+use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::sign_message_hash;
 use crate::tests::constants::ACCOUNT_PUBLIC_KEY;
@@ -11,7 +12,7 @@ use crate::{Error, Event, StorageView};
 
 #[test]
 fn given_contract_run_deploy_account_tx_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
         // TEST ACCOUNT CONTRACT
@@ -38,6 +39,7 @@ fn given_contract_run_deploy_account_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
@@ -62,7 +64,7 @@ fn given_contract_run_deploy_account_tx_works() {
 
 #[test]
 fn given_contract_run_deploy_account_tx_twice_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let salt = "0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463";
         let (address, account_class_hash, calldata) =
@@ -86,6 +88,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_ok!(Starknet::deploy_account(RuntimeOrigin::none(), transaction.clone()));
@@ -99,7 +102,7 @@ fn given_contract_run_deploy_account_tx_twice_fails() {
 
 #[test]
 fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
         let account_class_hash = get_account_class_hash(AccountType::V0(AccountTypeV0Inner::Argent));
@@ -111,6 +114,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_err!(
@@ -122,7 +126,7 @@ fn given_contract_run_deploy_account_tx_undeclared_then_it_fails() {
 
 #[test]
 fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -148,6 +152,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
         assert_err!(
@@ -159,7 +164,7 @@ fn given_contract_run_deploy_account_tx_fails_wrong_tx_version() {
 
 #[test]
 fn given_contract_run_deploy_account_openzeppelin_tx_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -183,8 +188,9 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
+        let mp_transaction = transaction.clone().from_deploy(Starknet::chain_id()).unwrap();
 
         let tx_hash = mp_transaction.hash;
         transaction.signature = sign_message_hash(tx_hash);
@@ -200,7 +206,7 @@ fn given_contract_run_deploy_account_openzeppelin_tx_works() {
 
 #[test]
 fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -224,9 +230,10 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
+            is_query: false,
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Openzeppelin));
 
         assert_err!(
@@ -238,7 +245,7 @@ fn given_contract_run_deploy_account_openzeppelin_with_incorrect_signature_then_
 
 #[test]
 fn given_contract_run_deploy_account_argent_tx_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -262,9 +269,10 @@ fn given_contract_run_deploy_account_argent_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
 
-        let mp_transaction = transaction.clone().from_deploy(get_chain_id()).unwrap();
+        let mp_transaction = transaction.clone().from_deploy(Starknet::chain_id()).unwrap();
 
         let tx_hash = mp_transaction.hash;
         transaction.signature = sign_message_hash(tx_hash);
@@ -280,7 +288,7 @@ fn given_contract_run_deploy_account_argent_tx_works() {
 
 #[test]
 fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -304,9 +312,10 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(Felt252Wrapper::ONE, Felt252Wrapper::ONE),
+            is_query: false,
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Argent));
 
         assert_err!(
@@ -318,7 +327,7 @@ fn given_contract_run_deploy_account_argent_with_incorrect_signature_then_it_fai
 
 #[test]
 fn given_contract_run_deploy_account_braavos_tx_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -352,9 +361,10 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: signatures.try_into().unwrap(),
+            is_query: false,
         };
 
-        let address = transaction.clone().from_deploy(get_chain_id()).unwrap().sender_address;
+        let address = transaction.clone().from_deploy(Starknet::chain_id()).unwrap().sender_address;
         set_infinite_tokens(address);
         set_signer(address, AccountType::V0(AccountTypeV0Inner::Braavos));
 
@@ -365,7 +375,7 @@ fn given_contract_run_deploy_account_braavos_tx_works() {
 
 #[test]
 fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fails() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -395,6 +405,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: [Felt252Wrapper::ZERO; 10].to_vec().try_into().unwrap(),
+            is_query: false,
         };
 
         assert_err!(
@@ -406,7 +417,7 @@ fn given_contract_run_deploy_account_braavos_with_incorrect_signature_then_it_fa
 
 #[test]
 fn test_verify_tx_longevity() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         // TEST ACCOUNT CONTRACT
         // - ref testnet tx(0x0751b4b5b95652ad71b1721845882c3852af17e2ed0c8d93554b5b292abb9810)
@@ -429,6 +440,7 @@ fn test_verify_tx_longevity() {
             nonce: Felt252Wrapper::ZERO,
             max_fee: Felt252Wrapper::from(u128::MAX),
             signature: bounded_vec!(),
+            is_query: false,
         };
         let validate_result =
             Starknet::validate_unsigned(TransactionSource::InBlock, &crate::Call::deploy_account { transaction });

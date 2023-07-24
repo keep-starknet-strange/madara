@@ -14,6 +14,9 @@ use crate::transaction::types::{Transaction, TransactionReceiptWrapper};
 // TODO: add real value (#250)
 pub type MaxTransactions = ConstU32<4294967295>;
 
+/// Maximum number of storage slots per contract
+pub type MaxStorageSlots = ConstU32<{ u32::MAX }>;
+
 /// Block Transactions
 pub type BlockTransactions = BoundedVec<Transaction, MaxTransactions>;
 

@@ -403,6 +403,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v0() {
         contract_address: FieldElement::default(),
         entry_point_selector: FieldElement::default(),
         calldata: vec![FieldElement::default()],
+        is_query: false,
     };
 
     let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V0(broadcasted_invoke_txn_v0);
@@ -423,6 +424,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1() {
         sender_address: FieldElement::default(),
         signature: vec![FieldElement::default()],
         calldata: vec![FieldElement::default()],
+        is_query: false,
     };
 
     let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
@@ -451,6 +453,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_sig_size() {
         sender_address: FieldElement::default(),
         signature: signature_size_maxed,
         calldata: vec![FieldElement::default()],
+        is_query: false,
     };
 
     let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
@@ -470,6 +473,7 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
         sender_address: FieldElement::default(),
         signature: vec![FieldElement::default()],
         calldata: calldata_size_maxed,
+        is_query: false,
     };
 
     let broadcasted_invoke_txn = BroadcastedInvokeTransaction::V1(broadcasted_invoke_txn_v1);
@@ -496,6 +500,7 @@ fn get_try_into_and_expected_value(
         nonce: FieldElement::default(),
         contract_address_salt: FieldElement::default(),
         class_hash: FieldElement::default(),
+        is_query: false,
     };
 
     let output: DeployAccountTransaction = input.try_into()?;
@@ -511,6 +516,7 @@ fn get_try_into_and_expected_value(
         salt: FieldElement::default().into(),
         account_class_hash: FieldElement::default().into(),
         max_fee: FieldElement::default().into(),
+        is_query: false,
     };
 
     Ok((output, expected_output))

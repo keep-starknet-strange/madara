@@ -1,0 +1,76 @@
+---
+name: Task - Build binaries and publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag_name:
+        description: "Release tag name"
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      release_tag_name:
+        description: "Release tag name"
+        type: string
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest-32-cores
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - aarch64-unknown-linux-gnu
+          - i686-pc-windows-gnu
+          - i686-pc-windows-msvc
+          - i686-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-gnu
+          - x86_64-pc-windows-msvc
+          - x86_64-unknown-linux-gnu
+        include:
+          - build: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - build: x86_64-apple-darwin
+            os: macos-latest
+          - build: x86_64-pc-windows-gnu
+            os: windows-latest
+          - build: x86_64-pc-windows-msvc
+            os: windows-latest
+          - build: i686-unknown-linux-gnu
+            os: ubuntu-latest
+          - build: i686-pc-windows-gnu
+            os: windows-latest
+          - build: i686-pc-windows-msvc
+            os: windows-latest
+          - build: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+      runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup rust toolchain
+        run: rustup show
+
+      - name: Install cargo-release
+        run: cargo install cargo-release
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.build }}
+
+      - name: Upload binaries
+        if: github.event.inputs.release_tag_name
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.build }}
+          path: target/${{ matrix.build }}/release
+
+      - name: Upload source
+        if: github.event.inputs.release_tag_name
+        uses: actions/upload-artifact@v2
+        with:
+          name: source
+          path: target/${{ matrix.build }}/release

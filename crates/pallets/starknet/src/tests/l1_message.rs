@@ -4,13 +4,14 @@ use mp_starknet::transaction::types::{DeclareTransaction, Transaction, TxType};
 use sp_runtime::traits::ValidateUnsigned;
 use sp_runtime::transaction_validity::TransactionSource;
 
+use super::mock::default_mock::*;
 use super::mock::*;
 use super::utils::get_contract_class;
 use crate::Error;
 
 #[test]
 fn given_contract_l1_message_fails_sender_not_deployed() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let none_origin = RuntimeOrigin::none();
@@ -30,6 +31,7 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
             signature: Default::default(),
             max_fee: Default::default(),
             class_hash: Default::default(),
+            is_query: false,
         };
 
         assert_err!(Starknet::declare(none_origin, transaction), Error::<MockRuntime>::AccountNotDeployed);
@@ -38,7 +40,7 @@ fn given_contract_l1_message_fails_sender_not_deployed() {
 
 #[test]
 fn test_verify_tx_longevity() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let transaction = Transaction { tx_type: TxType::L1Handler, ..Transaction::default() };

@@ -1,6 +1,30 @@
 use alloc::vec::Vec;
 
+use starknet_api::hash::StarkFelt;
+use starknet_api::transaction::TransactionVersion;
+use starknet_ff::FieldElement;
+
 use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};
+
+const QUERY_VERSION_OFFSET: FieldElement =
+    FieldElement::from_mont([18446744073700081665, 17407, 18446744073709551584, 576460752142434320]);
+
+/// Estimate fee adds an additional offset to the transaction version
+/// when handling Transaction within Madara, we ignore the offset and use the actual version.
+/// However, before sending the transaction to the account, we need to add the offset back for
+/// signature verification to work
+pub fn calculate_transaction_version(is_query: bool, version: TransactionVersion) -> TransactionVersion {
+    if !is_query {
+        return version;
+    }
+    let version = FieldElement::from(version.0) + QUERY_VERSION_OFFSET;
+    TransactionVersion(StarkFelt::from(version))
+}
+
+/// calls [calculate_transaction_version] after converting version to [TransactionVersion]
+pub fn calculate_transaction_version_from_u8(is_query: bool, version: u8) -> TransactionVersion {
+    calculate_transaction_version(is_query, TransactionVersion(StarkFelt::from(version)))
+}
 
 #[cfg(feature = "std")]
 mod reexport_std_types {

@@ -12,7 +12,7 @@ use bitvec::prelude::BitVec;
 use bitvec::slice::BitSlice;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
-use crate::traits::hash::CryptoHasherT;
+use crate::traits::hash::HasherT;
 
 /// A node in a Binary Merkle-Patricia Tree graph.
 #[derive(Clone, Debug, PartialEq)]
@@ -144,7 +144,7 @@ impl BinaryNode {
     ///
     /// If either child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self) {
+    pub(crate) fn calculate_hash<H: HasherT>(&mut self) {
         if self.hash.is_some() {
             return;
         }
@@ -159,7 +159,7 @@ impl BinaryNode {
             None => unreachable!("subtrees have to be committed first"),
         };
 
-        self.hash = Some(Felt252Wrapper(H::hash(left.0, right.0)));
+        self.hash = Some(Felt252Wrapper(H::default().hash_elements(left.0, right.0)));
     }
 }
 
@@ -249,7 +249,7 @@ impl EdgeNode {
     ///
     /// If the child's hash is [None], then the hash cannot
     /// be calculated and it will remain [None].
-    pub(crate) fn calculate_hash<H: CryptoHasherT>(&mut self) {
+    pub(crate) fn calculate_hash<H: HasherT>(&mut self) {
         if self.hash.is_some() {
             return;
         }
@@ -267,7 +267,7 @@ impl EdgeNode {
         length[31] = self.path.len() as u8;
 
         let length = Felt252Wrapper::try_from(&length).unwrap();
-        let hash = Felt252Wrapper(H::hash(child.0, path.0) + length.0);
+        let hash = Felt252Wrapper(H::default().hash_elements(child.0, path.0) + length.0);
         self.hash = Some(hash);
     }
 }

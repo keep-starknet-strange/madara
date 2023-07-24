@@ -12,7 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Substrate
-async-trait = { version = "0.1.57", optional = true }
+async-trait = { version = "0.1.72", optional = true }
 frame-support = { workspace = true }
 sp-core = { workspace = true }
 sp-inherents = { workspace = true }
@@ -26,7 +26,7 @@ blockifier = { workspace = true, default-features = false, features = [
 cairo-lang-casm = { workspace = true, default-features = false }
 cairo-lang-casm-contract-class = { workspace = true }
 cairo-vm = { workspace = true }
-starknet-core = { workspace = true, optional = true }
+starknet-core = { workspace = true, default-features = false }
 starknet-crypto = { workspace = true, default-features = false, features = [
   "alloc",
 ] }
@@ -49,12 +49,12 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 ] }
 scale-info = { workspace = true, features = ["derive", "bit-vec", "decode"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { version = "1.0.99", default-features = false }
+serde_json = { version = "1.0.100", default-features = false }
 thiserror-no-std = { workspace = true }
 
 [dev-dependencies]
 rand = "0.8.5"
-zstd = { version = "0.12.3", default-features = false }
+zstd = { version = "0.12.4", default-features = false }
 hex = { workspace = true }
 pretty_assertions = { workspace = true }
 
@@ -69,7 +69,7 @@ std = [
   "starknet-crypto/std",
   "starknet-ff/std",
   "starknet-ff/serde",
-  "starknet-core",
+  "starknet-core/std",
   "blockifier/std",
   "starknet_api/std",
   # Substrate

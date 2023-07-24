@@ -236,6 +236,7 @@ pub fn to_declare_transaction(
                 }))),
                 class_hash: legacy_contract_class.class_hash()?.into(),
                 compiled_class_hash: None,
+                is_query: declare_tx_v1.is_query,
             })
         }
         BroadcastedDeclareTransaction::V2(declare_tx_v2) => {
@@ -266,6 +267,7 @@ pub fn to_declare_transaction(
                 contract_class: BlockifierContractClass::V1(contract_class),
                 compiled_class_hash: Some(Felt252Wrapper::from(declare_tx_v2.compiled_class_hash)),
                 class_hash: declare_tx_v2.contract_class.class_hash().into(),
+                is_query: declare_tx_v2.is_query,
             })
         }
     }

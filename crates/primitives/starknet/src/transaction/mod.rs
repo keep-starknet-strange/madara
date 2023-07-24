@@ -43,9 +43,10 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
+use self::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
-use crate::state::StateChanges;
+use crate::state::{FeeConfig, StateChanges};
 
 impl EventWrapper {
     /// Creates a new instance of an event.
@@ -197,7 +198,7 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
 
         Ok(DeployAccountTransaction {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
+            max_fee: Fee(self.max_fee.try_into().unwrap()),
             version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
@@ -242,7 +243,7 @@ impl TryInto<InvokeTransaction> for &Transaction {
 
         Ok(InvokeTransaction::V1(InvokeTransactionV1 {
             transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(2),
+            max_fee: Fee(self.max_fee.try_into().unwrap()),
             signature: TransactionSignature(
                 self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
             ),
@@ -260,7 +261,7 @@ impl TryInto<DeclareTransaction> for &Transaction {
     fn try_into(self) -> Result<DeclareTransaction, Self::Error> {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
         let transaction_hash = TransactionHash(StarkFelt::new(self.hash.into())?);
-        let max_fee = Fee(2);
+        let max_fee = Fee(self.max_fee.try_into().unwrap());
         let signature = TransactionSignature(
             self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
         );
@@ -306,6 +307,7 @@ impl Transaction {
         contract_class: Option<ContractClass>,
         contract_address_salt: Option<U256>,
         max_fee: Felt252Wrapper,
+        is_query: bool,
     ) -> Self {
         Self {
             tx_type,
@@ -318,6 +320,7 @@ impl Transaction {
             contract_class,
             contract_address_salt,
             max_fee,
+            is_query,
         }
     }
 
@@ -525,7 +528,7 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
     ///   execution
-    pub fn execute<S: State + StateChanges>(
+    pub fn execute<S: State + StateChanges + FeeConfig>(
         &self,
         state: &mut S,
         block_context: &BlockContext,
@@ -557,7 +560,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -611,7 +614,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -643,7 +646,7 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context)?;
+                Self::handle_nonce(state, &account_context, self.is_query)?;
 
                 // Execute.
                 let transaction_execution = tx
@@ -671,7 +674,8 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
-        let (actual_fee, fee_transfer_call_info) = charge_fee(state, block_context, account_context, &tx_resources)?;
+        let (actual_fee, fee_transfer_call_info) =
+            charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?;
         Ok(TransactionExecutionInfoWrapper {
             validate_call_info,
             execute_call_info,
@@ -695,6 +699,7 @@ impl Transaction {
     pub fn handle_nonce(
         state: &mut dyn State,
         account_tx_context: &AccountTransactionContext,
+        is_query: bool,
     ) -> TransactionExecutionResultWrapper<()> {
         if account_tx_context.version == TransactionVersion(StarkFelt::from(0_u8)) {
             return Ok(());
@@ -702,6 +707,13 @@ impl Transaction {
 
         let address = account_tx_context.sender_address;
         let current_nonce = state.get_nonce_at(address).map_err(TransactionExecutionErrorWrapper::StateError)?;
+
+        // if it's an estimate_fee transaction than as long as the nonce is greater then current nonce
+        // we are good to go
+        if is_query && account_tx_context.nonce >= current_nonce {
+            return Ok(());
+        }
+
         if current_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionErrorWrapper::TransactionExecution(
                 TransactionExecutionError::InvalidNonce {
@@ -732,7 +744,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: Fee::default(),
-            version: tx.version,
+            version: calculate_transaction_version(self.is_query, tx.version),
             signature: TransactionSignature::default(),
             nonce: tx.nonce,
             sender_address: tx.contract_address,
@@ -753,7 +765,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version: TransactionVersion(StarkFelt::from(1_u8)),
+            version: calculate_transaction_version_from_u8(self.is_query, 1_u8),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -774,7 +786,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash,
             max_fee: tx.max_fee,
-            version: tx.version,
+            version: calculate_transaction_version(self.is_query, tx.version),
             signature: tx.signature.clone(),
             nonce: tx.nonce,
             sender_address: tx.contract_address,
@@ -795,7 +807,7 @@ impl Transaction {
         AccountTransactionContext {
             transaction_hash: tx.transaction_hash(),
             max_fee: tx.max_fee(),
-            version: tx.version(),
+            version: calculate_transaction_version(self.is_query, tx.version()),
             signature: tx.signature(),
             nonce: tx.nonce(),
             sender_address: tx.sender_address(),
@@ -817,6 +829,7 @@ impl Default for Transaction {
             contract_class: None,
             contract_address_salt: None,
             max_fee: Felt252Wrapper::from(u128::MAX),
+            is_query: false,
         }
     }
 }

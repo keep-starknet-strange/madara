@@ -1,11 +1,9 @@
-name: Linters
+---
+name: Task - Linters
 
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   spell-check:
@@ -45,7 +43,7 @@ jobs:
           cd tests
           npx eslint .
 
-  markdownlint:
+  markdown-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -54,3 +52,11 @@ jobs:
           config: "./.markdownlint.json"
           args: "."
           ignore: "./target"
+
+  toml-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout toml files
+        uses: actions/checkout@v3
+      - name: Run toml check
+        run: npx @taplo/cli fmt --config ./taplo/taplo.toml --check

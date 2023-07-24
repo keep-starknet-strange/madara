@@ -2,7 +2,7 @@ use mp_starknet::execution::types::Felt252Wrapper;
 use mp_starknet::transaction::types::{InvokeTransaction, Transaction};
 use sp_core::bounded_vec;
 
-use self::mock::Starknet;
+use self::mock::default_mock::Starknet;
 use self::utils::get_contract_class;
 
 mod account_helper;
@@ -10,12 +10,14 @@ mod call_contract;
 mod declare_tx;
 mod deploy_account_tx;
 mod erc20;
+mod fees_disabled;
 mod invoke_tx;
 mod l1_message;
 mod query_tx;
 mod sequencer_address;
 mod state_root;
 
+mod block;
 mod constants;
 mod message;
 mod mock;
@@ -43,6 +45,7 @@ pub fn get_invoke_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -73,6 +76,7 @@ fn get_invoke_argent_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -103,6 +107,7 @@ fn get_invoke_braavos_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -129,6 +134,7 @@ fn get_invoke_emit_event_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -155,6 +161,7 @@ fn get_invoke_nonce_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
@@ -179,6 +186,7 @@ fn get_storage_read_write_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id());
 
@@ -213,6 +221,7 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         nonce,
         signature,
         max_fee: Felt252Wrapper::from(u128::MAX),
+        is_query: false,
     }
     .from_invoke(Starknet::chain_id())
 }
