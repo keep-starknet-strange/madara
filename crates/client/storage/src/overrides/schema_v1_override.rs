@@ -172,11 +172,6 @@ where
         }
     }
 
-    // fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
-    //     let chain_id_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CHAIN_ID);
-    //     self.query_storage::<Felt252Wrapper>(block_hash, &StorageKey(chain_id_prefix))
-    // }
-
     fn contract_state_root_by_address(
         &self,
         block_hash: <B as BlockT>::Hash,
