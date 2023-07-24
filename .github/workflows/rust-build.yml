@@ -35,3 +35,5 @@ jobs:
       - name: Build the project
         run: |
           cargo build --release --workspace --features madara-state-root
+        env:
+          CARGO_INCREMENTAL: 0
