@@ -56,3 +56,13 @@ pub struct StateCommitments {
     /// Class Commitment
     pub class_commitment: StateCommitmentTree<PoseidonHasher>,
 }
+
+/// Build invoke transaction for transfer utils
+pub struct BuildTransferInvokeTransaction {
+    pub sender_address: Felt252Wrapper,
+    pub token_address: Felt252Wrapper,
+    pub recipient: Felt252Wrapper,
+    pub amount_low: Felt252Wrapper,
+    pub amount_high: Felt252Wrapper,
+    pub nonce: Felt252Wrapper,
+}
