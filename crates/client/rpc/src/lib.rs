@@ -14,6 +14,7 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
+use madara_runtime::pallets::ChainId;
 use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
@@ -438,10 +439,8 @@ where
 
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<Felt> {
-        let best_block_hash = self.client.info().best_hash;
-
-        let chain_id = self.client.runtime_api().chain_id(best_block_hash);
-        Ok(Felt(chain_id.map_err(|_| StarknetRpcApiError::InternalServerError)?.into()))
+        let chain_id = ChainId::get();
+        Ok(Felt(chain_id.into()))
     }
 
     /// Add an Invoke Transaction to invoke a contract function

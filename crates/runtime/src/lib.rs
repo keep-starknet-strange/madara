@@ -13,7 +13,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 /// Runtime modules.
 mod config;
 pub mod opaque;
-mod pallets;
+pub mod pallets;
 mod runtime_tests;
 mod types;
 
