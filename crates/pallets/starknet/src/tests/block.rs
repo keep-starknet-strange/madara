@@ -10,6 +10,7 @@ use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
 
+use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::constants::FEE_TOKEN_ADDRESS;
 use crate::tests::get_invoke_dummy;
@@ -17,7 +18,7 @@ use crate::{pallet, SeqAddrUpdate, SequencerAddress};
 
 #[test]
 fn store_block_no_pending_transactions_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         // initialize first block
         let header = System::finalize();
         const BLOCK_NUMBER: u64 = 1;
@@ -44,7 +45,7 @@ fn store_block_no_pending_transactions_works() {
 
 #[test]
 fn store_block_with_pending_transactions_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         // initialize first block
         let header = System::finalize();
         const BLOCK_NUMBER: u64 = 1;
@@ -88,7 +89,7 @@ fn store_block_with_pending_transactions_works() {
 
 #[test]
 fn get_block_context_works() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         // initialize first block
         let header = System::finalize();
         const BLOCK_NUMBER: u64 = 1;

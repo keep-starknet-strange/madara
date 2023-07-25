@@ -23,6 +23,17 @@ pub trait StateChanges {
     fn count_state_changes(&self) -> (usize, usize, usize);
 }
 
+/// This trait allows to get the fee config for the pallet and accordingly charge the fees
+pub trait FeeConfig {
+    /// This function reads the DisableTransactionFee from the pallet and returns a boolean
+    /// class hashes.
+    ///
+    /// # Returns
+    ///
+    /// * `bool` - Is the fee disabled
+    fn is_transaction_fee_disabled(&self) -> bool;
+}
+
 /// A simple implementation of `StateReader` using `HashMap`s as storage.
 #[derive(Debug, Default)]
 pub struct DictStateReader {

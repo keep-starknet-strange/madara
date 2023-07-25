@@ -1,11 +1,12 @@
 use frame_support::assert_ok;
 
+use super::mock::default_mock::*;
 use super::mock::*;
 use crate::tests::get_invoke_dummy;
 
 #[test]
 fn estimates_tx_fee_successfully() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let tx = get_invoke_dummy();
@@ -18,7 +19,7 @@ fn estimates_tx_fee_successfully() {
 
 #[test]
 fn estimate_does_not_add_to_pending() {
-    new_test_ext().execute_with(|| {
+    new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
 
         let tx = get_invoke_dummy();

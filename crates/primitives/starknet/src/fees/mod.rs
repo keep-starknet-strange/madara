@@ -20,6 +20,7 @@ use starknet_api::transaction::{Calldata, Fee};
 
 use super::state::StateChanges;
 use crate::alloc::string::ToString;
+use crate::state::FeeConfig;
 use crate::transaction::types::{TransactionExecutionErrorWrapper, TxType};
 
 /// Number of storage updates for the fee transfer tx.
@@ -99,20 +100,23 @@ pub fn get_transaction_resources<S: State + StateChanges>(
 ///
 /// [TransactionExecutionErrorWrapper] if any step of the fee transfer computation/transaction
 /// fails.
-pub fn charge_fee<S: State + StateChanges>(
+pub fn charge_fee<S: State + StateChanges + FeeConfig>(
     state: &mut S,
     block_context: &BlockContext,
     account_tx_context: AccountTransactionContext,
     resources: &BTreeMap<String, usize>,
+    is_query: bool,
 ) -> Result<(Fee, Option<CallInfo>), TransactionExecutionErrorWrapper> {
     let no_fee = Fee::default();
-    if account_tx_context.max_fee == no_fee {
+    if (!is_query && account_tx_context.max_fee == no_fee) || state.is_transaction_fee_disabled() {
         // Fee charging is not enforced in some tests.
         return Ok((no_fee, None));
     }
-
     let actual_fee = calculate_tx_fee(resources, block_context)
         .map_err(|_| TransactionExecutionErrorWrapper::FeeComputationError)?;
+    if is_query {
+        return Ok((actual_fee, None));
+    }
     let fee_transfer_call_info = execute_fee_transfer(state, block_context, account_tx_context, actual_fee)?;
 
     Ok((actual_fee, Some(fee_transfer_call_info)))
@@ -125,16 +129,14 @@ fn execute_fee_transfer(
     account_tx_context: AccountTransactionContext,
     actual_fee: Fee,
 ) -> Result<CallInfo, TransactionExecutionErrorWrapper> {
-    // TODO: use real value.
-    // FIXME: https://github.com/keep-starknet-strange/madara/issues/331
-    let max_fee = Fee(u128::MAX);
+    let max_fee = account_tx_context.max_fee;
     if actual_fee > max_fee {
         return Err(TransactionExecutionErrorWrapper::FeeTransferError { max_fee, actual_fee });
     }
     // TODO: This is what's done in the blockifier but this should be improved.
     // FIXME: https://github.com/keep-starknet-strange/madara/issues/332
     // The least significant 128 bits of the amount transferred.
-    let lsb_amount = StarkFelt::from(actual_fee.0 as u64);
+    let lsb_amount = StarkFelt::from(actual_fee.0);
     // The most significant 128 bits of the amount transferred.
     let msb_amount = StarkFelt::from(0_u64);
 
