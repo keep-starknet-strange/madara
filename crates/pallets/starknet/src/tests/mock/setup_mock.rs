@@ -21,7 +21,7 @@ macro_rules! mock_runtime {
 			use frame_support::traits::Hooks;
 			use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
             use mp_starknet::execution::types::Felt252Wrapper;
-            use starknet_core::types::FieldElement;
+            use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 
 
 			type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -81,17 +81,8 @@ macro_rules! mock_runtime {
 				pub const EnableStateRoot: bool = $enable_state_root;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
 				pub const ProtocolVersion: u8 = 0;
-                // Starknet testnet SN_GOERLI
-                // Need to use `from_mont` because this needs to be a constant function call
-                pub const ChainId: Felt252Wrapper = Felt252Wrapper(FieldElement::from_mont(
-                    [
-                        3753493103916128178,
-                        18446744073709548950,
-                        18446744073709551615,
-                        398700013197595345,
-                    ]
-                ));
-			}
+                pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+            }
 
 			impl pallet_starknet::Config for MockRuntime {
 				type RuntimeEvent = RuntimeEvent;

@@ -14,7 +14,6 @@ use std::sync::Arc;
 use errors::StarknetRpcApiError;
 use jsonrpsee::core::{async_trait, RpcResult};
 use log::error;
-use madara_runtime::pallets::ChainId;
 use mc_rpc_core::types::{ContractData, RpcGetProofInput, RpcGetProofOutput};
 pub use mc_rpc_core::utils::*;
 use mc_rpc_core::Felt;
@@ -439,7 +438,7 @@ where
 
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<Felt> {
-        let chain_id = ChainId::get();
+        let chain_id = madara_runtime::pallets::ChainId::get();
         Ok(Felt(chain_id.into()))
     }
 
