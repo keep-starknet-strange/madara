@@ -3,91 +3,91 @@
     [
       "0x00000000000000000000000000000000000000000000000000000000DEADBEEF",
       {
-        "path": "../../../cairo-contracts/build/test.json",
+        "path": "./cairo-contracts/build/test.json",
         "version": 0
       }
     ],
     [
       "0x01cb5d0b5b5146e1aab92eb9fc9883a32a33a604858bb0275ac0ee65d885bba8",
       {
-        "path": "../../../cairo-contracts/build/l1_handler.json",
+        "path": "./cairo-contracts/build/l1_handler.json",
         "version": 0
       }
     ],
     [
       "0x03bcec8de953ba8e305e2ce2db52c91504aefa7c56c91211873b4d6ba36e8c32",
       {
-        "path": "../../../cairo-contracts/build/NoValidateAccount.json",
+        "path": "./cairo-contracts/build/NoValidateAccount.json",
         "version": 0
       }
     ],
     [
       "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
       {
-        "path": "../../../cairo-contracts/build/OpenzeppelinAccount.json",
+        "path": "./cairo-contracts/build/OpenzeppelinAccount.json",
         "version": 0
       }
     ],
     [
       "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d",
       {
-        "path": "../../../cairo-contracts/build/ArgentAccount.json",
+        "path": "./cairo-contracts/build/ArgentAccount.json",
         "version": 0
       }
     ],
     [
       "0x0244ca3d9fe8b47dd565a6f4270d979ba31a7d6ff2c3bf8776198161505e8b52",
       {
-        "path": "../../../cairo-contracts/build/BraavosAccount.json",
+        "path": "./cairo-contracts/build/BraavosAccount.json",
         "version": 0
       }
     ],
     [
       "0x06a89ae7bd72c96202c040341c1ee422474b562e1d73c6848f08cae429c33262",
       {
-        "path": "../../../cairo-contracts/build/Proxy.json",
+        "path": "./cairo-contracts/build/Proxy.json",
         "version": 0
       }
     ],
     [
       "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f",
       {
-        "path": "../../../cairo-contracts/build/NoValidateAccount.json",
+        "path": "./cairo-contracts/build/NoValidateAccount.json",
         "version": 0
       }
     ],
     [
       "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
       {
-        "path": "../../../cairo-contracts/build/cairo_1/NoValidateAccount.casm.json",
+        "path": "./cairo-contracts/build/cairo_1/NoValidateAccount.casm.json",
         "version": 1
       }
     ],
     [
       "0x071aaf68d30c3e52e1c4b7d1209b0e09525939c31bb0275919dffd4cd53f57c4",
       {
-        "path": "../../../cairo-contracts/build/UnauthorizedInnerCallAccount.json",
+        "path": "./cairo-contracts/build/UnauthorizedInnerCallAccount.json",
         "version": 0
       }
     ],
     [
       "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922",
       {
-        "path": "../../../cairo-contracts/build/ERC20.json",
+        "path": "./cairo-contracts/build/ERC20.json",
         "version": 0
       }
     ],
     [
       "0x91000",
       {
-        "path": "../../../cairo-contracts/build/emit_single_event.json",
+        "path": "./cairo-contracts/build/emit_single_event.json",
         "version": 0
       }
     ],
     [
       "0x92000",
       {
-        "path": "../../../cairo-contracts/build/emit_multiple_events_across_contracts.json",
+        "path": "./cairo-contracts/build/emit_multiple_events_across_contracts.json",
         "version": 0
       }
     ]
