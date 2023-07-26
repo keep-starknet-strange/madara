@@ -70,7 +70,7 @@ by the great [LambdaClass](https://lambdaclass.com/) team 🫶:
  demo `docker-compose` file.
 - [Madara Kit Application](https://github.com/keep-starknet-strange/madara-app):
  A simple application that demonstrates how to use Madara. Deployed on `https://app.madara.zone`.
-- [Madara Docsite](https://github.com/keep-starknet-strange/madara-app):
+- [Madara Docsite](https://github.com/keep-starknet-strange/madara-docs):
  The source code of the Madara documentation website. Deployed on `https://docs.madara.zone`.
 
 ## 🌟 Features
