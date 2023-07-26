@@ -17,7 +17,6 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest-32-cores
     strategy:
       fail-fast: false
       matrix:
@@ -32,7 +31,7 @@ jobs:
           - x86_64-unknown-linux-gnu
         include:
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-latest-32-cores
           - build: x86_64-apple-darwin
             os: macos-latest
           - build: x86_64-pc-windows-gnu
@@ -40,14 +39,14 @@ jobs:
           - build: x86_64-pc-windows-msvc
             os: windows-latest
           - build: i686-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-latest-32-cores
           - build: i686-pc-windows-gnu
             os: windows-latest
           - build: i686-pc-windows-msvc
             os: windows-latest
           - build: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
-      runs-on: ${{ matrix.os }}
+            os: ubuntu-latest-32-cores
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
