@@ -118,7 +118,8 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let genesis: GenesisLoader = serde_json::from_str(&read_file_to_string("src/genesis_assets/genesis.json")).unwrap();
+    let genesis: GenesisLoader =
+        serde_json::from_str(&read_file_to_string("crates/node/src/genesis_assets/genesis.json")).unwrap();
     let genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
 
     GenesisConfig {

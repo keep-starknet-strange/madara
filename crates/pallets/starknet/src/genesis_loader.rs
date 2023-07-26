@@ -54,9 +54,15 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
 }
 
 pub fn read_file_to_string(path: &str) -> String {
-    let cargo_dir = String::from(env!("CARGO_MANIFEST_DIR"));
-    let path: PathBuf = [cargo_dir + "/" + path].iter().collect();
-    fs::read_to_string(path).unwrap()
+    let workspace = std::process::Command::new(env!("CARGO"))
+        .args(["locate-project", "--workspace", "--message-format=plain"])
+        .output()
+        .expect("Failed to execute cargo locate-project command")
+        .stdout;
+    let mut dir = PathBuf::from(std::str::from_utf8(&workspace).unwrap().trim());
+    dir.pop();
+    dir.push(path);
+    fs::read_to_string(dir).unwrap()
 }
 
 #[cfg(test)]
@@ -66,7 +72,8 @@ mod tests {
     #[test]
     fn test_deserialize_loader() {
         // When
-        let loader: GenesisLoader = serde_json::from_str(&read_file_to_string("src/tests/mock/genesis.json")).unwrap();
+        let loader: GenesisLoader =
+            serde_json::from_str(&read_file_to_string("crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
 
         // Then
         assert_eq!(13, loader.contract_classes.len());

@@ -125,7 +125,7 @@ macro_rules! mock_runtime {
 pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<T>().unwrap();
 
-    let genesis: GenesisLoader = serde_yaml::from_str(std::include_str!("./genesis.yaml")).unwrap();
+    let genesis: GenesisLoader = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
     let genesis: GenesisConfig<T> = genesis.into();
 
     genesis.assimilate_storage(&mut t).unwrap();
