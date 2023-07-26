@@ -40,6 +40,10 @@ impl pallet_starknet::Config for Runtime {
     type EnableStateRoot = ConstBool<false>;
     #[cfg(feature = "madara-state-root")]
     type EnableStateRoot = ConstBool<true>;
+    #[cfg(not(feature = "disable-transaction-fee"))]
+    type DisableTransactionFee = ConstBool<false>;
+    #[cfg(feature = "disable-transaction-fee")]
+    type DisableTransactionFee = ConstBool<true>;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
