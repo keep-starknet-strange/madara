@@ -27,7 +27,7 @@ describeDevMadara(
 
         const latestBlock = await providerRPC.getBlock("latest");
         expect(latestBlock.new_root).to.eq(
-          "0x4e65560d4b1751b0c3455f9f4e3e0ae0c41c4929796659ceec256f1aea08e28",
+          "0x5092d16e8b238b12b0830c71c6ad21dce5edf3ed41aaa935a79a8d7bd7481e5"
         );
       });
     });
@@ -45,7 +45,7 @@ describeDevMadara(
         };
         let storage_proof = await providerRPC.fetch(
           "starknet_getProof",
-          params,
+          params
         );
         storage_proof = await storage_proof.json();
 
@@ -65,16 +65,16 @@ describeDevMadara(
         };
         let storage_proof = await providerRPC.fetch(
           "starknet_getProof",
-          params,
+          params
         );
         storage_proof = await storage_proof.json();
 
         // Check contract root
         expect(storage_proof["result"]["contract_data"]["root"]).to.be.eq(
-          "2137650382361045467996332368791861747902403628779494221252963710317158396736",
+          "2137650382361045467996332368791861747902403628779494221252963710317158396736"
         );
       });
     });
   },
-  { runNewNode: true },
+  { runNewNode: true }
 );
