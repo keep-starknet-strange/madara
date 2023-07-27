@@ -82,8 +82,6 @@ pub trait StorageOverride<B: BlockT>: Send + Sync {
     fn nonce(&self, block_hash: B::Hash, address: ContractAddressWrapper) -> Option<NonceWrapper>;
     /// Returns the events for a provided block hash.
     fn events(&self, block_hash: B::Hash) -> Option<Vec<EventWrapper>>;
-    /// Returns the storage value for a provided key and block hash.
-    fn chain_id(&self, block_hash: B::Hash) -> Option<Felt252Wrapper>;
     /// Returns the state commitments for a provider block hash
     fn state_commitments(&self, block_hash: B::Hash) -> Option<StateCommitments>;
     /// Returns the state root at a provided contract address for the provided block.
@@ -214,18 +212,6 @@ where
     /// * `Some(events)` - The events for the provided block hash
     fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
         self.client.runtime_api().events(block_hash).ok()
-    }
-
-    /// Return the chain id for a provided block hash.
-    ///
-    /// # Arguments
-    ///
-    /// * `block_hash` - The block hash
-    ///
-    /// # Returns
-    /// * `Some(chain_id)` - The chain id for the provided block hash
-    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
-        self.client.runtime_api().chain_id(block_hash).ok()
     }
 
     /// Return the state commitments for a provided block hash
