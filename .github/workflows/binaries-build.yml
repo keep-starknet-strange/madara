@@ -83,13 +83,13 @@ jobs:
         if:
           matrix.build != 'aarch64-unknown-linux-gnu' && matrix.build !=
           'x86_64-pc-windows-gnu'
-        run: cargo build --release --target ${{ matrix.build }}
+        run: CARGO_INCREMENTAL=0 cargo build --release --target ${{ matrix.build }}
 
       - name: Build (x86_64-pc-windows-gnu)
         if: matrix.build == 'x86_64-pc-windows-gnu'
         run: |
           export JEMALLOC_OVERRIDE=/usr/local/lib/libjemalloc.a
-          cargo build --release --target ${{ matrix.build }}
+          CARGO_INCREMENTAL=0 cargo build --release --target ${{ matrix.build }}
 
       - name: Build (aarch64-unknown-linux-gnu)
         if: matrix.build == 'aarch64-unknown-linux-gnu'
@@ -97,7 +97,7 @@ jobs:
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc
           export CC_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-gcc
           export CXX_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-g+
-          cargo build --release --target ${{ matrix.build }}
+          CARGO_INCREMENTAL=0 cargo build --release --target ${{ matrix.build }}
 
       - name: Upload binaries
         if: github.event.inputs.release_tag_name
