@@ -46,8 +46,7 @@ jobs:
       - name: Setup build deps (linux/windows)
         if:
           matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
-          'aarch64-unknown-linux-gnu' || matrix.build ==
-          'x86_64-pc-windows-gnu'
+          'aarch64-unknown-linux-gnu' || matrix.build == 'x86_64-pc-windows-gnu'
         run: |
           sudo apt update
           sudo apt install -y clang llvm libudev-dev protobuf-compiler
