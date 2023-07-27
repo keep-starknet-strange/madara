@@ -21,17 +21,17 @@ jobs:
       fail-fast: false
       matrix:
         build:
+          - aarch64-apple-darwin
           - aarch64-unknown-linux-gnu
           - x86_64-apple-darwin
-          - x86_64-pc-windows-gnu
           - x86_64-unknown-linux-gnu
         include:
+          - build: aarch64-apple-darwin
+            os: macos-latest
           - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest
           - build: x86_64-apple-darwin
             os: macos-latest
-          - build: x86_64-pc-windows-gnu
-            os: ubuntu-latest
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
     runs-on: ${{ matrix.os }}
@@ -43,10 +43,10 @@ jobs:
         run: |
           rustup target add ${{ matrix.build }}
 
-      - name: Setup build deps (linux/windows)
+      - name: Setup build deps (linux)
         if:
           matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
-          'aarch64-unknown-linux-gnu' || matrix.build == 'x86_64-pc-windows-gnu'
+          'aarch64-unknown-linux-gnu'
         run: |
           sudo apt update
           sudo apt install -y clang llvm libudev-dev protobuf-compiler
@@ -62,36 +62,10 @@ jobs:
         run: |
           brew install protobuf
 
-      # https://github.com/gnzlbg/jemallocator/issues/153
-      - name: Setup build deps (x86_64-pc-windows-gnu)
-        if: matrix.build == 'x86_64-pc-windows-gnu'
-        run: |
-          sudo apt update
-          sudo apt install -y g++-mingw-w64-x86-64
-          sudo update-alternatives --config x86_64-w64-mingw32-gcc
-          sudo update-alternatives --config x86_64-w64-mingw32-g++
-          curl -L https://github.com/jemalloc/jemalloc/releases/download/5.2.1/jemalloc-5.2.1.tar.bz2 --output jemalloc.tar.bz2; \
-          tar -xvjf ./jemalloc.tar.bz2; rm -f  ./jemalloc.tar.bz2; cd jemalloc-5.2.1; \
-          ./configure --host=x86_64-w64-mingw32 --build=x86_64-unknown_linux-gnu --disable-cxx --disable-initial-exec-tls --with-private-namespace=_rjem_ --with-jemalloc-prefix=; \
-          make; \
-          sudo ar crus /usr/local/lib/libjemalloc.a src/jemalloc.o src/arena.o src/background_thread.o src/base.o \
-          src/bin.o src/bitmap.o src/ckh.o src/ctl.o src/div.o src/extent.o src/extent_dss.o src/extent_mmap.o \
-          src/hash.o src/hook.o src/large.o src/log.o src/malloc_io.o src/mutex.o src/mutex_pool.o src/nstime.o \
-          src/pages.o src/prng.o src/prof.o src/rtree.o src/safety_check.o src/stats.o src/sc.o src/sz.o src/tcache.o \
-          src/test_hooks.o src/ticker.o src/tsd.o src/witness.o; \
-          cd ..; rm -rf ./jemalloc-5.2.1
-
-      - name: Build
+      - name: Build (x86_64 linux/apple)
         if:
-          matrix.build != 'aarch64-unknown-linux-gnu' && matrix.build !=
-          'x86_64-pc-windows-gnu'
+          matrix.build != 'aarch64-unknown-linux-gnu'
         run: cargo build --release --target ${{ matrix.build }}
-
-      - name: Build (x86_64-pc-windows-gnu)
-        if: matrix.build == 'x86_64-pc-windows-gnu'
-        run: |
-          export JEMALLOC_OVERRIDE=/usr/local/lib/libjemalloc.a
-          cargo build --release --target ${{ matrix.build }}
 
       - name: Build (aarch64-unknown-linux-gnu)
         if: matrix.build == 'aarch64-unknown-linux-gnu'
