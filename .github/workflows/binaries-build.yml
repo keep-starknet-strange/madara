@@ -21,16 +21,12 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - aarch64-apple-darwin
           - aarch64-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-pc-windows-gnu
           - x86_64-pc-windows-msvc
           - x86_64-unknown-linux-gnu
         include:
-          - build: aarch64-apple-darwin
-            os: macos-latest
-            arch: arm64
           - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest
             arch: arm64
@@ -38,10 +34,7 @@ jobs:
             os: macos-latest
             arch: amd64
           - build: x86_64-pc-windows-gnu
-            os: windows-latest
-            arch: amd64
-          - build: x86_64-pc-windows-msvc
-            os: windows-latest
+            os: ubuntu-latest
             arch: amd64
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
@@ -51,41 +44,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Setup rust toolchain
+        run: |
+          rustup target add ${{ matrix.build }}
+
+      - name: Setup build deps (linux)
+        if:
+          matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
+          'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt update
+          sudo apt install -y clang llvm libudev-dev protobuf-compiler
+
+      - name: Setup build deps (aarch64-unknown-linux-gnu)
+        if: matrix.build == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt update
+          sudo apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Setup build deps (x86_64-apple-darwin)
+        if: matrix.build == 'x86_64-apple-darwin'
+        run: |
+          brew install protobuf
+
+      - name: Setup build deps (x86_64-pc-windows-gnu)
+        if: matrix.build == 'x86_64-pc-windows-gnu'
+        run: |
+          sudo apt update
+          sudo apt install -y g++-mingw-w64-x86-64
+
       - name: Set up QEMU
         if: matrix.arch == 'arm64'
         uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
-
-      - name: Setup rust toolchain
-        run: |
-          rustup target add ${{ matrix.build }}
-
-      - name: Setup build deps
-        if:
-          matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
-          'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
-
-      - name: Setup build deps (aarch64 linux)
-        if: matrix.build == 'aarch64-unknown-linux-gnu'
-        run: |
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Setup build deps
-        if: matrix.build == 'x86_64-apple-darwin'
-        run: |
-          brew install protobuf
-
-      - name: Setup build deps
-        if:
-          matrix.build == 'x86_64-pc-windows-gnu' || matrix.build ==
-          'x86_64-pc-windows-msvc'
-        run: |
-          choco install -y llvm
-          choco install -y protoc
 
       - name: Install cargo-release
         run: cargo install cargo-release
