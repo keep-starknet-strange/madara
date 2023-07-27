@@ -21,26 +21,41 @@ jobs:
       fail-fast: false
       matrix:
         build:
+          - aarch64-apple-darwin
           - aarch64-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-pc-windows-gnu
           - x86_64-pc-windows-msvc
           - x86_64-unknown-linux-gnu
         include:
-          - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-          - build: x86_64-apple-darwin
+          - build: aarch64-apple-darwin
             os: macos-latest
-          - build: x86_64-pc-windows-gnu
-            os: windows-latest
-          - build: x86_64-pc-windows-msvc
-            os: windows-latest
+            arch: arm64
           - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest
+            arch: arm64
+          - build: x86_64-apple-darwin
+            os: macos-latest
+            arch: amd64
+          - build: x86_64-pc-windows-gnu
+            os: windows-latest
+            arch: amd64
+          - build: x86_64-pc-windows-msvc
+            os: windows-latest
+            arch: amd64
+          - build: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            arch: amd64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
 
       - name: Setup rust toolchain
         run: |
