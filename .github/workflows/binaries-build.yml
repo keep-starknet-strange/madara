@@ -68,6 +68,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y g++-mingw-w64-x86-64
+          sudo update-alternatives --config x86_64-w64-mingw32-gcc
+          sudo update-alternatives --config x86_64-w64-mingw32-g++
           curl -L https://github.com/jemalloc/jemalloc/releases/download/5.2.1/jemalloc-5.2.1.tar.bz2 --output jemalloc.tar.bz2; \
           tar -xvjf ./jemalloc.tar.bz2; rm -f  ./jemalloc.tar.bz2; cd jemalloc-5.2.1; \
           ./configure --host=x86_64-w64-mingw32 --build=x86_64-unknown_linux-gnu --disable-cxx --disable-initial-exec-tls --with-private-namespace=_rjem_ --with-jemalloc-prefix=; \
