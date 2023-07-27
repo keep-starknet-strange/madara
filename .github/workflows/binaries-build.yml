@@ -83,11 +83,13 @@ jobs:
         run: cargo install cargo-release
 
       - name: Build
-        if: matrix.build != 'aarch64-unknown-linux-gnu'
+        if:
+          matrix.build != 'aarch64-unknown-linux-gnu' && matrix.build !=
+          'x86_64-pc-windows-gnu'
         run: cargo build --release --target ${{ matrix.build }}
 
       - name: Build (x86_64-pc-windows-gnu)
-        if: matrix.build != 'aarch64-unknown-linux-gnu'
+        if: matrix.build == 'x86_64-pc-windows-gnu'
         run: |
           export JEMALLOC_OVERRIDE=/usr/local/lib/libjemalloc.a
           cargo build --release --target ${{ matrix.build }}
