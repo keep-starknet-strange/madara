@@ -1,6 +1,5 @@
 use frame_support::traits::GenesisBuild;
 use mp_starknet::execution::types::Felt252Wrapper;
-use starknet_core::types::FieldElement;
 
 use super::helpers::*;
 use crate as pallet_starknet;
@@ -21,6 +20,8 @@ macro_rules! mock_runtime {
 			use crate::{ ContractAddressWrapper, SeqAddrUpdate, SequencerAddress};
 			use frame_support::traits::Hooks;
 			use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+            use mp_starknet::execution::types::Felt252Wrapper;
+            use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 
 
 			type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -80,7 +81,8 @@ macro_rules! mock_runtime {
 				pub const EnableStateRoot: bool = $enable_state_root;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
 				pub const ProtocolVersion: u8 = 0;
-			}
+                pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+            }
 
 			impl pallet_starknet::Config for MockRuntime {
 				type RuntimeEvent = RuntimeEvent;
@@ -93,6 +95,7 @@ macro_rules! mock_runtime {
 				type EnableStateRoot = EnableStateRoot;
 				type DisableTransactionFee = DisableTransactionFee;
 				type ProtocolVersion = ProtocolVersion;
+                type ChainId = ChainId;
 			}
 
 			/// Run to block n.
@@ -292,7 +295,6 @@ pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
                 Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap(),
             ),
         ],
-        chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
         seq_addr_updated: true,
         ..Default::default()
     }

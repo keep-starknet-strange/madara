@@ -55,6 +55,7 @@ pallet-starknet = { workspace = true }
 mp-starknet = { workspace = true, default-features = false }
 # Starknet dependencies
 blockifier = { workspace = true, default-features = false }
+starknet-ff = { workspace = true, default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
