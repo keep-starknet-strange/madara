@@ -58,7 +58,9 @@ jobs:
           sudo apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross
 
       - name: Setup build deps (x86_64-apple-darwin)
-        if: matrix.build == 'x86_64-apple-darwin'
+        if:
+          matrix.build == 'x86_64-apple-darwin' || matrix.build ==
+          'aarch64-apple-darwin'
         run: |
           brew install protobuf
 
