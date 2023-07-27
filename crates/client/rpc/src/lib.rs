@@ -438,8 +438,9 @@ where
 
     /// Returns the chain id.
     fn chain_id(&self) -> RpcResult<Felt> {
-        let chain_id = madara_runtime::pallets::ChainId::get();
-        Ok(Felt(chain_id.into()))
+        let best_block_hash = self.client.info().best_hash;
+        let chain_id = self.client.runtime_api().chain_id(best_block_hash);
+        Ok(Felt(chain_id.map_err(|_| StarknetRpcApiError::InternalServerError)?.into()))
     }
 
     /// Add an Invoke Transaction to invoke a contract function
