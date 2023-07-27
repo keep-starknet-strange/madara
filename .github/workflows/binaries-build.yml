@@ -22,29 +22,18 @@ jobs:
       matrix:
         build:
           - aarch64-unknown-linux-gnu
-          - i686-pc-windows-gnu
-          - i686-pc-windows-msvc
-          - i686-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-pc-windows-gnu
           - x86_64-pc-windows-msvc
           - x86_64-unknown-linux-gnu
         include:
-          - build: x86_64-unknown-linux-gnu
+          - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
           - build: x86_64-apple-darwin
-            os: macos-latest
+            os: macos-latest-xl
           - build: x86_64-pc-windows-gnu
-            os: windows-latest
-          - build: x86_64-pc-windows-msvc
-            os: windows-latest
-          - build: i686-unknown-linux-gnu
             os: ubuntu-latest-32-cores
-          - build: i686-pc-windows-gnu
-            os: windows-latest
-          - build: i686-pc-windows-msvc
-            os: windows-latest
-          - build: aarch64-unknown-linux-gnu
+          - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
     runs-on: ${{ matrix.os }}
     steps:
@@ -52,34 +41,33 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: nightly
-          override: true
-          components: rustfmt, clippy
+        run: |
+          rustup target add ${{ matrix.build }}
 
-      - name: Setup build deps
+      - name: Setup build deps (linux)
         if:
           matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
-          'i686-unknown-linux-gnu' || matrix.build ==
           'aarch64-unknown-linux-gnu'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm libudev-dev protobuf-compiler
+          sudo apt update
+          sudo apt install -y clang llvm libudev-dev protobuf-compiler
 
-      - name: Setup build deps
+      - name: Setup build deps (aarch64-unknown-linux-gnu)
+        if: matrix.build == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt update
+          sudo apt install -y g++-aarch64-linux-gnu libc6-dev-arm64-cross
+
+      - name: Setup build deps (x86_64-apple-darwin)
         if: matrix.build == 'x86_64-apple-darwin'
         run: |
           brew install protobuf
 
-      - name: Setup build deps
-        if:
-          matrix.build == 'x86_64-pc-windows-gnu' || matrix.build ==
-          'i686-pc-windows-gnu'
+      - name: Setup build deps (x86_64-pc-windows-gnu)
+        if: matrix.build == 'x86_64-pc-windows-gnu'
         run: |
-          choco install -y llvm
-          choco install -y protobuf
+          sudo apt update
+          sudo apt install -y g++-mingw-w64-x86-64
 
       - name: Install cargo-release
         run: cargo install cargo-release
