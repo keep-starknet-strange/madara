@@ -184,11 +184,6 @@
 <a href="#184" id="184">184</a>
 <a href="#185" id="185">185</a>
 <a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::sync::Arc;
 
@@ -197,7 +192,7 @@
 <span class="kw">use </span>madara_runtime::{Hash, RuntimeEvent};
 <span class="kw">use </span>mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span>mp_starknet::storage::{
-    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
+    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
     STARKNET_CONTRACT_STATE_ROOT, STARKNET_CONTRACT_STATE_TRIES, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS,
     STARKNET_STORAGE, SYSTEM_EVENTS,
 };
@@ -361,11 +356,6 @@
             <span class="prelude-val">Some</span>(commitments) =&gt; <span class="prelude-val">Some</span>(commitments),
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Some</span>(StateCommitments::default()),
         }
-    }
-
-    <span class="kw">fn </span>chain_id(<span class="kw-2">&amp;</span><span class="self">self</span>, block_hash: &lt;B <span class="kw">as </span>BlockT&gt;::Hash) -&gt; <span class="prelude-ty">Option</span>&lt;Felt252Wrapper&gt; {
-        <span class="kw">let </span>chain_id_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CHAIN_ID);
-        <span class="self">self</span>.query_storage::&lt;Felt252Wrapper&gt;(block_hash, <span class="kw-2">&amp;</span>StorageKey(chain_id_prefix))
     }
 
     <span class="kw">fn </span>contract_state_root_by_address(

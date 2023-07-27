@@ -317,11 +317,6 @@
 <a href="#317" id="317">317</a>
 <a href="#318" id="318">318</a>
 <a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fs;
 <span class="kw">use </span>std::path::PathBuf;
 
@@ -346,9 +341,6 @@
 
 <span class="doccomment">/// Specialized `ChainSpec` for development.
 </span><span class="kw">pub type </span>DevChainSpec = sc_service::GenericChainSpec&lt;DevGenesisExt&gt;;
-
-<span class="doccomment">/// Starknet testnet SN_GOERLI
-</span><span class="kw">pub const </span>CHAIN_ID_STARKNET_TESTNET: u128 = <span class="number">0x534e5f474f45524c49</span>;
 
 <span class="doccomment">/// Extension for the dev genesis config to support a custom changes to the genesis state.
 </span><span class="attr">#[derive(Serialize, Deserialize)]
@@ -545,7 +537,6 @@
     <span class="kw">let </span>udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
 
     <span class="kw">let </span>public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
-    <span class="kw">let </span>chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(<span class="kw-2">&amp;</span>CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
     GenesisConfig {
         system: SystemConfig {
@@ -641,7 +632,6 @@
             ],
             fee_token_address,
             _phantom: Default::default(),
-            chain_id,
             seq_addr_updated: <span class="bool-val">true</span>,
         },
     }

@@ -1198,10 +1198,6 @@
 <a href="#1198" id="1198">1198</a>
 <a href="#1199" id="1199">1199</a>
 <a href="#1200" id="1200">1200</a>
-<a href="#1201" id="1201">1201</a>
-<a href="#1202" id="1202">1202</a>
-<a href="#1203" id="1203">1203</a>
-<a href="#1204" id="1204">1204</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1368,6 +1364,8 @@
         </span><span class="kw">type </span>ValidateMaxNSteps: Get&lt;u32&gt;;
         <span class="attr">#[pallet::constant]
         </span><span class="kw">type </span>ProtocolVersion: Get&lt;u8&gt;;
+        <span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>ChainId: Get&lt;Felt252Wrapper&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -1517,11 +1515,6 @@
     #[pallet::getter(<span class="kw">fn </span>fee_token_address)]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>FeeTokenAddress&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, ContractAddressWrapper, ValueQuery&gt;;
 
-    <span class="doccomment">/// The chain id.
-    </span><span class="attr">#[pallet::storage]
-    #[pallet::getter(<span class="kw">fn </span>chain_id)]
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">type </span>ChainId&lt;T: Config&gt; = StorageValue&lt;<span class="kw">_</span>, Felt252Wrapper, ValueQuery&gt;;
-
     <span class="doccomment">/// Current sequencer address.
     </span><span class="attr">#[pallet::storage]
     #[pallet::getter(<span class="kw">fn </span>sequencer_address)]
@@ -1552,8 +1545,6 @@
         /// Must be set to the address of the fee token ERC20 contract.
         </span><span class="kw">pub </span>fee_token_address: ContractAddressWrapper,
         <span class="kw">pub </span>_phantom: PhantomData&lt;T&gt;,
-        <span class="doccomment">/// The chain id.
-        </span><span class="kw">pub </span>chain_id: Felt252Wrapper,
         <span class="kw">pub </span>seq_addr_updated: bool,
     }
 
@@ -1566,7 +1557,6 @@
                 storage: <span class="macro">vec!</span>[],
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
-                chain_id: Default::default(),
                 seq_addr_updated: <span class="bool-val">true</span>,
             }
         }
@@ -1621,8 +1611,6 @@
             LastKnownEthBlock::&lt;T&gt;::set(<span class="prelude-val">None</span>);
             <span class="comment">// Set the fee token address from the genesis config.
             </span>FeeTokenAddress::&lt;T&gt;::set(<span class="self">self</span>.fee_token_address);
-            <span class="comment">// Set the chain id from the genesis config.
-            </span>ChainId::&lt;T&gt;::put(<span class="self">self</span>.chain_id);
             SeqAddrUpdate::&lt;T&gt;::put(<span class="self">self</span>.seq_addr_updated);
         }
     }
@@ -1721,7 +1709,7 @@
 
             <span class="comment">// Get current block context
             </span><span class="kw">let </span>block_context = <span class="self">Self</span>::get_block_context();
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+            <span class="kw">let </span>chain_id = T::ChainId::get();
             <span class="kw">let </span>transaction: Transaction = transaction.from_invoke(chain_id);
             <span class="kw">let </span>call_info =
                 transaction.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), <span class="kw-2">&amp;</span>block_context, TxType::Invoke, <span class="prelude-val">None</span>);
@@ -1773,7 +1761,7 @@
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+            <span class="kw">let </span>chain_id = T::ChainId::get();
 
             <span class="kw">let </span>transaction: Transaction = transaction.from_declare(chain_id);
             <span class="comment">// Check that contract class is not None
@@ -1849,7 +1837,7 @@
             <span class="comment">// This ensures that the function can only be called via unsigned transaction.
             </span>ensure_none(origin)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id();
+            <span class="kw">let </span>chain_id = T::ChainId::get();
             <span class="kw">let </span>transaction: Transaction =
                 transaction.from_deploy(chain_id).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::TransactionConversionError)<span class="question-mark">?</span>;
 
@@ -2048,9 +2036,9 @@
     /// The transaction
     </span><span class="kw">fn </span>get_call_transaction(call: Call&lt;T&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Transaction, ()&gt; {
         <span class="kw">match </span>call {
-            Call::&lt;T&gt;::invoke { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_invoke(<span class="self">Self</span>::chain_id())),
-            Call::&lt;T&gt;::declare { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_declare(<span class="self">Self</span>::chain_id())),
-            Call::&lt;T&gt;::deploy_account { transaction } =&gt; transaction.from_deploy(<span class="self">Self</span>::chain_id()).map_err(|<span class="kw">_</span>| ()),
+            Call::&lt;T&gt;::invoke { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_invoke(T::ChainId::get())),
+            Call::&lt;T&gt;::declare { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction.from_declare(T::ChainId::get())),
+            Call::&lt;T&gt;::deploy_account { transaction } =&gt; transaction.from_deploy(T::ChainId::get()).map_err(|<span class="kw">_</span>| ()),
             Call::&lt;T&gt;::consume_l1_message { transaction } =&gt; <span class="prelude-val">Ok</span>(transaction),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(()),
         }
@@ -2114,7 +2102,7 @@
     <span class="doccomment">/// convert chain_id
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub fn </span>chain_id_str() -&gt; String {
-        <span class="kw">unsafe </span>{ from_utf8_unchecked(<span class="kw-2">&amp;</span><span class="self">Self</span>::chain_id().<span class="number">0</span>.to_bytes_be()).to_string() }
+        <span class="kw">unsafe </span>{ from_utf8_unchecked(<span class="kw-2">&amp;</span>T::ChainId::get().<span class="number">0</span>.to_bytes_be()).to_string() }
     }
 
     <span class="doccomment">/// Get the block hash of the previous block.
@@ -2404,6 +2392,10 @@
         });
 
         global_state_root
+    }
+
+    <span class="kw">pub fn </span>chain_id() -&gt; Felt252Wrapper {
+        T::ChainId::get()
     }
 }
 </code></pre></div>

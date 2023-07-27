@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["INITIAL_GAS_COST","STEP_GAS_COST"]};
+window.SIDEBAR_ITEMS = {"constant":["INITIAL_GAS_COST","SN_GOERLI_CHAIN_ID","STEP_GAS_COST"]};
