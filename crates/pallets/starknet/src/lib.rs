@@ -158,8 +158,7 @@ pub mod pallet {
         /// A bool to disable transaction fees and make all transactions free
         #[pallet::constant]
         type DisableTransactionFee: Get<bool>;
-        /// A bool to enable/disable Nonce validation
-        /// It has been requested by certain apps to allow for nonce validation to be disabled
+        /// A bool to disable Nonce validation
         type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
         type InvokeTxMaxNSteps: Get<u32>;

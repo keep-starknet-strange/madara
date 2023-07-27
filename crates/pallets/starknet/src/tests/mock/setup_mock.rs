@@ -10,7 +10,7 @@ use crate::Config;
 
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
-    ($mock_runtime:ident, $enable_state_root:expr, $disable_transaction_fee:expr, $enable_nonce_validation: expr) => {
+    ($mock_runtime:ident, $enable_state_root:expr, $disable_transaction_fee:expr, $disable_nonce_validation: expr) => {
 		pub mod $mock_runtime {
 			use frame_support::parameter_types;
 			use frame_support::traits::{ConstU16, ConstU64};
@@ -79,7 +79,7 @@ macro_rules! mock_runtime {
 				pub const ValidateMaxNSteps: u32 = 1_000_000;
 				pub const EnableStateRoot: bool = $enable_state_root;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
-                pub const DisableNonceValidation: bool = $enable_nonce_validation;
+                pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
 			}
 

@@ -24,9 +24,9 @@ fn given_invoke_tx_with_invalid_nonce_then_it_works() {
 
         assert_ok!(Starknet::invoke(none_origin, transaction.clone()));
 
-        // check nonce
+        // check nonce is still 0
         let nonce = Starknet::nonce(transaction.sender_address);
-        assert_eq!(nonce, Felt252Wrapper::from(1u8));
+        assert_eq!(nonce, Felt252Wrapper::from(0u8));
     });
 }
 
@@ -50,9 +50,9 @@ fn given_declare_tx_with_invalid_nonce_then_it_works() {
             get_contract_class("ERC20.json", 0)
         );
 
-        // check nonce
+        // check nonce is still 0
         let nonce = Starknet::nonce(transaction.sender_address);
-        assert_eq!(nonce, Felt252Wrapper::from(1u8));
+        assert_eq!(nonce, Felt252Wrapper::from(0u8));
     });
 }
 
@@ -72,8 +72,8 @@ fn given_deploy_account_tx_with_invalid_nonce_then_it_works() {
         assert_ok!(Starknet::deploy_account(none_origin, transaction));
         assert_eq!(Starknet::contract_class_hash_by_address(address).unwrap(), account_class_hash);
 
-        // check nonce
+        // check nonce is still 0
         let nonce = Starknet::nonce(address);
-        assert_eq!(nonce, Felt252Wrapper::from(1u8));
+        assert_eq!(nonce, Felt252Wrapper::from(0u8));
     });
 }
