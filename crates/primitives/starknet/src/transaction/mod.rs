@@ -698,7 +698,6 @@ impl Transaction {
     ///
     /// * `self` - The transaction to handle the nonce for
     /// * `state` - The state to handle the nonce on
-    /// * `nonce_validation` - Whether to validate the nonce
     /// * `account_tx_context` - The transaction context for the account
     ///
     /// # Returns
@@ -706,7 +705,6 @@ impl Transaction {
     /// * `TransactionExecutionResult<()>` - The result of the nonce handling
     pub fn handle_nonce(
         state: &mut dyn State,
-        disable_nonce_validation: bool,
         account_tx_context: &AccountTransactionContext,
         is_query: bool,
     ) -> TransactionExecutionResultWrapper<()> {
@@ -723,7 +721,7 @@ impl Transaction {
             return Ok(());
         }
 
-        if !disable_nonce_validation && current_nonce != account_tx_context.nonce {
+        if current_nonce != account_tx_context.nonce {
             return Err(TransactionExecutionErrorWrapper::TransactionExecution(
                 TransactionExecutionError::InvalidNonce {
                     address,
