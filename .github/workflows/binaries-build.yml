@@ -79,9 +79,6 @@ jobs:
           src/test_hooks.o src/ticker.o src/tsd.o src/witness.o; \
           cd ..; rm -rf ./jemalloc-5.2.1
 
-      - name: Install cargo-release
-        run: cargo install cargo-release
-
       - name: Build
         if:
           matrix.build != 'aarch64-unknown-linux-gnu' && matrix.build !=
