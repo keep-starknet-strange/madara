@@ -69,9 +69,7 @@ jobs:
           sudo apt update
           sudo apt install -y g++-mingw-w64-x86-64
           curl -L https://github.com/jemalloc/jemalloc/releases/download/5.2.1/jemalloc-5.2.1.tar.bz2 --output jemalloc.tar.bz2; \
-          tar -xvjf ./jemalloc.tar.bz2; \
-          rm -f  ./jemalloc.tar.bz2; \
-          cd jemalloc-5.2.1; \
+          tar -xvjf ./jemalloc.tar.bz2; rm -f  ./jemalloc.tar.bz2; cd jemalloc-5.2.1; \
           ./configure --host=x86_64-w64-mingw32 --build=x86_64-unknown_linux-gnu --disable-cxx --disable-initial-exec-tls --with-private-namespace=_rjem_ --with-jemalloc-prefix=; \
           make; \
           sudo ar crus /usr/local/lib/libjemalloc.a src/jemalloc.o src/arena.o src/background_thread.o src/base.o \
@@ -79,8 +77,7 @@ jobs:
           src/hash.o src/hook.o src/large.o src/log.o src/malloc_io.o src/mutex.o src/mutex_pool.o src/nstime.o \
           src/pages.o src/prng.o src/prof.o src/rtree.o src/safety_check.o src/stats.o src/sc.o src/sz.o src/tcache.o \
           src/test_hooks.o src/ticker.o src/tsd.o src/witness.o; \
-          cd ..; \
-          rm -rf ./jemalloc-5.2.1;
+          cd ..; rm -rf ./jemalloc-5.2.1
 
       - name: Install cargo-release
         run: cargo install cargo-release
