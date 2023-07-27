@@ -74,7 +74,7 @@ jobs:
           cd jemalloc-5.2.1; \
           ./configure --host=x86_64-w64-mingw32 --build=x86_64-unknown_linux-gnu --disable-cxx --disable-initial-exec-tls --with-private-namespace=_rjem_ --with-jemalloc-prefix=; \
           make; \
-          ar crus /usr/local/lib/libjemalloc.a src/jemalloc.o src/arena.o src/background_thread.o src/base.o \
+          sudo ar crus /usr/local/lib/libjemalloc.a src/jemalloc.o src/arena.o src/background_thread.o src/base.o \
           src/bin.o src/bitmap.o src/ckh.o src/ctl.o src/div.o src/extent.o src/extent_dss.o src/extent_mmap.o \
           src/hash.o src/hook.o src/large.o src/log.o src/malloc_io.o src/mutex.o src/mutex_pool.o src/nstime.o \
           src/pages.o src/prng.o src/prof.o src/rtree.o src/safety_check.o src/stats.o src/sc.o src/sz.o src/tcache.o \
