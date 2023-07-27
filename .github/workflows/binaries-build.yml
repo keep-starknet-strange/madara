@@ -27,13 +27,13 @@ jobs:
           - x86_64-unknown-linux-gnu
         include:
           - build: aarch64-apple-darwin
-            os: macos-latest
+            os: macos-latest-xl
           - build: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-latest-32-cores
           - build: x86_64-apple-darwin
-            os: macos-latest
+            os: macos-latest-xl
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-latest-32-cores
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
