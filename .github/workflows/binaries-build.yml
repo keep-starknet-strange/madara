@@ -29,16 +29,12 @@ jobs:
         include:
           - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
-            arch: arm64
           - build: x86_64-apple-darwin
             os: macos-latest-xl
-            arch: amd64
           - build: x86_64-pc-windows-gnu
             os: ubuntu-latest-32-cores
-            arch: amd64
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
-            arch: amd64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -72,12 +68,6 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y g++-mingw-w64-x86-64
-
-      - name: Set up QEMU
-        if: matrix.arch == 'arm64'
-        uses: docker/setup-qemu-action@v2
-        with:
-          platforms: arm64
 
       - name: Install cargo-release
         run: cargo install cargo-release
