@@ -37,7 +37,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup rust toolchain
         run: |
@@ -95,9 +95,9 @@ jobs:
       - name: Build (aarch64-unknown-linux-gnu)
         if: matrix.build == 'aarch64-unknown-linux-gnu'
         run: |
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
-          export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc
-          export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g+
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc
+          export CC_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-gcc
+          export CXX_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-g+
           cargo build --release --target ${{ matrix.build }}
 
       - name: Upload binaries
