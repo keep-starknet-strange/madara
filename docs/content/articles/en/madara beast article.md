@@ -4,7 +4,7 @@
 
 **Jul 20,2023** · 1 min read
 
-### From Massive Cost Reductions to Personalized Control, Discover the Future of Blockchain Infrastructure
+## From Massive Cost Reductions to Personalized Control, Discover the Future of Blockchain Infrastructure
 
 ***
 
