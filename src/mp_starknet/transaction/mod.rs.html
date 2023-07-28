@@ -844,6 +844,13 @@
 <a href="#844" id="844">844</a>
 <a href="#845" id="845">845</a>
 <a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -1379,6 +1386,7 @@
         state: <span class="kw-2">&amp;mut </span>S,
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         tx_type: TxType,
+        disable_nonce_validation: bool,
         contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
     ) -&gt; TransactionExecutionResultWrapper&lt;TransactionExecutionInfoWrapper&gt; {
         <span class="comment">// Initialize the execution resources.
@@ -1406,7 +1414,9 @@
                 );
 
                 <span class="comment">// Update nonce
-                </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+                </span><span class="kw">if </span>!disable_nonce_validation {
+                    <span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+                }
 
                 <span class="comment">// Validate.
                 </span><span class="kw">let </span>validate_call_info = <span class="self">self</span>.validate_tx(
@@ -1460,7 +1470,9 @@
                 );
 
                 <span class="comment">// Update nonce
-                </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+                </span><span class="kw">if </span>!disable_nonce_validation {
+                    <span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+                }
 
                 <span class="comment">// Validate.
                 </span><span class="kw">let </span>validate_call_info = <span class="self">self</span>.validate_tx(
@@ -1492,7 +1504,9 @@
                 );
 
                 <span class="comment">// Update nonce
-                </span><span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+                </span><span class="kw">if </span>!disable_nonce_validation {
+                    <span class="self">Self</span>::handle_nonce(state, <span class="kw-2">&amp;</span>account_context, <span class="self">self</span>.is_query)<span class="question-mark">?</span>;
+                }
 
                 <span class="comment">// Execute.
                 </span><span class="kw">let </span>transaction_execution = tx
