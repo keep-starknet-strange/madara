@@ -153,6 +153,7 @@ Thanks goes to these wonderful people
 ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <table>
   <tbody>
@@ -214,11 +215,13 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/exp-table"><img src="https://avatars.githubusercontent.com/u/76456212?v=4?s=100" width="100px;" alt="exp_table"/><br /><sub><b>exp_table</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=exp-table" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Pilouche"><img src="https://avatars.githubusercontent.com/u/26655725?v=4?s=100" width="100px;" alt="Pilou"/><br /><sub><b>Pilou</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Pilouche" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hel-kame"><img src="https://avatars.githubusercontent.com/u/117039823?v=4?s=100" width="100px;" alt="hithem"/><br /><sub><b>hithem</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=hel-kame" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/clexmond"><img src="https://avatars.githubusercontent.com/u/706094?v=4?s=100" width="100px;" alt="Chris Lexmond"/><br /><sub><b>Chris Lexmond</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=clexmond" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
 
 <!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
