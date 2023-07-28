@@ -158,6 +158,8 @@ pub mod pallet {
         /// A bool to disable transaction fees and make all transactions free
         #[pallet::constant]
         type DisableTransactionFee: Get<bool>;
+        /// A bool to disable Nonce validation
+        type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]
@@ -511,8 +513,14 @@ pub mod pallet {
             let block_context = Self::get_block_context();
             let chain_id = T::ChainId::get();
             let transaction: Transaction = transaction.from_invoke(chain_id);
-            let call_info =
-                transaction.execute(&mut BlockifierStateAdapter::<T>::default(), &block_context, TxType::Invoke, None);
+
+            let call_info = transaction.execute(
+                &mut BlockifierStateAdapter::<T>::default(),
+                &block_context,
+                TxType::Invoke,
+                T::DisableNonceValidation::get(),
+                None,
+            );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
@@ -584,6 +592,7 @@ pub mod pallet {
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::Declare,
+                T::DisableNonceValidation::get(),
                 Some(contract_class),
             );
             let receipt = match call_info {
@@ -655,6 +664,7 @@ pub mod pallet {
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::DeployAccount,
+                T::DisableNonceValidation::get(),
                 None,
             );
             let receipt = match call_info {
@@ -718,6 +728,7 @@ pub mod pallet {
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::L1Handler,
+                true,
                 None,
             ) {
                 Ok(v) => {
@@ -1104,6 +1115,7 @@ impl<T: Config> Pallet<T> {
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
             transaction.tx_type.clone(),
+            T::DisableNonceValidation::get(),
             transaction.contract_class.clone(),
         ) {
             Ok(v) => {

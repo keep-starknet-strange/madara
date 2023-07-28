@@ -1,5 +1,3 @@
-use core::str::FromStr;
-
 use mp_starknet::execution::types::Felt252Wrapper;
 use sp_core::H256;
 use starknet_api::api_core::{calculate_contract_address as _calculate_contract_address, ClassHash, ContractAddress};
@@ -54,11 +52,13 @@ pub enum AccountTypeV1Inner {
 }
 
 /// Returns the account address, class hash and calldata given an account type and given deploy salt
-pub fn account_helper(salt: &str, account_type: AccountType) -> (Felt252Wrapper, Felt252Wrapper, Vec<&str>) {
+pub fn account_helper(
+    salt: Felt252Wrapper,
+    account_type: AccountType,
+) -> (Felt252Wrapper, Felt252Wrapper, Vec<&'static str>) {
     let account_class_hash = get_account_class_hash(account_type);
     let calldata = get_account_calldata(account_type);
-    let account_salt = H256::from_str(salt).unwrap();
-    let addr = calculate_contract_address(account_salt, account_class_hash.into(), calldata.clone()).unwrap();
+    let addr = calculate_contract_address(salt, account_class_hash, calldata.clone()).unwrap();
     (addr.0.0.into(), account_class_hash, calldata)
 }
 
@@ -97,7 +97,7 @@ pub fn get_account_calldata(account_type: AccountType) -> Vec<&'static str> {
 
 /// Returns the account address for an account type
 pub fn get_account_address(account_type: AccountType) -> Felt252Wrapper {
-    account_helper(TEST_ACCOUNT_SALT, account_type).0
+    account_helper(*TEST_ACCOUNT_SALT, account_type).0
 }
 
 /// Calculate the address of a contract.
@@ -110,13 +110,13 @@ pub fn get_account_address(account_type: AccountType) -> Felt252Wrapper {
 /// # Errors
 /// If the contract address cannot be calculated.
 pub fn calculate_contract_address(
-    salt: H256,
-    class_hash: H256,
+    salt: Felt252Wrapper,
+    class_hash: Felt252Wrapper,
     constructor_calldata: Vec<&str>,
 ) -> Result<ContractAddress, StarknetApiError> {
     _calculate_contract_address(
-        ContractAddressSalt(StarkFelt::new(salt.0)?),
-        ClassHash(StarkFelt::new(class_hash.0)?),
+        ContractAddressSalt(StarkFelt::new(salt.0.to_bytes_be())?),
+        ClassHash(StarkFelt::new(class_hash.0.to_bytes_be())?),
         &Calldata(
             constructor_calldata
                 .clone()
