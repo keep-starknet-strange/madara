@@ -6,7 +6,7 @@ use frame_system::EventRecord;
 use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CHAIN_ID, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
+    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
     STARKNET_CONTRACT_STATE_ROOT, STARKNET_CONTRACT_STATE_TRIES, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS,
     STARKNET_STORAGE, SYSTEM_EVENTS,
 };
@@ -170,11 +170,6 @@ where
             Some(commitments) => Some(commitments),
             None => Some(StateCommitments::default()),
         }
-    }
-
-    fn chain_id(&self, block_hash: <B as BlockT>::Hash) -> Option<Felt252Wrapper> {
-        let chain_id_prefix = storage_prefix_build(PALLET_STARKNET, STARKNET_CHAIN_ID);
-        self.query_storage::<Felt252Wrapper>(block_hash, &StorageKey(chain_id_prefix))
     }
 
     fn contract_state_root_by_address(

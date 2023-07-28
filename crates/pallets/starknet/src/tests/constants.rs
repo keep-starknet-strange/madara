@@ -1,3 +1,6 @@
+use lazy_static::lazy_static;
+use mp_starknet::execution::types::Felt252Wrapper;
+
 pub const ACCOUNT_PRIVATE_KEY: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
 pub const ACCOUNT_PUBLIC_KEY: &str = "0x03603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
 pub const ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
@@ -15,7 +18,6 @@ pub const NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_0: &str =
     "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
 pub const NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_1: &str =
     "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276";
-pub const TEST_ACCOUNT_SALT: &str = "0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a";
 pub const TEST_CLASS_HASH: &str = "0x00000000000000000000000000000000000000000000000000000000DEADBEEF";
 pub const TEST_CONTRACT_ADDRESS: &str = "0x024d1e355f6b9d27a5a420c8f4b50cea9154a8e34ad30fc39d7c98d3c177d0d7";
 pub const TOKEN_CONTRACT_CLASS_HASH: &str = "0x06232eeb9ecb5de85fc927599f144913bfee6ac413f2482668c9f03ce4d07922";
@@ -31,3 +33,11 @@ pub const EMIT_SINGLE_EVENT_CLASS_HASH: &str = "0x91000";
 pub const MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS: &str =
     "0x051a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02cf";
 pub const MULTIPLE_EVENT_EMITTING_CLASS_HASH: &str = "0x92000";
+
+// salts for address calculation
+lazy_static! {
+    pub static ref SALT: Felt252Wrapper =
+        Felt252Wrapper::from_hex_be("0x03b37cbe4e9eac89d54c5f7cc6329a63a63e8c8db2bf936f981041e086752463").unwrap();
+    pub static ref TEST_ACCOUNT_SALT: Felt252Wrapper =
+        Felt252Wrapper::from_hex_be("0x0780f72e33c1508df24d8f00a96ecc6e08a850ecb09f7e6dff6a81624c0ef46a").unwrap();
+}
