@@ -56,7 +56,7 @@ fueling growth within the Starknet ecosystem.
 
 - [Madara Explorer](https://github.com/lambdaclass/madara_explorer) by the great
   [LambdaClass](https://lambdaclass.com/) team 🫶: A block explorer for Madara.
-- [Madara Infra](https://github.com/keep-starknet-strange/madara-app): A
+- [Madara Infra](https://github.com/keep-starknet-strange/madara-infra): A
   collection of scripts and tools to deploy and manage Madara on different
   environments (e.g. AWS, docker, ansible, etc.). It also contains the
   [Starknet Stack](https://github.com/keep-starknet-strange/madara-infra/blob/main/starknet-stack/docker-compose.yml)
