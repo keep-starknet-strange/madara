@@ -17,7 +17,6 @@ pub struct GenesisLoader {
     pub contracts: Vec<(ContractAddressWrapper, ClassHashWrapper)>,
     pub storage: Vec<(ContractStorageKeyWrapper, Felt252Wrapper)>,
     pub fee_token_address: ContractAddressWrapper,
-    pub chain_id: Felt252Wrapper,
     pub seq_addr_updated: bool,
 }
 
@@ -46,7 +45,6 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
             contract_classes: classes,
             storage: loader.storage,
             fee_token_address: loader.fee_token_address,
-            chain_id: loader.chain_id,
             seq_addr_updated: loader.seq_addr_updated,
             ..Default::default()
         }
