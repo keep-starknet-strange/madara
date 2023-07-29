@@ -85,7 +85,7 @@ jobs:
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
           choco install -y protobuf
-          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a --output /tmp/madara-libs/libjemalloc.a
+          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a --output C:/tmp/madara-libs/libjemalloc.a
           curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib --output /tmp/madara-libs/rocksdb.lib
 
       - name: Build (x86_64 linux/apple)
@@ -122,8 +122,8 @@ jobs:
       - name: Build (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
-          export JEMALLOC_OVERRIDE=C:\tmp\madara-libs\libjemalloc.a
-          export ROCKSDB_LIB_DIR=C:\tmp\madara-libs
+          export JEMALLOC_OVERRIDE=C:/tmp/madara-libs/libjemalloc.a
+          export ROCKSDB_LIB_DIR=C:/tmp/madara-libs
           cargo build --release --target ${{ matrix.build }}
 
       - name: Upload binaries
