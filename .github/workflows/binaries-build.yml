@@ -85,10 +85,10 @@ jobs:
       - name: Setup build deps (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
-          choco install -y protobuf
+          choco install -y protoc
           mkdir C:/tmp/madara-libs
-          curl https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a -OutFile C:/tmp/madara-libs/libjemalloc.a
-          curl https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib -OutFile /tmp/madara-libs/rocksdb.lib
+          (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a", "C:/tmp/madara-libs/libjemalloc.a")
+          (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib", "C:/tmp/madara-libs/rocksdb.lib")
 
       - name: Build (x86_64 linux and x86_64/aarch64 apple)
         if:
