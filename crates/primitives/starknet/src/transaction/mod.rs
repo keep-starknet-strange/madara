@@ -533,6 +533,7 @@ impl Transaction {
         state: &mut S,
         block_context: &BlockContext,
         tx_type: TxType,
+        disable_nonce_validation: bool,
         contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Initialize the execution resources.
@@ -560,7 +561,9 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context, self.is_query)?;
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -614,7 +617,9 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context, self.is_query)?;
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
 
                 // Validate.
                 let validate_call_info = self.validate_tx(
@@ -646,7 +651,9 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context, self.is_query)?;
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
 
                 // Execute.
                 let transaction_execution = tx
