@@ -86,6 +86,7 @@ jobs:
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
           choco install -y protoc
+          choco install -y llvm
           mkdir C:/tmp/madara-libs
           (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a", "C:/tmp/madara-libs/libjemalloc.a")
           (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib", "C:/tmp/madara-libs/rocksdb.lib")
@@ -108,7 +109,9 @@ jobs:
         if: matrix.build == 'x86_64-pc-windows-gnu'
         run: |
           cargo fetch --target ${{ matrix.build }}
-          # TODO check on ci the path
+          export reg_folder=$(ls /home/runner/.cargo/registry/src | grep github.com)
+          export pdb_folder=$(ls /home/runner/.cargo/registry/src/$reg_folder | grep parity-db)
+          sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' /home/runner/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
 
       - name: Build (x86_64-pc-windows-gnu)
         if: matrix.build == 'x86_64-pc-windows-gnu'
