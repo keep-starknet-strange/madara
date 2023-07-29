@@ -126,8 +126,8 @@ jobs:
       - name: Build (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
-          export JEMALLOC_OVERRIDE=C:/tmp/madara-libs/libjemalloc.a
-          export ROCKSDB_LIB_DIR=C:/tmp/madara-libs
+          JEMALLOC_OVERRIDE=C:/tmp/madara-libs/libjemalloc.a \
+          ROCKSDB_LIB_DIR=C:/tmp/madara-libs \
           cargo build --release --target ${{ matrix.build }}
 
       - name: Upload binaries
