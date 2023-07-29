@@ -1,9 +1,14 @@
 use mp_starknet::execution::types::Felt252Wrapper;
-use mp_starknet::transaction::types::{InvokeTransaction, Transaction};
+use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
 use sp_core::bounded_vec;
+use sp_runtime::BoundedVec;
 
 use self::mock::default_mock::Starknet;
+use self::mock::{get_account_address, get_storage_key, AccountType};
 use self::utils::get_contract_class;
+use crate::tests::mock::account_helper;
+use crate::tests::utils::sign_message_hash;
+use crate::{Config, StorageView};
 
 mod account_helper;
 mod call_contract;
@@ -13,6 +18,7 @@ mod erc20;
 mod fees_disabled;
 mod invoke_tx;
 mod l1_message;
+mod nonce_validation;
 mod query_tx;
 mod sequencer_address;
 mod state_root;
@@ -224,4 +230,62 @@ fn get_invoke_openzeppelin_dummy() -> Transaction {
         is_query: false,
     }
     .from_invoke(Starknet::chain_id())
+}
+
+/// Returns a dummy declare transaction for the given account type.
+/// The declared class hash is a ERC20 contract, class hash calculated
+/// with starkli.
+pub fn get_declare_dummy(account_type: AccountType) -> DeclareTransaction {
+    let account_addr = get_account_address(account_type);
+
+    let erc20_class = get_contract_class("ERC20.json", 0);
+    let erc20_class_hash =
+        Felt252Wrapper::from_hex_be("0x057eca87f4b19852cfd4551cf4706ababc6251a8781733a0a11cf8e94211da95").unwrap();
+
+    DeclareTransaction {
+        sender_address: account_addr,
+        contract_class: erc20_class,
+        version: 1,
+        class_hash: erc20_class_hash,
+        compiled_class_hash: None,
+        nonce: Felt252Wrapper::ZERO,
+        max_fee: Felt252Wrapper::from(u128::MAX),
+        signature: bounded_vec!(),
+        is_query: false,
+    }
+}
+
+/// Returns a dummy deploy account transaction for the given salt and account type
+pub fn get_deploy_account_dummy(salt: Felt252Wrapper, account_type: AccountType) -> DeployAccountTransaction {
+    let (_, account_class_hash, calldata) = account_helper(salt, account_type);
+
+    DeployAccountTransaction {
+        account_class_hash,
+        salt,
+        version: 1,
+        calldata: BoundedVec::try_from(
+            calldata
+                .clone()
+                .into_iter()
+                .map(|e| Felt252Wrapper::from_hex_be(e).unwrap())
+                .collect::<Vec<Felt252Wrapper>>(),
+        )
+        .unwrap(),
+        nonce: Felt252Wrapper::ZERO,
+        max_fee: Felt252Wrapper::from(u128::MAX),
+        signature: bounded_vec!(),
+        is_query: false,
+    }
+}
+
+/// Sets the balance of the given address to infinite.
+pub fn set_infinite_tokens<T: Config>(address: Felt252Wrapper) {
+    StorageView::<T>::insert(
+        get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 0),
+        Felt252Wrapper::from(u128::MAX),
+    );
+    StorageView::<T>::insert(
+        get_storage_key(&Starknet::fee_token_address(), "ERC20_balances", &[address], 1),
+        Felt252Wrapper::from(u128::MAX),
+    );
 }
