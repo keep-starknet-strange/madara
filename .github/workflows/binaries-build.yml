@@ -25,6 +25,8 @@ jobs:
           - aarch64-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-gnu
+          - x86_64-pc-windows-msvc
         include:
           - build: aarch64-apple-darwin
             os: macos-latest-xl
@@ -34,6 +36,10 @@ jobs:
             os: macos-latest-xl
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
+          - build: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+          - build: x86_64-pc-windows-msvc
+            os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -67,6 +73,21 @@ jobs:
         run: |
           brew install protobuf
 
+      - name: Setup build deps (x86_64-pc-windows-gnu)
+        if: matrix.build == 'x86_64-pc-windows-gnu'
+        run: |
+          sudo apt update
+          sudo apt install -y g++-mingw-w64-x86-64
+          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a --output /tmp/madara-libs/libjemalloc.a
+          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib --output /tmp/madara-libs/rocksdb.lib
+
+      - name: Setup build deps (x86_64-pc-windows-msvc)
+        if: matrix.build == 'x86_64-pc-windows-msvc'
+        run: |
+          choco install -y protobuf
+          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a --output /tmp/madara-libs/libjemalloc.a
+          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib --output /tmp/madara-libs/rocksdb.lib
+
       - name: Build (x86_64 linux/apple)
         if: matrix.build != 'aarch64-unknown-linux-gnu'
         run: cargo build --release --target ${{ matrix.build }}
@@ -77,6 +98,32 @@ jobs:
           export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/aarch64-linux-gnu-gcc
           export CC_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-gcc
           export CXX_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-g++
+          cargo build --release --target ${{ matrix.build }}
+
+      - name: Pre-Build (x86_64-pc-windows-gnu)
+        if: matrix.build == 'x86_64-pc-windows-gnu'
+        run: |
+          cargo fetch --target ${{ matrix.build }}
+          # TODO check on ci the path
+
+      - name: Build (x86_64-pc-windows-gnu)
+        if: matrix.build == 'x86_64-pc-windows-gnu'
+        run: |
+          export JEMALLOC_OVERRIDE=/tmp/madara-libs/libjemalloc.a
+          export ROCKSDB_LIB_DIR=/tmp/madara-libs
+          cargo build --release --target ${{ matrix.build }}
+
+      - name: Pre-Build (x86_64-pc-windows-msvc)
+        if: matrix.build == 'x86_64-pc-windows-msvc'
+        run: |
+          cargo fetch --target ${{ matrix.build }}
+          # TODO check on ci the path
+
+      - name: Build (x86_64-pc-windows-msvc)
+        if: matrix.build == 'x86_64-pc-windows-msvc'
+        run: |
+          export JEMALLOC_OVERRIDE=C:\tmp\madara-libs\libjemalloc.a
+          export ROCKSDB_LIB_DIR=C:\tmp\madara-libs
           cargo build --release --target ${{ matrix.build }}
 
       - name: Upload binaries
