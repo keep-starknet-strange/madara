@@ -47,10 +47,10 @@ pub enum StarknetRpcApiError {
 
 impl From<DispatchError> for StarknetRpcApiError {
     fn from(err: DispatchError) -> Self {
-        match err {
-            _ if err == PalletError::<Runtime>::ContractNotFound.into() => StarknetRpcApiError::ContractNotFound,
-            _ => StarknetRpcApiError::ContractError,
+        if err == PalletError::<Runtime>::ContractNotFound.into() {
+            return StarknetRpcApiError::ContractNotFound;
         }
+        StarknetRpcApiError::ContractError
     }
 }
 
