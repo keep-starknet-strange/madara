@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690540367972,
+  "lastUpdate": 1690724341333,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -12204,6 +12204,54 @@ window.BENCHMARK_DATA = {
             "value": 142.83333333333334,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "abishek_bashyal@outlook.com",
+            "name": "Abishek Bashyal",
+            "username": "MdTeach"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0d24667529dae4eabf595aa805a5314cba911839",
+          "message": "fix: contract call on non existing contract returning a specific error message (#884)\n\nCo-authored-by: Timothée Delabrouille <34384633+tdelabro@users.noreply.github.com>",
+          "timestamp": "2023-07-30T15:16:00+02:00",
+          "tree_id": "a5192234ecf0d12c16e2ace7269241ad401cab55",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/0d24667529dae4eabf595aa805a5314cba911839"
+        },
+        "date": 1690724337436,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 865,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 144.16666666666666,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3600\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average Extrinsics per block (ERC721 mints)",
+            "value": 860.75,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS (ERC721 mints)",
+            "value": 143.45833333333334,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       }
