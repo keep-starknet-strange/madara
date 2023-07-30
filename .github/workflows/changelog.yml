@@ -5,10 +5,9 @@ on:
     branches: [main]
 
 jobs:
-  # Enforces the update of a changelog file on every pull request 
+  # Enforces the update of a changelog file on every pull request
   # skipLabel default is "Skip-Changelog"
   changelog:
     runs-on: ubuntu-latest
     steps:
-    - uses: dangoslen/changelog-enforcer@v3
-    
+      - uses: dangoslen/changelog-enforcer@v3
