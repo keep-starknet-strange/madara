@@ -77,7 +77,7 @@ jobs:
         if: matrix.build == 'x86_64-pc-windows-gnu'
         run: |
           sudo apt update
-          sudo apt install -y g++-mingw-w64-x86-64
+          sudo apt install -y mingw-w64
           mkdir /tmp/madara-libs
           curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a --output /tmp/madara-libs/libjemalloc.a
           curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib --output /tmp/madara-libs/rocksdb.lib
