@@ -1030,6 +1030,7 @@
 <a href="#1030" id="1030">1030</a>
 <a href="#1031" id="1031">1031</a>
 <a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet RPC server API implementation
 //!
 //! It uses the madara client and backend in order to answer queries.
@@ -1277,8 +1278,9 @@
             })<span class="question-mark">?
             </span>.map_err(|e| {
                 <span class="macro">error!</span>(<span class="string">&quot;Failed to call function: {:#?}&quot;</span>, e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::from(e)
             })<span class="question-mark">?</span>;
+
         <span class="prelude-val">Ok</span>(result.iter().map(|x| <span class="macro">format!</span>(<span class="string">&quot;{:#x}&quot;</span>, x.<span class="number">0</span>)).collect())
     }
 
