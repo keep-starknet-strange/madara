@@ -245,8 +245,9 @@ where
             })?
             .map_err(|e| {
                 error!("Failed to call function: {:#?}", e);
-                StarknetRpcApiError::ContractError
+                StarknetRpcApiError::from(e)
             })?;
+
         Ok(result.iter().map(|x| format!("{:#x}", x.0)).collect())
     }
 
