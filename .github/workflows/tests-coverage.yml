@@ -35,6 +35,11 @@ jobs:
         run: |-
           cd tests
           npm run test
+      run: FORCE_WASM_EXECUTION=true cmd
+      - name: Run test
+        run: |-
+          cd tests
+          npm run test
 
   coverage:
     # sadly, for now we have to "rebuild" for the coverage
