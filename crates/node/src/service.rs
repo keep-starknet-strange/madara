@@ -246,12 +246,6 @@ where
 use crate::chain_spec::print_development_account;
 /// Builds a new service for a full client.
 pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
-
-    // Logging the development account
-    if config.chain_spec.id() == "dev" {
-        print_development_account()
-    }
-
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 

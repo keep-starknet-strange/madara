@@ -56,6 +56,10 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
         "dev",
         ChainType::Development,
         move || {
+
+            // Logging the development account
+            print_development_account();
+
             DevGenesisExt {
                 genesis_config: testnet_genesis(
                     wasm_binary,
@@ -84,11 +88,11 @@ use sp_core::hexdisplay::HexDisplay;
 pub fn print_development_account() {
     let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
     let signer = get_storage_key(&argent_account_address, "_signer", &[], 0);
-    log::info!(
-        "🧪 Using development account with address 0x{} and PK 0x{}",
-        HexDisplay::from(&signer.0.0.to_bytes_be()),
-        HexDisplay::from(&signer.1.0.to_bytes_be())
-    );
+    log::info!("🧪 Using the following development accounts:");
+    log::info!("🧪 NO VALIDATE: {}", NO_VALIDATE_ACCOUNT_ADDRESS);
+    log::info!("🧪 ARGENT: {}", ARGENT_ACCOUNT_ADDRESS);
+    log::info!("🧪 OZ: {}", OZ_ACCOUNT_ADDRESS);
+    log::info!("🧪 CAIRO 1: {}", CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS);
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
