@@ -145,5 +145,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/${{ matrix.build }}/release/${{ matrix.bin_name }}
           asset_name: ${{ matrix.build}}-${{ matrix.bin_name }}
-          tag: inputs.release_tag_name
+          tag: ${{ inputs.release_tag_name }}
           overwrite: true
