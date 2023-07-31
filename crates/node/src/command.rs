@@ -184,8 +184,21 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            // when using the --dev flag, every future config should be ignored
-            if !cli.run.run_cmd.shared_params.dev {
+			// create a reproducible dev environment
+			if cli.run.run_cmd.shared_params.dev {
+				// This flag sets `--chain=dev`, `--force-authoring`, `--rpc-cors=all`,
+				// `--alice`, and `--tmp` flags, unless explicitly overridden.
+				cli.run.run_cmd.shared_params.dev = false;
+				cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
+
+				cli.run.run_cmd.force_authoring = true;
+				cli.run.run_cmd.alice = true;
+				// tmp (base_path)
+
+				cli.run.run_cmd.rpc_cors = Some(vec!["all".to_string()].into());
+				cli.run.run_cmd.rpc_external = true;
+				cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+			} else {
                 let madara_path = if cli.run.madara_path.is_some() {
                     cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
                 } else {
