@@ -4,7 +4,7 @@ name: Task - Build binaries and publish
 on:
   workflow_dispatch:
     inputs:
-      release_tag_name:
+      elease_tag_name:
         description: "Release tag name"
         type: string
         required: true
@@ -29,17 +29,17 @@ jobs:
           - x86_64-pc-windows-msvc
         include:
           - build: aarch64-apple-darwin
-            os: macos-latest-xl
+            os: macos-latest
           - build: aarch64-unknown-linux-gnu
-            os: ubuntu-latest-32-cores
+            os: ubuntu-latest
           - build: x86_64-apple-darwin
-            os: macos-latest-xl
+            os: macos-latest
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest-32-cores
+            os: ubuntu-latest
           - build: x86_64-pc-windows-gnu
-            os: ubuntu-latest-32-cores
+            os: ubuntu-latest
           - build: x86_64-pc-windows-msvc
-            os: windows-latest-32-cores
+            os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
