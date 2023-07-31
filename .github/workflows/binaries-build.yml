@@ -29,13 +29,13 @@ jobs:
           - x86_64-pc-windows-msvc
         include:
           - build: aarch64-apple-darwin
-            os: macos-latest-xl
+            os: macos-latest
           - build: aarch64-unknown-linux-gnu
-            os: ubuntu-latest-32-cores
+            os: ubuntu-latest
           - build: x86_64-apple-darwin
-            os: macos-latest-xl
+            os: macos-latest
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest-32-cores
+            os: ubuntu-latest
           - build: x86_64-pc-windows-gnu
             os: ubuntu-latest
           - build: x86_64-pc-windows-msvc
