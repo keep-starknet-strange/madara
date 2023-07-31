@@ -12,3 +12,5 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
+- test: add `starknet-rpc-test` crate to the workspace
+- test(rpc): add `get_block_number.rs` tests
