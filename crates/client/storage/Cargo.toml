@@ -17,7 +17,6 @@ repository = "https://github.com/keep-starknet-strange/madara"
 blockifier = { workspace = true, default-features = false }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-madara-runtime = { workspace = true, default-features = true }
 mp-starknet = { workspace = true, default-features = true }
 pallet-starknet = { workspace = true, default-features = true }
 sc-client-api = { workspace = true, default-features = true }

@@ -1,6 +1,4 @@
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use madara_runtime::Runtime;
-use pallet_starknet::pallet::Error as PalletError;
 use sp_runtime::DispatchError;
 
 #[derive(thiserror::Error, Clone, Copy, Debug)]
@@ -46,10 +44,7 @@ pub enum StarknetRpcApiError {
 }
 
 impl From<DispatchError> for StarknetRpcApiError {
-    fn from(err: DispatchError) -> Self {
-        if err == PalletError::<Runtime>::ContractNotFound.into() {
-            return StarknetRpcApiError::ContractNotFound;
-        }
+    fn from(_err: DispatchError) -> Self {
         StarknetRpcApiError::ContractError
     }
 }
