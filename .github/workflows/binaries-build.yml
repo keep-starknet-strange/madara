@@ -30,16 +30,22 @@ jobs:
         include:
           - build: aarch64-apple-darwin
             os: macos-latest
+            bin_name: madara
           - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest
+            bin_name: madara
           - build: x86_64-apple-darwin
             os: macos-latest
+            bin_name: madara
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+            bin_name: madara
           - build: x86_64-pc-windows-gnu
             os: ubuntu-latest
+            bin_name: madara.exe
           - build: x86_64-pc-windows-msvc
             os: windows-latest
+            bin_name: madara.exe
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -133,17 +139,11 @@ jobs:
           set ROCKSDB_LIB_DIR=C:/tmp/madara-libs
           cargo build --release --target ${{ matrix.build }}
 
-      - name: Upload binaries
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.build }}
-          path: target/${{ matrix.build }}/release/madara*
-
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/${{ matrix.build }}/release/madara*
-          tag: ${{ github.ref }}
+          file: target/${{ matrix.build }}/release/${{ matrix.bin_name }}
+          asset_name: ${{ matrix.build}}-${{ matrix.bin_name }}
+          tag: if (inputs.release_tag_name) { echo inputs.release_tag_name; } else { echo github.ref; }
           overwrite: true
-          file_glob: true
