@@ -44,11 +44,11 @@ benchmarks! {
         sender_address: Felt252Wrapper::from_hex_be("0x4").unwrap(),
         calldata: vec![
             Felt252Wrapper::from_hex_be("0x1").unwrap(),
-            Felt252Wrapper::from_hex_be("0x41a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf").unwrap(),
+            Felt252Wrapper::from_hex_be("0x41a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf").unwrap(), // UDC contract
             Felt252Wrapper::from_hex_be("0x1987cbd17808b9a23693d4de7e246a443cfe37e6e7fbaeabd7d7e6532b07c3d").unwrap(),
             Felt252Wrapper::from_hex_be("0x4").unwrap(),
-            Felt252Wrapper::from_hex_be("0x3d1fc9d009582f159569678e08b6ac6314eb16eb81fdff5860592b7698522c0").unwrap(),
-            Felt252Wrapper::from_hex_be("0x4f0d2f1cfafb6c5124e7a151ca60ab39d669fbe0a56a53ad152a3c91fc37dc7").unwrap(),
+            Felt252Wrapper::from_hex_be("0x3d1fc9d009582f159569678e08b6ac6314eb16eb81fdff5860592b7698522c0").unwrap(), // class hash
+            Felt252Wrapper::from_hex_be("0x1").unwrap(),
             Felt252Wrapper::from_hex_be("0x1").unwrap(),
             Felt252Wrapper::from_hex_be("0x0").unwrap(),
         ].try_into().unwrap(),
@@ -61,6 +61,23 @@ benchmarks! {
       // deploy the contract
       assert!(pallet::Pallet::<T>::invoke(RawOrigin::None.into(), invoke_tx).is_ok());
   }: {
-     /* code to test the function benchmarked */
+     // call the infinite loop function
+     let invoke_tx = InvokeTransaction {
+        version:1,
+        sender_address: Felt252Wrapper::from_hex_be("0x4").unwrap(),
+        calldata: vec![
+            Felt252Wrapper::from_hex_be("0x1").unwrap(),
+            Felt252Wrapper::from_hex_be("0x7c328ec75649bb1e8ddd783b75b7d146c7ae13925a2cc5e2a46598fc551c950").unwrap(), // contract address
+            Felt252Wrapper::from_hex_be("0x2e7e6ab3df2d8d293198339ef8cda98658e6ddc2d7ffb24116e343e26d3db8d").unwrap(),
+            Felt252Wrapper::from_hex_be("0x0").unwrap()
+        ].try_into().unwrap(),
+        nonce: Felt252Wrapper::TWO,
+        max_fee: Felt252Wrapper::from_dec_str("1000000000").unwrap(),
+        signature: vec![].try_into().unwrap(),
+        is_query: false
+     };
+
+     // once we start charging for failing transactions this won't actually throw an error
+     assert!(pallet::Pallet::<T>::invoke(RawOrigin::None.into(), invoke_tx).is_err());
   }
 }
