@@ -85,13 +85,12 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
 }
 
 pub fn print_development_account() {
-    let argent_account_address = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_ADDRESS).unwrap();
-    let signer = get_storage_key(&argent_account_address, "_signer", &[], 0);
+    const NO_VALIDATE_PK: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
     log::info!("🧪 Using the following development accounts:");
-    log::info!("🧪 NO VALIDATE: {}", NO_VALIDATE_ACCOUNT_ADDRESS);
-    log::info!("🧪 ARGENT: {}", ARGENT_ACCOUNT_ADDRESS);
-    log::info!("🧪 OZ: {}", OZ_ACCOUNT_ADDRESS);
-    log::info!("🧪 CAIRO 1: {}", CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS);
+    log::info!("🧪 NO VALIDATE with address: {} and pk: {}", NO_VALIDATE_ACCOUNT_ADDRESS, "");
+    log::info!("🧪 ARGENT with address: {} and pk: {}", ARGENT_ACCOUNT_ADDRESS, NO_VALIDATE_PK);
+    log::info!("🧪 OZ with address: {} and pk: {}", OZ_ACCOUNT_ADDRESS, "");
+    log::info!("🧪 CAIRO 1 with address: {} and pk: {}", CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS, "");
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {

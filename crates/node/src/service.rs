@@ -243,7 +243,6 @@ where
     ))
 }
 
-use crate::chain_spec::print_development_account;
 /// Builds a new service for a full client.
 pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
