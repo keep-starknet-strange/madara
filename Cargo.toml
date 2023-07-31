@@ -12,6 +12,7 @@ members = [
   "crates/client/mapping-sync",
   "crates/client/storage",
   "crates/client/transaction-pool",
+  "starknet-rpc-test",
 ]
 
 [profile.release]
