@@ -40,6 +40,8 @@ use mp_starknet::crypto::state::StateCommitment;
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/reference/frame-pallets/>
 pub use pallet::*;
+/// The Starknet pallet's benchmarking to calcualte weights.
+pub mod benchmarking;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
 /// The implementation of the message type.
