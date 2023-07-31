@@ -22,7 +22,7 @@ fn copy_chain_spec(madara_path: String) {
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "Substrate Node".into()
+        "Madara Node".into()
     }
 
     fn impl_version() -> String {
@@ -38,7 +38,7 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "support.anonymous.an".into()
+        "docs.madara.zone".into()
     }
 
     fn copyright_start_year() -> i32 {
@@ -184,18 +184,17 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
+            println!("{:?}", cli);
 			// create a reproducible dev environment
 			if cli.run.run_cmd.shared_params.dev {
-				// This flag sets `--chain=dev`, `--force-authoring`, `--rpc-cors=all`,
-				// `--alice`, and `--tmp` flags, unless explicitly overridden.
 				cli.run.run_cmd.shared_params.dev = false;
 				cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
 
 				cli.run.run_cmd.force_authoring = true;
 				cli.run.run_cmd.alice = true;
-				// tmp (base_path)
+                cli.run.run_cmd.tmp = true;
 
-				cli.run.run_cmd.rpc_cors = Some(vec!["all".to_string()].into());
+				// we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external hosts
 				cli.run.run_cmd.rpc_external = true;
 				cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
 			} else {
