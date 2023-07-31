@@ -134,15 +134,16 @@ jobs:
           cargo build --release --target ${{ matrix.build }}
 
       - name: Upload binaries
-        if: github.event.inputs.release_tag_name
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.build }}
           path: target/${{ matrix.build }}/release
 
-      - name: Upload source
-        if: github.event.inputs.release_tag_name
-        uses: actions/upload-artifact@v2
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: source
-          path: target/${{ matrix.build }}/release
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/${{ matrix.build }}/release/madara*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
