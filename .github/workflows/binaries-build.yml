@@ -137,7 +137,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ matrix.build }}
-          path: target/${{ matrix.build }}/release
+          path: target/${{ matrix.build }}/release/madara*
 
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
