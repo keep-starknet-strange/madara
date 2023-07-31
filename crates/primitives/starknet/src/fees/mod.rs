@@ -12,6 +12,7 @@ use blockifier::fee::gas_usage::calculate_tx_gas_usage;
 use blockifier::fee::os_usage::get_additional_os_resources;
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
+use frame_support::log::info;
 use starknet_api::api_core::EntryPointSelector;
 use starknet_api::calldata;
 use starknet_api::deprecated_contract_class::EntryPointType;

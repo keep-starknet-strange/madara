@@ -24,6 +24,7 @@ use blockifier::transaction::transactions::{
     DeclareTransaction as StarknetDeclareTransaction, Executable, L1HandlerTransaction as StarknetL1HandlerTransaction,
 };
 use cairo_vm::felt::Felt252;
+use frame_support::log::info;
 use frame_support::BoundedVec;
 use sp_core::U256;
 use starknet_api::api_core::{
@@ -681,6 +682,7 @@ impl Transaction {
             execution_resources,
             tx_type,
         )?;
+
         let (actual_fee, fee_transfer_call_info) =
             charge_fee(state, block_context, account_context, &tx_resources, self.is_query)?;
         Ok(TransactionExecutionInfoWrapper {
