@@ -184,7 +184,6 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-            println!("{:?}", cli);
 			// create a reproducible dev environment
 			if cli.run.run_cmd.shared_params.dev {
 				cli.run.run_cmd.shared_params.dev = false;
