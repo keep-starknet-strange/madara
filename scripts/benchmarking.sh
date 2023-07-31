@@ -11,6 +11,9 @@ BINARY="./target/release/madara"
 STEPS=50
 REPEAT=20
 
+# Add a default execution parameter
+EXECUTION="wasm"
+
 if [[ ! -f "${BINARY}" ]]; then
     echo "binary '${BINARY}' does not exist."
     echo "ensure that the madara binary is compiled with '--features=runtime-benchmarks' and in release mode."
@@ -54,7 +57,7 @@ function bench {
     fi
 
     WASMTIME_BACKTRACE_DETAILS=1 ${BINARY} benchmark pallet \
-        --execution=native \
+        --execution=${EXECUTION} \
         --wasm-execution=compiled \
         --pallet "${1}" \
         --extrinsic "${2}" \
@@ -77,6 +80,11 @@ else
     ALL=0
     if [[ "${@}" =~ "--all" ]]; then
         ALL=1
+    fi
+
+    if [[ "${@}" =~ "--execution=" ]]; then
+        EXECUTION=$(echo ${@} | awk -F '--execution=' '{print $2}' | awk '{print $1}')
+        set -o noglob && set -- ${@/'--execution='${EXECUTION}} && set +o noglob
     fi
 
     if [[ "${ALL}" -eq 1 ]]; then
