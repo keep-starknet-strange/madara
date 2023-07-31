@@ -64,6 +64,32 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type BasicImportQueue<Client> = sc_consensus::DefaultImportQueue<Block, Client>;
 type BoxBlockImport<Client> = sc_consensus::BoxBlockImport<Block, TransactionFor<Client, Block>>;
 
+
+/// Creates a new set of partial components for the Madara blockchain.
+///
+/// Constructs and initializes various components needed for the Madara blockchain
+/// using the provided configuration and builder functions.
+///
+/// # Arguments
+///
+/// - `config`: A reference to the Madara blockchain's configuration.
+/// - `build_import_queue`: A function that builds the import queue and block import for the
+///                          blockchain. It takes various parameters and returns a result
+///                          containing the import queue and block import components, or an
+///                          error if the construction fails.
+///
+/// # Generic Parameters
+///
+/// - `RuntimeApi`: The runtime API trait that should be used with the blockchain. It should be
+///                  a type that implements `ConstructRuntimeApi` trait for the `Block` and
+///                  `FullClient` types.
+/// - `BIQ`: The type of the `build_import_queue` function, which should be a closure that takes
+///          the necessary parameters and returns the import queue and block import components.
+///
+/// # Returns
+///
+/// A `Result` containing the partial components for the Madara blockchain (`PartialComponents`)
+/// or an error (`ServiceError`) if the initialization fails.
 #[allow(clippy::type_complexity)]
 pub fn new_partial<BIQ>(
     config: &Configuration,
@@ -158,6 +184,7 @@ where
 
     let madara_backend = Arc::new(MadaraBackend::open(&config.database, &db_config_dir(config))?);
 
+    // Call the `build_import_queue` function to create an import queue and block import for the service.
     let (import_queue, block_import) = build_import_queue(
         client.clone(),
         config,
@@ -244,10 +271,24 @@ where
 }
 
 /// Builds a new service for a full client.
+///
+/// Constructs a full client service based on the provided configuration. It sets up essential
+/// components such as the backend, transaction pool, import queue, and more.
+///
+/// # Arguments
+///
+/// * `config` - A `Configuration` object that contains the service configuration.
+/// * `sealing` - An optional `Sealing` value that specifies the sealing mode to use.
+///
+/// # Returns:
+///
+/// * A `Result` containing a `TaskManager` object if the service was successfully created, or a `ServiceError` if an error occurred.
 pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
+    // Create a partial service by calling `new_partial` function with the chosen import queue function.
+    // This step sets up essential components for the full client, including the backend, transaction pool, import queue, and more.
     let sc_service::PartialComponents {
         client,
         backend,
@@ -493,6 +534,24 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
     Ok(task_manager)
 }
 
+/// Run the manual seal authorship component, which allows block production with manual sealing or instant sealing.
+///
+/// # Arguments
+///
+/// * `sealing` - The sealing mode to use (Manual or Instant).
+/// * `client` - An `Arc` containing the client for the service.
+/// * `transaction_pool` - An `Arc` containing the transaction pool for the service.
+/// * `select_chain` - The select chain for the service.
+/// * `block_import` - A boxed block import for the service.
+/// * `task_manager` - A reference to a `TaskManager` object that manages tasks for the service.
+/// * `prometheus_registry` - An optional reference to a `Registry` object for Prometheus metrics.
+/// * `commands_stream` - A stream of engine commands for the manual seal process.
+///
+/// # Constraints
+/// - `RuntimeApi`: Generic constraint, the RuntimeApi must implement the ConstructRuntimeApi trait and be Send + Sync with 'static lifetime.
+///
+/// # Returns
+/// Returns `Result<(), ServiceError>` indicating the success or failure of the function.
 #[allow(clippy::too_many_arguments)]
 fn run_manual_seal_authorship(
     sealing: Sealing,
@@ -548,6 +607,7 @@ where
         Ok(timestamp)
     };
 
+    // Run either manual seal or instant seal based on the provided sealing type.
     let manual_seal = match sealing {
         Sealing::Manual => future::Either::Left(sc_consensus_manual_seal::run_manual_seal(
             sc_consensus_manual_seal::ManualSealParams {
