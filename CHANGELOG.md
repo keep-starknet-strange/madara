@@ -2,6 +2,9 @@
 
 ## Next release
 
+- test: add `starknet-rpc-test` crate to the workspace
+- test(rpc): add `get_block_number.rs` tests
+
 ## v0.2.0
 
 - add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
