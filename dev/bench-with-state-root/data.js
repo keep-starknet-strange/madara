@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690790902603,
+  "lastUpdate": 1690790905295,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -5255,6 +5255,54 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/keep-starknet-strange/madara/commit/db957734252b00a051d979887dd593bef13cfc7e"
         },
         "date": 1690750726869,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 417,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 69.5,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average Extrinsics per block (ERC721 mints)",
+            "value": 382.25,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS (ERC721 mints)",
+            "value": 63.708333333333336,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "45264458+abdelhamidbakhta@users.noreply.github.com",
+            "name": "Abdel @ StarkWare",
+            "username": "abdelhamidbakhta"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d4db5229abf23fe8cbcc10c77f76ce84cd2aa4b3",
+          "message": ":busts_in_silhouette: Add @Tidus91 as a contributor (#942)",
+          "timestamp": "2023-07-31T09:09:46+02:00",
+          "tree_id": "89cb2e16dab9849caf542a86ffd7edb64f0b3a20",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/d4db5229abf23fe8cbcc10c77f76ce84cd2aa4b3"
+        },
+        "date": 1690790901846,
         "tool": "customBiggerIsBetter",
         "benches": [
           {
