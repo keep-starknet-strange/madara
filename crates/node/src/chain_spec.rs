@@ -120,7 +120,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
     let genesis: GenesisLoader =
         serde_json::from_str(&read_file_to_string("crates/node/src/genesis_assets/genesis.json")).unwrap();
-    let genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
+    let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
 
     GenesisConfig {
         system: SystemConfig {
@@ -132,6 +132,6 @@ fn testnet_genesis(
         // Deterministic finality mechanism used for block finalization
         grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
         /// Starknet Genesis configuration.
-        starknet: genesis,
+        starknet: starknet_genesis,
     }
 }
