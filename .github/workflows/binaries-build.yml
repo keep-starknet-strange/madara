@@ -80,8 +80,7 @@ jobs:
       - name: Setup build deps (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
-          choco install -y protoc
-          choco install -y llvm
+          choco install -y protoc llvm mingw
           mkdir C:/tmp/madara-libs
           (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a", "C:/tmp/madara-libs/libjemalloc.a")
           (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib", "C:/tmp/madara-libs/rocksdb.lib")
