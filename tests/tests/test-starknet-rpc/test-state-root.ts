@@ -27,7 +27,7 @@ describeDevMadara(
 
         const latestBlock = await providerRPC.getBlock("latest");
         expect(latestBlock.new_root).to.eq(
-          "0x4e65560d4b1751b0c3455f9f4e3e0ae0c41c4929796659ceec256f1aea08e28",
+          "0x5092d16e8b238b12b0830c71c6ad21dce5edf3ed41aaa935a79a8d7bd7481e5",
         );
       });
     });

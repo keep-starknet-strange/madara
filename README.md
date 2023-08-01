@@ -83,6 +83,7 @@ Get started with our comprehensive documentation, which covers everything from
 project structure and architecture to benchmarking and running Madara:
 
 - [Architecture Overview](./docs/architecture.md)
+- [Chain Genesis Information](./docs/genesis.md)
 - [Project Structure](./docs/project-structure.md)
 - [Getting Started Guide](./docs/getting-started.md)
 - [Run benchmark yourself](./benchmarking/README.md)
@@ -216,6 +217,7 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Pilouche"><img src="https://avatars.githubusercontent.com/u/26655725?v=4?s=100" width="100px;" alt="Pilou"/><br /><sub><b>Pilou</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Pilouche" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hel-kame"><img src="https://avatars.githubusercontent.com/u/117039823?v=4?s=100" width="100px;" alt="hithem"/><br /><sub><b>hithem</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=hel-kame" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/clexmond"><img src="https://avatars.githubusercontent.com/u/706094?v=4?s=100" width="100px;" alt="Chris Lexmond"/><br /><sub><b>Chris Lexmond</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=clexmond" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Tidus91"><img src="https://avatars.githubusercontent.com/u/65631603?v=4?s=100" width="100px;" alt="Tidus91"/><br /><sub><b>Tidus91</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Tidus91" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
