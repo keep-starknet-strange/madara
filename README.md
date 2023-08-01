@@ -83,6 +83,7 @@ Get started with our comprehensive documentation, which covers everything from
 project structure and architecture to benchmarking and running Madara:
 
 - [Architecture Overview](./docs/architecture.md)
+- [Chain Genesis Information](./docs/genesis.md)
 - [Project Structure](./docs/project-structure.md)
 - [Getting Started Guide](./docs/getting-started.md)
 - [Run benchmark yourself](./benchmarking/README.md)
