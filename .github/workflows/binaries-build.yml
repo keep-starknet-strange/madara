@@ -25,7 +25,8 @@ jobs:
           - aarch64-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-unknown-linux-gnu
-          - x86_64-pc-windows-gnu
+          # https://github.com/rust-rocksdb/rust-rocksdb/issues/665
+          # - x86_64-pc-windows-gnu
           - x86_64-pc-windows-msvc
         include:
           - build: aarch64-apple-darwin
@@ -40,9 +41,6 @@ jobs:
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             bin_name: madara
-          - build: x86_64-pc-windows-gnu
-            os: ubuntu-latest
-            bin_name: madara.exe
           - build: x86_64-pc-windows-msvc
             os: windows-latest
             bin_name: madara.exe
@@ -55,10 +53,10 @@ jobs:
         run: |
           rustup target add ${{ matrix.build }}
 
-      - name: Setup build deps (linux/windows)
+      - name: Setup build deps (linux)
         if:
           matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
-          'aarch64-unknown-linux-gnu' || matrix.build == 'x86_64-pc-windows-gnu'
+          'aarch64-unknown-linux-gnu'
         run: |
           sudo apt update
           sudo apt install -y clang llvm libudev-dev protobuf-compiler
@@ -78,15 +76,6 @@ jobs:
           'aarch64-apple-darwin'
         run: |
           brew install protobuf
-
-      - name: Setup build deps (x86_64-pc-windows-gnu)
-        if: matrix.build == 'x86_64-pc-windows-gnu'
-        run: |
-          sudo apt update
-          sudo apt install -y mingw-w64
-          mkdir /tmp/madara-libs
-          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a --output /tmp/madara-libs/libjemalloc.a
-          curl -L https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib --output /tmp/madara-libs/rocksdb.lib
 
       - name: Setup build deps (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
@@ -111,25 +100,13 @@ jobs:
           export CXX_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-g++
           cargo build --release --target ${{ matrix.build }}
 
-      - name: Pre-Build (x86_64-pc-windows-gnu)
-        if: matrix.build == 'x86_64-pc-windows-gnu'
-        run: |
-          cargo fetch --target ${{ matrix.build }}
-          export reg_folder=$(ls /home/runner/.cargo/registry/src | grep github.com)
-          export pdb_folder=$(ls /home/runner/.cargo/registry/src/$reg_folder | grep parity-db)
-          sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' /home/runner/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
-
-      - name: Build (x86_64-pc-windows-gnu)
-        if: matrix.build == 'x86_64-pc-windows-gnu'
-        run: |
-          export JEMALLOC_OVERRIDE=/tmp/madara-libs/libjemalloc.a
-          export ROCKSDB_LIB_DIR=/tmp/madara-libs
-          cargo build --release --target ${{ matrix.build }}
-
       - name: Pre-Build (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
         run: |
           cargo fetch --target ${{ matrix.build }}
+          #export reg_folder=$(ls /home/runner/.cargo/registry/src | grep github.com)
+          #export pdb_folder=$(ls /home/runner/.cargo/registry/src/$reg_folder | grep parity-db)
+          #sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' /home/runner/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
           # TODO check on ci the path
 
       - name: Build (x86_64-pc-windows-msvc)
