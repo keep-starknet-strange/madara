@@ -6,18 +6,17 @@ use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
 
-fn copy_chain_spec(madara_path: String) {
-    let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    src.push("chain-specs");
+fn fetch_chain_spec(madara_path: String, target: String) -> Result<(), Box<dyn std::error::Error>> {
     let mut dst = std::path::PathBuf::from(madara_path);
     dst.push("chain-specs");
     std::fs::create_dir_all(&dst).unwrap();
-    for file in std::fs::read_dir(src).unwrap() {
-        let file = file.unwrap();
-        let mut dst = dst.clone();
-        dst.push(file.file_name());
-        std::fs::copy(file.path(), dst).unwrap();
-    }
+
+    let response = reqwest::blocking::get(target.clone());
+    let mut file = std::fs::File::create(dst.join(target.split('/').last().unwrap()))?;
+    let mut content = std::io::Cursor::new(response?.bytes()?);
+    std::io::copy(&mut content, &mut file)?;
+
+    Ok(())
 }
 
 impl SubstrateCli for Cli {
@@ -38,7 +37,7 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "docs.madara.zone".into()
+        "madara.zone".into()
     }
 
     fn copyright_start_year() -> i32 {
@@ -208,14 +207,22 @@ pub fn run() -> sc_cli::Result<()> {
                     Some((madara_path.clone() + "/p2p-key.ed25519").into());
                 cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
 
-                if cli.run.testnet.is_some() {
-                    copy_chain_spec(madara_path.clone());
+                if cli.run.chain_spec_url.is_some() {
+                    let url = cli.run.chain_spec_url.clone().unwrap();
+                    fetch_chain_spec(
+                        madara_path.clone(),
+                        url.clone()).unwrap();
+                    cli.run.run_cmd.shared_params.chain =
+                        Some(madara_path.clone() + "/chain-specs/" + url.split("/").last().unwrap());
+                }
 
+                if cli.run.testnet.is_some() {
                     match cli.run.testnet {
-                        Some(Testnet::Local) => {
-                            cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/local-raw.json");
-                        }
                         Some(Testnet::Sharingan) => {
+                            // even if chain-spec url is specified, overwrite it
+                            fetch_chain_spec(
+                                madara_path.clone(),
+                                "https://chains.madara.zone/sharingan/testnet-sharingan-raw.json".to_string()).unwrap();
                             cli.run.run_cmd.shared_params.chain =
                                 Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                         }
