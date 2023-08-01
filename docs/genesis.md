@@ -1,9 +1,9 @@
 # Genesis
 
 The genesis of the chain can be found in the [node]
-(<<https://github.com/keep-starknet-strange/madara/tree/main/crates/node/src/gene>
-sis_assets>) crate. The genesis is defined in the form of a JSON file containing
-the following:
+(<https://github.com/keep-starknet-strange/madara/tree/main/crates/node/src/genesis_assets>)
+crate. The genesis is defined in the form of a JSON file containing the
+following:
 
 - contract_classes: list of tuples containing the class hash and the class. The
   class can be provided in two formats:
