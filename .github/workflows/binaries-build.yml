@@ -101,12 +101,12 @@ jobs:
 
       - name: Pre-Build (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
+        shell: bash
         run: |
           cargo fetch --target ${{ matrix.build }}
-          #export reg_folder=$(ls /home/runner/.cargo/registry/src | grep github.com)
-          #export pdb_folder=$(ls /home/runner/.cargo/registry/src/$reg_folder | grep parity-db)
-          #sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' /home/runner/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
-          # TODO check on ci the path
+          export reg_folder=$(ls C:/Users/runneradmin/.cargo/registry/src | grep github.com)
+          export pdb_folder=$(ls C:/Users/runneradmin/.cargo/registry/src/$reg_folder | grep parity-db)
+          sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' C:/Users/runneradmin/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
 
       - name: Build (x86_64-pc-windows-msvc)
         if: matrix.build == 'x86_64-pc-windows-msvc'
