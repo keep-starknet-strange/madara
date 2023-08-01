@@ -4,7 +4,12 @@ mod sharp_utils;
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::path::Path;
+use std::fs::File;
+use std::io::{BufReader, Read};
 
+use cairo_vm::cairo_run::{cairo_run, CairoRunConfig};
+use cairo_vm::hint_processor::builtin_hint_processor::builtin_hint_processor_definition::BuiltinHintProcessor;
 use futures::StreamExt;
 use lazy_static::lazy_static;
 use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
@@ -16,6 +21,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 use uuid::Uuid;
+
 
 lazy_static! {
     static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
@@ -47,7 +53,23 @@ where
 
             // Run the StarkNet OS + Submit PIE(blocked):
             // - https://github.com/lambdaclass/cairo-vm/issues/1305
-            // - CairoRunner.new("starknet")
+            let mut hint_processor = BuiltinHintProcessor::new_empty();
+            // TODO: add hint processor for OS Hints
+
+            let os_file = File::open(Path::new("cairo-contracts/build/os_compiled.json")).unwrap();
+            let mut reader = BufReader::new(os_file);
+            let mut buffer = Vec::<u8>::new();
+            reader.read_to_end(&mut buffer).unwrap();
+
+            let run_output = cairo_run(
+                &buffer,
+                &CairoRunConfig {
+                    layout: "starknet_with_keccak",
+                    ..Default::default()
+                },
+                &mut hint_processor,
+            ).unwrap();
+            log::error!("OS RUN: {:?}", run_output.0);
 
             // Store the DA output from the SN OS
             if let Err(db_err) = madara_backend.da().store_state_diff(&storage_event.block, Vec::new()) {

@@ -21,6 +21,7 @@ reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { version = "1.4.0", features = ["v4"] }
+cairo-vm = "0.8.5"
 
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }

@@ -691,6 +691,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bincode"
+version = "2.0.0-rc.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f11ea1a0346b94ef188834a65c068a03aec181c94896d481d7a0a40d85b0ce95"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "bindgen"
 version = "0.65.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -864,12 +873,12 @@ name = "blockifier"
 version = "0.1.0"
 source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support#15c81976e72f76ab7b5b19e68b597f9ae583dcd8"
 dependencies = [
- "cairo-felt",
+ "cairo-felt 0.6.0",
  "cairo-lang-casm",
  "cairo-lang-casm-contract-class",
  "cairo-lang-utils",
  "cairo-lang-vm-utils",
- "cairo-vm",
+ "cairo-vm 0.6.0",
  "derive_more",
  "hashbrown 0.13.2",
  "indexmap 2.0.0-pre",
@@ -1003,6 +1012,19 @@ dependencies = [
  "num-integer",
  "num-traits 0.2.16",
  "parity-scale-codec",
+ "serde",
+]
+
+[[package]]
+name = "cairo-felt"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed22664386f178bf9ca7b9ae7235727d92fa37b731a9063b5122488a1f699834"
+dependencies = [
+ "lazy_static",
+ "num-bigint",
+ "num-integer",
+ "num-traits 0.2.16",
  "serde",
 ]
 
@@ -1303,7 +1325,7 @@ version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "assert_matches",
- "cairo-felt",
+ "cairo-felt 0.6.0",
  "cairo-lang-casm",
  "cairo-lang-sierra",
  "cairo-lang-sierra-ap-change",
@@ -1333,7 +1355,7 @@ version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
  "anyhow",
- "cairo-felt",
+ "cairo-felt 0.6.0",
  "cairo-lang-casm",
  "cairo-lang-casm-contract-class",
  "cairo-lang-compiler",
@@ -1397,7 +1419,7 @@ name = "cairo-lang-utils"
 version = "2.0.0-rc2"
 source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-support#64ef5864c5b92ee40b46ecb0b6fd854bd790938d"
 dependencies = [
- "cairo-felt",
+ "cairo-felt 0.6.0",
  "hashbrown 0.14.0",
  "indexmap 2.0.0",
  "itertools",
@@ -1415,10 +1437,10 @@ source = "git+https://github.com/keep-starknet-strange/cairo.git?branch=no_std-s
 dependencies = [
  "ark-ff",
  "ark-std 0.3.0",
- "cairo-felt",
+ "cairo-felt 0.6.0",
  "cairo-lang-casm",
  "cairo-lang-utils",
- "cairo-vm",
+ "cairo-vm 0.6.0",
  "hashbrown 0.14.0",
  "num-bigint",
  "num-integer",
@@ -1443,7 +1465,7 @@ dependencies = [
  "ark-std 0.3.0",
  "bincode 2.0.0-rc.2",
  "bitvec 1.0.1",
- "cairo-felt",
+ "cairo-felt 0.6.0",
  "cairo-lang-casm",
  "cairo-lang-casm-contract-class",
  "cairo-take_until_unbalanced",
@@ -1467,6 +1489,36 @@ dependencies = [
  "sha3",
  "starknet-crypto 0.5.1",
  "thiserror",
+ "thiserror-no-std",
+]
+
+[[package]]
+name = "cairo-vm"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74af2798567c670dc274245ca135c4501100fc5639e91c83b8527d9e46a97249"
+dependencies = [
+ "anyhow",
+ "bincode 2.0.0-rc.3",
+ "bitvec 1.0.1",
+ "cairo-felt 0.8.5",
+ "generic-array 0.14.7",
+ "hashbrown 0.14.0",
+ "hex",
+ "keccak",
+ "lazy_static",
+ "mimalloc",
+ "nom",
+ "num-bigint",
+ "num-integer",
+ "num-prime",
+ "num-traits 0.2.16",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "sha2 0.10.7",
+ "sha3",
+ "starknet-crypto 0.5.1",
  "thiserror-no-std",
 ]
 
@@ -4860,6 +4912,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7012b1bbb0719e1097c47611d3898568c546d597c2e74d66f6087edd5233ff4"
 
 [[package]]
+name = "libmimalloc-sys"
+version = "0.1.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4ac0e912c8ef1b735e92369695618dc5b1819f5a7bf3f167301a3ba1cea515e"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
 name = "libp2p"
 version = "0.51.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5660,6 +5722,7 @@ name = "mc-data-availability"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "cairo-vm 0.8.5",
  "ethers",
  "futures",
  "lazy_static",
@@ -5758,7 +5821,7 @@ dependencies = [
  "cairo-lang-casm-contract-class",
  "cairo-lang-starknet",
  "cairo-lang-utils",
- "cairo-vm",
+ "cairo-vm 0.6.0",
  "flate2",
  "frame-support",
  "hex",
@@ -5913,6 +5976,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "mimalloc"
+version = "0.1.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e2894987a3459f3ffb755608bd82188f8ed00d0ae077f1edea29c068d639d98"
+dependencies = [
+ "libmimalloc-sys",
+]
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6000,7 +6072,7 @@ dependencies = [
  "blockifier",
  "cairo-lang-casm",
  "cairo-lang-casm-contract-class",
- "cairo-vm",
+ "cairo-vm 0.6.0",
  "derive_more",
  "flate2",
  "frame-support",
