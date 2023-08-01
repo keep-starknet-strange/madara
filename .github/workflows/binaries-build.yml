@@ -4,7 +4,7 @@ name: Task - Build binaries and publish
 on:
   workflow_dispatch:
     inputs:
-      elease_tag_name:
+      release_tag_name:
         description: "Release tag name"
         type: string
         required: true
