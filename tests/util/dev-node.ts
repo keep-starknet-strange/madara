@@ -85,7 +85,6 @@ export async function startMadaraDevNode(
     "--force-authoring",
     "--rpc-cors=all",
     "--alice",
-    "--dev",
     "--sealing=manual",
     "--in-peers=0",
     "--out-peers=1",
