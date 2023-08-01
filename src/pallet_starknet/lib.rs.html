@@ -1210,6 +1210,8 @@
 <a href="#1210" id="1210">1210</a>
 <a href="#1211" id="1211">1211</a>
 <a href="#1212" id="1212">1212</a>
+<a href="#1213" id="1213">1213</a>
+<a href="#1214" id="1214">1214</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1254,6 +1256,8 @@
 </span><span class="kw">pub use </span>pallet::<span class="kw-2">*</span>;
 <span class="doccomment">/// An adapter for the blockifier state related traits
 </span><span class="kw">pub mod </span>blockifier_state_adapter;
+<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub mod </span>genesis_loader;
 <span class="doccomment">/// The implementation of the message type.
 </span><span class="kw">pub mod </span>message;
 <span class="doccomment">/// The Starknet pallet&#39;s runtime API
