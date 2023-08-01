@@ -66,6 +66,22 @@ The below defines all hardcoded values set in the geneses:
 
 ### Storage node genesis
 
+The node storage is prefilled using the genesis in order to allow access to
+prefunded accounts. Available accounts with unlimited funds are 0x1, 0x2, 0x3
+and 0x4 (hence why the storage value we write is
+0xffffffffffffffffffffffffffffffff for U256 low and U256 high).
+
+Additionally, a public key
+(0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2) is set for
+accounts 0x2 and 0x3, for which the signature will be checked during the
+validation phases of the execution. Accounts 0x1 and 0x4 include an empty
+validation phases, meaning no signature is required to execute any transactions
+going through them.
+
+Finally, 0x1 is set as the contract owner of contract
+0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02, which is
+deployed as a ERC721 contract (given the class hash of 0x80000).
+
 <!-- markdownlint-disable MD013 -->
 
 | Contract address                                                   | Storage key                                                                                  | Storage value                                                                         |
