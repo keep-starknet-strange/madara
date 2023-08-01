@@ -5581,6 +5581,7 @@ dependencies = [
  "sp-std",
  "sp-transaction-pool",
  "sp-version",
+ "starknet-ff",
  "substrate-wasm-builder",
 ]
 

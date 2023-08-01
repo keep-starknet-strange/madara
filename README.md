@@ -1,4 +1,3 @@
-<!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/madara-no-bg.png" height="128">
@@ -7,19 +6,15 @@
 <div align="center">
 <br />
 <!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
 
 [![Project license](https://img.shields.io/github/license/keep-starknet-strange/madara.svg?style=flat-square)](LICENSE)
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/keep-starknet-strange/madara/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 <a href="https://twitter.com/MadaraStarknet">
 <img src="https://img.shields.io/twitter/follow/MadaraStarknet?style=social"/>
-</a>
-<a href="https://github.com/keep-starknet-strange/madara">
+</a> <a href="https://github.com/keep-starknet-strange/madara">
 <img src="https://img.shields.io/github/stars/keep-starknet-strange/madara?style=social"/>
-</a>
-<a href="https://docs.madara.zone/">
-<img src="https://img.shields.io/badge/Documentation-Website-yellow"/>
-</a>
+</a> <a href="https://docs.madara.zone/">
+<img src="https://img.shields.io/badge/Documentation-Website-yellow"/> </a>
 
 <a href="https://www.youtube.com/playlist?list=PL1yL2_t7cTuJtzmMQWk4UZkmMpdNF-quN">
 <img src="https://img.shields.io/badge/Community%20calls-Youtube-red?logo=youtube"/>
@@ -40,38 +35,38 @@
 
 # ⚡ Madara: Starknet Sequencer 👉👈
 
-Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/) sequencer
- designed to make your projects soar!
+Welcome to **Madara**, a blazing fast ⚡ [Starknet](https://www.starknet.io/)
+sequencer designed to make your projects soar!
 
-Built on the robust Substrate framework and fast, thanks to Rust 🦀,
-Madara delivers unmatched performance and scalability to power
- your Starknet-based Validity Rollup chain.
+Built on the robust Substrate framework and fast, thanks to Rust 🦀, Madara
+delivers unmatched performance and scalability to power your Starknet-based
+Validity Rollup chain.
 
 Dive into the world of Madara and join our passionate community of contributors!
-Together, we're pushing the boundaries of what's possible within the Starknet ecosystem.
+Together, we're pushing the boundaries of what's possible within the Starknet
+ecosystem.
 
-🚀 Discover the unparalleled flexibility and might of Madara,
-your gateway to launching your very own Starknet appchain or L3.
-Harness the prowess of Cairo, while maintaining complete control
-over your custom appchain, tailored to your specific requirements.
-Madara is designed to empower a multitude of projects, fueling
-growth within the Starknet ecosystem.
+🚀 Discover the unparalleled flexibility and might of Madara, your gateway to
+launching your very own Starknet appchain or L3. Harness the prowess of Cairo,
+while maintaining complete control over your custom appchain, tailored to your
+specific requirements. Madara is designed to empower a multitude of projects,
+fueling growth within the Starknet ecosystem.
 
 ## 📣 Peripheral repositories
 
-- [Madara Explorer](https://github.com/lambdaclass/madara_explorer)
-by the great [LambdaClass](https://lambdaclass.com/) team 🫶:
- A block explorer for Madara.
-- [Madara Infra](https://github.com/keep-starknet-strange/madara-app):
- A collection of scripts and tools to deploy and manage Madara
- on different environments (e.g. AWS, docker, ansible, etc.).
- It also contains
- the [Starknet Stack](https://github.com/keep-starknet-strange/madara-infra/blob/main/starknet-stack/docker-compose.yml)
- demo `docker-compose` file.
+- [Madara Explorer](https://github.com/lambdaclass/madara_explorer) by the great
+  [LambdaClass](https://lambdaclass.com/) team 🫶: A block explorer for Madara.
+- [Madara Infra](https://github.com/keep-starknet-strange/madara-infra): A
+  collection of scripts and tools to deploy and manage Madara on different
+  environments (e.g. AWS, docker, ansible, etc.). It also contains the
+  [Starknet Stack](https://github.com/keep-starknet-strange/madara-infra/blob/main/starknet-stack/docker-compose.yml)
+  demo `docker-compose` file.
 - [Madara Kit Application](https://github.com/keep-starknet-strange/madara-app):
- A simple application that demonstrates how to use Madara. Deployed on `https://app.madara.zone`.
-- [Madara Docsite](https://github.com/keep-starknet-strange/madara-docs):
- The source code of the Madara documentation website. Deployed on `https://docs.madara.zone`.
+  A simple application that demonstrates how to use Madara. Deployed on
+  `https://app.madara.zone`.
+- [Madara Docsite](https://github.com/keep-starknet-strange/madara-app): The
+  source code of the Madara documentation website. Deployed on
+  `https://docs.madara.zone`.
 
 ## 🌟 Features
 
@@ -100,45 +95,43 @@ build and run Madara on your local machine.
 
 ## Benchmarking
 
-Benchmarking is an essential process in our project development lifecycle,
-as it helps us to track the performance evolution of Madara over time.
-It provides us with valuable insights into how well Madara handles transaction throughput,
- and whether any recent changes have impacted performance.
+Benchmarking is an essential process in our project development lifecycle, as it
+helps us to track the performance evolution of Madara over time. It provides us
+with valuable insights into how well Madara handles transaction throughput, and
+whether any recent changes have impacted performance.
 
-You can follow the evolution of Madara's performance by visiting our [Benchmark Page](https://keep-starknet-strange.github.io/madara/dev/bench/).
+You can follow the evolution of Madara's performance by visiting our
+[Benchmark Page](https://keep-starknet-strange.github.io/madara/dev/bench/).
 
-However, it's important to understand that the absolute numbers presented
-on this page should not be taken as the reference or target numbers
-for a production environment.
-The benchmarks are run on a self-hosted GitHub runner,
- which may not represent the most powerful machine configurations in real-world
- production scenarios.
+However, it's important to understand that the absolute numbers presented on
+this page should not be taken as the reference or target numbers for a
+production environment. The benchmarks are run on a self-hosted GitHub runner,
+which may not represent the most powerful machine configurations in real-world
+production scenarios.
 
-Therefore, these numbers primarily serve as a tool to track
-the _relative_ performance changes over time.
-They allow us to quickly identify and address any performance regressions,
-and continuously optimize the system's performance.
+Therefore, these numbers primarily serve as a tool to track the _relative_
+performance changes over time. They allow us to quickly identify and address any
+performance regressions, and continuously optimize the system's performance.
 
-In other words, while the absolute throughput numbers may not be reflective of
- a production environment, the relative changes and trends over time
- are what we focus on. This way, we can ensure that Madara is always improving,
- and that we maintain a high standard of performance as the project evolves.
+In other words, while the absolute throughput numbers may not be reflective of a
+production environment, the relative changes and trends over time are what we
+focus on. This way, we can ensure that Madara is always improving, and that we
+maintain a high standard of performance as the project evolves.
 
-One can use flamegraph-rs to generate flamegraphs and look for
-the performance bottlenecks of the system by running the following :
+One can use flamegraph-rs to generate flamegraphs and look for the performance
+bottlenecks of the system by running the following :
 
-  ```bash
-  flamegraph --root --open  -- ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=1 --no-telemetry
-  ```
+```bash
+flamegraph --root --open  -- ./target/release/madara --dev --pool-limit=100000 --pool-kbytes=500000 --rpc-methods=unsafe --rpc-cors=all --in-peers=0 --out-peers=1 --no-telemetry
+```
 
-In parallel to that, run `npm run test` within the `benchmarking` folder.
-Once you stop the node, the flamegraph will open in your browser.
+In parallel to that, run `npm run test` within the `benchmarking` folder. Once
+you stop the node, the flamegraph will open in your browser.
 
 ## 🌐 Connect to the dev webapp
 
-Once your Madara node is up and running, you can connect to
-our Dev Frontend App to interact with your chain.
-[Connect here!](https://explorer.madara.zone/)
+Once your Madara node is up and running, you can connect to our Dev Frontend App
+to interact with your chain. [Connect here!](https://explorer.madara.zone/)
 
 ## 🤝 Contribute
 
@@ -222,6 +215,8 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/exp-table"><img src="https://avatars.githubusercontent.com/u/76456212?v=4?s=100" width="100px;" alt="exp_table"/><br /><sub><b>exp_table</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=exp-table" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Pilouche"><img src="https://avatars.githubusercontent.com/u/26655725?v=4?s=100" width="100px;" alt="Pilou"/><br /><sub><b>Pilou</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Pilouche" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hel-kame"><img src="https://avatars.githubusercontent.com/u/117039823?v=4?s=100" width="100px;" alt="hithem"/><br /><sub><b>hithem</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=hel-kame" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/clexmond"><img src="https://avatars.githubusercontent.com/u/706094?v=4?s=100" width="100px;" alt="Chris Lexmond"/><br /><sub><b>Chris Lexmond</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=clexmond" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Tidus91"><img src="https://avatars.githubusercontent.com/u/65631603?v=4?s=100" width="100px;" alt="Tidus91"/><br /><sub><b>Tidus91</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Tidus91" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

@@ -10,6 +10,7 @@ pub use frame_support::weights::constants::{
 pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
+use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -44,9 +45,11 @@ impl pallet_starknet::Config for Runtime {
     type DisableTransactionFee = ConstBool<false>;
     #[cfg(feature = "disable-transaction-fee")]
     type DisableTransactionFee = ConstBool<true>;
+    type DisableNonceValidation = ConstBool<false>;
     type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
+    type ChainId = ChainId;
 }
 
 /// --------------------------------------
@@ -158,6 +161,7 @@ parameter_types! {
     pub const InvokeTxMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
+    pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.

@@ -23,9 +23,6 @@ pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
 /// Specialized `ChainSpec` for development.
 pub type DevChainSpec = sc_service::GenericChainSpec<DevGenesisExt>;
 
-/// Starknet testnet SN_GOERLI
-pub const CHAIN_ID_STARKNET_TESTNET: u128 = 0x534e5f474f45524c49;
-
 /// Extension for the dev genesis config to support a custom changes to the genesis state.
 #[derive(Serialize, Deserialize)]
 pub struct DevGenesisExt {
@@ -221,7 +218,6 @@ fn testnet_genesis(
     let udc_contract_address = Felt252Wrapper::from_hex_be(UDC_CONTRACT_ADDRESS).unwrap();
 
     let public_key = Felt252Wrapper::from_hex_be(PUBLIC_KEY).unwrap();
-    let chain_id = Felt252Wrapper(FieldElement::from_byte_slice_be(&CHAIN_ID_STARKNET_TESTNET.to_be_bytes()).unwrap());
 
     GenesisConfig {
         system: SystemConfig {
@@ -317,7 +313,6 @@ fn testnet_genesis(
             ],
             fee_token_address,
             _phantom: Default::default(),
-            chain_id,
             seq_addr_updated: true,
         },
     }

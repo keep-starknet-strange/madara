@@ -414,6 +414,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "clexmond",
+      "name": "Chris Lexmond",
+      "avatar_url": "https://avatars.githubusercontent.com/u/706094?v=4",
+      "profile": "https://github.com/clexmond",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Tidus91",
+      "name": "Tidus91",
+      "avatar_url": "https://avatars.githubusercontent.com/u/65631603?v=4",
+      "profile": "https://github.com/Tidus91",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
