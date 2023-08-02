@@ -123,7 +123,11 @@ macro_rules! log {
 #[frame_support::pallet]
 pub mod pallet {
 
+    use blockifier::abi::constants::N_STEPS_RESOURCE;
+    use frame_support::dispatch::PostDispatchInfo;
+    use frame_support::sp_tracing::info;
     use mp_starknet::execution::types::CompiledClassHashWrapper;
+    use sp_runtime::Permill;
 
     use super::*;
 
@@ -163,13 +167,22 @@ pub mod pallet {
         /// A bool to disable Nonce validation
         type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
-        type InvokeTxMaxNSteps: Get<u32>;
+        type TransactionMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ValidateMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ChainId: Get<Felt252Wrapper>;
+        /// Gas limit of one block.
+        #[pallet::constant]
+        type BlockGasLimit: Get<u64>;
+        /// Maps Ethereum gas to Substrate weight.
+        type StepWeightMapping: StepWeightMapping;
+        /// Weight corresponding to a gas unit.
+        type WeightPerStep: Get<Weight>;
+        /// Gas limit Pov size ratio.
+        type StepLimitPovSizeRatio: Get<u64>;
     }
 
     /// The Starknet pallet hooks.
@@ -504,8 +517,11 @@ pub mod pallet {
         ///
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(1)]
-        #[pallet::weight({0})]
-        pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResult {
+        #[pallet::weight({
+			let without_base_extrinsic_weight = true;
+			T::StepWeightMapping::steps_to_weight(T::TransactionMaxNSteps::get(), without_base_extrinsic_weight)
+		})]
+        pub fn invoke(origin: OriginFor<T>, transaction: InvokeTransaction) -> DispatchResultWithPostInfo {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
             // Check if contract is deployed
@@ -523,24 +539,27 @@ pub mod pallet {
                 T::DisableNonceValidation::get(),
                 None,
             );
-            let receipt = match call_info {
+            let (receipt, n_steps) = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
                     execute_call_info,
                     fee_transfer_call_info,
                     actual_fee,
-                    actual_resources: _actual_resources,
+                    actual_resources,
                 }) => {
                     log!(debug, "Invoke Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
-                    TransactionReceiptWrapper {
-                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
-                        transaction_hash: transaction.hash,
-                        tx_type: TxType::Invoke,
-                        actual_fee: actual_fee.0.into(),
-                    }
+                    (
+                        TransactionReceiptWrapper {
+                            events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
+                            transaction_hash: transaction.hash,
+                            tx_type: TxType::Invoke,
+                            actual_fee: actual_fee.0.into(),
+                        },
+                        actual_resources.get(N_STEPS_RESOURCE).unwrap().clone(),
+                    )
                 }
                 Err(e) => {
                     log!(error, "Invoke Transaction execution failed: {:?}", e);
@@ -548,10 +567,16 @@ pub mod pallet {
                 }
             };
 
+            info!("actual weight - {:?}", T::StepWeightMapping::steps_to_weight(n_steps as u32, true));
+            info!("predicted steps - {:?}", T::TransactionMaxNSteps::get());
+
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
-            Ok(())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::StepWeightMapping::steps_to_weight(n_steps as u32, true)),
+                pays_fee: Pays::No,
+            })
         }
 
         /// The declare transaction is used to introduce new classes into the state of Starknet,
@@ -566,8 +591,11 @@ pub mod pallet {
         ///
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(2)]
-        #[pallet::weight({0})]
-        pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResult {
+        #[pallet::weight({
+			let without_base_extrinsic_weight = true;
+			T::StepWeightMapping::steps_to_weight(T::TransactionMaxNSteps::get(), without_base_extrinsic_weight)
+		})]
+        pub fn declare(origin: OriginFor<T>, transaction: DeclareTransaction) -> DispatchResultWithPostInfo {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -597,24 +625,27 @@ pub mod pallet {
                 T::DisableNonceValidation::get(),
                 Some(contract_class),
             );
-            let receipt = match call_info {
+            let (receipt, n_steps) = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
                     execute_call_info,
                     fee_transfer_call_info,
                     actual_fee,
-                    actual_resources: _actual_resources,
+                    actual_resources,
                 }) => {
                     log!(trace, "Declare Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
-                    TransactionReceiptWrapper {
-                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
-                        transaction_hash: transaction.hash,
-                        tx_type: TxType::Declare,
-                        actual_fee: actual_fee.0.into(),
-                    }
+                    (
+                        TransactionReceiptWrapper {
+                            events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
+                            transaction_hash: transaction.hash,
+                            tx_type: TxType::Declare,
+                            actual_fee: actual_fee.0.into(),
+                        },
+                        actual_resources.get(N_STEPS_RESOURCE).unwrap().clone(),
+                    )
                 }
                 Err(e) => {
                     log!(error, "Declare Transaction execution failed: {:?}", e);
@@ -627,7 +658,10 @@ pub mod pallet {
 
             // TODO: Update class hashes root
 
-            Ok(())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::StepWeightMapping::steps_to_weight(n_steps as u32, true)),
+                pays_fee: Pays::No,
+            })
         }
 
         /// Since StarkNet v0.10.1 the deploy_account transaction replaces the deploy transaction
@@ -643,8 +677,14 @@ pub mod pallet {
         ///
         /// * `DispatchResult` - The result of the transaction.
         #[pallet::call_index(3)]
-        #[pallet::weight({0})]
-        pub fn deploy_account(origin: OriginFor<T>, transaction: DeployAccountTransaction) -> DispatchResult {
+        #[pallet::weight({
+			let without_base_extrinsic_weight = true;
+			T::StepWeightMapping::steps_to_weight(T::TransactionMaxNSteps::get(), without_base_extrinsic_weight)
+		})]
+        pub fn deploy_account(
+            origin: OriginFor<T>,
+            transaction: DeployAccountTransaction,
+        ) -> DispatchResultWithPostInfo {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -669,24 +709,27 @@ pub mod pallet {
                 T::DisableNonceValidation::get(),
                 None,
             );
-            let receipt = match call_info {
+            let (receipt, n_steps) = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
                     validate_call_info: _validate_call_info,
                     execute_call_info,
                     fee_transfer_call_info,
                     actual_fee,
-                    actual_resources: _actual_resources,
+                    actual_resources,
                 }) => {
                     log!(trace, "Deploy_account Transaction executed successfully: {:?}", execute_call_info);
 
                     let events = Self::emit_events_for_calls(execute_call_info, fee_transfer_call_info)?;
 
-                    TransactionReceiptWrapper {
-                        events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
-                        transaction_hash: transaction.hash,
-                        tx_type: TxType::DeployAccount,
-                        actual_fee: actual_fee.0.into(),
-                    }
+                    (
+                        TransactionReceiptWrapper {
+                            events: BoundedVec::try_from(events).map_err(|_| Error::<T>::ReachedBoundedVecLimit)?,
+                            transaction_hash: transaction.hash,
+                            tx_type: TxType::DeployAccount,
+                            actual_fee: actual_fee.0.into(),
+                        },
+                        actual_resources.get(N_STEPS_RESOURCE).unwrap().clone(),
+                    )
                 }
                 Err(e) => {
                     log!(error, "Deploy_account Transaction execution failed: {:?}", e);
@@ -700,7 +743,10 @@ pub mod pallet {
             // Associate contract class to class hash
             // TODO: update state root
 
-            Ok(())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::StepWeightMapping::steps_to_weight(n_steps as u32, true)),
+                pays_fee: Pays::No,
+            })
         }
 
         /// Consume a message from L1.
@@ -717,7 +763,10 @@ pub mod pallet {
         /// # TODO
         /// * Compute weight
         #[pallet::call_index(4)]
-        #[pallet::weight({0})]
+        #[pallet::weight({
+			let without_base_extrinsic_weight = true;
+			T::StepWeightMapping::steps_to_weight(T::TransactionMaxNSteps::get(), without_base_extrinsic_weight)
+		})]
         pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
@@ -836,6 +885,36 @@ pub mod pallet {
     }
 }
 
+/// A mapping function that converts Starknet gas to Substrate weight
+pub trait StepWeightMapping {
+    fn steps_to_weight(steps: u32, without_base_weight: bool) -> Weight;
+    fn weight_to_gas(weight: Weight) -> u64;
+}
+
+pub struct FixedStepWeightMapping<T>(sp_std::marker::PhantomData<T>);
+impl<T: Config> StepWeightMapping for FixedStepWeightMapping<T> {
+    fn steps_to_weight(steps: u32, without_base_weight: bool) -> Weight {
+        let gas: u64 = steps as u64;
+        let mut weight = T::WeightPerStep::get().saturating_mul(gas);
+        if without_base_weight {
+            weight = weight.saturating_sub(
+                T::BlockWeights::get().get(frame_support::dispatch::DispatchClass::Normal).base_extrinsic,
+            );
+        }
+        // Apply a gas to proof size ratio based on BlockGasLimit
+        let ratio = T::StepLimitPovSizeRatio::get();
+        if ratio > 0 {
+            let proof_size = gas.saturating_div(ratio);
+            *weight.proof_size_mut() = proof_size;
+        }
+
+        weight
+    }
+    fn weight_to_gas(weight: Weight) -> u64 {
+        weight.div(T::WeightPerStep::get().ref_time()).ref_time()
+    }
+}
+
 /// The Starknet pallet internal functions.
 impl<T: Config> Pallet<T> {
     /// Returns the transaction for the Call
@@ -906,7 +985,7 @@ impl<T: Config> Pallet<T> {
             sequencer_address,
             fee_token_address,
             vm_resource_fee_cost,
-            invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
+            invoke_tx_max_n_steps: T::TransactionMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
         }

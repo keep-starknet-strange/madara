@@ -48,6 +48,9 @@ pub mod fees;
 /// Sequencer address inherent data.
 pub mod sequencer_address;
 
+/// Substrate weights related functionality.
+pub mod weights;
+
 /// Tests.
 #[cfg(test)]
 pub mod tests;

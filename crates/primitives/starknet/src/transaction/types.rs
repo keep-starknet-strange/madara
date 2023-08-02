@@ -512,7 +512,7 @@ pub struct TransactionExecutionInfoWrapper {
     pub execute_call_info: Option<CallInfo>,
     /// Fee transfer call info; [None] for `L1Handler`.
     pub fee_transfer_call_info: Option<CallInfo>,
-    /// The actual fee that was charged (in Wei).
+    /// The actual fee that was charged in the fee token.
     pub actual_fee: Fee,
     /// Actual execution resources the transaction is charged for,
     /// including L1 gas and additional OS resources estimation.

@@ -122,8 +122,8 @@ fn get_block_context_works() {
         );
         // correct vm_resource_fee_cost
         assert_eq!(HashMap::<String, f64>::new(), block_context.vm_resource_fee_cost);
-        // correct invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
-        assert_eq!(InvokeTxMaxNSteps::get(), block_context.invoke_tx_max_n_steps);
+        // correct invoke_tx_max_n_steps: T::TransactionMaxNSteps::get(),
+        assert_eq!(TransactionMaxNSteps::get(), block_context.invoke_tx_max_n_steps);
         // correct validate_max_n_steps: T::ValidateMaxNSteps::get(),
         assert_eq!(ValidateMaxNSteps::get(), block_context.validate_max_n_steps);
         // correct gas_price,

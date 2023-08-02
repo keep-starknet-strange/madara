@@ -11,6 +11,7 @@ pub use frame_support::weights::{IdentityFee, Weight};
 pub use frame_support::{construct_runtime, parameter_types, StorageValue};
 pub use frame_system::Call as SystemCall;
 use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
+use mp_starknet::weights::weight_per_step;
 /// Import the StarkNet pallet.
 pub use pallet_starknet;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -46,10 +47,14 @@ impl pallet_starknet::Config for Runtime {
     #[cfg(feature = "disable-transaction-fee")]
     type DisableTransactionFee = ConstBool<true>;
     type DisableNonceValidation = ConstBool<false>;
-    type InvokeTxMaxNSteps = InvokeTxMaxNSteps;
+    type TransactionMaxNSteps = TransactionMaxNSteps;
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
     type ChainId = ChainId;
+    type BlockGasLimit = BlockGasLimit;
+    type StepWeightMapping = pallet_starknet::FixedStepWeightMapping<Self>;
+    type WeightPerStep = WeightPerStep;
+    type StepLimitPovSizeRatio = StepLimitPovSizeRatio;
 }
 
 /// --------------------------------------
@@ -155,13 +160,19 @@ impl pallet_timestamp::Config for Runtime {
     type WeightInfo = ();
 }
 
+const BLOCK_STEP_LIMIT: u64 = 8_000_000;
+const GAS_PER_MILLION_CAIRO_STEPS: Permill = Permill::from_parts(10000);
+
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;
     pub const TransactionLongevity: u64 = u64::MAX;
-    pub const InvokeTxMaxNSteps: u32 = 1_000_000;
+    pub const TransactionMaxNSteps: u32 = 1_000_000;
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
     pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+    pub const BlockGasLimit: u64 = BLOCK_STEP_LIMIT;
+    pub WeightPerStep: Weight = Weight::from_parts(weight_per_step(BLOCK_STEP_LIMIT, NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK), 0);
+    pub const StepLimitPovSizeRatio: u64 = BLOCK_STEP_LIMIT.saturating_div(MAX_BLOCK_SIZE as u64);
 }
 
 /// Implement the OnTimestampSet trait to override the default Aura.
