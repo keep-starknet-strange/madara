@@ -42,7 +42,7 @@ jobs:
             os: ubuntu-latest-32-cores
             bin_name: madara
           - build: x86_64-pc-windows-msvc
-            os: windows-latest-32-cores
+            os: windows-latest
             bin_name: madara.exe
     runs-on: ${{ matrix.os }}
     steps:
