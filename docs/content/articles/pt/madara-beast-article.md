@@ -11,18 +11,18 @@
 ## TL;DR
 
 - O Madara é um Starknet sequencer de alta performance, que oferece o poder de criar 
-    [Appchains](https://www.starknet.io/en/posts/ecosystem/the-starknet-stacks-growth-spurt) customizáveis e eficientes.
+    [Appchains](https://www.starknet.io/en/posts/ecosystem/the-starknet-stacks-growth-spurt) personalizáveis e eficientes.
 
 - Ao usar a framework Substrate, o Madara amplifica as capacidades do Cairo VM, levando a programas provados, seguros e flexíveis.
 - A sua implementação oferece inúmeros beneficios como uma infraestrutura escalável, alto rendimento e um controlo sem precedente sobre aplicações.
 - As características únicas do Madara incluem suporte para potencial privacidade on-chain,
 inoperabilidade simplificada entre várias chains e uma execução robusta.
-- Madara está a construir o caminho em desenvolvimento dApp ao oferecer soluções custo benefício, escaláveis e customizáveis no domínio da blockchain. 
+- Madara está a construir o caminho em desenvolvimento dApp ao oferecer soluções custo benefício, escaláveis e personalizáveis no domínio da blockchain. 
 
 ## Introdução
 
 Imagina ter a capacidade para fazer uma blockchain especificamente para os requerimentos únicos da tua aplicação - é exatamente isto que uma appchain oferece.
-Appchains são blockchains especificas para uma aplicação que oferecem aos desenvolvedores flexibilidade para melhorar aspetos das chains para encaixar nas necessidades das suas aplicações, como escolher uma função de hash diferente ou customizar o algoritmo de consenso. A melhor parte? Appchains herdam a segurança de onde as robustas blockchains L1 e L2 são construídas, disponibilizando o melhor dos dois mundos para os desenvolvedores.
+Appchains são blockchains especificas para uma aplicação que oferecem aos desenvolvedores flexibilidade para melhorar aspetos das chains para encaixar nas necessidades das suas aplicações, como escolher uma função de hash diferente ou personalizar o algoritmo de consenso. A melhor parte? Appchains herdam a segurança de onde as robustas blockchains L1 e L2 são construídas, disponibilizando o melhor dos dois mundos para os desenvolvedores.
 
 Introduzimos o Madara, um sequencer inovador que combina flexibilidade com uma performance ultra-rápida. Sequencers são entidades responsáveis por executar transações e agrupá-las em lotes.
 Madara abre um leque de possibilidades como nunca para experimentação no ecossistema Starknet, agindo como uma porta de entrada para lançar a tua própria Starknet appchain.
@@ -42,7 +42,7 @@ Existem inúmeras razões interessantes para os desenvolvedores escolherem em es
 
 Desenvolvedores enfrentam desafios significantes em termos de escalabilidade nas infraestruturas de blockchain existentes. Escalabilidade abrange dois aspetos cruciais: alta velocidade e taxas baixas. Ao implementar uma redução de custo de 1,000x em cada camada, desenvolvedores conseguem alcançar uma redução de custo significativa de L1 até L3, potencialmente alcançando 1,000,000x. A capacidade de processamento não é afetada pela atividade de aplicações de terceiros pois a aplicação tem uma blockchain dedicada e não compete por recursos. Isto garante uma experiência suave e consistente.
 
-### Customização
+### Personalização
 
 Chains de uso geral como Starknet e Ethereum tẽm múltiplas medidas no que toca a garantit que a rede é utilizável por todos, levando a um ambiente constragido. Com appchains, desenvolvedores podem afinar vários aspetos das suas aplicações e infraestruturas, criando soluções à medida. Não gostas de um recurso do Cairo VM? Elimina-o da tua appchain.
 
