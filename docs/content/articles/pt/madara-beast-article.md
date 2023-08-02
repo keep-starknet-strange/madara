@@ -10,7 +10,7 @@
 
 ## TL;DR
 
-- Madara é um Starknet sequencer de alta performance, que oferece o poder de criar 
+- O Madara é um Starknet sequencer de alta performance, que oferece o poder de criar 
     [Appchains](https://www.starknet.io/en/posts/ecosystem/the-starknet-stacks-growth-spurt) customizáveis e eficientes.
 
 - Ao usar a framework Substrate, o Madara amplifica as capacidades do Cairo VM, levando a programas provados, seguros e flexíveis.
