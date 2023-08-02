@@ -161,7 +161,6 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 const BLOCK_STEP_LIMIT: u64 = 8_000_000;
-const GAS_PER_MILLION_CAIRO_STEPS: Permill = Permill::from_parts(10000);
 
 parameter_types! {
     pub const UnsignedPriority: u64 = 1 << 20;

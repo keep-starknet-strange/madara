@@ -22,6 +22,9 @@ macro_rules! mock_runtime {
 			use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
             use mp_starknet::execution::types::Felt252Wrapper;
             use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
+			use mp_starknet::weights::weight_per_step;
+			use frame_support::weights::Weight;
+			use sp_runtime::Perbill;
 
 
 			type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -73,6 +76,11 @@ macro_rules! mock_runtime {
 				type MaxConsumers = frame_support::traits::ConstU32<16>;
 			}
 
+			const BLOCK_STEP_LIMIT: u64 = 8_000_000;
+			const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+			const WEIGHT_MILLISECS_PER_BLOCK: u64 = 2000;
+			const MAX_BLOCK_SIZE: u32 = 20 * 1024 * 1024; // 20 MB
+
 			parameter_types! {
 				pub const UnsignedPriority: u64 = 1 << 20;
 				pub const TransactionLongevity: u64 = u64::MAX;
@@ -83,6 +91,9 @@ macro_rules! mock_runtime {
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
                 pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+				pub const BlockGasLimit: u64 = 8_000_000;
+				pub WeightPerStep: Weight = Weight::from_parts(weight_per_step(BLOCK_STEP_LIMIT, NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK), 0);
+				pub const StepLimitPovSizeRatio: u64 = BLOCK_STEP_LIMIT.saturating_div(MAX_BLOCK_SIZE as u64);
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -98,6 +109,10 @@ macro_rules! mock_runtime {
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
                 type ChainId = ChainId;
+				type BlockGasLimit = BlockGasLimit;
+				type StepWeightMapping = pallet_starknet::FixedStepWeightMapping<Self>;
+				type WeightPerStep = WeightPerStep;
+				type StepLimitPovSizeRatio = StepLimitPovSizeRatio;
 			}
 
 			/// Run to block n.

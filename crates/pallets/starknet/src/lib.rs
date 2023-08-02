@@ -127,7 +127,6 @@ pub mod pallet {
     use frame_support::dispatch::PostDispatchInfo;
     use frame_support::sp_tracing::info;
     use mp_starknet::execution::types::CompiledClassHashWrapper;
-    use sp_runtime::Permill;
 
     use super::*;
 
