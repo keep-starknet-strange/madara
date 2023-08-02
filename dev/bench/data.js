@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1690961532783,
+  "lastUpdate": 1690961535761,
   "repoUrl": "https://github.com/keep-starknet-strange/madara",
   "entries": {
     "Benchmark": [
@@ -12684,6 +12684,54 @@ window.BENCHMARK_DATA = {
             "value": 142.66666666666666,
             "unit": "tps",
             "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3000\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "clement0walter@gmail.com",
+            "name": "Clément Walter",
+            "username": "ClementWalter"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c4132d0d8dd3f5639574f667cfbedf4a86af2cbc",
+          "message": "Create madara beast article.md #932 (#933)\n\nCo-authored-by: odin free <58338510+welttowelt@users.noreply.github.com>",
+          "timestamp": "2023-08-02T08:46:37+02:00",
+          "tree_id": "8aa69032f12175d94455960f2522200ca199efe0",
+          "url": "https://github.com/keep-starknet-strange/madara/commit/c4132d0d8dd3f5639574f667cfbedf4a86af2cbc"
+        },
+        "date": 1690961531996,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "Average Extrinsics per block",
+            "value": 871,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3607\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS",
+            "value": 145.16666666666666,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3607\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average Extrinsics per block (ERC721 mints)",
+            "value": 857.5,
+            "unit": "extrinsics/block",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
+          },
+          {
+            "name": "Average TPS (ERC721 mints)",
+            "value": 142.91666666666666,
+            "unit": "tps",
+            "extra": "CPU Count: 16\nCPU Model: Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz\nCPU Speed (MHz): 3599\nTotal Memory: 32.822730752 GB\nPlatform: linux\nRelease: 5.19.0-1025-aws\nArchitecture: x64"
           }
         ]
       },
