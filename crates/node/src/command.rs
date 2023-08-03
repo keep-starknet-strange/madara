@@ -222,7 +222,7 @@ pub fn run() -> sc_cli::Result<()> {
                             // even if chain-spec url is specified, overwrite it
                             fetch_chain_spec(
                                 madara_path.clone(),
-                                "https://chains.madara.zone/sharingan/testnet-sharingan-raw.json".to_string()).unwrap();
+                                "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/chain-specs/testnet-sharingan-raw.json".to_string()).unwrap();
                             cli.run.run_cmd.shared_params.chain =
                                 Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                         }
