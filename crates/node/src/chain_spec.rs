@@ -1,4 +1,7 @@
-use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+use lazy_static::lazy_static;
+use madara_runtime::{
+    AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Runtime, StarknetConfig, SystemConfig, WASM_BINARY,
+};
 use pallet_starknet::genesis_loader::{read_file_to_string, GenesisLoader};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -7,6 +10,10 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
+
+lazy_static! {
+    static ref STARKNET_GENESIS: String = read_file_to_string("crates/node/src/genesis_assets/genesis.json");
+}
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -57,7 +64,7 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
         ChainType::Development,
         move || {
             // Logging the development account
-            print_development_account();
+            print_development_accounts();
 
             DevGenesisExt {
                 genesis_config: testnet_genesis(
@@ -86,13 +93,20 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
 // helper to print development accounts info
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
-pub fn print_development_account() {
+pub fn print_development_accounts() {
+    let loader: GenesisLoader = serde_json::from_str(&*STARKNET_GENESIS).unwrap();
+    let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<Runtime> = loader.into();
+    let no_validate_account_address = starknet_genesis.contracts[0].0.0.to_string();
+    let argent_account_address = starknet_genesis.contracts[1].0.0.to_string();
+    let oz_account_address = starknet_genesis.contracts[2].0.0.to_string();
+    let cairo_1_no_validate_account_address = starknet_genesis.contracts[3].0.0.to_string();
+
     const ARGENT_PK: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
     log::info!("🧪 Using the following development accounts:");
-    log::info!("🧪 NO VALIDATE with address: {} and pk: {}", NO_VALIDATE_ACCOUNT_ADDRESS, "");
-    log::info!("🧪 ARGENT with address: {} and pk: {}", ARGENT_ACCOUNT_ADDRESS, ARGENT_PK);
-    log::info!("🧪 OZ with address: {} and pk: {}", OZ_ACCOUNT_ADDRESS, ARGENT_PK);
-    log::info!("🧪 CAIRO 1 with address: {} and pk: {}", CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS, "");
+    log::info!("🧪 NO VALIDATE with address: {} and pk: {}", no_validate_account_address, "");
+    log::info!("🧪 ARGENT with address: {} and pk: {}", argent_account_address, ARGENT_PK);
+    log::info!("🧪 OZ with address: {} and pk: {}", oz_account_address, ARGENT_PK);
+    log::info!("🧪 CAIRO 1 with address: {} and pk: {}", cairo_1_no_validate_account_address, "");
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
@@ -133,10 +147,8 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let genesis: GenesisLoader =
-        serde_json::from_str(&read_file_to_string("crates/node/src/genesis_assets/genesis.json")).unwrap();
-    let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
-
+    let loader: GenesisLoader = serde_json::from_str(&*STARKNET_GENESIS).unwrap();
+    let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<Runtime> = loader.into();
     GenesisConfig {
         system: SystemConfig {
             // Add Wasm runtime to storage.
