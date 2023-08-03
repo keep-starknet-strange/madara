@@ -39,6 +39,7 @@ impl<T: Config> Pallet<T> {
             res.result.iter().try_for_each(|message| {
                 // Execute the message.
                 Self::consume_l1_message(OriginFor::<T>::none(), message.try_into_transaction()?)
+                    .map(|_| ())
                     .map_err(OffchainWorkerError::ConsumeMessageError)
             })?;
         }

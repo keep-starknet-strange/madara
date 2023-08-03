@@ -34,6 +34,7 @@
 #![allow(clippy::large_enum_variant)]
 
 use mp_starknet::crypto::state::StateCommitment;
+use mp_starknet::weights::StepWeightMapping;
 /// Starknet pallet.
 /// Definition of the pallet's runtime storage items, events, errors, and dispatchable
 /// functions.
@@ -173,14 +174,14 @@ pub mod pallet {
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ChainId: Get<Felt252Wrapper>;
-        /// Gas limit of one block.
+        /// Step limit of one block.
         #[pallet::constant]
-        type BlockGasLimit: Get<u64>;
-        /// Maps Ethereum gas to Substrate weight.
+        type BlockStepLimit: Get<u64>;
+        /// Maps Starknet steps to Substrate weight.
         type StepWeightMapping: StepWeightMapping;
-        /// Weight corresponding to a gas unit.
+        /// Weight corresponding to a step unit.
         type WeightPerStep: Get<Weight>;
-        /// Gas limit Pov size ratio.
+        /// Step limit Pov size ratio.
         type StepLimitPovSizeRatio: Get<u64>;
     }
 
@@ -763,7 +764,7 @@ pub mod pallet {
 			let without_base_extrinsic_weight = true;
 			T::StepWeightMapping::steps_to_weight(T::TransactionMaxNSteps::get(), without_base_extrinsic_weight)
 		})]
-        pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResult {
+        pub fn consume_l1_message(origin: OriginFor<T>, transaction: Transaction) -> DispatchResultWithPostInfo {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
@@ -771,7 +772,7 @@ pub mod pallet {
             ensure!(ContractClassHashes::<T>::contains_key(transaction.sender_address), Error::<T>::AccountNotDeployed);
 
             let block_context = Self::get_block_context();
-            match transaction.execute(
+            let n_steps = match transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::L1Handler,
@@ -780,18 +781,22 @@ pub mod pallet {
             ) {
                 Ok(v) => {
                     log!(debug, "Successfully consumed a message from L1: {:?}", v);
+                    v.actual_resources.get(N_STEPS_RESOURCE).unwrap().clone()
                 }
                 Err(e) => {
                     log!(error, "Failed to consume a message from L1: {:?}", e);
                     return Err(Error::<T>::TransactionExecutionFailed.into());
                 }
-            }
+            };
 
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction.clone(), TransactionReceiptWrapper::default()))
                 .or(Err(Error::<T>::TooManyPendingTransactions))?;
 
-            Ok(())
+            Ok(PostDispatchInfo {
+                actual_weight: Some(T::StepWeightMapping::steps_to_weight(n_steps as u32, true)),
+                pays_fee: Pays::No,
+            })
         }
     }
 
@@ -879,12 +884,6 @@ pub mod pallet {
             Ok(())
         }
     }
-}
-
-/// A mapping function that converts Starknet gas to Substrate weight
-pub trait StepWeightMapping {
-    fn steps_to_weight(steps: u32, without_base_weight: bool) -> Weight;
-    fn weight_to_gas(weight: Weight) -> u64;
 }
 
 pub struct FixedStepWeightMapping<T>(sp_std::marker::PhantomData<T>);

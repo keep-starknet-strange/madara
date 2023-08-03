@@ -1,4 +1,5 @@
 use frame_support::weights::constants::WEIGHT_REF_TIME_PER_MILLIS;
+use frame_support::weights::Weight;
 use sp_runtime::Perbill;
 
 /// `WeightPerStep` is an approximate ratio of the amount of Weight per Cairo Step.
@@ -24,4 +25,10 @@ pub fn weight_per_step(block_step_limit: u64, txn_ratio: Perbill, weight_millis_
     let weight_per_step = (txn_ratio * weight_per_block).saturating_div(block_step_limit);
     assert!(weight_per_step >= 1, "WeightPerStep must greater than or equal with 1");
     weight_per_step
+}
+
+/// A mapping function that converts Starknet steps to Substrate weight
+pub trait StepWeightMapping {
+    fn steps_to_weight(steps: u32, without_base_weight: bool) -> Weight;
+    fn weight_to_gas(weight: Weight) -> u64;
 }

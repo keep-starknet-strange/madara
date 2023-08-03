@@ -2,6 +2,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use core::str::Utf8Error;
 
+use frame_support::dispatch::DispatchErrorWithPostInfo;
 use scale_codec::{Decode, Encode};
 use serde::Deserialize;
 use sp_runtime::offchain::http::Error;
@@ -17,7 +18,7 @@ pub enum OffchainWorkerError {
     RequestError(Error),
     SerdeError,
     ToBytesError(Utf8Error),
-    ConsumeMessageError(DispatchError),
+    ConsumeMessageError(DispatchErrorWithPostInfo),
     ToTransactionError,
     U256ConversionError,
     HexDecodeError,

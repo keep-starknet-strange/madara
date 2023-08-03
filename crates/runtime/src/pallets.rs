@@ -51,7 +51,7 @@ impl pallet_starknet::Config for Runtime {
     type ValidateMaxNSteps = ValidateMaxNSteps;
     type ProtocolVersion = ProtocolVersion;
     type ChainId = ChainId;
-    type BlockGasLimit = BlockGasLimit;
+    type BlockStepLimit = BlockStepLimit;
     type StepWeightMapping = pallet_starknet::FixedStepWeightMapping<Self>;
     type WeightPerStep = WeightPerStep;
     type StepLimitPovSizeRatio = StepLimitPovSizeRatio;
@@ -169,7 +169,7 @@ parameter_types! {
     pub const ValidateMaxNSteps: u32 = 1_000_000;
     pub const ProtocolVersion: u8 = 0;
     pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
-    pub const BlockGasLimit: u64 = BLOCK_STEP_LIMIT;
+    pub const BlockStepLimit: u64 = BLOCK_STEP_LIMIT;
     pub WeightPerStep: Weight = Weight::from_parts(weight_per_step(BLOCK_STEP_LIMIT, NORMAL_DISPATCH_RATIO, WEIGHT_MILLISECS_PER_BLOCK), 0);
     pub const StepLimitPovSizeRatio: u64 = BLOCK_STEP_LIMIT.saturating_div(MAX_BLOCK_SIZE as u64);
 }
