@@ -1,8 +1,10 @@
 <!-- markdownlint-disable -->
 <div align="center">
-  <img src="docs/images/madara-no-bg.png" height="128">
+  <img src="docs/images/logo/PNGs/Madara logo - Red - Duotone.png" height="128">
 </div>
-
+<div align="center">
+  <img src="docs/images/logo/PNGs/Madara wordmark - Red.png" height="128">
+</div>
 <div align="center">
 <br />
 <!-- markdownlint-restore -->
@@ -218,6 +220,7 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/hel-kame"><img src="https://avatars.githubusercontent.com/u/117039823?v=4?s=100" width="100px;" alt="hithem"/><br /><sub><b>hithem</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=hel-kame" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/clexmond"><img src="https://avatars.githubusercontent.com/u/706094?v=4?s=100" width="100px;" alt="Chris Lexmond"/><br /><sub><b>Chris Lexmond</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=clexmond" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Tidus91"><img src="https://avatars.githubusercontent.com/u/65631603?v=4?s=100" width="100px;" alt="Tidus91"/><br /><sub><b>Tidus91</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=Tidus91" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/nikania"><img src="https://avatars.githubusercontent.com/u/54669079?v=4?s=100" width="100px;" alt="Veronika S"/><br /><sub><b>Veronika S</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=nikania" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
