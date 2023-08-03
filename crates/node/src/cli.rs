@@ -42,8 +42,8 @@ pub struct ExtendedRunCmd {
     #[clap(long)]
     pub madara_path: Option<PathBuf>,
 
-	#[clap(long)]
-	pub chain_spec_url: Option<String>,
+    #[clap(long)]
+    pub chain_spec_url: Option<String>,
 }
 
 #[allow(clippy::large_enum_variant)]

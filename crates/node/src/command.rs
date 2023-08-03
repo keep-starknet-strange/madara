@@ -183,19 +183,20 @@ pub fn run() -> sc_cli::Result<()> {
             runner.sync_run(|config| cmd.run::<Block>(&config))
         }
         None => {
-			// create a reproducible dev environment
-			if cli.run.run_cmd.shared_params.dev {
-				cli.run.run_cmd.shared_params.dev = false;
-				cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
+            // create a reproducible dev environment
+            if cli.run.run_cmd.shared_params.dev {
+                cli.run.run_cmd.shared_params.dev = false;
+                cli.run.run_cmd.shared_params.chain = Some("dev".to_string());
 
-				cli.run.run_cmd.force_authoring = true;
-				cli.run.run_cmd.alice = true;
+                cli.run.run_cmd.force_authoring = true;
+                cli.run.run_cmd.alice = true;
                 cli.run.run_cmd.tmp = true;
 
-				// we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external hosts
-				cli.run.run_cmd.rpc_external = true;
-				cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
-			} else {
+                // we can't set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
+                // hosts
+                cli.run.run_cmd.rpc_external = true;
+                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+            } else {
                 let madara_path = if cli.run.madara_path.is_some() {
                     cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
                 } else {
@@ -209,9 +210,7 @@ pub fn run() -> sc_cli::Result<()> {
 
                 if cli.run.chain_spec_url.is_some() {
                     let url = cli.run.chain_spec_url.clone().unwrap();
-                    fetch_chain_spec(
-                        madara_path.clone(),
-                        url.clone()).unwrap();
+                    fetch_chain_spec(madara_path.clone(), url.clone()).unwrap();
                     cli.run.run_cmd.shared_params.chain =
                         Some(madara_path.clone() + "/chain-specs/" + url.split('/').last().unwrap());
                 }
