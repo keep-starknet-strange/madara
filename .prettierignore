@@ -1,3 +1,7 @@
 target
 typescript-api
 cairo-contracts/build
+madara-app
+madara-dev-explorer
+madara-docs
+madara-infra
