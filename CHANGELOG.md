@@ -6,5 +6,7 @@
 - ci: added windows binaries build and upload the binaries to the release page
 - ci: add `CHANGELOG.md` and enforce it is edited for each PR on `main`
 - feat: add a `genesis_loader` for the node and mocking
+- feat: add `madara_tsukuyomi` as a submodule
+- branding: use new logo in the README
 - feat: print development accounts at node startup
 - test: add test to check tx signed by OZ account can be signed with Argent pk
