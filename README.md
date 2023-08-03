@@ -1,9 +1,10 @@
 <!-- markdownlint-disable -->
 <div align="center">
   <img src="docs/images/logo/PNGs/Madara logo - Red - Duotone.png" height="128">
+</div>
+<div align="center">
   <img src="docs/images/logo/PNGs/Madara wordmark - Red.png" height="128">
 </div>
-
 <div align="center">
 <br />
 <!-- markdownlint-restore -->
