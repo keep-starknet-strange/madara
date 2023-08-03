@@ -7,7 +7,6 @@ use scale_codec::{Decode, Encode};
 use serde::Deserialize;
 use sp_runtime::offchain::http::Error;
 use sp_runtime::offchain::HttpError;
-use sp_runtime::DispatchError;
 
 use crate::message::Message;
 

@@ -27,8 +27,10 @@ pub fn weight_per_step(block_step_limit: u64, txn_ratio: Perbill, weight_millis_
     weight_per_step
 }
 
-/// A mapping function that converts Starknet steps to Substrate weight
+/// Mapping functions that allow conversions b/w Starknet steps and Substrate weight
 pub trait StepWeightMapping {
+    /// Convert Cairo steps to Substrate weight.
     fn steps_to_weight(steps: u32, without_base_weight: bool) -> Weight;
+    /// Convert weight to Cairo steps
     fn weight_to_gas(weight: Weight) -> u64;
 }

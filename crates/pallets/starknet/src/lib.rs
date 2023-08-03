@@ -126,7 +126,6 @@ pub mod pallet {
 
     use blockifier::abi::constants::N_STEPS_RESOURCE;
     use frame_support::dispatch::PostDispatchInfo;
-    use frame_support::sp_tracing::info;
     use mp_starknet::execution::types::CompiledClassHashWrapper;
 
     use super::*;
@@ -889,8 +888,8 @@ pub mod pallet {
 pub struct FixedStepWeightMapping<T>(sp_std::marker::PhantomData<T>);
 impl<T: Config> StepWeightMapping for FixedStepWeightMapping<T> {
     fn steps_to_weight(steps: u32, without_base_weight: bool) -> Weight {
-        let gas: u64 = steps as u64;
-        let mut weight = T::WeightPerStep::get().saturating_mul(gas);
+        let steps: u64 = steps as u64;
+        let mut weight = T::WeightPerStep::get().saturating_mul(steps);
         if without_base_weight {
             weight = weight.saturating_sub(
                 T::BlockWeights::get().get(frame_support::dispatch::DispatchClass::Normal).base_extrinsic,
@@ -899,7 +898,7 @@ impl<T: Config> StepWeightMapping for FixedStepWeightMapping<T> {
         // Apply a gas to proof size ratio based on BlockGasLimit
         let ratio = T::StepLimitPovSizeRatio::get();
         if ratio > 0 {
-            let proof_size = gas.saturating_div(ratio);
+            let proof_size = steps.saturating_div(ratio);
             *weight.proof_size_mut() = proof_size;
         }
 
