@@ -1176,7 +1176,6 @@ impl<T: Config> Pallet<T> {
                 state_tree.set(storage_key, storage_value);
             });
 
-
             // We then compute the state root
             // And update the storage trie
             let state_root = state_tree.commit();

@@ -1,5 +1,5 @@
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use sp_runtime::DispatchError;
+use pallet_starknet::runtime_api::StarknetTransactionExecutionError;
 
 #[derive(thiserror::Error, Clone, Copy, Debug)]
 pub enum StarknetRpcApiError {
@@ -43,9 +43,15 @@ pub enum StarknetRpcApiError {
     UnimplementedMethod = 501,
 }
 
-impl From<DispatchError> for StarknetRpcApiError {
-    fn from(_err: DispatchError) -> Self {
-        StarknetRpcApiError::ContractError
+impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
+    fn from(err: StarknetTransactionExecutionError) -> Self {
+        match err {
+            StarknetTransactionExecutionError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
+            StarknetTransactionExecutionError::ClassAlreadyDeclared => StarknetRpcApiError::ClassAlreadyDeclared,
+            StarknetTransactionExecutionError::ClassHashNotFound => StarknetRpcApiError::ClassHashNotFound,
+            StarknetTransactionExecutionError::InvalidContractClass => StarknetRpcApiError::InvalidContractClass,
+            StarknetTransactionExecutionError::ContractError => StarknetRpcApiError::ContractError,
+        }
     }
 }
 
