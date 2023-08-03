@@ -1,6 +1,7 @@
 <!-- markdownlint-disable -->
 <div align="center">
-  <img src="docs/images/logo/PNGs/Madara logomark - Red - Duotone.png" height="256">
+  <img src="docs/images/logo/PNGs/Madara logo - Red - Duotone.png" height="128">
+  <img src="docs/images/logo/PNGs/Madara wordmark - Red.png" height="128">
 </div>
 
 <div align="center">
