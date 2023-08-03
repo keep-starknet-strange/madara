@@ -69,6 +69,9 @@ fueling growth within the Starknet ecosystem.
 - [Madara Docsite](https://github.com/keep-starknet-strange/madara-app): The
   source code of the Madara documentation website. Deployed on
   `https://docs.madara.zone`.
+- [Madara Tsukuyomi](https://github.com/keep-starknet-strange/madara-tsukuyomi):
+  The source code of the Madara Desktop App. A friendly GUI to start a Madara
+  node and interact with it.
 
 ## 🌟 Features
 
