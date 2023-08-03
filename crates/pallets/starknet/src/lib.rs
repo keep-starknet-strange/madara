@@ -566,9 +566,6 @@ pub mod pallet {
                 }
             };
 
-            info!("actual weight - {:?}", T::StepWeightMapping::steps_to_weight(n_steps as u32, true));
-            info!("predicted steps - {:?}", T::TransactionMaxNSteps::get());
-
             // Append the transaction to the pending transactions.
             Pending::<T>::try_append((transaction, receipt)).map_err(|_| Error::<T>::TooManyPendingTransactions)?;
 
