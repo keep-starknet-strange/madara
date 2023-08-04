@@ -1,6 +1,6 @@
 use frame_support::traits::GenesisBuild;
 
-use crate::genesis_loader::GenesisLoader;
+use crate::genesis_loader::{GenesisLoader, read_file_to_string};
 use crate::{Config, GenesisConfig};
 
 // Configure a mock runtime to test the pallet.
@@ -125,7 +125,7 @@ macro_rules! mock_runtime {
 pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<T>().unwrap();
 
-    let genesis: GenesisLoader = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
+    let genesis: GenesisLoader = serde_json::from_str(&read_file_to_string("crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
     let genesis: GenesisConfig<T> = genesis.into();
 
     genesis.assimilate_storage(&mut t).unwrap();

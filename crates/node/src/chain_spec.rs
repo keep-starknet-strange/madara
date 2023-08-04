@@ -1,5 +1,5 @@
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-use pallet_starknet::genesis_loader::{read_file_to_string, GenesisLoader};
+use pallet_starknet::genesis_loader::GenesisLoader;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -7,6 +7,8 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
+use sc_cli::SubstrateCli;
+use crate::cli::Cli;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -112,14 +114,23 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
     ))
 }
 
+
+
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
 ) -> GenesisConfig {
+	let cli = Cli::from_args();
+	let madara_path = if let Some(path) = cli.run.madara_path {
+		path.to_str().unwrap().to_string()
+	} else {
+		panic!("Madara path not specified. Please specify with `--base-path` or `--madara-path`");
+	};
+
     let genesis: GenesisLoader =
-        serde_json::from_str(&read_file_to_string("crates/node/src/genesis_assets/genesis.json")).unwrap();
+        serde_json::from_str(&format!("{}/genesis-assets/genesis.json", madara_path)).unwrap();
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
 
     GenesisConfig {

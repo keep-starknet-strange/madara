@@ -114,10 +114,10 @@ mod tests {
     fn test_deserialize_loader() {
         // When
         let loader: GenesisLoader =
-            serde_json::from_str(&read_file_to_string("crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
+            serde_json::from_str(&read_file_to_string("configs/genesis_assets/genesis.json")).unwrap();
 
         // Then
-        assert_eq!(13, loader.contract_classes.len());
+        assert_eq!(14, loader.contract_classes.len());
     }
 
     #[test]

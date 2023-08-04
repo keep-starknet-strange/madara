@@ -11,10 +11,33 @@ fn fetch_chain_spec(madara_path: String, target: String) -> Result<(), Box<dyn s
     dst.push("chain-specs");
     std::fs::create_dir_all(&dst).unwrap();
 
-    let response = reqwest::blocking::get(target.clone());
+    let response = reqwest::blocking::get(target.clone())?;
     let mut file = std::fs::File::create(dst.join(target.split('/').last().unwrap()))?;
-    let mut content = std::io::Cursor::new(response?.bytes()?);
+    let mut content = std::io::Cursor::new(response.bytes()?);
     std::io::copy(&mut content, &mut file)?;
+
+    Ok(())
+}
+
+fn fetch_genesis_configs(madara_path: String, target: String) -> Result<(), Box<dyn std::error::Error>> {
+    let mut dst = std::path::PathBuf::from(madara_path);
+    dst.push("genesis-assets");
+    std::fs::create_dir_all(&dst).unwrap();
+
+	let files = vec![
+		"Account.json",
+		"AccountBaseImpl.json",
+		"CallAggregator.json",
+		"genesis.json",
+		"Proxy.json",
+	];
+
+	for file in files {
+    	let response = reqwest::blocking::get(&format!("{}/{}", target, file))?;
+    	let mut file = std::fs::File::create(dst.join(target.split('/').last().unwrap()))?;
+    	let mut content = std::io::Cursor::new(response.bytes()?);
+    	std::io::copy(&mut content, &mut file)?;
+	}
 
     Ok(())
 }
@@ -217,6 +240,8 @@ pub fn run() -> sc_cli::Result<()> {
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
+
+			fetch_genesis_configs(madara_path.clone(), "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets".to_string()).unwrap();
 
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
