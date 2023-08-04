@@ -6,7 +6,7 @@ use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
 #[tokio::test]
 async fn work_ok_up_to_1000() -> Result<(), anyhow::Error> {
     let madara = MadaraClient::new(ExecutionStrategy::Native).await;
-    let rpc = &madara.starknet_client;
+    let rpc = madara.get_starknet_client();
 
     assert_eq!(rpc.block_number().await?, 0);
 

@@ -21,7 +21,7 @@ pub struct MadaraClient {
     process: Child,
     client: Client,
     rpc_request_count: Cell<usize>,
-    pub starknet_client: JsonRpcClient<HttpTransport>,
+    starknet_client: JsonRpcClient<HttpTransport>,
 }
 
 #[derive(Display)]
@@ -61,7 +61,8 @@ impl MadaraClient {
                 .spawn()
                 .unwrap();
 
-        let starknet_client = JsonRpcClient::new(HttpTransport::new(Url::parse("http://localhost:9944").unwrap()));
+        let starknet_client =
+            JsonRpcClient::new(HttpTransport::new(Url::parse("http://localhost:9944").expect("Invalid JSONRPC Url")));
 
         MadaraClient {
             process: child_handle,
@@ -129,6 +130,10 @@ impl MadaraClient {
         self.rpc_request_count.set(previous + 1);
 
         Ok(response)
+    }
+
+    pub fn get_starknet_client(&self) -> &JsonRpcClient<HttpTransport> {
+        &self.starknet_client
     }
 }
 
