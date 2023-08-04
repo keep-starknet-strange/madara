@@ -149,7 +149,6 @@ pub trait StarknetRpcApi {
 
     /// Simulate a given sequence of transactions on the requested state, and generate the execution
     /// traces. If one of the transactions is reverted, raises error.
-    /// Spec version 0.4.0-rc2
     #[method(name = "simulateTransactions")]
     fn simulate_transactions(
         &self,
@@ -158,7 +157,8 @@ pub trait StarknetRpcApi {
         simulation_flags: Vec<SimulateTransactionFlag>,
     ) -> RpcResult<Vec<SimulateTransactionResult>>;
 
-    /// Compatibility with Starknet.js
+    /// This is endpoint is for compatibility with Starknet.js (to use in integration tests)
+    /// Starknet.js uses the wrong "transactions" field name (has to be "transaction")
     /// See https://github.com/0xs34n/starknet.js/blob/829f5f4375a63c7c269e34dad22c9cd8874a64ba/src/provider/rpc.ts#L546
     #[method(name = "simulateTransaction")]
     fn simulate_transaction(

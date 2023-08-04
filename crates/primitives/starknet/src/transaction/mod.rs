@@ -1,4 +1,6 @@
 //! Starknet transaction related functionality.
+/// Manual SCALE codec implementations for certain types
+pub mod codecs;
 /// Constants related to transactions.
 pub mod constants;
 /// Types related to transactions.

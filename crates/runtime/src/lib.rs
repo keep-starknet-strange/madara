@@ -283,7 +283,7 @@ impl_runtime_apis! {
         }
 
         fn simulate_transactions(transactions: Vec<Transaction>, skip_validate: bool, skip_fee_charge: bool) -> Result<Vec<TransactionExecutionInfoWrapper>, DispatchError> {
-            Starknet::simulate_transactions(transactions, skip_validate, skip_fee_charge)
+            Starknet::execute_batch(transactions, skip_validate, skip_fee_charge)
         }
 
         fn get_hasher() -> Hasher {

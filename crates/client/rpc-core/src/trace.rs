@@ -16,13 +16,11 @@ use crate::types::{
 
 /// Aggregates fee estimation from execution info (similar to what estimate_fee does)
 pub fn get_fee_estimate(execution_info: &TransactionExecutionInfoWrapper) -> FeeEstimate {
-    FeeEstimate {
-        overall_fee: execution_info.actual_fee.0 as u64,
-        gas_price: 0,
-        // TODO: actual_resources are not passed atm because it's tricky to implement SCALE on hashmap
-        // Alternatively we can aggregate consumed gas from all the call_info structures
-        gas_consumed: 0,
-    }
+    let gas_consumed = match execution_info.actual_resources.get("l1_gas_usage") {
+        Some(l1_gas_usage) => *l1_gas_usage as u64,
+        None => 0u64,
+    };
+    FeeEstimate { overall_fee: execution_info.actual_fee.0 as u64, gas_price: 0, gas_consumed }
 }
 
 /// Converts StarkFelt used in Blockifier/StarknetAPI to FieldElement from starknet-rs

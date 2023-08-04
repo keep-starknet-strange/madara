@@ -504,7 +504,7 @@ pub struct EventWrapper {
 }
 
 /// This struct wraps the \[TransactionExecutionInfo\] type from the blockifier.
-#[derive(Debug, scale_codec::Encode, scale_codec::Decode)]
+#[derive(Debug, PartialEq, Eq, scale_codec::Encode, scale_codec::Decode)]
 pub struct TransactionExecutionInfoWrapper {
     /// Transaction validation call info; [None] for `L1Handler`.
     pub validate_call_info: Option<CallInfo>,
@@ -516,7 +516,7 @@ pub struct TransactionExecutionInfoWrapper {
     pub actual_fee: Fee,
     /// Actual execution resources the transaction is charged for,
     /// including L1 gas and additional OS resources estimation.
-    #[codec(skip)]
+    #[codec(encoded_as = "crate::transaction::codecs::ActualResourcesCodec")]
     pub actual_resources: BTreeMap<String, usize>,
 }
 

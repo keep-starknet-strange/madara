@@ -11,7 +11,7 @@ import {
   SIGNER_PRIVATE,
   TEST_CONTRACT_ADDRESS,
   DEPLOY_ACCOUNT_COST,
-  TEST_CONTRACT_CLASS_HASH,
+  CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
 } from "../constants";
 
 // In order to run just this test suite:
@@ -57,10 +57,11 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
     });
 
     it("should simulate account deploy transaction successfully", async function () {
+      const calldata = [0x123];  // Public key
       const deployedContractAddress = hash.calculateContractAddressFromHash(
         SALT,
-        TEST_CONTRACT_CLASS_HASH,
-        [],
+        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,  // NoValidate account contract (Cairo 1)
+        calldata,
         0,
       );
 
@@ -75,8 +76,8 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
 
       const invocation: AccountInvocationItem = {
         type: "DEPLOY_ACCOUNT",
-        constructorCalldata: [],
-        classHash: TEST_CONTRACT_CLASS_HASH,
+        constructorCalldata: calldata,
+        classHash: CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
         addressSalt: SALT,
         signature: [],
         nonce: 0,

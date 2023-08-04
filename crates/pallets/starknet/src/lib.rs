@@ -69,9 +69,11 @@ use alloc::vec::Vec;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::contract_class::ContractClass;
 use blockifier::execution::entry_point::{CallInfo, ExecutionResources};
+use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier_state_adapter::BlockifierStateAdapter;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::Time;
+use frame_support::transactional;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
@@ -464,6 +466,26 @@ pub mod pallet {
         ReachedBoundedVecLimit,
         TransactionConversionError,
         SequencerAddressNotValid,
+    }
+
+    impl<T: Config> From<TransactionExecutionError> for Error<T> {
+        fn from(err: TransactionExecutionError) -> Self {
+            match err {
+                TransactionExecutionError::DeclareTransactionError { class_hash: _ } => {
+                    Error::<T>::ClassHashAlreadyDeclared
+                }
+                _ => Error::<T>::TransactionExecutionFailed,
+            }
+        }
+    }
+
+    impl<T: Config> From<TransactionExecutionErrorWrapper> for Error<T> {
+        fn from(err: TransactionExecutionErrorWrapper) -> Self {
+            match err {
+                TransactionExecutionErrorWrapper::TransactionExecution(err) => err.into(),
+                _ => Error::<T>::TransactionExecutionFailed,
+            }
+        }
     }
 
     /// The Starknet pallet external functions.
@@ -1143,8 +1165,10 @@ impl<T: Config> Pallet<T> {
         }
     }
 
-    /// Simulate transaction batch execution
-    pub fn simulate_transactions(
+    /// Execute batch of transactions atomically (either all or none of the transactions are
+    /// applied)
+    #[transactional]
+    pub fn execute_batch(
         transactions: Vec<Transaction>,
         skip_validate: bool,
         skip_fee_charge: bool,
@@ -1152,10 +1176,12 @@ impl<T: Config> Pallet<T> {
         let mut state = BlockifierStateAdapter::<T>::default();
         let context = Self::get_block_context();
 
-        transactions
-            .into_iter()
-            .map(|tx| {
-                tx.execute(
+        let batch_size = transactions.len();
+        let mut res: Vec<TransactionExecutionInfoWrapper> = Vec::with_capacity(batch_size);
+
+        for (i, tx) in transactions.into_iter().enumerate() {
+            let exec_info = tx
+                .execute(
                     &mut state,
                     &context,
                     tx.tx_type.clone(),
@@ -1163,12 +1189,14 @@ impl<T: Config> Pallet<T> {
                     skip_validate,
                     skip_fee_charge,
                 )
-            })
-            .collect::<Result<Vec<_>, TransactionExecutionErrorWrapper>>()
-            .map_err(|e| {
-                log!(error, "Failed to simulate transaction: {:?}", e);
-                Error::<T>::TransactionExecutionFailed.into()
-            })
+                .map_err(|e| {
+                    log!(error, "Failed to execute batch, tx {} of {}:\n{:#?}", i + 1, batch_size, e);
+                    DispatchError::from(Error::<T>::from(e))
+                })?;
+            res.push(exec_info);
+        }
+
+        Ok(res)
     }
 
     /// Returns the hasher used by the runtime.
