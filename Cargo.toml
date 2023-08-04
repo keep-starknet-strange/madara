@@ -158,20 +158,20 @@ log = { version = "0.4.19", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 safe-mix = { version = "1.0", default-features = false }
 jsonrpsee = { version = "0.16.2", default-features = false }
-clap = { version = "4.3.11", default-features = false }
+clap = { version = "4.3.19", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 futures-timer = { version = "3.0.2", default-features = false }
-serde = { version = "1.0.171", default-features = false }
+serde = { version = "1.0.175", default-features = false }
 serde_json = { version = "1.0.100", default-features = false }
-serde_with = "2.3.3"
+serde_with = { version = "2.3.3", default-features = false }
 bitvec = { version = "1", default-features = false }
-thiserror = "1.0.40"
+thiserror = "1.0.44"
 thiserror-no-std = "2.0.2"
 derive_more = { version = "0.99.17", default-features = false }
 rstest = "0.17.0"
 pretty_assertions = "1.4.0"
 linked-hash-map = { version = "0.5.6", default-features = false }
 parking_lot = "0.12.1"
-async-trait = "0.1.69"
+async-trait = "0.1.72"
 indexmap = { git = "https://github.com/bluss/indexmap", rev = "ca5f848e10c31e80aeaad0720d14aa2f6dd6cfb1", default-features = false }
-num-traits = "0.2.8"
+num-traits = "0.2.16"

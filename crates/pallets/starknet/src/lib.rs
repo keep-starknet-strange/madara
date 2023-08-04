@@ -42,6 +42,8 @@ use mp_starknet::crypto::state::StateCommitment;
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
+#[cfg(feature = "std")]
+pub mod genesis_loader;
 /// The implementation of the message type.
 pub mod message;
 /// The Starknet pallet's runtime API
@@ -160,12 +162,16 @@ pub mod pallet {
         /// A bool to disable transaction fees and make all transactions free
         #[pallet::constant]
         type DisableTransactionFee: Get<bool>;
+        /// A bool to disable Nonce validation
+        type DisableNonceValidation: Get<bool>;
         #[pallet::constant]
         type InvokeTxMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ValidateMaxNSteps: Get<u32>;
         #[pallet::constant]
         type ProtocolVersion: Get<u8>;
+        #[pallet::constant]
+        type ChainId: Get<Felt252Wrapper>;
     }
 
     /// The Starknet pallet hooks.
@@ -315,11 +321,6 @@ pub mod pallet {
     #[pallet::getter(fn fee_token_address)]
     pub(super) type FeeTokenAddress<T: Config> = StorageValue<_, ContractAddressWrapper, ValueQuery>;
 
-    /// The chain id.
-    #[pallet::storage]
-    #[pallet::getter(fn chain_id)]
-    pub(super) type ChainId<T: Config> = StorageValue<_, Felt252Wrapper, ValueQuery>;
-
     /// Current sequencer address.
     #[pallet::storage]
     #[pallet::getter(fn sequencer_address)]
@@ -350,8 +351,6 @@ pub mod pallet {
         /// Must be set to the address of the fee token ERC20 contract.
         pub fee_token_address: ContractAddressWrapper,
         pub _phantom: PhantomData<T>,
-        /// The chain id.
-        pub chain_id: Felt252Wrapper,
         pub seq_addr_updated: bool,
     }
 
@@ -364,7 +363,6 @@ pub mod pallet {
                 storage: vec![],
                 fee_token_address: ContractAddressWrapper::default(),
                 _phantom: PhantomData,
-                chain_id: Default::default(),
                 seq_addr_updated: true,
             }
         }
@@ -419,8 +417,6 @@ pub mod pallet {
             LastKnownEthBlock::<T>::set(None);
             // Set the fee token address from the genesis config.
             FeeTokenAddress::<T>::set(self.fee_token_address);
-            // Set the chain id from the genesis config.
-            ChainId::<T>::put(self.chain_id);
             SeqAddrUpdate::<T>::put(self.seq_addr_updated);
         }
     }
@@ -539,12 +535,14 @@ pub mod pallet {
 
             // Get current block context
             let block_context = Self::get_block_context();
-            let chain_id = Self::chain_id();
+            let chain_id = T::ChainId::get();
             let transaction: Transaction = transaction.from_invoke(chain_id);
+
             let call_info = transaction.execute(
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::Invoke,
+                T::DisableNonceValidation::get(),
                 None,
                 false,
                 false,
@@ -597,7 +595,7 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let chain_id = Self::chain_id();
+            let chain_id = T::ChainId::get();
 
             let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
@@ -620,6 +618,7 @@ pub mod pallet {
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::Declare,
+                T::DisableNonceValidation::get(),
                 Some(contract_class),
                 false,
                 false,
@@ -675,7 +674,7 @@ pub mod pallet {
             // This ensures that the function can only be called via unsigned transaction.
             ensure_none(origin)?;
 
-            let chain_id = Self::chain_id();
+            let chain_id = T::ChainId::get();
             let transaction: Transaction =
                 transaction.from_deploy(chain_id).map_err(|_| Error::<T>::TransactionConversionError)?;
 
@@ -693,6 +692,7 @@ pub mod pallet {
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::DeployAccount,
+                T::DisableNonceValidation::get(),
                 None,
                 false,
                 false,
@@ -758,6 +758,7 @@ pub mod pallet {
                 &mut BlockifierStateAdapter::<T>::default(),
                 &block_context,
                 TxType::L1Handler,
+                true,
                 None,
                 false,
                 false,
@@ -878,9 +879,9 @@ impl<T: Config> Pallet<T> {
     /// The transaction
     fn get_call_transaction(call: Call<T>) -> Result<Transaction, ()> {
         match call {
-            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(Self::chain_id())),
-            Call::<T>::declare { transaction } => Ok(transaction.from_declare(Self::chain_id())),
-            Call::<T>::deploy_account { transaction } => transaction.from_deploy(Self::chain_id()).map_err(|_| ()),
+            Call::<T>::invoke { transaction } => Ok(transaction.from_invoke(T::ChainId::get())),
+            Call::<T>::declare { transaction } => Ok(transaction.from_declare(T::ChainId::get())),
+            Call::<T>::deploy_account { transaction } => transaction.from_deploy(T::ChainId::get()).map_err(|_| ()),
             Call::<T>::consume_l1_message { transaction } => Ok(transaction),
             _ => Err(()),
         }
@@ -944,7 +945,7 @@ impl<T: Config> Pallet<T> {
     /// convert chain_id
     #[inline(always)]
     pub fn chain_id_str() -> String {
-        unsafe { from_utf8_unchecked(&Self::chain_id().0.to_bytes_be()).to_string() }
+        unsafe { from_utf8_unchecked(&T::ChainId::get().0.to_bytes_be()).to_string() }
     }
 
     /// Get the block hash of the previous block.
@@ -1146,6 +1147,7 @@ impl<T: Config> Pallet<T> {
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),
             transaction.tx_type.clone(),
+            T::DisableNonceValidation::get(),
             transaction.contract_class.clone(),
             false,
             false,
@@ -1242,12 +1244,12 @@ impl<T: Config> Pallet<T> {
                 state_tree.set(storage_key, storage_value);
             });
 
-            // Update the state trie for this contract in runtime storage.
-            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
-
             // We then compute the state root
             // And update the storage trie
             let state_root = state_tree.commit();
+
+            // Update the state trie for this contract in runtime storage.
+            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
 
             // Update contracts' states root mapping
             ContractsStateRoots::<T>::set(contract_address, Some(state_root));
@@ -1270,5 +1272,9 @@ impl<T: Config> Pallet<T> {
         });
 
         global_state_root
+    }
+
+    pub fn chain_id() -> Felt252Wrapper {
+        T::ChainId::get()
     }
 }

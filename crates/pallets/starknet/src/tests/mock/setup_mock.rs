@@ -1,16 +1,11 @@
 use frame_support::traits::GenesisBuild;
-use mp_starknet::execution::types::Felt252Wrapper;
-use starknet_core::types::FieldElement;
 
-use super::helpers::*;
-use crate as pallet_starknet;
-use crate::tests::constants::*;
-use crate::tests::utils::get_contract_class;
-use crate::Config;
+use crate::genesis_loader::GenesisLoader;
+use crate::{Config, GenesisConfig};
 
 // Configure a mock runtime to test the pallet.
 macro_rules! mock_runtime {
-    ($mock_runtime:ident, $enable_state_root:expr, $disable_transaction_fee:expr) => {
+    ($mock_runtime:ident, $enable_state_root:expr, $disable_transaction_fee:expr, $disable_nonce_validation: expr) => {
 		pub mod $mock_runtime {
 			use frame_support::parameter_types;
 			use frame_support::traits::{ConstU16, ConstU64};
@@ -21,6 +16,8 @@ macro_rules! mock_runtime {
 			use crate::{ ContractAddressWrapper, SeqAddrUpdate, SequencerAddress};
 			use frame_support::traits::Hooks;
 			use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
+            use mp_starknet::execution::types::Felt252Wrapper;
+            use mp_starknet::constants::SN_GOERLI_CHAIN_ID;
 
 
 			type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -79,8 +76,10 @@ macro_rules! mock_runtime {
 				pub const ValidateMaxNSteps: u32 = 1_000_000;
 				pub const EnableStateRoot: bool = $enable_state_root;
 				pub const DisableTransactionFee: bool = $disable_transaction_fee;
+                pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
-			}
+                pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+            }
 
 			impl pallet_starknet::Config for MockRuntime {
 				type RuntimeEvent = RuntimeEvent;
@@ -92,7 +91,9 @@ macro_rules! mock_runtime {
 				type ValidateMaxNSteps = ValidateMaxNSteps;
 				type EnableStateRoot = EnableStateRoot;
 				type DisableTransactionFee = DisableTransactionFee;
+                type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
+                type ChainId = ChainId;
 			}
 
 			/// Run to block n.
@@ -124,184 +125,15 @@ macro_rules! mock_runtime {
 pub fn new_test_ext<T: Config>() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default().build_storage::<T>().unwrap();
 
-    // ARGENT CLASSES
-    let blockifier_account_class = get_contract_class("NoValidateAccount.json", 0);
-    let blockifier_account_class_hash = Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_CLASS).unwrap();
-    let blockifier_account_address = Felt252Wrapper::from_hex_be(BLOCKIFIER_ACCOUNT_ADDRESS).unwrap();
+    let genesis: GenesisLoader = serde_json::from_str(std::include_str!("./genesis.json")).unwrap();
+    let genesis: GenesisConfig<T> = genesis.into();
 
-    // TEST CLASSES
-    let erc20_class = get_contract_class("ERC20.json", 0);
-
-    // ACCOUNT CONTRACT
-
-    // OPENZEPPELIN ACCOUNT CONTRACT
-    let openzeppelin_account_class = get_contract_class("OpenzeppelinAccount.json", 0);
-    let openzeppelin_account_class_hash = Felt252Wrapper::from_hex_be(OPENZEPPELIN_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
-    let openzeppelin_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
-
-    // ARGENT ACCOUNT CONTRACT
-    let argent_account_class = get_contract_class("ArgentAccount.json", 0);
-    let argent_account_class_hash = Felt252Wrapper::from_hex_be(ARGENT_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
-    let argent_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::Argent));
-
-    // BRAAVOS ACCOUNT CONTRACT
-    let braavos_account_class = get_contract_class("BraavosAccount.json", 0);
-    let braavos_account_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
-    let braavos_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::Braavos));
-
-    let braavos_proxy_class = get_contract_class("Proxy.json", 0);
-    let braavos_proxy_class_hash = Felt252Wrapper::from_hex_be(BRAAVOS_PROXY_CLASS_HASH_CAIRO_0).unwrap();
-    let braavos_proxy_address = get_account_address(AccountType::V0(AccountTypeV0Inner::BraavosProxy));
-
-    // UNAUTHORIZED INNER CALL ACCOUNT CONTRACT
-    let inner_call_account_class = get_contract_class("UnauthorizedInnerCallAccount.json", 0);
-    let inner_call_account_class_hash =
-        Felt252Wrapper::from_hex_be(UNAUTHORIZED_INNER_CALL_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
-    let inner_call_account_address = get_account_address(AccountType::V0(AccountTypeV0Inner::InnerCall));
-
-    // NO VALIDATE ACCOUNT CONTRACT
-    let no_validate_class = get_contract_class("NoValidateAccount.json", 0);
-    let no_validate_class_hash = Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_0).unwrap();
-    let no_validate_address = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
-
-    // CAIRO 1 NO VALIDATE ACCOUNT CONTRACT
-    let cairo_1_no_validate_account_class = get_contract_class("NoValidateAccount.casm.json", 1);
-    let cairo_1_no_validate_account_class_hash =
-        Felt252Wrapper::from_hex_be(NO_VALIDATE_ACCOUNT_CLASS_HASH_CAIRO_1).unwrap();
-    let cairo_1_no_validate_account_address = get_account_address(AccountType::V1(AccountTypeV1Inner::NoValidate));
-
-    // TEST CONTRACT
-    let test_contract_class = get_contract_class("test.json", 0);
-    let test_contract_class_hash = Felt252Wrapper::from_hex_be(TEST_CLASS_HASH).unwrap();
-    let test_contract_address = Felt252Wrapper::from_hex_be(TEST_CONTRACT_ADDRESS).unwrap();
-
-    // L1 HANDLER CONTRACT
-    let l1_handler_class = get_contract_class("l1_handler.json", 0);
-    let l1_handler_contract_address = Felt252Wrapper::from_hex_be(L1_HANDLER_CONTRACT_ADDRESS).unwrap();
-    let l1_handler_class_hash = Felt252Wrapper::from_hex_be(L1_HANDLER_CLASS_HASH).unwrap();
-
-    // FEE CONTRACT
-    let token_class_hash = Felt252Wrapper::from_hex_be(TOKEN_CONTRACT_CLASS_HASH).unwrap();
-    let fee_token_address = Felt252Wrapper::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
-
-    // SINGLE/MULTIPLE EVENT EMITTING CONTRACT
-    let single_event_emitting_class = get_contract_class("emit_single_event.json", 0);
-    let single_event_emitting_contract_class_hash = Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CLASS_HASH).unwrap();
-    let single_event_emitting_contract_address =
-        Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap();
-    let multiple_event_emitting_class = get_contract_class("emit_multiple_events_across_contracts.json", 0);
-    let multiple_event_emitting_class_hash = Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CLASS_HASH).unwrap();
-    let multiple_event_emitting_contract_address =
-        Felt252Wrapper::from_hex_be(MULTIPLE_EVENT_EMITTING_CONTRACT_ADDRESS).unwrap();
-
-    pallet_starknet::GenesisConfig::<T> {
-        contracts: vec![
-            (test_contract_address, test_contract_class_hash),
-            (l1_handler_contract_address, l1_handler_class_hash),
-            (blockifier_account_address, blockifier_account_class_hash),
-            (openzeppelin_account_address, openzeppelin_account_class_hash),
-            (argent_account_address, argent_account_class_hash),
-            (braavos_account_address, braavos_account_class_hash),
-            (braavos_proxy_address, braavos_proxy_class_hash),
-            (no_validate_address, no_validate_class_hash),
-            (cairo_1_no_validate_account_address, cairo_1_no_validate_account_class_hash),
-            (inner_call_account_address, inner_call_account_class_hash),
-            (fee_token_address, token_class_hash),
-            (single_event_emitting_contract_address, single_event_emitting_contract_class_hash),
-            (multiple_event_emitting_contract_address, multiple_event_emitting_class_hash),
-        ],
-        contract_classes: vec![
-            (test_contract_class_hash, test_contract_class),
-            (l1_handler_class_hash, l1_handler_class),
-            (blockifier_account_class_hash, blockifier_account_class),
-            (openzeppelin_account_class_hash, openzeppelin_account_class),
-            (argent_account_class_hash, argent_account_class),
-            (braavos_account_class_hash, braavos_account_class),
-            (braavos_proxy_class_hash, braavos_proxy_class),
-            (no_validate_class_hash, no_validate_class),
-            (cairo_1_no_validate_account_class_hash, cairo_1_no_validate_account_class),
-            (inner_call_account_class_hash, inner_call_account_class),
-            (token_class_hash, erc20_class),
-            (single_event_emitting_contract_class_hash, single_event_emitting_class),
-            (multiple_event_emitting_class_hash, multiple_event_emitting_class),
-        ],
-        fee_token_address,
-        storage: vec![
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_address], 0),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[no_validate_address], 1),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 0),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[cairo_1_no_validate_account_address], 1),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[blockifier_account_address], 0),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[blockifier_account_address], 1),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[openzeppelin_account_address], 0),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[openzeppelin_account_address], 1),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[argent_account_address], 0),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[argent_account_address], 1),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[braavos_account_address], 0),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&fee_token_address, "ERC20_balances", &[braavos_account_address], 1),
-                Felt252Wrapper::from(u128::MAX),
-            ),
-            (
-                get_storage_key(&openzeppelin_account_address, "Account_public_key", &[], 0),
-                Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
-            ),
-            (
-                get_storage_key(&argent_account_address, "_signer", &[], 0),
-                Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
-            ),
-            (
-                get_storage_key(&braavos_account_address, "Account_signers", &[Felt252Wrapper::ZERO], 0),
-                Felt252Wrapper::from_hex_be(ACCOUNT_PUBLIC_KEY).unwrap(),
-            ),
-            (
-                get_storage_key(&multiple_event_emitting_contract_address, "external_contract_addr", &[], 0),
-                Felt252Wrapper::from_hex_be(EMIT_SINGLE_EVENT_CONTRACT_ADDRESS).unwrap(),
-            ),
-        ],
-        chain_id: Felt252Wrapper(FieldElement::from_byte_slice_be(b"SN_GOERLI").unwrap()),
-        seq_addr_updated: true,
-        ..Default::default()
-    }
-    .assimilate_storage(&mut t)
-    .unwrap();
+    genesis.assimilate_storage(&mut t).unwrap();
 
     t.into()
 }
 
-mock_runtime!(default_mock, false, false);
-mock_runtime!(state_root_mock, true, false);
-mock_runtime!(fees_disabled_mock, false, true);
+mock_runtime!(default_mock, false, false, false);
+mock_runtime!(state_root_mock, true, false, false);
+mock_runtime!(fees_disabled_mock, false, true, false);
+mock_runtime!(no_nonce_validation_mock, false, true, true);

@@ -537,6 +537,7 @@ impl Transaction {
         state: &mut S,
         block_context: &BlockContext,
         tx_type: TxType,
+        disable_nonce_validation: bool,
         contract_class: Option<ContractClass>,
         skip_validate: bool,
         skip_fee_charge: bool,
@@ -566,7 +567,9 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context, self.is_query)?;
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
 
                 // Validate.
                 let validate_call_info = if !skip_validate {
@@ -624,7 +627,9 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context, self.is_query)?;
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
 
                 // Validate.
                 let validate_call_info = if !skip_validate {
@@ -660,7 +665,9 @@ impl Transaction {
                 );
 
                 // Update nonce
-                Self::handle_nonce(state, &account_context, self.is_query)?;
+                if !disable_nonce_validation {
+                    Self::handle_nonce(state, &account_context, self.is_query)?;
+                }
 
                 // First you need to deploy your contract and only after that you can run validation
                 // https://docs.starknet.io/documentation/architecture_and_concepts/Account_Abstraction/deploying_new_accounts/#transaction_flow
