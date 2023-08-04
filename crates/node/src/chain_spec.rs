@@ -101,10 +101,10 @@ pub fn print_development_accounts() {
 
     const ARGENT_PK: &str = "0x00c1cf1490de1352865301bb8705143f3ef938f97fdf892f1090dcb5ac7bcd1d";
     log::info!("🧪 Using the following development accounts:");
-    log::info!("🧪 NO VALIDATE with address: {} and pk: {}", no_validate_account_address, "");
-    log::info!("🧪 ARGENT with address: {} and pk: {}", argent_account_address, ARGENT_PK);
-    log::info!("🧪 OZ with address: {} and pk: {}", oz_account_address, ARGENT_PK);
-    log::info!("🧪 CAIRO 1 with address: {} and pk: {}", cairo_1_no_validate_account_address, "");
+    log::info!("🧪 NO VALIDATE with address: 0x{} and no pk", no_validate_account_address);
+    log::info!("🧪 ARGENT with address: 0x{} and pk: {}", argent_account_address, ARGENT_PK);
+    log::info!("🧪 OZ with address: 0x{} and pk: {}", oz_account_address, ARGENT_PK);
+    log::info!("🧪 CAIRO 1 with address: 0x{} and no pk", cairo_1_no_validate_account_address);
 }
 
 pub fn local_testnet_config() -> Result<ChainSpec, String> {
