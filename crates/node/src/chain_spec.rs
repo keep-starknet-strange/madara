@@ -1,7 +1,5 @@
 use lazy_static::lazy_static;
-use madara_runtime::{
-    AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Runtime, StarknetConfig, SystemConfig, WASM_BINARY,
-};
+use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Runtime, SystemConfig, WASM_BINARY};
 use pallet_starknet::genesis_loader::{read_file_to_string, GenesisLoader};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -94,7 +92,7 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
 pub fn print_development_accounts() {
-    let loader: GenesisLoader = serde_json::from_str(&*STARKNET_GENESIS).unwrap();
+    let loader: GenesisLoader = serde_json::from_str(&STARKNET_GENESIS).unwrap();
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<Runtime> = loader.into();
     let no_validate_account_address = starknet_genesis.contracts[0].0.0.to_string();
     let argent_account_address = starknet_genesis.contracts[1].0.0.to_string();
@@ -147,7 +145,7 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let loader: GenesisLoader = serde_json::from_str(&*STARKNET_GENESIS).unwrap();
+    let loader: GenesisLoader = serde_json::from_str(&STARKNET_GENESIS).unwrap();
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<Runtime> = loader.into();
     GenesisConfig {
         system: SystemConfig {
