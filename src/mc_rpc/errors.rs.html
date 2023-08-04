@@ -59,10 +59,9 @@
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
 <a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
 </pre><pre class="rust"><code><span class="kw">use </span>jsonrpsee::types::error::{CallError, ErrorObject};
-<span class="kw">use </span>madara_runtime::Runtime;
-<span class="kw">use </span>pallet_starknet::pallet::Error <span class="kw">as </span>PalletError;
-<span class="kw">use </span>sp_runtime::DispatchError;
+<span class="kw">use </span>pallet_starknet::runtime_api::StarknetTransactionExecutionError;
 
 <span class="attr">#[derive(thiserror::Error, Clone, Copy, Debug)]
 </span><span class="kw">pub enum </span>StarknetRpcApiError {
@@ -106,12 +105,15 @@
     </span>UnimplementedMethod = <span class="number">501</span>,
 }
 
-<span class="kw">impl </span>From&lt;DispatchError&gt; <span class="kw">for </span>StarknetRpcApiError {
-    <span class="kw">fn </span>from(err: DispatchError) -&gt; <span class="self">Self </span>{
-        <span class="kw">if </span>err == PalletError::&lt;Runtime&gt;::ContractNotFound.into() {
-            <span class="kw">return </span>StarknetRpcApiError::ContractNotFound;
+<span class="kw">impl </span>From&lt;StarknetTransactionExecutionError&gt; <span class="kw">for </span>StarknetRpcApiError {
+    <span class="kw">fn </span>from(err: StarknetTransactionExecutionError) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>err {
+            StarknetTransactionExecutionError::ContractNotFound =&gt; StarknetRpcApiError::ContractNotFound,
+            StarknetTransactionExecutionError::ClassAlreadyDeclared =&gt; StarknetRpcApiError::ClassAlreadyDeclared,
+            StarknetTransactionExecutionError::ClassHashNotFound =&gt; StarknetRpcApiError::ClassHashNotFound,
+            StarknetTransactionExecutionError::InvalidContractClass =&gt; StarknetRpcApiError::InvalidContractClass,
+            StarknetTransactionExecutionError::ContractError =&gt; StarknetRpcApiError::ContractError,
         }
-        StarknetRpcApiError::ContractError
     }
 }
 

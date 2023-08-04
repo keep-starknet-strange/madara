@@ -2392,12 +2392,12 @@
                 state_tree.set(storage_key, storage_value);
             });
 
-            <span class="comment">// Update the state trie for this contract in runtime storage.
-            </span>ContractTries::&lt;T&gt;::set(contract_address, <span class="prelude-val">Some</span>(state_tree.clone()));
-
             <span class="comment">// We then compute the state root
             // And update the storage trie
             </span><span class="kw">let </span>state_root = state_tree.commit();
+
+            <span class="comment">// Update the state trie for this contract in runtime storage.
+            </span>ContractTries::&lt;T&gt;::set(contract_address, <span class="prelude-val">Some</span>(state_tree.clone()));
 
             <span class="comment">// Update contracts&#39; states root mapping
             </span>ContractsStateRoots::&lt;T&gt;::set(contract_address, <span class="prelude-val">Some</span>(state_root));

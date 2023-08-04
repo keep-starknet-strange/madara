@@ -386,6 +386,25 @@
 <a href="#386" id="386">386</a>
 <a href="#387" id="387">387</a>
 <a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
 </pre><pre class="rust"><code><span class="doccomment">//! L2 validity rollup, settling on Ethereum or as a L3 application-specific rollup, settling on
 //! public Starknet L2.
 //! For now this is the same because we don&#39;t support yet validity proofs and state updates to
@@ -423,6 +442,8 @@
 <span class="kw">use </span>pallet_grandpa::{fg_primitives, AuthorityId <span class="kw">as </span>GrandpaId, AuthorityList <span class="kw">as </span>GrandpaAuthorityList};
 <span class="doccomment">/// Import the StarkNet pallet.
 </span><span class="kw">pub use </span>pallet_starknet;
+<span class="kw">use </span>pallet_starknet::pallet::Error <span class="kw">as </span>PalletError;
+<span class="kw">use </span>pallet_starknet::runtime_api::StarknetTransactionExecutionError;
 <span class="kw">use </span>pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
 <span class="kw">use </span>pallet_starknet::Call::{declare, deploy_account, invoke};
 <span class="kw">use </span>pallet_starknet::Event;
@@ -709,6 +730,23 @@
                 }
             };
             <span class="prelude-val">Ok</span>(UncheckedExtrinsic::new_unsigned(call.into()))
+        }
+
+        <span class="kw">fn </span>convert_error(error: DispatchError) -&gt; StarknetTransactionExecutionError {
+            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::ContractNotFound.into() {
+                <span class="kw">return </span>StarknetTransactionExecutionError::ContractNotFound;
+            }
+            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::ClassHashAlreadyDeclared.into() {
+                <span class="kw">return </span>StarknetTransactionExecutionError::ClassAlreadyDeclared;
+            }
+            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::ContractClassHashUnknown.into() {
+                <span class="kw">return </span>StarknetTransactionExecutionError::ClassHashNotFound;
+            }
+            <span class="kw">if </span>error == PalletError::&lt;Runtime&gt;::InvalidContractClass.into() {
+                <span class="kw">return </span>StarknetTransactionExecutionError::InvalidContractClass;
+            }
+
+            StarknetTransactionExecutionError::ContractError
         }
     }
 
