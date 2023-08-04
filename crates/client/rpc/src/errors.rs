@@ -1,7 +1,5 @@
 use jsonrpsee::types::error::{CallError, ErrorObject};
-use madara_runtime::Runtime;
-use pallet_starknet::pallet::Error as PalletError;
-use sp_runtime::DispatchError;
+use pallet_starknet::runtime_api::StarknetTransactionExecutionError;
 
 #[derive(thiserror::Error, Clone, Copy, Debug)]
 pub enum StarknetRpcApiError {
@@ -45,12 +43,15 @@ pub enum StarknetRpcApiError {
     UnimplementedMethod = 501,
 }
 
-impl From<DispatchError> for StarknetRpcApiError {
-    fn from(err: DispatchError) -> Self {
-        if err == PalletError::<Runtime>::ContractNotFound.into() {
-            return StarknetRpcApiError::ContractNotFound;
+impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
+    fn from(err: StarknetTransactionExecutionError) -> Self {
+        match err {
+            StarknetTransactionExecutionError::ContractNotFound => StarknetRpcApiError::ContractNotFound,
+            StarknetTransactionExecutionError::ClassAlreadyDeclared => StarknetRpcApiError::ClassAlreadyDeclared,
+            StarknetTransactionExecutionError::ClassHashNotFound => StarknetRpcApiError::ClassHashNotFound,
+            StarknetTransactionExecutionError::InvalidContractClass => StarknetRpcApiError::InvalidContractClass,
+            StarknetTransactionExecutionError::ContractError => StarknetRpcApiError::ContractError,
         }
-        StarknetRpcApiError::ContractError
     }
 }
 
