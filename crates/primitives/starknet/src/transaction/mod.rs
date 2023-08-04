@@ -523,6 +523,7 @@ impl Transaction {
     /// * `state` - The state to execute the transaction on.
     /// * `block` - The block to execute the transaction on.
     /// * `tx_type` - The type of the transaction to execute.
+    /// * `disable_nonce_validation` - Allow non-sequential or repeating nonce
     /// * `contract_class` - The contract class to execute the transaction on.
     /// * `fee_token_address` - The fee token address.
     /// * `skip_validate` - Skip transaction validation (simulation case)
@@ -532,6 +533,7 @@ impl Transaction {
     ///
     /// * `TransactionExecutionResult<TransactionExecutionInfo>` - The result of the transaction
     ///   execution
+    #[allow(clippy::too_many_arguments)]
     pub fn execute<S: State + StateChanges + FeeConfig>(
         &self,
         state: &mut S,

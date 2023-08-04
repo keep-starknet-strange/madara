@@ -1187,6 +1187,7 @@ impl<T: Config> Pallet<T> {
                     &mut state,
                     &context,
                     tx.tx_type.clone(),
+                    false,  // validate nonces
                     tx.contract_class.clone(),
                     skip_validate,
                     skip_fee_charge,

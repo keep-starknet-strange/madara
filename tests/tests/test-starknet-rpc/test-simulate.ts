@@ -57,10 +57,10 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
     });
 
     it("should simulate account deploy transaction successfully", async function () {
-      const calldata = [0x123];  // Public key
+      const calldata = [0x123]; // Public key
       const deployedContractAddress = hash.calculateContractAddressFromHash(
         SALT,
-        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,  // NoValidate account contract (Cairo 1)
+        CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH, // NoValidate account contract (Cairo 1)
         calldata,
         0,
       );

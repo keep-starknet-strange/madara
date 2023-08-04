@@ -1,10 +1,9 @@
-use core::str::{from_utf8, FromStr};
+use core::str::from_utf8;
 
 use blockifier::execution::contract_class::{ContractClass, ContractClassV1};
 use frame_support::{assert_err, assert_ok, bounded_vec};
 use mp_starknet::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::transaction::types::{DeclareTransaction, DeployAccountTransaction, InvokeTransaction, Transaction};
-use sp_core::H256;
 
 use super::mock::default_mock::*;
 use super::mock::*;
@@ -42,7 +41,7 @@ fn from_declare_transaction(declare_tx: DeclareTransaction) -> Transaction {
 
 fn build_deploy_account_transaction(nonce: Felt252Wrapper) -> (DeployAccountTransaction, Felt252Wrapper) {
     let class_hash = Felt252Wrapper::from_hex_be(HELLO_SN_CLASS_HASH).unwrap();
-    let salt = H256::from_str(HELLO_SN_SALT).unwrap();
+    let salt = Felt252Wrapper::from_hex_be(HELLO_SN_SALT).unwrap();
     let address = calculate_contract_address(salt, class_hash.into(), bounded_vec!()).unwrap();
 
     let deploy_tx = DeployAccountTransaction {
