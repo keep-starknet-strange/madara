@@ -10,4 +10,5 @@
 - fix: state root bug fix where the tree was stored in runtime _before_ being
   committed
 - feat: add a `genesis_loader` for the node and mocking
+- feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
