@@ -7,8 +7,10 @@ use anyhow::anyhow;
 use derive_more::Display;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
-use serde::Deserialize;
 use serde_json::json;
+use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
+use starknet_providers::Provider;
+use url::Url;
 
 #[derive(Debug)]
 /// A wrapper over the Madara process handle, reqwest client and request counter
@@ -19,6 +21,7 @@ pub struct MadaraClient {
     process: Child,
     client: Client,
     rpc_request_count: Cell<usize>,
+    starknet_client: JsonRpcClient<HttpTransport>,
 }
 
 #[derive(Display)]
@@ -45,7 +48,7 @@ impl MadaraClient {
         );
 
         let child_handle = Command::new(madara_path.to_str().unwrap())
-                // Silence Madara stdout and stderr          
+                // Silence Madara stdout and stderr
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .args([
@@ -58,7 +61,15 @@ impl MadaraClient {
                 .spawn()
                 .unwrap();
 
-        MadaraClient { process: child_handle, client: Client::new(), rpc_request_count: Default::default() }
+        let starknet_client =
+            JsonRpcClient::new(HttpTransport::new(Url::parse("http://localhost:9944").expect("Invalid JSONRPC Url")));
+
+        MadaraClient {
+            process: child_handle,
+            client: Client::new(),
+            starknet_client,
+            rpc_request_count: Default::default(),
+        }
     }
 
     pub async fn new(execution: ExecutionStrategy) -> Self {
@@ -76,7 +87,7 @@ impl MadaraClient {
     }
 
     pub async fn run_to_block(&self, target_block: u64) -> anyhow::Result<()> {
-        let mut current_block = self.get_block_number().await?;
+        let mut current_block = self.starknet_client.block_number().await?;
 
         if current_block >= target_block {
             return Err(anyhow!("target_block must be in the future"));
@@ -120,6 +131,10 @@ impl MadaraClient {
 
         Ok(response)
     }
+
+    pub fn get_starknet_client(&self) -> &JsonRpcClient<HttpTransport> {
+        &self.starknet_client
+    }
 }
 
 // Substrate RPC
@@ -143,52 +158,5 @@ impl MadaraClient {
         let response = self.call_rpc(body).await?;
 
         Ok(response.status().is_success())
-    }
-}
-
-#[derive(Debug, Deserialize)]
-struct MadaraRpcResponse<T> {
-    #[allow(dead_code)]
-    jsonrpc: JsonRpcVersion,
-    #[allow(dead_code)]
-    id: usize,
-    result: T,
-}
-
-#[derive(Debug)]
-enum JsonRpcVersion {
-    V2,
-}
-
-impl<'de> Deserialize<'de> for JsonRpcVersion {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = <&str>::deserialize(deserializer)?;
-
-        if s == "2.0" {
-            Ok(JsonRpcVersion::V2)
-        } else {
-            Err(serde::de::Error::invalid_value(serde::de::Unexpected::Str(s), &"a valid version. `2.0` is supported"))
-        }
-    }
-}
-
-type GetBlockNumberResponse = MadaraRpcResponse<u64>;
-
-// Starknet RPC
-impl MadaraClient {
-    pub async fn get_block_number(&self) -> anyhow::Result<u64> {
-        let body = json!({
-            "method": "starknet_blockNumber"
-        });
-
-        let response = self.call_rpc(body).await?;
-        let bytes = response.bytes().await?;
-
-        let body: GetBlockNumberResponse = serde_json::from_slice(&bytes)?;
-
-        Ok(body.result)
     }
 }
