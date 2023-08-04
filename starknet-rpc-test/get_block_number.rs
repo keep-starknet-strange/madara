@@ -1,7 +1,7 @@
 extern crate starknet_rpc_test;
 
 use starknet_providers::Provider;
-use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
+use starknet_rpc_test::{ExecutionStrategy, MadaraClient, BlockCreation};
 
 #[tokio::test]
 async fn work_ok_up_to_1000() -> Result<(), anyhow::Error> {
@@ -10,7 +10,7 @@ async fn work_ok_up_to_1000() -> Result<(), anyhow::Error> {
 
     assert_eq!(rpc.block_number().await?, 0);
 
-    madara.create_block().await?;
+    madara.create_block(None, BlockCreation::default()).await?;
     assert_eq!(rpc.block_number().await?, 1);
 
     madara.run_to_block(20).await?;

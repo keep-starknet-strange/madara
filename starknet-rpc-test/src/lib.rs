@@ -8,6 +8,7 @@ use derive_more::Display;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
 use serde_json::json;
+use starknet_core::types::Transaction;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
 use url::Url;
@@ -22,6 +23,12 @@ pub struct MadaraClient {
     client: Client,
     rpc_request_count: Cell<usize>,
     starknet_client: JsonRpcClient<HttpTransport>,
+}
+
+#[derive(Debug, Default)]
+pub struct BlockCreation {
+    parent_hash: Option<String>,
+    finalize: bool,
 }
 
 #[derive(Display)]
@@ -94,7 +101,7 @@ impl MadaraClient {
         }
 
         while current_block < target_block {
-            self.create_block().await?;
+            self.create_block(None, BlockCreation::default()).await?;
             current_block += 1;
         }
 
@@ -103,7 +110,7 @@ impl MadaraClient {
 
     pub async fn create_n_blocks(&self, mut n: u64) -> anyhow::Result<()> {
         while n > 0 {
-            self.create_block().await?;
+            self.create_block(None, BlockCreation::default()).await?;
             n -= 1;
         }
 
@@ -139,10 +146,21 @@ impl MadaraClient {
 
 // Substrate RPC
 impl MadaraClient {
-    pub async fn create_block(&self) -> anyhow::Result<()> {
+    pub async fn create_block(
+        &self,
+        transactions: Option<Vec<Transaction>>,
+        options: BlockCreation,
+    ) -> anyhow::Result<()> {
+        let empty_block = transactions.is_none() || transactions.unwrap().len() == 0;
+
+        let params = match options.parent_hash {
+            Some(parent_hash) => vec![json!(empty_block), json!(options.finalize), json!(parent_hash)],
+            None => vec![json!(empty_block), json!(options.finalize)],
+        };
+
         let body = json!({
             "method": "engine_createBlock",
-            "params": vec![true, true],
+            "params": params,
         });
 
         let response = self.call_rpc(body).await?;
