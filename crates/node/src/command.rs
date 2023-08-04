@@ -24,20 +24,14 @@ fn fetch_genesis_configs(madara_path: String, target: String) -> Result<(), Box<
     dst.push("genesis-assets");
     std::fs::create_dir_all(&dst).unwrap();
 
-	let files = vec![
-		"Account.json",
-		"AccountBaseImpl.json",
-		"CallAggregator.json",
-		"genesis.json",
-		"Proxy.json",
-	];
+    let files = vec!["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
 
-	for file in files {
-    	let response = reqwest::blocking::get(&format!("{}/{}", target, file))?;
-    	let mut file = std::fs::File::create(dst.join(target.split('/').last().unwrap()))?;
-    	let mut content = std::io::Cursor::new(response.bytes()?);
-    	std::io::copy(&mut content, &mut file)?;
-	}
+    for file in files {
+        let response = reqwest::blocking::get(&format!("{}/{}", target, file))?;
+        let mut file = std::fs::File::create(dst.join(file))?;
+        let mut content = std::io::Cursor::new(response.bytes()?);
+        std::io::copy(&mut content, &mut file)?;
+    }
 
     Ok(())
 }
@@ -220,36 +214,39 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
-			// alias madara_path <> base_path
+            // alias madara_path <> base_path
             let madara_path = if cli.run.madara_path.is_some() {
-				let path = cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string();
-            	cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-				path
+                let path = cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string();
+                cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
+                path
             } else if cli.run.run_cmd.shared_params.base_path.is_some() {
-				let path = cli.run.run_cmd.shared_params.base_path.clone().unwrap().to_str().unwrap().to_string();
-				cli.run.madara_path = Some((path.clone()).into());
-				path
-			} else {
+                let path = cli.run.run_cmd.shared_params.base_path.clone().unwrap().to_str().unwrap().to_string();
+                cli.run.madara_path = Some((path.clone()).into());
+                path
+            } else {
                 let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
                 let path = format!("{}/.madara", home_path);
-				cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-				cli.run.madara_path = Some((path.clone()).into());
-				path
+                cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
+                cli.run.madara_path = Some((path.clone()).into());
+                path
             };
 
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
-
-			fetch_genesis_configs(madara_path.clone(), "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets".to_string()).unwrap();
+            fetch_genesis_configs(
+                madara_path.clone(),
+                "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets"
+                    .to_string(),
+            )
+            .unwrap();
 
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
                     fetch_chain_spec(
                         madara_path.clone(),
                         "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/chain-specs/testnet-sharingan-raw.json".to_string()).unwrap();
-                    cli.run.run_cmd.shared_params.chain =
-                        Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                 }
 
                 cli.run.run_cmd.rpc_external = true;
