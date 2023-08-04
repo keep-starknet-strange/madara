@@ -10,3 +10,6 @@
 [submodule "madara-dev-explorer"]
 	path = madara-dev-explorer
 	url = https://github.com/keep-starknet-strange/madara-dev-explorer
+[submodule "madara-tsukuyomi"]
+	path = madara-tsukuyomi
+	url = https://github.com/keep-starknet-strange/madara-tsukuyomi
