@@ -2,15 +2,16 @@ mod ethereum;
 mod sharp_utils;
 mod celestia;
 
+use celestia::CelestiaClient;
+pub use celestia::CelestiaClientBuilder;
+
 use std::collections::HashMap;
 use std::marker::PhantomData;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use ethers::types::U256;
 use futures::StreamExt;
 use lazy_static::lazy_static;
-use mp_starknet::sequencer_address::DEFAULT_SEQUENCER_ADDRESS;
 use mp_starknet::storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
@@ -30,7 +31,9 @@ lazy_static! {
 }
 
 pub type StorageWrites<'a> = Vec<(&'a [u8], &'a [u8])>;
-pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
+pub struct DataAvailabilityWorker<B, C> {
+    phantom: PhantomData<(B, C)>
+}
 
 impl<B, C> DataAvailabilityWorker<B, C>
 where
@@ -102,40 +105,20 @@ where
     C: ProvideRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
 {
-    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>, l1_node: String) {
+    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>, l1_node: Arc<CelestiaClient>) {
         let mut notification_st = client.import_notification_stream();
 
         while let Some(notification) = notification_st.next().await {
-            // Query last proven block
-            /*  if let Ok(last_block) = ethereum::last_proven_block(&l1_node).await {
-                match madara_backend.da().last_proved_block() {
-                    Ok(last_local_block) => log::info!("Last onchain: {last_block}, Last Local: {last_local_block}"),
-                    Err(e) => log::debug!("could not pull last local block: {e}"),
-                };
-            }*/
-
-            // Check the associated job status
-            // remove sharp status checking, we publish anyway
 
             match madara_backend.da().state_diff(&notification.hash) {
                 Ok(state_diff) => {
-                    // publish state diff to Layer 1
-                    //TODO :celestia
-                    celestia::publish_data(state_diff).await;
-
-                    // save last proven block
-                    /*if let Err(db_err) = madara_backend.da().update_last_proved_block(&notification.hash) {
-                        log::debug!("could not save last proved block: {db_err}");
-                    };*/
+                    // publish state diff to Celestia
+                    if let Err(e) = l1_node.publish_state_diff_and_verify_inclusion(state_diff).await {
+                        log::error!("Failed to publish data: {}", e);
+                    }
                 }
                 Err(e) => log::debug!("could not pull state diff: {e}"),
             }
-            
-            /*if let Ok(job_resp) = sharp_utils::get_status(sharp_utils::TEST_JOB_ID) {
-                if let Some(status) = job_resp.status {
-                    
-                }
-            }*/
         }
     }
 }
