@@ -6,8 +6,8 @@ use starknet_core::types::{BlockId, BlockTag};
 use starknet_ff::FieldElement;
 use starknet_providers::Provider;
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
-use starknet_rpc_test::utils::transfer_tokens;
-use starknet_rpc_test::{BlockCreation, ExecutionStrategy, MadaraClient};
+use starknet_rpc_test::utils::AccountActions;
+use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
 use starknet_signers::{LocalWallet, SigningKey};
 use tokio::sync::OnceCell;
 
@@ -22,9 +22,7 @@ async fn work_ok_with_empty_block() -> Result<(), anyhow::Error> {
     let madara = get_madara_client().await;
     let rpc = madara.get_starknet_client();
 
-    assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 0);
-
-    madara.create_block(vec![], BlockCreation::default()).await?;
+    madara.create_empty_block().await?;
     assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 0);
 
     Ok(())
@@ -40,15 +38,11 @@ async fn work_ok_with_block_one_tx() -> Result<(), anyhow::Error> {
     let account = SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET);
 
     madara
-        .create_block(
-            vec![transfer_tokens(
-                &account,
-                argent_account_address,
-                FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
-                None,
-            )],
-            BlockCreation::new(None, true),
-        )
+        .create_block_with_txs(vec![account.transfer_tokens(
+            argent_account_address,
+            FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+            None,
+        )])
         .await?;
 
     assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 1);
@@ -58,27 +52,24 @@ async fn work_ok_with_block_one_tx() -> Result<(), anyhow::Error> {
 
 #[tokio::test]
 async fn work_ok_with_block_multiple_txs() -> Result<(), anyhow::Error> {
-    let madara = get_madara_client().await;
-    let _rpcc = madara.get_starknet_client();
-
     // TODO: Uncomment when raw execution is supported
+    // let madara = get_madara_client().await;
+    // let rpc = madara.get_starknet_client();
+
     // madara
-    //     .create_block(
+    //     .create_block_with_txs(
     //         vec![
-    //             transfer_tokens(
-    //                 &account,
+    //             account.transfer_tokens(
     //                 argent_account_address,
     //                 FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
     //                 Some(1),
     //             ),
-    //             transfer_tokens(
-    //                 &account,
+    //             account.transfer_tokens(
     //                 argent_account_address,
     //                 FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
     //                 Some(2),
     //             ),
     //         ],
-    //         BlockCreation::new(None, true),
     //     )
     //     .await?;
 

@@ -34,18 +34,6 @@ pub struct MadaraClient {
     starknet_client: JsonRpcClient<HttpTransport>,
 }
 
-#[derive(Debug, Default)]
-pub struct BlockCreation {
-    parent_hash: Option<String>,
-    finalize: bool,
-}
-
-impl BlockCreation {
-    pub fn new(parent_hash: Option<String>, finalize: bool) -> Self {
-        BlockCreation { parent_hash, finalize }
-    }
-}
-
 #[derive(Display)]
 pub enum ExecutionStrategy {
     Native,
@@ -57,6 +45,7 @@ impl Drop for MadaraClient {
         if let Err(e) = self.process.kill() {
             eprintln!("Could not kill Madara process: {}", e)
         }
+        println!("dropped");
     }
 }
 
@@ -116,7 +105,7 @@ impl MadaraClient {
         }
 
         while current_block < target_block {
-            self.create_block(vec![], BlockCreation::default()).await?;
+            self.create_empty_block().await?;
             current_block += 1;
         }
 
@@ -125,7 +114,7 @@ impl MadaraClient {
 
     pub async fn create_n_blocks(&self, mut n: u64) -> anyhow::Result<()> {
         while n > 0 {
-            self.create_block(vec![], BlockCreation::default()).await?;
+            self.create_empty_block().await?;
             n -= 1;
         }
 
@@ -158,21 +147,21 @@ impl MadaraClient {
 
 // Substrate RPC
 impl MadaraClient {
-    pub async fn create_block(
-        &self,
-        transactions: Vec<TransactionExecution<'_>>,
-        options: BlockCreation,
-    ) -> anyhow::Result<()> {
-        let empty_block = transactions.len() == 0;
-
-        let params = match options.parent_hash {
-            Some(parent_hash) => vec![json!(empty_block), json!(options.finalize), json!(parent_hash)],
-            None => vec![json!(empty_block), json!(options.finalize)],
-        };
-
+    pub async fn create_empty_block(&self) -> anyhow::Result<()> {
         let body = json!({
             "method": "engine_createBlock",
-            "params": params,
+            "params": [true, true],
+        });
+
+        let response = self.call_rpc(body).await?;
+        // TODO: read actual error from response
+        response.status().is_success().then_some(()).ok_or(anyhow!("failed to create a new block"))
+    }
+
+    pub async fn create_block_with_txs(&self, transactions: Vec<TransactionExecution<'_>>) -> anyhow::Result<()> {
+        let body = json!({
+            "method": "engine_createBlock",
+            "params": [false, true],
         });
 
         let mut results: Vec<InvokeTransactionResult> = Vec::new();
@@ -180,6 +169,17 @@ impl MadaraClient {
             let result = tx.send().await?;
             results.push(result);
         }
+
+        let response = self.call_rpc(body).await?;
+        // TODO: read actual error from response
+        response.status().is_success().then_some(()).ok_or(anyhow!("failed to create a new block"))
+    }
+
+    pub async fn create_block_with_parent(&self, parent_hash: &str) -> anyhow::Result<()> {
+        let body = json!({
+            "method": "engine_createBlock",
+            "params": [json!(true), json!(true), json!(parent_hash)],
+        });
 
         let response = self.call_rpc(body).await?;
         // TODO: read actual error from response
