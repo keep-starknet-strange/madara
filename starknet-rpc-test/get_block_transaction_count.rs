@@ -4,6 +4,7 @@ extern crate starknet_rpc_test;
 
 use std::assert_matches::assert_matches;
 
+use rstest::{fixture, rstest};
 use starknet_accounts::SingleOwnerAccount;
 use starknet_core::chain_id;
 use starknet_core::types::{BlockId, BlockTag};
@@ -13,17 +14,16 @@ use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_
 use starknet_rpc_test::utils::AccountActions;
 use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
 use starknet_signers::{LocalWallet, SigningKey};
-use tokio::sync::OnceCell;
 
-static MADARA_CLIENT: OnceCell<MadaraClient> = OnceCell::const_new();
-
-async fn get_madara_client() -> &'static MadaraClient {
-    MADARA_CLIENT.get_or_init(|| async { MadaraClient::new(ExecutionStrategy::Native).await }).await
+#[fixture]
+async fn madara() -> MadaraClient {
+    MadaraClient::new(ExecutionStrategy::Native).await
 }
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_with_empty_block() -> Result<(), anyhow::Error> {
-    let madara = get_madara_client().await;
+async fn work_ok_with_empty_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     madara.create_empty_block().await?;
@@ -32,9 +32,10 @@ async fn work_ok_with_empty_block() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn fail_non_existing_block() -> Result<(), anyhow::Error> {
-    let madara = get_madara_client().await;
+async fn fail_non_existing_block(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     madara.create_empty_block().await?;
@@ -47,9 +48,10 @@ async fn fail_non_existing_block() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_with_block_one_tx() -> Result<(), anyhow::Error> {
-    let madara = get_madara_client().await;
+async fn work_ok_with_block_one_tx(#[future] madara: MadaraClient) -> Result<(), anyhow::Error> {
+    let madara = madara.await;
     let rpc = madara.get_starknet_client();
 
     let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
@@ -69,10 +71,11 @@ async fn work_ok_with_block_one_tx() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn work_ok_with_block_multiple_txs() -> Result<(), anyhow::Error> {
+async fn work_ok_with_block_multiple_txs(#[future] _madara: MadaraClient) -> Result<(), anyhow::Error> {
     // TODO: Uncomment when raw execution is supported
-    // let madara = get_madara_client().await;
+    // let madara = madara.await;
     // let rpc = madara.get_starknet_client();
 
     // madara

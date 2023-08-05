@@ -5208,7 +5208,7 @@ dependencies = [
  "mp-starknet",
  "pallet-starknet",
  "pretty_assertions",
- "rstest",
+ "rstest 0.17.0",
  "sc-client-api",
  "sc-network-sync",
  "sc-transaction-pool-api",
@@ -7385,7 +7385,19 @@ checksum = "de1bb486a691878cd320c2f0d319ba91eeaa2e894066d8b5f8f117c000e9d962"
 dependencies = [
  "futures",
  "futures-timer",
- "rstest_macros",
+ "rstest_macros 0.17.0",
+ "rustc_version",
+]
+
+[[package]]
+name = "rstest"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b96577ca10cb3eade7b337eb46520108a67ca2818a24d0b63f41fd62bc9651c"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "rstest_macros 0.18.1",
  "rustc_version",
 ]
 
@@ -7400,6 +7412,23 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 1.0.109",
+ "unicode-ident",
+]
+
+[[package]]
+name = "rstest_macros"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225e674cf31712b8bb15fdbca3ec0c1b9d825c5a24407ff2b7e005fb6a29ba03"
+dependencies = [
+ "cfg-if",
+ "glob",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "relative-path",
+ "rustc_version",
+ "syn 2.0.26",
  "unicode-ident",
 ]
 
@@ -10126,6 +10155,7 @@ dependencies = [
  "derive_more",
  "lazy_static",
  "reqwest",
+ "rstest 0.18.1",
  "serde",
  "serde_json",
  "starknet-accounts",

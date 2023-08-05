@@ -10,6 +10,7 @@ derive_more = "0.99.17"
 reqwest = "0.11.18"
 serde = { version = "1.0.179", features = ["derive"] }
 serde_json = "1.0.104"
+thiserror = {workspace= true}
 starknet-ff = {workspace = true}
 starknet-core = {workspace = true}
 starknet-crypto = {workspace = true}
@@ -19,7 +20,7 @@ starknet-accounts = {version = "^0.4.0"}
 url = "2.2.2"
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
 lazy_static = "1.4.0"
-thiserror = {workspace= true}
+rstest = "0.18.1"
 
 [[test]]
 name = "starknet_get_block_number"
