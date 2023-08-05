@@ -16,6 +16,7 @@ static MADARA_CLIENT: OnceCell<MadaraClient> = OnceCell::const_new();
 async fn get_madara_client() -> &'static MadaraClient {
     MADARA_CLIENT.get_or_init(|| async { MadaraClient::new(ExecutionStrategy::Native).await }).await
 }
+
 #[tokio::test]
 async fn work_ok_with_empty_block() -> Result<(), anyhow::Error> {
     let madara = get_madara_client().await;

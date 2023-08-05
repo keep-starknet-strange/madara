@@ -18,18 +18,3 @@ pub const CONTRACT_ADDRESS: &str = "0x000000000000000000000000000000000000000000
 pub const FEE_TOKEN_ADDRESS: &str = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 pub const TOKEN_CLASS_HASH: &str = "0x0000000000000000000000000000000000000000000000000000000000010000";
 pub const ARGENT_CONTRACT_ADDRESS: &str = "0x0000000000000000000000000000000000000000000000000000000000000002";
-
-// pub fn load_erc20_contract() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/ERC20.json")?)? }
-// pub fn load_erc721_contract() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/ERC721.json")?)? }
-// pub fn load_test_contract() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/test.json")?)? }
-// pub fn load_test_cairo_1_sierra() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/cairo_1/HelloStarknet.sierra.
-// json")?)? } pub fn load_erc20_cairo_1_sierra() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/cairo_1/erc20.sierra.json")?)?
-// } pub fn load_test_cairo_1_casm() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/cairo_1/HelloStarknet.casm.
-// json")?)? } pub fn load_erc20_cairo_1_casm() -> Result<ContractArtifact, anyhow::Error> {
-// serde_json::from_str(&fs::read_to_string("../cairo-contracts/build/cairo_1/erc20.casm.json")?)? }
