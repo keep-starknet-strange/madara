@@ -115,6 +115,14 @@ impl CelestiaClientBuilder {
         CelestiaClient::new(http_client, ws_client)
     }
 
+    fn get_http_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<HttpClient> {
+        Ok(new_http(endpoint, Some(auth_token)).unwrap())
+    }
+
+    async fn get_ws_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<WsClient> {
+        Ok(new_websocket(endpoint, Some(auth_token)).await.unwrap())
+    }
+
     #[cfg(test)]
     pub async fn build_test(self) -> CelestiaRpcResult<CelestiaClient> {
         let base_config = Network::LOCAL.to_base_config();
@@ -126,14 +134,6 @@ impl CelestiaClientBuilder {
         let ws_client = CelestiaClientBuilder::get_ws_client(&ws_endpoint, &auth_token).await?;
 
         CelestiaClient::new(http_client, ws_client)
-    }
-
-    fn get_http_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<HttpClient> {
-        Ok(new_http(endpoint, Some(auth_token)).unwrap())
-    }
-
-    async fn get_ws_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<WsClient> {
-        Ok(new_websocket(endpoint, Some(auth_token)).await.unwrap())
     }
 }
 
