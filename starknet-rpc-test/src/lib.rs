@@ -1,7 +1,7 @@
-use std::cell::Cell;
 use std::fmt::Debug;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use anyhow::anyhow;
 use derive_more::Display;
@@ -30,7 +30,7 @@ type TransactionExecution<'a> = Execution<'a, SingleOwnerAccount<&'a JsonRpcClie
 pub struct MadaraClient {
     process: Child,
     client: Client,
-    rpc_request_count: Cell<usize>,
+    rpc_request_count: AtomicUsize,
     starknet_client: JsonRpcClient<HttpTransport>,
 }
 
@@ -134,7 +134,8 @@ impl MadaraClient {
 
     async fn call_rpc(&self, mut body: serde_json::Value) -> reqwest::Result<Response> {
         let body = body.as_object_mut().expect("the body should be an object");
-        body.insert("id".to_string(), self.rpc_request_count.get().into());
+        let current_id = self.rpc_request_count.fetch_add(1, Ordering::Relaxed);
+        body.insert("id".to_string(), current_id.into());
         body.insert("jsonrpc".to_string(), "2.0".into());
 
         let body = serde_json::to_string(&body).expect("the json body must be serializable");
@@ -146,10 +147,6 @@ impl MadaraClient {
             .body(body)
             .send()
             .await?;
-
-        // Increment rpc_request_count
-        let previous = self.rpc_request_count.get();
-        self.rpc_request_count.set(previous + 1);
 
         Ok(response)
     }
