@@ -1,10 +1,10 @@
 #![feature(assert_matches)]
 
+use std::cell::Cell;
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 use anyhow::anyhow;
 use constants::{MAX_PORT, MIN_PORT};
@@ -46,7 +46,7 @@ lazy_static! {
 pub struct MadaraClient {
     process: Child,
     client: Client,
-    rpc_request_count: AtomicUsize,
+    rpc_request_count: Cell<usize>,
     starknet_client: JsonRpcClient<HttpTransport>,
     port: u16,
 }
@@ -65,7 +65,9 @@ pub enum TestError {
 
 impl Drop for MadaraClient {
     fn drop(&mut self) {
-        self.process.kill().expect("Cannot kill process");
+        if let Err(e) = self.process.kill() {
+            eprintln!("Could not kill Madara process: {}", e)
+        }
     }
 }
 
@@ -87,26 +89,30 @@ impl MadaraClient {
 
         let free_port = get_free_port()?;
 
-        let root = Path::new("../");
-        std::env::set_current_dir(&root).expect("Failed to change working directory");
+        let current_root = Path::new(".");
+        let repository_root = Path::new("../");
+
+        std::env::set_current_dir(&repository_root).expect("Failed to change working directory");
 
         let child_handle = Command::new("cargo")
-                // Silence Madara stdout and stderr
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
-                .args([
-					"run",
-					"--release",
-					"--",
-                    "--alice",
-                    "--sealing=manual",
-                    &format!("--execution={execution}"),
-                    "--chain=dev",
-                    "--tmp",
-                    &format!("--rpc-port={free_port}"),
-                ])
-                .spawn()
-                .expect("Could not start background madara node");
+		// Silence Madara stdout and stderr
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
+		.args([
+			"run",
+			"--release",
+			"--",
+			"--alice",
+			"--sealing=manual",
+			&format!("--execution={execution}"),
+			"--chain=dev",
+			"--tmp",
+			&format!("--rpc-port={free_port}"),
+			])
+			.spawn()
+			.expect("Could not start background madara node");
+
+        std::env::set_current_dir(&current_root).expect("Failed to switch back working directory");
 
         let host = &format!("http://localhost:{free_port}");
 
@@ -161,8 +167,7 @@ impl MadaraClient {
 
     async fn call_rpc(&self, mut body: serde_json::Value) -> reqwest::Result<Response> {
         let body = body.as_object_mut().expect("the body should be an object");
-        let current_id = self.rpc_request_count.fetch_add(1, Ordering::Relaxed);
-        body.insert("id".to_string(), current_id.into());
+        body.insert("id".to_string(), self.rpc_request_count.get().into());
         body.insert("jsonrpc".to_string(), "2.0".into());
 
         let body = serde_json::to_string(&body).expect("the json body must be serializable");
@@ -174,6 +179,10 @@ impl MadaraClient {
             .body(body)
             .send()
             .await?;
+
+        // Increment rpc_request_count
+        let previous = self.rpc_request_count.get();
+        self.rpc_request_count.set(previous + 1);
 
         Ok(response)
     }
