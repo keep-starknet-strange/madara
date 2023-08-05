@@ -28,7 +28,6 @@ async fn work_ok_at_start_and_with_new_blocks() -> Result<(), anyhow::Error> {
     assert_eq!(rpc.block_hash_and_number().await?.block_number, 1);
 
     let signer = LocalWallet::from(SigningKey::from_secret_scalar(FieldElement::from_hex_be(SIGNER_PRIVATE).unwrap()));
-    let argent_account_address = FieldElement::from_hex_be(ARGENT_CONTRACT_ADDRESS).expect("Invalid Contract Address");
     let account = SingleOwnerAccount::new(rpc, signer, argent_account_address, chain_id::TESTNET);
 
     madara

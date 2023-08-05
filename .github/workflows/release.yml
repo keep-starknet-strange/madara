@@ -16,5 +16,7 @@ jobs:
   binaries_release_build:
     name: Build binaries (release)
     uses: ./.github/workflows/binaries-build.yml
+    permissions:
+      contents: write
     with:
       release_tag_name: ${{ github.event.release.tag_name }}

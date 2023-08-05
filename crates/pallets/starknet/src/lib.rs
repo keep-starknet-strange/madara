@@ -42,6 +42,8 @@ use mp_starknet::crypto::state::StateCommitment;
 pub use pallet::*;
 /// An adapter for the blockifier state related traits
 pub mod blockifier_state_adapter;
+#[cfg(feature = "std")]
+pub mod genesis_loader;
 /// The implementation of the message type.
 pub mod message;
 /// The Starknet pallet's runtime API
@@ -1176,12 +1178,12 @@ impl<T: Config> Pallet<T> {
                 state_tree.set(storage_key, storage_value);
             });
 
-            // Update the state trie for this contract in runtime storage.
-            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
-
             // We then compute the state root
             // And update the storage trie
             let state_root = state_tree.commit();
+
+            // Update the state trie for this contract in runtime storage.
+            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
 
             // Update contracts' states root mapping
             ContractsStateRoots::<T>::set(contract_address, Some(state_root));
