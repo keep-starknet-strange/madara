@@ -1882,7 +1882,7 @@
       },
       "TXN_STATUS": {
         "type": "string",
-        "enum": ["PENDING", "ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "REJECTED"],
+        "enum": ["ACCEPTED_ON_L2", "ACCEPTED_ON_L1", "REJECTED"],
         "description": "The status of the transaction"
       },
       "TXN_TYPE": {
