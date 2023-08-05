@@ -823,7 +823,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 [[package]]
 name = "blockifier"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange//blockifier?branch=no_std-support#9e35d7f205501388d2c0a663bf1edb1bf4204ba4"
+source = "git+https://github.com/keep-starknet-strange/blockifier?branch=no_std-support#9e35d7f205501388d2c0a663bf1edb1bf4204ba4"
 dependencies = [
  "cairo-felt",
  "cairo-lang-casm",
