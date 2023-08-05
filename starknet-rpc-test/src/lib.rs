@@ -8,10 +8,19 @@ use derive_more::Display;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::{Client, Response};
 use serde_json::json;
-use starknet_core::types::Transaction;
+use starknet_accounts::{Execution, SingleOwnerAccount};
+use starknet_core::types::InvokeTransactionResult;
 use starknet_providers::jsonrpc::{HttpTransport, JsonRpcClient};
 use starknet_providers::Provider;
+use starknet_signers::LocalWallet;
 use url::Url;
+
+/// Constants (addresses, contracts...)
+pub mod constants;
+/// Starknet related utilities
+pub mod utils;
+
+type TransactionExecution<'a> = Execution<'a, SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>>;
 
 #[derive(Debug)]
 /// A wrapper over the Madara process handle, reqwest client and request counter
@@ -29,6 +38,12 @@ pub struct MadaraClient {
 pub struct BlockCreation {
     parent_hash: Option<String>,
     finalize: bool,
+}
+
+impl BlockCreation {
+    pub fn new(parent_hash: Option<String>, finalize: bool) -> Self {
+        BlockCreation { parent_hash, finalize }
+    }
 }
 
 #[derive(Display)]
@@ -101,7 +116,7 @@ impl MadaraClient {
         }
 
         while current_block < target_block {
-            self.create_block(None, BlockCreation::default()).await?;
+            self.create_block(vec![], BlockCreation::default()).await?;
             current_block += 1;
         }
 
@@ -110,7 +125,7 @@ impl MadaraClient {
 
     pub async fn create_n_blocks(&self, mut n: u64) -> anyhow::Result<()> {
         while n > 0 {
-            self.create_block(None, BlockCreation::default()).await?;
+            self.create_block(vec![], BlockCreation::default()).await?;
             n -= 1;
         }
 
@@ -148,10 +163,10 @@ impl MadaraClient {
 impl MadaraClient {
     pub async fn create_block(
         &self,
-        transactions: Option<Vec<Transaction>>,
+        transactions: Vec<TransactionExecution<'_>>,
         options: BlockCreation,
     ) -> anyhow::Result<()> {
-        let empty_block = transactions.is_none() || transactions.unwrap().len() == 0;
+        let empty_block = transactions.len() == 0;
 
         let params = match options.parent_hash {
             Some(parent_hash) => vec![json!(empty_block), json!(options.finalize), json!(parent_hash)],
@@ -162,6 +177,12 @@ impl MadaraClient {
             "method": "engine_createBlock",
             "params": params,
         });
+
+        let mut results: Vec<InvokeTransactionResult> = Vec::new();
+        for tx in transactions {
+            let result = tx.send().await?;
+            results.push(result);
+        }
 
         let response = self.call_rpc(body).await?;
         // TODO: read actual error from response
