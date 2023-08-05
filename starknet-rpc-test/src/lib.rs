@@ -1,3 +1,5 @@
+#![feature(assert_matches)]
+
 use std::fmt::Debug;
 use std::net::TcpListener;
 use std::path::Path;

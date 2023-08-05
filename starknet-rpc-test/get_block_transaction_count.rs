@@ -1,10 +1,14 @@
+#![feature(assert_matches)]
+
 extern crate starknet_rpc_test;
+
+use std::assert_matches::assert_matches;
 
 use starknet_accounts::SingleOwnerAccount;
 use starknet_core::chain_id;
 use starknet_core::types::{BlockId, BlockTag};
 use starknet_ff::FieldElement;
-use starknet_providers::Provider;
+use starknet_providers::{Provider, ProviderError};
 use starknet_rpc_test::constants::{ARGENT_CONTRACT_ADDRESS, MINT_AMOUNT, SIGNER_PRIVATE};
 use starknet_rpc_test::utils::AccountActions;
 use starknet_rpc_test::{ExecutionStrategy, MadaraClient};
@@ -24,6 +28,21 @@ async fn work_ok_with_empty_block() -> Result<(), anyhow::Error> {
 
     madara.create_empty_block().await?;
     assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 0);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn fail_non_existing_block() -> Result<(), anyhow::Error> {
+    let madara = get_madara_client().await;
+    let rpc = madara.get_starknet_client();
+
+    madara.create_empty_block().await?;
+
+    assert_matches!(
+        rpc.get_block_transaction_count(BlockId::Hash(FieldElement::ZERO)).await.err(),
+        Some(ProviderError::StarknetError(_))
+    );
 
     Ok(())
 }
