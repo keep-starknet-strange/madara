@@ -248,7 +248,9 @@ where
 pub fn new_full(
     config: Configuration,
     sealing: Option<Sealing>,
-    l1_node: Option<String>,
+    l1_node_http: Option<String>,
+    l1_node_ws: Option<String>,
+    auth_token: Option<String>
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -374,7 +376,14 @@ pub fn new_full(
         .for_each(|()| future::ready(())),
     );
 
-    if let Some(node) = l1_node {
+    if l1_node_http.is_some() || l1_node_ws.is_some() || auth_token.is_some() {
+        
+        let l1_client = mc_data_availability::CelestiaClientBuilder::new()
+                .http_endpoint(l1_node_http.as_deref())
+                .ws_endpoint(l1_node_ws.as_deref())
+                .auth_token(auth_token.as_deref())
+                .build().unwrap();
+
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",
             Some("madara"),
@@ -384,7 +393,7 @@ pub fn new_full(
         task_manager.spawn_essential_handle().spawn(
             "da-worker-update",
             Some("madara"),
-            DataAvailabilityWorker::update_state(client.clone(), madara_backend, node),
+            DataAvailabilityWorker::update_state(client.clone(), madara_backend, l1_client.into()),
         );
     };
 
