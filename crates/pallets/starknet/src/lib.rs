@@ -1187,7 +1187,7 @@ impl<T: Config> Pallet<T> {
                     &mut state,
                     &context,
                     tx.tx_type.clone(),
-                    false,  // validate nonces
+                    false, // validate nonces
                     tx.contract_class.clone(),
                     skip_validate,
                     skip_fee_charge,
@@ -1196,6 +1196,8 @@ impl<T: Config> Pallet<T> {
                     log!(error, "Failed to execute batch, tx {} of {}:\n{:#?}", i + 1, batch_size, e);
                     DispatchError::from(Error::<T>::from(e))
                 })?;
+
+            log!(debug, "Execution trace:\n{:#?}", exec_info);
             res.push(exec_info);
         }
 

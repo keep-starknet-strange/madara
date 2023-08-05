@@ -147,8 +147,8 @@ pub trait StarknetRpcApi {
     #[method(name = "getProof")]
     fn get_proof(&self, get_proof_input: RpcGetProofInput) -> RpcResult<RpcGetProofOutput>;
 
-    /// Simulate a given sequence of transactions on the requested state, and generate the execution
-    /// traces. If one of the transactions is reverted, raises error.
+    /// Simulates a given sequence of transactions at the beginning of the block specified,
+    /// and returns execution trace. If one of the transactions is reverted, raises error.
     #[method(name = "simulateTransactions")]
     fn simulate_transactions(
         &self,
@@ -158,7 +158,7 @@ pub trait StarknetRpcApi {
     ) -> RpcResult<Vec<SimulateTransactionResult>>;
 
     /// This is endpoint is for compatibility with Starknet.js (to use in integration tests)
-    /// Starknet.js uses the wrong "transactions" field name (has to be "transaction")
+    /// Starknet.js uses incorrect "transactions" field name (has to be "transaction")
     /// See https://github.com/0xs34n/starknet.js/blob/829f5f4375a63c7c269e34dad22c9cd8874a64ba/src/provider/rpc.ts#L546
     #[method(name = "simulateTransaction")]
     fn simulate_transaction(

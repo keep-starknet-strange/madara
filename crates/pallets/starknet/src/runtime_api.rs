@@ -49,7 +49,7 @@ sp_api::decl_runtime_apis! {
         fn chain_id() -> Felt252Wrapper;
         /// Returns fee estimate
         fn estimate_fee(transaction: Transaction) -> Result<(u64, u64), DispatchError>;
-        /// Execute transactions without applying changes to the state (NOTE: initial state is at the end of the specified substrate block)
+        /// Executes transactions atomically and produces traces
         fn simulate_transactions(transactions: Vec<Transaction>, skip_validate: bool, skip_fee_charge: bool) -> Result<Vec<TransactionExecutionInfoWrapper>, DispatchError>;
         /// Returns the hasher used by the runtime.
         fn get_hasher() -> Hasher;

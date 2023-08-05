@@ -42,7 +42,7 @@ fn from_declare_transaction(declare_tx: DeclareTransaction) -> Transaction {
 fn build_deploy_account_transaction(nonce: Felt252Wrapper) -> (DeployAccountTransaction, Felt252Wrapper) {
     let class_hash = Felt252Wrapper::from_hex_be(HELLO_SN_CLASS_HASH).unwrap();
     let salt = Felt252Wrapper::from_hex_be(HELLO_SN_SALT).unwrap();
-    let address = calculate_contract_address(salt, class_hash.into(), bounded_vec!()).unwrap();
+    let address = calculate_contract_address(salt, class_hash, bounded_vec!()).unwrap();
 
     let deploy_tx = DeployAccountTransaction {
         account_class_hash: class_hash,
@@ -142,6 +142,24 @@ fn execute_batch_declare_for_declared_class_failed() {
         let mut tx = from_declare_transaction(declare_tx);
         tx.nonce = Felt252Wrapper::from(1u128);
         assert_err!(Starknet::execute_batch(vec![tx], false, false), Error::<MockRuntime>::ClassHashAlreadyDeclared);
+    });
+}
+
+#[test]
+fn execute_batch_double_declare_failed() {
+    new_test_ext::<MockRuntime>().execute_with(|| {
+        basic_test_setup(2);
+
+        let sender_account = get_account_address(AccountType::V0(AccountTypeV0Inner::NoValidate));
+        let declare_tx = build_declare_transaction(sender_account, Felt252Wrapper::ZERO);
+
+        let tx1 = from_declare_transaction(declare_tx.clone());
+        let mut tx2 = from_declare_transaction(declare_tx);
+        tx2.nonce = Felt252Wrapper::from(1u128);
+        assert_err!(
+            Starknet::execute_batch(vec![tx1, tx2], false, false),
+            Error::<MockRuntime>::ClassHashAlreadyDeclared
+        );
     });
 }
 

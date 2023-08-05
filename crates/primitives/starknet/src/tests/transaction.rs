@@ -1,7 +1,9 @@
+use alloc::collections::BTreeMap;
 use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
 use frame_support::{bounded_vec, BoundedVec};
+use scale_codec::{Decode, Encode};
 use sp_core::{TypedGet, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockHash, BlockNumber};
@@ -22,7 +24,7 @@ use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::transaction::constants;
 use crate::transaction::types::{
     BroadcastedTransactionConversionErrorWrapper, DeployAccountTransaction, EventError, EventWrapper,
-    InvokeTransaction, MaxArraySize, Transaction, TransactionReceiptWrapper, TxType,
+    InvokeTransaction, MaxArraySize, Transaction, TransactionExecutionInfoWrapper, TransactionReceiptWrapper, TxType,
 };
 
 #[test]
@@ -481,6 +483,21 @@ fn test_try_invoke_txn_from_broadcasted_invoke_txn_v1_max_calldata_size() {
 
     assert!(invoke_txn.is_err());
     assert!(matches!(invoke_txn.unwrap_err(), BroadcastedTransactionConversionErrorWrapper::CalldataConversionError));
+}
+
+#[test]
+fn test_transaction_execution_info_scale_codec() {
+    let exec_info = TransactionExecutionInfoWrapper {
+        validate_call_info: None,
+        execute_call_info: None,
+        fee_transfer_call_info: None,
+        actual_fee: Fee(42),
+        actual_resources: BTreeMap::from([(String::from("test"), 4294967297usize)]),
+    };
+
+    let encoded = exec_info.encode();
+    let decoded = TransactionExecutionInfoWrapper::decode(&mut encoded.as_slice()).expect("Failed to decode");
+    assert_eq!(exec_info, decoded);
 }
 
 // This helper methods either returns result of `TryInto::try_into()` and expected result or the

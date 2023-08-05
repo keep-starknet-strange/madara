@@ -1,5 +1,12 @@
 import "@keep-starknet-strange/madara-api-augment";
-import { Account, AccountInvocationItem, RpcProvider, hash } from "starknet";
+import { expect } from "chai";
+import {
+  Account,
+  AccountInvocationItem,
+  RpcProvider,
+  hash,
+  Sequencer,
+} from "starknet";
 import { jumpBlocks } from "../../util/block";
 import { describeDevMadara } from "../../util/setup-dev-tests";
 import { rpcTransfer } from "../../util/utils";
@@ -12,6 +19,8 @@ import {
   TEST_CONTRACT_ADDRESS,
   DEPLOY_ACCOUNT_COST,
   CAIRO_1_ACCOUNT_CONTRACT_CLASS_HASH,
+  TEST_CAIRO_1_SIERRA,
+  TEST_CAIRO_1_CASM,
 } from "../constants";
 
 // In order to run just this test suite:
@@ -50,10 +59,17 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
         version: 1,
       };
 
-      await providerRPC.getSimulateTransaction([invocation], {
+      const res = await providerRPC.getSimulateTransaction([invocation], {
         blockIdentifier: "latest",
-        // skipValidate: true,
       });
+      expect(res.length).to.be.equal(1);
+      expect(
+        res[0].transaction_trace as Sequencer.TransactionTraceResponse,
+      ).to.have.property("execute_invocation");
+      expect(
+        res[0].transaction_trace as Sequencer.TransactionTraceResponse,
+      ).to.have.property("validate_invocation");
+      //expect(res[0].transaction_trace as Sequencer.TransactionTraceResponse).to.have.property("fee_transfer_invocation");
     });
 
     it("should simulate account deploy transaction successfully", async function () {
@@ -84,13 +100,20 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
         version: 1,
       };
 
-      await providerRPC.getSimulateTransaction([invocation], {
+      const res = await providerRPC.getSimulateTransaction([invocation], {
         blockIdentifier: "latest",
-        // skipValidate: true,
       });
+      expect(res.length).to.be.equal(1);
+      expect(
+        res[0].transaction_trace as Sequencer.TransactionTraceResponse,
+      ).to.have.property("constructor_invocation");
+      expect(
+        res[0].transaction_trace as Sequencer.TransactionTraceResponse,
+      ).to.have.property("validate_invocation");
+      //expect(res[0].transaction_trace as Sequencer.TransactionTraceResponse).to.have.property("fee_transfer_invocation");
     });
 
-    it("should should simulate declare transaction", async function () {
+    it("should simulate declare transaction successfully and not mutate the state", async function () {
       // computed via: starkli class-hash ./cairo-contracts/build/ERC20.json
       // the above command should be used at project root
       const classHash =
@@ -102,7 +125,7 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
         SIGNER_PRIVATE,
       );
 
-      await account.simulateTransaction(
+      const res = await account.simulateTransaction(
         [
           {
             type: "DECLARE",
@@ -114,6 +137,85 @@ describeDevMadara("Starknet RPC - Simulation Test", (context) => {
           blockIdentifier: "latest",
         },
       );
+      expect(res.length).to.be.equal(1);
+      expect(
+        res[0].transaction_trace as Sequencer.TransactionTraceResponse,
+      ).to.have.property("validate_invocation");
+      //expect(res[0].transaction_trace as Sequencer.TransactionTraceResponse).to.have.property("fee_transfer_invocation");
+
+      // Making sure simulation actually leaves no changes
+
+      await jumpBlocks(context, 1);
+
+      await expect(
+        providerRPC.getClass(classHash, "latest"),
+      ).to.be.rejectedWith("28: Class hash not found");
+    });
+
+    it("should run simulation on a specified block in the past", async function () {
+      // Note that simulating declare v1 (apparently) does not throw errors if class is already declared
+      // Thus here we are using declare v2 with cairo v1 contract
+      const account = new Account(
+        providerRPC,
+        ARGENT_CONTRACT_ADDRESS,
+        SIGNER_PRIVATE,
+      );
+
+      const nonce = await providerRPC.getNonceForAddress(
+        ARGENT_CONTRACT_ADDRESS,
+        "latest",
+      );
+
+      await account.declare(
+        {
+          casm: TEST_CAIRO_1_CASM,
+          contract: TEST_CAIRO_1_SIERRA,
+        },
+        { nonce, version: 2 },
+      );
+
+      await jumpBlocks(context, 1);
+
+      // Make sure simulation would fail now
+
+      await expect(
+        account.simulateTransaction(
+          [
+            {
+              type: "DECLARE",
+              casm: TEST_CAIRO_1_CASM,
+              contract: TEST_CAIRO_1_SIERRA,
+            },
+          ],
+          {
+            blockIdentifier: "latest",
+          },
+        ),
+      ).to.be.rejectedWith("40: Contract error");
+
+      // But if we rewind 1 block back, everything should be ok
+      // We need to set the nonce manually though
+
+      const block_hash_and_number = await providerRPC.getBlockHashAndNumber();
+
+      const res = await account.simulateTransaction(
+        [
+          {
+            type: "DECLARE",
+            casm: TEST_CAIRO_1_CASM,
+            contract: TEST_CAIRO_1_SIERRA,
+          },
+        ],
+        {
+          blockIdentifier: block_hash_and_number.block_number - 1,
+          nonce,
+        },
+      );
+      expect(res.length).to.be.equal(1);
+      expect(
+        res[0].transaction_trace as Sequencer.TransactionTraceResponse,
+      ).to.have.property("validate_invocation");
+      //expect(res[0].transaction_trace as Sequencer.TransactionTraceResponse).to.have.property("fee_transfer_invocation");
     });
   });
 });
