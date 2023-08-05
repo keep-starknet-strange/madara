@@ -31,9 +31,7 @@ lazy_static! {
 }
 
 pub type StorageWrites<'a> = Vec<(&'a [u8], &'a [u8])>;
-pub struct DataAvailabilityWorker<B, C> {
-    phantom: PhantomData<(B, C)>
-}
+pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 
 impl<B, C> DataAvailabilityWorker<B, C>
 where
