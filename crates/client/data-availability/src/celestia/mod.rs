@@ -1,244 +1,194 @@
 use std::sync::Arc;
+use eyre::Result;
 
-use ethers::types::{Address, I256, U256};
+use ethers::types::U256;
 
+mod network;
+use network::Network;
+mod utils;
+use utils::string_to_namespace;
 
-use celestia_types::{Blob, Commitment};
-use celestia_types::nmt::{Namespace, NS_ID_V0_SIZE};
-use celestia_rpc::client::{new_http};
-use celestia_rpc::HeaderClient;
-use celestia_rpc::BlobClient; 
+use celestia_types::Blob;
+use celestia_types::nmt::Namespace;
+use celestia_types::Result as CelestiaTypesResult;
+use celestia_rpc::client::{new_http, new_websocket};
+use celestia_rpc::{BlobClient, HeaderClient};
+use celestia_rpc::Result as CelestiaRpcResult;
+use jsonrpsee::http_client::HttpClient;
+use jsonrpsee::ws_client::WsClient;
+use jsonrpsee::core::Error as JsonRpSeeError;
 
-use rand::{Rng, RngCore};
-use rand::rngs::StdRng;
-use rand::SeedableRng;
-use tokio::sync::Mutex;
+const MADARA: &str = "Madara";
 
+#[derive(Debug, Clone)]
+pub struct CelestiaClient {
+    http_client: HttpClient,
+    ws_client: Arc<WsClient>,
+    nid: Namespace
+}
 
-
-//pub const _STARKNET_MAINNET_CC_ADDRESS: &str = "0xc662c410C0ECf747543f5bA90660f6ABeBD9C8c4";
-//pub const STARKNET_GOERLI_CC_ADDRESS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
-
-// TODO:
-// - remove unwraps
-// - test sequencer address
-// - make chain configurable
-pub async fn publish_data(state_diff: Vec<U256>) {
-    log::info!("publish_data: {:?}", state_diff);
-
-    let client = new_http("http://localhost:26658",
-    Some("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdfQ.qKuJEGn2nai79X3GsGjmpwugDnbdaBzHLK-uXDSn3Bc")).unwrap();
-
-    // cast Vec<U256> to Vec<u8>
-    let mut state_diff_bytes: Vec<u8> = Vec::new();
-    for i in 0..state_diff.len() {
-        let mut bytes = [0 as u8; 32];
-        state_diff[i].to_big_endian(&mut bytes);
-        state_diff_bytes.extend_from_slice(&bytes);
+impl CelestiaClient {
+    pub fn new(http_client: HttpClient, ws_client: WsClient) -> CelestiaRpcResult<Self> {
+        Ok(CelestiaClient { 
+            http_client,
+            ws_client: Arc::new(ws_client),
+            nid:  string_to_namespace(MADARA).unwrap()
+        }
+        )
     }
 
-    //define namespace
-    // let rng = StdRng::from_entropy();
-    // let rng = Arc::new(Mutex::new(rng));
-    let mut array: [u8; 10] = [0; 10];
+    pub async fn publish_state_diff_and_verify_inclusion(&self, state_diff: Vec<U256>) -> eyre::Result<()> {
+        let blob = self.get_blob_from_state_diff(state_diff)?;
+        let submitted_height = self.publish_data(&blob).await?;
+        
+        //blocking call, awaiting on server side (Celestia Node) that a block with our data is included
+        //not clean split between ws and http endpoints, which is why this call is blocking in the first place...
+        self.ws_client.header_wait_for_height(submitted_height).await?;
 
-    for i in 0..10 {
-        // let mut rng = rng.lock().await;
-        array[i] = i as u8;
+        self.verify_blob_was_included(submitted_height, blob).await?;
+
+        Ok(())
     }
 
-    let nid = Namespace::new_v0(&array).unwrap();
+    async fn publish_data(&self, blob: &Blob) -> Result<u64, JsonRpSeeError> {
+        self.http_client.blob_submit(&[blob.clone()]).await
+    }
 
-    //define a new blob
-    let blob = Blob::new(nid, state_diff_bytes).unwrap();
-    log::info!("blob: {:?}", blob);
-    println!("blob: {:?}", blob);
+    fn get_blob_from_state_diff(&self, state_diff: Vec<U256>) -> CelestiaTypesResult<Blob> {
+        
+        let state_diff_bytes: Vec<u8> = state_diff.iter().flat_map(|item| {
+            let mut bytes = [0_u8; 32];
+            item.to_big_endian(&mut bytes);
+            bytes.to_vec()
+        }).collect();
 
-    let submitted_height = client.blob_submit(&[blob.clone()]).await.unwrap();
+        Blob::new(self.nid, state_diff_bytes)
+    }
 
-    // let submitted_height = blob_submit(&client, &[blob.clone()]).await.unwrap();
-    log::info!("Submitted height deterministic: {:?}", submitted_height); // Print submitted_height
+    async fn verify_blob_was_included(&self, submitted_height:u64, blob: Blob) -> eyre::Result<()> {
+        let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await?;
+        received_blob.validate()?;
+        Ok(())
+    }
 }
 
-pub fn random_ns() -> Namespace {
-    Namespace::const_v0(random_bytes_array())
+#[derive(Default)]
+pub struct CelestiaClientBuilder {
+    http_endpoint: Option<String>,
+    ws_endpoint: Option<String>,
+    auth_token: Option<String>,
 }
 
-pub fn random_bytes(length: usize) -> Vec<u8> {
-    let mut bytes = vec![0; length];
-    rand::thread_rng().fill_bytes(&mut bytes);
-    bytes
+impl CelestiaClientBuilder {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn http_endpoint(mut self, endpoint: Option<&str>) -> Self {
+        self.http_endpoint = endpoint.map(|s| s.to_string());
+        self
+    }
+
+    pub fn ws_endpoint(mut self, endpoint: Option<&str>) -> Self {
+        self.ws_endpoint = endpoint.map(|s| s.to_string());
+        self
+    }
+
+    pub fn auth_token(mut self, auth_token: Option<&str>) -> Self {
+        self.auth_token = auth_token.map(|s| s.to_string());
+        self
+    }
+
+    pub fn build(self) -> CelestiaRpcResult<CelestiaClient> {
+        let base_config = Network::LOCAL.to_base_config();
+        let http_endpoint = self.http_endpoint.unwrap_or_else(|| base_config.http_endpoint.unwrap());
+        let ws_endpoint = self.ws_endpoint.unwrap_or_else(|| base_config.ws_endpoint.unwrap());
+        let auth_token = self.auth_token.unwrap_or_else(|| base_config.auth_token.unwrap_or_default());
+        
+        let http_client = CelestiaClientBuilder::get_http_client(&http_endpoint, &auth_token)?;
+        
+        //https://greptime.com/blogs/2023-03-09-bridging-async-and-sync-rust
+        let ws_client = futures::executor::block_on(async {
+            CelestiaClientBuilder::get_ws_client(&ws_endpoint, &auth_token).await.unwrap()
+        });
+
+        CelestiaClient::new(http_client, ws_client)
+    }
+
+    #[cfg(test)]
+    pub async fn build_test(self) -> CelestiaRpcResult<CelestiaClient> {
+        let base_config = Network::LOCAL.to_base_config();
+        let http_endpoint = self.http_endpoint.unwrap_or_else(|| base_config.http_endpoint.unwrap());
+        let ws_endpoint = self.ws_endpoint.unwrap_or_else(|| base_config.ws_endpoint.unwrap());
+        let auth_token = self.auth_token.unwrap_or_else(|| base_config.auth_token.unwrap_or_default());
+
+        let http_client = CelestiaClientBuilder::get_http_client(&http_endpoint, &auth_token)?;
+        let ws_client = CelestiaClientBuilder::get_ws_client(&ws_endpoint, &auth_token).await?;
+
+        CelestiaClient::new(http_client, ws_client)
+    }
+
+    fn get_http_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<HttpClient> {
+        Ok(new_http(endpoint, Some(auth_token)).unwrap())
+    }
+
+    async fn get_ws_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<WsClient> {
+        Ok(new_websocket(endpoint, Some(auth_token)).await.unwrap())
+    }
 }
 
-pub fn random_bytes_array<const N: usize>() -> [u8; N] {
-    std::array::from_fn(|_| rand::random())
-}
-
-// pub async fn blob_submit<C>(client: &C, blobs: &[Blob]) -> Result<u64, Error>
-// where
-//     C: ClientT + Sync,
-// {
-//     let _guard = write_lock().await;
-//     client.blob_submit(blobs).await
-// }
-
-
-pub async fn blob_submit_and_get_random() -> Result<(), Box<dyn std::error::Error>>  {
-    let client = new_http("http://localhost:26658",
-    Some("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdfQ.qKuJEGn2nai79X3GsGjmpwugDnbdaBzHLK-uXDSn3Bc"))?;
-
-    // client.header_wait_for_height(2).await?;
-
-    let namespace = random_ns();
-    let data = random_bytes(5);
-    let blob = Blob::new(namespace, data).unwrap();
-
-    let submitted_height = client.blob_submit(&[blob.clone()]).await;
-
-    // let submitted_height = blob_submit(&client, &[blob.clone()]).await.unwrap();
-    println!("Submitted height random: {:?}", submitted_height); // Print submitted_height
-
-    Ok(())
-
-    // cast Vec<U256> to Vec<u8>
-    // let mut state_diff_bytes: Vec<u8> = Vec::new();
-    // for i in 0..state_diff.len() {
-    //     let mut bytes = [0 as u8; 32];
-    //     state_diff[i].to_big_endian(&mut bytes);
-    //     state_diff_bytes.extend_from_slice(&bytes);
-    // }
-
-    // //define namespace
-    // let mut rng = rand::thread_rng();
-    // let mut array: [u8; 10] = [0; 10];
-
-    // for i in 0..10 {
-    //     array[i] = rng.gen();
-    // }
-
-    // let nid = Namespace::new_v0(&array).unwrap();
-
-    // //define a new blob
-    // let blob = Blob::new(nid, state_diff_bytes);
-    // log::info!("blob: {:?}", blob);
-
-    // let dah = client
-    //     .header_get_by_height(submitted_height)
-    //     .await
-    //     .unwrap()
-    //     .dah;
-
-    // let root_hash = dah.row_root(0).unwrap();
-    // println!("Root hash: {:?}", root_hash); // Print root_hash
-
-    // let received_blob = client
-    //     .blob_get(submitted_height, namespace, blob.commitment)
-    //     .await
-    //     .unwrap();
-
-    // received_blob.validate().unwrap();
-    // assert_eq!(received_blob, blob);
-
-    // let proofs = client
-    //     .blob_get_proof(submitted_height, namespace, blob.commitment)
-    //     .await
-    //     .unwrap();
-
-    // assert_eq!(proofs.len(), 1);
-
-    // let leaves = blob.to_shares().unwrap();
-
-    // proofs[0]
-    //     .verify_complete_namespace(&root_hash, &leaves, namespace.into())
-    //     .unwrap();
-    
-}
-
-// pub async fn blob_submit_and_get_deterministic() -> Result<(), Box<dyn std::error::Error>>  {
-//     let client = new_http("http://localhost:26658",
-//     Some("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJwdWJsaWMiLCJyZWFkIiwid3JpdGUiLCJhZG1pbiJdfQ.qKuJEGn2nai79X3GsGjmpwugDnbdaBzHLK-uXDSn3Bc"))?;
-
-//     let mut state_diff_bytes: Vec<u8> = Vec::new();
-//     for i in 0..state_diff.len() {
-//         let mut bytes = [0 as u8; 32];
-//         state_diff[i].to_big_endian(&mut bytes);
-//         state_diff_bytes.extend_from_slice(&bytes);
-//     }
-
-
-//     //define namespace
-//     let mut rng = rand::thread_rng();
-//     let mut array: [u8; 10] = [0; 10];
-
-//     for i in 0..10 {
-//         array[i] = rng.gen();
-//     }
-
-//     let nid = Namespace::new_v0(&array).unwrap();
-
-//     //define a new blob
-//     let blob = Blob::new(nid, state_diff_bytes).unwrap();
-//     log::info!("blob: {:?}", blob);
-
-//     let submitted_height = client.blob_submit(&[blob.clone()]).await;
-
-//     // let submitted_height = blob_submit(&client, &[blob.clone()]).await.unwrap();
-//     println!("Submitted height deterministic: {:?}", submitted_height); // Print submitted_height
-
-//     Ok(())
-
-//     // let dah = client
-//     //     .header_get_by_height(submitted_height)
-//     //     .await
-//     //     .unwrap()
-//     //     .dah;
-
-//     // let root_hash = dah.row_root(0).unwrap();
-//     // println!("Root hash: {:?}", root_hash); // Print root_hash
-
-//     // let received_blob = client
-//     //     .blob_get(submitted_height, namespace, blob.commitment)
-//     //     .await
-//     //     .unwrap();
-
-//     // received_blob.validate().unwrap();
-//     // assert_eq!(received_blob, blob);
-
-//     // let proofs = client
-//     //     .blob_get_proof(submitted_height, namespace, blob.commitment)
-//     //     .await
-//     //     .unwrap();
-
-//     // assert_eq!(proofs.len(), 1);
-
-//     // let leaves = blob.to_shares().unwrap();
-
-//     // proofs[0]
-//     //     .verify_complete_namespace(&root_hash, &leaves, namespace.into())
-//     //     .unwrap();
-    
-// }
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // #[tokio::test]
-    // async fn test_blob_submit_and_get_random() {
-    //     let result = blob_submit_and_get().await;
-    //     // assert!(result.is_ok());
-    // }
-
+    use std::env;
 
     #[tokio::test]
-    async fn test_publish_data() {
+    async fn test_publish_data_and_verify_publication() -> Result<()> {
+        let mut path = env::current_dir().unwrap(); // get current directory
+        
+        path.push(".env"); // add .env to the path
+
+        dotenvy::from_path(path).ok();
+
+        let auth_token = env::var("AUTH_TOKEN")
+        .expect("AUTH_TOKEN must be set"); // Get the auth_token
+
+        let client: CelestiaClient = CelestiaClientBuilder::new()
+        .auth_token(Some(&auth_token))
+        .build_test()
+        .await?;
+
         let state_diff = vec![ethers::types::U256::from(0)];
-        let result = publish_data(state_diff).await;
-        // assert!(result.is_ok());
+
+        let blob = client.get_blob_from_state_diff(state_diff).unwrap();
+
+        let submitted_height = client.publish_data(&blob).await.unwrap();
+
+        println!("Submitted height deterministic: {:?}, now waiting for block conf", submitted_height);
+
+        let block_conf = client.http_client.header_wait_for_height(submitted_height).await?;
+
+        println!("block_conf: {:?}", block_conf.header);
+
+        let dah = client
+        .http_client
+        .header_get_by_height(submitted_height)
+        .await
+        .unwrap()
+        .dah;
+        let root_hash = dah.row_root(0).unwrap();
+
+        println!("root_hash: {:?}", root_hash);
+
+        let received_blob = client
+        .http_client
+        .blob_get(submitted_height, client.nid, blob.commitment)
+        .await
+        .unwrap();
+
+        received_blob.validate().unwrap();
+        assert_eq!(received_blob, blob);
+
+        Ok(())
     }
-    
-    // #[tokio::test]
-    // async fn test_blob_submit_and_get_deterministic() {
-    //     let result = blob_submit_and_get().await;
-    //     // assert!(result.is_ok());
-    // }
 }
