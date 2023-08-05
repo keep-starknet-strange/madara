@@ -85,20 +85,19 @@ impl MadaraClient {
         // we keep the reference, otherwise the mutex unlocks immediately
         let _mutex_guard = BACKGROUND_MADARA_MUTEX.lock().await;
 
-        let madara_path = Path::new("../target/release/madara");
-        assert!(
-            madara_path.exists(),
-            "could not find the madara binary at `{}`",
-            madara_path.to_str().expect("madara_path must be a valid path")
-        );
-
         let free_port = get_free_port()?;
 
-        let child_handle = Command::new(madara_path.to_str().unwrap())
+        let root = Path::new("../");
+        std::env::set_current_dir(&root).expect("Failed to change working directory");
+
+        let child_handle = Command::new("cargo")
                 // Silence Madara stdout and stderr
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .args([
+					"run",
+					"--release",
+					"--",
                     "--alice",
                     "--sealing=manual",
                     &format!("--execution={execution}"),
@@ -107,7 +106,7 @@ impl MadaraClient {
                     &format!("--rpc-port={free_port}"),
                 ])
                 .spawn()
-                .unwrap();
+                .expect("Could not start background madara node");
 
         let host = &format!("http://localhost:{free_port}");
 
