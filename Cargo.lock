@@ -10124,6 +10124,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "derive_more",
+ "lazy_static",
  "reqwest",
  "serde",
  "serde_json",
@@ -10133,6 +10134,7 @@ dependencies = [
  "starknet-ff",
  "starknet-providers",
  "starknet-signers",
+ "thiserror",
  "tokio",
  "url",
 ]

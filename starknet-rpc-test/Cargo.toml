@@ -17,10 +17,9 @@ starknet-providers = {workspace = true}
 starknet-signers = {version = "^0.3.0"}
 starknet-accounts = {version = "^0.4.0"}
 url = "2.2.2"
-
-[dev-dependencies]
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
-
+lazy_static = "1.4.0"
+thiserror = {workspace= true}
 
 [[test]]
 name = "starknet_get_block_number"
