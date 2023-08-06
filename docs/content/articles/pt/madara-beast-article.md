@@ -1,17 +1,17 @@
 ![thee BEEAAST](https://imgur.com/EBwBNnB.jpg)
 
-# Aproveitando a Besta - Madara e a Revolução das Starknet Appchains
+# Dominando a Besta - Madara e a Revolução das Appchains da Starknet 
 
 **Jul 20,2023** · 1 min read
 
-<font size=5>_De Grande Reduções de Custos a Controlo Personalizado, Descobre o
-Futuro da Insfraestrutura de Blockchain_</font>
+<font size=5>_De Reduções de Custos Massivas ao Controlo Personalizado, Descobre o
+Futuro da Insfraestrutura da Blockchain_</font>
 
 ---
 
 ## TL;DR
 
-- O Madara é um Starknet sequencer de alta performance, que oferece o poder de
+- O Madara é um sequencer para a Starknet de alta performance, que oferece o poder de
   criar
   [Appchains](https://www.starknet.io/en/posts/ecosystem/the-starknet-stacks-growth-spurt)
   personalizáveis e eficientes.
@@ -66,7 +66,7 @@ diretamente da Starknet.
 ### Escalabilidade
 
 Desenvolvedores enfrentam desafios significantes em termos de escalabilidade nas
-infraestruturas de blockchain existentes. Escalabilidade abrange dois aspetos
+infraestruturas de blockchain existentes. A escalabilidade abrange dois aspetos
 cruciais: alta velocidade e taxas baixas. Ao implementar uma redução de custo de
 1,000x em cada camada, desenvolvedores conseguem alcançar uma redução de custo
 significativa de L1 até L3, potencialmente alcançando 1,000,000x. A capacidade
@@ -76,7 +76,7 @@ uma experiência suave e consistente.
 
 ### Personalização
 
-Chains de uso geral como Starknet e Ethereum tẽm múltiplas medidas no que toca a
+Chains de uso geral como a Starknet e Ethereum tẽm múltiplas medidas no que toca a
 garantit que a rede é utilizável por todos, levando a um ambiente constragido.
 Com appchains, desenvolvedores podem afinar vários aspetos das suas aplicações e
 infraestruturas, criando soluções à medida. Não gostas de um recurso do Cairo
@@ -85,9 +85,9 @@ VM? Elimina-o da tua appchain.
 ### Inovação
 
 A personalização de appchains permite aos desenvolvedores trabalhar com recursos
-que estão indisponíveis ou arriscados atualmente em ambientes como o Starknet.
+que estão indisponíveis ou arriscados atualmente em ambientes como a Starknet.
 Appchains oferecem a cada equipa a autonomia para escrever e autorizar quaisquer
-dicas de código desejadas. Isto permite appchains desbloquearem muitos casos de
+dicas de código desejadas. Isto permite às appchains desbloquearem muitos casos de
 uso, como ser capaz de reforçar on-chain KYC sem vazar informação privada.
 
 ## Efeito do Madara na Pilha da Appchain
@@ -137,16 +137,16 @@ integração segura com a Starknet. Desta maneira, o Madara aproveita o poder do
 Cairo para permitir a comprovação da execução do programa.
 
 A natureza modular inerente da framework Substrate permite ao desenvolvedores
-personalizar a appchain com facilidade. Nenhuma suposição é imposta, permitindo
-que você incorpore seus protocolo de consenso próprio, funções hash, esquema de
-assinatura, layout de armazenamento – o que quer que seu aplicativo exija,
-enquanto utiliza o Cairo para gerar provas. Sem limites no que os
-desenvolvedores podem fazer enquanto ainda são demonstráveis, herdando o
-segurança da cadeia subjacente - seja Starknet ou Ethereum.
+personalizar a appchain com facilidade. Nenhuma suposição é imposta, permitindo a 
+incorporação dos teus protocolos de consenso, funções hash, esquema de
+assinatura, layout de armazenamento – independente das necessidades da aplicação, 
+utilizando o Cairo para gerar provas. Sem limites no que os
+desenvolvedores podem fazer enquanto ainda são comprováveis, herdando a segurança
+da chain - seja Starknet ou Ethereum.
 
-Inicialmente, Madara terá uma forte semelhança com o Starknet, permitindo a
+Inicialmente, o Madara terá uma forte semelhança com a Starknet, permitindo a
 capacidade de composição de smart contracts no ecossistema da Starknet.
-Encontram-se guardados planos maiores para o futuro à medida que a Starknet se
+Existem planos maiores para o futuro à medida que a Starknet se
 integra com o [Herodotus](https://www.herodotus.dev/) para alavancar
 [provas de armazenamento](https://starkware.medium.com/what-are-storage-proofs-and-how-can-they-improve-oracles-e0379108720a)
 para alcançar interoperabilidade. A integração de provas de armazenamento também
