@@ -30,7 +30,6 @@ eyre = "0.6.8"
 celestia-rpc = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
 celestia-types = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
 
-
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-blockchain = { workspace = true }
@@ -41,6 +40,12 @@ sc-client-api = { workspace = true }
 mc-db = { workspace = true }
 mp-starknet = { workspace = true }
 starknet_api = { workspace = true }
+
+# Avail subxt dependency
+avail-subxt = {workspace = true }
+subxt = { workspace = true }
+anyhow = { workspace = true }
+sp-keyring = "*"
 
 [dev-dependencies]
 dotenvy = "0.15.7"

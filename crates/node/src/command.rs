@@ -218,7 +218,7 @@ pub fn run() -> sc_cli::Result<()> {
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing, cli.run.l1_node_http, cli.run.l1_node_ws, cli.run.auth_token).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, cli.run.l1_node_ws).map_err(sc_cli::Error::Service)
             })
         }
     }

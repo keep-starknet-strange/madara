@@ -1,14 +1,15 @@
+mod avail;
+mod celestia;
 mod ethereum;
 mod sharp_utils;
-mod celestia;
-
-use celestia::CelestiaClient;
-pub use celestia::CelestiaClientBuilder;
 
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
+pub use avail::AvailClient;
+// use celestia::CelestiaClient;
+pub use celestia::CelestiaClientBuilder;
 use ethers::types::U256;
 use futures::StreamExt;
 use lazy_static::lazy_static;
@@ -19,7 +20,7 @@ use sc_client_api::client::BlockchainEvents;
 use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
-use uuid::Uuid;
+// use uuid::Uuid;
 
 lazy_static! {
     static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
@@ -103,14 +104,13 @@ where
     C: ProvideRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
 {
-    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>, l1_node: Arc<CelestiaClient>) {
+    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>, l1_node: Arc<AvailClient>) {
         let mut notification_st = client.import_notification_stream();
 
         while let Some(notification) = notification_st.next().await {
-
             match madara_backend.da().state_diff(&notification.hash) {
                 Ok(state_diff) => {
-                    // publish state diff to Celestia
+                    // publish state diff to Avail
                     if let Err(e) = l1_node.publish_state_diff_and_verify_inclusion(state_diff).await {
                         log::error!("Failed to publish data: {}", e);
                     }
