@@ -35,7 +35,7 @@ lazy_static! {
         /// finds that it's free and tries occupying it
         /// Using the mutex in `get_free_port_listener` might be safer than using no mutex at all,
         /// but not sufficiently safe
-        static ref BACKGROUND_MADARA_MUTEX: Mutex<()> = Mutex::new(());
+        static ref FREE_PORT_ATTRIBUTION_MUTEX: Mutex<()> = Mutex::new(());
 }
 
 #[derive(Debug)]
@@ -85,7 +85,7 @@ fn get_free_port() -> Result<u16, TestError> {
 impl MadaraClient {
     async fn init(execution: ExecutionStrategy) -> Result<Self, TestError> {
         // we keep the reference, otherwise the mutex unlocks immediately
-        let _mutex_guard = BACKGROUND_MADARA_MUTEX.lock().await;
+        let _mutex_guard = FREE_PORT_ATTRIBUTION_MUTEX.lock().await;
 
         let free_port = get_free_port()?;
 
