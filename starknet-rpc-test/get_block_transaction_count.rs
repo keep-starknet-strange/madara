@@ -71,31 +71,31 @@ async fn work_ok_with_block_one_tx(#[future] madara: MadaraClient) -> Result<(),
     Ok(())
 }
 
-#[rstest]
-#[tokio::test]
-async fn work_ok_with_block_multiple_txs(#[future] _madara: MadaraClient) -> Result<(), anyhow::Error> {
-    // TODO: Uncomment when raw execution is supported
-    // let madara = madara.await;
-    // let rpc = madara.get_starknet_client();
+// TODO: Uncomment when raw execution is supported
+// #[rstest]
+// #[tokio::test]
+// async fn work_ok_with_block_multiple_txs(#[future] _madara: MadaraClient) -> Result<(),
+// anyhow::Error> {     let madara = madara.await;
+//     let rpc = madara.get_starknet_client();
 
-    // madara
-    //     .create_block_with_txs(
-    //         vec![
-    //             account.transfer_tokens(
-    //                 argent_account_address,
-    //                 FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
-    //                 Some(1),
-    //             ),
-    //             account.transfer_tokens(
-    //                 argent_account_address,
-    //                 FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
-    //                 Some(2),
-    //             ),
-    //         ],
-    //     )
-    //     .await?;
+//     madara
+//         .create_block_with_txs(
+//             vec![
+//                 account.transfer_tokens(
+//                     argent_account_address,
+//                     FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+//                     Some(1),
+//                 ),
+//                 account.transfer_tokens(
+//                     argent_account_address,
+//                     FieldElement::from_hex_be(MINT_AMOUNT).expect("Invalid Mint Amount"),
+//                     Some(2),
+//                 ),
+//             ],
+//         )
+//         .await?;
 
-    // assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 2);
+//     assert_eq!(rpc.get_block_transaction_count(BlockId::Tag(BlockTag::Latest)).await?, 2);
 
-    Ok(())
-}
+//     Ok(())
+// }

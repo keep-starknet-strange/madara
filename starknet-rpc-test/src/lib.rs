@@ -89,8 +89,8 @@ impl MadaraClient {
 
         let free_port = get_free_port()?;
 
-        let current_root = Path::new(".");
-        let repository_root = Path::new("../");
+        let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
+        let repository_root = manifest_path.parent().expect("Failed to get parent directory of CARGO_MANIFEST_DIR");
 
         std::env::set_current_dir(&repository_root).expect("Failed to change working directory");
 
@@ -111,8 +111,6 @@ impl MadaraClient {
 			])
 			.spawn()
 			.expect("Could not start background madara node");
-
-        std::env::set_current_dir(&current_root).expect("Failed to switch back working directory");
 
         let host = &format!("http://localhost:{free_port}");
 
