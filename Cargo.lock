@@ -941,7 +941,7 @@ dependencies = [
 [[package]]
 name = "cairo-felt"
 version = "0.6.0"
-source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#754c1bb974995471bd410f04ded2a90021ca32fd"
+source = "git+https://github.com/keep-starknet-strange/cairo-rs?branch=no_std-support-with-cairo-1#e89a7a53e61a7f209c5039adb4165ff8c568c738"
 dependencies = [
  "lazy_static",
  "num-bigint",
@@ -9788,7 +9788,7 @@ dependencies = [
 [[package]]
 name = "starknet_api"
 version = "0.1.0"
-source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support#6a48e7c8636685b80515c6ab666c1ae9d01278a2"
+source = "git+https://github.com/keep-starknet-strange/starknet-api?branch=no_std-support#edd83979fb7153929da6b06e19e70441fc8ae364"
 dependencies = [
  "cairo-lang-casm-contract-class",
  "derive_more",
@@ -9798,6 +9798,7 @@ dependencies = [
  "once_cell",
  "parity-scale-codec",
  "primitive-types",
+ "scale-info",
  "serde",
  "serde_json",
  "starknet-crypto 0.5.1",
@@ -10802,7 +10803,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
  "digest 0.10.7",
- "rand 0.8.5",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
