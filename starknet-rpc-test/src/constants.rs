@@ -1,3 +1,5 @@
+use starknet_ff::FieldElement;
+
 pub const TEST_CONTRACT_ADDRESS: &str = "0x0000000000000000000000000000000000000000000000000000000000001111";
 pub const ACCOUNT_CONTRACT: &str = "0x0000000000000000000000000000000000000000000000000000000000000001";
 pub const CAIRO_1_ACCOUNT_CONTRACT: &str = "0x0000000000000000000000000000000000000000000000000000000000000004";
@@ -22,3 +24,8 @@ pub const ARGENT_CONTRACT_ADDRESS: &str = "0x00000000000000000000000000000000000
 // Taken from https://github.com/0xSpaceShard/starknet-devnet-rs/blob/main/crates/starknet-server/tests/common/mod.rs#L5
 pub const MIN_PORT: u16 = 1025;
 pub const MAX_PORT: u16 = 65_535;
+
+// Need to use `from_mont` because this needs to be a constant function call
+/// ChainId for Starknet Goerli testnet
+pub const SN_GOERLI_CHAIN_ID: FieldElement =
+    FieldElement::from_mont([3753493103916128178, 18446744073709548950, 18446744073709551615, 398700013197595345]);
