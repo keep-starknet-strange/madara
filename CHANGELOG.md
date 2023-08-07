@@ -4,6 +4,11 @@
 
 - test: add `starknet-rpc-test` crate to the workspace
 - test(rpc): add `get_block_number.rs` tests
+- test: add `starknet-rpc-test` crate to the workspace
+- test(rpc): add `get_block_number.rs` tests
+- test(rpc): add `get_block_number.rs` tests
+- test(rpc): add `get_block_hash_and_number.rs` tests
+- test(rpc): add `get_block_transaction_count.rs` tests
 
 ## v0.2.0
 
