@@ -10,15 +10,17 @@ derive_more = "0.99.17"
 reqwest = "0.11.18"
 serde = { version = "1.0.179", features = ["derive"] }
 serde_json = "1.0.104"
+thiserror = {workspace= true}
 starknet-ff = {workspace = true}
 starknet-core = {workspace = true}
 starknet-crypto = {workspace = true}
 starknet-providers = {workspace = true}
+starknet-signers = {version = "^0.3.0"}
+starknet-accounts = {version = "^0.4.0"}
 url = "2.2.2"
-
-[dev-dependencies]
-tokio = { version = "1.29.1", features = ["rt", "macros"] }
-
+tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
+lazy_static = "1.4.0"
+rstest = "0.18.1"
 
 [[test]]
 name = "starknet_get_block_number"
@@ -27,3 +29,7 @@ path = "get_block_number.rs"
 [[test]]
 name = "starknet_get_block_hash_and_number"
 path = "get_block_hash_and_number.rs"
+
+[[test]]
+name = "starknet_get_block_transaction_count"
+path = "get_block_transaction_count.rs"
