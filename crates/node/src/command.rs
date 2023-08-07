@@ -205,9 +205,57 @@ pub fn run() -> sc_cli::Result<()> {
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
+            if cli.run.genesis_url.is_some() {
+                // can't copy extra genesis-assets atm
+                let copied = utils::fetch_from_url(
+                    cli.run.genesis_url.clone().unwrap(),
+                    madara_path.clone() + "/configs/genesis-assets"
+                );
+
+                if !copied {
+                    return Err("Failed to fetch genesis assets".into());
+                }
+            } else {
+                let files: Vec<&str> = vec!["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
+                for file in files {
+                    let src_path: String = utils::get_project_path() + "/onfigs/genesis-assets/" + file;
+                    let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
+                    if !copied {
+                        copied = utils::fetch_from_url( "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets/".to_string() + file, madara_path.clone() + "/genesis-assets");
+
+                        if !copied {
+                            return Err("Failed to fetch genesis assets".into());
+                        }
+                    }
+                }
+            }
+
+            if cli.run.chain_spec_url.is_some() && cli.run.testnet.is_none() {
+                let copied = utils::fetch_from_url(
+                    cli.run.chain_spec_url.clone().unwrap(),
+                    madara_path.clone() + "/chain-specs"
+                );
+
+                if !copied {
+                    return Err("Failed to fetch chain spec".into());
+                }
+            }
+
+            // TODO copy cairo-contracts
+
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    copy_chain_spec(madara_path.clone());
+                    let src_path: String = utils::get_project_path() + "/configs/chain-specs/testnet-sharingan-raw.json";
+                    let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
+                    if !copied {
+                        copied = utils::fetch_from_url( "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/chain-specs/testnet-sharingan-raw.json".to_string(), madara_path.clone() + "/chain-specs"
+                        );
+
+                        if !copied {
+                            return Err("Failed to retrieve testnet-sharingan-raw.json".into());
+                        }
+                    }
+
                     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
                 }
 
