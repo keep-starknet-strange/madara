@@ -10,7 +10,7 @@ async fn work_ok_up_to_1000() -> Result<(), anyhow::Error> {
 
     assert_eq!(rpc.block_number().await?, 0);
 
-    madara.create_block().await?;
+    madara.create_empty_block().await?;
     assert_eq!(rpc.block_number().await?, 1);
 
     madara.run_to_block(20).await?;

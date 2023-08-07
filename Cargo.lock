@@ -2741,6 +2741,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "eth-keystore"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fda3bf123be441da5260717e0661c25a2fd9cb2b2c1d20bf2e05580047158ab"
+dependencies = [
+ "aes 0.8.3",
+ "ctr 0.9.2",
+ "digest 0.10.7",
+ "hex",
+ "hmac 0.12.1",
+ "pbkdf2 0.11.0",
+ "rand 0.8.5",
+ "scrypt",
+ "serde",
+ "serde_json",
+ "sha2 0.10.7",
+ "sha3",
+ "thiserror",
+ "uuid 0.8.2",
+]
+
+[[package]]
 name = "ethbloom"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5259,7 +5281,7 @@ dependencies = [
  "mp-starknet",
  "pallet-starknet",
  "pretty_assertions",
- "rstest",
+ "rstest 0.17.0",
  "sc-client-api",
  "sc-network-sync",
  "sc-transaction-pool-api",
@@ -7444,7 +7466,19 @@ checksum = "de1bb486a691878cd320c2f0d319ba91eeaa2e894066d8b5f8f117c000e9d962"
 dependencies = [
  "futures",
  "futures-timer",
- "rstest_macros",
+ "rstest_macros 0.17.0",
+ "rustc_version",
+]
+
+[[package]]
+name = "rstest"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b96577ca10cb3eade7b337eb46520108a67ca2818a24d0b63f41fd62bc9651c"
+dependencies = [
+ "futures",
+ "futures-timer",
+ "rstest_macros 0.18.1",
  "rustc_version",
 ]
 
@@ -7459,6 +7493,23 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 1.0.109",
+ "unicode-ident",
+]
+
+[[package]]
+name = "rstest_macros"
+version = "0.18.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225e674cf31712b8bb15fdbca3ec0c1b9d825c5a24407ff2b7e005fb6a29ba03"
+dependencies = [
+ "cfg-if",
+ "glob",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "relative-path",
+ "rustc_version",
+ "syn 2.0.28",
  "unicode-ident",
 ]
 
@@ -7726,6 +7777,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "salsa20"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97a22f5af31f73a954c10289c93e8a50cc23d971e80ee446f1f6f7137a088213"
+dependencies = [
+ "cipher 0.4.4",
 ]
 
 [[package]]
@@ -8811,6 +8871,18 @@ name = "scratch"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3cf7c11c38cb994f3d40e8a8cde3bbd1f72a435e4c49e85d6553d8312306152"
+
+[[package]]
+name = "scrypt"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9f9e24d2b632954ded8ab2ef9fea0a0c769ea56ea98bddbafbad22caeeadf45d"
+dependencies = [
+ "hmac 0.12.1",
+ "pbkdf2 0.11.0",
+ "salsa20",
+ "sha2 0.10.7",
+]
 
 [[package]]
 name = "sct"
@@ -10030,6 +10102,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
+name = "starknet-accounts"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "111ed887e4db14f0df1f909905e7737e4730770c8ed70997b58a71d5d940daac"
+dependencies = [
+ "async-trait",
+ "starknet-core 0.5.1",
+ "starknet-providers",
+ "starknet-signers",
+ "thiserror",
+]
+
+[[package]]
 name = "starknet-core"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10174,15 +10259,36 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "derive_more",
+ "lazy_static",
  "reqwest",
+ "rstest 0.18.1",
  "serde",
  "serde_json",
+ "starknet-accounts",
  "starknet-core 0.6.0",
  "starknet-crypto 0.6.0",
  "starknet-ff",
  "starknet-providers",
+ "starknet-signers",
+ "thiserror",
  "tokio",
  "url",
+]
+
+[[package]]
+name = "starknet-signers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5313524cc79344015ef2a8618947332ab17012b5c50600c7f84c60989bdec980"
+dependencies = [
+ "async-trait",
+ "auto_impl",
+ "crypto-bigint 0.5.2",
+ "eth-keystore",
+ "rand 0.8.5",
+ "starknet-core 0.5.1",
+ "starknet-crypto 0.6.0",
+ "thiserror",
 ]
 
 [[package]]
@@ -11346,6 +11452,16 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
 name = "uuid"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom 0.2.10",
+ "serde",
+]
+
+[[package]]
+name = "uuid"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d023da39d1fde5a8a3fe1f3e01ca9632ada0a63e9797de55a879d6e2236277be"
@@ -11966,7 +12082,7 @@ dependencies = [
  "tokio",
  "turn",
  "url",
- "uuid",
+ "uuid 1.4.0",
  "waitgroup",
  "webrtc-mdns",
  "webrtc-util",
