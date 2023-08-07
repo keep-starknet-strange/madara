@@ -5,20 +5,7 @@ use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, service};
-
-fn copy_chain_spec(madara_path: String) {
-    let mut src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    src.push("chain-specs");
-    let mut dst = std::path::PathBuf::from(madara_path);
-    dst.push("chain-specs");
-    std::fs::create_dir_all(&dst).unwrap();
-    for file in std::fs::read_dir(src).unwrap() {
-        let file = file.unwrap();
-        let mut dst = dst.clone();
-        dst.push(file.file_name());
-        std::fs::copy(file.path(), dst).unwrap();
-    }
-}
+use crate::utils;
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -198,7 +185,7 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.shared_params.base_path = Some((madara_path.clone()).into());
 
                 if cli.run.testnet.is_some() {
-                    copy_chain_spec(madara_path.clone());
+                    utils::copy_chain_spec(madara_path.clone());
 
                     match cli.run.testnet {
                         Some(Testnet::Local) => {
