@@ -11,7 +11,7 @@ use sp_core::H256;
 use sp_keyring::AccountKeyring;
 
 const MADARA_APP_ID: u32 = 0;
-const AVAIL_WS: &str = "wss://kate.avail.tools/ws";
+const AVAIL_WS: &str = "wss://kate.avail.tools:443/ws";
 const AVAIL_VALIDATE_CODEGEN: bool = true;
 
 pub struct AvailClient {
@@ -19,12 +19,11 @@ pub struct AvailClient {
     app_id: AppId,
 }
 impl AvailClient {
-    pub fn new(ws_endpoint: Option<&str>, app_id: Option<u32>, validate_codegen: Option<bool>) -> Result<Self> {
+    pub fn new(ws_endpoint: Option<&str>, app_id: Option<u32>) -> Result<Self> {
         let ws_endpoint = ws_endpoint.unwrap_or(AVAIL_WS);
         let app_id = AppId(app_id.unwrap_or(MADARA_APP_ID));
-        let validate_codegen = validate_codegen.unwrap_or(AVAIL_VALIDATE_CODEGEN);
 
-        let ws_client = futures::executor::block_on(async { build_client(ws_endpoint, validate_codegen).await })
+        let ws_client = futures::executor::block_on(async { build_client(ws_endpoint, AVAIL_VALIDATE_CODEGEN).await })
             .map_err(|e| anyhow::anyhow!("Could not initialize ws endpoint {e}"))?;
 
         Ok(AvailClient { ws_client, app_id })
@@ -44,7 +43,6 @@ impl AvailClient {
         let signer = PairSigner::new(AccountKeyring::Alice.pair());
         let data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
         let extrinsic_params = AvailExtrinsicParams::new_with_app_id(self.app_id);
-        println!("Sending example data...");
         let events = self
             .ws_client
             .tx()
@@ -93,6 +91,15 @@ impl AvailClient {
 
         Ok(())
     }
+
+    #[cfg(test)]
+    pub async fn new_for_test(ws_endpoint: Option<&str>, app_id: Option<u32>) -> Result<Self> {
+        let ws_endpoint = ws_endpoint.unwrap_or(AVAIL_WS);
+        let app_id = AppId(app_id.unwrap_or(MADARA_APP_ID));
+        let ws_client = build_client(ws_endpoint, AVAIL_VALIDATE_CODEGEN).await?;
+
+        Ok(AvailClient { ws_client, app_id })
+    }
 }
 
 #[cfg(test)]
@@ -101,42 +108,15 @@ mod tests {
 
     #[tokio::test]
     async fn test_publish_data_and_verify_publication() -> Result<()> {
-        let client = AvailClient::new(None, None, None).unwrap();
+        let client = AvailClient::new_for_test(Some("ws://127.0.0.1:9945"), None).await.unwrap();
         let state_diff = vec![ethers::types::U256::from(0)];
 
         let bytes = client.get_bytes_from_state_diff(state_diff).unwrap();
         let bytes = BoundedVec(bytes);
 
         let submitted_block_hash = client.publish_data(&bytes).await.unwrap();
-        println!("Submitted block hash: {}", submitted_block_hash);
-
-        client.verify_bytes_inclusion(submitted_block_hash, &bytes).await.unwrap();
-
-        // Below is similar to what verify_bytes_inclusion does
-        let submitted_block = client.ws_client.rpc().block(Some(submitted_block_hash)).await.unwrap().unwrap();
-
-        let call = submitted_block
-            .block
-            .extrinsics
-            .into_iter()
-            .filter_map(|chain_block_ext| AppUncheckedExtrinsic::try_from(chain_block_ext).map(|ext| ext.function).ok())
-            .find(|call| match call {
-                Call::DataAvailability(da_call) => match da_call {
-                    DaCall::submit_data { data } => data == &bytes,
-                    _ => false,
-                },
-                _ => false,
-            });
-
-        // Verification
-        assert!(call.is_some(), "Block with extrinsic not found on da layer");
-        println!("State root: {:?}", submitted_block.block.header.state_root);
-        println!("Extrinsics root: {:?}", submitted_block.block.header.extrinsics_root);
-        println!("Extrinsics root: {:?}", submitted_block.block.header.extrinsics_root);
-        if let Some(Call::DataAvailability(DaCall::submit_data { data })) = call {
-            println!("Data from event {:?}", data);
-            assert_eq!(data, bytes);
-        }
+        let result = client.verify_bytes_inclusion(submitted_block_hash, &bytes).await;
+        assert!(result.is_ok());
 
         Ok(())
     }

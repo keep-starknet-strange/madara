@@ -1,5 +1,5 @@
-use eyre::Result;
 use celestia_types::nmt::Namespace;
+use eyre::Result;
 
 pub fn string_to_namespace(input: &str) -> Result<Namespace> {
     // Convert the input string to bytes

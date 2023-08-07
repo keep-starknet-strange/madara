@@ -9,18 +9,14 @@ pub struct BaseConfig {
 impl Default for BaseConfig {
     fn default() -> Self {
         BaseConfig {
-            http_endpoint: Some("http://".to_string() + &IpAddr::V4(Ipv4Addr::LOCALHOST).to_string() + ":26658"), // Default to "127.0.0.1"
-            ws_endpoint: Some("ws://".to_string() + &IpAddr::V4(Ipv4Addr::LOCALHOST).to_string() + ":26658"), // Default to "127.0.0.1"
+            http_endpoint: Some("http://".to_string() + &IpAddr::V4(Ipv4Addr::LOCALHOST).to_string() + ":26658"), /* Default to "127.0.0.1" */
+            ws_endpoint: Some("ws://".to_string() + &IpAddr::V4(Ipv4Addr::LOCALHOST).to_string() + ":26658"), /* Default to "127.0.0.1" */
             auth_token: None,
         }
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-)]
+#[derive(Debug, Clone, Copy)]
 pub enum Network {
     LOCAL,
 }
@@ -37,7 +33,5 @@ impl Network {
 }
 
 pub fn testnet() -> BaseConfig {
-    BaseConfig {
-        ..std::default::Default::default()
-    }
+    BaseConfig { ..std::default::Default::default() }
 }

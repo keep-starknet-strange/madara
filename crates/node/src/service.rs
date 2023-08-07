@@ -375,11 +375,8 @@ pub fn new_full(
     );
 
     if l1_node_ws.is_some() {
-        let ws_enpoint = l1_node_ws.as_deref();
-        let l1_client =
-            mc_data_availability::AvailClient::new(ws_enpoint, Some(0), Some(true)).unwrap();
-
-
+        let ws_endpoint = l1_node_ws.as_deref();
+        let l1_client = mc_data_availability::AvailClient::new(ws_endpoint, Some(0)).unwrap();
 
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",
