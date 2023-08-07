@@ -23,6 +23,7 @@
 - test(rpc): add `get_block_number.rs` tests
 - test(rpc): add `get_block_hash_and_number.rs` tests
 - test(rpc): add `get_block_transaction_count.rs` tests
+- test(rpc): add `chain_id.rs` tests
 
 ## v0.1.0
 
