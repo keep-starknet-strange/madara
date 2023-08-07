@@ -223,6 +223,18 @@
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 <span class="kw">use </span>madara_runtime::Block;
 <span class="kw">use </span>sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
@@ -247,7 +259,7 @@
 
 <span class="kw">impl </span>SubstrateCli <span class="kw">for </span>Cli {
     <span class="kw">fn </span>impl_name() -&gt; String {
-        <span class="string">&quot;Substrate Node&quot;</span>.into()
+        <span class="string">&quot;Madara Node&quot;</span>.into()
     }
 
     <span class="kw">fn </span>impl_version() -&gt; String {
@@ -263,7 +275,7 @@
     }
 
     <span class="kw">fn </span>support_url() -&gt; String {
-        <span class="string">&quot;support.anonymous.an&quot;</span>.into()
+        <span class="string">&quot;madara.zone&quot;</span>.into()
     }
 
     <span class="kw">fn </span>copyright_start_year() -&gt; i32 {
@@ -409,36 +421,48 @@
             runner.sync_run(|config| cmd.run::&lt;Block&gt;(<span class="kw-2">&amp;</span>config))
         }
         <span class="prelude-val">None </span>=&gt; {
-            <span class="comment">// when using the --dev flag, every future config should be ignored
-            </span><span class="kw">if </span>!cli.run.run_cmd.shared_params.dev {
-                <span class="kw">let </span>madara_path = <span class="kw">if </span>cli.run.madara_path.is_some() {
-                    cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string()
-                } <span class="kw">else </span>{
-                    <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
-                    <span class="macro">format!</span>(<span class="string">&quot;{}/.madara&quot;</span>, home_path)
-                };
+            <span class="comment">// create a reproducible dev environment
+            </span><span class="kw">if </span>cli.run.run_cmd.shared_params.dev {
+                cli.run.run_cmd.shared_params.dev = <span class="bool-val">false</span>;
+                cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(<span class="string">&quot;dev&quot;</span>.to_string());
 
-                cli.run.run_cmd.network_params.node_key_params.node_key_file =
-                    <span class="prelude-val">Some</span>((madara_path.clone() + <span class="string">&quot;/p2p-key.ed25519&quot;</span>).into());
-                cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((madara_path.clone()).into());
+                cli.run.run_cmd.force_authoring = <span class="bool-val">true</span>;
+                cli.run.run_cmd.alice = <span class="bool-val">true</span>;
 
-                <span class="kw">if </span>cli.run.testnet.is_some() {
+                <span class="comment">// we can&#39;t set `--rpc-cors=all`, so it needs to be set manually if we want to connect with external
+                // hosts
+                </span>cli.run.run_cmd.rpc_external = <span class="bool-val">true</span>;
+                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+            }
+
+            <span class="comment">// alias madara_path &lt;&gt; base_path
+            </span><span class="kw">let </span>madara_path = <span class="kw">if </span>cli.run.madara_path.is_some() {
+                <span class="kw">let </span>path = cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string();
+                cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((path.clone()).into());
+                path
+            } <span class="kw">else if </span>cli.run.run_cmd.shared_params.base_path.is_some() {
+                <span class="kw">let </span>path = cli.run.run_cmd.shared_params.base_path.clone().unwrap().to_str().unwrap().to_string();
+                cli.run.madara_path = <span class="prelude-val">Some</span>((path.clone()).into());
+                path
+            } <span class="kw">else </span>{
+                <span class="kw">let </span>home_path = std::env::var(<span class="string">&quot;HOME&quot;</span>).unwrap_or(std::env::var(<span class="string">&quot;USERPROFILE&quot;</span>).unwrap_or(<span class="string">&quot;.&quot;</span>.into()));
+                <span class="kw">let </span>path = <span class="macro">format!</span>(<span class="string">&quot;{}/.madara&quot;</span>, home_path);
+                cli.run.run_cmd.shared_params.base_path = <span class="prelude-val">Some</span>((path.clone()).into());
+                cli.run.madara_path = <span class="prelude-val">Some</span>((path.clone()).into());
+                path
+            };
+
+            cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                <span class="prelude-val">Some</span>((madara_path.clone() + <span class="string">&quot;/p2p-key.ed25519&quot;</span>).into());
+
+            <span class="kw">if </span>cli.run.testnet.is_some() {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(Testnet::Sharingan) = cli.run.testnet {
                     copy_chain_spec(madara_path.clone());
-
-                    <span class="kw">match </span>cli.run.testnet {
-                        <span class="prelude-val">Some</span>(Testnet::Local) =&gt; {
-                            cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/local-raw.json&quot;</span>);
-                        }
-                        <span class="prelude-val">Some</span>(Testnet::Sharingan) =&gt; {
-                            cli.run.run_cmd.shared_params.chain =
-                                <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
-                        }
-                        <span class="prelude-val">None </span>=&gt; {}
-                    };
-
-                    cli.run.run_cmd.rpc_external = <span class="bool-val">true</span>;
-                    cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
+                    cli.run.run_cmd.shared_params.chain = <span class="prelude-val">Some</span>(madara_path + <span class="string">&quot;/chain-specs/testnet-sharingan-raw.json&quot;</span>);
                 }
+
+                cli.run.run_cmd.rpc_external = <span class="bool-val">true</span>;
+                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
             <span class="kw">let </span>runner = cli.create_runner(<span class="kw-2">&amp;</span>cli.run.run_cmd)<span class="question-mark">?</span>;
