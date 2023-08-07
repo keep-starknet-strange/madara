@@ -7,21 +7,21 @@ use starknet_signers::LocalWallet;
 use crate::constants::FEE_TOKEN_ADDRESS;
 
 pub trait AccountActions {
-    fn transfer_tokens<'a>(
-        &'a self,
+    fn transfer_tokens(
+        &self,
         recipient: FieldElement,
         transfer_amount: FieldElement,
         nonce: Option<u64>,
-    ) -> Execution<'a, SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>>;
+    ) -> Execution<'_, SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet>>;
 }
 
 impl AccountActions for SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet> {
-    fn transfer_tokens<'a>(
-        &'a self,
+    fn transfer_tokens(
+        &self,
         recipient: FieldElement,
         transfer_amount: FieldElement,
         nonce: Option<u64>,
-    ) -> Execution<'a, SingleOwnerAccount<&'a JsonRpcClient<HttpTransport>, LocalWallet>> {
+    ) -> Execution<'_, SingleOwnerAccount<&JsonRpcClient<HttpTransport>, LocalWallet>> {
         let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).unwrap();
 
         let calls = vec![Call {

@@ -92,7 +92,7 @@ impl MadaraClient {
         let manifest_path = Path::new(&env!("CARGO_MANIFEST_DIR"));
         let repository_root = manifest_path.parent().expect("Failed to get parent directory of CARGO_MANIFEST_DIR");
 
-        std::env::set_current_dir(&repository_root).expect("Failed to change working directory");
+        std::env::set_current_dir(repository_root).expect("Failed to change working directory");
 
         let child_handle = Command::new("cargo")
 		// Silence Madara stdout and stderr
