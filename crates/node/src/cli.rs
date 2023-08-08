@@ -44,7 +44,16 @@ pub struct ExtendedRunCmd {
     pub madara_path: Option<PathBuf>,
 
     #[clap(long)]
+    pub da_type: Option<String>,
+
+    #[clap(long)]
+    pub l1_node_http: Option<String>,
+
+    #[clap(long)]
     pub l1_node_ws: Option<String>,
+
+    #[clap(long)]
+    pub auth_token: Option<String>,
 }
 
 #[allow(clippy::large_enum_variant)]

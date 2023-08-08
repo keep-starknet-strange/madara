@@ -248,7 +248,10 @@ where
 pub fn new_full(
     config: Configuration,
     sealing: Option<Sealing>,
+    da_type: Option<String>,
+    l1_node_http: Option<String>,
     l1_node_ws: Option<String>,
+    auth_token: Option<String>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -374,9 +377,11 @@ pub fn new_full(
         .for_each(|()| future::ready(())),
     );
 
-    if l1_node_ws.is_some() {
+    if da_type.is_some() {
+        // TODO: Use da_type to map to correct client, better to add an abstraction layer.
         let ws_endpoint = l1_node_ws.as_deref();
-        let l1_client = mc_data_availability::AvailClient::new(ws_endpoint, Some(0)).unwrap();
+        let auth_token = auth_token.as_deref();
+        let l1_client = mc_data_availability::AvailClient::new(ws_endpoint, Some(0), auth_token).unwrap();
 
         task_manager.spawn_essential_handle().spawn(
             "da-worker-prove",

@@ -8,25 +8,35 @@ use avail_subxt::primitives::AvailExtrinsicParams;
 use avail_subxt::{build_client, Call};
 use ethers::types::U256;
 use sp_core::H256;
-use sp_keyring::AccountKeyring;
+use subxt::ext::sp_core::Pair;
 
-const MADARA_APP_ID: u32 = 0;
+const MADARA_DEFAULT_APP_ID: u32 = 0;
+
 const AVAIL_WS: &str = "wss://kate.avail.tools:443/ws";
 const AVAIL_VALIDATE_CODEGEN: bool = true;
+const AVAIL_DEFAULT_SEED: &str = "//Alice";
+
+fn signer_from_seed(seed: &str) -> Result<PairSigner> {
+    let pair = Pair::from_string(seed, None)?;
+    Ok(PairSigner::new(pair))
+}
 
 pub struct AvailClient {
     ws_client: AvailSubxtClient,
     app_id: AppId,
+    signer: PairSigner,
 }
 impl AvailClient {
-    pub fn new(ws_endpoint: Option<&str>, app_id: Option<u32>) -> Result<Self> {
+    pub fn new(ws_endpoint: Option<&str>, app_id: Option<u32>, auth_token: Option<&str>) -> Result<Self> {
         let ws_endpoint = ws_endpoint.unwrap_or(AVAIL_WS);
-        let app_id = AppId(app_id.unwrap_or(MADARA_APP_ID));
+        let app_id = AppId(app_id.unwrap_or(MADARA_DEFAULT_APP_ID));
+        let seed = auth_token.unwrap_or(AVAIL_DEFAULT_SEED);
+        let signer = signer_from_seed(seed)?;
 
         let ws_client = futures::executor::block_on(async { build_client(ws_endpoint, AVAIL_VALIDATE_CODEGEN).await })
             .map_err(|e| anyhow::anyhow!("Could not initialize ws endpoint {e}"))?;
 
-        Ok(AvailClient { ws_client, app_id })
+        Ok(AvailClient { ws_client, app_id, signer })
     }
 
     pub async fn publish_state_diff_and_verify_inclusion(&self, state_diff: Vec<U256>) -> Result<()> {
@@ -40,13 +50,12 @@ impl AvailClient {
     }
 
     async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<H256> {
-        let signer = PairSigner::new(AccountKeyring::Alice.pair());
         let data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
         let extrinsic_params = AvailExtrinsicParams::new_with_app_id(self.app_id);
         let events = self
             .ws_client
             .tx()
-            .sign_and_submit_then_watch(&data_transfer, &signer, extrinsic_params)
+            .sign_and_submit_then_watch(&data_transfer, &self.signer, extrinsic_params)
             .await?
             .wait_for_finalized_success()
             .await?;
@@ -93,12 +102,14 @@ impl AvailClient {
     }
 
     #[cfg(test)]
-    pub async fn new_for_test(ws_endpoint: Option<&str>, app_id: Option<u32>) -> Result<Self> {
+    async fn new_for_test(ws_endpoint: Option<&str>, app_id: Option<u32>, auth_token: Option<&str>) -> Result<Self> {
         let ws_endpoint = ws_endpoint.unwrap_or(AVAIL_WS);
-        let app_id = AppId(app_id.unwrap_or(MADARA_APP_ID));
+        let app_id = AppId(app_id.unwrap_or(MADARA_DEFAULT_APP_ID));
+        let seed = auth_token.unwrap_or(AVAIL_DEFAULT_SEED);
+        let signer = signer_from_seed(seed)?;
         let ws_client = build_client(ws_endpoint, AVAIL_VALIDATE_CODEGEN).await?;
 
-        Ok(AvailClient { ws_client, app_id })
+        Ok(AvailClient { ws_client, app_id, signer })
     }
 }
 
@@ -108,7 +119,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_publish_data_and_verify_publication() -> Result<()> {
-        let client = AvailClient::new_for_test(Some("ws://127.0.0.1:9945"), None).await.unwrap();
+        let client = AvailClient::new_for_test(Some("ws://127.0.0.1:9945"), Some(0), Some("//Bob")).await.unwrap();
         let state_diff = vec![ethers::types::U256::from(0)];
 
         let bytes = client.get_bytes_from_state_diff(state_diff).unwrap();
