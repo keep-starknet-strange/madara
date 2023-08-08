@@ -21,6 +21,7 @@ url = "2.2.2"
 tokio = { version = "1.29.1", features = ["rt", "macros", "parking_lot"] }
 lazy_static = "1.4.0"
 rstest = "0.18.1"
+assert_matches = "1.5.0"
 
 [[test]]
 name = "starknet_get_block_number"
@@ -37,3 +38,7 @@ path = "get_block_transaction_count.rs"
 [[test]]
 name = "starknet_chain_id"
 path = "chain_id.rs"
+
+[[test]]
+name = "starknet_get_storage_at"
+path = "get_storage_at.rs"
