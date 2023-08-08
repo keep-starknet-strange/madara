@@ -25,6 +25,8 @@ pub const ARGENT_CONTRACT_ADDRESS: &str = "0x00000000000000000000000000000000000
 pub const MIN_PORT: u16 = 1025;
 pub const MAX_PORT: u16 = 65_535;
 
+pub const MAX_U256: &str = "0xffffffffffffffffffffffffffffffff";
+
 // Need to use `from_mont` because this needs to be a constant function call
 /// ChainId for Starknet Goerli testnet
 pub const SN_GOERLI_CHAIN_ID: FieldElement =
