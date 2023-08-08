@@ -82,13 +82,7 @@ async fn return_0_for_uninitialized_key() -> Result<(), anyhow::Error> {
     let fee_token_address = FieldElement::from_hex_be(FEE_TOKEN_ADDRESS).expect("Invalid Contract Address");
 
     assert_eq!(
-            rpc
-            .get_storage_at(
-                fee_token_address,
-                FieldElement::from_hex_be("0x1").unwrap(),
-                BlockId::Number(0),
-        )
-        .await?,
+        rpc.get_storage_at(fee_token_address, FieldElement::from_hex_be("0x1").unwrap(), BlockId::Number(0),).await?,
         FieldElement::from_hex_be("0x0").unwrap()
     );
 
