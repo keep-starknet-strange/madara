@@ -4,6 +4,7 @@ use core::str::FromStr;
 use blockifier::abi::abi_utils::selector_from_name;
 use frame_support::{bounded_vec, BoundedVec};
 use scale_codec::{Decode, Encode};
+use scale_info::TypeInfo;
 use sp_core::{TypedGet, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
 use starknet_api::block::{BlockHash, BlockNumber};
@@ -498,6 +499,12 @@ fn test_transaction_execution_info_scale_codec() {
     let encoded = exec_info.encode();
     let decoded = TransactionExecutionInfoWrapper::decode(&mut encoded.as_slice()).expect("Failed to decode");
     assert_eq!(exec_info, decoded);
+
+    let type_info = TransactionExecutionInfoWrapper::type_info();
+    assert_eq!(
+        type_info.path.segments.join("::"),
+        String::from("mp_starknet::transaction::types::TransactionExecutionInfoWrapper")
+    );
 }
 
 // This helper methods either returns result of `TryInto::try_into()` and expected result or the

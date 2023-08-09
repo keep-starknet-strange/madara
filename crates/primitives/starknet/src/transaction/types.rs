@@ -523,6 +523,8 @@ pub struct TransactionExecutionInfoWrapper {
 impl scale_info::TypeInfo for TransactionExecutionInfoWrapper {
     type Identity = Self;
 
+    // The type info is saying that the ContractClassV0Inner must be seen as an
+    // array of bytes.
     fn type_info() -> scale_info::Type {
         scale_info::Type::builder()
             .path(scale_info::Path::new("TransactionExecutionInfoWrapper", module_path!()))
