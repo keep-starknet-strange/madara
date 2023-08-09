@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use blockifier::abi::abi_utils::selector_from_name;
 use blockifier::block_context::BlockContext;
 use blockifier::execution::entry_point::{CallEntryPoint, CallType};
-use cairo_vm::felt::Felt252;
 use frame_support::{assert_ok, bounded_vec};
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
