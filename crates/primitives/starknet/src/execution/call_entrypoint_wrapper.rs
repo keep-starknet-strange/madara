@@ -126,7 +126,7 @@ impl Default for CallEntryPointWrapper {
             calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
-            initial_gas: INITIAL_GAS.into(),
+            initial_gas: Felt252Wrapper::default(),
             compiled_class_hash: None,
         }
     }
@@ -163,8 +163,7 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             // starknet-lib is constantly breaking it's api
             // I hope it's nothing important ¯\_(ツ)_/¯
             code_address: None,
-            // initial_gas: Felt252::from_bytes_be(&self.initial_gas.0.to_bytes_be()),
-            initial_gas: INITIAL_GAS.into(),
+            initial_gas: self.initial_gas.into(),
         };
 
         Ok(entrypoint)
