@@ -1,4 +1,5 @@
 use frame_support::BoundedVec;
+use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -86,8 +87,7 @@ impl Message {
             calldata,
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
-            // FIXME 710
-            initial_gas: Felt252Wrapper::from(0_u8),
+            initial_gas: INITIAL_GAS.into(),
             compiled_class_hash: None,
         };
         Ok(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })

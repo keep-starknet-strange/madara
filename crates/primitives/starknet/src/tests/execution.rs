@@ -13,6 +13,7 @@ use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
 
+use crate::constants::INITIAL_GAS;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;
 use crate::execution::entrypoint_wrapper::EntryPointTypeWrapper;
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
@@ -34,7 +35,7 @@ fn test_call_entry_point_execute_works() {
         calldata,
         address,
         ContractAddressWrapper::default(),
-        Felt252Wrapper::default(),
+        INITIAL_GAS.into(),
         None,
     );
 
@@ -68,7 +69,7 @@ fn test_call_entry_point_execute_fails_undeclared_class_hash() {
         calldata,
         address,
         ContractAddressWrapper::default(),
-        Felt252Wrapper::default(),
+        INITIAL_GAS.into(),
         None,
     );
 
@@ -103,7 +104,7 @@ fn test_try_into_entrypoint_works() {
         calldata: bounded_vec![Felt252Wrapper::ONE, Felt252Wrapper::TWO, Felt252Wrapper::THREE],
         storage_address: Felt252Wrapper::from_hex_be("0x1").unwrap(),
         caller_address: Felt252Wrapper::from_hex_be("0x2").unwrap(),
-        initial_gas: Felt252Wrapper::from(3_u8),
+        initial_gas: INITIAL_GAS.into(),
         compiled_class_hash: None,
     };
     let entrypoint: CallEntryPoint = entrypoint_wrapper.try_into().unwrap();
@@ -116,7 +117,7 @@ fn test_try_into_entrypoint_works() {
         code_address: None,
         entry_point_selector: EntryPointSelector(stark_felt!(0_u8)),
         entry_point_type: EntryPointType::External,
-        initial_gas: Felt252::from(3_u8),
+        initial_gas: INITIAL_GAS.into(),
     };
 
     pretty_assertions::assert_eq!(entrypoint, expected_entrypoint);

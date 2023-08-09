@@ -8,6 +8,7 @@ use blockifier::execution::entry_point::{
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use cairo_vm::felt::Felt252;
+use crate::constants::INITIAL_GAS;
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
@@ -125,7 +126,7 @@ impl Default for CallEntryPointWrapper {
             calldata: BoundedVec::default(),
             storage_address: ContractAddressWrapper::default(),
             caller_address: ContractAddressWrapper::default(),
-            initial_gas: Felt252Wrapper::default(),
+            initial_gas: INITIAL_GAS.into(),
             compiled_class_hash: None,
         }
     }
@@ -162,7 +163,8 @@ impl TryInto<CallEntryPoint> for CallEntryPointWrapper {
             // starknet-lib is constantly breaking it's api
             // I hope it's nothing important ¯\_(ツ)_/¯
             code_address: None,
-            initial_gas: Felt252::from_bytes_be(&self.initial_gas.0.to_bytes_be()),
+            // initial_gas: Felt252::from_bytes_be(&self.initial_gas.0.to_bytes_be()),
+            initial_gas: INITIAL_GAS.into(),
         };
 
         Ok(entrypoint)
