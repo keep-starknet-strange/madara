@@ -12,3 +12,4 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
+- feat: add `starknet_simulateTransactions` RPC endpoint
