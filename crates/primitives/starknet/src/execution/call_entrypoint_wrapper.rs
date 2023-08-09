@@ -8,7 +8,6 @@ use blockifier::execution::entry_point::{
 use blockifier::state::state_api::State;
 use blockifier::transaction::objects::AccountTransactionContext;
 use cairo_vm::felt::Felt252;
-use crate::constants::INITIAL_GAS;
 use frame_support::BoundedVec;
 use sp_core::ConstU32;
 use starknet_api::api_core::{ClassHash, ContractAddress, EntryPointSelector};
@@ -20,6 +19,7 @@ use super::entrypoint_wrapper::{
     EntryPointExecutionErrorWrapper, EntryPointExecutionResultWrapper, EntryPointTypeWrapper,
 };
 use super::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
+use crate::constants::INITIAL_GAS;
 
 /// Max number of calldata / tx.
 #[cfg(not(test))]
