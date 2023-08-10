@@ -122,6 +122,7 @@ mod tests {
         let fee_token_address = FieldElement::from(5u8).into();
 
         let genesis_loader = GenesisLoader {
+			madara_path: utils::get_project_path() + "/configs",
             contract_classes: vec![(class_hash, class)],
             contracts: vec![(contract_address, class_hash)],
             storage: vec![((contract_address, storage_key), storage_value)],
