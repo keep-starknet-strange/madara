@@ -54,7 +54,7 @@ pub fn development_config(
     madara_path: Option<PathBuf>,
 ) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-    let madara_path_string = madara_path.clone().unwrap().to_str().unwrap().to_string();
+    let madara_path_string = madara_path.unwrap().to_str().unwrap().to_string();
 
     Ok(DevChainSpec::from_genesis(
         // Name
@@ -90,7 +90,7 @@ pub fn development_config(
 
 pub fn local_testnet_config(madara_path: Option<PathBuf>) -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-    let madara_path_string = madara_path.clone().unwrap().to_str().unwrap().to_string();
+    let madara_path_string = madara_path.unwrap().to_str().unwrap().to_string();
 
     Ok(ChainSpec::from_genesis(
         // Name
