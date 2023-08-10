@@ -25,6 +25,7 @@ type StorageValue = HexFelt;
 
 #[derive(Deserialize, Serialize)]
 pub struct GenesisLoader {
+	pub madara_path: String,
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
@@ -48,8 +49,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
                 match class {
                     ContractClass::Path { path, version } => {
-                        // TODO replace with madara_path
-                        let contract_path = "~/.madara/".to_string() + &path;
+                        let contract_path = loader.madara_path.clone() + "/" + &path;
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path), version))
                     }
                     ContractClass::Class(class) => (hash, class),

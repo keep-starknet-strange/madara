@@ -87,8 +87,6 @@ export async function startMadaraDevNode(
     "--alice",
     "--dev",
     "--sealing=manual",
-    "--in-peers=0",
-    "--out-peers=1",
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
     `--rpc-port=${rpcPort}`,
@@ -151,7 +149,7 @@ export async function startMadaraDevNode(
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
-      if (chunk.toString().match(/Substrate Node/)) {
+      if (chunk.toString().match(/Madara Node/)) {
         clearTimeout(timer);
         if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);
@@ -251,7 +249,7 @@ export async function startMadaraForkedNode(rpcPort: number): Promise<{
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
-      if (chunk.toString().match(/Substrate Node/)) {
+      if (chunk.toString().match(/Madara Node/)) {
         clearTimeout(timer);
         if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);
