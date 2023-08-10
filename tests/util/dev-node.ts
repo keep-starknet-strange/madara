@@ -91,6 +91,7 @@ export async function startMadaraDevNode(
     "--tmp",
     "--rpc-methods=unsafe",
   ];
+  console.log(p2pPort, rpcPort, cmd, args);
   if (WASM_RUNTIME_OVERRIDES != "") {
     args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
     // For tracing tests now we require to enable archive block pruning.
