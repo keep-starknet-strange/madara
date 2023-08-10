@@ -130,10 +130,8 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let genesis_path = madara_path.clone() + "/genesis-assets/genesis.json";
-	let mut genesis: serde_json::Map<String, serde_json::Value> = serde_json::from_str(&utils::read_file_to_string(genesis_path)).unwrap();
-	genesis.insert("madara_path".to_string(), serde_json::Value::String(madara_path.clone()));
-	let genesis = serde_json::to_string(&genesis).unwrap();
-    let genesis: GenesisLoader = serde_json::from_str(&genesis).unwrap();
+    let mut genesis: GenesisLoader = serde_json::from_str(&utils::read_file_to_string(genesis_path)).unwrap();
+    genesis.set_madara_path(madara_path);
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
 
     GenesisConfig {

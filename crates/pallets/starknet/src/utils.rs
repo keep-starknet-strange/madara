@@ -60,5 +60,6 @@ pub fn fetch_from_url(target: String, dest_path: String) -> bool {
 }
 
 pub fn read_file_to_string(path: String) -> String {
+    println!("Reading file {}", path);
     std::fs::read_to_string(path).unwrap()
 }

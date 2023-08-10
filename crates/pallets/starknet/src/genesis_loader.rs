@@ -25,7 +25,7 @@ type StorageValue = HexFelt;
 
 #[derive(Deserialize, Serialize)]
 pub struct GenesisLoader {
-	pub madara_path: String,
+    pub madara_path: Option<String>,
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
@@ -40,6 +40,12 @@ pub enum ContractClass {
     Class(StarknetContractClass),
 }
 
+impl GenesisLoader {
+    pub fn set_madara_path(&mut self, madara_path: String) {
+        self.madara_path = Some(madara_path);
+    }
+}
+
 impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
     fn from(loader: GenesisLoader) -> Self {
         let contract_classes = loader
@@ -49,7 +55,11 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
                 match class {
                     ContractClass::Path { path, version } => {
-                        let contract_path = loader.madara_path.clone() + "/" + &path;
+                        let contract_path = if loader.madara_path.is_some() {
+                            loader.madara_path.clone().unwrap() + "/" + &path
+                        } else {
+                            utils::get_project_path() + "/" + &path
+                        };
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path), version))
                     }
                     ContractClass::Class(class) => (hash, class),
@@ -122,7 +132,7 @@ mod tests {
         let fee_token_address = FieldElement::from(5u8).into();
 
         let genesis_loader = GenesisLoader {
-			madara_path: utils::get_project_path() + "/configs",
+            madara_path: None,
             contract_classes: vec![(class_hash, class)],
             contracts: vec![(contract_address, class_hash)],
             storage: vec![((contract_address, storage_key), storage_value)],
@@ -134,7 +144,7 @@ mod tests {
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
+        let expected = r#"{"madara_path":null,"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
         assert_eq!(expected, serialized_loader);
     }
 }
