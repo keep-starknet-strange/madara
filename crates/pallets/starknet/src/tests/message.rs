@@ -1,4 +1,5 @@
 use frame_support::bounded_vec;
+use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -23,7 +24,7 @@ fn test_try_into_transaction_correct_message_should_work() {
             calldata: bounded_vec![Felt252Wrapper::ONE, Felt252Wrapper::ONE],
             storage_address: felt_one,
             caller_address: ContractAddressWrapper::default(),
-            initial_gas: Felt252Wrapper::default(),
+            initial_gas: INITIAL_GAS.into(),
             compiled_class_hash: None,
         },
         ..Transaction::default()
