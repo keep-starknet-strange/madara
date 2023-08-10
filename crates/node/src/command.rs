@@ -36,9 +36,9 @@ impl SubstrateCli for Cli {
         Ok(match id {
             "dev" => {
                 let enable_manual_seal = self.sealing.map(|_| true);
-                Box::new(chain_spec::development_config(enable_manual_seal)?)
+                Box::new(chain_spec::development_config(enable_manual_seal, self.run.madara_path.clone())?)
             }
-            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config()?),
+            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(self.run.madara_path.clone())?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
     }
@@ -206,6 +206,7 @@ pub fn run() -> sc_cli::Result<()> {
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
             if cli.run.genesis_url.is_some() {
+                // TODO also use local fs
                 // can't copy extra genesis-assets atm
                 let copied = utils::fetch_from_url(
                     cli.run.genesis_url.clone().unwrap(),
@@ -216,9 +217,10 @@ pub fn run() -> sc_cli::Result<()> {
                     return Err("Failed to fetch genesis assets".into());
                 }
             } else {
+                // TODO confirm with the CI that we are fetching all
                 let files: Vec<&str> = vec!["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
                 for file in files {
-                    let src_path: String = utils::get_project_path() + "/onfigs/genesis-assets/" + file;
+                    let src_path: String = utils::get_project_path() + "/configs/genesis-assets/" + file;
                     let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
                     if !copied {
                         copied = utils::fetch_from_url( "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets/".to_string() + file, madara_path.clone() + "/genesis-assets");
@@ -230,6 +232,8 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             }
 
+            // TODO copy cairo-contracts
+
             if cli.run.chain_spec_url.is_some() && cli.run.testnet.is_none() {
                 let copied = utils::fetch_from_url(
                     cli.run.chain_spec_url.clone().unwrap(),
@@ -240,8 +244,6 @@ pub fn run() -> sc_cli::Result<()> {
                     return Err("Failed to fetch chain spec".into());
                 }
             }
-
-            // TODO copy cairo-contracts
 
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
