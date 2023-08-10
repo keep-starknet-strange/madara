@@ -207,10 +207,10 @@ pub fn run() -> sc_cli::Result<()> {
 
             if cli.run.genesis_url.is_some() {
                 // can't copy extra genesis-assets atm
-				// we can reuse #982 to create the standard to fetch relevant files
+                // we can reuse #982 to create the standard to fetch relevant files
                 let copied = utils::fetch_from_url(
                     cli.run.genesis_url.clone().unwrap(),
-                    madara_path.clone() + "/configs/genesis-assets"
+                    madara_path.clone() + "/configs/genesis-assets",
                 );
 
                 if !copied {
@@ -218,11 +218,13 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             } else {
                 // TODO confirm with the CI that we are fetching all and fetch dynamically
-				// Issue #982
-                let files: Vec<&str> = vec!["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
+                // Issue #982
+                let files: Vec<&str> =
+                    vec!["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
                 for file in files {
                     let src_path: String = utils::get_project_path() + "/configs/genesis-assets/" + file;
-                    let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
+                    let mut copied: bool =
+                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
                     if !copied {
                         copied = utils::fetch_from_url( "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets/".to_string() + file, madara_path.clone() + "/genesis-assets");
 
@@ -234,24 +236,63 @@ pub fn run() -> sc_cli::Result<()> {
             }
 
             // TODO confirm with the CI that we are fetching all and fetch dynamically
-			// Issue #982
-			let files: Vec<&str> = vec!["ArgentAccount.json", "bigint.json", "BraavosAccount.json", "calls.json", "constants.json", "Counter.json", "ec.json", "ec_mulmuladd.json", "ec_mulmuladd_secp256r1.json", "emit_multiple_events_across_contracts.json", "emit_single_event.json", "ERC20.json", "ERC721.json", "Example.sierra.json", "field.json", "guards.json", "l1_handler.json", "library.json", "NoValidateAccount.json", "OpenzeppelinAccount.json", "Proxy.json", "security_test.json", "signature.json", "test.json", "UnauthorizedInnerCallAccount.json", "UniversalDeployer.json", "upgradable.json", "cairo_1/erc20.casm.json", "cairo_1/erc20.sierra.json", "cairo_1/HelloStarknet.casm.json", "cairo_1/HelloStarknet.sierra.json", "cairo_1/NoValidateAccount.casm.json", "cairo_1/NoValidateAccount.sierra.json"];
-			for file in files {
-				let src_path: String = utils::get_project_path() + "/configs/cairo-contracts/" + file;
-				let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
-				if !copied {
-					copied = utils::fetch_from_url( "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/cairo-contracts/".to_string() + file, madara_path.clone() + "/cairo-contracts");
+            // Issue #982
+            let files: Vec<&str> = vec![
+                "ArgentAccount.json",
+                "bigint.json",
+                "BraavosAccount.json",
+                "calls.json",
+                "constants.json",
+                "Counter.json",
+                "ec.json",
+                "ec_mulmuladd.json",
+                "ec_mulmuladd_secp256r1.json",
+                "emit_multiple_events_across_contracts.json",
+                "emit_single_event.json",
+                "ERC20.json",
+                "ERC721.json",
+                "Example.sierra.json",
+                "field.json",
+                "guards.json",
+                "l1_handler.json",
+                "library.json",
+                "NoValidateAccount.json",
+                "OpenzeppelinAccount.json",
+                "Proxy.json",
+                "security_test.json",
+                "signature.json",
+                "test.json",
+                "UnauthorizedInnerCallAccount.json",
+                "UniversalDeployer.json",
+                "upgradable.json",
+                "cairo_1/erc20.casm.json",
+                "cairo_1/erc20.sierra.json",
+                "cairo_1/HelloStarknet.casm.json",
+                "cairo_1/HelloStarknet.sierra.json",
+                "cairo_1/NoValidateAccount.casm.json",
+                "cairo_1/NoValidateAccount.sierra.json",
+            ];
+            for file in files {
+                let src_path: String = utils::get_project_path() + "/configs/cairo-contracts/" + file;
+                let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
+                if !copied {
+                    copied = utils::fetch_from_url(
+                        "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/cairo-contracts/"
+                            .to_string()
+                            + file,
+                        madara_path.clone() + "/cairo-contracts",
+                    );
 
-					if !copied {
-						return Err("Failed to fetch cairo contracts".into());
-					}
-				}
-			}
+                    if !copied {
+                        return Err("Failed to fetch cairo contracts".into());
+                    }
+                }
+            }
 
             if cli.run.chain_spec_url.is_some() && cli.run.testnet.is_none() {
                 let copied = utils::fetch_from_url(
                     cli.run.chain_spec_url.clone().unwrap(),
-                    madara_path.clone() + "/chain-specs"
+                    madara_path.clone() + "/chain-specs",
                 );
 
                 if !copied {
@@ -261,7 +302,8 @@ pub fn run() -> sc_cli::Result<()> {
 
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    let src_path: String = utils::get_project_path() + "/configs/chain-specs/testnet-sharingan-raw.json";
+                    let src_path: String =
+                        utils::get_project_path() + "/configs/chain-specs/testnet-sharingan-raw.json";
                     let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
                     if !copied {
                         copied = utils::fetch_from_url( "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/chain-specs/testnet-sharingan-raw.json".to_string(), madara_path.clone() + "/chain-specs"

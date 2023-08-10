@@ -289,12 +289,7 @@
         "value": "Account: reentrant call"
       }
     ],
-    "builtins": [
-      "pedersen",
-      "range_check",
-      "ecdsa",
-      "bitwise"
-    ],
+    "builtins": ["pedersen", "range_check", "ecdsa", "bitwise"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -1551,9 +1546,7 @@
         "type": "alias"
       },
       "__wrappers__.__execute__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 699,
         "type": "function"
       },
@@ -1620,9 +1613,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 548,
         "type": "function"
       },
@@ -1655,9 +1646,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate_declare__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 607,
         "type": "function"
       },
@@ -1690,9 +1679,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate_deploy__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 645,
         "type": "function"
       },
@@ -1725,9 +1712,7 @@
         "type": "alias"
       },
       "__wrappers__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 366,
         "type": "function"
       },
@@ -1760,9 +1745,7 @@
         "type": "alias"
       },
       "__wrappers__.getPublicKey": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 401,
         "type": "function"
       },
@@ -1829,9 +1812,7 @@
         "type": "alias"
       },
       "__wrappers__.isValidSignature": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 500,
         "type": "function"
       },
@@ -1898,9 +1879,7 @@
         "type": "alias"
       },
       "__wrappers__.setPublicKey": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 461,
         "type": "function"
       },
@@ -1933,9 +1912,7 @@
         "type": "alias"
       },
       "__wrappers__.supportsInterface": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 434,
         "type": "function"
       },
@@ -2738,9 +2715,7 @@
         "type": "alias"
       },
       "openzeppelin.account.presets.Account.__execute__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 668,
         "type": "function"
       },
@@ -2803,9 +2778,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.__validate__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 531,
         "type": "function"
       },
@@ -2864,9 +2837,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.__validate_declare__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 590,
         "type": "function"
       },
@@ -2913,9 +2884,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.__validate_deploy__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 628,
         "type": "function"
       },
@@ -2970,9 +2939,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 359,
         "type": "function"
       },
@@ -3015,9 +2982,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.getPublicKey": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 386,
         "type": "function"
       },
@@ -3059,9 +3024,7 @@
         "type": "alias"
       },
       "openzeppelin.account.presets.Account.isValidSignature": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 481,
         "type": "function"
       },
@@ -3116,9 +3079,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.setPublicKey": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 454,
         "type": "function"
       },
@@ -3161,9 +3122,7 @@
         "value": 0
       },
       "openzeppelin.account.presets.Account.supportsInterface": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 418,
         "type": "function"
       },
@@ -4017,9 +3976,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math.assert_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 67,
         "type": "function"
       },
@@ -4127,9 +4084,7 @@
         "type": "label"
       },
       "starkware.cairo.common.math.assert_lt_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 112,
         "type": "function"
       },
@@ -4210,9 +4165,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math_cmp.is_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 128,
         "type": "function"
       },

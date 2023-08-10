@@ -363,102 +363,42 @@
   ],
   "sierra_program_debug_info": {
     "type_names": [
-      [
-        0,
-        "RangeCheck"
-      ],
-      [
-        1,
-        "GasBuiltin"
-      ],
-      [
-        2,
-        "felt252"
-      ],
-      [
-        3,
-        "Array<felt252>"
-      ],
-      [
-        4,
-        "Snapshot<Array<felt252>>"
-      ],
-      [
-        5,
-        "core::array::Span::<core::felt252>"
-      ],
-      [
-        6,
-        "Unit"
-      ],
-      [
-        7,
-        "core::option::Option::<core::felt252>"
-      ],
-      [
-        8,
-        "u32"
-      ],
-      [
-        9,
-        "core::bool"
-      ],
-      [
-        10,
-        "BuiltinCosts"
-      ],
+      [0, "RangeCheck"],
+      [1, "GasBuiltin"],
+      [2, "felt252"],
+      [3, "Array<felt252>"],
+      [4, "Snapshot<Array<felt252>>"],
+      [5, "core::array::Span::<core::felt252>"],
+      [6, "Unit"],
+      [7, "core::option::Option::<core::felt252>"],
+      [8, "u32"],
+      [9, "core::bool"],
+      [10, "BuiltinCosts"],
       [
         11,
         "hello_starknet::hello_starknet::HelloStarknet::balance::ContractState"
       ],
-      [
-        12,
-        "hello_starknet::hello_starknet::HelloStarknet::ContractState"
-      ],
-      [
-        13,
-        "System"
-      ],
+      [12, "hello_starknet::hello_starknet::HelloStarknet::ContractState"],
+      [13, "System"],
       [
         14,
         "Tuple<hello_starknet::hello_starknet::HelloStarknet::ContractState, Unit>"
       ],
-      [
-        15,
-        "core::panics::Panic"
-      ],
-      [
-        16,
-        "Tuple<core::panics::Panic, Array<felt252>>"
-      ],
+      [15, "core::panics::Panic"],
+      [16, "Tuple<core::panics::Panic, Array<felt252>>"],
       [
         17,
         "core::panics::PanicResult::<(hello_starknet::hello_starknet::HelloStarknet::ContractState, ())>"
       ],
-      [
-        18,
-        "Tuple<core::array::Span::<core::felt252>>"
-      ],
+      [18, "Tuple<core::array::Span::<core::felt252>>"],
       [
         19,
         "core::panics::PanicResult::<(core::array::Span::<core::felt252>,)>"
       ],
-      [
-        20,
-        "Tuple<felt252>"
-      ],
-      [
-        21,
-        "core::panics::PanicResult::<(core::felt252,)>"
-      ],
-      [
-        22,
-        "Box<felt252>"
-      ],
-      [
-        23,
-        "core::option::Option::<core::box::Box::<@core::felt252>>"
-      ],
+      [20, "Tuple<felt252>"],
+      [21, "core::panics::PanicResult::<(core::felt252,)>"],
+      [22, "Box<felt252>"],
+      [23, "core::option::Option::<core::box::Box::<@core::felt252>>"],
       [
         24,
         "Tuple<hello_starknet::hello_starknet::HelloStarknet::balance::ContractState, Unit>"
@@ -467,144 +407,45 @@
         25,
         "core::panics::PanicResult::<(hello_starknet::hello_starknet::HelloStarknet::balance::ContractState, ())>"
       ],
-      [
-        26,
-        "StorageBaseAddress"
-      ],
-      [
-        27,
-        "StorageAddress"
-      ],
+      [26, "StorageBaseAddress"],
+      [27, "StorageAddress"],
       [
         28,
         "core::result::Result::<core::felt252, core::array::Array::<core::felt252>>"
       ],
-      [
-        29,
-        "core::result::Result::<(), core::array::Array::<core::felt252>>"
-      ],
-      [
-        30,
-        "Tuple<Unit>"
-      ],
-      [
-        31,
-        "core::panics::PanicResult::<((),)>"
-      ]
+      [29, "core::result::Result::<(), core::array::Array::<core::felt252>>"],
+      [30, "Tuple<Unit>"],
+      [31, "core::panics::PanicResult::<((),)>"]
     ],
     "libfunc_names": [
-      [
-        0,
-        "revoke_ap_tracking"
-      ],
-      [
-        1,
-        "enable_ap_tracking"
-      ],
-      [
-        2,
-        "withdraw_gas"
-      ],
-      [
-        3,
-        "branch_align"
-      ],
-      [
-        4,
-        "store_temp<core::array::Span::<core::felt252>>"
-      ],
-      [
-        5,
-        "function_call<user@core::Felt252Serde::deserialize>"
-      ],
-      [
-        6,
-        "store_temp<RangeCheck>"
-      ],
-      [
-        7,
-        "enum_match<core::option::Option::<core::felt252>>"
-      ],
-      [
-        8,
-        "struct_deconstruct<core::array::Span::<core::felt252>>"
-      ],
-      [
-        9,
-        "array_len<felt252>"
-      ],
-      [
-        10,
-        "snapshot_take<u32>"
-      ],
-      [
-        11,
-        "drop<u32>"
-      ],
-      [
-        12,
-        "u32_const<0>"
-      ],
-      [
-        13,
-        "rename<u32>"
-      ],
-      [
-        14,
-        "store_temp<u32>"
-      ],
-      [
-        15,
-        "u32_eq"
-      ],
-      [
-        16,
-        "struct_construct<Unit>"
-      ],
-      [
-        17,
-        "enum_init<core::bool, 0>"
-      ],
-      [
-        18,
-        "store_temp<core::bool>"
-      ],
-      [
-        19,
-        "jump"
-      ],
-      [
-        20,
-        "enum_init<core::bool, 1>"
-      ],
-      [
-        21,
-        "bool_not_impl"
-      ],
-      [
-        22,
-        "enum_match<core::bool>"
-      ],
-      [
-        23,
-        "drop<Unit>"
-      ],
-      [
-        24,
-        "get_builtin_costs"
-      ],
-      [
-        25,
-        "store_temp<BuiltinCosts>"
-      ],
-      [
-        26,
-        "withdraw_gas_all"
-      ],
-      [
-        27,
-        "disable_ap_tracking"
-      ],
+      [0, "revoke_ap_tracking"],
+      [1, "enable_ap_tracking"],
+      [2, "withdraw_gas"],
+      [3, "branch_align"],
+      [4, "store_temp<core::array::Span::<core::felt252>>"],
+      [5, "function_call<user@core::Felt252Serde::deserialize>"],
+      [6, "store_temp<RangeCheck>"],
+      [7, "enum_match<core::option::Option::<core::felt252>>"],
+      [8, "struct_deconstruct<core::array::Span::<core::felt252>>"],
+      [9, "array_len<felt252>"],
+      [10, "snapshot_take<u32>"],
+      [11, "drop<u32>"],
+      [12, "u32_const<0>"],
+      [13, "rename<u32>"],
+      [14, "store_temp<u32>"],
+      [15, "u32_eq"],
+      [16, "struct_construct<Unit>"],
+      [17, "enum_init<core::bool, 0>"],
+      [18, "store_temp<core::bool>"],
+      [19, "jump"],
+      [20, "enum_init<core::bool, 1>"],
+      [21, "bool_not_impl"],
+      [22, "enum_match<core::bool>"],
+      [23, "drop<Unit>"],
+      [24, "get_builtin_costs"],
+      [25, "store_temp<BuiltinCosts>"],
+      [26, "withdraw_gas_all"],
+      [27, "disable_ap_tracking"],
       [
         28,
         "struct_construct<hello_starknet::hello_starknet::HelloStarknet::balance::ContractState>"
@@ -613,22 +454,13 @@
         29,
         "struct_construct<hello_starknet::hello_starknet::HelloStarknet::ContractState>"
       ],
-      [
-        30,
-        "store_temp<GasBuiltin>"
-      ],
-      [
-        31,
-        "store_temp<System>"
-      ],
+      [30, "store_temp<GasBuiltin>"],
+      [31, "store_temp<System>"],
       [
         32,
         "store_temp<hello_starknet::hello_starknet::HelloStarknet::ContractState>"
       ],
-      [
-        33,
-        "store_temp<felt252>"
-      ],
+      [33, "store_temp<felt252>"],
       [
         34,
         "function_call<user@hello_starknet::hello_starknet::HelloStarknet::increase_balance>"
@@ -641,26 +473,11 @@
         36,
         "drop<Tuple<hello_starknet::hello_starknet::HelloStarknet::ContractState, Unit>>"
       ],
-      [
-        37,
-        "array_new<felt252>"
-      ],
-      [
-        38,
-        "snapshot_take<Array<felt252>>"
-      ],
-      [
-        39,
-        "drop<Array<felt252>>"
-      ],
-      [
-        40,
-        "struct_construct<core::array::Span::<core::felt252>>"
-      ],
-      [
-        41,
-        "struct_construct<Tuple<core::array::Span::<core::felt252>>>"
-      ],
+      [37, "array_new<felt252>"],
+      [38, "snapshot_take<Array<felt252>>"],
+      [39, "drop<Array<felt252>>"],
+      [40, "struct_construct<core::array::Span::<core::felt252>>"],
+      [41, "struct_construct<Tuple<core::array::Span::<core::felt252>>>"],
       [
         42,
         "enum_init<core::panics::PanicResult::<(core::array::Span::<core::felt252>,)>, 0>"
@@ -673,38 +490,17 @@
         44,
         "enum_init<core::panics::PanicResult::<(core::array::Span::<core::felt252>,)>, 1>"
       ],
-      [
-        45,
-        "drop<felt252>"
-      ],
-      [
-        46,
-        "felt252_const<375233589013918064796019>"
-      ],
-      [
-        47,
-        "array_append<felt252>"
-      ],
-      [
-        48,
-        "struct_construct<core::panics::Panic>"
-      ],
-      [
-        49,
-        "struct_construct<Tuple<core::panics::Panic, Array<felt252>>>"
-      ],
-      [
-        50,
-        "function_call<user@core::starknet::use_system_implicit>"
-      ],
+      [45, "drop<felt252>"],
+      [46, "felt252_const<375233589013918064796019>"],
+      [47, "array_append<felt252>"],
+      [48, "struct_construct<core::panics::Panic>"],
+      [49, "struct_construct<Tuple<core::panics::Panic, Array<felt252>>>"],
+      [50, "function_call<user@core::starknet::use_system_implicit>"],
       [
         51,
         "felt252_const<7733229381460288120802334208475838166080759535023995805565484692595>"
       ],
-      [
-        52,
-        "drop<core::array::Span::<core::felt252>>"
-      ],
+      [52, "drop<core::array::Span::<core::felt252>>"],
       [
         53,
         "felt252_const<1979706721653833758925397712865600297316042839304765459608024204080243>"
@@ -721,38 +517,17 @@
         56,
         "function_call<user@hello_starknet::hello_starknet::HelloStarknet::get_balance>"
       ],
-      [
-        57,
-        "enum_match<core::panics::PanicResult::<(core::felt252,)>>"
-      ],
-      [
-        58,
-        "struct_deconstruct<Tuple<felt252>>"
-      ],
-      [
-        59,
-        "snapshot_take<felt252>"
-      ],
-      [
-        60,
-        "store_temp<Array<felt252>>"
-      ],
-      [
-        61,
-        "function_call<user@core::Felt252Serde::serialize>"
-      ],
-      [
-        62,
-        "array_snapshot_pop_front<felt252>"
-      ],
+      [57, "enum_match<core::panics::PanicResult::<(core::felt252,)>>"],
+      [58, "struct_deconstruct<Tuple<felt252>>"],
+      [59, "snapshot_take<felt252>"],
+      [60, "store_temp<Array<felt252>>"],
+      [61, "function_call<user@core::Felt252Serde::serialize>"],
+      [62, "array_snapshot_pop_front<felt252>"],
       [
         63,
         "enum_init<core::option::Option::<core::box::Box::<@core::felt252>>, 0>"
       ],
-      [
-        64,
-        "store_temp<Snapshot<Array<felt252>>>"
-      ],
+      [64, "store_temp<Snapshot<Array<felt252>>>"],
       [
         65,
         "store_temp<core::option::Option::<core::box::Box::<@core::felt252>>>"
@@ -765,26 +540,11 @@
         67,
         "enum_match<core::option::Option::<core::box::Box::<@core::felt252>>>"
       ],
-      [
-        68,
-        "unbox<felt252>"
-      ],
-      [
-        69,
-        "rename<felt252>"
-      ],
-      [
-        70,
-        "enum_init<core::option::Option::<core::felt252>, 0>"
-      ],
-      [
-        71,
-        "store_temp<core::option::Option::<core::felt252>>"
-      ],
-      [
-        72,
-        "enum_init<core::option::Option::<core::felt252>, 1>"
-      ],
+      [68, "unbox<felt252>"],
+      [69, "rename<felt252>"],
+      [70, "enum_init<core::option::Option::<core::felt252>, 0>"],
+      [71, "store_temp<core::option::Option::<core::felt252>>"],
+      [72, "enum_init<core::option::Option::<core::felt252>, 1>"],
       [
         73,
         "struct_deconstruct<hello_starknet::hello_starknet::HelloStarknet::ContractState>"
@@ -801,10 +561,7 @@
         76,
         "function_call<user@hello_starknet::hello_starknet::HelloStarknet::balance::InternalContractStateImpl::read>"
       ],
-      [
-        77,
-        "felt252_add"
-      ],
+      [77, "felt252_add"],
       [
         78,
         "function_call<user@hello_starknet::hello_starknet::HelloStarknet::balance::InternalContractStateImpl::write>"
@@ -837,42 +594,18 @@
         85,
         "drop<hello_starknet::hello_starknet::HelloStarknet::balance::ContractState>"
       ],
-      [
-        86,
-        "store_temp<Unit>"
-      ],
-      [
-        87,
-        "struct_construct<Tuple<felt252>>"
-      ],
-      [
-        88,
-        "enum_init<core::panics::PanicResult::<(core::felt252,)>, 0>"
-      ],
-      [
-        89,
-        "store_temp<core::panics::PanicResult::<(core::felt252,)>>"
-      ],
-      [
-        90,
-        "enum_init<core::panics::PanicResult::<(core::felt252,)>, 1>"
-      ],
+      [86, "store_temp<Unit>"],
+      [87, "struct_construct<Tuple<felt252>>"],
+      [88, "enum_init<core::panics::PanicResult::<(core::felt252,)>, 0>"],
+      [89, "store_temp<core::panics::PanicResult::<(core::felt252,)>>"],
+      [90, "enum_init<core::panics::PanicResult::<(core::felt252,)>, 1>"],
       [
         91,
         "storage_base_address_const<916907772491729262376534102982219947830828984996257231353398618781993312401>"
       ],
-      [
-        92,
-        "storage_address_from_base"
-      ],
-      [
-        93,
-        "store_temp<StorageAddress>"
-      ],
-      [
-        94,
-        "storage_read_syscall"
-      ],
+      [92, "storage_address_from_base"],
+      [93, "store_temp<StorageAddress>"],
+      [94, "storage_read_syscall"],
       [
         95,
         "enum_init<core::result::Result::<core::felt252, core::array::Array::<core::felt252>>, 0>"
@@ -893,10 +626,7 @@
         99,
         "function_call<user@core::starknet::SyscallResultTraitImpl::<core::felt252>::unwrap_syscall>"
       ],
-      [
-        100,
-        "storage_write_syscall"
-      ],
+      [100, "storage_write_syscall"],
       [
         101,
         "enum_init<core::result::Result::<(), core::array::Array::<core::felt252>>, 0>"
@@ -917,14 +647,8 @@
         105,
         "function_call<user@core::starknet::SyscallResultTraitImpl::<()>::unwrap_syscall>"
       ],
-      [
-        106,
-        "enum_match<core::panics::PanicResult::<((),)>>"
-      ],
-      [
-        107,
-        "struct_deconstruct<Tuple<Unit>>"
-      ],
+      [106, "enum_match<core::panics::PanicResult::<((),)>>"],
+      [107, "struct_deconstruct<Tuple<Unit>>"],
       [
         108,
         "struct_construct<Tuple<hello_starknet::hello_starknet::HelloStarknet::balance::ContractState, Unit>>"
@@ -949,22 +673,10 @@
         113,
         "enum_match<core::result::Result::<(), core::array::Array::<core::felt252>>>"
       ],
-      [
-        114,
-        "struct_construct<Tuple<Unit>>"
-      ],
-      [
-        115,
-        "enum_init<core::panics::PanicResult::<((),)>, 0>"
-      ],
-      [
-        116,
-        "store_temp<core::panics::PanicResult::<((),)>>"
-      ],
-      [
-        117,
-        "enum_init<core::panics::PanicResult::<((),)>, 1>"
-      ]
+      [114, "struct_construct<Tuple<Unit>>"],
+      [115, "enum_init<core::panics::PanicResult::<((),)>, 0>"],
+      [116, "store_temp<core::panics::PanicResult::<((),)>>"],
+      [117, "enum_init<core::panics::PanicResult::<((),)>, 1>"]
     ],
     "user_func_names": [
       [
@@ -975,26 +687,11 @@
         1,
         "hello_starknet::hello_starknet::HelloStarknet::__external::get_balance"
       ],
-      [
-        2,
-        "core::Felt252Serde::deserialize"
-      ],
-      [
-        3,
-        "hello_starknet::hello_starknet::HelloStarknet::increase_balance"
-      ],
-      [
-        4,
-        "core::starknet::use_system_implicit"
-      ],
-      [
-        5,
-        "hello_starknet::hello_starknet::HelloStarknet::get_balance"
-      ],
-      [
-        6,
-        "core::Felt252Serde::serialize"
-      ],
+      [2, "core::Felt252Serde::deserialize"],
+      [3, "hello_starknet::hello_starknet::HelloStarknet::increase_balance"],
+      [4, "core::starknet::use_system_implicit"],
+      [5, "hello_starknet::hello_starknet::HelloStarknet::get_balance"],
+      [6, "core::Felt252Serde::serialize"],
       [
         7,
         "hello_starknet::hello_starknet::HelloStarknet::balance::InternalContractStateImpl::read"
@@ -1007,10 +704,7 @@
         9,
         "core::starknet::SyscallResultTraitImpl::<core::felt252>::unwrap_syscall"
       ],
-      [
-        10,
-        "core::starknet::SyscallResultTraitImpl::<()>::unwrap_syscall"
-      ]
+      [10, "core::starknet::SyscallResultTraitImpl::<()>::unwrap_syscall"]
     ]
   },
   "contract_class_version": "0.1.0",

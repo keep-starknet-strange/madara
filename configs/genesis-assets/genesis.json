@@ -57,10 +57,7 @@
     ["0x1000", { "path": "cairo-contracts/test.json", "version": 0 }],
     ["0x10000", { "path": "cairo-contracts/ERC20.json", "version": 0 }],
     ["0x20000", { "path": "cairo-contracts/ERC20.json", "version": 0 }],
-    [
-      "0x80000",
-      { "path": "cairo-contracts/ERC721.json", "version": 0 }
-    ],
+    ["0x80000", { "path": "cairo-contracts/ERC721.json", "version": 0 }],
     [
       "0x90000",
       {

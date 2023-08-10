@@ -80,10 +80,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "pedersen",
-      "range_check"
-    ],
+    "builtins": ["pedersen", "range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -535,9 +532,7 @@
         "type": "alias"
       },
       "__main__.deployContract": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 94,
         "type": "function"
       },
@@ -604,9 +599,7 @@
         "type": "alias"
       },
       "__wrappers__.deployContract": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 155,
         "type": "function"
       },

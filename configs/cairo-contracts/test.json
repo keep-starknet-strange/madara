@@ -343,11 +343,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "pedersen",
-      "range_check",
-      "bitwise"
-    ],
+    "builtins": ["pedersen", "range_check", "bitwise"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -1436,11 +1432,7 @@
       ],
       "455": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__",
-            "__main__.sqrt"
-          ],
+          "accessible_scopes": ["__main__", "__main__", "__main__.sqrt"],
           "code": "from starkware.python.math_utils import isqrt\nvalue = ids.value % PRIME\nassert value < 2 ** 250, f\"value={value} is outside of the range [0, 2**250).\"\nassert 2 ** 250 < PRIME\nids.root = isqrt(value)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1655,9 +1647,7 @@
         "type": "alias"
       },
       "__main__.bitwise_and": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 427,
         "type": "function"
       },
@@ -1700,9 +1690,7 @@
         "type": "alias"
       },
       "__main__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 321,
         "type": "function"
       },
@@ -1745,9 +1733,7 @@
         "type": "alias"
       },
       "__main__.emit_event": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 359,
         "type": "function"
       },
@@ -1961,9 +1947,7 @@
         "value": 0
       },
       "__main__.return_result": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 400,
         "type": "function"
       },
@@ -1993,9 +1977,7 @@
         "value": 0
       },
       "__main__.sqrt": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 453,
         "type": "function"
       },
@@ -2068,10 +2050,7 @@
         "type": "alias"
       },
       "__main__.test_call_contract": {
-        "decorators": [
-          "external",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_output"],
         "pc": 622,
         "type": "function"
       },
@@ -2118,9 +2097,7 @@
         "value": 0
       },
       "__main__.test_contract_address": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 740,
         "type": "function"
       },
@@ -2175,9 +2152,7 @@
         "value": 0
       },
       "__main__.test_deploy": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 655,
         "type": "function"
       },
@@ -2228,10 +2203,7 @@
         "value": 0
       },
       "__main__.test_library_call": {
-        "decorators": [
-          "external",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_output"],
         "pc": 512,
         "type": "function"
       },
@@ -2278,9 +2250,7 @@
         "value": 0
       },
       "__main__.test_nested_library_call": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 545,
         "type": "function"
       },
@@ -2331,9 +2301,7 @@
         "value": 1
       },
       "__main__.test_storage_read_write": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 476,
         "type": "function"
       },
@@ -2372,9 +2340,7 @@
         "value": 0
       },
       "__main__.test_storage_var": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 705,
         "type": "function"
       },
@@ -2412,9 +2378,7 @@
         "value": 0
       },
       "__main__.with_arg": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 381,
         "type": "function"
       },
@@ -2444,9 +2408,7 @@
         "value": 0
       },
       "__main__.without_arg": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 345,
         "type": "function"
       },
@@ -2471,9 +2433,7 @@
         "value": 0
       },
       "__wrappers__.bitwise_and": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 435,
         "type": "function"
       },
@@ -2506,9 +2466,7 @@
         "type": "alias"
       },
       "__wrappers__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 327,
         "type": "function"
       },
@@ -2541,9 +2499,7 @@
         "type": "alias"
       },
       "__wrappers__.emit_event": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 366,
         "type": "function"
       },
@@ -2576,9 +2532,7 @@
         "type": "alias"
       },
       "__wrappers__.return_result": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 411,
         "type": "function"
       },
@@ -2645,9 +2599,7 @@
         "type": "alias"
       },
       "__wrappers__.sqrt": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 459,
         "type": "function"
       },
@@ -2680,10 +2632,7 @@
         "type": "alias"
       },
       "__wrappers__.test_call_contract": {
-        "decorators": [
-          "external",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_output"],
         "pc": 630,
         "type": "function"
       },
@@ -2716,9 +2665,7 @@
         "type": "alias"
       },
       "__wrappers__.test_contract_address": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 759,
         "type": "function"
       },
@@ -2785,9 +2732,7 @@
         "type": "alias"
       },
       "__wrappers__.test_deploy": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 673,
         "type": "function"
       },
@@ -2854,10 +2799,7 @@
         "type": "alias"
       },
       "__wrappers__.test_library_call": {
-        "decorators": [
-          "external",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_output"],
         "pc": 520,
         "type": "function"
       },
@@ -2890,9 +2832,7 @@
         "type": "alias"
       },
       "__wrappers__.test_nested_library_call": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 592,
         "type": "function"
       },
@@ -2959,9 +2899,7 @@
         "type": "alias"
       },
       "__wrappers__.test_storage_read_write": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 494,
         "type": "function"
       },
@@ -3028,9 +2966,7 @@
         "type": "alias"
       },
       "__wrappers__.test_storage_var": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 724,
         "type": "function"
       },
@@ -3063,9 +2999,7 @@
         "type": "alias"
       },
       "__wrappers__.with_arg": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 384,
         "type": "function"
       },
@@ -3098,9 +3032,7 @@
         "type": "alias"
       },
       "__wrappers__.without_arg": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 346,
         "type": "function"
       },
@@ -3733,9 +3665,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math.assert_250_bit": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 77,
         "type": "function"
       },
@@ -3854,9 +3784,7 @@
         "type": "alias"
       },
       "starkware.cairo.lang.compiler.lib.registers.get_ap": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 10,
         "type": "function"
       },
@@ -3918,9 +3846,7 @@
         "type": "alias"
       },
       "starkware.starknet.common.storage.normalize_address": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 90,
         "type": "function"
       },

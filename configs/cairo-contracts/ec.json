@@ -8,10 +8,7 @@
   "program": {
     "attributes": [
       {
-        "accessible_scopes": [
-          "__main__",
-          "__main__.ec_mul_inner"
-        ],
+        "accessible_scopes": ["__main__", "__main__.ec_mul_inner"],
         "end_pc": 480,
         "flow_tracking_data": {
           "ap_tracking": {
@@ -25,9 +22,7 @@
         "value": "Too large scalar"
       }
     ],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x4824800180058000",
@@ -954,10 +949,7 @@
       ],
       "186": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.compute_doubling_slope"
-          ],
+          "accessible_scopes": ["__main__", "__main__.compute_doubling_slope"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -968,10 +960,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.compute_doubling_slope"
-          ],
+          "accessible_scopes": ["__main__", "__main__.compute_doubling_slope"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_ALPHA as ALPHA",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -982,10 +971,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.compute_doubling_slope"
-          ],
+          "accessible_scopes": ["__main__", "__main__.compute_doubling_slope"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nfrom starkware.python.math_utils import ec_double_slope\n\n# Compute the slope.\nx = pack(ids.point.x, PRIME)\ny = pack(ids.point.y, PRIME)\nvalue = slope = ec_double_slope(point=(x, y), alpha=ALPHA, p=SECP_P)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1000,10 +986,7 @@
       ],
       "236": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.compute_slope"
-          ],
+          "accessible_scopes": ["__main__", "__main__.compute_slope"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1014,10 +997,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.compute_slope"
-          ],
+          "accessible_scopes": ["__main__", "__main__.compute_slope"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nfrom starkware.python.math_utils import line_slope\n\n# Compute the slope.\nx0 = pack(ids.point0.x, PRIME)\ny0 = pack(ids.point0.y, PRIME)\nx1 = pack(ids.point1.x, PRIME)\ny1 = pack(ids.point1.y, PRIME)\nvalue = slope = line_slope(point1=(x0, y0), point2=(x1, y1), p=SECP_P)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1033,10 +1013,7 @@
       ],
       "285": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_double"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_double"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1047,10 +1024,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_double"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_double"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\n\nslope = pack(ids.slope, PRIME)\nx = pack(ids.point.x, PRIME)\ny = pack(ids.point.y, PRIME)\n\nvalue = new_x = (pow(slope, 2, SECP_P) - 2 * x) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1066,10 +1040,7 @@
       ],
       "288": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_double"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_double"],
           "code": "value = new_y = (slope * (x - new_x) - y) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1082,10 +1053,7 @@
       ],
       "378": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.fast_ec_add"
-          ],
+          "accessible_scopes": ["__main__", "__main__.fast_ec_add"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1096,10 +1064,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.fast_ec_add"
-          ],
+          "accessible_scopes": ["__main__", "__main__.fast_ec_add"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\n\nslope = pack(ids.slope, PRIME)\nx0 = pack(ids.point0.x, PRIME)\nx1 = pack(ids.point1.x, PRIME)\ny0 = pack(ids.point0.y, PRIME)\n\nvalue = new_x = (pow(slope, 2, SECP_P) - x0 - x1) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1116,10 +1081,7 @@
       ],
       "381": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.fast_ec_add"
-          ],
+          "accessible_scopes": ["__main__", "__main__.fast_ec_add"],
           "code": "value = new_y = (slope * (x0 - new_x) - y0) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -1132,10 +1094,7 @@
       ],
       "511": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_mul_inner"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_mul_inner"],
           "code": "memory[ap] = (ids.scalar % PRIME) % 2",
           "flow_tracking_data": {
             "ap_tracking": {

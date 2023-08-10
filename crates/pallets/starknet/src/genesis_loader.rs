@@ -10,8 +10,7 @@ use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_crypto::FieldElement;
 
 use crate::types::ContractStorageKeyWrapper;
-use crate::GenesisConfig;
-use crate::utils;
+use crate::{utils, GenesisConfig};
 
 /// A wrapper for FieldElement that implements serde's Serialize and Deserialize for hex strings.
 #[serde_as]
@@ -49,8 +48,8 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
                 match class {
                     ContractClass::Path { path, version } => {
-						//TODO replace with madara_path
-						let contract_path = "~/.madara/".to_string() + &path;
+                        // TODO replace with madara_path
+                        let contract_path = "~/.madara/".to_string() + &path;
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path), version))
                     }
                     ContractClass::Class(class) => (hash, class),
@@ -102,9 +101,10 @@ mod tests {
     #[test]
     fn test_deserialize_loader() {
         // When
-		// TODO replace with madara_path
-        let loader: GenesisLoader =
-            serde_json::from_str(&utils::read_file_to_string("~/.madara/".to_string() + "crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
+        let loader: GenesisLoader = serde_json::from_str(&utils::read_file_to_string(
+            utils::get_project_path() + "/crates/pallets/starknet/src/tests/mock/genesis.json",
+        ))
+        .unwrap();
 
         // Then
         assert_eq!(13, loader.contract_classes.len());
@@ -113,8 +113,7 @@ mod tests {
     #[test]
     fn test_serialize_loader() {
         // Given
-        let class: ContractClass =
-            ContractClass::Path { path: "cairo-contracts/ERC20.json".into(), version: 0 };
+        let class: ContractClass = ContractClass::Path { path: "cairo-contracts/ERC20.json".into(), version: 0 };
 
         let class_hash = FieldElement::from(1u8).into();
         let contract_address = FieldElement::from(2u8).into();

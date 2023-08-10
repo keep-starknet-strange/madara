@@ -109,10 +109,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "pedersen",
-      "range_check"
-    ],
+    "builtins": ["pedersen", "range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x480680017fff8000",
@@ -496,11 +493,7 @@
         "type": "alias"
       },
       "__main__.__default__": {
-        "decorators": [
-          "external",
-          "raw_input",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_input", "raw_output"],
         "pc": 137,
         "type": "function"
       },
@@ -551,10 +544,7 @@
         "value": 0
       },
       "__main__.__l1_default__": {
-        "decorators": [
-          "l1_handler",
-          "raw_input"
-        ],
+        "decorators": ["l1_handler", "raw_input"],
         "pc": 164,
         "type": "function"
       },
@@ -613,9 +603,7 @@
         "type": "alias"
       },
       "__main__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 91,
         "type": "function"
       },
@@ -670,9 +658,7 @@
         "value": 0
       },
       "__main__.get_implementation": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 197,
         "type": "function"
       },
@@ -718,11 +704,7 @@
         "type": "alias"
       },
       "__wrappers__.__default__": {
-        "decorators": [
-          "external",
-          "raw_input",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_input", "raw_output"],
         "pc": 155,
         "type": "function"
       },
@@ -755,10 +737,7 @@
         "type": "alias"
       },
       "__wrappers__.__l1_default__": {
-        "decorators": [
-          "l1_handler",
-          "raw_input"
-        ],
+        "decorators": ["l1_handler", "raw_input"],
         "pc": 180,
         "type": "function"
       },
@@ -791,9 +770,7 @@
         "type": "alias"
       },
       "__wrappers__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 108,
         "type": "function"
       },
@@ -826,9 +803,7 @@
         "type": "alias"
       },
       "__wrappers__.get_implementation": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 212,
         "type": "function"
       },

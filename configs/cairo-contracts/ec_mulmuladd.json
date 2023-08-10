@@ -25,9 +25,7 @@
         "value": "Too large scalar"
       }
     ],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x4824800180058000",
@@ -3100,10 +3098,7 @@
       ],
       "664": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_mulmuladd_inner"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_mulmuladd_inner"],
           "code": "ids.dibit = ((ids.scalar_u >> ids.m) & 1) + 2 * ((ids.scalar_v >> ids.m) & 1)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -3121,10 +3116,7 @@
       ],
       "889": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_mulmuladd_W_inner"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_mulmuladd_W_inner"],
           "code": "ids.quad_bit = (\n    8 * ((ids.scalar_v >> ids.m) & 1)\n    + 4 * ((ids.scalar_u >> ids.m) & 1)\n    + 2 * ((ids.scalar_v >> (ids.m - 1)) & 1)\n    + ((ids.scalar_u >> (ids.m - 1)) & 1)\n)",
           "flow_tracking_data": {
             "ap_tracking": {

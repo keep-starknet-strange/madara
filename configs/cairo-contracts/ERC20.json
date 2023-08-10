@@ -691,10 +691,7 @@
         "value": "ERC20: insufficient allowance"
       }
     ],
-    "builtins": [
-      "pedersen",
-      "range_check"
-    ],
+    "builtins": ["pedersen", "range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -2722,9 +2719,7 @@
         "type": "alias"
       },
       "__wrappers__.allowance": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1237,
         "type": "function"
       },
@@ -2791,9 +2786,7 @@
         "type": "alias"
       },
       "__wrappers__.approve": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1352,
         "type": "function"
       },
@@ -2860,9 +2853,7 @@
         "type": "alias"
       },
       "__wrappers__.balanceOf": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1201,
         "type": "function"
       },
@@ -2929,9 +2920,7 @@
         "type": "alias"
       },
       "__wrappers__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 1040,
         "type": "function"
       },
@@ -2964,9 +2953,7 @@
         "type": "alias"
       },
       "__wrappers__.decimals": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1169,
         "type": "function"
       },
@@ -3033,9 +3020,7 @@
         "type": "alias"
       },
       "__wrappers__.decreaseAllowance": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1428,
         "type": "function"
       },
@@ -3102,9 +3087,7 @@
         "type": "alias"
       },
       "__wrappers__.increaseAllowance": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1390,
         "type": "function"
       },
@@ -3171,9 +3154,7 @@
         "type": "alias"
       },
       "__wrappers__.name": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1078,
         "type": "function"
       },
@@ -3240,9 +3221,7 @@
         "type": "alias"
       },
       "__wrappers__.symbol": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1108,
         "type": "function"
       },
@@ -3309,9 +3288,7 @@
         "type": "alias"
       },
       "__wrappers__.totalSupply": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1139,
         "type": "function"
       },
@@ -3378,9 +3355,7 @@
         "type": "alias"
       },
       "__wrappers__.transfer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1274,
         "type": "function"
       },
@@ -3409,9 +3384,7 @@
         "type": "alias"
       },
       "__wrappers__.transferFrom": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1313,
         "type": "function"
       },
@@ -5640,9 +5613,7 @@
         "type": "alias"
       },
       "openzeppelin.token.erc20.presets.ERC20.allowance": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1219,
         "type": "function"
       },
@@ -5689,9 +5660,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.approve": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1334,
         "type": "function"
       },
@@ -5738,9 +5707,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.balanceOf": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1184,
         "type": "function"
       },
@@ -5783,9 +5750,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 1026,
         "type": "function"
       },
@@ -5844,9 +5809,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.decimals": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1154,
         "type": "function"
       },
@@ -5884,9 +5847,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.decreaseAllowance": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1410,
         "type": "function"
       },
@@ -5933,9 +5894,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.increaseAllowance": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1372,
         "type": "function"
       },
@@ -5982,9 +5941,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.name": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1063,
         "type": "function"
       },
@@ -6022,9 +5979,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.symbol": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1093,
         "type": "function"
       },
@@ -6062,9 +6017,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.totalSupply": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1123,
         "type": "function"
       },
@@ -6102,9 +6055,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.transfer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1256,
         "type": "function"
       },
@@ -6151,9 +6102,7 @@
         "value": 0
       },
       "openzeppelin.token.erc20.presets.ERC20.transferFrom": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 1294,
         "type": "function"
       },
@@ -6559,9 +6508,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math.assert_250_bit": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 56,
         "type": "function"
       },
@@ -6692,9 +6639,7 @@
         "value": 0
       },
       "starkware.cairo.common.math.assert_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 69,
         "type": "function"
       },
@@ -6909,9 +6854,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math_cmp.is_le": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 187,
         "type": "function"
       },
@@ -6950,9 +6893,7 @@
         "value": 0
       },
       "starkware.cairo.common.math_cmp.is_nn": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 154,
         "type": "function"
       },
@@ -7496,9 +7437,7 @@
         "type": "alias"
       },
       "starkware.starknet.common.storage.normalize_address": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 114,
         "type": "function"
       },

@@ -25,9 +25,7 @@
         "value": "Too large scalar"
       }
     ],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x4824800180058000",
@@ -3802,10 +3800,7 @@
       ],
       "3095": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.ec_mulmuladdW_bg3"
-          ],
+          "accessible_scopes": ["__main__", "__main__.ec_mulmuladdW_bg3"],
           "code": "ids.len_hi = max(ids.scalar_u.d2.bit_length(), ids.scalar_v.d2.bit_length())-1",
           "flow_tracking_data": {
             "ap_tracking": {

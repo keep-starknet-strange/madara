@@ -8,10 +8,7 @@
   "program": {
     "attributes": [
       {
-        "accessible_scopes": [
-          "__main__",
-          "__main__.execute_multicall"
-        ],
+        "accessible_scopes": ["__main__", "__main__.execute_multicall"],
         "end_pc": 101,
         "flow_tracking_data": {
           "ap_tracking": {
@@ -27,9 +24,7 @@
         "value": "multicall {call_array_len} failed"
       }
     ],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
