@@ -13,10 +13,10 @@ pub fn get_project_path() -> String {
 }
 
 pub fn copy_from_filesystem(src_path: String, dest_path: String) -> bool {
-    log::info!("Trying to copy {} to {} from filesystem", src_path.clone(), dest_path.clone());
+    log::info!("Trying to copy {} to {} from filesystem", src_path.clone(), dest_path);
     let src = std::path::PathBuf::from(src_path.clone());
     if !src.exists() {
-        log::info!("{} does not exist", src_path.clone());
+        log::info!("{} does not exist", src_path);
         return false;
     }
 
@@ -26,23 +26,24 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String) -> bool {
     std::fs::copy(src, dst).unwrap();
 
     log::info!("Copied {} to {} from filesystem", src_path, dest_path);
-    return true;
+
+    true
 }
 
 pub fn fetch_from_url(target: String, dest_path: String) -> bool {
-    log::info!("Trying to fetch {} to {} from url", target.clone(), dest_path.clone());
+    log::info!("Trying to fetch {} to {} from url", target, dest_path);
     let dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst).unwrap();
 
     let response = reqwest::blocking::get(target.clone());
     if response.is_err() {
-        log::info!("Failed to fetch {} from url", target.clone());
+        log::info!("Failed to fetch {} from url", target);
         return false;
     }
 
     let file = std::fs::File::create(dst.join(target.split('/').last().unwrap()));
     if file.is_err() {
-        log::info!("Failed to create file {} from url", target.clone());
+        log::info!("Failed to create file {} from url", target);
         return false;
     }
 
@@ -55,7 +56,7 @@ pub fn fetch_from_url(target: String, dest_path: String) -> bool {
     let mut content = std::io::Cursor::new(bytes.unwrap());
     std::io::copy(&mut content, &mut file.unwrap()).unwrap();
 
-    return true;
+    true
 }
 
 pub fn read_file_to_string(path: String) -> String {
