@@ -47,8 +47,8 @@ indexmap = { workspace = true }
 log = { workspace = true }
 reqwest = { workspace = true, optional = true, features = [
   "blocking",
-  "native-tls"]
-}
+  "native-tls",
+] }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
 ] }
