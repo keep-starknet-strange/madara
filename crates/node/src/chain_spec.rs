@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
 use pallet_starknet::genesis_loader::GenesisLoader;
+use pallet_starknet::utils;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -9,8 +10,6 @@ use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_core::storage::Storage;
 use sp_core::{Pair, Public};
 use sp_state_machine::BasicExternalities;
-
-use crate::utils;
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig>;
@@ -128,7 +127,6 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
 	let genesis_path = madara_path.clone() + "/genesis-assets/genesis.json";
-	println!("{}", utils::read_file_to_string(genesis_path.clone()));
     let genesis: GenesisLoader =
         serde_json::from_str(&utils::read_file_to_string(genesis_path)).unwrap();
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();

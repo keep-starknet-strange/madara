@@ -11,6 +11,7 @@ use starknet_crypto::FieldElement;
 
 use crate::types::ContractStorageKeyWrapper;
 use crate::GenesisConfig;
+use crate::utils;
 
 /// A wrapper for FieldElement that implements serde's Serialize and Deserialize for hex strings.
 #[serde_as]
@@ -49,9 +50,8 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 match class {
                     ContractClass::Path { path, version } => {
 						//TODO replace with madara_path
-						let contract_path = "~/.madara/genesis-assets/".to_string() + &path;
-						println!("contract_path: {}", contract_path);
-                        (hash, get_contract_class(&contract_path, version))
+						let contract_path = "~/.madara/".to_string() + &path;
+                        (hash, get_contract_class(&utils::read_file_to_string(contract_path), version))
                     }
                     ContractClass::Class(class) => (hash, class),
                 }
@@ -102,18 +102,19 @@ mod tests {
     #[test]
     fn test_deserialize_loader() {
         // When
-        // let loader: GenesisLoader =
-        //     serde_json::from_str(&(utils::get_storage_path() + "crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
-        //
-        // // Then
-        // assert_eq!(13, loader.contract_classes.len());
+		// TODO replace with madara_path
+        let loader: GenesisLoader =
+            serde_json::from_str(&utils::read_file_to_string("~/.madara/".to_string() + "crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
+
+        // Then
+        assert_eq!(13, loader.contract_classes.len());
     }
 
     #[test]
     fn test_serialize_loader() {
         // Given
         let class: ContractClass =
-            ContractClass::Path { path: "./cairo-contracts/build/ERC20.json".into(), version: 0 };
+            ContractClass::Path { path: "cairo-contracts/ERC20.json".into(), version: 0 };
 
         let class_hash = FieldElement::from(1u8).into();
         let contract_address = FieldElement::from(2u8).into();
@@ -133,7 +134,7 @@ mod tests {
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"./cairo-contracts/build/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
+        let expected = r#"{"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
         assert_eq!(expected, serialized_loader);
     }
 }

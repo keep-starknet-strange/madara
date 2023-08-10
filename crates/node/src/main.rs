@@ -10,7 +10,6 @@ mod command;
 mod genesis_block;
 mod rpc;
 mod starknet;
-mod utils;
 
 fn main() -> sc_cli::Result<()> {
     command::run()

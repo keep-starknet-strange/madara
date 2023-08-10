@@ -45,6 +45,7 @@ sp-std = { workspace = true }
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
+reqwest = { workspace = true, optional = true, features = ["blocking", "native-tls"] }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
 ] }
@@ -79,6 +80,7 @@ std = [
   "blockifier/std",
   # Other third party dependencies
   "scale-codec/std",
+  "reqwest",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]
