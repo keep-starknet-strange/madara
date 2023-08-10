@@ -13,7 +13,7 @@ pub fn get_project_path() -> String {
 }
 
 pub fn copy_from_filesystem(src_path: String, dest_path: String) -> bool {
-    log::info!("Trying to copy {} to {} from filesystem", src_path.clone(), dest_path);
+    log::info!("Trying to copy {} to {} from filesystem", src_path, dest_path);
     let src = std::path::PathBuf::from(src_path.clone());
     if !src.exists() {
         log::info!("{} does not exist", src_path);
@@ -60,6 +60,5 @@ pub fn fetch_from_url(target: String, dest_path: String) -> bool {
 }
 
 pub fn read_file_to_string(path: String) -> String {
-    println!("Reading file {}", path);
     std::fs::read_to_string(path).unwrap()
 }
