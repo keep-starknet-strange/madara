@@ -45,7 +45,6 @@ starknet_api = { workspace = true }
 avail-subxt = {workspace = true }
 subxt = { workspace = true }
 anyhow = { workspace = true }
-sp-keyring = "*"
 
 [dev-dependencies]
 dotenvy = "0.15.7"

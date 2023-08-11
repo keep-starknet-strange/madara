@@ -2,29 +2,30 @@ use anyhow::Result;
 use avail_subxt::api::runtime_types::avail_core::AppId;
 use avail_subxt::api::runtime_types::da_control::pallet::Call as DaCall;
 use avail_subxt::api::runtime_types::sp_core::bounded::bounded_vec::BoundedVec;
-use avail_subxt::api::{self as AvailApi};
-use avail_subxt::avail::{AppUncheckedExtrinsic, Client as AvailSubxtClient, PairSigner};
+use avail_subxt::avail::{AppUncheckedExtrinsic, Client as AvailSubxtClient};
 use avail_subxt::primitives::AvailExtrinsicParams;
-use avail_subxt::{build_client, Call};
+use avail_subxt::{api as AvailApi, build_client, AvailConfig, Call};
 use ethers::types::U256;
 use sp_core::H256;
-use subxt::ext::sp_core::Pair;
+use subxt::ext::sp_core::sr25519::Pair;
 
 const MADARA_DEFAULT_APP_ID: u32 = 0;
-
 const AVAIL_WS: &str = "wss://kate.avail.tools:443/ws";
 const AVAIL_VALIDATE_CODEGEN: bool = true;
 const AVAIL_DEFAULT_SEED: &str = "//Alice";
 
-fn signer_from_seed(seed: &str) -> Result<PairSigner> {
-    let pair = Pair::from_string(seed, None)?;
-    Ok(PairSigner::new(pair))
+type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
+
+fn signer_from_seed(seed: &str) -> Result<AvailPairSigner> {
+    let pair = <Pair as subxt::ext::sp_core::Pair>::from_string(seed, None)?;
+    let signer = AvailPairSigner::new(pair);
+    Ok(signer)
 }
 
 pub struct AvailClient {
     ws_client: AvailSubxtClient,
     app_id: AppId,
-    signer: PairSigner,
+    signer: AvailPairSigner,
 }
 impl AvailClient {
     pub fn new(ws_endpoint: Option<&str>, app_id: Option<u32>, auth_token: Option<&str>) -> Result<Self> {
