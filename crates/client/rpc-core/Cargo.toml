@@ -1,13 +1,13 @@
 [package]
 name = "mc-rpc-core"
-version = "0.1.0"
+version.workspace = true
+edition.workspace = true
 description = "RPC trait of Starknet"
 authors = [
   "Timothée Delabrouille <https://github.com/tdelabro>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
