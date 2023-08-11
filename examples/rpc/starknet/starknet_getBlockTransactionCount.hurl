@@ -4,7 +4,7 @@ Content-Type: application/json
     "jsonrpc": "2.0",
     "method": "starknet_getBlockTransactionCount",
     "params": [
-        "latest"
+        {"block_number": 7}
     ],
     "id":1
 }

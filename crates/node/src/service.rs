@@ -10,6 +10,7 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
+use mc_data_availability::DataAvailabilityWorker;
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
@@ -244,7 +245,14 @@ where
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    sealing: Option<Sealing>,
+    da_type: Option<String>,
+    l1_node_http: Option<String>,
+    l1_node_ws: Option<String>,
+    auth_token: Option<String>,
+) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -361,13 +369,32 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             Duration::new(6, 0),
             client.clone(),
             backend.clone(),
-            madara_backend,
+            madara_backend.clone(),
             3,
             0,
             hasher,
         )
         .for_each(|()| future::ready(())),
     );
+
+    if da_type.is_some() {
+        // TODO: Use da_type to map to correct client, better to add an abstraction layer.
+        let ws_endpoint = l1_node_ws.as_deref();
+        let auth_token = auth_token.as_deref();
+        let l1_client = mc_data_availability::AvailClient::new(ws_endpoint, Some(0), auth_token).unwrap();
+
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-prove",
+            Some("madara"),
+            DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend.clone()),
+        );
+
+        task_manager.spawn_essential_handle().spawn(
+            "da-worker-update",
+            Some("madara"),
+            DataAvailabilityWorker::update_state(client.clone(), madara_backend, l1_client.into()),
+        );
+    };
 
     if role.is_authority() {
         // manual-seal authorship

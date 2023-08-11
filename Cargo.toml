@@ -42,6 +42,9 @@ frame-system-rpc-runtime-api = { git = "https://github.com/paritytech/substrate"
 frame-try-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 
+# celestia rust dependency
+celestia-rpc = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
+
 # Substrate primitives dependencies
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43", default-features = false }
@@ -120,6 +123,7 @@ mc-storage = { path = "crates/client/storage" }
 mc-rpc = { path = "crates/client/rpc" }
 mc-rpc-core = { path = "crates/client/rpc-core" }
 mc-block-proposer = { path = "crates/client/block-proposer" }
+mc-data-availability = { path = "crates/client/data-availability" }
 mc-transaction-pool = { path = "crates/client/transaction-pool" }
 
 # Madara runtime
@@ -148,6 +152,10 @@ cairo-lang-starknet = { git = "https://github.com/keep-starknet-strange/cairo.gi
 cairo-lang-casm-contract-class = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
 cairo-lang-casm = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
 cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
+
+# Avail dependency
+avail-subxt = { git="https://github.com/availproject/avail", version = "0.3.0", branch = "develop" }
+subxt = "0.29"
 
 # Other third party dependencies
 anyhow = "1.0.71"

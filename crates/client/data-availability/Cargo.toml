@@ -1,0 +1,51 @@
+[package]
+name = "mc-data-availability"
+version = "0.1.0"
+description = "Starknet data availability."
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+async-trait = { workspace = true }
+ethers = "2.0.7"
+futures = "0.3.21"
+jsonrpsee = { version = "0.18.2", features = ["http-client", "ws-client", "macros"] }
+lazy_static = "1.4.0"
+log = { workspace = true }
+reqwest = { version = "0.11.18", features = ["blocking", "json"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { version = "1.4.0", features = ["v4"] }
+rand = "0.8.5"
+tokio = { version = "1", features = ["full"] }
+eyre = "0.6.8"
+
+# celestia rust dependency
+celestia-rpc = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
+celestia-types = { git = "https://github.com/oblique/celestia-node-rs/", rev = "6b30994", default-features = false }
+
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-api = { workspace = true }
+sp-io = { workspace = true }
+sc-client-api = { workspace = true }
+
+mc-db = { workspace = true }
+mp-starknet = { workspace = true }
+starknet_api = { workspace = true }
+
+# Avail subxt dependency
+avail-subxt = {workspace = true }
+subxt = { workspace = true }
+anyhow = { workspace = true }
+sp-keyring = "*"
+
+[dev-dependencies]
+dotenvy = "0.15.7"
