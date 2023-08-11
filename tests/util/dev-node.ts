@@ -91,7 +91,7 @@ export async function startMadaraDevNode(
     `--rpc-port=${rpcPort}`,
     `--madara-path=/tmp/${p2pPort}`,
   ];
-  console.log(p2pPort, rpcPort, cmd, args);
+
   if (WASM_RUNTIME_OVERRIDES != "") {
     args.push(`--wasm-runtime-overrides=${WASM_RUNTIME_OVERRIDES}`);
     // For tracing tests now we require to enable archive block pruning.
@@ -109,7 +109,7 @@ export async function startMadaraDevNode(
   let runningNode: ChildProcess = null;
   process.once("exit", onProcessExit);
   process.once("SIGINT", onProcessInterrupt);
-  runningNode = spawn(cmd, args, {stdio: ['pipe', 'pipe', 'pipe']});
+  runningNode = spawn(cmd, args);
 
   runningNode.once("exit", () => {
     process.removeListener("exit", onProcessExit);
@@ -144,13 +144,13 @@ export async function startMadaraDevNode(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onData = async (chunk: any) => {
-      if (true) {
+      if (DISPLAY_LOG) {
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
       if (chunk.toString().match(/Madara Node/)) {
         clearTimeout(timer);
-        if (!true) {
+        if (!DISPLAY_LOG) {
           runningNode.stderr.off("data", onData);
           runningNode.stdout.off("data", onData);
         }
