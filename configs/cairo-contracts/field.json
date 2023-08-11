@@ -7,9 +7,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x4824800180058000",
@@ -221,10 +219,7 @@
       ],
       "13": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.assert_165_bit"
-          ],
+          "accessible_scopes": ["__main__", "__main__.assert_165_bit"],
           "code": "from starkware.cairo.common.math_utils import as_int\n\n# Correctness check.\nvalue = as_int(ids.value, PRIME) % PRIME\nassert value < ids.UPPER_BOUND, f'{value} is outside of the range [0, 2**250).'\n\n# Calculation for the assertion.\nids.high, ids.low = divmod(ids.value, ids.SHIFT)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -241,10 +236,7 @@
       ],
       "102": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.verify_zero"
-          ],
+          "accessible_scopes": ["__main__", "__main__.verify_zero"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -255,10 +247,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.verify_zero"
-          ],
+          "accessible_scopes": ["__main__", "__main__.verify_zero"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\n\nq, r = divmod(pack(ids.val, PRIME), SECP_P)\nassert r == 0, f\"verify_zero: Invalid input {ids.val.d0, ids.val.d1, ids.val.d2}.\"\nids.q = q % PRIME",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -274,10 +263,7 @@
       ],
       "134": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.is_zero"
-          ],
+          "accessible_scopes": ["__main__", "__main__.is_zero"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -288,10 +274,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.is_zero"
-          ],
+          "accessible_scopes": ["__main__", "__main__.is_zero"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nx = pack(ids.x, PRIME) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -304,10 +287,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.is_zero"
-          ],
+          "accessible_scopes": ["__main__", "__main__.is_zero"],
           "code": "memory[ap] = to_felt_or_relocatable(x == 0)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -320,10 +300,7 @@
       ],
       "149": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.is_zero"
-          ],
+          "accessible_scopes": ["__main__", "__main__.is_zero"],
           "code": "from starkware.python.math_utils import div_mod\n\nvalue = x_inv = div_mod(1, x, SECP_P)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -336,10 +313,7 @@
       ],
       "170": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.reduce"
-          ],
+          "accessible_scopes": ["__main__", "__main__.reduce"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_P as SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -350,10 +324,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.reduce"
-          ],
+          "accessible_scopes": ["__main__", "__main__.reduce"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nx = pack(ids.x, PRIME) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -366,10 +337,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.reduce"
-          ],
+          "accessible_scopes": ["__main__", "__main__.reduce"],
           "code": "from starkware.python.math_utils import div_mod\n\nvalue = x_inv = div_mod(1, x, SECP_P)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -382,10 +350,7 @@
       ],
       "173": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.reduce"
-          ],
+          "accessible_scopes": ["__main__", "__main__.reduce"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nx = pack(ids.x, PRIME) % SECP_P",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -398,10 +363,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.reduce"
-          ],
+          "accessible_scopes": ["__main__", "__main__.reduce"],
           "code": "from starkware.python.math_utils import div_mod\n\nvalue = x_inv = div_mod(1, x, SECP_P)",
           "flow_tracking_data": {
             "ap_tracking": {

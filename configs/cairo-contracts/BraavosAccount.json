@@ -1633,11 +1633,7 @@
         "value": "Please Upgrade Wallet app. Invalid transaction version."
       },
       {
-        "accessible_scopes": [
-          "__main__",
-          "__main__",
-          "__main__.setPublicKey"
-        ],
+        "accessible_scopes": ["__main__", "__main__", "__main__.setPublicKey"],
         "end_pc": 7066,
         "flow_tracking_data": {
           "ap_tracking": {
@@ -1687,11 +1683,7 @@
         "value": "Account: declare invalid signature"
       }
     ],
-    "builtins": [
-      "pedersen",
-      "range_check",
-      "ecdsa"
-    ],
+    "builtins": ["pedersen", "range_check", "ecdsa"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -11470,9 +11462,7 @@
         "type": "alias"
       },
       "__main__.__execute__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 8000,
         "type": "function"
       },
@@ -11527,9 +11517,7 @@
         "value": 1
       },
       "__main__.__validate__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7788,
         "type": "function"
       },
@@ -11588,9 +11576,7 @@
         "value": 3
       },
       "__main__.__validate_declare__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7950,
         "type": "function"
       },
@@ -11637,9 +11623,7 @@
         "value": 0
       },
       "__main__.__validate_deploy__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7901,
         "type": "function"
       },
@@ -11706,9 +11690,7 @@
         "value": 0
       },
       "__main__.add_signer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6951,
         "type": "function"
       },
@@ -11759,9 +11741,7 @@
         "type": "alias"
       },
       "__main__.cancel_deferred_disable_multisig_req": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7764,
         "type": "function"
       },
@@ -11799,9 +11779,7 @@
         "value": 0
       },
       "__main__.cancel_deferred_remove_signer_req": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7153,
         "type": "function"
       },
@@ -11844,9 +11822,7 @@
         "value": 0
       },
       "__main__.disable_multisig": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7683,
         "type": "function"
       },
@@ -11884,9 +11860,7 @@
         "value": 0
       },
       "__main__.disable_multisig_with_etd": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7707,
         "type": "function"
       },
@@ -11924,9 +11898,7 @@
         "value": 0
       },
       "__main__.getPublicKey": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7181,
         "type": "function"
       },
@@ -11976,9 +11948,7 @@
         "type": "alias"
       },
       "__main__.get_deferred_disable_multisig_req": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7733,
         "type": "function"
       },
@@ -12016,9 +11986,7 @@
         "value": 0
       },
       "__main__.get_deferred_remove_signer_req": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7344,
         "type": "function"
       },
@@ -12056,9 +12024,7 @@
         "value": 0
       },
       "__main__.get_execution_time_delay": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7376,
         "type": "function"
       },
@@ -12096,9 +12062,7 @@
         "value": 0
       },
       "__main__.get_impl_version": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 6832,
         "type": "function"
       },
@@ -12136,9 +12100,7 @@
         "value": 0
       },
       "__main__.get_multisig": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7514,
         "type": "function"
       },
@@ -12176,9 +12138,7 @@
         "value": 0
       },
       "__main__.get_pending_multisig_transaction": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7579,
         "type": "function"
       },
@@ -12216,9 +12176,7 @@
         "value": 0
       },
       "__main__.get_public_key": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7220,
         "type": "function"
       },
@@ -12256,9 +12214,7 @@
         "value": 0
       },
       "__main__.get_signer": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7301,
         "type": "function"
       },
@@ -12301,9 +12257,7 @@
         "value": 0
       },
       "__main__.get_signers": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7251,
         "type": "function"
       },
@@ -12345,9 +12299,7 @@
         "type": "alias"
       },
       "__main__.initializer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6863,
         "type": "function"
       },
@@ -12390,9 +12342,7 @@
         "value": 0
       },
       "__main__.isValidSignature": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7458,
         "type": "function"
       },
@@ -12451,9 +12401,7 @@
         "type": "alias"
       },
       "__main__.is_valid_signature": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7409,
         "type": "function"
       },
@@ -12512,9 +12460,7 @@
         "type": "alias"
       },
       "__main__.migrate_storage": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6923,
         "type": "function"
       },
@@ -12557,9 +12503,7 @@
         "value": 0
       },
       "__main__.remove_signer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7089,
         "type": "function"
       },
@@ -12602,9 +12546,7 @@
         "value": 0
       },
       "__main__.remove_signer_with_etd": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7119,
         "type": "function"
       },
@@ -12647,9 +12589,7 @@
         "value": 0
       },
       "__main__.setPublicKey": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7059,
         "type": "function"
       },
@@ -12692,9 +12632,7 @@
         "value": 0
       },
       "__main__.set_multisig": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7545,
         "type": "function"
       },
@@ -12737,9 +12675,7 @@
         "value": 0
       },
       "__main__.sign_pending_multisig_transaction": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7614,
         "type": "function"
       },
@@ -12798,9 +12734,7 @@
         "value": 0
       },
       "__main__.supportsInterface": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 6797,
         "type": "function"
       },
@@ -12843,9 +12777,7 @@
         "value": 0
       },
       "__main__.swap_signers": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7000,
         "type": "function"
       },
@@ -12892,9 +12824,7 @@
         "value": 0
       },
       "__main__.upgrade": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6895,
         "type": "function"
       },
@@ -12937,9 +12867,7 @@
         "value": 0
       },
       "__wrappers__.__execute__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 8060,
         "type": "function"
       },
@@ -13006,9 +12934,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7860,
         "type": "function"
       },
@@ -13041,9 +12967,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate_declare__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7980,
         "type": "function"
       },
@@ -13076,9 +13000,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate_deploy__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7917,
         "type": "function"
       },
@@ -13111,9 +13033,7 @@
         "type": "alias"
       },
       "__wrappers__.add_signer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6975,
         "type": "function"
       },
@@ -13180,9 +13100,7 @@
         "type": "alias"
       },
       "__wrappers__.cancel_deferred_disable_multisig_req": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7772,
         "type": "function"
       },
@@ -13215,9 +13133,7 @@
         "type": "alias"
       },
       "__wrappers__.cancel_deferred_remove_signer_req": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7162,
         "type": "function"
       },
@@ -13250,9 +13166,7 @@
         "type": "alias"
       },
       "__wrappers__.disable_multisig": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7691,
         "type": "function"
       },
@@ -13285,9 +13199,7 @@
         "type": "alias"
       },
       "__wrappers__.disable_multisig_with_etd": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7717,
         "type": "function"
       },
@@ -13320,9 +13232,7 @@
         "type": "alias"
       },
       "__wrappers__.getPublicKey": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7204,
         "type": "function"
       },
@@ -13389,9 +13299,7 @@
         "type": "alias"
       },
       "__wrappers__.get_deferred_disable_multisig_req": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7748,
         "type": "function"
       },
@@ -13458,9 +13366,7 @@
         "type": "alias"
       },
       "__wrappers__.get_deferred_remove_signer_req": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7360,
         "type": "function"
       },
@@ -13527,9 +13433,7 @@
         "type": "alias"
       },
       "__wrappers__.get_execution_time_delay": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7393,
         "type": "function"
       },
@@ -13596,9 +13500,7 @@
         "type": "alias"
       },
       "__wrappers__.get_impl_version": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 6847,
         "type": "function"
       },
@@ -13665,9 +13567,7 @@
         "type": "alias"
       },
       "__wrappers__.get_multisig": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7529,
         "type": "function"
       },
@@ -13734,9 +13634,7 @@
         "type": "alias"
       },
       "__wrappers__.get_pending_multisig_transaction": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7598,
         "type": "function"
       },
@@ -13803,9 +13701,7 @@
         "type": "alias"
       },
       "__wrappers__.get_public_key": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7235,
         "type": "function"
       },
@@ -13872,9 +13768,7 @@
         "type": "alias"
       },
       "__wrappers__.get_signer": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7325,
         "type": "function"
       },
@@ -13941,9 +13835,7 @@
         "type": "alias"
       },
       "__wrappers__.get_signers": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7281,
         "type": "function"
       },
@@ -14010,9 +13902,7 @@
         "type": "alias"
       },
       "__wrappers__.initializer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6876,
         "type": "function"
       },
@@ -14045,9 +13935,7 @@
         "type": "alias"
       },
       "__wrappers__.isValidSignature": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7484,
         "type": "function"
       },
@@ -14114,9 +14002,7 @@
         "type": "alias"
       },
       "__wrappers__.is_valid_signature": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 7428,
         "type": "function"
       },
@@ -14183,9 +14069,7 @@
         "type": "alias"
       },
       "__wrappers__.migrate_storage": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6932,
         "type": "function"
       },
@@ -14218,9 +14102,7 @@
         "type": "alias"
       },
       "__wrappers__.remove_signer": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7100,
         "type": "function"
       },
@@ -14253,9 +14135,7 @@
         "type": "alias"
       },
       "__wrappers__.remove_signer_with_etd": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7134,
         "type": "function"
       },
@@ -14288,9 +14168,7 @@
         "type": "alias"
       },
       "__wrappers__.setPublicKey": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7070,
         "type": "function"
       },
@@ -14323,9 +14201,7 @@
         "type": "alias"
       },
       "__wrappers__.set_multisig": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7560,
         "type": "function"
       },
@@ -14358,9 +14234,7 @@
         "type": "alias"
       },
       "__wrappers__.sign_pending_multisig_transaction": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7646,
         "type": "function"
       },
@@ -14427,9 +14301,7 @@
         "type": "alias"
       },
       "__wrappers__.supportsInterface": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 6813,
         "type": "function"
       },
@@ -14496,9 +14368,7 @@
         "type": "alias"
       },
       "__wrappers__.swap_signers": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 7033,
         "type": "function"
       },
@@ -14565,9 +14435,7 @@
         "type": "alias"
       },
       "__wrappers__.upgrade": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 6904,
         "type": "function"
       },
@@ -23364,9 +23232,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math.assert_250_bit": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 144,
         "type": "function"
       },
@@ -23497,9 +23363,7 @@
         "value": 0
       },
       "starkware.cairo.common.math.assert_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 186,
         "type": "function"
       },
@@ -23607,9 +23471,7 @@
         "type": "label"
       },
       "starkware.cairo.common.math.assert_lt_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 231,
         "type": "function"
       },
@@ -23876,9 +23738,7 @@
         "type": "reference"
       },
       "starkware.cairo.common.math.split_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 157,
         "type": "function"
       },
@@ -24077,9 +23937,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math_cmp.is_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 305,
         "type": "function"
       },
@@ -24152,9 +24010,7 @@
         "type": "label"
       },
       "starkware.cairo.common.math_cmp.is_not_zero": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 297,
         "type": "function"
       },
@@ -24564,9 +24420,7 @@
         "value": 0
       },
       "starkware.cairo.lang.compiler.lib.registers.get_ap": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 25,
         "type": "function"
       },
@@ -24652,9 +24506,7 @@
         "type": "alias"
       },
       "starkware.starknet.common.storage.normalize_address": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 257,
         "type": "function"
       },

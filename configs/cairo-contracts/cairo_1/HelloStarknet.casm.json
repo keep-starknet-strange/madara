@@ -737,112 +737,33 @@
     ]
   ],
   "pythonic_hints": [
-    [
-      0,
-      [
-        "memory[ap + 0] = 22440 <= memory[fp + -6]"
-      ]
-    ],
-    [
-      41,
-      [
-        "memory[ap + 0] = 0 <= memory[ap + -26]"
-      ]
-    ],
-    [
-      62,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      80,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      98,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      112,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      126,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      141,
-      [
-        "memory[ap + 0] = 7840 <= memory[fp + -6]"
-      ]
-    ],
-    [
-      176,
-      [
-        "memory[ap + 0] = 0 <= memory[ap + -11]"
-      ]
-    ],
-    [
-      196,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      219,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      237,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      251,
-      [
-        "memory[ap + 0] = segments.add()"
-      ]
-    ],
-    [
-      378,
-      [
-        "syscall_handler.syscall(syscall_ptr=memory[fp + -3])"
-      ]
-    ],
-    [
-      428,
-      [
-        "syscall_handler.syscall(syscall_ptr=memory[fp + -4])"
-      ]
-    ]
+    [0, ["memory[ap + 0] = 22440 <= memory[fp + -6]"]],
+    [41, ["memory[ap + 0] = 0 <= memory[ap + -26]"]],
+    [62, ["memory[ap + 0] = segments.add()"]],
+    [80, ["memory[ap + 0] = segments.add()"]],
+    [98, ["memory[ap + 0] = segments.add()"]],
+    [112, ["memory[ap + 0] = segments.add()"]],
+    [126, ["memory[ap + 0] = segments.add()"]],
+    [141, ["memory[ap + 0] = 7840 <= memory[fp + -6]"]],
+    [176, ["memory[ap + 0] = 0 <= memory[ap + -11]"]],
+    [196, ["memory[ap + 0] = segments.add()"]],
+    [219, ["memory[ap + 0] = segments.add()"]],
+    [237, ["memory[ap + 0] = segments.add()"]],
+    [251, ["memory[ap + 0] = segments.add()"]],
+    [378, ["syscall_handler.syscall(syscall_ptr=memory[fp + -3])"]],
+    [428, ["syscall_handler.syscall(syscall_ptr=memory[fp + -4])"]]
   ],
   "entry_points_by_type": {
     "EXTERNAL": [
       {
         "selector": "0x362398bec32bc0ebb411203221a35a0301193a96f317ebe5e40be9f60d15320",
         "offset": 0,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       },
       {
         "selector": "0x39e11d48192e4333233c7eb19d10ad67c362bb28580c604d67884c85da39695",
         "offset": 141,
-        "builtins": [
-          "range_check"
-        ]
+        "builtins": ["range_check"]
       }
     ],
     "L1_HANDLER": [],

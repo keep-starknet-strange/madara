@@ -150,9 +150,7 @@
         "value": "Invalid signature."
       }
     ],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -7680,9 +7678,7 @@
         "value": 0
       },
       "starkware.cairo.common.math.assert_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 75,
         "type": "function"
       },
@@ -7790,9 +7786,7 @@
         "type": "label"
       },
       "starkware.cairo.common.math.assert_lt_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 120,
         "type": "function"
       },
@@ -8059,9 +8053,7 @@
         "type": "reference"
       },
       "starkware.cairo.common.math.split_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 46,
         "type": "function"
       },
@@ -8260,9 +8252,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math_cmp.is_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 154,
         "type": "function"
       },
@@ -8335,9 +8325,7 @@
         "type": "label"
       },
       "starkware.cairo.common.math_cmp.is_not_zero": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 146,
         "type": "function"
       },

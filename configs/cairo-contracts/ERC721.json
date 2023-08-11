@@ -1082,10 +1082,7 @@
         "value": "ERC721: transfer to non ERC721Receiver implementer"
       }
     ],
-    "builtins": [
-      "pedersen",
-      "range_check"
-    ],
+    "builtins": ["pedersen", "range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -4169,9 +4166,7 @@
         "type": "alias"
       },
       "__wrappers__.approve": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2013,
         "type": "function"
       },
@@ -4204,9 +4199,7 @@
         "type": "alias"
       },
       "__wrappers__.balanceOf": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1812,
         "type": "function"
       },
@@ -4273,9 +4266,7 @@
         "type": "alias"
       },
       "__wrappers__.burn": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2180,
         "type": "function"
       },
@@ -4308,9 +4299,7 @@
         "type": "alias"
       },
       "__wrappers__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 1681,
         "type": "function"
       },
@@ -4343,9 +4332,7 @@
         "type": "alias"
       },
       "__wrappers__.getApproved": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1883,
         "type": "function"
       },
@@ -4412,9 +4399,7 @@
         "type": "alias"
       },
       "__wrappers__.isApprovedForAll": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1919,
         "type": "function"
       },
@@ -4481,9 +4466,7 @@
         "type": "alias"
       },
       "__wrappers__.mint": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2148,
         "type": "function"
       },
@@ -4516,9 +4499,7 @@
         "type": "alias"
       },
       "__wrappers__.name": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1750,
         "type": "function"
       },
@@ -4585,9 +4566,7 @@
         "type": "alias"
       },
       "__wrappers__.owner": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1989,
         "type": "function"
       },
@@ -4616,9 +4595,7 @@
         "type": "alias"
       },
       "__wrappers__.ownerOf": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1847,
         "type": "function"
       },
@@ -4723,9 +4700,7 @@
         "type": "alias"
       },
       "__wrappers__.renounceOwnership": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2264,
         "type": "function"
       },
@@ -4758,9 +4733,7 @@
         "type": "alias"
       },
       "__wrappers__.safeTransferFrom": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2103,
         "type": "function"
       },
@@ -4793,9 +4766,7 @@
         "type": "alias"
       },
       "__wrappers__.setApprovalForAll": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2041,
         "type": "function"
       },
@@ -4828,9 +4799,7 @@
         "type": "alias"
       },
       "__wrappers__.setTokenURI": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2213,
         "type": "function"
       },
@@ -4863,9 +4832,7 @@
         "type": "alias"
       },
       "__wrappers__.supportsInterface": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1717,
         "type": "function"
       },
@@ -4932,9 +4899,7 @@
         "type": "alias"
       },
       "__wrappers__.symbol": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1780,
         "type": "function"
       },
@@ -5001,9 +4966,7 @@
         "type": "alias"
       },
       "__wrappers__.tokenURI": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1955,
         "type": "function"
       },
@@ -5070,9 +5033,7 @@
         "type": "alias"
       },
       "__wrappers__.transferFrom": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2070,
         "type": "function"
       },
@@ -5105,9 +5066,7 @@
         "type": "alias"
       },
       "__wrappers__.transferOwnership": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2240,
         "type": "function"
       },
@@ -8885,9 +8844,7 @@
         "type": "alias"
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.approve": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2004,
         "type": "function"
       },
@@ -8934,9 +8891,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.balanceOf": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1795,
         "type": "function"
       },
@@ -8979,9 +8934,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.burn": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2168,
         "type": "function"
       },
@@ -9024,9 +8977,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 1670,
         "type": "function"
       },
@@ -9077,9 +9028,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.getApproved": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1866,
         "type": "function"
       },
@@ -9122,9 +9071,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.isApprovedForAll": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1902,
         "type": "function"
       },
@@ -9171,9 +9118,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.mint": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2134,
         "type": "function"
       },
@@ -9220,9 +9165,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.name": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1735,
         "type": "function"
       },
@@ -9260,9 +9203,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.owner": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1974,
         "type": "function"
       },
@@ -9300,9 +9241,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.ownerOf": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1830,
         "type": "function"
       },
@@ -9345,9 +9284,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.renounceOwnership": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2258,
         "type": "function"
       },
@@ -9385,9 +9322,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.safeTransferFrom": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2091,
         "type": "function"
       },
@@ -9446,9 +9381,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.setApprovalForAll": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2033,
         "type": "function"
       },
@@ -9495,9 +9428,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.setTokenURI": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2199,
         "type": "function"
       },
@@ -9544,9 +9475,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.supportsInterface": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1701,
         "type": "function"
       },
@@ -9589,9 +9518,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.symbol": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1765,
         "type": "function"
       },
@@ -9629,9 +9556,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.tokenURI": {
-        "decorators": [
-          "view"
-        ],
+        "decorators": ["view"],
         "pc": 1938,
         "type": "function"
       },
@@ -9674,9 +9599,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.transferFrom": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2060,
         "type": "function"
       },
@@ -9727,9 +9650,7 @@
         "value": 0
       },
       "openzeppelin.token.erc721.presets.ERC721MintableBurnable.transferOwnership": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 2233,
         "type": "function"
       },
@@ -10127,9 +10048,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math.assert_250_bit": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 80,
         "type": "function"
       },
@@ -10221,9 +10140,7 @@
         "type": "reference"
       },
       "starkware.cairo.common.math.assert_le_felt": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 93,
         "type": "function"
       },
@@ -10452,9 +10369,7 @@
         "type": "alias"
       },
       "starkware.cairo.common.math_cmp.is_le": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 211,
         "type": "function"
       },
@@ -10493,9 +10408,7 @@
         "value": 0
       },
       "starkware.cairo.common.math_cmp.is_nn": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 178,
         "type": "function"
       },
@@ -11087,9 +11000,7 @@
         "type": "alias"
       },
       "starkware.starknet.common.storage.normalize_address": {
-        "decorators": [
-          "known_ap_change"
-        ],
+        "decorators": ["known_ap_change"],
         "pc": 138,
         "type": "function"
       },

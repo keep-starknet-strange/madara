@@ -28,9 +28,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x400780017fff7ffc",
@@ -77,9 +75,7 @@
     },
     "identifiers": {
       "__main__.assert_calldata_is_one": {
-        "decorators": [
-          "l1_handler"
-        ],
+        "decorators": ["l1_handler"],
         "pc": 0,
         "type": "function"
       },
@@ -113,9 +109,7 @@
         "value": 0
       },
       "__wrappers__.assert_calldata_is_one": {
-        "decorators": [
-          "l1_handler"
-        ],
+        "decorators": ["l1_handler"],
         "pc": 5,
         "type": "function"
       },

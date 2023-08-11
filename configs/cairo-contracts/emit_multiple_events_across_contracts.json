@@ -51,10 +51,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "pedersen",
-      "range_check"
-    ],
+    "builtins": ["pedersen", "range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -480,9 +477,7 @@
         "type": "alias"
       },
       "__main__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 108,
         "type": "function"
       },
@@ -525,9 +520,7 @@
         "value": 0
       },
       "__main__.emit_external": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 156,
         "type": "function"
       },
@@ -565,9 +558,7 @@
         "value": 0
       },
       "__main__.emit_internal": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 133,
         "type": "function"
       },
@@ -836,9 +827,7 @@
         "type": "alias"
       },
       "__wrappers__.constructor": {
-        "decorators": [
-          "constructor"
-        ],
+        "decorators": ["constructor"],
         "pc": 115,
         "type": "function"
       },
@@ -871,9 +860,7 @@
         "type": "alias"
       },
       "__wrappers__.emit_external": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 170,
         "type": "function"
       },
@@ -906,9 +893,7 @@
         "type": "alias"
       },
       "__wrappers__.emit_internal": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 141,
         "type": "function"
       },

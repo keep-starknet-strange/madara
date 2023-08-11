@@ -59,9 +59,7 @@
         "value": "Invalid signature."
       }
     ],
-    "builtins": [
-      "range_check"
-    ],
+    "builtins": ["range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -4189,10 +4187,7 @@
       ],
       "3470": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.div_mod_n"
-          ],
+          "accessible_scopes": ["__main__", "__main__.div_mod_n"],
           "code": "from starkware.cairo.common.cairo_secp.secp256r1_utils import SECP256R1_N as N",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -4203,10 +4198,7 @@
           }
         },
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.div_mod_n"
-          ],
+          "accessible_scopes": ["__main__", "__main__.div_mod_n"],
           "code": "from starkware.cairo.common.cairo_secp.secp_utils import pack\nfrom starkware.python.math_utils import div_mod, safe_div\n\na = pack(ids.a, PRIME)\nb = pack(ids.b, PRIME)\nvalue = res = div_mod(a, b, N)",
           "flow_tracking_data": {
             "ap_tracking": {
@@ -4222,10 +4214,7 @@
       ],
       "3473": [
         {
-          "accessible_scopes": [
-            "__main__",
-            "__main__.div_mod_n"
-          ],
+          "accessible_scopes": ["__main__", "__main__.div_mod_n"],
           "code": "value = k_plus_one = safe_div(res * b - a, N) + 1",
           "flow_tracking_data": {
             "ap_tracking": {

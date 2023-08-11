@@ -169,10 +169,7 @@
   },
   "program": {
     "attributes": [],
-    "builtins": [
-      "pedersen",
-      "range_check"
-    ],
+    "builtins": ["pedersen", "range_check"],
     "compiler_version": "0.11.2",
     "data": [
       "0x40780017fff7fff",
@@ -865,10 +862,7 @@
         "type": "alias"
       },
       "__main__.__execute__": {
-        "decorators": [
-          "external",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_output"],
         "pc": 236,
         "type": "function"
       },
@@ -923,9 +917,7 @@
         "value": 0
       },
       "__main__.__validate__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 183,
         "type": "function"
       },
@@ -980,9 +972,7 @@
         "value": 0
       },
       "__main__.__validate_declare__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 150,
         "type": "function"
       },
@@ -1012,9 +1002,7 @@
         "value": 0
       },
       "__main__.__validate_deploy__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 166,
         "type": "function"
       },
@@ -1060,9 +1048,7 @@
         "type": "alias"
       },
       "__main__.deploy_contract": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 270,
         "type": "function"
       },
@@ -1351,10 +1337,7 @@
         "type": "alias"
       },
       "__wrappers__.__execute__": {
-        "decorators": [
-          "external",
-          "raw_output"
-        ],
+        "decorators": ["external", "raw_output"],
         "pc": 249,
         "type": "function"
       },
@@ -1387,9 +1370,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 207,
         "type": "function"
       },
@@ -1422,9 +1403,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate_declare__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 151,
         "type": "function"
       },
@@ -1457,9 +1436,7 @@
         "type": "alias"
       },
       "__wrappers__.__validate_deploy__": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 167,
         "type": "function"
       },
@@ -1492,9 +1469,7 @@
         "type": "alias"
       },
       "__wrappers__.deploy_contract": {
-        "decorators": [
-          "external"
-        ],
+        "decorators": ["external"],
         "pc": 302,
         "type": "function"
       },
