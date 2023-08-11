@@ -84,12 +84,12 @@ export async function startMadaraDevNode(
     "--no-prometheus",
     "--dev",
     "--rpc-cors=all",
+    "--rpc-methods=unsafe",
     "--sealing=manual",
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
     `--rpc-port=${rpcPort}`,
-    "--tmp",
-    "--rpc-methods=unsafe",
+    `--madara-path=/tmp/${p2pPort}`,
   ];
   console.log(p2pPort, rpcPort, cmd, args);
   if (WASM_RUNTIME_OVERRIDES != "") {
