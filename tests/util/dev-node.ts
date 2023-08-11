@@ -109,7 +109,7 @@ export async function startMadaraDevNode(
   let runningNode: ChildProcess = null;
   process.once("exit", onProcessExit);
   process.once("SIGINT", onProcessInterrupt);
-  runningNode = spawn(cmd, args);
+  runningNode = spawn(cmd, args, {stdio: ['pipe', 'pipe', 'pipe']});
 
   runningNode.once("exit", () => {
     process.removeListener("exit", onProcessExit);
@@ -144,13 +144,13 @@ export async function startMadaraDevNode(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onData = async (chunk: any) => {
-      if (DISPLAY_LOG) {
+      if (true) {
         console.log(chunk.toString());
       }
       binaryLogs.push(chunk);
       if (chunk.toString().match(/Madara Node/)) {
         clearTimeout(timer);
-        if (!DISPLAY_LOG) {
+        if (!true) {
           runningNode.stderr.off("data", onData);
           runningNode.stdout.off("data", onData);
         }
