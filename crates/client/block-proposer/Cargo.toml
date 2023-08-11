@@ -1,13 +1,13 @@
 [package]
 name = "mc-block-proposer"
-version = "0.1.0"
+version.workspace = true
+edition.workspace = true
 description = "Starknet block proposer implementation."
 authors = [
   "Abdelhamid Bakhta <https://github.com/abdelhamidbakhta>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
