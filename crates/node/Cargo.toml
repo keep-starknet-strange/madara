@@ -1,13 +1,13 @@
 [package]
 name = "madara"
-version = "0.1.0-alpha"
+version.workspace = true
+edition.workspace = true
 description = "Madara node."
 authors = [
   "Abdelhamid Bakhta <@keep-starknet-strange>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
