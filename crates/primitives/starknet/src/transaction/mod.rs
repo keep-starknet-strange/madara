@@ -471,7 +471,7 @@ impl Transaction {
             storage_address: account_tx_context.sender_address,
             caller_address: StarknetContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas: remaining_gas.clone(),
+            initial_gas: *remaining_gas,
         };
 
         let validate_call_info = validate_call

@@ -146,7 +146,7 @@ fn execute_fee_transfer(
     let msb_amount = StarkFelt::from(0_u64);
 
     // The fee-token contract is a Cairo 0 contract, hence the initial gas is irrelevant.
-    let initial_gas = super::constants::INITIAL_GAS.into();
+    let initial_gas = super::constants::INITIAL_GAS;
 
     let storage_address = block_context.fee_token_address;
     let fee_transfer_call = CallEntryPoint {
