@@ -98,7 +98,6 @@ use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
-use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
@@ -527,7 +526,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Invoke,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -581,7 +579,7 @@ pub mod pallet {
 
             let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
-            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+            transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
             // Check that the class hash is not None
             let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
@@ -601,7 +599,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Declare,
                 T::DisableNonceValidation::get(),
-                Some(contract_class),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -673,7 +670,6 @@ pub mod pallet {
                 &block_context,
                 TxType::DeployAccount,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -737,7 +733,6 @@ pub mod pallet {
                 &block_context,
                 TxType::L1Handler,
                 true,
-                None,
             ) {
                 Ok(v) => {
                     log!(debug, "Successfully consumed a message from L1: {:?}", v);
@@ -1159,7 +1154,6 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             transaction.tx_type.clone(),
             T::DisableNonceValidation::get(),
-            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);

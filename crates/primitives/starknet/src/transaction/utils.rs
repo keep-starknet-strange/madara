@@ -29,6 +29,7 @@ pub fn calculate_transaction_version_from_u8(is_query: bool, version: u8) -> Tra
     calculate_transaction_version(is_query, TransactionVersion(StarkFelt::from(version)))
 }
 
+/// converts [Felt252Wrapper] to [Nonce]
 pub fn felt_to_nonce(nonce: Felt252Wrapper) -> Result<Nonce, StarknetApiError> {
     Ok(Nonce(StarkFelt::new(nonce.into())?))
 }

@@ -3,7 +3,6 @@ use sp_core::U256;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
-use starknet_api::stdlib::collections::HashMap;
 
 use crate::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 use crate::traits::hash::HasherT;

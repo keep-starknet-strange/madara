@@ -1,7 +1,7 @@
 use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
-use blockifier::execution::contract_class::{ContractClassV0, ContractClassV1};
+use blockifier::execution::contract_class::ContractClassV0;
 use frame_support::{bounded_vec, BoundedVec};
 use sp_core::{TypedGet, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};

@@ -7,14 +7,13 @@ use blockifier::execution::errors::{EntryPointExecutionError, VirtualMachineExec
 use cairo_vm::vm::errors::cairo_run_errors::CairoRunError;
 use cairo_vm::vm::errors::vm_errors::VirtualMachineError;
 use cairo_vm::vm::errors::vm_exception::VmException;
-use frame_support::{assert_err, assert_ok, bounded_vec};
+use frame_support::{assert_ok, bounded_vec};
 use starknet_api::api_core::{ChainId, ClassHash, ContractAddress, EntryPointSelector, PatriciaKey};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::Calldata;
 use starknet_api::{patricia_key, stark_felt};
-use thiserror_no_std::Error;
 
 use crate::constants::INITIAL_GAS;
 use crate::execution::call_entrypoint_wrapper::CallEntryPointWrapper;

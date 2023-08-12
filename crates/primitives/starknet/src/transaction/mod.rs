@@ -15,7 +15,6 @@ use blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
 use blockifier::execution::errors::EntryPointExecutionError;
-use blockifier::state::errors::StateError;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
@@ -25,9 +24,7 @@ use blockifier::transaction::transactions::{
 };
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{
-    ClassHash, CompiledClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector,
-};
+use starknet_api::api_core::{CompiledClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
@@ -551,7 +548,6 @@ impl Transaction {
         block_context: &BlockContext,
         tx_type: TxType,
         disable_nonce_validation: bool,
-        contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
@@ -620,8 +616,6 @@ impl Transaction {
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
-                let contract_class =
-                    contract_class.ok_or_else(|| StateError::UndeclaredClassHash(ClassHash::default()))?;
 
                 // Create the context.
                 let mut context = EntryPointExecutionContext::new(
