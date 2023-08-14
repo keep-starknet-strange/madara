@@ -1072,7 +1072,7 @@ impl<T: Config> Pallet<T> {
     ///
     /// # Returns
     ///
-    /// The result of the operation.
+    /// Next expected event order
     #[inline(always)]
     fn emit_events(
         call_info: &CallInfo,
