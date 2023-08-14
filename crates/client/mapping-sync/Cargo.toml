@@ -1,13 +1,13 @@
 [package]
 name = "mc-mapping-sync"
-version = "0.1.0"
+version.workspace = true
+edition.workspace = true
 description = "Mapping sync logic for Madara"
 authors = [
   "Timothée Delabrouille <https://github.com/tdelabro>",
   "Substrate DevHub <https://github.com/substrate-developer-hub>",
 ]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
