@@ -39,3 +39,14 @@ func emit_external{ syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     IExternalContract.emit_external(contract_address=_external_contract_addr);
     return();
 }
+
+@external
+func emit_sandwich{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() {
+    let (_external_contract_addr) = external_contract_addr.read();
+    internal.emit();
+    IExternalContract.emit_external(contract_address=_external_contract_addr);
+    internal.emit();
+    IExternalContract.emit_external(contract_address=_external_contract_addr);
+    internal.emit();
+    return();
+}

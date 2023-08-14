@@ -19,8 +19,14 @@ poetry install
 The goal of this folder is to provide artifacts for madara testing and deploy
 scripts targeting madara endpoints for end-to-end testing.
 
+First of all make sure you are inside the poetry env:
+
+```bash
+poetry shell
+```
+
 The script folder contains example scripts, for example for compiling all the
-files:
+Cairo 0 contracts:
 
 ```bash
 python scripts/compile_all.py
@@ -30,4 +36,25 @@ Or for deploying an ERC20
 
 ```bash
 python scripts/deploy_erc20.py
+```
+
+## Class hash
+
+Make sure you have `starkli` installed:
+
+```bash
+curl https://get.starkli.sh | sh
+starkliup
+```
+
+In order to calculate class hash for Cairo 0 contract:
+
+```bash
+starkli class-hash path-to-output.json
+```
+
+For Cairo 1:
+
+```bash
+starkli class-hash path-to-output.casm.json
 ```

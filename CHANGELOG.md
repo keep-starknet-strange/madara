@@ -16,3 +16,4 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
+- fix: events are emitted in correct sequential order

@@ -1066,28 +1066,61 @@ impl<T: Config> Pallet<T> {
     ///
     /// # Arguments
     ///
-    /// * `call_info` - The call info.
+    /// * `call_info` — A ref to the call info structure.
+    /// * `events` — A mutable ref to a resulting list of events
+    /// * `next_order` — Next expected event order, has to be 0 for a top level invocation
     ///
     /// # Returns
     ///
     /// The result of the operation.
     #[inline(always)]
-    fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
-        let mut events = Vec::new();
+    fn emit_events(
+        call_info: &CallInfo,
+        events: &mut Vec<StarknetEventType>,
+        next_order: usize,
+    ) -> Result<usize, EventError> {
+        let mut event_idx = 0;
+        let mut inner_call_idx = 0;
+        let mut next_order = next_order;
 
-        call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-        for ordered_event in &call_info.execution.events {
-            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
-            events.push(event_type);
-        }
-
-        for inner_call in &mut call_info.inner_calls {
-            let inner_events = Self::emit_events(inner_call)?;
-            if !inner_events.is_empty() {
-                events.extend(inner_events);
+        loop {
+            // Emit current call's events as long as they have sequential orders
+            if event_idx < call_info.execution.events.len() {
+                let ordered_event = &call_info.execution.events[event_idx];
+                if ordered_event.order == next_order {
+                    let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+                    events.push(event_type);
+                    next_order += 1;
+                    event_idx += 1;
+                    continue;
+                }
             }
+
+            // Go deeper to find the continuation of the sequence
+            if inner_call_idx < call_info.inner_calls.len() {
+                next_order = Self::emit_events(&call_info.inner_calls[inner_call_idx], events, next_order)?;
+                inner_call_idx += 1;
+                continue;
+            }
+
+            // At this point we have iterated over all sequential events and visited all internal calls
+            break;
         }
-        Ok(events)
+
+        if event_idx < call_info.execution.events.len() {
+            // Normally this should not happen and we trust blockifier to produce correct event orders
+            log!(
+                debug,
+                "Invalid event #{} order: expected {}, got {}\nCall info: {:#?}",
+                event_idx,
+                next_order,
+                call_info.execution.events[event_idx].order,
+                call_info
+            );
+            return Err(EventError::InconsistentOrdering);
+        }
+
+        Ok(next_order)
     }
 
     /// Emit an event from the call info in substrate.
@@ -1144,14 +1177,16 @@ impl<T: Config> Pallet<T> {
         execute_call_info: Option<CallInfo>,
         fee_transfer_call_info: Option<CallInfo>,
     ) -> Result<Vec<StarknetEventType>, Error<T>> {
-        let events = match (execute_call_info, fee_transfer_call_info) {
-            (Some(mut exec), Some(mut fee)) => {
-                let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
-                events
+        let mut events = Vec::new();
+        match (execute_call_info, fee_transfer_call_info) {
+            (Some(exec), Some(fee)) => {
+                Self::emit_events(&exec, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+                Self::emit_events(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
             }
-            (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
-            _ => Vec::default(),
+            (_, Some(fee)) => {
+                Self::emit_events(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+            }
+            _ => {}
         };
         Ok(events)
     }
