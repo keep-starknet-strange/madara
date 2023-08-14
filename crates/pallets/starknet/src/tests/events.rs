@@ -26,7 +26,7 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
             version: 1,
             sender_address: sender_account,
             calldata: bounded_vec![
-                emit_contract_address.clone(), // Token address
+                emit_contract_address, // Token address
                 emit_selector,
                 Felt252Wrapper::ZERO, // Calldata len
             ],
@@ -41,18 +41,17 @@ fn internal_and_external_events_are_emitted_in_the_right_order() {
 
         let pending = Starknet::pending();
         let receipt = &pending.get(0).unwrap().1;
-        let event_emitters: Vec<Felt252Wrapper> =
-            receipt.events.iter().map(|event| event.from_address.clone()).collect();
+        let event_emitters: Vec<Felt252Wrapper> = receipt.events.iter().map(|event| event.from_address).collect();
 
         pretty_assertions::assert_eq!(
             event_emitters,
             vec![
-                emit_contract_address.clone(),  // internal
-                inner_contract_address.clone(),  // external
-                emit_contract_address.clone(),  // internal
+                emit_contract_address,  // internal
                 inner_contract_address, // external
-                emit_contract_address, // internal
-                fee_token_address // fee transfer
+                emit_contract_address,  // internal
+                inner_contract_address, // external
+                emit_contract_address,  // internal
+                fee_token_address       // fee transfer
             ]
         );
     });
