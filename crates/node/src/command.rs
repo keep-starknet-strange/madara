@@ -208,30 +208,23 @@ pub fn run() -> sc_cli::Result<()> {
             if cli.run.genesis_url.is_some() {
                 // can't copy extra genesis-assets atm
                 // we can reuse #982 to create the standard to fetch relevant files
-                let copied = utils::fetch_from_url(
+                utils::fetch_from_url(
                     cli.run.genesis_url.clone().unwrap(),
                     madara_path.clone() + "/configs/genesis-assets",
-                );
-
-                if !copied {
-                    return Err("Failed to fetch genesis assets".into());
-                }
+                )
+                .unwrap();
             } else {
                 // TODO confirm with the CI that we are fetching all and fetch dynamically
                 // Issue #982
                 for file in constants::GENESIS_ASSETS_FILES {
-                    let src_path: String = utils::get_project_path() + "/configs/genesis-assets/" + file;
-                    let mut copied: bool =
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
-                    if !copied {
-                        copied = utils::fetch_from_url(
+                    let src_path = utils::get_project_path().unwrap() + "/configs/genesis-assets/" + file;
+                    let copied = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
+                    if copied.is_err() {
+                        utils::fetch_from_url(
                             constants::GENESIS_ASSETS_URL.to_string() + file,
                             madara_path.clone() + "/genesis-assets",
-                        );
-
-                        if !copied {
-                            return Err("Failed to fetch genesis assets".into());
-                        }
+                        )
+                        .unwrap();
                     }
                 }
             }
@@ -239,45 +232,33 @@ pub fn run() -> sc_cli::Result<()> {
             // TODO confirm with the CI that we are fetching all and fetch dynamically
             // Issue #982
             for file in constants::CAIRO_CONTRACTS_FILES {
-                let src_path: String = utils::get_project_path() + "/configs/cairo-contracts/" + file;
-                let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
-                if !copied {
-                    copied = utils::fetch_from_url(
+                let src_path = utils::get_project_path().unwrap() + "/configs/cairo-contracts/" + file;
+                let copied = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
+                if copied.is_err() {
+                    utils::fetch_from_url(
                         constants::CAIRO_CONTRACTS_URL.to_string() + file,
                         madara_path.clone() + "/cairo-contracts",
-                    );
-
-                    if !copied {
-                        return Err("Failed to fetch cairo contracts".into());
-                    }
+                    )
+                    .unwrap();
                 }
             }
 
             if cli.run.chain_spec_url.is_some() && cli.run.testnet.is_none() {
-                let copied = utils::fetch_from_url(
-                    cli.run.chain_spec_url.clone().unwrap(),
-                    madara_path.clone() + "/chain-specs",
-                );
-
-                if !copied {
-                    return Err("Failed to fetch chain spec".into());
-                }
+                utils::fetch_from_url(cli.run.chain_spec_url.clone().unwrap(), madara_path.clone() + "/chain-specs")
+                    .unwrap();
             }
 
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
                     let src_path: String =
-                        utils::get_project_path() + "/configs/chain-specs/testnet-sharingan-raw.json";
-                    let mut copied: bool = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
-                    if !copied {
-                        copied = utils::fetch_from_url(
+                        utils::get_project_path().unwrap() + "/configs/chain-specs/testnet-sharingan-raw.json";
+                    let copied = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
+                    if copied.is_err() {
+                        utils::fetch_from_url(
                             constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                             madara_path.clone() + "/chain-specs",
-                        );
-
-                        if !copied {
-                            return Err("Failed to retrieve testnet-sharingan-raw.json".into());
-                        }
+                        )
+                        .unwrap();
                     }
 
                     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
