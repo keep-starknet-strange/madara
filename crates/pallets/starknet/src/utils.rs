@@ -47,7 +47,7 @@ pub fn get_project_path() -> Result<String, Error> {
         .output();
 
     if workspace.is_err() {
-        return Err("Failed to get project path".into());
+        return Err("Failed to locate the project".into());
     }
 
     let mut dir = std::path::PathBuf::from(std::str::from_utf8(&workspace?.stdout)?.trim());
