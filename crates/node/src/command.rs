@@ -218,8 +218,8 @@ pub fn run() -> sc_cli::Result<()> {
                 // Issue #982
                 for file in constants::GENESIS_ASSETS_FILES {
                     let src_path = utils::get_project_path().unwrap() + "/configs/genesis-assets/" + file;
-                    let copied = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
-                    if copied.is_err() {
+                    let res = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
+                    if res.is_err() {
                         utils::fetch_from_url(
                             constants::GENESIS_ASSETS_URL.to_string() + file,
                             madara_path.clone() + "/genesis-assets",
@@ -233,8 +233,8 @@ pub fn run() -> sc_cli::Result<()> {
             // Issue #982
             for file in constants::CAIRO_CONTRACTS_FILES {
                 let src_path = utils::get_project_path().unwrap() + "/configs/cairo-contracts/" + file;
-                let copied = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
-                if copied.is_err() {
+                let res = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
+                if res.is_err() {
                     utils::fetch_from_url(
                         constants::CAIRO_CONTRACTS_URL.to_string() + file,
                         madara_path.clone() + "/cairo-contracts",
@@ -252,8 +252,8 @@ pub fn run() -> sc_cli::Result<()> {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
                     let src_path: String =
                         utils::get_project_path().unwrap() + "/configs/chain-specs/testnet-sharingan-raw.json";
-                    let copied = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
-                    if copied.is_err() {
+                    let res = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
+                    if res.is_err() {
                         utils::fetch_from_url(
                             constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                             madara_path.clone() + "/chain-specs",
