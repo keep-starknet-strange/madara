@@ -1,4 +1,47 @@
-pub fn get_project_path() -> Result<String, Box<dyn std::error::Error>> {
+#[derive(Debug)]
+pub enum Error {
+    Cli(sc_cli::Error),
+}
+
+impl From<Error> for sc_cli::Error {
+    fn from(err: Error) -> Self {
+        match err {
+            Error::Cli(err) => err,
+        }
+    }
+}
+
+impl From<Box<dyn std::error::Error>> for Error {
+    fn from(err: Box<dyn std::error::Error>) -> Self {
+        Error::Cli(sc_cli::Error::Input(err.to_string()))
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Cli(sc_cli::Error::Io(err))
+    }
+}
+
+impl From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Self {
+        Error::Cli(sc_cli::Error::Input(err.to_string()))
+    }
+}
+
+impl From<&str> for Error {
+    fn from(err: &str) -> Self {
+        Error::Cli(sc_cli::Error::Input(err.to_string()))
+    }
+}
+
+impl From<core::str::Utf8Error> for Error {
+    fn from(err: core::str::Utf8Error) -> Self {
+        Error::Cli(sc_cli::Error::Input(err.to_string()))
+    }
+}
+
+pub fn get_project_path() -> Result<String, Error> {
     let workspace = std::process::Command::new(env!("CARGO"))
         .args(["locate-project", "--workspace", "--message-format=plain"])
         .output();
@@ -12,7 +55,7 @@ pub fn get_project_path() -> Result<String, Box<dyn std::error::Error>> {
     Ok(dir.to_str().ok_or("Failed to get project path")?.to_string())
 }
 
-pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), Box<dyn std::error::Error>> {
+pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), Error> {
     log::info!("Trying to copy {} to {} from filesystem", src_path, dest_path);
     let src = std::path::PathBuf::from(src_path.clone());
     if !src.exists() {
@@ -29,7 +72,7 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), B
     Ok(())
 }
 
-pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Box<dyn std::error::Error>> {
+pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
     log::info!("Trying to fetch {} to {} from url", target, dest_path);
     let dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst)?;
@@ -58,6 +101,6 @@ pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Box<dyn s
     Ok(())
 }
 
-pub fn read_file_to_string(path: String) -> Result<String, Box<dyn std::error::Error>> {
+pub fn read_file_to_string(path: String) -> Result<String, Error> {
     Ok(std::fs::read_to_string(path)?)
 }

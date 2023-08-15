@@ -6145,6 +6145,7 @@ dependencies = [
  "parity-scale-codec",
  "pretty_assertions",
  "reqwest",
+ "sc-cli",
  "scale-info",
  "serde",
  "serde_json",
