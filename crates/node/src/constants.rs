@@ -3,13 +3,13 @@ pub const SHARINGAN_CHAIN_SPEC_URL: &str = "https://raw.githubusercontent.com/ke
 pub const GENESIS_ASSETS_URL: &str =
     "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets/";
 
-pub const GENESIS_ASSETS_FILES: [&'static str; 5] =
+pub const GENESIS_ASSETS_FILES: [&str; 5] =
     ["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
 
 pub const CAIRO_CONTRACTS_URL: &str =
     "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/cairo-contracts/";
 
-pub const CAIRO_CONTRACTS_FILES: [&'static str; 33] = [
+pub const CAIRO_CONTRACTS_FILES: [&str; 33] = [
     "ArgentAccount.json",
     "bigint.json",
     "BraavosAccount.json",
