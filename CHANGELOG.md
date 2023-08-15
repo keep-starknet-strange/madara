@@ -18,3 +18,5 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
+- fix: update the default port for running Madara locally in getting-started.md
+  file from 9933 to 9944.
