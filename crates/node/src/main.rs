@@ -7,10 +7,10 @@ mod benchmarking;
 mod chain_spec;
 mod cli;
 mod command;
+mod constants;
 mod genesis_block;
 mod rpc;
 mod starknet;
-mod constants;
 
 fn main() -> sc_cli::Result<()> {
     command::run()

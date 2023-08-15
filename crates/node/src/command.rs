@@ -5,7 +5,7 @@ use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, service, constants};
+use crate::{chain_spec, constants, service};
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -224,7 +224,10 @@ pub fn run() -> sc_cli::Result<()> {
                     let mut copied: bool =
                         utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
                     if !copied {
-                        copied = utils::fetch_from_url(constants::GENESIS_ASSETS_URL.to_string() + file, madara_path.clone() + "/genesis-assets");
+                        copied = utils::fetch_from_url(
+                            constants::GENESIS_ASSETS_URL.to_string() + file,
+                            madara_path.clone() + "/genesis-assets",
+                        );
 
                         if !copied {
                             return Err("Failed to fetch genesis assets".into());
@@ -269,7 +272,7 @@ pub fn run() -> sc_cli::Result<()> {
                     if !copied {
                         copied = utils::fetch_from_url(
                             constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
-                            madara_path.clone() + "/chain-specs"
+                            madara_path.clone() + "/chain-specs",
                         );
 
                         if !copied {
