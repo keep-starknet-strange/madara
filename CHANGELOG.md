@@ -4,6 +4,7 @@
 
 ## v0.1.0
 
+- ci: stop closing stale issues
 - ci: reactivate changelog enforcement
 - cli: change dev flag behaviour and created alias for base and madara path
 - configs: fix genesis.json refs to link the config folder
