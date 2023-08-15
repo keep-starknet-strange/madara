@@ -1,10 +1,10 @@
 [package]
 name = "pallet-starknet"
-version = "0.1.0-alpha"
+version.workspace = true
+edition.workspace = true
 description = "FRAME pallet to execute Starknet contracts."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
