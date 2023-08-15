@@ -58,7 +58,11 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                         let contract_path = if loader.madara_path.is_some() {
                             loader.madara_path.clone().unwrap() + "/" + &path
                         } else {
-                            utils::get_project_path() + "/" + &path
+							let project_path = utils::get_project_path();
+							if project_path == "" {
+								panic!("Project path not found");
+							}
+                            project_path + "/" + &path
                         };
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path), version))
                     }
