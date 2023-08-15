@@ -85,6 +85,7 @@ export async function startMadaraDevNode(
     "--dev",
     "--rpc-cors=all",
     "--rpc-methods=unsafe",
+    "--tx-ban-seconds=0",
     "--sealing=manual",
     `-l${MADARA_LOG}`,
     `--port=${p2pPort}`,
