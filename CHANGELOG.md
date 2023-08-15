@@ -7,6 +7,8 @@
 - feat: refactor flags on tests
 - feat: fetch config files from gh repo
 - refactor: remove config files from the code
+- ci: stop closing stale issues
+- ci: reactivate changelog enforcement
 - cli: change dev flag behaviour and created alias for base and madara path
 - configs: fix genesis.json refs to link the config folder
 - ci: downgraded windows runner to windows-latest
