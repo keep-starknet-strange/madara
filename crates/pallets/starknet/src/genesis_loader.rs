@@ -59,7 +59,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                             loader.madara_path.clone().unwrap() + "/" + &path
                         } else {
                             let project_path = utils::get_project_path();
-                            if project_path == "" {
+                            if project_path.is_empty() {
                                 panic!("Project path not found");
                             }
                             project_path + "/" + &path
