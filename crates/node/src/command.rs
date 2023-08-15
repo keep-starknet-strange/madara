@@ -215,7 +215,8 @@ pub fn run() -> sc_cli::Result<()> {
                 // TODO confirm with the CI that we are fetching all and fetch dynamically
                 // Issue #982
                 for file in constants::GENESIS_ASSETS_FILES {
-                    let src_path = utils::get_project_path().unwrap() + "/configs/genesis-assets/" + file;
+                    let src_path =
+                        utils::get_project_path().unwrap_or("".to_string()) + "/configs/genesis-assets/" + file;
                     let res = utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets");
                     if res.is_err() {
                         utils::fetch_from_url(
@@ -229,7 +230,7 @@ pub fn run() -> sc_cli::Result<()> {
             // TODO confirm with the CI that we are fetching all and fetch dynamically
             // Issue #982
             for file in constants::CAIRO_CONTRACTS_FILES {
-                let src_path = utils::get_project_path()? + "/configs/cairo-contracts/" + file;
+                let src_path = utils::get_project_path().unwrap_or("".to_string()) + "/configs/cairo-contracts/" + file;
                 let res = utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts");
                 if res.is_err() {
                     utils::fetch_from_url(
@@ -245,8 +246,8 @@ pub fn run() -> sc_cli::Result<()> {
 
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    let src_path: String =
-                        utils::get_project_path()? + "/configs/chain-specs/testnet-sharingan-raw.json";
+                    let src_path = utils::get_project_path().unwrap_or("".to_string())
+                        + "/configs/chain-specs/testnet-sharingan-raw.json";
                     let res = utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs");
                     if res.is_err() {
                         utils::fetch_from_url(
