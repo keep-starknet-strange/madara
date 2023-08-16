@@ -18,9 +18,7 @@ LABEL description="Madara, a blazing fast Starknet sequencer" \
   documentation="https://docs.madara.zone/"
 
 # TODO: change the way chain-specs are copied on the node
-COPY --from=builder /madara /madara
 COPY --from=builder /madara/target/release/madara /madara-bin
-COPY --from=builder /madara/crates/node/chain-specs /chain-specs
 
 RUN apt-get -y update; \
     apt-get install -y --no-install-recommends \
