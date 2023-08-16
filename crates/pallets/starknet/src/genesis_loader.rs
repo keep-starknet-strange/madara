@@ -55,11 +55,12 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
                 match class {
                     ContractClass::Path { path, version } => {
-                        let contract_path = if loader.madara_path.is_some() {
-                            loader.madara_path.clone().unwrap() + "/" + &path
-                        } else {
-                            let project_path = utils::get_project_path().expect("Project path not found");
-                            project_path + "/" + &path
+                        let contract_path = match loader.madara_path.clone() {
+                            Some(madara_path) => madara_path + "/" + &path,
+                            None => {
+                                let project_path = utils::get_project_path().expect("Project path not found");
+                                project_path + "/" + &path
+                            }
                         };
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path).unwrap(), version))
                     }

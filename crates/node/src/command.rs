@@ -253,22 +253,21 @@ pub fn run() -> sc_cli::Result<()> {
                 utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
             }
 
-            if cli.run.testnet.is_some() {
-                if let Some(Testnet::Sharingan) = cli.run.testnet {
-                    let src_path = utils::get_project_path();
-                    if let Ok(src_path) = src_path {
-                        let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-                    } else {
-                        utils::fetch_from_url(
-                            constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
-                            madara_path.clone() + "/chain-specs",
-                        )?;
-                    }
-
-                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+            if let Some(Testnet::Sharingan) = cli.run.testnet {
+                let src_path = utils::get_project_path();
+                if let Ok(src_path) = src_path {
+                    let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
+                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
+                } else {
+                    utils::fetch_from_url(
+                        constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
+                        madara_path.clone() + "/chain-specs",
+                    )?;
                 }
 
+                cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+
+                // This should go apply to all testnets when applying a match pattern
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
