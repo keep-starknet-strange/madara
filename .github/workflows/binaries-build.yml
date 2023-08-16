@@ -25,15 +25,25 @@ jobs:
           - aarch64-unknown-linux-gnu
           - x86_64-apple-darwin
           - x86_64-unknown-linux-gnu
+          # https://github.com/rust-rocksdb/rust-rocksdb/issues/665
+          # - x86_64-pc-windows-gnu
+          - x86_64-pc-windows-msvc
         include:
           - build: aarch64-apple-darwin
             os: macos-latest-xl
+            bin_name: madara
           - build: aarch64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
+            bin_name: madara
           - build: x86_64-apple-darwin
             os: macos-latest-xl
+            bin_name: madara
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest-32-cores
+            bin_name: madara
+          - build: x86_64-pc-windows-msvc
+            os: windows-latest
+            bin_name: madara.exe
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -43,13 +53,13 @@ jobs:
         run: |
           rustup target add ${{ matrix.build }}
 
-      - name: Setup build deps (linux/windows)
+      - name: Setup build deps (linux)
         if:
           matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
-          'aarch64-unknown-linux-gnu' || matrix.build == 'x86_64-pc-windows-gnu'
+          'aarch64-unknown-linux-gnu'
         run: |
           sudo apt update
-          sudo apt install -y clang llvm libudev-dev protobuf-compiler
+          sudo apt install -y clang llvm libudev-dev protobuf-compiler libssl-dev
 
       - name: Setup build deps (aarch64-unknown-linux-gnu)
         if: matrix.build == 'aarch64-unknown-linux-gnu'
@@ -67,8 +77,18 @@ jobs:
         run: |
           brew install protobuf
 
-      - name: Build (x86_64 linux/apple)
-        if: matrix.build != 'aarch64-unknown-linux-gnu'
+      - name: Setup build deps (x86_64-pc-windows-msvc)
+        if: matrix.build == 'x86_64-pc-windows-msvc'
+        run: |
+          choco install -y protoc llvm
+          mkdir C:/tmp/madara-libs
+          (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/libjemalloc.a", "C:/tmp/madara-libs/libjemalloc.a")
+          (New-Object net.webclient).Downloadfile("https://github.com/keep-starknet-strange/madara-infra/releases/download/win-bins-build-libs/rocksdb.lib", "C:/tmp/madara-libs/rocksdb.lib")
+
+      - name: Build (x86_64 linux and x86_64/aarch64 apple)
+        if:
+          matrix.build == 'x86_64-unknown-linux-gnu' || matrix.build ==
+          'x86_64-apple-darwin' || matrix.build == 'aarch64-apple-darwin'
         run: cargo build --release --target ${{ matrix.build }}
 
       - name: Build (aarch64-unknown-linux-gnu)
@@ -79,16 +99,26 @@ jobs:
           export CXX_aarch64_unknown_linux_gnu=/usr/bin/aarch64-linux-gnu-g++
           cargo build --release --target ${{ matrix.build }}
 
-      - name: Upload binaries
-        if: github.event.inputs.release_tag_name
-        uses: actions/upload-artifact@v2
-        with:
-          name: ${{ matrix.build }}
-          path: target/${{ matrix.build }}/release
+      - name: Pre-Build (x86_64-pc-windows-msvc)
+        if: matrix.build == 'x86_64-pc-windows-msvc'
+        shell: bash
+        run: |
+          cargo fetch --target ${{ matrix.build }}
+          export reg_folder=$(ls C:/Users/runneradmin/.cargo/registry/src | grep github.com)
+          export pdb_folder=$(ls C:/Users/runneradmin/.cargo/registry/src/$reg_folder | grep parity-db)
+          sed -ir 's/madvise_random(_id: TableId, _map: \&mut memmap2::MmapMut)/madvise_random(_map: \&mut memmap2::MmapMut)/g' C:/Users/runneradmin/.cargo/registry/src/$reg_folder/$pdb_folder/src/file.rs
 
-      - name: Upload source
-        if: github.event.inputs.release_tag_name
-        uses: actions/upload-artifact@v2
+      - name: Build (x86_64-pc-windows-msvc)
+        if: matrix.build == 'x86_64-pc-windows-msvc'
+        shell: bash
+        run: |
+          JEMALLOC_OVERRIDE=C:/tmp/madara-libs/libjemalloc.a ROCKSDB_LIB_DIR=C:/tmp/madara-libs cargo build --release --target ${{ matrix.build }}
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: source
-          path: target/${{ matrix.build }}/release
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/${{ matrix.build }}/release/${{ matrix.bin_name }}
+          asset_name: ${{ matrix.build}}-${{ matrix.bin_name }}
+          tag: ${{ inputs.release_tag_name }}
+          overwrite: true

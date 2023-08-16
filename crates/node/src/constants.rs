@@ -1,30 +1,46 @@
-pub const ARGENT_ACCOUNT_ADDRESS: &str = "0x2";
-pub const ARGENT_ACCOUNT_CLASS_HASH: &str = "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d";
-pub const ARGENT_PROXY_CLASS_HASH: &str = "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9";
+pub const SHARINGAN_CHAIN_SPEC_URL: &str = "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/chain-specs/testnet-sharingan-raw.json";
 
-pub const BRAAVOS_ACCOUNT_CLASS_HASH: &str = "0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4";
-pub const BRAAVOS_ACCOUNT_BASE_IMPL_CLASS_HASH: &str =
-    "0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570";
-pub const BRAAVOS_PROXY_CLASS_HASH: &str = "0x3131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e";
-pub const BRAAVOS_CALL_AGGREGATOR_CLASS_HASH: &str =
-    "0x07db5c2c2676c2a5bfc892ee4f596b49514e3056a0eee8ad125870b4fb1dd909";
+pub const GENESIS_ASSETS_URL: &str =
+    "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/genesis-assets/";
 
-pub const OZ_ACCOUNT_ADDRESS: &str = "0x3";
-pub const OZ_ACCOUNT_CLASS_HASH: &str = "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd";
-pub const NO_VALIDATE_ACCOUNT_ADDRESS: &str = "0x1";
-pub const NO_VALIDATE_ACCOUNT_CLASS_HASH: &str = "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f";
-pub const FEE_TOKEN_ADDRESS: &str = "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
-pub const FEE_TOKEN_CLASS_HASH: &str = "0x20000";
-pub const TEST_CONTRACT_ADDRESS: &str = "0x1111";
-pub const TEST_CONTRACT_CLASS_HASH: &str = "0x1000";
-pub const ERC20_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00";
-pub const ERC20_CLASS_HASH: &str = "0x10000";
-pub const CAIRO_1_NO_VALIDATE_ACCOUNT_ADDRESS: &str = "0x4";
-pub const CAIRO_1_NO_VALIDATE_ACCOUNT_CLASS_HASH: &str =
-    "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276";
-pub const ERC721_ADDRESS: &str = "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02";
-pub const ERC721_CLASS_HASH: &str = "0x80000";
-pub const UDC_CONTRACT_ADDRESS: &str = "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf";
-pub const UDC_CLASS_HASH: &str = "0x90000";
+pub const GENESIS_ASSETS_FILES: [&str; 5] =
+    ["Account.json", "AccountBaseImpl.json", "CallAggregator.json", "genesis.json", "Proxy.json"];
 
-pub const PUBLIC_KEY: &str = "0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2";
+pub const CAIRO_CONTRACTS_URL: &str =
+    "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/cairo-contracts/";
+
+pub const CAIRO_CONTRACTS_FILES: [&str; 33] = [
+    "ArgentAccount.json",
+    "bigint.json",
+    "BraavosAccount.json",
+    "calls.json",
+    "constants.json",
+    "Counter.json",
+    "ec.json",
+    "ec_mulmuladd.json",
+    "ec_mulmuladd_secp256r1.json",
+    "emit_multiple_events_across_contracts.json",
+    "emit_single_event.json",
+    "ERC20.json",
+    "ERC721.json",
+    "Example.sierra.json",
+    "field.json",
+    "guards.json",
+    "l1_handler.json",
+    "library.json",
+    "NoValidateAccount.json",
+    "OpenzeppelinAccount.json",
+    "Proxy.json",
+    "security_test.json",
+    "signature.json",
+    "test.json",
+    "UnauthorizedInnerCallAccount.json",
+    "UniversalDeployer.json",
+    "upgradable.json",
+    "cairo_1/erc20.casm.json",
+    "cairo_1/erc20.sierra.json",
+    "cairo_1/HelloStarknet.casm.json",
+    "cairo_1/HelloStarknet.sierra.json",
+    "cairo_1/NoValidateAccount.casm.json",
+    "cairo_1/NoValidateAccount.sierra.json",
+];

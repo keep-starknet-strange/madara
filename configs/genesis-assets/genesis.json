@@ -1,0 +1,199 @@
+{
+  "contract_classes": [
+    [
+      "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f",
+      {
+        "path": "cairo-contracts/NoValidateAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d",
+      {
+        "path": "cairo-contracts/ArgentAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9",
+      { "path": "cairo-contracts/Proxy.json", "version": 0 }
+    ],
+    [
+      "0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4",
+      { "path": "genesis-assets/Account.json", "version": 0 }
+    ],
+    [
+      "0x5aa23d5bb71ddaa783da7ea79d405315bafa7cf0387a74f4593578c3e9e6570",
+      {
+        "path": "genesis-assets/AccountBaseImpl.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x07db5c2c2676c2a5bfc892ee4f596b49514e3056a0eee8ad125870b4fb1dd909",
+      {
+        "path": "genesis-assets/CallAggregator.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x3131fa018d520a037686ce3efddeab8f28895662f019ca3ca18a626650f7d1e",
+      { "path": "cairo-contracts/Proxy.json", "version": 0 }
+    ],
+    [
+      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd",
+      {
+        "path": "cairo-contracts/OpenzeppelinAccount.json",
+        "version": 0
+      }
+    ],
+    [
+      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276",
+      {
+        "path": "cairo-contracts/NoValidateAccount.casm.json",
+        "version": 1
+      }
+    ],
+    ["0x1000", { "path": "cairo-contracts/test.json", "version": 0 }],
+    ["0x10000", { "path": "cairo-contracts/ERC20.json", "version": 0 }],
+    ["0x20000", { "path": "cairo-contracts/ERC20.json", "version": 0 }],
+    ["0x80000", { "path": "cairo-contracts/ERC721.json", "version": 0 }],
+    [
+      "0x90000",
+      {
+        "path": "cairo-contracts/UniversalDeployer.json",
+        "version": 0
+      }
+    ]
+  ],
+  "contracts": [
+    [
+      "0x1",
+      "0x0279d77db761fba82e0054125a6fdb5f6baa6286fa3fb73450cc44d193c2d37f"
+    ],
+    [
+      "0x2",
+      "0x06f0d6f6ae72e1a507ff4b65181291642889742dbf8f1a53e9ec1c595d01ba7d"
+    ],
+    [
+      "0x3",
+      "0x006280083f8c2a2db9f737320d5e3029b380e0e820fe24b8d312a6a34fdba0cd"
+    ],
+    [
+      "0x4",
+      "0x35ccefcf9d5656da623468e27e682271cd327af196785df99e7fee1436b6276"
+    ],
+    ["0x1111", "0x1000"],
+    [
+      "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
+      "0x10000"
+    ],
+    [
+      "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02",
+      "0x80000"
+    ],
+    [
+      "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+      "0x20000"
+    ],
+    [
+      "0x041a78e741e5af2fec34b695679bc6891742439f7afb8484ecd7766661ad02bf",
+      "0x90000"
+    ]
+  ],
+  "storage": [
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0a"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bc"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x45abe05a3e7fb0c2ae1fa912be22a7dbc4832915e00562e2783dee710b9e4bd"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x262e096a838c0d8f34f641ff917d47d7dcb345c69efe61d9ab6b675e7340fc6"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x262e096a838c0d8f34f641ff917d47d7dcb345c69efe61d9ab6b675e7340fc7"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f2146f"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+        "0x1d8bbc4f93f5ab9858f6c0c0de2769599fb97511503d5bf2872ef6846f21470"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
+        "0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f09"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d00",
+        "0x7b62949c85c6af8a50c11c22927f9302f7a2e40bc93b4c988415915b0f97f0a"
+      ],
+      "0xffffffffffffffffffffffffffffffff"
+    ],
+    [
+      [
+        "0x2",
+        "0x1ccc09c8a19948e048de7add6929589945e25f22059c7345aaf7837188d8d05"
+      ],
+      "0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
+    ],
+    [
+      [
+        "0x3",
+        "0x1379ac0624b939ceb9dede92211d7db5ee174fe28be72245b0a1a2abd81c98f"
+      ],
+      "0x3603a2692a2ae60abb343e832ee53b55d6b25f02a3ef1565ec691edc7a209b2"
+    ],
+    [
+      [
+        "0x040e59c2c182a58fb0a74349bfa4769cbbcba32547591dd3fb1def8623997d02",
+        "0x2bd557f4ba80dfabefabe45e9b2dd35db1b9a78e96c72bc2b69b655ce47a930"
+      ],
+      "0x1"
+    ]
+  ],
+  "fee_token_address": "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+  "seq_addr_updated": true
+}
