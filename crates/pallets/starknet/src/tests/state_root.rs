@@ -16,6 +16,7 @@ fn given_default_runtime_with_state_root_disabled_default_value_is_correct() {
 }
 
 #[test]
+#[ignore]
 fn given_default_runtime_with_state_root_enabled_default_value_is_correct() {
     new_test_ext::<state_root_mock::MockRuntime>().execute_with(|| {
         state_root_mock::basic_test_setup(2);

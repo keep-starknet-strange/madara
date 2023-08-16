@@ -377,20 +377,6 @@ pub mod pallet {
 
             for (address, class_hash) in self.contracts.iter() {
                 ContractClassHashes::<T>::insert(address, class_hash);
-
-                // Update state tries if enabled in the runtime configuration
-                if T::EnableStateRoot::get() {
-                    // Update contracts trie
-                    let mut tree = crate::StarknetStateCommitments::<T>::get().storage_commitment;
-                    let nonce = Pallet::<T>::nonce(address);
-                    let contract_root = Pallet::<T>::contract_state_root_by_address(address).unwrap_or_default();
-                    let hash = calculate_contract_state_hash::<T::SystemHash>(*class_hash, contract_root, nonce);
-                    tree.set(*address, hash);
-
-                    crate::StarknetStateCommitments::<T>::mutate(|state| {
-                        state.storage_commitment = tree;
-                    })
-                }
             }
 
             for (class_hash, contract_class) in self.contract_classes.iter() {
@@ -399,17 +385,6 @@ pub mod pallet {
 
             for (key, value) in self.storage.iter() {
                 StorageView::<T>::insert(key, value);
-
-                // Update state tries if enabled in the runtime configuration
-                if T::EnableStateRoot::get() {
-                    // Store intermediary state updates
-                    // As we update this mapping iteratively
-                    // We will end up with only the latest storage slot update
-                    // TODO: Estimate overhead of this approach
-                    PendingStorageChanges::<T>::mutate(key.0, |storage_slots| {
-                        storage_slots.try_push((key.1, *value)).unwrap(); // TODO: unwrap safu ??
-                    });
-                }
             }
 
             LastKnownEthBlock::<T>::set(None);
@@ -1009,8 +984,7 @@ impl<T: Config> Pallet<T> {
         let parent_block_hash = Self::parent_block_hash(&block_number);
         let pending = Self::pending();
 
-        let global_state_root =
-            if T::EnableStateRoot::get() { Self::compute_and_store_state_root() } else { Felt252Wrapper::default() };
+        let global_state_root = Felt252Wrapper::default();
 
         let sequencer_address = Self::sequencer_address();
         let block_timestamp = Self::block_timestamp();
