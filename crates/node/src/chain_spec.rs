@@ -1,5 +1,8 @@
+use std::path::PathBuf;
+
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-use pallet_starknet::genesis_loader::{read_file_to_string, GenesisLoader};
+use pallet_starknet::genesis_loader::GenesisLoader;
+use pallet_starknet::utils;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -46,8 +49,9 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSpec, String> {
+pub fn development_config(enable_manual_seal: Option<bool>, madara_path: PathBuf) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    let madara_path = madara_path.to_str().unwrap().to_string();
 
     Ok(DevChainSpec::from_genesis(
         // Name
@@ -58,6 +62,7 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
         move || {
             DevGenesisExt {
                 genesis_config: testnet_genesis(
+                    madara_path.clone(),
                     wasm_binary,
                     // Initial PoA authorities
                     vec![authority_keys_from_seed("Alice")],
@@ -80,8 +85,9 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
     ))
 }
 
-pub fn local_testnet_config() -> Result<ChainSpec, String> {
+pub fn local_testnet_config(madara_path: PathBuf) -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    let madara_path = madara_path.to_str().unwrap().to_string();
 
     Ok(ChainSpec::from_genesis(
         // Name
@@ -91,6 +97,7 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         ChainType::Local,
         move || {
             testnet_genesis(
+                madara_path.clone(),
                 wasm_binary,
                 // Initial PoA authorities
                 // Intended to be only 2
@@ -114,12 +121,15 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
+    madara_path: String,
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let genesis: GenesisLoader =
-        serde_json::from_str(&read_file_to_string("crates/node/src/genesis_assets/genesis.json")).unwrap();
+    let genesis = madara_path.clone() + "/genesis-assets/genesis.json";
+    let genesis = utils::read_file_to_string(genesis).expect("Failed to read genesis file");
+    let mut genesis: GenesisLoader = serde_json::from_str(&genesis).expect("Failed loading genesis");
+    genesis.set_madara_path(madara_path);
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
 
     GenesisConfig {

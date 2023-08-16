@@ -153,9 +153,8 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
       });
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const latestBlock: Block = await providerRPC.getBlockWithTxHashes(
-        "latest",
-      );
+      const latestBlock: Block =
+        await providerRPC.getBlockWithTxHashes("latest");
       expect(latestBlock).to.not.be.undefined;
       expect(latestBlock.status).to.be.equal("ACCEPTED_ON_L2");
       expect(latestBlock.transactions.length).to.be.equal(0);
@@ -173,9 +172,8 @@ describeDevMadara("Starknet RPC - Block Test", (context) => {
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const blockWithTxHashes: Block = await providerRPC.getBlockWithTxHashes(
-        "latest",
-      );
+      const blockWithTxHashes: Block =
+        await providerRPC.getBlockWithTxHashes("latest");
       expect(blockWithTxHashes).to.not.be.undefined;
       expect(blockWithTxHashes.status).to.be.equal("ACCEPTED_ON_L2");
       expect(blockWithTxHashes.transactions.length).to.be.equal(1);
