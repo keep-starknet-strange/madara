@@ -1074,7 +1074,7 @@ impl<T: Config> Pallet<T> {
     ///
     /// Next expected event order
     #[inline(always)]
-    fn emit_events(
+    fn emit_events_in_call_info(
         call_info: &CallInfo,
         events: &mut Vec<StarknetEventType>,
         next_order: usize,
@@ -1098,7 +1098,8 @@ impl<T: Config> Pallet<T> {
 
             // Go deeper to find the continuation of the sequence
             if inner_call_idx < call_info.inner_calls.len() {
-                next_order = Self::emit_events(&call_info.inner_calls[inner_call_idx], events, next_order)?;
+                next_order =
+                    Self::emit_events_in_call_info(&call_info.inner_calls[inner_call_idx], events, next_order)?;
                 inner_call_idx += 1;
                 continue;
             }
@@ -1180,11 +1181,11 @@ impl<T: Config> Pallet<T> {
         let mut events = Vec::new();
         match (execute_call_info, fee_transfer_call_info) {
             (Some(exec), Some(fee)) => {
-                Self::emit_events(&exec, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
-                Self::emit_events(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+                Self::emit_events_in_call_info(&exec, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+                Self::emit_events_in_call_info(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
             }
             (_, Some(fee)) => {
-                Self::emit_events(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+                Self::emit_events_in_call_info(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
             }
             _ => {}
         };
