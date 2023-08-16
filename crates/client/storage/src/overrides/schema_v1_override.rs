@@ -2,17 +2,12 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 
 use blockifier::execution::contract_class::ContractClass;
-use frame_system::EventRecord;
-use madara_runtime::{Hash, RuntimeEvent};
 use mp_starknet::execution::types::{ClassHashWrapper, ContractAddressWrapper, Felt252Wrapper};
 use mp_starknet::storage::{
-    PALLET_STARKNET, PALLET_SYSTEM, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH,
-    STARKNET_CONTRACT_STATE_ROOT, STARKNET_CONTRACT_STATE_TRIES, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS,
-    STARKNET_STORAGE, SYSTEM_EVENTS,
+    PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_CONTRACT_STATE_ROOT,
+    STARKNET_CONTRACT_STATE_TRIES, STARKNET_NONCE, STARKNET_STATE_COMMITMENTS, STARKNET_STORAGE,
 };
-use mp_starknet::transaction::types::EventWrapper;
 use pallet_starknet::types::{NonceWrapper, StateCommitments, StateTrie};
-use pallet_starknet::Event;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use scale_codec::{Decode, Encode};
@@ -146,20 +141,6 @@ where
             Some(nonce) => Some(nonce),
             None => Some(NonceWrapper::default()),
         }
-    }
-
-    fn events(&self, block_hash: <B as BlockT>::Hash) -> Option<Vec<EventWrapper>> {
-        let events_key = storage_prefix_build(PALLET_SYSTEM, SYSTEM_EVENTS);
-        let events = self.query_storage::<Vec<EventRecord<RuntimeEvent, Hash>>>(block_hash, &StorageKey(events_key));
-        events.map(|events| {
-            events
-                .into_iter()
-                .filter_map(|e| match e {
-                    EventRecord { event: RuntimeEvent::Starknet(Event::StarknetEvent(event)), .. } => Some(event),
-                    _ => None,
-                })
-                .collect()
-        })
     }
 
     fn state_commitments(&self, block_hash: <B as BlockT>::Hash) -> Option<StateCommitments> {
