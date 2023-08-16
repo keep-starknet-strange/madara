@@ -25,3 +25,4 @@
 - fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
 - fix: update the default port for running Madara locally in getting-started.md
   file from 9933 to 9944.
+- dev: replace the 0 initial gas value with u128::MAX because view call entrypoints were failing
