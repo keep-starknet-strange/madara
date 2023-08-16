@@ -343,8 +343,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54669079?v=4",
       "profile": "https://github.com/nikania",
       "contributions": ["code"]
+    },
+    {
+      "login": "0xAsten",
+      "name": "Asten",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114395459?v=4",
+      "profile": "https://github.com/0xAsten",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,
   "linkToUsage": false
 }
+
