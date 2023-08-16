@@ -1,10 +1,10 @@
 [package]
 name = "mp-starknet"
-version = "0.1.0-alpha"
+version.workspace = true
+edition.workspace = true
 license = "MIT"
 description = "Starknet primitives for Substrate."
 authors = { workspace = true }
-edition = { workspace = true }
 repository = { workspace = true }
 
 [package.metadata.docs.rs]
