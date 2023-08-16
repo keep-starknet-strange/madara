@@ -216,14 +216,14 @@ pub fn run() -> sc_cli::Result<()> {
                 // Issue #982
                 for file in constants::GENESIS_ASSETS_FILES {
                     let src_path = utils::get_project_path();
-                    if src_path.is_err() {
+                    if let Ok(src_path) = src_path {
+                        let src_path = src_path + "/configs/genesis-assets/" + file;
+                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
+                    } else {
                         utils::fetch_from_url(
                             constants::GENESIS_ASSETS_URL.to_string() + file,
                             madara_path.clone() + "/genesis-assets",
                         )?;
-                    } else {
-                        let src_path = src_path.unwrap() + "/configs/genesis-assets/" + file;
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
                     }
                 }
             }
@@ -232,14 +232,14 @@ pub fn run() -> sc_cli::Result<()> {
             // Issue #982
             for file in constants::CAIRO_CONTRACTS_FILES {
                 let src_path = utils::get_project_path();
-                if src_path.is_err() {
+                if let Ok(src_path) = src_path {
+                    let src_path = src_path + "/configs/cairo-contracts/" + file;
+                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
+                } else {
                     utils::fetch_from_url(
                         constants::CAIRO_CONTRACTS_URL.to_string() + file,
                         madara_path.clone() + "/cairo-contracts",
                     )?;
-                } else {
-                    let src_path = src_path.unwrap() + "/configs/cairo-contracts/" + file;
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
                 }
             }
 
@@ -250,14 +250,14 @@ pub fn run() -> sc_cli::Result<()> {
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
                     let src_path = utils::get_project_path();
-                    if src_path.is_err() {
+                    if let Ok(src_path) = src_path {
+                        let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
+                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
+                    } else {
                         utils::fetch_from_url(
                             constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                             madara_path.clone() + "/chain-specs",
                         )?;
-                    } else {
-                        let src_path = src_path.unwrap() + "/configs/chain-specs/testnet-sharingan-raw.json";
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
                     }
 
                     cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");

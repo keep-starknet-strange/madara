@@ -44,13 +44,9 @@ impl From<core::str::Utf8Error> for Error {
 pub fn get_project_path() -> Result<String, Error> {
     let workspace = std::process::Command::new(env!("CARGO"))
         .args(["locate-project", "--workspace", "--message-format=plain"])
-        .output();
+        .output()?;
 
-    if workspace.is_err() {
-        return Err("Failed to locate the project".into());
-    }
-
-    let mut dir = std::path::PathBuf::from(std::str::from_utf8(&workspace?.stdout)?.trim());
+    let mut dir = std::path::PathBuf::from(std::str::from_utf8(&workspace.stdout)?.trim());
     dir.pop();
     Ok(dir.to_str().ok_or("Failed to get project path")?.to_string())
 }
@@ -77,26 +73,13 @@ pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
     let dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst)?;
 
-    let response = reqwest::blocking::get(target.clone());
-    if response.is_err() {
-        log::info!("Failed to fetch {} from url", target);
-        return Err("Failed to fetch from url".into());
-    }
+    let response = reqwest::blocking::get(target.clone())?;
 
-    let file = std::fs::File::create(dst.join(target.split('/').last().ok_or("File name not found")?));
-    if file.is_err() {
-        log::info!("Failed to create file {} from url", target);
-        return Err("Failed to create file".into());
-    }
+    let mut file = std::fs::File::create(dst.join(target.split('/').last().ok_or("File name not found")?))?;
+    let bytes = response.bytes()?;
 
-    let bytes = response?.bytes();
-    if bytes.is_err() {
-        log::info!("Failed to get bytes from {} from url", target);
-        return Err("Failed to get bytes from url".into());
-    }
-
-    let mut content = std::io::Cursor::new(bytes?);
-    std::io::copy(&mut content, &mut file?)?;
+    let mut content = std::io::Cursor::new(bytes);
+    std::io::copy(&mut content, &mut file)?;
 
     Ok(())
 }
