@@ -350,8 +350,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/114395459?v=4",
       "profile": "https://github.com/0xAsten",
       "contributions": ["code"]
+    },
+    {
+      "login": "ben2077",
+      "name": "ben2077",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22720665?v=4",
+      "profile": "https://github.com/ben2077",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,
   "linkToUsage": false
 }
+

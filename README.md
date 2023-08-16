@@ -226,6 +226,9 @@ Thanks goes to these wonderful people
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/nikania"><img src="https://avatars.githubusercontent.com/u/54669079?v=4?s=100" width="100px;" alt="Veronika S"/><br /><sub><b>Veronika S</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=nikania" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/0xAsten"><img src="https://avatars.githubusercontent.com/u/114395459?v=4?s=100" width="100px;" alt="Asten"/><br /><sub><b>Asten</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=0xAsten" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ben2077"><img src="https://avatars.githubusercontent.com/u/22720665?v=4?s=100" width="100px;" alt="ben2077"/><br /><sub><b>ben2077</b></sub></a><br /><a href="https://github.com/keep-starknet-strange/madara/commits?author=ben2077" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
