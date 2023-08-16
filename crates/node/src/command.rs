@@ -35,9 +35,14 @@ impl SubstrateCli for Cli {
         Ok(match id {
             "dev" => {
                 let enable_manual_seal = self.sealing.map(|_| true);
-                Box::new(chain_spec::development_config(enable_manual_seal, self.run.madara_path.clone())?)
+                Box::new(chain_spec::development_config(
+                    enable_manual_seal,
+                    self.run.madara_path.clone().expect("Failed retrieving madara_path"),
+                )?)
             }
-            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(self.run.madara_path.clone())?),
+            "" | "local" | "madara-local" => Box::new(chain_spec::local_testnet_config(
+                self.run.madara_path.clone().expect("Failed retrieving madara_path"),
+            )?),
             path => Box::new(chain_spec::ChainSpec::from_json_file(std::path::PathBuf::from(path))?),
         })
     }
@@ -185,32 +190,31 @@ pub fn run() -> sc_cli::Result<()> {
             }
 
             // alias madara_path <> base_path <> TODO tmp
-            let madara_path = if cli.run.madara_path.is_some() {
-                let path = cli.run.madara_path.clone().unwrap().to_str().unwrap().to_string();
-                cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-                path
-            } else if cli.run.run_cmd.shared_params.base_path.is_some() {
-                let path = cli.run.run_cmd.shared_params.base_path.clone().unwrap().to_str().unwrap().to_string();
-                cli.run.madara_path = Some((path.clone()).into());
-                path
-            } else {
-                let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
-                let path = format!("{}/.madara", home_path);
-                cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
-                cli.run.madara_path = Some((path.clone()).into());
-                path
+            let madara_path = match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
+                (Some(madara_path), _) => {
+                    cli.run.run_cmd.shared_params.base_path = Some(madara_path.clone());
+                    madara_path.to_str().unwrap().to_string()
+                }
+                (_, Some(base_path)) => {
+                    cli.run.madara_path = Some(base_path.clone());
+                    base_path.to_str().unwrap().to_string()
+                }
+                _ => {
+                    let home_path = std::env::var("HOME").unwrap_or(std::env::var("USERPROFILE").unwrap_or(".".into()));
+                    let path = format!("{}/.madara", home_path);
+                    cli.run.run_cmd.shared_params.base_path = Some((path.clone()).into());
+                    cli.run.madara_path = Some((path.clone()).into());
+                    path
+                }
             };
 
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
-            if cli.run.genesis_url.is_some() {
+            if let Some(genesis_url) = cli.run.genesis_url.clone() {
                 // can't copy extra genesis-assets atm
                 // we can reuse #982 to create the standard to fetch relevant files
-                utils::fetch_from_url(
-                    cli.run.genesis_url.clone().unwrap(),
-                    madara_path.clone() + "/configs/genesis-assets",
-                )?;
+                utils::fetch_from_url(genesis_url, madara_path.clone() + "/configs/genesis-assets")?;
             } else {
                 // TODO confirm with the CI that we are fetching all and fetch dynamically
                 // Issue #982
@@ -243,8 +247,8 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             }
 
-            if cli.run.chain_spec_url.is_some() && cli.run.testnet.is_none() {
-                utils::fetch_from_url(cli.run.chain_spec_url.clone().unwrap(), madara_path.clone() + "/chain-specs")?;
+            if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
+                utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
             }
 
             if cli.run.testnet.is_some() {

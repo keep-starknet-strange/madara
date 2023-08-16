@@ -49,12 +49,9 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config(
-    enable_manual_seal: Option<bool>,
-    madara_path: Option<PathBuf>,
-) -> Result<DevChainSpec, String> {
+pub fn development_config(enable_manual_seal: Option<bool>, madara_path: PathBuf) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-    let madara_path = madara_path.unwrap().to_str().unwrap().to_string();
+    let madara_path = madara_path.to_str().unwrap().to_string();
 
     Ok(DevChainSpec::from_genesis(
         // Name
@@ -88,9 +85,9 @@ pub fn development_config(
     ))
 }
 
-pub fn local_testnet_config(madara_path: Option<PathBuf>) -> Result<ChainSpec, String> {
+pub fn local_testnet_config(madara_path: PathBuf) -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
-    let madara_path = madara_path.unwrap().to_str().unwrap().to_string();
+    let madara_path = madara_path.to_str().unwrap().to_string();
 
     Ok(ChainSpec::from_genesis(
         // Name
@@ -130,11 +127,8 @@ fn testnet_genesis(
     _enable_println: bool,
 ) -> GenesisConfig {
     let genesis = madara_path.clone() + "/genesis-assets/genesis.json";
-    let genesis = utils::read_file_to_string(genesis);
-    if genesis.is_err() {
-        panic!("Failed to read genesis file");
-    }
-    let mut genesis: GenesisLoader = serde_json::from_str(&genesis.unwrap()).unwrap();
+    let genesis = utils::read_file_to_string(genesis).expect("Failed to read genesis file");
+    let mut genesis: GenesisLoader = serde_json::from_str(&genesis).expect("Failed loading genesis");
     genesis.set_madara_path(madara_path);
     let starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis.into();
 
