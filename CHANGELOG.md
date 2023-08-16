@@ -2,6 +2,8 @@
 
 ## Next release
 
+- ci: fix docker and binaries build
+
 ## v0.1.0
 
 - feat: refactor flags on tests
