@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["copy_chain_spec","run"]};
+window.SIDEBAR_ITEMS = {"fn":["run"]};

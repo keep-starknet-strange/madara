@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"fn":["copy_from_filesystem","fetch_from_url","get_project_path","read_file_to_string"]};

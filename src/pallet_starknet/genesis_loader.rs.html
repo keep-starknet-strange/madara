@@ -148,9 +148,12 @@
 <a href="#148" id="148">148</a>
 <a href="#149" id="149">149</a>
 <a href="#150" id="150">150</a>
-</pre><pre class="rust"><code><span class="kw">use </span>std::fs;
-<span class="kw">use </span>std::path::PathBuf;
-<span class="kw">use </span>std::string::String;
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::vec::Vec;
 
 <span class="kw">use </span>blockifier::execution::contract_class::ContractClass <span class="kw">as </span>StarknetContractClass;
@@ -162,7 +165,7 @@
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
 <span class="kw">use </span><span class="kw">crate</span>::types::ContractStorageKeyWrapper;
-<span class="kw">use </span><span class="kw">crate</span>::GenesisConfig;
+<span class="kw">use crate</span>::{utils, GenesisConfig};
 
 <span class="doccomment">/// A wrapper for FieldElement that implements serde&#39;s Serialize and Deserialize for hex strings.
 </span><span class="attr">#[serde_as]
@@ -177,6 +180,7 @@
 
 <span class="attr">#[derive(Deserialize, Serialize)]
 </span><span class="kw">pub struct </span>GenesisLoader {
+    <span class="kw">pub </span>madara_path: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>contract_classes: Vec&lt;(ClassHash, ContractClass)&gt;,
     <span class="kw">pub </span>contracts: Vec&lt;(ContractAddress, ClassHash)&gt;,
     <span class="kw">pub </span>storage: Vec&lt;(ContractStorageKey, StorageValue)&gt;,
@@ -191,6 +195,12 @@
     Class(StarknetContractClass),
 }
 
+<span class="kw">impl </span>GenesisLoader {
+    <span class="kw">pub fn </span>set_madara_path(<span class="kw-2">&amp;mut </span><span class="self">self</span>, madara_path: String) {
+        <span class="self">self</span>.madara_path = <span class="prelude-val">Some</span>(madara_path);
+    }
+}
+
 <span class="kw">impl</span>&lt;T: <span class="kw">crate</span>::Config&gt; From&lt;GenesisLoader&gt; <span class="kw">for </span>GenesisConfig&lt;T&gt; {
     <span class="kw">fn </span>from(loader: GenesisLoader) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>contract_classes = loader
@@ -200,7 +210,14 @@
                 <span class="kw">let </span>hash = <span class="kw">unsafe </span>{ std::mem::transmute::&lt;ClassHash, ClassHashWrapper&gt;(hash) };
                 <span class="kw">match </span>class {
                     ContractClass::Path { path, version } =&gt; {
-                        (hash, get_contract_class(<span class="kw-2">&amp;</span>read_file_to_string(<span class="kw-2">&amp;</span>path), version))
+                        <span class="kw">let </span>contract_path = <span class="kw">match </span>loader.madara_path.clone() {
+                            <span class="prelude-val">Some</span>(madara_path) =&gt; madara_path + <span class="string">&quot;/&quot; </span>+ <span class="kw-2">&amp;</span>path,
+                            <span class="prelude-val">None </span>=&gt; {
+                                <span class="kw">let </span>project_path = utils::get_project_path().expect(<span class="string">&quot;Project path not found&quot;</span>);
+                                project_path + <span class="string">&quot;/&quot; </span>+ <span class="kw-2">&amp;</span>path
+                            }
+                        };
+                        (hash, get_contract_class(<span class="kw-2">&amp;</span>utils::read_file_to_string(contract_path).unwrap(), version))
                     }
                     ContractClass::Class(class) =&gt; (hash, class),
                 }
@@ -238,18 +255,6 @@
     }
 }
 
-<span class="kw">pub fn </span>read_file_to_string(path: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="kw">let </span>workspace = std::process::Command::new(<span class="macro">env!</span>(<span class="string">&quot;CARGO&quot;</span>))
-        .args([<span class="string">&quot;locate-project&quot;</span>, <span class="string">&quot;--workspace&quot;</span>, <span class="string">&quot;--message-format=plain&quot;</span>])
-        .output()
-        .expect(<span class="string">&quot;Failed to execute cargo locate-project command&quot;</span>)
-        .stdout;
-    <span class="kw">let </span><span class="kw-2">mut </span>dir = PathBuf::from(std::str::from_utf8(<span class="kw-2">&amp;</span>workspace).unwrap().trim());
-    dir.pop();
-    dir.push(path);
-    fs::read_to_string(dir).unwrap()
-}
-
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -263,8 +268,13 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_deserialize_loader() {
         <span class="comment">// When
-        </span><span class="kw">let </span>loader: GenesisLoader =
-            serde_json::from_str(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;crates/pallets/starknet/src/tests/mock/genesis.json&quot;</span>)).unwrap();
+        </span><span class="kw">let </span>loader: GenesisLoader = serde_json::from_str(
+            <span class="kw-2">&amp;</span>utils::read_file_to_string(
+                utils::get_project_path().unwrap() + <span class="string">&quot;/crates/pallets/starknet/src/tests/mock/genesis.json&quot;</span>,
+            )
+            .unwrap(),
+        )
+        .unwrap();
 
         <span class="comment">// Then
         </span><span class="macro">assert_eq!</span>(<span class="number">13</span>, loader.contract_classes.len());
@@ -273,8 +283,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_serialize_loader() {
         <span class="comment">// Given
-        </span><span class="kw">let </span>class: ContractClass =
-            ContractClass::Path { path: <span class="string">&quot;./cairo-contracts/build/ERC20.json&quot;</span>.into(), version: <span class="number">0 </span>};
+        </span><span class="kw">let </span>class: ContractClass = ContractClass::Path { path: <span class="string">&quot;cairo-contracts/ERC20.json&quot;</span>.into(), version: <span class="number">0 </span>};
 
         <span class="kw">let </span>class_hash = FieldElement::from(<span class="number">1u8</span>).into();
         <span class="kw">let </span>contract_address = FieldElement::from(<span class="number">2u8</span>).into();
@@ -283,6 +292,7 @@
         <span class="kw">let </span>fee_token_address = FieldElement::from(<span class="number">5u8</span>).into();
 
         <span class="kw">let </span>genesis_loader = GenesisLoader {
+            madara_path: <span class="prelude-val">None</span>,
             contract_classes: <span class="macro">vec!</span>[(class_hash, class)],
             contracts: <span class="macro">vec!</span>[(contract_address, class_hash)],
             storage: <span class="macro">vec!</span>[((contract_address, storage_key), storage_value)],
@@ -294,7 +304,7 @@
         </span><span class="kw">let </span>serialized_loader = serde_json::to_string(<span class="kw-2">&amp;</span>genesis_loader).unwrap();
 
         <span class="comment">// Then
-        </span><span class="kw">let </span>expected = <span class="string">r#&quot;{&quot;contract_classes&quot;:[[&quot;0x1&quot;,{&quot;path&quot;:&quot;./cairo-contracts/build/ERC20.json&quot;,&quot;version&quot;:0}]],&quot;contracts&quot;:[[&quot;0x2&quot;,&quot;0x1&quot;]],&quot;storage&quot;:[[[&quot;0x2&quot;,&quot;0x3&quot;],&quot;0x4&quot;]],&quot;fee_token_address&quot;:&quot;0x5&quot;,&quot;seq_addr_updated&quot;:false}&quot;#</span>;
+        </span><span class="kw">let </span>expected = <span class="string">r#&quot;{&quot;madara_path&quot;:null,&quot;contract_classes&quot;:[[&quot;0x1&quot;,{&quot;path&quot;:&quot;cairo-contracts/ERC20.json&quot;,&quot;version&quot;:0}]],&quot;contracts&quot;:[[&quot;0x2&quot;,&quot;0x1&quot;]],&quot;storage&quot;:[[[&quot;0x2&quot;,&quot;0x3&quot;],&quot;0x4&quot;]],&quot;fee_token_address&quot;:&quot;0x5&quot;,&quot;seq_addr_updated&quot;:false}&quot;#</span>;
         <span class="macro">assert_eq!</span>(expected, serialized_loader);
     }
 }

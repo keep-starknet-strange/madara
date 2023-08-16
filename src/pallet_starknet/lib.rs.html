@@ -1212,6 +1212,9 @@
 <a href="#1212" id="1212">1212</a>
 <a href="#1213" id="1213">1213</a>
 <a href="#1214" id="1214">1214</a>
+<a href="#1215" id="1215">1215</a>
+<a href="#1216" id="1216">1216</a>
+<a href="#1217" id="1217">1217</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1266,6 +1269,9 @@
 </span><span class="kw">pub mod </span>transaction_validation;
 <span class="doccomment">/// The Starknet pallet&#39;s runtime custom types.
 </span><span class="kw">pub mod </span>types;
+<span class="doccomment">/// Util functions for madara.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="kw">pub mod </span>utils;
 
 <span class="doccomment">/// Everything needed to run the pallet offchain workers
 </span><span class="kw">mod </span>offchain_worker;

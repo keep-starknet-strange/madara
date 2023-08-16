@@ -135,8 +135,21 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-</pre><pre class="rust"><code><span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
-<span class="kw">use </span>pallet_starknet::genesis_loader::{read_file_to_string, GenesisLoader};
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+</pre><pre class="rust"><code><span class="kw">use </span>std::path::PathBuf;
+
+<span class="kw">use </span>madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, SystemConfig, WASM_BINARY};
+<span class="kw">use </span>pallet_starknet::genesis_loader::GenesisLoader;
+<span class="kw">use </span>pallet_starknet::utils;
 <span class="kw">use </span>sc_service::ChainType;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>sp_consensus_aura::sr25519::AuthorityId <span class="kw">as </span>AuraId;
@@ -183,8 +196,9 @@
     (get_from_seed::&lt;AuraId&gt;(s), get_from_seed::&lt;GrandpaId&gt;(s))
 }
 
-<span class="kw">pub fn </span>development_config(enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;DevChainSpec, String&gt; {
+<span class="kw">pub fn </span>development_config(enable_manual_seal: <span class="prelude-ty">Option</span>&lt;bool&gt;, madara_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;DevChainSpec, String&gt; {
     <span class="kw">let </span>wasm_binary = WASM_BINARY.ok_or_else(|| <span class="string">&quot;Development wasm not available&quot;</span>.to_string())<span class="question-mark">?</span>;
+    <span class="kw">let </span>madara_path = madara_path.to_str().unwrap().to_string();
 
     <span class="prelude-val">Ok</span>(DevChainSpec::from_genesis(
         <span class="comment">// Name
@@ -195,6 +209,7 @@
         <span class="kw">move </span>|| {
             DevGenesisExt {
                 genesis_config: testnet_genesis(
+                    madara_path.clone(),
                     wasm_binary,
                     <span class="comment">// Initial PoA authorities
                     </span><span class="macro">vec!</span>[authority_keys_from_seed(<span class="string">&quot;Alice&quot;</span>)],
@@ -217,8 +232,9 @@
     ))
 }
 
-<span class="kw">pub fn </span>local_testnet_config() -&gt; <span class="prelude-ty">Result</span>&lt;ChainSpec, String&gt; {
+<span class="kw">pub fn </span>local_testnet_config(madara_path: PathBuf) -&gt; <span class="prelude-ty">Result</span>&lt;ChainSpec, String&gt; {
     <span class="kw">let </span>wasm_binary = WASM_BINARY.ok_or_else(|| <span class="string">&quot;Development wasm not available&quot;</span>.to_string())<span class="question-mark">?</span>;
+    <span class="kw">let </span>madara_path = madara_path.to_str().unwrap().to_string();
 
     <span class="prelude-val">Ok</span>(ChainSpec::from_genesis(
         <span class="comment">// Name
@@ -228,6 +244,7 @@
         ChainType::Local,
         <span class="kw">move </span>|| {
             testnet_genesis(
+                madara_path.clone(),
                 wasm_binary,
                 <span class="comment">// Initial PoA authorities
                 // Intended to be only 2
@@ -251,12 +268,15 @@
 
 <span class="doccomment">/// Configure initial storage state for FRAME modules.
 </span><span class="kw">fn </span>testnet_genesis(
+    madara_path: String,
     wasm_binary: <span class="kw-2">&amp;</span>[u8],
     initial_authorities: Vec&lt;(AuraId, GrandpaId)&gt;,
     _enable_println: bool,
 ) -&gt; GenesisConfig {
-    <span class="kw">let </span>genesis: GenesisLoader =
-        serde_json::from_str(<span class="kw-2">&amp;</span>read_file_to_string(<span class="string">&quot;crates/node/src/genesis_assets/genesis.json&quot;</span>)).unwrap();
+    <span class="kw">let </span>genesis = madara_path.clone() + <span class="string">&quot;/genesis-assets/genesis.json&quot;</span>;
+    <span class="kw">let </span>genesis = utils::read_file_to_string(genesis).expect(<span class="string">&quot;Failed to read genesis file&quot;</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>genesis: GenesisLoader = serde_json::from_str(<span class="kw-2">&amp;</span>genesis).expect(<span class="string">&quot;Failed loading genesis&quot;</span>);
+    genesis.set_madara_path(madara_path);
     <span class="kw">let </span>starknet_genesis: madara_runtime::pallet_starknet::GenesisConfig&lt;<span class="kw">_</span>&gt; = genesis.into();
 
     GenesisConfig {

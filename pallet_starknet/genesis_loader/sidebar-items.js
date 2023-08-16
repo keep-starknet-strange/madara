@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ContractClass"],"fn":["read_file_to_string"],"struct":["GenesisLoader","HexFelt"]};
+window.SIDEBAR_ITEMS = {"enum":["ContractClass"],"struct":["GenesisLoader","HexFelt"]};
