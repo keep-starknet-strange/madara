@@ -189,7 +189,9 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
-            // alias madara_path <> base_path <> TODO tmp
+            // alias madara_path <> base_path
+            // TODO also alias tmp (tmp generates random base_paths that are not specified within
+            // the command)
             let madara_path = match (cli.run.madara_path.clone(), cli.run.run_cmd.shared_params.base_path.clone()) {
                 (Some(madara_path), _) => {
                     cli.run.run_cmd.shared_params.base_path = Some(madara_path.clone());
