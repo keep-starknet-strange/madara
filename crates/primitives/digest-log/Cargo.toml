@@ -1,10 +1,10 @@
 [package]
 name = "mp-digest-log"
-version = "0.1.0-alpha"
+version.workspace = true
+edition.workspace = true
 license = "MIT"
 description = "Primitives for Madara digest logs"
 authors = { workspace = true }
-edition = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
