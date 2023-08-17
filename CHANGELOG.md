@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
 - fix: changed log::info to println for file copy logs
 
