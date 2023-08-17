@@ -4,6 +4,7 @@
 
 ## v0.1.0
 
+- ci: rm codespell task and rm .codespellignore
 - feat: refactor flags on tests
 - feat: fetch config files from gh repo
 - refactor: remove config files from the code
