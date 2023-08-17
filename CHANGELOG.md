@@ -2,8 +2,15 @@
 
 ## Next release
 
+- ci: disable benchmark for pushes and pr's
+- ci: fix docker and binaries build
+
 ## v0.1.0
 
+- ci: rm codespell task and rm .codespellignore
+- feat: refactor flags on tests
+- feat: fetch config files from gh repo
+- refactor: remove config files from the code
 - ci: stop closing stale issues
 - ci: reactivate changelog enforcement
 - cli: change dev flag behaviour and created alias for base and madara path
@@ -18,3 +25,7 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
+- add-contributors: `0xAsten`
+- fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
+- fix: update the default port for running Madara locally in getting-started.md
+  file from 9933 to 9944.
