@@ -2,8 +2,10 @@
 
 ## Next release
 
+- docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
+- ci: don't enforce changelog on PR's with label `dependencies`
 
 ## v0.1.0
 
@@ -27,6 +29,7 @@
 - branding: use new logo in the README
 - feat: add `starknet_simulateTransactions` RPC endpoint
 - fix: events are emitted in correct sequential order
+- fix: expected event idx in cotinuation tokens in test responses
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
 - add-contributors: `0xAsten`
