@@ -80,6 +80,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
@@ -976,7 +977,7 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas,
+            INITIAL_GAS.into(),
             None,
         );
 
