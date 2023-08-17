@@ -4,6 +4,7 @@
 
 - ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
+- ci: don't enforce changelog on PR's with label `dependencies`
 
 ## v0.1.0
 
