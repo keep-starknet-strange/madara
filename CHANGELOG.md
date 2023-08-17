@@ -2,6 +2,8 @@
 
 ## Next release
 
+- ci: fix docker and binaries build
+
 ## v0.1.0
 
 - ci: rm codespell task and rm .codespellignore
