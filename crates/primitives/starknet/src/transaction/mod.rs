@@ -414,8 +414,7 @@ impl Transaction {
             }
         };
 
-        // FIXME 710
-        let mut initial_gas = super::constants::INITIAL_GAS_COST.into();
+        let mut initial_gas = super::constants::INITIAL_GAS.into();
 
         self.validate_tx(state, execution_resources, block_context, &account_context, tx_type, &mut initial_gas)
     }
@@ -543,7 +542,7 @@ impl Transaction {
         self.verify_tx_version(&tx_type)?;
 
         // FIXME 710
-        let mut initial_gas: Felt252 = super::constants::INITIAL_GAS_COST.into();
+        let mut initial_gas: Felt252 = super::constants::INITIAL_GAS.into();
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
