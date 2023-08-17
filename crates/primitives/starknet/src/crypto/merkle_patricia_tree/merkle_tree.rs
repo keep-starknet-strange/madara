@@ -256,8 +256,8 @@ impl<H: HasherT> MerkleTree<H> {
         //
         // 2. The tree is empty, we insert the new leaf and the root becomes an edge node connecting to it.
         //
-        // 3. The leaf does not exist, and the tree is not empty. The final node in the traversal will
-        //    be an edge node who's path diverges from our new leaf node's.
+        // 3. The leaf does not exist, and the tree is not empty. The final node in the traversal will be an
+        //    edge node who's path diverges from our new leaf node's.
         //
         //    This edge must be split into a new subtree containing both the existing edge's child and the
         //    new leaf. This requires an edge followed by a binary node and then further edges to both the
