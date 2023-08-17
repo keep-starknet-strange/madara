@@ -59,7 +59,7 @@ jobs:
           'aarch64-unknown-linux-gnu'
         run: |
           sudo apt update
-          sudo apt install -y clang llvm libudev-dev protobuf-compiler
+          sudo apt install -y clang llvm libudev-dev protobuf-compiler libssl-dev
 
       - name: Setup build deps (aarch64-unknown-linux-gnu)
         if: matrix.build == 'aarch64-unknown-linux-gnu'
