@@ -1215,6 +1215,43 @@
 <a href="#1215" id="1215">1215</a>
 <a href="#1216" id="1216">1216</a>
 <a href="#1217" id="1217">1217</a>
+<a href="#1218" id="1218">1218</a>
+<a href="#1219" id="1219">1219</a>
+<a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1297,6 +1334,7 @@
 <span class="kw">use </span>frame_system::pallet_prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span>mp_digest_log::MADARA_ENGINE_ID;
 <span class="kw">use </span>mp_starknet::block::{Block <span class="kw">as </span>StarknetBlock, Header <span class="kw">as </span>StarknetHeader, MaxStorageSlots, MaxTransactions};
+<span class="kw">use </span>mp_starknet::constants::INITIAL_GAS;
 <span class="kw">use </span>mp_starknet::crypto::commitment::{<span class="self">self</span>, calculate_contract_state_hash};
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
@@ -2193,8 +2231,8 @@
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas,
-            </span><span class="prelude-val">None</span>,
+            INITIAL_GAS.into(),
+            <span class="prelude-val">None</span>,
         );
 
         <span class="kw">match </span>entrypoint.execute(<span class="kw-2">&amp;mut </span>BlockifierStateAdapter::&lt;T&gt;::default(), block_context) {
@@ -2286,28 +2324,62 @@
     ///
     /// # Arguments
     ///
-    /// * `call_info` - The call info.
+    /// * `call_info` — A ref to the call info structure.
+    /// * `events` — A mutable ref to a resulting list of events
+    /// * `next_order` — Next expected event order, has to be 0 for a top level invocation
     ///
     /// # Returns
     ///
-    /// The result of the operation.
+    /// Next expected event order
     </span><span class="attr">#[inline(always)]
-    </span><span class="kw">fn </span>emit_events(call_info: <span class="kw-2">&amp;mut </span>CallInfo) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, EventError&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>events = Vec::new();
+    </span><span class="kw">fn </span>emit_events_in_call_info(
+        call_info: <span class="kw-2">&amp;</span>CallInfo,
+        events: <span class="kw-2">&amp;mut </span>Vec&lt;StarknetEventType&gt;,
+        next_order: usize,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, EventError&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>event_idx = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>inner_call_idx = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>next_order = next_order;
 
-        call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-        <span class="kw">for </span>ordered_event <span class="kw">in </span><span class="kw-2">&amp;</span>call_info.execution.events {
-            <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, call_info.call.storage_address)<span class="question-mark">?</span>;
-            events.push(event_type);
-        }
-
-        <span class="kw">for </span>inner_call <span class="kw">in </span><span class="kw-2">&amp;mut </span>call_info.inner_calls {
-            <span class="kw">let </span>inner_events = <span class="self">Self</span>::emit_events(inner_call)<span class="question-mark">?</span>;
-            <span class="kw">if </span>!inner_events.is_empty() {
-                events.extend(inner_events);
+        <span class="kw">loop </span>{
+            <span class="comment">// Emit current call&#39;s events as long as they have sequential orders
+            </span><span class="kw">if </span>event_idx &lt; call_info.execution.events.len() {
+                <span class="kw">let </span>ordered_event = <span class="kw-2">&amp;</span>call_info.execution.events[event_idx];
+                <span class="kw">if </span>ordered_event.order == next_order {
+                    <span class="kw">let </span>event_type = <span class="self">Self</span>::emit_event(<span class="kw-2">&amp;</span>ordered_event.event, call_info.call.storage_address)<span class="question-mark">?</span>;
+                    events.push(event_type);
+                    next_order += <span class="number">1</span>;
+                    event_idx += <span class="number">1</span>;
+                    <span class="kw">continue</span>;
+                }
             }
+
+            <span class="comment">// Go deeper to find the continuation of the sequence
+            </span><span class="kw">if </span>inner_call_idx &lt; call_info.inner_calls.len() {
+                next_order =
+                    <span class="self">Self</span>::emit_events_in_call_info(<span class="kw-2">&amp;</span>call_info.inner_calls[inner_call_idx], events, next_order)<span class="question-mark">?</span>;
+                inner_call_idx += <span class="number">1</span>;
+                <span class="kw">continue</span>;
+            }
+
+            <span class="comment">// At this point we have iterated over all sequential events and visited all internal calls
+            </span><span class="kw">break</span>;
         }
-        <span class="prelude-val">Ok</span>(events)
+
+        <span class="kw">if </span>event_idx &lt; call_info.execution.events.len() {
+            <span class="comment">// Normally this should not happen and we trust blockifier to produce correct event orders
+            </span><span class="macro">log!</span>(
+                debug,
+                <span class="string">&quot;Invalid event #{} order: expected {}, got {}\nCall info: {:#?}&quot;</span>,
+                event_idx,
+                next_order,
+                call_info.execution.events[event_idx].order,
+                call_info
+            );
+            <span class="kw">return </span><span class="prelude-val">Err</span>(EventError::InconsistentOrdering);
+        }
+
+        <span class="prelude-val">Ok</span>(next_order)
     }
 
     <span class="doccomment">/// Emit an event from the call info in substrate.
@@ -2364,14 +2436,16 @@
         execute_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
         fee_transfer_call_info: <span class="prelude-ty">Option</span>&lt;CallInfo&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;StarknetEventType&gt;, Error&lt;T&gt;&gt; {
-        <span class="kw">let </span>events = <span class="kw">match </span>(execute_call_info, fee_transfer_call_info) {
-            (<span class="prelude-val">Some</span>(<span class="kw-2">mut </span>exec), <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>fee)) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>exec).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
-                events.append(<span class="kw-2">&amp;mut </span><span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>fee).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>);
-                events
+        <span class="kw">let </span><span class="kw-2">mut </span>events = Vec::new();
+        <span class="kw">match </span>(execute_call_info, fee_transfer_call_info) {
+            (<span class="prelude-val">Some</span>(exec), <span class="prelude-val">Some</span>(fee)) =&gt; {
+                <span class="self">Self</span>::emit_events_in_call_info(<span class="kw-2">&amp;</span>exec, <span class="kw-2">&amp;mut </span>events, <span class="number">0</span>).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
+                <span class="self">Self</span>::emit_events_in_call_info(<span class="kw-2">&amp;</span>fee, <span class="kw-2">&amp;mut </span>events, <span class="number">0</span>).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
             }
-            (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>fee)) =&gt; <span class="self">Self</span>::emit_events(<span class="kw-2">&amp;mut </span>fee).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>,
-            <span class="kw">_ </span>=&gt; Vec::default(),
+            (<span class="kw">_</span>, <span class="prelude-val">Some</span>(fee)) =&gt; {
+                <span class="self">Self</span>::emit_events_in_call_info(<span class="kw-2">&amp;</span>fee, <span class="kw-2">&amp;mut </span>events, <span class="number">0</span>).map_err(|<span class="kw">_</span>| Error::&lt;T&gt;::EmitEventError)<span class="question-mark">?</span>;
+            }
+            <span class="kw">_ </span>=&gt; {}
         };
         <span class="prelude-val">Ok</span>(events)
     }

@@ -908,6 +908,10 @@
 <a href="#908" id="908">908</a>
 <a href="#909" id="909">909</a>
 <a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::BTreeMap;
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::sync::Arc;
@@ -927,6 +931,7 @@
 <span class="kw">use </span>starknet_api::StarknetApiError;
 <span class="kw">use </span>thiserror_no_std::Error;
 
+<span class="kw">use </span><span class="kw">crate</span>::constants::INITIAL_GAS;
 <span class="kw">use </span><span class="kw">crate</span>::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
 };
@@ -1108,8 +1113,8 @@
                 BoundedVec::default(),
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
-                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710
-                </span><span class="self">self</span>.compiled_class_hash,
+                INITIAL_GAS.into(),
+                <span class="self">self</span>.compiled_class_hash,
             ),
             contract_class: <span class="prelude-val">Some</span>(<span class="self">self</span>.contract_class),
             contract_address_salt: <span class="prelude-val">None</span>,
@@ -1186,8 +1191,8 @@
                 <span class="self">self</span>.calldata,
                 sender_address,
                 sender_address,
-                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
-                </span><span class="prelude-val">None</span>,
+                INITIAL_GAS.into(),
+                <span class="prelude-val">None</span>,
             ),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">Some</span>(<span class="self">self</span>.salt.into()),
@@ -1301,8 +1306,8 @@
                 <span class="self">self</span>.calldata,
                 <span class="self">self</span>.sender_address,
                 <span class="self">self</span>.sender_address,
-                Felt252Wrapper::from(<span class="number">0_u8</span>), <span class="comment">// FIXME 710 update this once transaction contains the initial gas
-                </span><span class="prelude-val">None</span>,
+                INITIAL_GAS.into(),
+                <span class="prelude-val">None</span>,
             ),
             contract_class: <span class="prelude-val">None</span>,
             contract_address_salt: <span class="prelude-val">None</span>,
@@ -1455,6 +1460,9 @@
     <span class="doccomment">/// Too many events
     </span><span class="attr">#[error(<span class="string">&quot;Too many events&quot;</span>)]
     </span>TooManyEvents,
+    <span class="doccomment">/// Inconsistent ordering
+    </span><span class="attr">#[error(<span class="string">&quot;Inconsistent ordering&quot;</span>)]
+    </span>InconsistentOrdering,
 }
 
 <span class="doccomment">/// Error enum wrapper for state diffs.

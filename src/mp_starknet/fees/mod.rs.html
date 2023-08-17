@@ -400,7 +400,7 @@
     </span><span class="kw">let </span>msb_amount = StarkFelt::from(<span class="number">0_u64</span>);
 
     <span class="comment">// The fee-token contract is a Cairo 0 contract, hence the initial gas is irrelevant.
-    </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
+    </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS.into();
 
     <span class="kw">let </span>storage_address = block_context.fee_token_address;
     <span class="kw">let </span>fee_transfer_call = CallEntryPoint {

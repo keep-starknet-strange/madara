@@ -94,6 +94,7 @@
 <a href="#94" id="94">94</a>
 <a href="#95" id="95">95</a>
 </pre><pre class="rust"><code><span class="kw">use </span>frame_support::BoundedVec;
+<span class="kw">use </span>mp_starknet::constants::INITIAL_GAS;
 <span class="kw">use </span>mp_starknet::execution::types::{
     CallEntryPointWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
 };
@@ -181,8 +182,7 @@
             calldata,
             storage_address: sender_address,
             caller_address: ContractAddressWrapper::default(),
-            <span class="comment">// FIXME 710
-            </span>initial_gas: Felt252Wrapper::from(<span class="number">0_u8</span>),
+            initial_gas: INITIAL_GAS.into(),
             compiled_class_hash: <span class="prelude-val">None</span>,
         };
         <span class="prelude-val">Ok</span>(Transaction { sender_address, nonce, call_entrypoint, ..Transaction::default() })

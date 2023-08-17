@@ -850,7 +850,6 @@
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
-<a href="#853" id="853">853</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -1267,8 +1266,7 @@
             }
         };
 
-        <span class="comment">// FIXME 710
-        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
+        <span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS.into();
 
         <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, tx_type, <span class="kw-2">&amp;mut </span>initial_gas)
     }
@@ -1396,7 +1394,7 @@
         </span><span class="self">self</span>.verify_tx_version(<span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
         <span class="comment">// FIXME 710
-        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas: Felt252 = <span class="kw">super</span>::constants::INITIAL_GAS_COST.into();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas: Felt252 = <span class="kw">super</span>::constants::INITIAL_GAS.into();
 
         <span class="comment">// Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
