@@ -2,10 +2,12 @@
 
 ## Next release
 
+- ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
 
 ## v0.1.0
 
+- ci: rm codespell task and rm .codespellignore
 - feat: refactor flags on tests
 - feat: fetch config files from gh repo
 - refactor: remove config files from the code
