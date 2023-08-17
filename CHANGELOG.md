@@ -3,6 +3,7 @@
 ## Next release
 
 - ci: fix docker and binaries build
+- fix: changed log::info to println for file copy logs
 
 ## v0.1.0
 
