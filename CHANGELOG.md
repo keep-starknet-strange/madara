@@ -27,6 +27,7 @@
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
 - fix: events are emitted in correct sequential order
+- fix: expected event idx in cotinuation tokens in test responses
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
 - add-contributors: `0xAsten`

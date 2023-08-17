@@ -321,7 +321,11 @@ describeDevMadara("Starknet RPC - Events Test", (context) => {
       let { events, continuation_token } = await providerRPC.getEvents(filter);
 
       expect(events.length).to.be.equal(7);
-      expect(continuation_token).to.be.equal("0,3,2");
+      // Transaction receipt events ordered as follows:
+      // 0 FEE_TOKEN :: Transfer <-- rpc filter stops here
+      // 1 ARGENT_ACCOUNT :: Execute
+      // 2 FEE_TOKEN :: Transfer (fee charge)
+      expect(continuation_token).to.be.equal("0,3,1");
 
       for (let i = 0; i < 3; i++) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -368,6 +372,8 @@ describeDevMadara("Starknet RPC - Events Test", (context) => {
       ({ events, continuation_token } = await providerRPC.getEvents(filter));
 
       expect(events.length).to.be.equal(7);
+      // Event idx in continuation token is equal to the total event count in receipt
+      // Meaning that it will be treated as the first event in the next tx receipt
       expect(continuation_token).to.be.equal("1,1,3");
 
       expect(validateAndParseAddress(events[0].from_address)).to.be.equal(
@@ -739,7 +745,11 @@ describeDevMadara("Starknet RPC - Events Test", (context) => {
       // @ts-ignore
       const events = await providerRPC.getEvents(filter);
       expect(events.events.length).to.be.equal(1);
-      expect(events.continuation_token).to.be.equal("0,0,1");
+      // Transaction receipt events ordered as follows:
+      // 0 FEE_TOKEN :: Transfer
+      // 1 ARGENT_ACCOUNT :: Execute <-- rpc filter stops here
+      // 2 FEE_TOKEN :: Transfer (fee charge)
+      expect(events.continuation_token).to.be.equal("0,0,2");
       expect(events.events[0]).to.deep.equal({
         transaction_hash: tx.transaction_hash,
         block_hash: block_hash_and_number.block_hash,
