@@ -52,10 +52,10 @@ pub fn get_project_path() -> Result<String, Error> {
 }
 
 pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), Error> {
-    log::info!("Trying to copy {} to {} from filesystem", src_path, dest_path);
+    println!("Trying to copy {} to {} from filesystem", src_path, dest_path);
     let src = std::path::PathBuf::from(src_path.clone());
     if !src.exists() {
-        log::info!("{} does not exist", src_path);
+        println!("{} does not exist", src_path);
         return Err("File does not exist".into());
     }
 
@@ -64,12 +64,12 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String) -> Result<(), E
     dst.push(src.file_name().ok_or("File name not found")?);
     std::fs::copy(src, dst)?;
 
-    log::info!("Copied {} to {} from filesystem", src_path, dest_path);
+    println!("Copied {} to {} from filesystem", src_path, dest_path);
     Ok(())
 }
 
 pub fn fetch_from_url(target: String, dest_path: String) -> Result<(), Error> {
-    log::info!("Trying to fetch {} to {} from url", target, dest_path);
+    println!("Trying to fetch {} to {} from url", target, dest_path);
     let dst = std::path::PathBuf::from(dest_path);
     std::fs::create_dir_all(&dst)?;
 
