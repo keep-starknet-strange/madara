@@ -545,6 +545,9 @@ pub enum EventError {
     /// Too many events
     #[error("Too many events")]
     TooManyEvents,
+    /// Inconsistent ordering
+    #[error("Inconsistent ordering")]
+    InconsistentOrdering,
 }
 
 /// Error enum wrapper for state diffs.
