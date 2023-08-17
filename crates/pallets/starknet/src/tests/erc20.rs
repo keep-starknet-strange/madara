@@ -52,6 +52,11 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
 
         assert_ok!(Starknet::invoke(origin.clone(), deploy_transaction));
         let events = System::events();
+        // Expected events:
+        // ERC20 -> Transfer
+        // NoValidateAccount -> ContractDeployed
+        // FeeToken -> Transfer
+
         // Check transaction event (deployment)
         pretty_assertions::assert_eq!(
             Event::<MockRuntime>::StarknetEvent(EventWrapper {
@@ -83,7 +88,7 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
                 ),
                 from_address: sender_account,
             }),
-            events[events.len() - 3].event.clone().try_into().unwrap(),
+            events[1].event.clone().try_into().unwrap(),
         );
         let expected_fee_transfer_event = Event::StarknetEvent(EventWrapper {
             keys: bounded_vec![
@@ -161,6 +166,10 @@ fn given_erc20_transfer_when_invoke_then_it_works() {
         );
 
         let events = System::events();
+        // Expected events: (added on top of the past ones)
+        // ERC20 -> Transfer
+        // FeeToken -> Transfer
+
         // Check regular event.
         let expected_event = Event::StarknetEvent(EventWrapper {
             keys: bounded_vec![
