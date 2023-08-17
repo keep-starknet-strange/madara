@@ -3,10 +3,12 @@
 ## Next release
 
 - docs: added translation of madara beast article.md to portuguese
+- ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
 
 ## v0.1.0
 
+- ci: rm codespell task and rm .codespellignore
 - feat: refactor flags on tests
 - feat: fetch config files from gh repo
 - refactor: remove config files from the code
@@ -24,6 +26,9 @@
 - feat: add a `genesis_loader` for the node and mocking
 - feat: add `madara_tsukuyomi` as a submodule
 - branding: use new logo in the README
+- fix: events are emitted in correct sequential order
+- chore: cairo-contracts compilation scripts & docs are updated, cairo_0
+  contracts recompiled
 - add-contributors: `0xAsten`
 - fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
 - fix: update the default port for running Madara locally in getting-started.md
