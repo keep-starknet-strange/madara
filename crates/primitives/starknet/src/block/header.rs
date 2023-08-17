@@ -91,12 +91,13 @@ impl Header {
             block_number: BlockNumber(self.block_number),
             block_timestamp: BlockTimestamp(self.block_timestamp),
             sequencer_address,
-            vm_resource_fee_cost: HashMap::default(),
+            vm_resource_fee_cost: Default::default(),
             fee_token_address,
             invoke_tx_max_n_steps: 1000000,
             validate_max_n_steps: 1000000,
             // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
             gas_price: 10,
+            max_recursion_depth: 50,
         }
     }
 

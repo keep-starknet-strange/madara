@@ -57,7 +57,10 @@ pub fn create_test_state() -> CachedState<DictStateReader> {
         ),
     ]);
 
-    CachedState::new(DictStateReader { class_hash_to_class, address_to_class_hash, ..Default::default() })
+    CachedState::new(
+        DictStateReader { class_hash_to_class, address_to_class_hash, ..Default::default() },
+        Default::default(),
+    )
 }
 
 pub fn get_contract_class(contract_path: &str, version: u8) -> ContractClass {

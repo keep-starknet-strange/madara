@@ -174,6 +174,8 @@ pub mod pallet {
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ChainId: Get<Felt252Wrapper>;
+        #[pallet::constant]
+        type MaxRecursionDepth: Get<u32>;
     }
 
     /// The Starknet pallet hooks.
@@ -900,7 +902,7 @@ impl<T: Config> Pallet<T> {
 
         let chain_id = Self::chain_id_str();
 
-        let vm_resource_fee_cost = HashMap::default();
+        let vm_resource_fee_cost = Default::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
         BlockContext {
@@ -913,6 +915,7 @@ impl<T: Config> Pallet<T> {
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
+            max_recursion_depth: T::MaxRecursionDepth::get() as usize,
         }
     }
 

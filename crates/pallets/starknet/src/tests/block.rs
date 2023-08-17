@@ -1,3 +1,4 @@
+use alloc::sync::Arc;
 use std::collections::HashMap;
 
 use frame_support::assert_ok;
@@ -121,7 +122,7 @@ fn get_block_context_works() {
             block_context.fee_token_address
         );
         // correct vm_resource_fee_cost
-        assert_eq!(HashMap::<String, f64>::new(), block_context.vm_resource_fee_cost);
+        assert_eq!(Arc::new(HashMap::<String, f64>::new()), block_context.vm_resource_fee_cost);
         // correct invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
         assert_eq!(InvokeTxMaxNSteps::get(), block_context.invoke_tx_max_n_steps);
         // correct validate_max_n_steps: T::ValidateMaxNSteps::get(),
