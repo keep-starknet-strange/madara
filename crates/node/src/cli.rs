@@ -15,7 +15,6 @@ pub enum Sealing {
 /// Available testnets.
 #[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
 pub enum Testnet {
-    Local,
     Sharingan,
 }
 
@@ -44,6 +43,12 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub madara_path: Option<PathBuf>,
+
+    #[clap(long)]
+    pub chain_spec_url: Option<String>,
+
+    #[clap(long)]
+    pub genesis_url: Option<String>,
 
     #[clap(long)]
     pub da_config_path: Option<String>,

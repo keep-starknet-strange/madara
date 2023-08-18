@@ -12,7 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # Substrate
-async-trait = { version = "0.1.72", optional = true }
+async-trait = { version = "0.1.73", optional = true }
 frame-support = { workspace = true }
 sp-core = { workspace = true }
 sp-inherents = { workspace = true }
@@ -49,7 +49,7 @@ scale-codec = { package = "parity-scale-codec", workspace = true, features = [
 ] }
 scale-info = { workspace = true, features = ["derive", "bit-vec", "decode"] }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { version = "1.0.100", default-features = false }
+serde_json = { version = "1.0.104", default-features = false }
 thiserror-no-std = { workspace = true }
 
 [dev-dependencies]
