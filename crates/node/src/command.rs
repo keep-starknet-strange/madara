@@ -1,9 +1,12 @@
+use std::collections::HashMap;
+use std::io::BufRead;
+
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-use crate::cli::{Cli, Subcommand, Testnet};
+use crate::cli::{Cli, Subcommand, Testnet, DA_CONFIG_NAME};
 use crate::{chain_spec, service};
 
 fn copy_chain_spec(madara_path: String) {
@@ -17,6 +20,39 @@ fn copy_chain_spec(madara_path: String) {
         let mut dst = dst.clone();
         dst.push(file.file_name());
         std::fs::copy(file.path(), dst).unwrap();
+    }
+}
+
+fn copy_da_config(da_config_path: String, madara_path: String) {
+    let src = std::path::PathBuf::from(da_config_path);
+    let mut dst = std::path::PathBuf::from(madara_path.clone());
+    dst.push(DA_CONFIG_NAME);
+
+    if let Some(parent) = dst.parent() {
+        std::fs::create_dir_all(parent).unwrap();
+    }
+    std::fs::copy(src, dst).unwrap();
+    println!("Copied da_config file to madara path: {}", madara_path + "/" + DA_CONFIG_NAME);
+}
+
+fn get_da_config(madara_path: String) -> Option<HashMap<String, String>> {
+    let src = madara_path + "/" + DA_CONFIG_NAME;
+    let path = std::path::Path::new(&src);
+    if path.exists() {
+        println!("DA config file loaded from: {src}");
+        let file = std::fs::File::open(&src).unwrap();
+        let reader = std::io::BufReader::new(file);
+        let mut map = HashMap::new();
+
+        for line in reader.lines().flatten() {
+            let parts: Vec<&str> = line.split('=').collect();
+            if parts.len() > 1 {
+                map.insert(parts[0].to_string(), parts[1].to_string());
+            }
+        }
+        Some(map)
+    } else {
+        None
     }
 }
 
@@ -221,24 +257,24 @@ pub fn run() -> sc_cli::Result<()> {
             if cli.run.testnet.is_some() {
                 if let Some(Testnet::Sharingan) = cli.run.testnet {
                     copy_chain_spec(madara_path.clone());
-                    cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+                    cli.run.run_cmd.shared_params.chain =
+                        Some(madara_path.clone() + "/chain-specs/testnet-sharingan-raw.json");
                 }
 
                 cli.run.run_cmd.rpc_external = true;
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
+            // Copy the DA config to the madara path if passed in cli
+            if let Some(da_config_path) = cli.run.da_config_path.clone() {
+                copy_da_config(da_config_path, madara_path.clone())
+            }
+            // Get the DA Config
+            let da_config = get_da_config(madara_path);
+
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(
-                    config,
-                    cli.sealing,
-                    cli.run.da_type,
-                    cli.run.l1_node_http,
-                    cli.run.l1_node_ws,
-                    cli.run.auth_token,
-                )
-                .map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
     }

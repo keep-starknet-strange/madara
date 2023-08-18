@@ -1,15 +1,16 @@
 mod avail;
 mod celestia;
+pub mod da;
 mod ethereum;
 mod sharp_utils;
+mod utils;
 
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
 pub use avail::AvailClient;
-// use celestia::CelestiaClient;
-pub use celestia::CelestiaClientBuilder;
+use da::{submit_data_and_verify_inclusion, DataAvailability};
 use ethers::types::U256;
 use futures::StreamExt;
 use lazy_static::lazy_static;
@@ -32,8 +33,8 @@ lazy_static! {
 }
 
 pub type StorageWrites<'a> = Vec<(&'a [u8], &'a [u8])>;
-pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 
+pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 impl<B, C> DataAvailabilityWorker<B, C>
 where
     B: BlockT,
@@ -87,43 +88,40 @@ where
             };
 
             // Submit the StarkNet OS PIE
-            /*if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {
-                log::info!("Job Submitted: {}", job_resp.cairo_job_key);
-                // Store the cairo job key
-                let _res = madara_backend
-                    .da()
-                    .update_cairo_job(&storage_event.block, Uuid::from_str(sharp_utils::TEST_JOB_ID).unwrap());
-            }*/
+            // if let Ok(job_resp) = sharp_utils::submit_pie(sharp_utils::TEST_CAIRO_PIE_BASE64) {
+            //     log::info!("Job Submitted: {}", job_resp.cairo_job_key);
+            //     // Store the cairo job key
+            //     let _res = madara_backend
+            //         .da()
+            //         .update_cairo_job(&storage_event.block,
+            // Uuid::from_str(sharp_utils::TEST_JOB_ID).unwrap()); }
         }
     }
-}
 
-impl<B, C> DataAvailabilityWorker<B, C>
-where
-    B: BlockT,
-    C: ProvideRuntimeApi<B>,
-    C: BlockchainEvents<B> + 'static,
-{
-    pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>, l1_node: Arc<AvailClient>) {
+    pub async fn update_state(
+        client: Arc<C>,
+        madara_backend: Arc<mc_db::Backend<B>>,
+        da_client: Arc<dyn DataAvailability>,
+    ) {
         let mut notification_st = client.import_notification_stream();
 
         while let Some(notification) = notification_st.next().await {
-            match madara_backend.da().state_diff(&notification.hash) {
-                Ok(state_diff) => {
-                    // publish state diff to Avail
-                    if let Err(e) = l1_node.publish_state_diff_and_verify_inclusion(state_diff).await {
-                        log::error!("Failed to publish data: {}", e);
-                    }
+            let state_diff = match madara_backend.da().state_diff(&notification.hash) {
+                Ok(diff) => diff,
+                Err(e) => {
+                    log::error!("could not pull state diff: {e}");
+                    continue;
                 }
-                Err(e) => log::debug!("could not pull state diff: {e}"),
-            }
+            };
+
+            submit_data_and_verify_inclusion(&da_client, &state_diff).await;
         }
     }
 }
 
 // encode calldata:
 // - https://docs.starknet.io/documentation/architecture_and_concepts/Data_Availability/on-chain-data/#pre_v0.11.0_example
-pub fn pre_0_11_0_state_diff(storage_diffs: HashMap<&[u8], StorageWrites>, nonces: HashMap<&[u8], &[u8]>) -> Vec<U256> {
+fn pre_0_11_0_state_diff(storage_diffs: HashMap<&[u8], StorageWrites>, nonces: HashMap<&[u8], &[u8]>) -> Vec<U256> {
     let mut state_diff: Vec<U256> = Vec::new();
 
     state_diff.push(U256::from(storage_diffs.len()));

@@ -1,21 +1,20 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use ethers::types::U256;
-use eyre::Result;
-
-mod network;
-use network::Network;
 mod utils;
+use anyhow::Result;
+use async_trait::async_trait;
 use celestia_rpc::client::{new_http, new_websocket};
-use celestia_rpc::{BlobClient, HeaderClient, Result as CelestiaRpcResult};
+use celestia_rpc::{BlobClient, HeaderClient};
 use celestia_types::nmt::Namespace;
-use celestia_types::{Blob, Result as CelestiaTypesResult};
-use jsonrpsee::core::Error as JsonRpSeeError;
+use celestia_types::Blob;
 use jsonrpsee::http_client::HttpClient;
 use jsonrpsee::ws_client::WsClient;
 use utils::string_to_namespace;
 
-const MADARA: &str = "Madara";
+use crate::da::{DAArgs, DAInput, DAOutput, DataAvailability};
+use crate::utils::{get_bytes_from_state_diff, is_valid_http_endpoint, is_valid_ws_endpoint};
 
 #[derive(Debug, Clone)]
 pub struct CelestiaClient {
@@ -24,154 +23,144 @@ pub struct CelestiaClient {
     nid: Namespace,
 }
 
+#[async_trait]
+impl DataAvailability for CelestiaClient {
+    fn new(da_config: &HashMap<String, String>) -> Result<Self> {
+        if let DAArgs::Celestia { http_endpoint, ws_endpoint, auth_token, namespace } = Self::validate_args(da_config)?
+        {
+            let http_client = new_http(&http_endpoint, Some(&auth_token))?;
+
+            // https://greptime.com/blogs/2023-03-09-bridging-async-and-sync-rust
+            let ws_client = futures::executor::block_on(async { new_websocket(&ws_endpoint, Some(&auth_token)).await })
+                .map_err(|e| anyhow::anyhow!("Could not initialize ws endpoint {e}"))?;
+
+            let nid = string_to_namespace(&namespace)?;
+
+            Ok(CelestiaClient { http_client, ws_client: Arc::new(ws_client), nid })
+        } else {
+            Err(anyhow::anyhow!("Invalid parameters"))
+        }
+    }
+
+    fn validate_args(da_config: &HashMap<String, String>) -> Result<DAArgs> {
+        if da_config.len() != 5 {
+            return Err(anyhow::anyhow!("Expected 5 arguments for Celestia but received {}", da_config.len()));
+        }
+
+        let http_endpoint =
+            da_config.get("http_endpoint").ok_or_else(|| anyhow::anyhow!("Missing 'http_endpoint'"))?.clone();
+        let ws_endpoint = da_config.get("ws_endpoint").ok_or_else(|| anyhow::anyhow!("Missing 'ws_endpoint'"))?.clone();
+        let auth_token = da_config.get("auth_token").ok_or_else(|| anyhow::anyhow!("Missing 'auth_token'"))?.clone();
+        let namespace = da_config.get("namespace").ok_or_else(|| anyhow::anyhow!("Missing 'namespace'"))?.clone();
+
+        if !is_valid_http_endpoint(&http_endpoint) {
+            return Err(anyhow::anyhow!("Invalid http endpoint, received {}", http_endpoint));
+        }
+        if !is_valid_ws_endpoint(&ws_endpoint) {
+            return Err(anyhow::anyhow!("Invalid ws endpoint, received {}", ws_endpoint));
+        }
+
+        Ok(DAArgs::Celestia { http_endpoint, ws_endpoint, auth_token, namespace })
+    }
+
+    fn format_state_diff(&self, state_diff: &[U256]) -> Result<DAInput> {
+        let blob = Blob::new(self.nid, get_bytes_from_state_diff(state_diff))?;
+        Ok(DAInput::Celestia(blob))
+    }
+
+    async fn publish_data(&self, data: &DAInput) -> Result<DAOutput> {
+        if let DAInput::Celestia(blob) = data {
+            let submitted_height = self.http_client.blob_submit(&[blob.clone()]).await?;
+
+            // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
+            // not clean split between ws and http endpoints, which is why this call is blocking in the first
+            // place...
+            self.ws_client.header_wait_for_height(submitted_height).await?;
+
+            Ok(DAOutput::Celestia { submitted_height })
+        } else {
+            Err(anyhow::anyhow!("Invalid input data"))
+        }
+    }
+
+    async fn verify_inclusion(&self, da_input: &DAInput, da_output: &DAOutput) -> Result<()> {
+        match (da_input, da_output) {
+            (DAInput::Celestia(blob), DAOutput::Celestia { submitted_height }) => {
+                let received_blob = self.http_client.blob_get(*submitted_height, self.nid, blob.commitment).await?;
+                received_blob.validate()?;
+                Ok(())
+            }
+            _ => Err(anyhow::anyhow!("Invalid input or output")),
+        }
+    }
+}
+
 impl CelestiaClient {
-    pub fn new(http_client: HttpClient, ws_client: WsClient) -> CelestiaRpcResult<Self> {
-        Ok(CelestiaClient { http_client, ws_client: Arc::new(ws_client), nid: string_to_namespace(MADARA).unwrap() })
-    }
-
-    pub async fn publish_state_diff_and_verify_inclusion(&self, state_diff: Vec<U256>) -> eyre::Result<()> {
-        let blob = self.get_blob_from_state_diff(state_diff)?;
-        let submitted_height = self.publish_data(&blob).await?;
-
-        // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
-        // not clean split between ws and http endpoints, which is why this call is blocking in the first
-        // place...
-        self.ws_client.header_wait_for_height(submitted_height).await?;
-
-        self.verify_blob_was_included(submitted_height, blob).await?;
-
-        Ok(())
-    }
-
-    async fn publish_data(&self, blob: &Blob) -> Result<u64, JsonRpSeeError> {
-        self.http_client.blob_submit(&[blob.clone()]).await
-    }
-
-    fn get_blob_from_state_diff(&self, state_diff: Vec<U256>) -> CelestiaTypesResult<Blob> {
-        let state_diff_bytes: Vec<u8> = state_diff
-            .iter()
-            .flat_map(|item| {
-                let mut bytes = [0_u8; 32];
-                item.to_big_endian(&mut bytes);
-                bytes.to_vec()
-            })
-            .collect();
-
-        Blob::new(self.nid, state_diff_bytes)
-    }
-
-    async fn verify_blob_was_included(&self, submitted_height: u64, blob: Blob) -> eyre::Result<()> {
-        let received_blob = self.http_client.blob_get(submitted_height, self.nid, blob.commitment).await?;
-        received_blob.validate()?;
-        Ok(())
-    }
-}
-
-#[derive(Default)]
-pub struct CelestiaClientBuilder {
-    http_endpoint: Option<String>,
-    ws_endpoint: Option<String>,
-    auth_token: Option<String>,
-}
-
-impl CelestiaClientBuilder {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn http_endpoint(mut self, endpoint: Option<&str>) -> Self {
-        self.http_endpoint = endpoint.map(|s| s.to_string());
-        self
-    }
-
-    pub fn ws_endpoint(mut self, endpoint: Option<&str>) -> Self {
-        self.ws_endpoint = endpoint.map(|s| s.to_string());
-        self
-    }
-
-    pub fn auth_token(mut self, auth_token: Option<&str>) -> Self {
-        self.auth_token = auth_token.map(|s| s.to_string());
-        self
-    }
-
-    pub fn build(self) -> CelestiaRpcResult<CelestiaClient> {
-        let base_config = Network::LOCAL.to_base_config();
-        let http_endpoint = self.http_endpoint.unwrap_or_else(|| base_config.http_endpoint.unwrap());
-        let ws_endpoint = self.ws_endpoint.unwrap_or_else(|| base_config.ws_endpoint.unwrap());
-        let auth_token = self.auth_token.unwrap_or_else(|| base_config.auth_token.unwrap_or_default());
-
-        let http_client = CelestiaClientBuilder::get_http_client(&http_endpoint, &auth_token)?;
-
-        // https://greptime.com/blogs/2023-03-09-bridging-async-and-sync-rust
-        let ws_client = futures::executor::block_on(async {
-            CelestiaClientBuilder::get_ws_client(&ws_endpoint, &auth_token).await.unwrap()
-        });
-
-        CelestiaClient::new(http_client, ws_client)
-    }
-
-    fn get_http_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<HttpClient> {
-        Ok(new_http(endpoint, Some(auth_token)).unwrap())
-    }
-
-    async fn get_ws_client(endpoint: &str, auth_token: &str) -> CelestiaRpcResult<WsClient> {
-        Ok(new_websocket(endpoint, Some(auth_token)).await.unwrap())
-    }
-
     #[cfg(test)]
-    pub async fn build_test(self) -> CelestiaRpcResult<CelestiaClient> {
-        let base_config = Network::LOCAL.to_base_config();
-        let http_endpoint = self.http_endpoint.unwrap_or_else(|| base_config.http_endpoint.unwrap());
-        let ws_endpoint = self.ws_endpoint.unwrap_or_else(|| base_config.ws_endpoint.unwrap());
-        let auth_token = self.auth_token.unwrap_or_else(|| base_config.auth_token.unwrap_or_default());
+    pub async fn new_test() -> Result<Self> {
+        use std::env;
 
-        let http_client = CelestiaClientBuilder::get_http_client(&http_endpoint, &auth_token)?;
-        let ws_client = CelestiaClientBuilder::get_ws_client(&ws_endpoint, &auth_token).await?;
+        let mut path = env::current_dir().unwrap(); // get current directory
+        path.push(".env"); // add .env to the path
+        dotenvy::from_path(path).ok();
+        let auth_token = env::var("AUTH_TOKEN").expect("AUTH_TOKEN must be set"); // Get the auth_token
 
-        CelestiaClient::new(http_client, ws_client)
+        let mut celestia_map: HashMap<String, String> = HashMap::new();
+        celestia_map.insert("da_type".to_string(), "Celestia".to_string());
+        celestia_map.insert("ws_endpoint".to_string(), "ws://127.0.0.1:26658".to_string());
+        celestia_map.insert("http_endpoint".to_string(), "http://127.0.0.1:26658".to_string());
+        celestia_map.insert("auth_token".to_string(), auth_token); // Assuming this variable exists elsewhere in your code.
+        celestia_map.insert("namespace".to_string(), "Madara".to_string());
+
+        if let DAArgs::Celestia { http_endpoint, ws_endpoint, auth_token, namespace } =
+            Self::validate_args(&celestia_map)?
+        {
+            let http_client = new_http(&http_endpoint, Some(&auth_token)).unwrap();
+            let ws_client = new_websocket(&ws_endpoint, Some(&auth_token)).await.unwrap();
+            let nid = string_to_namespace(&namespace).unwrap();
+
+            Ok(CelestiaClient { http_client, ws_client: Arc::new(ws_client), nid })
+        } else {
+            Err(anyhow::anyhow!("Invalid parameters"))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use super::*;
 
     #[tokio::test]
+    #[ignore]
     async fn test_publish_data_and_verify_publication() -> Result<()> {
-        let mut path = env::current_dir().unwrap(); // get current directory
-
-        path.push(".env"); // add .env to the path
-
-        dotenvy::from_path(path).ok();
-
-        let auth_token = env::var("AUTH_TOKEN").expect("AUTH_TOKEN must be set"); // Get the auth_token
-
-        let client: CelestiaClient = CelestiaClientBuilder::new().auth_token(Some(&auth_token)).build_test().await?;
-
+        let da_client = CelestiaClient::new_test().await.unwrap();
         let state_diff = vec![ethers::types::U256::from(0)];
 
-        let blob = client.get_blob_from_state_diff(state_diff).unwrap();
+        let da_input = da_client.format_state_diff(&state_diff).unwrap();
+        let da_output = da_client.publish_data(&da_input).await.unwrap();
 
-        let submitted_height = client.publish_data(&blob).await.unwrap();
+        match (da_input, da_output) {
+            (DAInput::Celestia(blob), DAOutput::Celestia { submitted_height }) => {
+                println!("Submitted height deterministic: {:?}, now waiting for block conf", submitted_height);
 
-        println!("Submitted height deterministic: {:?}, now waiting for block conf", submitted_height);
+                let block_conf = da_client.http_client.header_wait_for_height(submitted_height).await?;
 
-        let block_conf = client.http_client.header_wait_for_height(submitted_height).await?;
+                println!("block_conf: {:?}", block_conf.header);
 
-        println!("block_conf: {:?}", block_conf.header);
+                let dah = da_client.http_client.header_get_by_height(submitted_height).await.unwrap().dah;
+                let root_hash = dah.row_root(0).unwrap();
 
-        let dah = client.http_client.header_get_by_height(submitted_height).await.unwrap().dah;
-        let root_hash = dah.row_root(0).unwrap();
+                println!("root_hash: {:?}", root_hash);
 
-        println!("root_hash: {:?}", root_hash);
+                let received_blob =
+                    da_client.http_client.blob_get(submitted_height, da_client.nid, blob.commitment).await.unwrap();
 
-        let received_blob = client.http_client.blob_get(submitted_height, client.nid, blob.commitment).await.unwrap();
+                received_blob.validate().unwrap();
+                assert_eq!(received_blob, blob);
 
-        received_blob.validate().unwrap();
-        assert_eq!(received_blob, blob);
-
-        Ok(())
+                Ok(())
+            }
+            _ => Err(anyhow::anyhow!("Invalid input or output")),
+        }
     }
 }

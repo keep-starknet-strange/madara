@@ -6099,7 +6099,6 @@ dependencies = [
  "celestia-types",
  "dotenvy",
  "ethers",
- "eyre",
  "futures",
  "jsonrpsee 0.18.2",
  "lazy_static",
@@ -6119,6 +6118,7 @@ dependencies = [
  "starknet_api",
  "subxt",
  "tokio",
+ "url",
  "uuid 1.4.0",
 ]
 
