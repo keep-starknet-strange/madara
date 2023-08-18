@@ -1,26 +1,32 @@
+pub mod config;
+
 use anyhow::Result;
+use async_trait::async_trait;
 use avail_subxt::api::runtime_types::avail_core::AppId;
 use avail_subxt::api::runtime_types::da_control::pallet::Call as DaCall;
 use avail_subxt::api::runtime_types::sp_core::bounded::bounded_vec::BoundedVec;
-use avail_subxt::api::{self as AvailApi};
-use avail_subxt::avail::{AppUncheckedExtrinsic, Client as AvailSubxtClient, PairSigner};
+use avail_subxt::avail::{AppUncheckedExtrinsic, Client as AvailSubxtClient};
 use avail_subxt::primitives::AvailExtrinsicParams;
-use avail_subxt::{build_client, Call};
-use ethers::types::U256;
+use avail_subxt::{api as AvailApi, build_client, AvailConfig, Call};
+use ethers::types::{I256, U256};
 use sp_core::H256;
-use subxt::ext::sp_core::Pair;
+use subxt::ext::sp_core::sr25519::Pair;
 
-use crate::DaClient;
+use crate::{DaClient, DaMode};
 
+type AvailPairSigner = subxt::tx::PairSigner<AvailConfig, Pair>;
+
+#[derive(Clone)]
 pub struct AvailClient {
     ws_client: AvailSubxtClient,
     app_id: AppId,
-    signer: PairSigner,
+    signer: AvailPairSigner,
+    mode: DaMode,
 }
 
 #[async_trait]
-impl DaClient for CelestiaClient {
-    pub async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<bool, String> {
+impl DaClient for AvailClient {
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
         let bytes = self.get_bytes_from_state_diff(state_diff)?;
         let bytes = BoundedVec(bytes);
 
@@ -30,19 +36,26 @@ impl DaClient for CelestiaClient {
         Ok(())
     }
 
-    fn get_mode(&self) -> String {
-        self.mode.clone()
+    async fn last_state(&self) -> Result<I256> {
+        Ok(I256::from(1))
+    }
+
+    fn get_mode(&self) -> DaMode {
+        self.mode
     }
 }
 
 impl AvailClient {
     pub fn new(conf: config::AvailConfig) -> Result<Self> {
-        let signer = PairSigner::new(Pair::from_string(conf.seed.as_str(), None)?)?;
+        let signer = signer_from_seed(conf.seed.as_str())?;
 
-        let ws_client = futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
-            .map_err(|e| anyhow::anyhow!("Could not initialize ws endpoint {e}"))?;
+        let app_id = AppId(conf.app_id);
 
-        Ok(Self { ws_client, AppId(conf.app_id), signer })
+        let ws_client =
+            futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
+                .map_err(|e| anyhow::anyhow!("could not initialize ws endpoint {e}"))?;
+
+        Ok(Self { ws_client, app_id, signer, mode: conf.mode })
     }
 
     async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<H256> {
@@ -96,4 +109,10 @@ impl AvailClient {
 
         Ok(())
     }
+}
+
+fn signer_from_seed(seed: &str) -> Result<AvailPairSigner> {
+    let pair = <Pair as subxt::ext::sp_core::Pair>::from_string(seed, None)?;
+    let signer = AvailPairSigner::new(pair);
+    Ok(signer)
 }

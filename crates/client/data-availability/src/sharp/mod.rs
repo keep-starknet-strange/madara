@@ -1,6 +1,8 @@
+use anyhow::Result;
 use serde::Deserialize;
 use uuid::Uuid;
 
+#[allow(dead_code)]
 pub const LAMBDA_URL: &str = "https://testnet.provingservice.io";
 pub const _LAMBDA_MAX_PIE_MB: u64 = 20_971_520;
 
@@ -33,13 +35,13 @@ impl CairoJobStatus {
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
 pub struct CairoJobResponse {
-    pub cairo_job_key: String,
+    pub cairo_job_key: Uuid,
     pub version: u64,
 }
 
 // Send zipped CairoPie to SHARP
 // - PIE Submission format base64.b64encode(cairo_pie.serialize()).decode("ascii")
-pub fn submit_pie(pie: &str) -> Result<CairoJobResponse, String> {
+pub fn submit_pie(pie: &str) -> Result<CairoJobResponse> {
     let data = serde_json::json!({ "cairo_pie": pie });
     let data = serde_json::json!({ "action": "add_job", "request": data });
     let _payload: serde_json::Value = serde_json::from_value(data).unwrap();
@@ -52,7 +54,7 @@ pub fn submit_pie(pie: &str) -> Result<CairoJobResponse, String> {
     //     _ => Err(String::from("could not submit pie")),
     // }
 
-    Ok(CairoJobResponse { cairo_job_key: Uuid::new_v4().to_string(), version: 1_u64 })
+    Ok(CairoJobResponse { cairo_job_key: Uuid::new_v4(), version: 1_u64 })
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Deserialize)]
@@ -65,7 +67,7 @@ pub struct CairoStatusResponse {
 }
 
 // Fetch Cairo Job Status from SHARP
-pub fn get_status(job_key: &str) -> Result<CairoStatusResponse, String> {
+pub fn _get_status(job_key: &str) -> Result<CairoStatusResponse> {
     let data = serde_json::json!({ "cairo_job_key": job_key });
     let data = serde_json::json!({ "action": "get_status", "request": data });
     let payload: serde_json::Value = serde_json::from_value(data).unwrap();
@@ -74,6 +76,6 @@ pub fn get_status(job_key: &str) -> Result<CairoStatusResponse, String> {
 
     match resp.status() {
         reqwest::StatusCode::OK => Ok(resp.json::<CairoStatusResponse>().unwrap()),
-        _ => Err(String::from("could not get job status")),
+        _ => Err(anyhow::anyhow!("could not get job status")),
     }
 }

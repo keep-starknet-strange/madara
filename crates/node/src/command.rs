@@ -2,11 +2,12 @@ use std::path::PathBuf;
 
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
 use madara_runtime::Block;
+use mc_data_availability::DaLayer;
 use pallet_starknet::utils;
 use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
-use crate::cli::{Cli, DaLayer, Subcommand, Testnet};
+use crate::cli::{Cli, Subcommand, Testnet};
 use crate::{chain_spec, constants, service};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
@@ -275,20 +276,20 @@ pub fn run() -> sc_cli::Result<()> {
                 cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
             }
 
-            let mut da_client: Option<(DaLayer, PathBuf)> = None;
-            if let Some(da_mode) = cli.run.da_mode.clone() {
-                let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-" + da_mode.as_str() + ".json");
+            let mut da_config: Option<(DaLayer, PathBuf)> = None;
+            if let Some(da_layer) = cli.run.da_layer.clone() {
+                let da_path = std::path::PathBuf::from(madara_path.clone() + "/da-config.json");
                 if !da_path.exists() {
                     log::info!("{} does not contain DA config", madara_path.clone());
                     return Err("DA config not available".into());
                 }
 
-                da_client = Some((da_mode, da_path));
+                da_config = Some((da_layer, da_path));
             }
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
-                service::new_full(config, cli.sealing, da_client).map_err(sc_cli::Error::Service)
+                service::new_full(config, cli.sealing, da_config).map_err(sc_cli::Error::Service)
             })
         }
     }

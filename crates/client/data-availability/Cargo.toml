@@ -14,15 +14,18 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
 futures = "0.3.21"
 jsonrpsee = { version = "0.18.2", features = ["http-client", "ws-client", "macros"] }
 lazy_static = { workspace = true }
 log = "0.4.19"
 reqwest = { version = "0.11.18", features = ["blocking", "json"] }
 tokio = { version = "1", features = ["full"] }
+thiserror = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-uuid = { version = "1.4.0", features = ["v4"] }
+url = "2.4.0"
+uuid = { version = "1.4.0", features = ["v4", "serde"] }
 
 # Substrate
 sp-core = { workspace = true }
@@ -41,8 +44,9 @@ starknet_api = { workspace = true }
 ethers = "2.0.7"
 
 # Avail subxt dependency
-# avail-subxt = { git="https://github.com/availproject/avail", version = "0.3.0", branch = "develop" }
-# subxt = "0.29"
+avail-subxt = { git="https://github.com/availproject/avail", version = "0.3.0", branch = "develop" }
+subxt = "0.29"
+sp-keyring = { workspace = true }
 
 # Celestia
 celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs" }

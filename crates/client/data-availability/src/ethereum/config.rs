@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
+use crate::DaMode;
+
 pub const DEFAULT_ETHEREUM_NODE: &str = "127.0.0.1:8545";
 pub const DEFAULT_SEQUENCER_KEY: &str = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 pub const DEFUALT_STARKNET_CORE_CONTRACTS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
@@ -12,18 +14,18 @@ pub const DEFAULT_CHAIN_ID: u64 = 31337;
 pub struct EthereumConfig {
     #[serde(default = "default_http")]
     pub http_provider: String,
-    #[serde(default = "default_mode")]
-    pub mode: String,
     #[serde(default = "default_core_contracts")]
     pub core_contracts: String,
     #[serde(default = "default_sequencer_key")]
     pub sequencer_key: String,
     #[serde(default = "default_chain_id")]
     pub chain_id: u64,
+    #[serde(default = "default_mode")]
+    pub mode: DaMode,
 }
 
 impl EthereumConfig {
-    pub fn new(path: &PathBuf) -> Result<Self, String> {
+    pub fn try_from_file(path: &PathBuf) -> Result<Self, String> {
         let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
         serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
     }
@@ -31,10 +33,6 @@ impl EthereumConfig {
 
 fn default_http() -> String {
     format!("http://{DEFAULT_ETHEREUM_NODE}")
-}
-
-fn default_mode() -> String {
-    "validium".to_string()
 }
 
 fn default_core_contracts() -> String {
@@ -47,6 +45,10 @@ fn default_sequencer_key() -> String {
 
 fn default_chain_id() -> u64 {
     DEFAULT_CHAIN_ID
+}
+
+fn default_mode() -> DaMode {
+    DaMode::Validium
 }
 
 impl Default for EthereumConfig {

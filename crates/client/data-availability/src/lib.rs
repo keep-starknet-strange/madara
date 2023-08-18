@@ -1,34 +1,47 @@
-pub mod ethereum;
-pub mod celestia;
 pub mod avail;
-pub mod utils;
+pub mod celestia;
+pub mod ethereum;
 mod sharp;
+pub mod utils;
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, Read};
 use std::marker::PhantomData;
-use std::path::Path;
-use std::str::FromStr;
 use std::sync::Arc;
 
+use anyhow::Result;
 use async_trait::async_trait;
-use ethers::types::U256;
+use ethers::types::{I256, U256};
 use futures::StreamExt;
-use log::{debug, error, info, trace, warn};
-
 use sc_client_api::client::BlockchainEvents;
+use serde::Deserialize;
 use sp_api::ProvideRuntimeApi;
 use sp_runtime::traits::Block as BlockT;
-use uuid::Uuid;
+
+pub type StorageWrites<'a> = Vec<(&'a [u8], &'a [u8])>;
 
 pub struct DataAvailabilityWorker<B, C>(PhantomData<(B, C)>);
 
+#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+pub enum DaLayer {
+    Celestia,
+    Ethereum,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize)]
+pub enum DaMode {
+    #[serde(rename = "validity")]
+    Validity,
+    #[serde(rename = "volition")]
+    Volition,
+    #[serde(rename = "validium")]
+    Validium,
+}
 
 #[async_trait]
 pub trait DaClient {
-    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<bool, String>;
-    fn get_mode(&self) -> String;
+    fn get_mode(&self) -> DaMode;
+    async fn last_state(&self) -> Result<I256>;
+    async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
 }
 
 impl<B, C> DataAvailabilityWorker<B, C>
@@ -37,7 +50,7 @@ where
     C: ProvideRuntimeApi<B>,
     C: BlockchainEvents<B> + 'static,
 {
-    pub async fn prove_current_block(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
+    pub async fn prove_current_block(da_mode: DaMode, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
         let mut storage_event_st = client.storage_changes_notification_stream(None, None).unwrap();
 
         while let Some(storage_event) = storage_event_st.next().await {
@@ -56,13 +69,13 @@ where
                     key = raw_split.1;
                 }
 
-                if prefix == *SN_NONCE_PREFIX {
+                if prefix == *utils::SN_NONCE_PREFIX {
                     if let Some(data) = event.2 {
                         nonces.insert(key, data.0.as_slice());
                     }
                 }
 
-                if prefix == *SN_STORAGE_PREFIX {
+                if prefix == *utils::SN_STORAGE_PREFIX {
                     if let Some(data) = event.2 {
                         // first 32 bytes = contract address, second 32 bytes = storage variable
                         let write_split = key.split_at(32);
@@ -75,21 +88,26 @@ where
                 }
             }
 
-            let state_diff = utisl.pre_0_11_0_state_diff(storage_diffs, nonces);
+            let state_diff = utils::pre_0_11_0_state_diff(storage_diffs, nonces);
 
             // Store the DA output from the SN OS
             if let Err(db_err) = madara_backend.da().store_state_diff(&storage_event.block, state_diff) {
                 log::error!("db err: {db_err}");
             };
 
-            // Submit the StarkNet OS PIE
-            // if let Ok(job_resp) = sharp::submit_pie(sharp::TEST_CAIRO_PIE_BASE64) {
-            //     log::info!("Job Submitted: {}", job_resp.cairo_job_key);
-            //     // Storfe the cairo job key
-            //     let _res = madara_backend
-            //         .da()
-            //         .update_cairo_job(&storage_event.block,
-            // Uuid::from_str(sharp::TEST_JOB_ID).unwrap()); }
+            match da_mode {
+                DaMode::Validity => {
+                    // Submit the StarkNet OS PIE
+                    if let Ok(job_resp) = sharp::submit_pie("test") {
+                        log::info!("Job Submitted: {}", job_resp.cairo_job_key);
+                        // Store the cairo job key
+                        let _res = madara_backend.da().update_cairo_job(&storage_event.block, job_resp.cairo_job_key);
+                    }
+                }
+                _ => {
+                    log::info!("don't prove in remaining DA modes")
+                }
+            }
         }
     }
 }
@@ -105,45 +123,55 @@ where
         let mut notification_st = client.import_notification_stream();
 
         while let Some(notification) = notification_st.next().await {
+            // Query last written state
+            if let Ok(last_block) = da_client.last_state().await {
+                match madara_backend.da().last_proved_block() {
+                    Ok(last_local_block) => {
+                        log::info!("Last onchain: {last_block}, Last Local: {last_local_block}")
+                    }
+                    Err(e) => log::debug!("could not pull last local block: {e}"),
+                };
+            }
+
+            // match da_client.get_mode() {
+            //     DaMode::Validity => {
+            //         // Check the associated job status
+            //         if let Ok(job_resp) = sharp::get_status(sharp::TEST_JOB_ID) {
+            //             if let Some(status) = job_resp.status {
+            //                 if status == "ONCHAIN" {
+            //                     match madara_backend.da().state_diff(&notification.hash) {
+            //                         Ok(state_diff) => {
+            //                             // publish state diff to Layer 1
+            //                             ethereum::publish_data(&DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
+
+            //                             // save last proven block
+            //                             if let Err(db_err) =
+            //                                 madara_backend.da().update_last_proved_block(&notification.hash)
+            //                             {
+            //                                 log::debug!(
+            //                                     "could not save last proved block: {db_err}"
+            //                                 );
+            //                             };
+            //                         }
+            //                         Err(e) => log::debug!("could not pull state diff: {e}"),
+            //                     }
+            //                 }
+            //             }
+            //         }
+            //     }
+            //     _ => {
+            //         log::info!("don't check proof in remaining DA modes")
+            //     }
+            // }
+
             match madara_backend.da().state_diff(&notification.hash) {
                 Ok(state_diff) => {
                     if let Err(e) = da_client.publish_state_diff(state_diff).await {
-                        log::error!("Failed to publish data: {}", e);
+                        log::error!("DA PUBLISH ERROR: {}", e);
                     }
                 }
                 Err(e) => log::error!("could not pull state diff: {e}"),
             }
-
-            // ETHEREUM
-            // Query last proven block
-            // if let Ok(last_block) = ethereum::last_proven_block().await {
-            //     match madara_backend.da().last_proved_block() {
-            //         Ok(last_local_block) => log::info!("Last onchain: {last_block}, Last Local:
-            // {last_local_block}"),         Err(e) => log::debug!("could not pull last
-            // local block: {e}"),     };
-            // }
-
-            // Check the associated job status
-            // if let Ok(job_resp) = sharp::get_status(sharp::TEST_JOB_ID) {
-            //     if let Some(status) = job_resp.status {
-            //         if status == "ONCHAIN" {
-            //             match madara_backend.da().state_diff(&notification.hash) {
-            //                 Ok(state_diff) => {
-            //                     // publish state diff to Layer 1
-            //                     ethereum::publish_data(&DEFAULT_SEQUENCER_ADDRESS,
-            // state_diff).await;
-
-            //                     // save last proven block
-            //                     if let Err(db_err) =
-            // madara_backend.da().update_last_proved_block(&notification.hash) {
-            //                         log::debug!("could not save last proved block: {db_err}");
-            //                     };
-            //                 }
-            //                 Err(e) => log::debug!("could not pull state diff: {e}"),
-            //             }
-            //         }
-            //     }
-            // }
         }
     }
 }

@@ -3,51 +3,52 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
-const MADARA_DEFAULT_APP_ID: u32 = 0;
-const AVAIL_VALIDATE_CODEGEN: bool = true;
-const AVAIL_WS: &str = "wss://kate.avail.tools:443/ws";
-const AVAIL_DEFAULT_SEED: &str = "//Alice";
+use crate::DaMode;
 
+const DEFAULT_AVAIL_WS: &str = "wss://kate.avail.tools:443/ws";
+const DEFAULT_APP_ID: u32 = 0;
+const DEFAULT_AVAIL_VALIDATE_CODEGEN: bool = true;
+const DEFAULT_AVAIL_SEED: &str = "//Alice";
 
 #[derive(Clone, PartialEq, Deserialize, Debug)]
 pub struct AvailConfig {
     #[serde(default = "default_ws")]
     pub ws_provider: String,
     #[serde(default = "default_app_id")]
-    pub app_id: String,
-    #[serde(default = "default_mode")]
-    pub mode: String,
+    pub app_id: u32,
     #[serde(default = "default_validate_codegen")]
     pub validate_codegen: bool,
     #[serde(default = "default_seed")]
     pub seed: String,
+    #[serde(default = "default_mode")]
+    pub mode: DaMode,
 }
 
 impl AvailConfig {
-    pub fn new(path: &PathBuf) -> Result<Self, String> {
+    pub fn try_from_file(path: &PathBuf) -> Result<Self, String> {
         let file = File::open(path).map_err(|e| format!("error opening da config: {e}"))?;
         serde_json::from_reader(file).map_err(|e| format!("error parsing da config: {e}"))
     }
 }
 
 fn default_ws() -> String {
-    AVAIL_WS.to_string()
-}
-
-fn default_mode() -> String {
-    "validium".to_string()
+    DEFAULT_AVAIL_WS.to_string()
 }
 
 fn default_app_id() -> u32 {
-    MADARA_DEFAULT_APP_ID
+    DEFAULT_APP_ID
 }
 
 fn default_validate_codegen() -> bool {
-    AVAIL_VALIDATE_CODEGEN
+    DEFAULT_AVAIL_VALIDATE_CODEGEN
 }
 
 fn default_seed() -> String {
-    AVAIL_DEFAULT_SEED.to_string()
+    DEFAULT_AVAIL_SEED.to_string()
+}
+
+fn default_mode() -> DaMode {
+    DaMode::Validium
 }
 
 impl Default for AvailConfig {
