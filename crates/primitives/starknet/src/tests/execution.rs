@@ -175,7 +175,7 @@ fn test_try_into_entrypoint_works() {
         code_address: None,
         entry_point_selector: EntryPointSelector(stark_felt!(0_u8)),
         entry_point_type: EntryPointType::External,
-        initial_gas: INITIAL_GAS.into(),
+        initial_gas: INITIAL_GAS,
     };
 
     pretty_assertions::assert_eq!(entrypoint, expected_entrypoint);
