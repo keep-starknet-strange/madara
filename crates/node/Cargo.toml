@@ -74,6 +74,7 @@ frame-benchmarking-cli = { workspace = true }
 blockifier = { workspace = true }
 hex = { workspace = true }
 madara-runtime = { workspace = true }
+mc-data-availability = { workspace = true }
 mc-block-proposer = { workspace = true }
 mc-db = { workspace = true }
 mc-mapping-sync = { workspace = true }

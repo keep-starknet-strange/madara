@@ -1,6 +1,7 @@
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::cell::RefCell;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -10,6 +11,11 @@ use futures::prelude::*;
 use madara_runtime::opaque::Block;
 use madara_runtime::{self, Hash, RuntimeApi};
 use mc_block_proposer::ProposerFactory;
+use mc_data_availability::celestia::config::CelestiaConfig;
+use mc_data_availability::celestia::CelestiaClient;
+use mc_data_availability::ethereum::config::EthereumConfig;
+use mc_data_availability::ethereum::EthereumClient;
+use mc_data_availability::{DaClient, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
@@ -33,7 +39,7 @@ use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 
-use crate::cli::Sealing;
+use crate::cli::{DaMode, Sealing};
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
@@ -244,7 +250,11 @@ where
 }
 
 /// Builds a new service for a full client.
-pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskManager, ServiceError> {
+pub fn new_full(
+    config: Configuration,
+    sealing: Option<Sealing>,
+    da_mode: Option<(DaMode, PathBuf)>,
+) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
 
@@ -361,13 +371,55 @@ pub fn new_full(config: Configuration, sealing: Option<Sealing>) -> Result<TaskM
             Duration::new(6, 0),
             client.clone(),
             backend.clone(),
-            madara_backend,
+            madara_backend.clone(),
             3,
             0,
             hasher,
         )
         .for_each(|()| future::ready(())),
     );
+
+    if let Some((da_mode, da_path)) = da_mode {
+        match da_mode {
+            DaMode::Celestia => {
+                let celestia_conf = CelestiaConfig::new(&da_path)?;
+                let da_client =
+                    CelestiaClient::new(celestia_conf.clone()).map_err(|e| ServiceError::Other(e.to_string()))?;
+
+                task_manager.spawn_essential_handle().spawn(
+                    "da-worker-update",
+                    Some("madara"),
+                    DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
+                );
+
+                if da_client.get_mode() == "sovereign" {
+                    task_manager.spawn_essential_handle().spawn(
+                        "da-worker-prove",
+                        Some("madara"),
+                        DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend),
+                    );
+                }
+            }
+            DaMode::Ethereum => {
+                let ethereum_conf = EthereumConfig::new(&da_path)?;
+                let da_client = EthereumClient::new(ethereum_conf.clone());
+
+                task_manager.spawn_essential_handle().spawn(
+                    "da-worker-update",
+                    Some("madara"),
+                    DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
+                );
+
+                if da_client.get_mode() == "sovereign" {
+                    task_manager.spawn_essential_handle().spawn(
+                        "da-worker-prove",
+                        Some("madara"),
+                        DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend),
+                    );
+                }
+            }
+        }
+    };
 
     if role.is_authority() {
         // manual-seal authorship

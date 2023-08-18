@@ -1,0 +1,48 @@
+[package]
+name = "mc-data-availability"
+version = "0.1.0"
+description = "Starknet data availability."
+homepage = "https://github.com/keep-starknet-strange/madara"
+edition = "2021"
+license = "MIT"
+publish = false
+repository = "https://github.com/keep-starknet-strange/madara"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+async-trait = { workspace = true }
+futures = "0.3.21"
+jsonrpsee = { version = "0.18.2", features = ["http-client", "ws-client", "macros"] }
+lazy_static = "1.4.0"
+log = "0.4.19"
+reqwest = { version = "0.11.18", features = ["blocking", "json"] }
+tokio = { version = "1", features = ["full"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { version = "1.4.0", features = ["v4"] }
+
+# Substrate
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-api = { workspace = true }
+sp-io = { workspace = true }
+sc-client-api = { workspace = true }
+
+# Starknet
+mc-db = { workspace = true }
+mp-starknet = { workspace = true }
+starknet_api = { workspace = true }
+
+# Ethereum
+ethers = "2.0.7"
+
+# Avail dependency
+# avail-subxt = { git="https://github.com/availproject/avail", version = "0.3.0" }
+# subxt = "0.29"
+
+# Celestia
+celestia-rpc = { git = "https://github.com/eigerco/celestia-node-rs" }
+celestia-types = { git = "https://github.com/eigerco/celestia-node-rs" }

@@ -18,6 +18,22 @@ pub enum Testnet {
     Sharingan,
 }
 
+/// Data Availablity Mode.
+#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
+pub enum DaMode {
+    Celestia,
+    Ethereum,
+}
+
+impl DaMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DaMode::Celestia => "celestia",
+            DaMode::Ethereum => "ethereum",
+        }
+    }
+}
+
 #[derive(Debug, clap::Parser)]
 pub struct Cli {
     #[command(subcommand)]
@@ -47,6 +63,9 @@ pub struct ExtendedRunCmd {
 
     #[clap(long)]
     pub genesis_url: Option<String>,
+
+    #[clap(long)]
+    pub da_mode: Option<DaMode>,
 }
 
 #[allow(clippy::large_enum_variant)]

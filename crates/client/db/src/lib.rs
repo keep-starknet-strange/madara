@@ -13,6 +13,7 @@
 
 mod mapping_db;
 pub use mapping_db::MappingCommitment;
+mod da_db;
 mod db_opening_utils;
 mod meta_db;
 
@@ -20,6 +21,7 @@ use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
+use da_db::DaDb;
 use mapping_db::MappingDb;
 use meta_db::MetaDb;
 use sc_client_db::DatabaseSource;
@@ -36,16 +38,18 @@ struct DatabaseSettings {
 }
 
 pub(crate) mod columns {
-    pub const NUM_COLUMNS: u32 = 4;
+    pub const NUM_COLUMNS: u32 = 5;
 
     pub const META: u32 = 0;
     pub const BLOCK_MAPPING: u32 = 1;
     pub const TRANSACTION_MAPPING: u32 = 2;
     pub const SYNCED_MAPPING: u32 = 3;
+    pub const DA: u32 = 4;
 }
 
 pub mod static_keys {
     pub const CURRENT_SYNCING_TIPS: &[u8] = b"CURRENT_SYNCING_TIPS";
+    pub const LAST_PROVED_BLOCK: &[u8] = b"LAST_PROVED_BLOCK";
 }
 
 /// The Madara client database backend
@@ -56,6 +60,7 @@ pub mod static_keys {
 pub struct Backend<B: BlockT> {
     meta: Arc<MetaDb<B>>,
     mapping: Arc<MappingDb<B>>,
+    da: Arc<DaDb<B>>,
 }
 
 /// Returns the Starknet database directory.
@@ -92,6 +97,7 @@ impl<B: BlockT> Backend<B> {
         Ok(Self {
             mapping: Arc::new(MappingDb { db: db.clone(), write_lock: Arc::new(Mutex::new(())), _marker: PhantomData }),
             meta: Arc::new(MetaDb { db: db.clone(), _marker: PhantomData }),
+            da: Arc::new(DaDb { db: db.clone(), _marker: PhantomData }),
         })
     }
 
@@ -103,5 +109,10 @@ impl<B: BlockT> Backend<B> {
     /// Return the meta database manager
     pub fn meta(&self) -> &Arc<MetaDb<B>> {
         &self.meta
+    }
+
+    /// Return the da database manager
+    pub fn da(&self) -> &Arc<DaDb<B>> {
+        &self.da
     }
 }
