@@ -343,8 +343,16 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54669079?v=4",
       "profile": "https://github.com/nikania",
       "contributions": ["code"]
+    },
+    {
+      "login": "m-kus",
+      "name": "Michael Zaikin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44951260?v=4",
+      "profile": "https://github.com/m-kus",
+      "contributions": ["code"]
     }
   ],
   "contributorsPerLine": 7,
   "linkToUsage": false
 }
+
