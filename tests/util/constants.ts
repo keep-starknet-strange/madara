@@ -1,7 +1,7 @@
 export const BASE_PATH = process.env.BASE_PATH;
 export const CUSTOM_SPEC_PATH = process.env.CUSTOM_SPEC_PATH;
 
-export const DISPLAY_LOG = process.env.MADARA_LOG || false;
+export const DISPLAY_LOG = process.env.DISPLAY_LOG || false;
 export const MADARA_LOG = process.env.MADARA_LOG || "info";
 export const DEBUG_MODE = process.env.DEBUG_MODE || false;
 
