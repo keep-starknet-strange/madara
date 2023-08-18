@@ -34,9 +34,8 @@ fn default_ws() -> String {
     AVAIL_WS.to_string()
 }
 
-
 fn default_mode() -> String {
-    "sovereign".to_string()
+    "validium".to_string()
 }
 
 fn default_app_id() -> u32 {

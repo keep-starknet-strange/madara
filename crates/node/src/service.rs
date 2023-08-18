@@ -15,7 +15,7 @@ use mc_data_availability::celestia::config::CelestiaConfig;
 use mc_data_availability::celestia::CelestiaClient;
 use mc_data_availability::ethereum::config::EthereumConfig;
 use mc_data_availability::ethereum::EthereumClient;
-use mc_data_availability::{DaClient, DataAvailabilityWorker};
+use mc_data_availability::{DaClient, DaMode, DataAvailabilityWorker};
 use mc_mapping_sync::MappingSyncWorker;
 use mc_storage::overrides_handle;
 use mc_transaction_pool::FullPool;
@@ -39,7 +39,7 @@ use sp_offchain::STORAGE_PREFIX;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
 
-use crate::cli::{DaMode, Sealing};
+use crate::cli::{DaLayer, Sealing};
 use crate::genesis_block::MadaraGenesisBlockBuilder;
 use crate::rpc::StarknetDeps;
 use crate::starknet::{db_config_dir, MadaraBackend};
@@ -253,7 +253,7 @@ where
 pub fn new_full(
     config: Configuration,
     sealing: Option<Sealing>,
-    da_mode: Option<(DaMode, PathBuf)>,
+    da_mode: Option<(DaLayer, PathBuf)>,
 ) -> Result<TaskManager, ServiceError> {
     let build_import_queue =
         if sealing.is_some() { build_manual_seal_import_queue } else { build_aura_grandpa_import_queue };
@@ -379,47 +379,47 @@ pub fn new_full(
         .for_each(|()| future::ready(())),
     );
 
-    if let Some((da_mode, da_path)) = da_mode {
-        match da_mode {
-            DaMode::Celestia => {
-                let celestia_conf = CelestiaConfig::new(&da_path)?;
-                let da_client =
-                    CelestiaClient::new(celestia_conf.clone()).map_err(|e| ServiceError::Other(e.to_string()))?;
+    // if let Some((da_mode, da_path)) = da_mode {
+    //     match da_mode {
+    //         DaLayer::Celestia => {
+    //             let celestia_conf = CelestiaConfig::new(&da_path)?;
+    //             let da_client =
+    //                 CelestiaClient::new(celestia_conf.clone()).map_err(|e| ServiceError::Other(e.to_string()))?;
 
-                task_manager.spawn_essential_handle().spawn(
-                    "da-worker-update",
-                    Some("madara"),
-                    DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
-                );
+    //             task_manager.spawn_essential_handle().spawn(
+    //                 "da-worker-update",
+    //                 Some("madara"),
+    //                 DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
+    //             );
 
-                if da_client.get_mode() == "sovereign" {
-                    task_manager.spawn_essential_handle().spawn(
-                        "da-worker-prove",
-                        Some("madara"),
-                        DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend),
-                    );
-                }
-            }
-            DaMode::Ethereum => {
-                let ethereum_conf = EthereumConfig::new(&da_path)?;
-                let da_client = EthereumClient::new(ethereum_conf.clone());
+    //             if da_client.get_mode() == "validium" {
+    //                 task_manager.spawn_essential_handle().spawn(
+    //                     "da-worker-prove",
+    //                     Some("madara"),
+    //                     DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend),
+    //                 );
+    //             }
+    //         }
+    //         DaLayer::Ethereum => {
+    //             let ethereum_conf = EthereumConfig::new(&da_path)?;
+    //             let da_client = EthereumClient::new(ethereum_conf.clone());
 
-                task_manager.spawn_essential_handle().spawn(
-                    "da-worker-update",
-                    Some("madara"),
-                    DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
-                );
+    //             task_manager.spawn_essential_handle().spawn(
+    //                 "da-worker-update",
+    //                 Some("madara"),
+    //                 DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
+    //             );
 
-                if da_client.get_mode() == "sovereign" {
-                    task_manager.spawn_essential_handle().spawn(
-                        "da-worker-prove",
-                        Some("madara"),
-                        DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend),
-                    );
-                }
-            }
-        }
-    };
+    //             if da_client.get_mode() == "validium" {
+    //                 task_manager.spawn_essential_handle().spawn(
+    //                     "da-worker-prove",
+    //                     Some("madara"),
+    //                     DataAvailabilityWorker::prove_current_block(client.clone(), madara_backend),
+    //                 );
+    //             }
+    //         }
+    //     }
+    // };
 
     if role.is_authority() {
         // manual-seal authorship

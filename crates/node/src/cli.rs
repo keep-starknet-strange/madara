@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use mc_data_availability::utils::DaLayer;
+
 use sc_cli::RunCmd;
 
 /// Available Sealing methods.
@@ -16,22 +18,6 @@ pub enum Sealing {
 #[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
 pub enum Testnet {
     Sharingan,
-}
-
-/// Data Availablity Mode.
-#[derive(Debug, Copy, Clone, PartialEq, clap::ValueEnum)]
-pub enum DaMode {
-    Celestia,
-    Ethereum,
-}
-
-impl DaMode {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            DaMode::Celestia => "celestia",
-            DaMode::Ethereum => "ethereum",
-        }
-    }
 }
 
 #[derive(Debug, clap::Parser)]
@@ -65,7 +51,7 @@ pub struct ExtendedRunCmd {
     pub genesis_url: Option<String>,
 
     #[clap(long)]
-    pub da_mode: Option<DaMode>,
+    pub da_mode: Option<DaLayer>,
 }
 
 #[allow(clippy::large_enum_variant)]

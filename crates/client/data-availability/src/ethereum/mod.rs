@@ -10,7 +10,6 @@ use ethers::types::{Address, I256, U256};
 
 use crate::DaClient;
 
-#[derive(Debug, Clone)]
 pub struct EthereumClient {
     http_provider: Provider<Http>,
     mode: String,

@@ -36,19 +36,14 @@ impl DaClient for CelestiaClient {
 }
 
 impl AvailClient {
-    pub fn new(ws_endpoint: Option<&str>, app_id: Option<u32>, auth_token: Option<&str>) -> Result<Self> {
-        let ws_endpoint = ws_endpoint.unwrap_or(AVAIL_WS);
-        let app_id = AppId(app_id.unwrap_or(MADARA_DEFAULT_APP_ID));
-        let seed = auth_token.unwrap_or(AVAIL_DEFAULT_SEED);
-        let signer = signer_from_seed(seed)?;
+    pub fn new(conf: config::AvailConfig) -> Result<Self> {
+        let signer = PairSigner::new(Pair::from_string(conf.seed.as_str(), None)?)?;
 
-        let ws_client = futures::executor::block_on(async { build_client(ws_endpoint, AVAIL_VALIDATE_CODEGEN).await })
+        let ws_client = futures::executor::block_on(async { build_client(conf.ws_provider.as_str(), conf.validate_codegen).await })
             .map_err(|e| anyhow::anyhow!("Could not initialize ws endpoint {e}"))?;
 
-        Ok(AvailClient { ws_client, app_id, signer })
+        Ok(Self { ws_client, AppId(conf.app_id), signer })
     }
-
-
 
     async fn publish_data(&self, bytes: &BoundedVec<u8>) -> Result<H256> {
         let data_transfer = AvailApi::tx().data_availability().submit_data(bytes.clone());
@@ -101,9 +96,4 @@ impl AvailClient {
 
         Ok(())
     }
-}
-
-fn signer_from_seed(seed: &str) -> Result<PairSigner> {
-    let pair = Pair::from_string(seed, None)?;
-    Ok(PairSigner::new(pair))
 }

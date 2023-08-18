@@ -34,7 +34,7 @@ fn default_http() -> String {
 }
 
 fn default_mode() -> String {
-    "sovereign".to_string()
+    "validium".to_string()
 }
 
 fn default_core_contracts() -> String {

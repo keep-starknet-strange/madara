@@ -11,7 +11,6 @@ use jsonrpsee::http_client::HttpClient;
 
 use crate::DaClient;
 
-#[derive(Debug, Clone)]
 pub struct CelestiaClient {
     http_client: HttpClient,
     mode: String,

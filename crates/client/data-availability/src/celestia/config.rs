@@ -40,7 +40,7 @@ fn default_nid() -> String {
 }
 
 fn default_mode() -> String {
-    "sovereign".to_string()
+    "validium".to_string()
 }
 
 impl Default for CelestiaConfig {
