@@ -302,7 +302,8 @@ pub fn run() -> sc_cli::Result<()> {
                     )?;
                 }
 
-                cli.run.run_cmd.shared_params.chain = Some(madara_path.clone() + "/chain-specs/testnet-sharingan-raw.json");
+                cli.run.run_cmd.shared_params.chain =
+                    Some(madara_path.clone() + "/chain-specs/testnet-sharingan-raw.json");
 
                 // This should go apply to all testnets when applying a match pattern
                 cli.run.run_cmd.rpc_external = true;
