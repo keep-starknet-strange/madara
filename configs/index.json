@@ -1,0 +1,173 @@
+{
+  "remote-base-path": "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/",
+  "configs": [
+    "cairo-contracts": [
+      {
+        "name": "ArgentAccount.json",
+        "md5": "fb96b0c9993878c6a5a5cabf8ce9b3c9"
+      },
+      {
+        "name": "bigint.json",
+        "md5": "5ab2384c3ac75ec08768d22584ed6e26"
+      },
+      {
+        "name": "BraavosAccount",
+        "md5": "bc9cf29d23e5cd5fdeda0485765763a2"
+      },
+      {
+        "name": "calls.json",
+        "md5": "746fbf6b5631cf889b65751905194909"
+      },
+      {
+        "name": "constants.json",
+        "md5": "7bfeb036081a951ff27c601c4e057387"
+      },
+      {
+        "name": "Counter.json",
+        "md5": "61455348d9421fafc1b7a5b1ad891029"
+      },
+      {
+        "name": "ec.json",
+        "md5": "45ed89edfb8575f349346622097a149e"
+      },
+      {
+        "name": "ec_mulmuladd.json",
+        "md5": "a309e8424eda8b8241da0d20b61014e1"
+      },
+      {
+        "name": "ec_mulmuladd_secp256r1.json",
+        "md5": "28875964d7dea4e0afe63782ed1ddef1"
+      },
+      {
+        "name": "emit_multiple_events_across_contracts.json",
+        "md5": "0aa9c8a1cc37f45953f7a4ade7ae9f8e"
+      },
+      {
+        "name": "emit_single_event.json",
+        "md5": "f81b66c79527641184b9790cb2194631"
+      },
+      {
+        "name": "ERC20.json",
+        "md5": "bb4b9492b9ac173cc8648899f82fb4b5"
+      },
+      {
+        "name": "ERC721.json",
+        "md5": "921c01faed5df5b24a80e52a3b469330"
+      },
+      {
+        "name": "Example.sierra.json",
+        "md5": "1209e947ed73a1bb10791458dc9171f1"
+      },
+      {
+        "name": "field.json",
+        "md5": "75813036733a1f84521847467db4767c"
+      },
+      {
+        "name": "guards.json",
+        "md5": "f2b17a8ec78f4ec7ae2426a1cd92b69c"
+      },
+      {
+        "name": "l1_handler.json",
+        "md5": "072ec724081697afb5e9f17315fe409c"
+      },
+      {
+        "name": "library.json",
+        "md5": "cf3a4c050d627112dcf490495cff44bc"
+      },
+      {
+        "name": "NoValidateAccount.json",
+        "md5": "8049765b03c864c1f743ebcfbac0b721"
+      },
+      {
+        "name": "OpenzeppelinAccount.json",
+        "md5": "afac329e2b9d0525dd0e481591a0e98b"
+      },
+      {
+        "name": "Proxy.json",
+        "md5": "cd2bf3a51f319124f7506327ccd4045d"
+      },
+      {
+        "name": "security_test.json",
+        "md5": "1289d771132e1553e9b75fd4455f2de7"
+      },
+      {
+        "name": "signature.json",
+        "md5": "aa8fc383bcbea48ee3c888d2f0856c0b"
+      },
+      {
+        "name": "test.json",
+        "md5": "b022be5ad4dae9599d4fa44467abfbd9"
+      },
+      {
+        "name": "UnauthorizedInnerCallAccount.json",
+        "md5": "a9f9fc2fab5ed9a52b96e79f7663618c"
+      },
+      {
+        "name": "UniversalDeployer.json",
+        "md5": "d917baa8b1455f946d095d467dcdba47"
+      },
+      {
+        "name": "upgradable.json",
+        "md5": "298968f80c680defe588c932f0eead37"
+      }
+    ],
+    "cairo_1-contracts": [
+      {
+        "name": "erc20.casm.json",
+        "md5": "dda01531375ace92803900faa5569f29"
+      },
+      {
+        "name": "erc20.sierra.json",
+        "md5": "8c120c4daf5a53c005735e9a6019f1d4"
+      },
+      {
+        "name": "HelloStarknet.casm.json",
+        "md5": "cec93da4f7d007318bb33dc2dbc60a98"
+      },
+      {
+        "name": "HelloStarknet.sierra.json",
+        "md5": "8fcd1daa47a2c87dc137317028087e46"
+      },
+      {
+        "name": "NoValidateAccount.casm.json",
+        "md5": "a6d73f38cec68964187e7c5a217dcac2"
+      },
+      {
+        "name": "NoValidateAccount.sierra.json",
+        "md5": "ce26634a2879099707cb1a899f5c59c8"
+      }
+    ],
+    "chain-specs": [
+      {
+        "name": "testnet-sharingan-raw.json",
+        "md5": "673afeb9606408a259ae2f15c5e56cc9"
+      },
+      {
+        "name": "testnet-sharingan.json",
+        "md5": "914d8ca7a371ccb6c711ae1a3bb4d504"
+      }
+    ],
+    "genesis-assets": [
+      {
+        "name": "Account.json",
+        "md5": "bbdfc1b69f76e9c2784db6d8b697dc56"
+      },
+      {
+        "name": "AccountBaseImpl.json",
+        "md5": "517db50da627d5cf290aa53c402cea39"
+      },
+      {
+        "name": "CallAggregator.json",
+        "md5": "3f418be1aab5ebd4a591e815af65533a"
+      },
+      {
+        "name": "genesis.json",
+        "md5": "a18f94c61c426bdded4f19af40bd3fa9"
+      },
+      {
+        "name": "Proxy.json",
+        "md5": "94339e5c00dc295bbf70a320d2067be5"
+      }
+    ]
+  ]
+}

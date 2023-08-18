@@ -225,7 +225,7 @@ pub fn run() -> sc_cli::Result<()> {
                     if let Ok(src_path) = src_path {
                         let src_path = src_path + "/configs/genesis-assets/" + file;
                         utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
-                    } else {
+                    } else if !cli.run.disable_url_fetch {
                         utils::fetch_from_url(
                             constants::GENESIS_ASSETS_URL.to_string() + file,
                             madara_path.clone() + "/genesis-assets",
@@ -241,7 +241,7 @@ pub fn run() -> sc_cli::Result<()> {
                 if let Ok(src_path) = src_path {
                     let src_path = src_path + "/configs/cairo-contracts/" + file;
                     utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
-                } else {
+                } else if !cli.run.disable_url_fetch {
                     utils::fetch_from_url(
                         constants::CAIRO_CONTRACTS_URL.to_string() + file,
                         madara_path.clone() + "/cairo-contracts",
@@ -258,7 +258,7 @@ pub fn run() -> sc_cli::Result<()> {
                 if let Ok(src_path) = src_path {
                     let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
                     utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-                } else {
+                } else if !cli.run.disable_url_fetch {
                     utils::fetch_from_url(
                         constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
                         madara_path.clone() + "/chain-specs",
