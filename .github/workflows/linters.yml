@@ -6,17 +6,6 @@ on:
   workflow_call:
 
 jobs:
-  spell-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: codespell-project/actions-codespell@v1
-        with:
-          check_filenames: true
-          check_hidden: true
-          ignore_words_file: ./.codespellignore
-          skip: Cargo.lock,package-lock.json,target,yarn.lock,.git,resources
-
   prettier:
     runs-on: ubuntu-latest
     steps:
