@@ -1,5 +1,5 @@
 {
-  "remote-base-path": "https://raw.githubusercontent.com/keep-starknet-strange/madara/main/configs/",
+  "remote-base-path": "https://raw.githubusercontent.com/d-roak/madara/feat/configs-index/configs/",
   "configs": [
     "cairo-contracts": [
       {
@@ -10,7 +10,8 @@
     "chain-specs": [
       {
         "name": "testnet-sharingan-raw.json",
-        "md5": "673afeb9606408a259ae2f15c5e56cc9"
+        "md5": "673afeb9606408a259ae2f15c5e56cc9",
+        "url": "https://chains.madara.zone/sharingan/testnet-sharingan-raw.json"
       },
       {
         "name": "testnet-sharingan.json",

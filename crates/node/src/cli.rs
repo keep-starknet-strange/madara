@@ -51,6 +51,10 @@ pub struct ExtendedRunCmd {
 	#[clap(long)]
 	pub disable_url_fetch: bool,
 
+	/// Update madara config files (fetching them locally or remotely)
+	#[clap(long)]
+	pub update_madara_configs: bool,
+
 	/// Load a custom chain-spec from an url
     #[clap(long)]
     pub chain_spec_url: Option<String>,

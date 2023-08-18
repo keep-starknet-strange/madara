@@ -213,10 +213,10 @@ pub fn run() -> sc_cli::Result<()> {
             cli.run.run_cmd.network_params.node_key_params.node_key_file =
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
-            if let Some(genesis_url) = cli.run.genesis_url.clone() {
+            if let Some(configs_url) = cli.run.configs_url.clone() {
                 // can't copy extra genesis-assets atm
                 // we can reuse #982 to create the standard to fetch relevant files
-                utils::fetch_from_url(genesis_url, madara_path.clone() + "/configs/genesis-assets")?;
+                utils::fetch_from_url(configs_url, madara_path.clone() + "/configs")?;
             } else {
                 // TODO confirm with the CI that we are fetching all and fetch dynamically
                 // Issue #982
