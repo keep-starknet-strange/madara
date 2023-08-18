@@ -65,3 +65,21 @@ impl DefaultHasher for PedersenHasher {
         Self::default()
     }
 }
+
+#[test]
+fn dynamic_string_hashing() {
+    use core::str::FromStr;
+
+    let hasher = PedersenHasher::hasher();
+
+    let message = format!("Hello, madara!!. It is pedersen hash."); // 37 bytes
+    let message = message.as_bytes();
+    let hash_value = hasher.hash_bytes(message);
+
+    assert_eq!(
+        hash_value,
+        Felt252Wrapper(
+            FieldElement::from_str("0x05a76d229982b7175a4da818ceec34c08690af7db687fa036838beccc87e7ed1").unwrap()
+        )
+    );
+}
