@@ -11,7 +11,7 @@ use ethers::types::{Address, I256, U256};
 
 use crate::{DaClient, DaMode};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct EthereumClient {
     http_provider: Provider<Http>,
     wallet: LocalWallet,
@@ -59,13 +59,17 @@ impl DaClient for EthereumClient {
 }
 
 impl EthereumClient {
-    pub fn new(conf: config::EthereumConfig) -> Self {
-        let provider = Provider::<Http>::try_from(conf.http_provider).unwrap();
+    pub fn try_from_config(conf: config::EthereumConfig) -> Result<Self, String> {
+        let provider = Provider::<Http>::try_from(conf.http_provider).map_err(|e| format!("ethereum error: {e}"))?;
 
-        let wallet: LocalWallet = conf.sequencer_key.parse::<LocalWallet>().unwrap().with_chain_id(conf.chain_id);
+        let wallet: LocalWallet = conf
+            .sequencer_key
+            .parse::<LocalWallet>()
+            .map_err(|e| format!("ethereum error: {e}"))?
+            .with_chain_id(conf.chain_id);
 
-        let cc_address: Address = conf.core_contracts.parse().unwrap();
+        let cc_address: Address = conf.core_contracts.parse().map_err(|e| format!("ethereum error: {e}"))?;
 
-        Self { http_provider: provider, wallet, cc_address, mode: conf.mode }
+        Ok(Self { http_provider: provider, wallet, cc_address, mode: conf.mode })
     }
 }

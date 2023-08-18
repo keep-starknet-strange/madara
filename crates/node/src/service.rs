@@ -379,6 +379,7 @@ pub fn new_full(
         .for_each(|()| future::ready(())),
     );
 
+    // initialize data availability worker
     if let Some((da_layer, da_path)) = da_layer {
         match da_layer {
             DaLayer::Celestia => {
@@ -400,7 +401,7 @@ pub fn new_full(
             }
             DaLayer::Ethereum => {
                 let ethereum_conf = EthereumConfig::try_from_file(&da_path)?;
-                let da_client = EthereumClient::new(ethereum_conf.clone());
+                let da_client = EthereumClient::try_from_config(ethereum_conf.clone())?;
 
                 task_manager.spawn_essential_handle().spawn(
                     "da-worker-update",
