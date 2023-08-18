@@ -31,7 +31,7 @@
 - fix: expected event idx in cotinuation tokens in test responses
 - chore: cairo-contracts compilation scripts & docs are updated, cairo_0
   contracts recompiled
-- add-contributors: `0xAsten`
+- add-contributors: `0xAsten`, `m-kus`, `joaopereira12`
 - fix: update RPC URL to use localhost instead of 0.0.0.0 in hurl.config file
 - fix: update the default port for running Madara locally in getting-started.md
   file from 9933 to 9944.
