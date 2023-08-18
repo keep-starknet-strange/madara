@@ -2,6 +2,7 @@
 
 ## Next release
 
+- ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
 - ci: fix docker and binaries build
