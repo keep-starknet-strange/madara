@@ -14,6 +14,7 @@ use async_trait::async_trait;
 use ethers::types::U256;
 use futures::StreamExt;
 use lazy_static::lazy_static;
+use log::{debug, error, info, trace, warn};
 use mp_starknet::storage::{
     PALLET_STARKNET, STARKNET_CONTRACT_CLASS, STARKNET_CONTRACT_CLASS_HASH, STARKNET_NONCE, STARKNET_STORAGE,
 };
@@ -22,10 +23,8 @@ use sp_api::ProvideRuntimeApi;
 use sp_io::hashing::twox_128;
 use sp_runtime::traits::Block as BlockT;
 use uuid::Uuid;
-use log::{debug, error, info, trace, warn};
 
 const LOG_TARGET: &str = "da-worker";
-
 
 lazy_static! {
     static ref SN_NONCE_PREFIX: Vec<u8> = [twox_128(PALLET_STARKNET), twox_128(STARKNET_NONCE)].concat();
@@ -55,8 +54,6 @@ where
         let mut storage_event_st = client.storage_changes_notification_stream(None, None).unwrap();
 
         while let Some(storage_event) = storage_event_st.next().await {
-            info!("GOT HERERERERRERERER");
-
             // Locate and encode the storage change
             let mut _deployed_contracts: Vec<String> = Vec::new();
             let mut nonces: HashMap<&[u8], &[u8]> = HashMap::new();
@@ -118,7 +115,6 @@ where
 {
     // pub async fn update_state(client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
     pub async fn update_state(da_client: impl DaClient, client: Arc<C>, madara_backend: Arc<mc_db::Backend<B>>) {
-        info!(target: LOG_TARGET, "GOT HERERERERERERERERE.");
         let mut notification_st = client.import_notification_stream();
 
         while let Some(notification) = notification_st.next().await {
