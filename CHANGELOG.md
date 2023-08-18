@@ -38,3 +38,5 @@
   file from 9933 to 9944.
 - dev: replace the 0 initial gas value with u128::MAX because view call
   entrypoints were failing
+- feat: add a data availability worker, data availability trait and a common structure for Avail, Celestia, Ethereum.
+
