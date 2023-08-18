@@ -1,5 +1,6 @@
 //! Pedersen hash module.
 use alloc::vec::Vec;
+use core::cmp;
 
 use starknet_core::crypto::compute_hash_on_elements;
 use starknet_crypto::{pedersen_hash, FieldElement};
@@ -20,10 +21,27 @@ impl HasherT for PedersenHasher {
     /// # Returns
     /// The hash of the data.
     fn hash_bytes(&self, data: &[u8]) -> Felt252Wrapper {
-        // For now we use the first 31 bytes of the data as the field element, to avoid any panics.
-        // TODO: have proper error handling and think about how to hash efficiently big chunks of data.
-        let field_element = FieldElement::from_byte_slice_be(&data[..31]).unwrap();
-        Felt252Wrapper(pedersen_hash(&FieldElement::ZERO, &field_element))
+        // Calculate the number of 31-byte chunks we'll need, rounding up.
+        // (1 byte is used padding to prevent the value of field from being greater than modular)
+        // TODO: It is need a way to truncate bytes to fit into values smaller than modular (optimization)
+        let chunks = (data.len() + 30) / 31;
+
+        let mut hash_value = FieldElement::ZERO;
+
+        for i in 0..chunks {
+            let start = i * 31;
+            let end = cmp::min(start + 31, data.len());
+
+            // Create a buffer for our 32-byte chunk.
+            let mut buffer = [0u8; 32];
+            buffer[1..end - start + 1].copy_from_slice(&data[start..end]);
+
+            // Convert the buffer to a FieldElement and then to a Felt252Wrapper.
+            let field_element = FieldElement::from_bytes_be(&buffer).unwrap();
+            hash_value = pedersen_hash(&hash_value, &field_element);
+        }
+
+        Felt252Wrapper(hash_value)
     }
 
     /// Hashes a slice of field elements using the Pedersen hash function.
