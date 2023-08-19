@@ -1,10 +1,10 @@
 [package]
 name = "pallet-starknet"
-version = "0.1.0-alpha"
+version.workspace = true
+edition.workspace = true
 description = "FRAME pallet to execute Starknet contracts."
 authors = ["Abdelhamid Bakhta <@abdelhamidbakhta>"]
 homepage = "https://github.com/keep-starknet-strange/madara"
-edition = "2021"
 license = "MIT"
 publish = false
 repository = "https://github.com/keep-starknet-strange/madara"
@@ -32,6 +32,8 @@ starknet_api = { workspace = true, default-features = false }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+# Substrate Client
+sc-cli = { workspace = true, optional = true }
 # Substrate primitives
 sp-api = { workspace = true }
 sp-core = { workspace = true }
@@ -45,6 +47,10 @@ sp-std = { workspace = true }
 hex = { workspace = true }
 indexmap = { workspace = true }
 log = { workspace = true }
+reqwest = { workspace = true, optional = true, features = [
+  "blocking",
+  "rustls-tls",
+] }
 scale-codec = { package = "parity-scale-codec", workspace = true, features = [
   "derive",
 ] }
@@ -66,6 +72,7 @@ std = [
   # Substrate
   "frame-support/std",
   "frame-system/std",
+  "sc-cli",
   "sp-io/std",
   "sp-runtime/std",
   "frame-benchmarking?/std",
@@ -79,6 +86,7 @@ std = [
   "blockifier/std",
   # Other third party dependencies
   "scale-codec/std",
+  "reqwest",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]

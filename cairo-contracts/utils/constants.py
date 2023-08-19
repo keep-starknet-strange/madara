@@ -13,7 +13,7 @@ logger.setLevel(logging.INFO)
 BUILD_DIR = Path("build")
 BUILD_DIR.mkdir(exist_ok=True, parents=True)
 SOURCE_DIR = Path("src")
-CONTRACTS = {p.stem: p for p in list(SOURCE_DIR.glob("**/*.cairo"))}
+CONTRACTS = {p.stem: p for p in list(SOURCE_DIR.glob("**/*.cairo")) if not 'cairo_1' in p.parts}
 
 DEPLOYMENTS_DIR = Path("deployments")
 DEPLOYMENTS_DIR.mkdir(exist_ok=True, parents=True)

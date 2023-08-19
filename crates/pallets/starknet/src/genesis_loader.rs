@@ -1,5 +1,3 @@
-use std::fs;
-use std::path::PathBuf;
 use std::string::String;
 use std::vec::Vec;
 
@@ -12,7 +10,7 @@ use starknet_core::serde::unsigned_field_element::UfeHex;
 use starknet_crypto::FieldElement;
 
 use crate::types::ContractStorageKeyWrapper;
-use crate::GenesisConfig;
+use crate::{utils, GenesisConfig};
 
 /// A wrapper for FieldElement that implements serde's Serialize and Deserialize for hex strings.
 #[serde_as]
@@ -27,6 +25,7 @@ type StorageValue = HexFelt;
 
 #[derive(Deserialize, Serialize)]
 pub struct GenesisLoader {
+    pub madara_path: Option<String>,
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
     pub contracts: Vec<(ContractAddress, ClassHash)>,
     pub storage: Vec<(ContractStorageKey, StorageValue)>,
@@ -41,6 +40,12 @@ pub enum ContractClass {
     Class(StarknetContractClass),
 }
 
+impl GenesisLoader {
+    pub fn set_madara_path(&mut self, madara_path: String) {
+        self.madara_path = Some(madara_path);
+    }
+}
+
 impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
     fn from(loader: GenesisLoader) -> Self {
         let contract_classes = loader
@@ -50,7 +55,14 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                 let hash = unsafe { std::mem::transmute::<ClassHash, ClassHashWrapper>(hash) };
                 match class {
                     ContractClass::Path { path, version } => {
-                        (hash, get_contract_class(&read_file_to_string(&path), version))
+                        let contract_path = match loader.madara_path.clone() {
+                            Some(madara_path) => madara_path + "/" + &path,
+                            None => {
+                                let project_path = utils::get_project_path().expect("Project path not found");
+                                project_path + "/" + &path
+                            }
+                        };
+                        (hash, get_contract_class(&utils::read_file_to_string(contract_path).unwrap(), version))
                     }
                     ContractClass::Class(class) => (hash, class),
                 }
@@ -88,18 +100,6 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
     }
 }
 
-pub fn read_file_to_string(path: &str) -> String {
-    let workspace = std::process::Command::new(env!("CARGO"))
-        .args(["locate-project", "--workspace", "--message-format=plain"])
-        .output()
-        .expect("Failed to execute cargo locate-project command")
-        .stdout;
-    let mut dir = PathBuf::from(std::str::from_utf8(&workspace).unwrap().trim());
-    dir.pop();
-    dir.push(path);
-    fs::read_to_string(dir).unwrap()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -113,8 +113,13 @@ mod tests {
     #[test]
     fn test_deserialize_loader() {
         // When
-        let loader: GenesisLoader =
-            serde_json::from_str(&read_file_to_string("crates/pallets/starknet/src/tests/mock/genesis.json")).unwrap();
+        let loader: GenesisLoader = serde_json::from_str(
+            &utils::read_file_to_string(
+                utils::get_project_path().unwrap() + "/crates/pallets/starknet/src/tests/mock/genesis.json",
+            )
+            .unwrap(),
+        )
+        .unwrap();
 
         // Then
         assert_eq!(13, loader.contract_classes.len());
@@ -123,8 +128,7 @@ mod tests {
     #[test]
     fn test_serialize_loader() {
         // Given
-        let class: ContractClass =
-            ContractClass::Path { path: "./cairo-contracts/build/ERC20.json".into(), version: 0 };
+        let class: ContractClass = ContractClass::Path { path: "cairo-contracts/ERC20.json".into(), version: 0 };
 
         let class_hash = FieldElement::from(1u8).into();
         let contract_address = FieldElement::from(2u8).into();
@@ -133,6 +137,7 @@ mod tests {
         let fee_token_address = FieldElement::from(5u8).into();
 
         let genesis_loader = GenesisLoader {
+            madara_path: None,
             contract_classes: vec![(class_hash, class)],
             contracts: vec![(contract_address, class_hash)],
             storage: vec![((contract_address, storage_key), storage_value)],
@@ -144,7 +149,7 @@ mod tests {
         let serialized_loader = serde_json::to_string(&genesis_loader).unwrap();
 
         // Then
-        let expected = r#"{"contract_classes":[["0x1",{"path":"./cairo-contracts/build/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
+        let expected = r#"{"madara_path":null,"contract_classes":[["0x1",{"path":"cairo-contracts/ERC20.json","version":0}]],"contracts":[["0x2","0x1"]],"storage":[[["0x2","0x3"],"0x4"]],"fee_token_address":"0x5","seq_addr_updated":false}"#;
         assert_eq!(expected, serialized_loader);
     }
 }
