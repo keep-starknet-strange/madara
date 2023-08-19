@@ -38,3 +38,8 @@
   file from 9933 to 9944.
 - dev: replace the 0 initial gas value with u128::MAX because view call
   entrypoints were failing
+- test: add `starknet-rpc-test` crate to the workspace
+- test(rpc): add `get_block_number.rs` tests
+- test(rpc): add `get_block_hash_and_number.rs` tests
+- test(rpc): add `get_block_transaction_count.rs` tests
+- test(rpc): add `chain_id.rs` tests
