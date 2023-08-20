@@ -97,8 +97,8 @@ Madara是由StarkWare探索团队，
 
 ## 进入: Madara
 
-在Madara中，通过利用Substrate框架并整合Cairo 
-VM来执行Cairo程序和Starknet智能合约，从而增强了Cairo VM。
+在Madara中，通过利用Substrate框架并整合Cairo VM来执行Cairo程序和Starknet智能合约，
+从而增强了Cairo VM。
 Substrate是一个开源Rust框架，以其灵活性而闻名，并用于构建可定制的区块链。
 与此同时，Cairo VM专门设计用于高效生成程序执行的有效性证明。
 通过在L2上使用状态跟踪和智能合约来验证这些证明，应用链确保集成了Starknet的安全性。
