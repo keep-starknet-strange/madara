@@ -56,8 +56,9 @@ Madara是由StarkWare探索团队，也称为[Keep Starknet Strange](https://git
 
 一起来看看构成应用链的不同层级间的相互作用，以及Madara的用武之地。
 
-1. **执行:** 执行层定义了区块的执行和状态差异的生成。Madara 提供了在两种执行工具包（StarkWare 的 [blockifier](https://github.com/starkware-libs/blockifier) 和 LambdaClass
-的 [starknet_in_rust](https://github.com/lambdaclass/starknet_in_rust)）之间切换的灵活性。无论选择了哪个执行工具包，
+1. **执行:** 执行层定义了区块的执行和状态差异的生成。Madara 提供了在两种执行工具包（StarkWare 的
+[blockifier](https://github.com/starkware-libs/blockifier) 和 LambdaClass的
+[starknet_in_rust](https://github.com/lambdaclass/starknet_in_rust)）之间切换的灵活性。无论选择了哪个执行工具包，
 底层框架都使用Cairo VM。Cairo语言有助于创建可证明的程序，这样就能证明计算被正确执行。
 2. **结算:** 作为有效性Rollup，Madara应用链的状态可以仅通过检查其结算层来重建。通过在Starknet L2上更频繁的结算，L3应用链
 可以实现更快的硬最终性，而去中心化的排序层实现更强大的软最终性，因此，在这两方面(硬和软终结性)，结算都得到了增强。
@@ -72,10 +73,18 @@ Madara是由StarkWare探索团队，也称为[Keep Starknet Strange](https://git
 
 ## 进入: Madara
 
-在Madara中，通过利用Substrate框架并整合Cairo VM来执行Cairo程序和Starknet智能合约，从而增强了Cairo VM。Substrate是一个开源Rust框架，以其灵活性而闻名，并用于构建可定制的区块链。与此同时，Cairo VM专门设计用于高效生成程序执行的有效性证明。通过在L2上使用状态跟踪和智能合约来验证这些证明，应用链确保集成了Starknet的安全性。这样，Madara利用Cairo的强大功能实现了程序执行的可证明性。
+在Madara中，通过利用Substrate框架并整合Cairo VM来执行Cairo程序和Starknet智能合约，从而增强了Cairo VM。
+Substrate是一个开源Rust框架，以其灵活性而闻名，并用于构建可定制的区块链。与此同时，Cairo VM专门设计用于
+高效生成程序执行的有效性证明。通过在L2上使用状态跟踪和智能合约来验证这些证明，应用链确保集成了Starknet的安全性。
+这样，Madara利用Cairo的强大功能实现了程序执行的可证明性。
 
-Substrate框架固有的模块化特性使开发者可以轻松地定制应用链。没有任何强加的假设，允许你自行整合共识协议、哈希函数、签名方案、存储布局 - 无论你的应用需要什么，都可以利用Cairo来生成证明。无论是Starknet还是Ethereum上，开发者都可以在继承底层链安全性的同时，不受限制的操作，并可被证明。
+Substrate框架固有的模块化特性使开发者可以轻松地定制应用链。没有任何强加的假设，允许你自行整合共识协议、
+哈希函数、签名方案、存储布局 - 无论你的应用需要什么，都可以利用Cairo来生成证明。无论是Starknet还是Ethereum上，
+开发者都可以在继承底层链安全性的同时，不受限制的操作，并可被证明。
 
-起初，Madara将与Starknet非常相似，使智能合约可以在Starknet生态系统内进行组合。未来将有更宏伟的计划，因为Starknet将与[Herodotus](https://www.herodotus.dev/)集成，利用[存储证明](https://book.starknet.io/chapter_8/storage_proofs.html)实现互操作性。存储证明的整合还将使Madara应用链能够考虑来自其他链的状态和流动性。
+起初，Madara将与Starknet非常相似，使智能合约可以在Starknet生态系统内进行组合。未来将有更宏伟的计划，
+因为Starknet将与[Herodotus](https://www.herodotus.dev/)集成，利用
+[存储证明](https://book.starknet.io/chapter_8/storage_proofs.html)实现互操作性。存储证明的整合还将使Madara
+应用链能够考虑来自其他链的状态和流动性。
 
 准备好见证由Madara开启的Starknet新纪元吧。
