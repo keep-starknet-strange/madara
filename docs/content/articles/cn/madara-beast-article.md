@@ -36,7 +36,8 @@ Madara是由StarkWare探索团队，也称为[Keep Starknet Strange](https://git
 
 ### 定制化
 
-像Starknet和Ethereum等通用链采取了多项措施来确保网络对所有人可用，但这导致了一种受限的环境。通过应用链，开发人员可以微调其应用和基础设施的各个方面，创建量身定制的解决方案。不喜欢Cairo VM的某个特性？可以在你的应用链中将其排除掉。
+像Starknet和Ethereum等通用链采取了多项措施来确保网络对所有人可用，但这导致了一种受限的环境。通过应用链，开发人员可以微调其应用和基础设施的各个方面，创建量身定制的解决方案。不喜欢Cairo VM的某个特性？
+可以在你的应用链中将其排除掉。
 
 ### 创新
 
@@ -46,11 +47,12 @@ Madara是由StarkWare探索团队，也称为[Keep Starknet Strange](https://git
 
 一起来看看构成应用链的不同层级间的相互作用，以及Madara的用武之地。
 
-1. **执行:** 执行层定义了区块的执行和状态差异的生成。Madara 提供了在两种执行工具包（StarkWare 的 [blockifier](https://github.com/starkware-libs/blockifier) 和 LambdaClass 的 [starknet_in_rust](https://github.com/lambdaclass/starknet_in_rust)）之间切换的灵活性。无论选择了哪个执行工具包，底层框架都使用Cairo VM。Cairo语言有助于创建可证明的程序，这样就能证明计算被正确执行。
-2. **结算:** 作为有效性Rollup，Madara应用链的状态可以仅通过检查其结算层来重建。通过在Starknet L2上更频繁的结算，L3应用链可以实现更快的硬最终性，而去中心化的排序层实现更强大的软最终性，因此，在这两方面(硬和软终结性)，结算都得到了增强。
-3. **排序:** Madara负责排序过程，可以根据应用的需求进行调整，无论是简单的FCFS或PGA，还是像Narwhall和Bullshark这类更复杂的方案。一些应用链可以选择部署加密内存池，以确保公平排序并减轻MEV的影响。
-4. **数据可用性:** 数据可用性保证始终可访问完整的状态树，借此向用户提供信心，即使Madara发生故障的情况下，他们也能证明自己拥有资金的所有权。Madara将为开发者提供多种可供选择的数据可用性方案。
-5. **治理:** 每个Madara应用链可以选择其治理模型。[Snapshot X](https://twitter.com/SnapshotLabs)提供了一个依赖于存储证明并完全基于链上的治理系统。其他治理机制也在探索中，譬如原生的Substrate治理面板。链上治理是Madara的核心价值所在。
+1. **执行:** 执行层定义了区块的执行和状态差异的生成。Madara 提供了在两种执行工具包（StarkWare 的 [blockifier](https://github.com/starkware-libs/blockifier) 和 LambdaClass
+的 [starknet_in_rust](https://github.com/lambdaclass/starknet_in_rust)）之间切换的灵活性。无论选择了哪个执行工具包，底层框架都使用Cairo VM。Cairo语言有助于创建可证明的程序，这样就能证明计算被正确执行。
+3. **结算:** 作为有效性Rollup，Madara应用链的状态可以仅通过检查其结算层来重建。通过在Starknet L2上更频繁的结算，L3应用链可以实现更快的硬最终性，而去中心化的排序层实现更强大的软最终性，因此，在这两方面(硬和软终结性)，结算都得到了增强。
+4. **排序:** Madara负责排序过程，可以根据应用的需求进行调整，无论是简单的FCFS或PGA，还是像Narwhall和Bullshark这类更复杂的方案。一些应用链可以选择部署加密内存池，以确保公平排序并减轻MEV的影响。
+5. **数据可用性:** 数据可用性保证始终可访问完整的状态树，借此向用户提供信心，即使Madara发生故障的情况下，他们也能证明自己拥有资金的所有权。Madara将为开发者提供多种可供选择的数据可用性方案。
+6. **治理:** 每个Madara应用链可以选择其治理模型。[Snapshot X](https://twitter.com/SnapshotLabs)提供了一个依赖于存储证明并完全基于链上的治理系统。其他治理机制也在探索中，譬如原生的Substrate治理面板。链上治理是Madara的核心价值所在。
 
 ![come come](https://lh4.googleusercontent.com/i7bXi2IPV-LTLzEgueA2SPHGULUFDj1OX4IznOQr5BeZe0hcey-VXA5TOV6q9XaVqBGAcYiie7u7uxw7q1ByZxjkPQKHERqKJTxhdDdTSgBQy8smyNO3jEHiNJv7Eqh8BMxjj4fFlQAW6gm-hQMzyIU)
 
