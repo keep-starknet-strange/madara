@@ -529,20 +529,17 @@ where
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
         let smthng = request.iter().any(|tx| match tx {
-            BroadcastedTransaction::Invoke(a) => match a {
-                BroadcastedInvokeTransaction::V0(b) => b.is_query,
-                BroadcastedInvokeTransaction::V1(b) => b.is_query,
-            },
-            BroadcastedTransaction::Declare(a) => match a {
-                BroadcastedDeclareTransaction::V2(b) => b.is_query,
-                BroadcastedDeclareTransaction::V1(b) => b.is_query,
-            },
-            BroadcastedTransaction::DeployAccount(a) => a.is_query,
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V0(tx_v0)) => tx_v0.is_query,
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx_v1)) => tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) => deploy_tx.is_query,
         });
+
         if smthng {
             return Err(StarknetRpcApiError::UnsupportedTxVersion.into());
         }
-        
+
         let substrate_block_hash = self.substrate_block_hash_from_starknet_block(block_id).map_err(|e| {
             error!("'{e}'");
             StarknetRpcApiError::BlockNotFound
