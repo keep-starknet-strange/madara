@@ -1,8 +1,8 @@
 mod avail;
 mod celestia;
 pub mod da;
-mod ethereum;
-mod sharp_utils;
+// mod ethereum;
+// mod sharp_utils;
 mod utils;
 
 use std::collections::HashMap;

@@ -154,7 +154,7 @@ cairo-lang-casm = { git = "https://github.com/keep-starknet-strange/cairo.git", 
 cairo-lang-utils = { git = "https://github.com/keep-starknet-strange/cairo.git", branch = "no_std-support", default-features = false }
 
 # Avail dependency
-avail-subxt = { git="https://github.com/availproject/avail", version = "0.3.0", branch = "develop" }
+avail-subxt = { git = "https://github.com/availproject/avail", version = "0.3.0", branch = "develop" }
 subxt = "0.29"
 
 # Other third party dependencies
