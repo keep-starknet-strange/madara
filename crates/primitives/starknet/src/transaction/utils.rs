@@ -1,9 +1,12 @@
 use alloc::vec::Vec;
 
+use starknet_api::api_core::Nonce;
 use starknet_api::hash::StarkFelt;
 use starknet_api::transaction::TransactionVersion;
+use starknet_api::StarknetApiError;
 use starknet_ff::FieldElement;
 
+use crate::execution::felt252_wrapper::Felt252Wrapper;
 use crate::execution::types::{EntryPointTypeWrapper, EntryPointWrapper};
 
 const QUERY_VERSION_OFFSET: FieldElement =
@@ -24,6 +27,11 @@ pub fn calculate_transaction_version(is_query: bool, version: TransactionVersion
 /// calls [calculate_transaction_version] after converting version to [TransactionVersion]
 pub fn calculate_transaction_version_from_u8(is_query: bool, version: u8) -> TransactionVersion {
     calculate_transaction_version(is_query, TransactionVersion(StarkFelt::from(version)))
+}
+
+/// converts [Felt252Wrapper] to [Nonce]
+pub fn felt_to_nonce(nonce: Felt252Wrapper) -> Result<Nonce, StarknetApiError> {
+    Ok(Nonce(StarkFelt::new(nonce.into())?))
 }
 
 #[cfg(feature = "std")]

@@ -79,6 +79,7 @@ macro_rules! mock_runtime {
                 pub const DisableNonceValidation: bool = $disable_nonce_validation;
 				pub const ProtocolVersion: u8 = 0;
                 pub const ChainId: Felt252Wrapper = SN_GOERLI_CHAIN_ID;
+                pub const MaxRecursionDepth: u32 = 50;
             }
 
 			impl pallet_starknet::Config for MockRuntime {
@@ -94,6 +95,7 @@ macro_rules! mock_runtime {
                 type DisableNonceValidation = DisableNonceValidation;
 				type ProtocolVersion = ProtocolVersion;
                 type ChainId = ChainId;
+                type MaxRecursionDepth = MaxRecursionDepth;
 			}
 
 			/// Run to block n.
