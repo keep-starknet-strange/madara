@@ -19,28 +19,30 @@ pub enum StarknetRpcApiError {
     InvalidTxnIndex = 27,
     #[error("Class hash not found")]
     ClassHashNotFound = 28,
-    #[error("Class already declared")]
-    ClassAlreadyDeclared = 51,
     #[error("Requested page size is too big")]
     PageSizeTooBig = 31,
     #[error("There are no blocks")]
     NoBlocks = 32,
     #[error("The supplied continuation token is invalid or unknown")]
     InvalidContinuationToken = 33,
+    #[error("Too many keys provided in a filter")]
+    TooManyKeysInFilter = 34,
+    #[error("Failed to fetch pending transactions")]
+    FailedToFetchPendingTransactions = 38,
     #[error("Contract error")]
     ContractError = 40,
     #[error("Invalid contract class")]
     InvalidContractClass = 50,
-    #[error("Too many storage keys requested")]
-    ProofLimitExceeded = 10000,
-    #[error("Too many keys provided in a filter")]
-    TooManyKeysInFilter = 34,
+    #[error("Class already declared")]
+    ClassAlreadyDeclared = 51,
+    #[error("The transaction version is not supported")]
+    UnsupportedTxVersion = 61,
     #[error("Internal server error")]
     InternalServerError = 500,
-    #[error("Failed to fetch pending transactions")]
-    FailedToFetchPendingTransactions = 38,
     #[error("Unimplemented method")]
     UnimplementedMethod = 501,
+    #[error("Too many storage keys requested")]
+    ProofLimitExceeded = 10000,
 }
 
 impl From<StarknetTransactionExecutionError> for StarknetRpcApiError {
