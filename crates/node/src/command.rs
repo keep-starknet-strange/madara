@@ -210,10 +210,10 @@ pub fn run() -> sc_cli::Result<()> {
                 }
             };
 
-            if let None = cli.run.run_cmd.network_params.node_key_params.node_key_file {
-				cli.run.run_cmd.network_params.node_key_params.node_key_file =
-					Some((madara_path.clone() + "/p2p-key.ed25519").into());
-			}
+            if cli.run.run_cmd.network_params.node_key_params.node_key_file.is_none() {
+                cli.run.run_cmd.network_params.node_key_params.node_key_file =
+                    Some((madara_path.clone() + "/p2p-key.ed25519").into());
+            }
 
             let local_path = utils::get_project_path();
 
@@ -223,7 +223,11 @@ pub fn run() -> sc_cli::Result<()> {
                 let src_path = src_path.clone() + "/configs/index.json";
                 utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs", cli.run.update_configs)?;
             } else if !cli.run.disable_url_fetch {
-                utils::fetch_from_url(constants::DEFAULT_CONFIGS_URL.to_string(), madara_path.clone() + "/configs", cli.run.update_configs)?;
+                utils::fetch_from_url(
+                    constants::DEFAULT_CONFIGS_URL.to_string(),
+                    madara_path.clone() + "/configs",
+                    cli.run.update_configs,
+                )?;
             }
 
             let madara_configs: configs::Configs =
@@ -233,25 +237,37 @@ pub fn run() -> sc_cli::Result<()> {
             for asset in madara_configs.genesis_assets {
                 if let Ok(ref src_path) = local_path {
                     let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets", cli.run.update_configs)?;
+                    utils::copy_from_filesystem(
+                        src_path,
+                        madara_path.clone() + "/configs/genesis-assets",
+                        cli.run.update_configs,
+                    )?;
                 } else if !cli.run.disable_url_fetch {
                     configs::fetch_and_validate_file(
                         madara_configs.remote_base_path.clone(),
                         asset,
                         madara_path.clone() + "/configs/genesis-assets/",
-						cli.run.update_configs
+                        cli.run.update_configs,
                     )?;
                 }
             }
 
             if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-                utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+                utils::fetch_from_url(
+                    chain_spec_url.clone(),
+                    madara_path.clone() + "/chain-specs",
+                    cli.run.update_configs,
+                )?;
                 let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
                 cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
             } else if let (Some(Testnet::Sharingan), false) = (cli.run.testnet, cli.run.disable_url_fetch) {
                 if let Ok(ref src_path) = local_path {
                     let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_configs)?;
+                    utils::copy_from_filesystem(
+                        src_path,
+                        madara_path.clone() + "/chain-specs",
+                        cli.run.update_configs,
+                    )?;
                 } else {
                     // If testnet flag is specified, right now it's only Sharingan
                     for chain_spec in madara_configs.chain_specs {
@@ -259,7 +275,7 @@ pub fn run() -> sc_cli::Result<()> {
                             madara_configs.remote_base_path.clone(),
                             chain_spec,
                             madara_path.clone() + "/configs/chain-specs/",
-							cli.run.update_configs
+                            cli.run.update_configs,
                         )?;
                     }
                 }

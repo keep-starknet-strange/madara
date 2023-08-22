@@ -71,10 +71,10 @@ pub fn copy_from_filesystem(src_path: String, dest_path: String, force_replace: 
     std::fs::create_dir_all(&dst)?;
     dst.push(src.file_name().ok_or("File name not found")?);
 
-	if dst.exists() && !force_replace {
-		log::info!("{} already exists", dest_path);
-		return Ok(());
-	}
+    if dst.exists() && !force_replace {
+        log::info!("{} already exists", dest_path);
+        return Ok(());
+    }
     std::fs::copy(src, dst)?;
 
     log::info!("Copied {} to {} from filesystem", src_path, dest_path);
@@ -85,12 +85,12 @@ pub fn fetch_from_url(target: String, dest_path: String, force_replace: bool) ->
     log::info!("Trying to fetch {} to {} from url", target, dest_path);
     let mut dst = std::path::PathBuf::from(dest_path.clone());
     std::fs::create_dir_all(&dst)?;
-	dst.push(target.split('/').last().expect("File name not found"));
+    dst.push(target.split('/').last().expect("File name not found"));
 
-	if dst.exists() && !force_replace {
-		log::info!("{} already exists", dest_path);
-		return Ok(());
-	}
+    if dst.exists() && !force_replace {
+        log::info!("{} already exists", dest_path);
+        return Ok(());
+    }
 
     let response = reqwest::blocking::get(target.clone())?;
 
