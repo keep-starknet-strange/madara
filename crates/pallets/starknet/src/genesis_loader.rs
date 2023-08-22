@@ -23,7 +23,7 @@ type StorageKey = HexFelt;
 type ContractStorageKey = (ContractAddress, StorageKey);
 type StorageValue = HexFelt;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct GenesisLoader {
     pub madara_path: Option<String>,
     pub contract_classes: Vec<(ClassHash, ContractClass)>,
@@ -33,7 +33,7 @@ pub struct GenesisLoader {
     pub seq_addr_updated: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(untagged)]
 pub enum ContractClass {
     Path { path: String, version: u8 },
