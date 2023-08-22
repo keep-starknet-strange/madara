@@ -26,7 +26,6 @@ pub fn fetch_and_validate_file(remote_base_path: String, file: File, dest_path: 
 			.split("/")
 			.collect::<Vec<&str>>()
 			.join("/");
-		println!("relative_path: {}", relative_path);
 		utils::fetch_from_url(
 			remote_base_path + &relative_path + &file.name,
 			dest_path.clone())?;

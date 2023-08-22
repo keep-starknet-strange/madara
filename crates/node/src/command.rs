@@ -228,9 +228,18 @@ pub fn run() -> sc_cli::Result<()> {
 						asset,
 						madara_path.clone() + "/configs/genesis-assets/")?;
 				}
+			}
 
-				// If testnet flag is specified, right now it's only Sharingan
-				if let Some(Testnet::Sharingan) = cli.run.testnet {
+            if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
+                utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
+				let chain_spec = chain_spec_url.split('/').last().ok_or("File name not found")?;
+            	cli.run.run_cmd.shared_params.chain = Some(madara_path.clone() + "/chain-specs/" + chain_spec);
+            } else if let (Some(Testnet::Sharingan), false) = (cli.run.testnet, cli.run.disable_url_fetch) {
+            	if let Ok(src_path) = utils::get_project_path() {
+            	    let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
+            	    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
+            	} else {
+					// If testnet flag is specified, right now it's only Sharingan
 					for chain_spec in madara_configs.chain_specs {
 						configs::fetch_and_validate_file(
 							madara_configs.remote_base_path.clone(),
@@ -238,24 +247,13 @@ pub fn run() -> sc_cli::Result<()> {
 							madara_path.clone() + "/configs/chain-specs/")?;
 					}
 				}
+
+            	cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
+
+            	// This should go apply to all testnets when applying a match pattern
+            	cli.run.run_cmd.rpc_external = true;
+            	cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
 			}
-
-            if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-                utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
-            }
-
-            if let Some(Testnet::Sharingan) = cli.run.testnet {
-                if let Ok(src_path) = utils::get_project_path() {
-                    let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-                }
-
-                cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");
-
-                // This should go apply to all testnets when applying a match pattern
-                cli.run.run_cmd.rpc_external = true;
-                cli.run.run_cmd.rpc_methods = RpcMethods::Unsafe;
-            }
 
             let runner = cli.create_runner(&cli.run.run_cmd)?;
             runner.run_node_until_exit(|config| async move {
