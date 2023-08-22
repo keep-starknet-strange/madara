@@ -2,6 +2,7 @@
 
 ## Next release
 
+- fix: RPC getClassAt cairo legacy program code encoding
 - ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
