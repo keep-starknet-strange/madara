@@ -80,6 +80,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
@@ -97,7 +98,6 @@ use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
-use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
@@ -173,6 +173,8 @@ pub mod pallet {
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ChainId: Get<Felt252Wrapper>;
+        #[pallet::constant]
+        type MaxRecursionDepth: Get<u32>;
     }
 
     /// The Starknet pallet hooks.
@@ -524,7 +526,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Invoke,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -578,7 +579,7 @@ pub mod pallet {
 
             let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
-            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+            transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
             // Check that the class hash is not None
             let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
@@ -598,7 +599,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Declare,
                 T::DisableNonceValidation::get(),
-                Some(contract_class),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -670,7 +670,6 @@ pub mod pallet {
                 &block_context,
                 TxType::DeployAccount,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -734,7 +733,6 @@ pub mod pallet {
                 &block_context,
                 TxType::L1Handler,
                 true,
-                None,
             ) {
                 Ok(v) => {
                     log!(debug, "Successfully consumed a message from L1: {:?}", v);
@@ -899,7 +897,7 @@ impl<T: Config> Pallet<T> {
 
         let chain_id = Self::chain_id_str();
 
-        let vm_resource_fee_cost = HashMap::default();
+        let vm_resource_fee_cost = Default::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
         BlockContext {
@@ -912,6 +910,7 @@ impl<T: Config> Pallet<T> {
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
+            max_recursion_depth: T::MaxRecursionDepth::get() as usize,
         }
     }
 
@@ -976,7 +975,7 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas,
+            INITIAL_GAS.into(),
             None,
         );
 
@@ -1155,7 +1154,6 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             transaction.tx_type.clone(),
             T::DisableNonceValidation::get(),
-            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);

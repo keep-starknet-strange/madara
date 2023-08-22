@@ -357,6 +357,20 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/22720665?v=4",
       "profile": "https://github.com/ben2077",
       "contributions": ["code"]
+    },
+    {
+      "login": "m-kus",
+      "name": "Michael Zaikin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44951260?v=4",
+      "profile": "https://github.com/m-kus",
+      "contributions": ["code"]
+    },
+    {
+      "login": "joaopereira12",
+      "name": "João Pereira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77340776?v=4",
+      "profile": "https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/",
+      "contributions": ["doc"]
     }
   ],
   "contributorsPerLine": 7,

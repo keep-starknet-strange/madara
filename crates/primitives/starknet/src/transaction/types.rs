@@ -17,6 +17,7 @@ use starknet_api::transaction::{Calldata, ContractAddressSalt, Fee};
 use starknet_api::StarknetApiError;
 use thiserror_no_std::Error;
 
+use crate::constants::INITIAL_GAS;
 use crate::crypto::commitment::{
     calculate_declare_tx_hash, calculate_deploy_account_tx_hash, calculate_invoke_tx_hash,
 };
@@ -198,7 +199,7 @@ impl DeclareTransaction {
                 BoundedVec::default(),
                 self.sender_address,
                 self.sender_address,
-                Felt252Wrapper::from(0_u8), // FIXME 710
+                INITIAL_GAS.into(),
                 self.compiled_class_hash,
             ),
             contract_class: Some(self.contract_class),
@@ -276,7 +277,7 @@ impl DeployAccountTransaction {
                 self.calldata,
                 sender_address,
                 sender_address,
-                Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                INITIAL_GAS.into(),
                 None,
             ),
             contract_class: None,
@@ -391,7 +392,7 @@ impl InvokeTransaction {
                 self.calldata,
                 self.sender_address,
                 self.sender_address,
-                Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas
+                INITIAL_GAS.into(),
                 None,
             ),
             contract_class: None,
