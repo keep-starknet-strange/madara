@@ -529,11 +529,11 @@ where
         block_id: BlockId,
     ) -> RpcResult<Vec<FeeEstimate>> {
         let is_invalid_query_transaction = request.iter().any(|tx| match tx {
-            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V0(tx_v0)) => tx_v0.is_query,
-            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx_v1)) => tx_v1.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => tx_v1.is_query,
-            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => tx_v2.is_query,
-            BroadcastedTransaction::DeployAccount(deploy_tx) => deploy_tx.is_query,
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V0(tx_v0)) => !tx_v0.is_query,
+            BroadcastedTransaction::Invoke(BroadcastedInvokeTransaction::V1(tx_v1)) => !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V1(tx_v1)) => !tx_v1.is_query,
+            BroadcastedTransaction::Declare(BroadcastedDeclareTransaction::V2(tx_v2)) => !tx_v2.is_query,
+            BroadcastedTransaction::DeployAccount(deploy_tx) => !deploy_tx.is_query,
         });
         if is_invalid_query_transaction {
             return Err(StarknetRpcApiError::UnsupportedTxVersion.into());

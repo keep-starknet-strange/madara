@@ -460,7 +460,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC20_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 },
+          { nonce: ARGENT_CONTRACT_NONCE.value },
         );
         ARGENT_CONTRACT_NONCE.value += 1;
         await jumpBlocks(context, 1);
@@ -495,7 +495,6 @@ describeDevMadara(
           },
           {
             nonce: CAIRO_1_NO_VALIDATE_ACCOUNT.value,
-            version: 1,
           },
         );
         CAIRO_1_NO_VALIDATE_ACCOUNT.value += 1;
@@ -533,7 +532,6 @@ describeDevMadara(
             },
             {
               nonce: ARGENT_CONTRACT_NONCE.value,
-              version: 1,
             },
           ),
         ).to.be.rejectedWith("51: Class already declared");
@@ -585,10 +583,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC721_CONTRACT,
           },
-          {
-            nonce: ARGENT_CONTRACT_NONCE.value,
-            version: 100000000000000000000000000000001n,
-          },
+          { nonce: ARGENT_CONTRACT_NONCE.value },
         );
 
         const txs = await providerRPC.getPendingTransactions();
