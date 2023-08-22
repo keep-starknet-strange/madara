@@ -88,8 +88,8 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
 // helper to print development accounts info
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
-pub fn print_development_accounts(genesis_string: &String) {
-    let genesis_loader: GenesisLoader = serde_json::from_str(&genesis_string).unwrap();
+pub fn print_development_accounts(genesis_string: &str) {
+    let genesis_loader: GenesisLoader = serde_json::from_str(genesis_string).unwrap();
     let genesis_config: madara_runtime::pallet_starknet::GenesisConfig<Runtime> = genesis_loader.into();
     let no_validate_account_address = genesis_config.contracts[0].0.0.to_string();
     let argent_account_address = genesis_config.contracts[1].0.0.to_string();
@@ -143,10 +143,10 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 fn testnet_genesis(
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
-    genesis_string: &String,
+    genesis_string: &str,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let genesis_loader: GenesisLoader = serde_json::from_str(&genesis_string).unwrap();
+    let genesis_loader: GenesisLoader = serde_json::from_str(genesis_string).unwrap();
     let genesis_config: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis_loader.into();
 
     GenesisConfig {
