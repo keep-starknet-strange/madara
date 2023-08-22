@@ -11,7 +11,7 @@ pub struct Configs {
 #[derive(Deserialize)]
 pub struct File {
     pub name: String,
-    pub md5: String,
+    pub md5: Option<String>,
     pub url: Option<String>,
 }
 
@@ -25,12 +25,14 @@ pub fn fetch_and_validate_file(remote_base_path: String, file: File, dest_path: 
         utils::fetch_from_url(remote_base_path + &relative_path + &file.name, dest_path.clone(), force_fetching)?;
     }
 
-    let file_str = utils::read_file_to_string(dest_path + &file.name)?;
-    let digest = md5::compute(file_str.as_bytes());
-    let hash = format!("{:x}", digest);
-    if hash != file.md5 {
-        return Err(format!("File hash mismatch: {} != {}", hash, file.md5));
-    }
+	if let Some(file_hash) = file.md5 {
+    	let file_str = utils::read_file_to_string(dest_path + &file.name)?;
+    	let digest = md5::compute(file_str.as_bytes());
+    	let hash = format!("{:x}", digest);
+    	if hash != file_hash {
+    	    return Err(format!("File hash mismatch: {} != {}", hash, file_hash));
+    	}
+	}
 
     Ok(())
 }

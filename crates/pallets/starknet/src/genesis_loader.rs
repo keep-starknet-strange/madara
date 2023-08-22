@@ -62,7 +62,6 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                                 project_path + "/configs/" + &path
                             }
                         };
-						println!("contract_path: {}", contract_path);
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path).unwrap(), version))
                     }
                     ContractClass::Class(class) => (hash, class),
