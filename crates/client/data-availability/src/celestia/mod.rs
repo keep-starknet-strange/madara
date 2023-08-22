@@ -3,7 +3,7 @@ pub mod config;
 use anyhow::Result;
 use async_trait::async_trait;
 use celestia_rpc::client::new_http;
-use celestia_rpc::BlobClient;
+use celestia_rpc::{BlobClient, HeaderClient};
 use celestia_types::nmt::Namespace;
 use celestia_types::{Blob, Result as CelestiaTypesResult};
 use ethers::types::{I256, U256};
@@ -27,8 +27,10 @@ impl DaClient for CelestiaClient {
         // blocking call, awaiting on server side (Celestia Node) that a block with our data is included
         // not clean split between ws and http endpoints, which is why this call is blocking in the first
         // place...
-        // self.ws_client.header_wait_for_height(submitted_height).await.map_err(|e|
-        // anyhow::anyhow!("celestia da error: {e}"));
+        self.http_client
+            .header_wait_for_height(submitted_height)
+            .await
+            .map_err(|e| anyhow::anyhow!("celestia da error: {e}"))?;
         self.verify_blob_was_included(submitted_height, blob)
             .await
             .map_err(|e| anyhow::anyhow!("celestia error: {e}"))?;
