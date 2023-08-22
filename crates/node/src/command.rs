@@ -5,7 +5,7 @@ use sc_cli::{ChainSpec, RpcMethods, RuntimeVersion, SubstrateCli};
 
 use crate::benchmarking::{inherent_benchmark_data, RemarkBuilder};
 use crate::cli::{Cli, Subcommand, Testnet};
-use crate::{chain_spec, constants, service};
+use crate::{chain_spec, constants, service, configs};
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
         "Madara Node".into()
@@ -214,55 +214,40 @@ pub fn run() -> sc_cli::Result<()> {
                 Some((madara_path.clone() + "/p2p-key.ed25519").into());
 
             if let Some(configs_url) = cli.run.configs_url.clone() {
-                // can't copy extra genesis-assets atm
-                // we can reuse #982 to create the standard to fetch relevant files
                 utils::fetch_from_url(configs_url, madara_path.clone() + "/configs")?;
-            } else {
-                // TODO confirm with the CI that we are fetching all and fetch dynamically
-                // Issue #982
-                for file in constants::GENESIS_ASSETS_FILES {
-                    let src_path = utils::get_project_path();
-                    if let Ok(src_path) = src_path {
-                        let src_path = src_path + "/configs/genesis-assets/" + file;
-                        utils::copy_from_filesystem(src_path, madara_path.clone() + "/genesis-assets")?;
-                    } else if !cli.run.disable_url_fetch {
-                        utils::fetch_from_url(
-                            constants::GENESIS_ASSETS_URL.to_string() + file,
-                            madara_path.clone() + "/genesis-assets",
-                        )?;
-                    }
-                }
+            } else if !cli.run.disable_url_fetch {
+				utils::fetch_from_url(constants::DEFAULT_CONFIGS_URL.to_string(), madara_path.clone() + "/configs")?;
             }
 
-            // TODO confirm with the CI that we are fetching all and fetch dynamically
-            // Issue #982
-            for file in constants::CAIRO_CONTRACTS_FILES {
-                let src_path = utils::get_project_path();
-                if let Ok(src_path) = src_path {
-                    let src_path = src_path + "/configs/cairo-contracts/" + file;
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/cairo-contracts")?;
-                } else if !cli.run.disable_url_fetch {
-                    utils::fetch_from_url(
-                        constants::CAIRO_CONTRACTS_URL.to_string() + file,
-                        madara_path.clone() + "/cairo-contracts",
-                    )?;
-                }
-            }
+			let madara_configs: configs::Configs = serde_json::from_str(&utils::read_file_to_string(madara_path.clone() + "/configs/index.json")?).expect("Failed to load madara configs");
+
+			if !cli.run.disable_url_fetch {
+				for asset in madara_configs.genesis_assets {
+					configs::fetch_and_validate_file(
+						madara_configs.remote_base_path.clone(),
+						asset,
+						madara_path.clone() + "/configs/genesis-assets/")?;
+				}
+
+				// If testnet flag is specified, right now it's only Sharingan
+				if let Some(Testnet::Sharingan) = cli.run.testnet {
+					for chain_spec in madara_configs.chain_specs {
+						configs::fetch_and_validate_file(
+							madara_configs.remote_base_path.clone(),
+							chain_spec,
+							madara_path.clone() + "/configs/chain-specs/")?;
+					}
+				}
+			}
 
             if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
                 utils::fetch_from_url(chain_spec_url, madara_path.clone() + "/chain-specs")?;
             }
 
             if let Some(Testnet::Sharingan) = cli.run.testnet {
-                let src_path = utils::get_project_path();
-                if let Ok(src_path) = src_path {
+                if let Ok(src_path) = utils::get_project_path() {
                     let src_path = src_path + "/configs/chain-specs/testnet-sharingan-raw.json";
                     utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
-                } else if !cli.run.disable_url_fetch {
-                    utils::fetch_from_url(
-                        constants::SHARINGAN_CHAIN_SPEC_URL.to_string(),
-                        madara_path.clone() + "/chain-specs",
-                    )?;
                 }
 
                 cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/testnet-sharingan-raw.json");

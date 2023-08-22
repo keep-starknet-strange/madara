@@ -6,6 +6,7 @@ mod service;
 mod benchmarking;
 mod chain_spec;
 mod cli;
+mod configs;
 mod command;
 mod constants;
 mod genesis_block;

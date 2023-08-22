@@ -11,6 +11,14 @@ impl From<Error> for sc_cli::Error {
     }
 }
 
+impl From<Error> for String {
+    fn from(err: Error) -> Self {
+        match err {
+            Error::Cli(err) => err.to_string(),
+        }
+    }
+}
+
 impl From<Box<dyn std::error::Error>> for Error {
     fn from(err: Box<dyn std::error::Error>) -> Self {
         Error::Cli(sc_cli::Error::Input(err.to_string()))
