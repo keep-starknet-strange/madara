@@ -384,15 +384,13 @@ pub fn new_full(
         match da_layer {
             DaLayer::Celestia => {
                 let celestia_conf = CelestiaConfig::try_from_file(&da_path)?;
-                let da_client =
-                    CelestiaClient::new(celestia_conf.clone()).map_err(|e| ServiceError::Other(e.to_string()))?;
-
+                let da_client = CelestiaClient::try_from_config(celestia_conf.clone())
+                    .map_err(|e| ServiceError::Other(e.to_string()))?;
                 task_manager.spawn_essential_handle().spawn(
                     "da-worker-update",
                     Some("madara"),
                     DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
                 );
-
                 task_manager.spawn_essential_handle().spawn(
                     "da-worker-prove",
                     Some("madara"),
@@ -408,7 +406,6 @@ pub fn new_full(
                     Some("madara"),
                     DataAvailabilityWorker::update_state(da_client.clone(), client.clone(), madara_backend.clone()),
                 );
-
                 task_manager.spawn_essential_handle().spawn(
                     "da-worker-prove",
                     Some("madara"),

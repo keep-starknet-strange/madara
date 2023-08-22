@@ -7,7 +7,7 @@ use crate::DaMode;
 
 pub const DEFAULT_ETHEREUM_NODE: &str = "127.0.0.1:8545";
 pub const DEFAULT_SEQUENCER_KEY: &str = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-pub const DEFUALT_STARKNET_CORE_CONTRACTS: &str = "0xde29d060D45901Fb19ED6C6e959EB22d8626708e";
+pub const DEFUALT_STARKNET_CORE_CONTRACTS: &str = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 pub const DEFAULT_CHAIN_ID: u64 = 31337;
 
 #[derive(Clone, PartialEq, Deserialize, Debug)]
@@ -48,7 +48,7 @@ fn default_chain_id() -> u64 {
 }
 
 fn default_mode() -> DaMode {
-    DaMode::Validium
+    DaMode::default()
 }
 
 impl Default for EthereumConfig {

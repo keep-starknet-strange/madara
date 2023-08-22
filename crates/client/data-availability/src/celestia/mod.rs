@@ -36,7 +36,7 @@ impl DaClient for CelestiaClient {
         Ok(())
     }
 
-    async fn last_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<I256> {
         Ok(I256::from(1))
     }
 
@@ -46,7 +46,7 @@ impl DaClient for CelestiaClient {
 }
 
 impl CelestiaClient {
-    pub fn new(conf: config::CelestiaConfig) -> Result<Self> {
+    pub fn try_from_config(conf: config::CelestiaConfig) -> Result<Self> {
         let http_client = new_http(conf.http_provider.clone().as_str(), conf.auth_token.as_deref())?;
 
         // Convert the input string to bytes

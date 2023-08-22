@@ -36,7 +36,7 @@ impl DaClient for AvailClient {
         Ok(())
     }
 
-    async fn last_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<I256> {
         Ok(I256::from(1))
     }
 
@@ -46,7 +46,7 @@ impl DaClient for AvailClient {
 }
 
 impl AvailClient {
-    pub fn new(conf: config::AvailConfig) -> Result<Self> {
+    pub fn try_from_config(conf: config::AvailConfig) -> Result<Self> {
         let signer = signer_from_seed(conf.seed.as_str())?;
 
         let app_id = AppId(conf.app_id);

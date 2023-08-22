@@ -27,20 +27,21 @@ pub enum DaLayer {
     Ethereum,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize, Default)]
 pub enum DaMode {
     #[serde(rename = "validity")]
     Validity,
     #[serde(rename = "volition")]
     Volition,
     #[serde(rename = "validium")]
+    #[default]
     Validium,
 }
 
 #[async_trait]
 pub trait DaClient {
     fn get_mode(&self) -> DaMode;
-    async fn last_state(&self) -> Result<I256>;
+    async fn last_published_state(&self) -> Result<I256>;
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()>;
 }
 
@@ -124,53 +125,30 @@ where
 
         while let Some(notification) = notification_st.next().await {
             // Query last written state
-            if let Ok(last_block) = da_client.last_state().await {
-                match madara_backend.da().last_proved_block() {
-                    Ok(last_local_block) => {
-                        log::info!("Last onchain: {last_block}, Last Local: {last_local_block}")
-                    }
-                    Err(e) => log::debug!("could not pull last local block: {e}"),
-                };
-            }
-
-            // match da_client.get_mode() {
-            //     DaMode::Validity => {
-            //         // Check the associated job status
-            //         if let Ok(job_resp) = sharp::get_status(sharp::TEST_JOB_ID) {
-            //             if let Some(status) = job_resp.status {
-            //                 if status == "ONCHAIN" {
-            //                     match madara_backend.da().state_diff(&notification.hash) {
-            //                         Ok(state_diff) => {
-            //                             // publish state diff to Layer 1
-            //                             ethereum::publish_data(&DEFAULT_SEQUENCER_ADDRESS, state_diff).await;
-
-            //                             // save last proven block
-            //                             if let Err(db_err) =
-            //                                 madara_backend.da().update_last_proved_block(&notification.hash)
-            //                             {
-            //                                 log::debug!(
-            //                                     "could not save last proved block: {db_err}"
-            //                                 );
-            //                             };
-            //                         }
-            //                         Err(e) => log::debug!("could not pull state diff: {e}"),
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     _ => {
-            //         log::info!("don't check proof in remaining DA modes")
-            //     }
-            // }
-
-            match madara_backend.da().state_diff(&notification.hash) {
-                Ok(state_diff) => {
-                    if let Err(e) = da_client.publish_state_diff(state_diff).await {
-                        log::error!("DA PUBLISH ERROR: {}", e);
-                    }
+            let _last_published_state = match da_client.last_published_state().await {
+                Ok(last_published_state) => last_published_state,
+                Err(e) => {
+                    log::error!("da provider error: {e}");
+                    continue;
                 }
-                Err(e) => log::error!("could not pull state diff: {e}"),
+            };
+            println!("LAST STATE: {:?}", _last_published_state);
+
+            match da_client.get_mode() {
+                DaMode::Validity => {
+                    // Check the SHARP status of last_proved + 1
+                    // Write the publish state diff of last_proved + 1
+                    log::info!("validity da mode not implemented");
+                }
+                DaMode::Validium => match madara_backend.da().state_diff(&notification.hash) {
+                    Ok(state_diff) => {
+                        if let Err(e) = da_client.publish_state_diff(state_diff).await {
+                            log::error!("DA PUBLISH ERROR: {}", e);
+                        }
+                    }
+                    Err(e) => log::error!("could not pull state diff: {e}"),
+                },
+                DaMode::Volition => log::info!("volition da mode not implemented"),
             }
         }
     }

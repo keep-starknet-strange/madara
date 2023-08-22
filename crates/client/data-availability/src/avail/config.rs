@@ -48,7 +48,7 @@ fn default_seed() -> String {
 }
 
 fn default_mode() -> DaMode {
-    DaMode::Validium
+    DaMode::default()
 }
 
 impl Default for AvailConfig {

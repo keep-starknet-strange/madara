@@ -5,16 +5,17 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use ethers::prelude::{abigen, SignerMiddleware};
-use ethers::providers::{Http, Middleware, Provider};
+use ethers::providers::{Http, Provider};
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{Address, I256, U256};
 
+use crate::utils::is_valid_http_endpoint;
 use crate::{DaClient, DaMode};
 
 #[derive(Clone, Debug)]
 pub struct EthereumClient {
     http_provider: Provider<Http>,
-    wallet: LocalWallet,
+    signer: Arc<SignerMiddleware<Provider<Http>, LocalWallet>>,
     cc_address: Address,
     mode: DaMode,
 }
@@ -22,8 +23,7 @@ pub struct EthereumClient {
 #[async_trait]
 impl DaClient for EthereumClient {
     async fn publish_state_diff(&self, state_diff: Vec<U256>) -> Result<()> {
-        let bal = self.http_provider.get_balance(self.wallet.address(), None).await.unwrap();
-        println!("BALANCE: {:?} {:?}", state_diff, bal);
+        println!("State diff: {:?}", state_diff);
 
         abigen!(
             STARKNET,
@@ -31,17 +31,22 @@ impl DaClient for EthereumClient {
                 function updateState(uint256[] calldata programOutput, uint256 onchainDataHash, uint256 onchainDataSize) external
             ]"#,
         );
-        let signer = Arc::new(SignerMiddleware::new(self.http_provider.clone(), self.wallet.clone()));
-        let _core_contracts = STARKNET::new(self.cc_address, signer);
 
-        // let tx = contract.update_state(state_diff, U256::default(), U256::default());
-        // let pending_tx = tx.send().await.unwrap();
-        // let minted_tx = pending_tx.await.unwrap();
-        // log::info!("State Update: {:?}", minted_tx);
+        let core_contracts = STARKNET::new(self.cc_address, self.signer.clone());
+
+        let fmt_tx = core_contracts.update_state(state_diff, U256::default(), U256::default());
+        let tx = fmt_tx
+            .send()
+            .await
+            .map_err(|e| anyhow::anyhow!("ethereum send update err: {e}"))?
+            .await
+            .map_err(|e| anyhow::anyhow!("ethereum poll update err: {e}"))?;
+
+        log::info!("State Update: {:?}", tx);
         Ok(())
     }
 
-    async fn last_state(&self) -> Result<I256> {
+    async fn last_published_state(&self) -> Result<I256> {
         abigen!(
             STARKNET,
             r#"[
@@ -60,6 +65,10 @@ impl DaClient for EthereumClient {
 
 impl EthereumClient {
     pub fn try_from_config(conf: config::EthereumConfig) -> Result<Self, String> {
+        if !is_valid_http_endpoint(&conf.http_provider) {
+            return Err(format!("invalid http endpoint, received {}", &conf.http_provider));
+        }
+
         let provider = Provider::<Http>::try_from(conf.http_provider).map_err(|e| format!("ethereum error: {e}"))?;
 
         let wallet: LocalWallet = conf
@@ -68,8 +77,10 @@ impl EthereumClient {
             .map_err(|e| format!("ethereum error: {e}"))?
             .with_chain_id(conf.chain_id);
 
+        let signer = Arc::new(SignerMiddleware::new(provider.clone(), wallet.clone()));
+
         let cc_address: Address = conf.core_contracts.parse().map_err(|e| format!("ethereum error: {e}"))?;
 
-        Ok(Self { http_provider: provider, wallet, cc_address, mode: conf.mode })
+        Ok(Self { http_provider: provider, signer, cc_address, mode: conf.mode })
     }
 }
