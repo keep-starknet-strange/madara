@@ -585,7 +585,7 @@ describeDevMadara(
             classHash: classHash,
             contract: ERC721_CONTRACT,
           },
-          { nonce: ARGENT_CONTRACT_NONCE.value, version: 1 },
+          { nonce: ARGENT_CONTRACT_NONCE.value, version: 0x100000000000000000000000000000000 },
         );
 
         const txs = await providerRPC.getPendingTransactions();
