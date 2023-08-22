@@ -15,8 +15,7 @@ pub struct File {
     pub url: Option<String>,
 }
 
-pub fn fetch_and_validate_file(remote_base_path: String, file: File, dest_path: String) -> Result<(), String> {
-	let force_fetching = true;
+pub fn fetch_and_validate_file(remote_base_path: String, file: File, dest_path: String, force_fetching: bool) -> Result<(), String> {
     if let Some(url) = file.url {
         utils::fetch_from_url(url, dest_path.clone(), force_fetching)?;
     } else {
