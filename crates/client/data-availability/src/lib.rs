@@ -132,7 +132,6 @@ where
                     continue;
                 }
             };
-            println!("LAST STATE: {:?}", _last_published_state);
 
             match da_client.get_mode() {
                 DaMode::Validity => {
