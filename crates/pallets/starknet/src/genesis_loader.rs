@@ -59,7 +59,7 @@ impl<T: crate::Config> From<GenesisLoader> for GenesisConfig<T> {
                             Some(madara_path) => madara_path + "/configs/" + &path,
                             None => {
                                 let project_path = utils::get_project_path().expect("Project path not found");
-                                project_path + "/configs/" + &path
+                                project_path + "/" + &path
                             }
                         };
                         (hash, get_contract_class(&utils::read_file_to_string(contract_path).unwrap(), version))
