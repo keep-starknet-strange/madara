@@ -314,7 +314,7 @@ describeDevMadara(
       });
     });
 
-    // TODO:
+    // TODO: eazeazaez
     //    - once starknet-rs supports query tx version
     //    - test w/ account.estimateInvokeFee, account.estimateDeclareFee, account.estimateAccountDeployFee
     describe("estimateFee", async () => {

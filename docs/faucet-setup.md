@@ -107,7 +107,7 @@ async function transfer(to) {
     },
   ]);
   const maxFee = "0x11111111111";
-  const version = "0x1";
+  const version = "0x100000000000000000000000000000001";
   const txnHash = starknet.hash.calculateTransactionHash(
     address,
     version,
