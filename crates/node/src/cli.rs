@@ -36,32 +36,32 @@ pub struct ExtendedRunCmd {
     #[clap(flatten)]
     pub run_cmd: RunCmd,
 
-	/// Choose a supported testnet chain which will load some default values
-	/// current supported testnets: sharingan
+    /// Choose a supported testnet chain which will load some default values
+    /// current supported testnets: sharingan
     #[clap(long)]
     pub testnet: Option<Testnet>,
 
-	/// Path to the folder where all configuration files and data are stored
-	/// There is an alias for madara_path <> base_path <> tmp
-	/// Default: ~/.madara
+    /// Path to the folder where all configuration files and data are stored
+    /// There is an alias for madara_path <> base_path <> tmp
+    /// Default: ~/.madara
     #[clap(long)]
     pub madara_path: Option<PathBuf>,
 
-	/// Disable automatic url fetching for madara config files
-	#[clap(long)]
-	pub disable_url_fetch: bool,
+    /// Disable automatic url fetching for madara config files
+    #[clap(long)]
+    pub disable_url_fetch: bool,
 
-	/// Update madara config files (fetching them locally or remotely)
-	#[clap(long)]
-	pub update_madara_configs: bool,
+    /// Update madara config files (fetching them locally or remotely)
+    #[clap(long)]
+    pub update_madara_configs: bool,
 
-	/// Load a custom chain-spec from an url
+    /// Load a custom chain-spec from an url
     #[clap(long)]
     pub chain_spec_url: Option<String>,
 
-	/// Load a custom index.json file for downloading custom assets
-	/// Check documentation in
-	/// https://github.com/keep-starknet-strange/madara/blob/main/docs/configs.md
+    /// Load a custom index.json file for downloading custom assets
+    /// Check documentation in
+    /// https://github.com/keep-starknet-strange/madara/blob/main/docs/configs.md
     #[clap(long)]
     pub configs_url: Option<String>,
 }

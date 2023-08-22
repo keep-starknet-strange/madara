@@ -2,6 +2,7 @@
 
 ## Next release
 
+- feat: better management of custom configurations for genesis assets
 - ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
