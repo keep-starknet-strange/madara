@@ -15,26 +15,22 @@ use blockifier::execution::entry_point::{
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
 use blockifier::execution::errors::EntryPointExecutionError;
-use blockifier::state::errors::StateError;
 use blockifier::state::state_api::State;
 use blockifier::transaction::errors::TransactionExecutionError;
 use blockifier::transaction::objects::AccountTransactionContext;
 use blockifier::transaction::transaction_utils::{update_remaining_gas, verify_no_calls_to_other_contracts};
 use blockifier::transaction::transactions::{
-    DeclareTransaction as StarknetDeclareTransaction, Executable, L1HandlerTransaction as StarknetL1HandlerTransaction,
+    DeclareTransaction, DeployAccountTransaction, Executable, InvokeTransaction, L1HandlerTransaction,
 };
-use cairo_vm::felt::Felt252;
 use frame_support::BoundedVec;
 use sp_core::U256;
-use starknet_api::api_core::{
-    ClassHash, CompiledClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector, Nonce,
-};
+use starknet_api::api_core::{CompiledClassHash, ContractAddress as StarknetContractAddress, EntryPointSelector};
 use starknet_api::deprecated_contract_class::EntryPointType;
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::transaction::{
-    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2,
-    DeployAccountTransaction, EventContent, Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction,
-    TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature, TransactionVersion,
+    Calldata, ContractAddressSalt, DeclareTransactionV0V1, DeclareTransactionV2, EventContent, Fee,
+    InvokeTransactionV1, TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature,
+    TransactionVersion,
 };
 use starknet_api::{calldata, StarknetApiError};
 
@@ -43,7 +39,7 @@ use self::types::{
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-use self::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
+use self::utils::{calculate_transaction_version, calculate_transaction_version_from_u8, felt_to_nonce};
 use crate::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 use crate::fees::{self, charge_fee};
 use crate::state::{FeeConfig, StateChanges};
@@ -197,19 +193,21 @@ impl TryInto<DeployAccountTransaction> for &Transaction {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
 
         Ok(DeployAccountTransaction {
-            transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(self.max_fee.try_into().unwrap()),
-            version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
-            signature: TransactionSignature(
-                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(self.nonce.into())?),
+            tx_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
+            tx: starknet_api::transaction::DeployAccountTransaction {
+                max_fee: Fee(self.max_fee.try_into().unwrap()),
+                version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
+                signature: TransactionSignature(
+                    self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
+                ),
+                nonce: felt_to_nonce(self.nonce)?,
+                class_hash: entrypoint.class_hash.unwrap_or_default(),
+                constructor_calldata: entrypoint.calldata,
+                contract_address_salt: ContractAddressSalt(StarkFelt::new(
+                    self.contract_address_salt.unwrap_or_default().into(),
+                )?),
+            },
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-            class_hash: entrypoint.class_hash.unwrap_or_default(),
-            constructor_calldata: entrypoint.calldata,
-            contract_address_salt: ContractAddressSalt(StarkFelt::new(
-                self.contract_address_salt.unwrap_or_default().into(),
-            )?),
         })
     }
 }
@@ -222,14 +220,18 @@ impl TryInto<L1HandlerTransaction> for &Transaction {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
 
         Ok(L1HandlerTransaction {
-            transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
-            nonce: Nonce(StarkFelt::new(self.nonce.into())?),
-            contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-            calldata: entrypoint.calldata,
-            entry_point_selector: EntryPointSelector(StarkHash::new(<[u8; 32]>::from(
-                self.call_entrypoint.entrypoint_selector.unwrap_or_default(),
-            ))?),
+            tx_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
+            tx: starknet_api::transaction::L1HandlerTransaction {
+                version: TransactionVersion(StarkFelt::new(U256::from(self.version).into())?),
+                nonce: felt_to_nonce(self.nonce)?,
+                contract_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
+                calldata: entrypoint.calldata,
+                entry_point_selector: EntryPointSelector(StarkHash::new(<[u8; 32]>::from(
+                    self.call_entrypoint.entrypoint_selector.unwrap_or_default(),
+                ))?),
+            },
+            // FIXME 712
+            paid_fee_on_l1: Default::default(),
         })
     }
 }
@@ -241,16 +243,18 @@ impl TryInto<InvokeTransaction> for &Transaction {
     fn try_into(self) -> Result<InvokeTransaction, Self::Error> {
         let entrypoint: CallEntryPoint = self.call_entrypoint.clone().try_into()?;
 
-        Ok(InvokeTransaction::V1(InvokeTransactionV1 {
-            transaction_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
-            max_fee: Fee(self.max_fee.try_into().unwrap()),
-            signature: TransactionSignature(
-                self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(self.nonce.into())?),
-            sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
-            calldata: entrypoint.calldata,
-        }))
+        Ok(InvokeTransaction {
+            tx: starknet_api::transaction::InvokeTransaction::V1(InvokeTransactionV1 {
+                max_fee: Fee(self.max_fee.try_into().unwrap()),
+                signature: TransactionSignature(
+                    self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
+                ),
+                nonce: felt_to_nonce(self.nonce)?,
+                sender_address: StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?,
+                calldata: entrypoint.calldata,
+            }),
+            tx_hash: TransactionHash(StarkFelt::new(self.hash.into())?),
+        })
     }
 }
 
@@ -265,31 +269,41 @@ impl TryInto<DeclareTransaction> for &Transaction {
         let signature = TransactionSignature(
             self.signature.clone().into_inner().iter().map(|x| StarkFelt::new((*x).into()).unwrap()).collect(),
         );
-        let nonce = Nonce(StarkFelt::new(self.nonce.into())?);
+        let nonce = felt_to_nonce(self.nonce)?;
         let sender_address = StarknetContractAddress::try_from(StarkFelt::new(self.sender_address.into())?)?;
         let class_hash = entrypoint.class_hash.unwrap_or_default();
 
-        if self.version <= 1_u8 {
-            let tx = DeclareTransactionV0V1 { transaction_hash, max_fee, signature, nonce, sender_address, class_hash };
-            if self.version == 0_u8 {
-                return Ok(DeclareTransaction::V0(tx));
-            } else {
-                return Ok(DeclareTransaction::V1(tx));
+        let tx = match self.version {
+            0_u8 | 1_u8 => {
+                let tx = DeclareTransactionV0V1 { max_fee, signature, nonce, sender_address, class_hash };
+                if self.version == 0_u8 {
+                    starknet_api::transaction::DeclareTransaction::V0(tx)
+                } else {
+                    starknet_api::transaction::DeclareTransaction::V1(tx)
+                }
             }
-        } else if self.version == 2_u8 {
-            let tx = DeclareTransactionV2 {
-                transaction_hash,
-                max_fee,
-                signature,
-                nonce,
-                sender_address,
-                class_hash,
-                // FIXME: https://github.com/keep-starknet-strange/madara/issues/796
-                compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().0),
-            };
-            return Ok(DeclareTransaction::V2(tx));
-        }
-        unimplemented!("DeclareTransaction version {} is not supported", self.version)
+            2_u8 => {
+                let tx = DeclareTransactionV2 {
+                    max_fee,
+                    signature,
+                    nonce,
+                    sender_address,
+                    class_hash,
+                    // FIXME:
+                    compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().0),
+                };
+                starknet_api::transaction::DeclareTransaction::V2(tx)
+            }
+            _ => unimplemented!("DeclareTransaction version {} is not supported", self.version),
+        };
+
+        // FIXME: handle the error case and don't unwrap directly
+        Ok(DeclareTransaction::new(
+            tx,
+            transaction_hash,
+            self.contract_class.clone().ok_or("ContractClass is missing").unwrap(),
+        )
+        .unwrap())
     }
 }
 
@@ -359,8 +373,8 @@ impl Transaction {
                 let deploy_account_tx: DeployAccountTransaction =
                     self.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)?;
                 let validate_calldata = vec![
-                    vec![deploy_account_tx.class_hash.0, deploy_account_tx.contract_address_salt.0],
-                    (*deploy_account_tx.constructor_calldata.0).clone(),
+                    vec![deploy_account_tx.class_hash().0, deploy_account_tx.contract_address_salt().0],
+                    (*deploy_account_tx.constructor_calldata().0).clone(),
                 ]
                 .concat();
                 Ok(Calldata(validate_calldata.into()))
@@ -415,7 +429,7 @@ impl Transaction {
         };
 
         // FIXME 710
-        let mut initial_gas = super::constants::INITIAL_GAS_COST.into();
+        let mut initial_gas = super::constants::INITIAL_GAS;
 
         self.validate_tx(state, execution_resources, block_context, &account_context, tx_type, &mut initial_gas)
     }
@@ -437,12 +451,12 @@ impl Transaction {
         block_context: &BlockContext,
         account_tx_context: &AccountTransactionContext,
         tx_type: &TxType,
-        remaining_gas: &mut Felt252,
+        remaining_gas: &mut u64,
     ) -> TransactionValidationResultWrapper<Option<CallInfo>> {
         let mut context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.validate_max_n_steps,
+            block_context.validate_max_n_steps as usize,
         );
         if context.account_tx_context.is_v0() {
             return Ok(None);
@@ -457,7 +471,7 @@ impl Transaction {
             storage_address: account_tx_context.sender_address,
             caller_address: StarknetContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas: remaining_gas.clone(),
+            initial_gas: *remaining_gas,
         };
 
         let validate_call_info = validate_call
@@ -534,7 +548,6 @@ impl Transaction {
         block_context: &BlockContext,
         tx_type: TxType,
         disable_nonce_validation: bool,
-        contract_class: Option<ContractClass>,
     ) -> TransactionExecutionResultWrapper<TransactionExecutionInfoWrapper> {
         // Initialize the execution resources.
         let execution_resources = &mut ExecutionResources::default();
@@ -543,7 +556,7 @@ impl Transaction {
         self.verify_tx_version(&tx_type)?;
 
         // FIXME 710
-        let mut initial_gas: Felt252 = super::constants::INITIAL_GAS_COST.into();
+        let mut initial_gas = super::constants::INITIAL_GAS;
 
         // Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -557,7 +570,7 @@ impl Transaction {
                 let mut context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps as usize,
                 );
 
                 // Update nonce
@@ -586,14 +599,12 @@ impl Transaction {
             TxType::L1Handler => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_l1_handler_transaction_context(&tx);
-                // FIXME 712
-                let tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() };
 
                 // Create the context.
                 let mut context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps as usize,
                 );
                 (
                     tx.run_execute(state, execution_resources, &mut context, &mut initial_gas)
@@ -605,15 +616,12 @@ impl Transaction {
             TxType::Declare => {
                 let tx = self.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)?;
                 let account_context = self.get_declare_transaction_context(&tx);
-                let contract_class =
-                    contract_class.ok_or_else(|| StateError::UndeclaredClassHash(ClassHash::default()))?;
-                let tx = StarknetDeclareTransaction::new(tx, contract_class)?;
 
                 // Create the context.
                 let mut context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps as usize,
                 );
 
                 // Update nonce
@@ -647,7 +655,7 @@ impl Transaction {
                 let mut context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps as usize,
                 );
 
                 // Update nonce
@@ -747,14 +755,14 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_l1_handler_transaction_context(&self, tx: &L1HandlerTransaction) -> AccountTransactionContext {
+    fn get_l1_handler_transaction_context(&self, transaction: &L1HandlerTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
+            transaction_hash: transaction.tx_hash,
             max_fee: Fee::default(),
-            version: calculate_transaction_version(self.is_query, tx.version),
+            version: calculate_transaction_version(self.is_query, transaction.tx.version),
             signature: TransactionSignature::default(),
-            nonce: tx.nonce,
-            sender_address: tx.contract_address,
+            nonce: transaction.tx.nonce,
+            sender_address: transaction.tx.contract_address,
         }
     }
 
@@ -768,14 +776,18 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_invoke_transaction_context(&self, tx: &InvokeTransaction) -> AccountTransactionContext {
+    fn get_invoke_transaction_context(&self, transaction: &InvokeTransaction) -> AccountTransactionContext {
+        let invoke_tx = match transaction.tx.clone() {
+            starknet_api::transaction::InvokeTransaction::V1(tx) => tx,
+            _ => unimplemented!("Unsupported invoke transaction version"),
+        };
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash(),
-            max_fee: tx.max_fee(),
+            transaction_hash: transaction.tx_hash,
+            max_fee: invoke_tx.max_fee,
             version: calculate_transaction_version_from_u8(self.is_query, 1_u8),
-            signature: tx.signature(),
-            nonce: tx.nonce(),
-            sender_address: tx.sender_address(),
+            signature: invoke_tx.signature,
+            nonce: invoke_tx.nonce,
+            sender_address: invoke_tx.sender_address,
         }
     }
 
@@ -789,14 +801,17 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_deploy_account_transaction_context(&self, tx: &DeployAccountTransaction) -> AccountTransactionContext {
+    fn get_deploy_account_transaction_context(
+        &self,
+        transaction: &DeployAccountTransaction,
+    ) -> AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
-            max_fee: tx.max_fee,
-            version: calculate_transaction_version(self.is_query, tx.version),
-            signature: tx.signature.clone(),
-            nonce: tx.nonce,
-            sender_address: tx.contract_address,
+            transaction_hash: transaction.tx_hash,
+            max_fee: transaction.tx.max_fee,
+            version: calculate_transaction_version(self.is_query, transaction.tx.version),
+            signature: transaction.tx.signature.clone(),
+            nonce: transaction.tx.nonce,
+            sender_address: transaction.contract_address,
         }
     }
 
@@ -810,14 +825,14 @@ impl Transaction {
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    fn get_declare_transaction_context(&self, tx: &DeclareTransaction) -> AccountTransactionContext {
+    fn get_declare_transaction_context(&self, transaction: &DeclareTransaction) -> AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash(),
-            max_fee: tx.max_fee(),
-            version: calculate_transaction_version(self.is_query, tx.version()),
-            signature: tx.signature(),
-            nonce: tx.nonce(),
-            sender_address: tx.sender_address(),
+            transaction_hash: transaction.tx_hash(),
+            max_fee: transaction.tx().max_fee(),
+            version: calculate_transaction_version(self.is_query, transaction.tx().version()),
+            signature: transaction.tx().signature(),
+            nonce: transaction.tx().nonce(),
+            sender_address: transaction.tx().sender_address(),
         }
     }
 }

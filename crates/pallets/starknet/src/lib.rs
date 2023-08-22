@@ -52,6 +52,9 @@ pub mod runtime_api;
 pub mod transaction_validation;
 /// The Starknet pallet's runtime custom types.
 pub mod types;
+/// Util functions for madara.
+#[cfg(feature = "std")]
+pub mod utils;
 
 /// Everything needed to run the pallet offchain workers
 mod offchain_worker;
@@ -77,6 +80,7 @@ use frame_support::traits::Time;
 use frame_system::pallet_prelude::*;
 use mp_digest_log::MADARA_ENGINE_ID;
 use mp_starknet::block::{Block as StarknetBlock, Header as StarknetHeader, MaxStorageSlots, MaxTransactions};
+use mp_starknet::constants::INITIAL_GAS;
 use mp_starknet::crypto::commitment::{self, calculate_contract_state_hash};
 use mp_starknet::execution::types::{
     CallEntryPointWrapper, ClassHashWrapper, ContractAddressWrapper, EntryPointTypeWrapper, Felt252Wrapper,
@@ -94,7 +98,6 @@ use sp_std::result;
 use starknet_api::api_core::{ChainId, ContractAddress};
 use starknet_api::block::{BlockNumber, BlockTimestamp};
 use starknet_api::hash::StarkFelt;
-use starknet_api::stdlib::collections::HashMap;
 use starknet_api::transaction::EventContent;
 use starknet_crypto::FieldElement;
 
@@ -170,6 +173,8 @@ pub mod pallet {
         type ProtocolVersion: Get<u8>;
         #[pallet::constant]
         type ChainId: Get<Felt252Wrapper>;
+        #[pallet::constant]
+        type MaxRecursionDepth: Get<u32>;
     }
 
     /// The Starknet pallet hooks.
@@ -521,7 +526,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Invoke,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -575,7 +579,7 @@ pub mod pallet {
 
             let transaction: Transaction = transaction.from_declare(chain_id);
             // Check that contract class is not None
-            let contract_class = transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
+            transaction.contract_class.clone().ok_or(Error::<T>::ContractClassMustBeSpecified)?;
 
             // Check that the class hash is not None
             let class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::<T>::ClassHashMustBeSpecified)?;
@@ -595,7 +599,6 @@ pub mod pallet {
                 &block_context,
                 TxType::Declare,
                 T::DisableNonceValidation::get(),
-                Some(contract_class),
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -667,7 +670,6 @@ pub mod pallet {
                 &block_context,
                 TxType::DeployAccount,
                 T::DisableNonceValidation::get(),
-                None,
             );
             let receipt = match call_info {
                 Ok(TransactionExecutionInfoWrapper {
@@ -731,7 +733,6 @@ pub mod pallet {
                 &block_context,
                 TxType::L1Handler,
                 true,
-                None,
             ) {
                 Ok(v) => {
                     log!(debug, "Successfully consumed a message from L1: {:?}", v);
@@ -896,7 +897,7 @@ impl<T: Config> Pallet<T> {
 
         let chain_id = Self::chain_id_str();
 
-        let vm_resource_fee_cost = HashMap::default();
+        let vm_resource_fee_cost = Default::default();
         // FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         let gas_price = 10;
         BlockContext {
@@ -909,6 +910,7 @@ impl<T: Config> Pallet<T> {
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
+            max_recursion_depth: T::MaxRecursionDepth::get() as usize,
         }
     }
 
@@ -973,7 +975,7 @@ impl<T: Config> Pallet<T> {
             BoundedVec::try_from(calldata).unwrap_or_default(),
             address,
             ContractAddressWrapper::default(),
-            Felt252Wrapper::from(0_u8), // FIXME 710 update this once transaction contains the initial gas,
+            INITIAL_GAS.into(),
             None,
         );
 
@@ -1066,28 +1068,62 @@ impl<T: Config> Pallet<T> {
     ///
     /// # Arguments
     ///
-    /// * `call_info` - The call info.
+    /// * `call_info` — A ref to the call info structure.
+    /// * `events` — A mutable ref to a resulting list of events
+    /// * `next_order` — Next expected event order, has to be 0 for a top level invocation
     ///
     /// # Returns
     ///
-    /// The result of the operation.
+    /// Next expected event order
     #[inline(always)]
-    fn emit_events(call_info: &mut CallInfo) -> Result<Vec<StarknetEventType>, EventError> {
-        let mut events = Vec::new();
+    fn emit_events_in_call_info(
+        call_info: &CallInfo,
+        events: &mut Vec<StarknetEventType>,
+        next_order: usize,
+    ) -> Result<usize, EventError> {
+        let mut event_idx = 0;
+        let mut inner_call_idx = 0;
+        let mut next_order = next_order;
 
-        call_info.execution.events.sort_by_key(|ordered_event| ordered_event.order);
-        for ordered_event in &call_info.execution.events {
-            let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
-            events.push(event_type);
-        }
-
-        for inner_call in &mut call_info.inner_calls {
-            let inner_events = Self::emit_events(inner_call)?;
-            if !inner_events.is_empty() {
-                events.extend(inner_events);
+        loop {
+            // Emit current call's events as long as they have sequential orders
+            if event_idx < call_info.execution.events.len() {
+                let ordered_event = &call_info.execution.events[event_idx];
+                if ordered_event.order == next_order {
+                    let event_type = Self::emit_event(&ordered_event.event, call_info.call.storage_address)?;
+                    events.push(event_type);
+                    next_order += 1;
+                    event_idx += 1;
+                    continue;
+                }
             }
+
+            // Go deeper to find the continuation of the sequence
+            if inner_call_idx < call_info.inner_calls.len() {
+                next_order =
+                    Self::emit_events_in_call_info(&call_info.inner_calls[inner_call_idx], events, next_order)?;
+                inner_call_idx += 1;
+                continue;
+            }
+
+            // At this point we have iterated over all sequential events and visited all internal calls
+            break;
         }
-        Ok(events)
+
+        if event_idx < call_info.execution.events.len() {
+            // Normally this should not happen and we trust blockifier to produce correct event orders
+            log!(
+                debug,
+                "Invalid event #{} order: expected {}, got {}\nCall info: {:#?}",
+                event_idx,
+                next_order,
+                call_info.execution.events[event_idx].order,
+                call_info
+            );
+            return Err(EventError::InconsistentOrdering);
+        }
+
+        Ok(next_order)
     }
 
     /// Emit an event from the call info in substrate.
@@ -1118,7 +1154,6 @@ impl<T: Config> Pallet<T> {
             &Self::get_block_context(),
             transaction.tx_type.clone(),
             T::DisableNonceValidation::get(),
-            transaction.contract_class.clone(),
         ) {
             Ok(v) => {
                 log!(debug, "Successfully estimated fee: {:?}", v);
@@ -1144,14 +1179,16 @@ impl<T: Config> Pallet<T> {
         execute_call_info: Option<CallInfo>,
         fee_transfer_call_info: Option<CallInfo>,
     ) -> Result<Vec<StarknetEventType>, Error<T>> {
-        let events = match (execute_call_info, fee_transfer_call_info) {
-            (Some(mut exec), Some(mut fee)) => {
-                let mut events = Self::emit_events(&mut exec).map_err(|_| Error::<T>::EmitEventError)?;
-                events.append(&mut Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?);
-                events
+        let mut events = Vec::new();
+        match (execute_call_info, fee_transfer_call_info) {
+            (Some(exec), Some(fee)) => {
+                Self::emit_events_in_call_info(&exec, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+                Self::emit_events_in_call_info(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
             }
-            (_, Some(mut fee)) => Self::emit_events(&mut fee).map_err(|_| Error::<T>::EmitEventError)?,
-            _ => Vec::default(),
+            (_, Some(fee)) => {
+                Self::emit_events_in_call_info(&fee, &mut events, 0).map_err(|_| Error::<T>::EmitEventError)?;
+            }
+            _ => {}
         };
         Ok(events)
     }
@@ -1178,12 +1215,12 @@ impl<T: Config> Pallet<T> {
                 state_tree.set(storage_key, storage_value);
             });
 
-            // Update the state trie for this contract in runtime storage.
-            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
-
             // We then compute the state root
             // And update the storage trie
             let state_root = state_tree.commit();
+
+            // Update the state trie for this contract in runtime storage.
+            ContractTries::<T>::set(contract_address, Some(state_tree.clone()));
 
             // Update contracts' states root mapping
             ContractsStateRoots::<T>::set(contract_address, Some(state_root));

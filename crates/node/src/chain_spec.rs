@@ -1,5 +1,7 @@
 use madara_runtime::{AuraConfig, EnableManualSeal, GenesisConfig, GrandpaConfig, Runtime, SystemConfig, WASM_BINARY};
 use pallet_starknet::genesis_loader::{read_file_to_string, GenesisLoader};
+use std::path::PathBuf;
+use pallet_starknet::utils;
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -46,8 +48,9 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
     (get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
-pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSpec, String> {
+pub fn development_config(enable_manual_seal: Option<bool>, madara_path: PathBuf) -> Result<DevChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    let madara_path = madara_path.to_str().unwrap().to_string();
 
     Ok(DevChainSpec::from_genesis(
         // Name
@@ -57,15 +60,14 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
         ChainType::Development,
         move || {
             // Logging the development account
-            let genesis_string = read_file_to_string("crates/node/src/genesis_assets/genesis.json");
-            print_development_accounts(&genesis_string);
+            print_development_accounts(&madara_path);
 
             DevGenesisExt {
                 genesis_config: testnet_genesis(
+                    madara_path.clone(),
                     wasm_binary,
                     // Initial PoA authorities
                     vec![authority_keys_from_seed("Alice")],
-                    &genesis_string,
                     true,
                 ),
                 enable_manual_seal,
@@ -88,7 +90,7 @@ pub fn development_config(enable_manual_seal: Option<bool>) -> Result<DevChainSp
 // helper to print development accounts info
 // accounts with addresses 0x1 and 0x4 are NO VALIDATE accounts (don't require PK)
 // accounts with addresses 0x2 and 0x3 have the same PK
-pub fn print_development_accounts(genesis_string: &str) {
+pub fn print_development_accounts(madara_path: &str) {
     let genesis_loader: GenesisLoader = serde_json::from_str(genesis_string).unwrap();
     let genesis_config: madara_runtime::pallet_starknet::GenesisConfig<Runtime> = genesis_loader.into();
     let no_validate_account_address = genesis_config.contracts[0].0.0.to_string();
@@ -104,8 +106,9 @@ pub fn print_development_accounts(genesis_string: &str) {
     log::info!("🧪 CAIRO 1 with address: 0x{} and no pk", cairo_1_no_validate_account_address);
 }
 
-pub fn local_testnet_config() -> Result<ChainSpec, String> {
+pub fn local_testnet_config(madara_path: PathBuf) -> Result<ChainSpec, String> {
     let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
+    let madara_path = madara_path.to_str().unwrap().to_string();
 
     Ok(ChainSpec::from_genesis(
         // Name
@@ -114,14 +117,12 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
         "local_testnet",
         ChainType::Local,
         move || {
-            let genesis_string = read_file_to_string("crates/node/src/genesis_assets/genesis.json");
-
             testnet_genesis(
+                madara_path.clone(),
                 wasm_binary,
                 // Initial PoA authorities
                 // Intended to be only 2
                 vec![authority_keys_from_seed("Alice"), authority_keys_from_seed("Bob")],
-                &genesis_string,
                 true,
             )
         },
@@ -141,13 +142,16 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 
 /// Configure initial storage state for FRAME modules.
 fn testnet_genesis(
+    madara_path: String,
     wasm_binary: &[u8],
     initial_authorities: Vec<(AuraId, GrandpaId)>,
-    genesis_string: &str,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let genesis_loader: GenesisLoader = serde_json::from_str(genesis_string).unwrap();
-    let genesis_config: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis_loader.into();
+    let genesis_path = madara_path.clone() + "/genesis-assets/genesis.json";
+    let genesis = utils::read_file_to_string(genesis_path).expect("Failed to read genesis file");
+    let mut genesis_loader: GenesisLoader = serde_json::from_str(&genesis).expect("Failed loading genesis");
+    genesis_loader.set_madara_path(madara_path);
+    let starknet_genesis_config: madara_runtime::pallet_starknet::GenesisConfig<_> = genesis_loader.into();
 
     GenesisConfig {
         system: SystemConfig {
@@ -159,6 +163,6 @@ fn testnet_genesis(
         // Deterministic finality mechanism used for block finalization
         grandpa: GrandpaConfig { authorities: initial_authorities.iter().map(|x| (x.1.clone(), 1)).collect() },
         /// Starknet Genesis configuration.
-        starknet: genesis_config,
+        starknet: starknet_genesis_config,
     }
 }

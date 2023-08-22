@@ -343,6 +343,34 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/54669079?v=4",
       "profile": "https://github.com/nikania",
       "contributions": ["code"]
+    },
+    {
+      "login": "0xAsten",
+      "name": "Asten",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114395459?v=4",
+      "profile": "https://github.com/0xAsten",
+      "contributions": ["code"]
+    },
+    {
+      "login": "ben2077",
+      "name": "ben2077",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22720665?v=4",
+      "profile": "https://github.com/ben2077",
+      "contributions": ["code"]
+    },
+    {
+      "login": "m-kus",
+      "name": "Michael Zaikin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/44951260?v=4",
+      "profile": "https://github.com/m-kus",
+      "contributions": ["code"]
+    },
+    {
+      "login": "joaopereira12",
+      "name": "João Pereira",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77340776?v=4",
+      "profile": "https://www.linkedin.com/in/jo%C3%A3o-pereira-91a087230/",
+      "contributions": ["doc"]
     }
   ],
   "contributorsPerLine": 7,

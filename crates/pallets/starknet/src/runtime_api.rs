@@ -18,6 +18,15 @@ use sp_runtime::DispatchError;
 use crate::types::{NonceWrapper, StateCommitments};
 use crate::StateTrie;
 
+#[derive(scale_codec::Encode, scale_codec::Decode, scale_info::TypeInfo)]
+pub enum StarknetTransactionExecutionError {
+    ContractNotFound,
+    ClassAlreadyDeclared,
+    ClassHashNotFound,
+    InvalidContractClass,
+    ContractError,
+}
+
 sp_api::decl_runtime_apis! {
     pub trait StarknetRuntimeApi {
         /// Returns the nonce associated with the given address in the given block
@@ -58,5 +67,7 @@ sp_api::decl_runtime_apis! {
     pub trait ConvertTransactionRuntimeApi {
         /// Converts the transaction to an UncheckedExtrinsic for submission to the pool.
         fn convert_transaction(transaction: Transaction, tx_type: TxType) -> Result<<Block as BlockT>::Extrinsic, DispatchError>;
+        /// Converts the DispatchError to an understandable error for the client
+        fn convert_error(error: DispatchError) -> StarknetTransactionExecutionError;
     }
 }

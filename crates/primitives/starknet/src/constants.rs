@@ -2,13 +2,8 @@ use starknet_ff::FieldElement;
 
 use crate::execution::felt252_wrapper::Felt252Wrapper;
 
-// Gas Cost.
-// See documentation for more details.
-/// Gas per step
-pub const STEP_GAS_COST: u64 = 100;
-/// An estimation of the initial gas for a transaction to run with. This solution is temporary and
-/// this value will become a field of the transaction.
-pub const INITIAL_GAS_COST: u64 = 10_u64.pow(8) * STEP_GAS_COST;
+/// Initial gas for a transaction
+pub const INITIAL_GAS: u64 = u64::MAX;
 
 // Need to use `from_mont` because this needs to be a constant function call
 /// ChainId for Starknet Goerli testnet
