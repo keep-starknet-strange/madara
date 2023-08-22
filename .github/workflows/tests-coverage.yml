@@ -34,7 +34,7 @@ jobs:
       - name: Run test (native)
         run: |-
           cd tests
-          npm run test
+          DISPLAY_LOG=true npm run test
       - name: Run test (wasm)
         run: |-
           cd tests
