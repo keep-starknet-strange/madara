@@ -34,3 +34,4 @@
   file from 9933 to 9944.
 - dev: replace the 0 initial gas value with u128::MAX because view call
   entrypoints were failing
+- fix: estimate_fee should make sure you use query_version TODO
