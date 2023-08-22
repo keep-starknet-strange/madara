@@ -216,12 +216,12 @@ pub fn run() -> sc_cli::Result<()> {
             let local_path = utils::get_project_path();
 
             if let Some(configs_url) = cli.run.configs_url.clone() {
-                utils::fetch_from_url(configs_url, madara_path.clone() + "/configs")?;
+                utils::fetch_from_url(configs_url, madara_path.clone() + "/configs", cli.run.update_madara_configs)?;
             } else if let Ok(ref src_path) = local_path {
                 let src_path = src_path.clone() + "/configs/index.json";
-                utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs")?;
+                utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs", cli.run.update_madara_configs)?;
             } else if !cli.run.disable_url_fetch {
-                utils::fetch_from_url(constants::DEFAULT_CONFIGS_URL.to_string(), madara_path.clone() + "/configs")?;
+                utils::fetch_from_url(constants::DEFAULT_CONFIGS_URL.to_string(), madara_path.clone() + "/configs", cli.run.update_madara_configs)?;
             }
 
             let madara_configs: configs::Configs =
@@ -231,7 +231,7 @@ pub fn run() -> sc_cli::Result<()> {
             for asset in madara_configs.genesis_assets {
                 if let Ok(ref src_path) = local_path {
                     let src_path = src_path.clone() + "/configs/genesis-assets/" + &asset.name;
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets")?;
+                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/configs/genesis-assets", cli.run.update_madara_configs)?;
                 } else if !cli.run.disable_url_fetch {
                     configs::fetch_and_validate_file(
                         madara_configs.remote_base_path.clone(),
@@ -242,13 +242,13 @@ pub fn run() -> sc_cli::Result<()> {
             }
 
             if let (Some(chain_spec_url), None) = (cli.run.chain_spec_url.clone(), cli.run.testnet) {
-                utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs")?;
+                utils::fetch_from_url(chain_spec_url.clone(), madara_path.clone() + "/chain-specs", cli.run.update_madara_configs)?;
                 let chain_spec = chain_spec_url.split('/').last().expect("Chain spec file name not found");
                 cli.run.run_cmd.shared_params.chain = Some(madara_path + "/chain-specs/" + chain_spec);
             } else if let (Some(Testnet::Sharingan), false) = (cli.run.testnet, cli.run.disable_url_fetch) {
                 if let Ok(ref src_path) = local_path {
                     let src_path = src_path.clone() + "/configs/chain-specs/testnet-sharingan-raw.json";
-                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs")?;
+                    utils::copy_from_filesystem(src_path, madara_path.clone() + "/chain-specs", cli.run.update_madara_configs)?;
                 } else {
                     // If testnet flag is specified, right now it's only Sharingan
                     for chain_spec in madara_configs.chain_specs {

@@ -126,7 +126,7 @@ fn testnet_genesis(
     initial_authorities: Vec<(AuraId, GrandpaId)>,
     _enable_println: bool,
 ) -> GenesisConfig {
-    let genesis = madara_path.clone() + "/genesis-assets/genesis.json";
+    let genesis = madara_path.clone() + "/configs/genesis-assets/genesis.json";
     let genesis = utils::read_file_to_string(genesis).expect("Failed to read genesis file");
     let mut genesis: GenesisLoader = serde_json::from_str(&genesis).expect("Failed loading genesis");
     genesis.set_madara_path(madara_path);

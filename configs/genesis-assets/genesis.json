@@ -16,7 +16,7 @@
     ],
     [
       "0x0424b7f61e3c5dfd74400d96fdea7e1f0bf2757f31df04387eaa957f095dd7b9",
-      { "path": "cairo-contracts/Proxy.json", "version": 0 }
+      { "path": "genesis-assets/Proxy.json", "version": 0 }
     ],
     [
       "0x2c2b8f559e1221468140ad7b2352b1a5be32660d0bf1a3ae3a054a4ec5254e4",

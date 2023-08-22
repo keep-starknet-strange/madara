@@ -16,12 +16,13 @@ pub struct File {
 }
 
 pub fn fetch_and_validate_file(remote_base_path: String, file: File, dest_path: String) -> Result<(), String> {
+	let force_fetching = true;
     if let Some(url) = file.url {
-        utils::fetch_from_url(url, dest_path.clone())?;
+        utils::fetch_from_url(url, dest_path.clone(), force_fetching)?;
     } else {
         let relative_path =
             dest_path.split("configs/").collect::<Vec<&str>>()[1].split('/').collect::<Vec<&str>>().join("/");
-        utils::fetch_from_url(remote_base_path + &relative_path + &file.name, dest_path.clone())?;
+        utils::fetch_from_url(remote_base_path + &relative_path + &file.name, dest_path.clone(), force_fetching)?;
     }
 
     let file_str = utils::read_file_to_string(dest_path + &file.name)?;
