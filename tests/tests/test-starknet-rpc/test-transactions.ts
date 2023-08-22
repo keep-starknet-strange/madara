@@ -587,7 +587,7 @@ describeDevMadara(
           },
           {
             nonce: ARGENT_CONTRACT_NONCE.value,
-            version: 0x100000000000000000000000000000000,
+            version: 100000000000000000000000000000001n,
           },
         );
 
