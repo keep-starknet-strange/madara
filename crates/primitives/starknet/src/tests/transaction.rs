@@ -1,6 +1,7 @@
 use core::str::FromStr;
 
 use blockifier::abi::abi_utils::selector_from_name;
+use blockifier::execution::contract_class::ContractClassV0;
 use frame_support::{bounded_vec, BoundedVec};
 use sp_core::{TypedGet, U256};
 use starknet_api::api_core::{ContractAddress, PatriciaKey};
@@ -8,8 +9,8 @@ use starknet_api::block::{BlockHash, BlockNumber};
 use starknet_api::hash::{StarkFelt, StarkHash};
 use starknet_api::patricia_key;
 use starknet_api::transaction::{
-    Event, EventContent, EventData, EventKey, Fee, InvokeTransactionOutput, TransactionHash, TransactionOutput,
-    TransactionReceipt,
+    Event, EventContent, EventData, EventKey, Fee, InvokeTransactionOutput, TransactionExecutionStatus,
+    TransactionHash, TransactionOutput, TransactionReceipt,
 };
 use starknet_core::types::{
     BroadcastedDeployAccountTransaction, BroadcastedInvokeTransaction, BroadcastedInvokeTransactionV0,
@@ -96,6 +97,7 @@ fn test_validate_entrypoint_calldata_declare() {
             class_hash: Some(get_test_class_hash()),
             ..CallEntryPointWrapper::default()
         },
+        contract_class: Some(blockifier::execution::contract_class::ContractClass::V0(ContractClassV0::default())),
         ..Transaction::default()
     };
 
@@ -231,6 +233,7 @@ fn test_try_into_transaction_receipt_wrapper() {
             actual_fee: Fee(0),
             messages_sent: vec![],
             events: vec![event1.clone(), event2.clone()],
+            execution_status: TransactionExecutionStatus::Succeeded,
         }),
         block_hash: BlockHash(StarkFelt::new([0; 32]).unwrap()),
         block_number: BlockNumber(0),
@@ -290,6 +293,7 @@ fn test_try_into_transaction_receipt_wrapper_with_too_many_events() {
             actual_fee: Fee(0),
             messages_sent: vec![],
             events,
+            execution_status: TransactionExecutionStatus::Succeeded,
         }),
         block_hash: BlockHash(StarkFelt::new([0; 32]).unwrap()),
         block_number: BlockNumber(0),
