@@ -23,7 +23,6 @@ name = "madara"
 async-trait = "0.1"
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true, features = ["thread-pool"] }
-lazy_static = "1.4.0"
 log = { workspace = true }
 serde = { workspace = true }
 

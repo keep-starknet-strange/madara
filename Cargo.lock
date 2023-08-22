@@ -4876,7 +4876,6 @@ dependencies = [
  "futures",
  "hex",
  "jsonrpsee",
- "lazy_static",
  "log",
  "madara-runtime",
  "mc-block-proposer",
