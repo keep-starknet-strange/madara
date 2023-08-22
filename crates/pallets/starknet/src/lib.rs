@@ -1154,7 +1154,7 @@ impl<T: Config> Pallet<T> {
         if !transaction.is_query {
             return Err(DispatchError::Other("Cannot estimate_fee with is_query = false"));
         }
-        
+
         match transaction.execute(
             &mut BlockifierStateAdapter::<T>::default(),
             &Self::get_block_context(),

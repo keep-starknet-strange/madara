@@ -27,7 +27,10 @@ fn estimates_tx_fee_with_query_version() {
         let tx = get_invoke_dummy();
 
         let estimation = Starknet::estimate_fee(tx).unwrap_err();
-        assert!(estimation == DispatchError::Other("Cannot estimate_fee with is_query = false"), "Should return an error when query_version is false");
+        assert!(
+            estimation == DispatchError::Other("Cannot estimate_fee with is_query = false"),
+            "Should return an error when query_version is false"
+        );
     });
 }
 
