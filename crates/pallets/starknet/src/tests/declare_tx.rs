@@ -109,7 +109,7 @@ fn given_contract_declare_on_openzeppelin_account_then_it_works() {
     new_test_ext::<MockRuntime>().execute_with(|| {
         basic_test_setup(2);
         let none_origin = RuntimeOrigin::none();
-// TODO CHECK ALL PLACES WITH _dummy
+
         let mut transaction = get_declare_dummy(AccountType::V0(AccountTypeV0Inner::Openzeppelin));
         let erc20_class_hash = transaction.class_hash;
 
