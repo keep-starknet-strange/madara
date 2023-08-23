@@ -379,14 +379,11 @@ describeDevMadara(
           ...txDetails,
         };
 
-        const fee_estimates = await providerRPC.getEstimateFeeBulk(
-          [invocation],
-          {
+        await expect(
+          providerRPC.getEstimateFeeBulk([invocation], {
             blockIdentifier: "latest",
-          },
-        );
-
-        expect(fee_estimates)
+          }),
+        )
           .to.eventually.be.rejectedWith(
             "61: The transaction version is not supported",
           )
