@@ -28,7 +28,10 @@ fn estimates_tx_fee_with_query_version() {
 
         let estimation_txn = Starknet::estimate_fee(tx);
         assert!(estimation_txn.is_err());
-        assert!(matches!(estimation_txn.unwrap_err(), DispatchError::Other("Cannot estimate_fee with is_query = false")));
+        assert!(matches!(
+            estimation_txn.unwrap_err(),
+            DispatchError::Other("Cannot estimate_fee with is_query = false")
+        ));
     });
 }
 

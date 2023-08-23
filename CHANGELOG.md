@@ -39,4 +39,5 @@
   file from 9933 to 9944.
 - dev: replace the 0 initial gas value with u128::MAX because view call
   entrypoints were failing
-- fix: estimate_fee should make sure all transaction have a version being 2^128 + 1 or 2^128+2 depending on the tx type 
+- fix: estimate_fee should make sure all transaction have a version being
+  2^128 + 1 or 2^128+2 depending on the tx type
