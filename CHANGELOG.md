@@ -2,6 +2,8 @@
 
 ## Next release
 
+- tests: add block call before querying blockId
+- tests: update package-lock
 - ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese
 - ci: disable benchmark for pushes and pr's
