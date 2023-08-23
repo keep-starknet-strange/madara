@@ -67,38 +67,35 @@ describeDevMadara(
         );
 
         let retries = 5;
+        let tx: InvokeTransaction;
         do {
           try {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            const tx: InvokeTransaction =
-              await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
-            expect(tx).to.not.be.undefined;
-            expect(tx.type).to.be.equal("INVOKE");
-            expect(tx.sender_address).to.be.equal(
-              toHex(ARGENT_CONTRACT_ADDRESS),
-            );
-            expect(tx.calldata).to.deep.equal(
-              [
-                1,
-                FEE_TOKEN_ADDRESS,
-                hash.getSelectorFromName("transfer"),
-                0,
-                3,
-                3,
-                ARGENT_CONTRACT_ADDRESS,
-                MINT_AMOUNT,
-                0,
-              ].map(toHex),
-            );
-
-            return;
+            tx = await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
+            retries = 0;
           } catch {
+            await new Promise((r) => setTimeout(r, 1000));
             retries -= 1;
           }
         } while (retries > 0);
 
-        throw new Error("Transaction not found");
+        expect(tx).to.not.be.undefined;
+        expect(tx.type).to.be.equal("INVOKE");
+        expect(tx.sender_address).to.be.equal(toHex(ARGENT_CONTRACT_ADDRESS));
+        expect(tx.calldata).to.deep.equal(
+          [
+            1,
+            FEE_TOKEN_ADDRESS,
+            hash.getSelectorFromName("transfer"),
+            0,
+            3,
+            3,
+            ARGENT_CONTRACT_ADDRESS,
+            MINT_AMOUNT,
+            0,
+          ].map(toHex),
+        );
       });
 
       it("should throws block not found error", async function () {
