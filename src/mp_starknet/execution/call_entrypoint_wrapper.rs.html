@@ -167,6 +167,10 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::format;
 <span class="kw">use </span>alloc::sync::Arc;
 
@@ -275,7 +279,7 @@
         <span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
         <span class="kw">let </span>account_context = AccountTransactionContext::default();
         <span class="kw">let </span>max_steps = block_context.invoke_tx_max_n_steps;
-        <span class="kw">let </span>context = <span class="kw-2">&amp;mut </span>EntryPointExecutionContext::new(block_context, account_context, max_steps);
+        <span class="kw">let </span>context = <span class="kw-2">&amp;mut </span>EntryPointExecutionContext::new(block_context, account_context, max_steps <span class="kw">as </span>usize);
 
         call_entry_point
             .execute(state, execution_resources, context)
@@ -330,7 +334,11 @@
             // starknet-lib is constantly breaking it&#39;s api
             // I hope it&#39;s nothing important ¯\_(ツ)_/¯
             </span>code_address: <span class="prelude-val">None</span>,
-            initial_gas: <span class="self">self</span>.initial_gas.into(),
+            <span class="comment">// initial_gas should come from the RPC call
+            // and should be a u64. If it&#39;s not, the error must
+            // be caught on the client side, hence it&#39;s safe to
+            // unwrap over here
+            </span>initial_gas: <span class="self">self</span>.initial_gas.try_into().unwrap(),
         };
 
         <span class="prelude-val">Ok</span>(entrypoint)

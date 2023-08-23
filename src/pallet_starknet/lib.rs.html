@@ -1249,9 +1249,6 @@
 <a href="#1249" id="1249">1249</a>
 <a href="#1250" id="1250">1250</a>
 <a href="#1251" id="1251">1251</a>
-<a href="#1252" id="1252">1252</a>
-<a href="#1253" id="1253">1253</a>
-<a href="#1254" id="1254">1254</a>
 </pre><pre class="rust"><code><span class="doccomment">//! A Substrate pallet implementation for Starknet, a decentralized, permissionless, and scalable
 //! zk-rollup for general-purpose smart contracts.
 //! See the [Starknet documentation](https://docs.starknet.io/) for more information.
@@ -1352,7 +1349,6 @@
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 <span class="kw">use </span>starknet_api::transaction::EventContent;
 <span class="kw">use </span>starknet_crypto::FieldElement;
 
@@ -1428,6 +1424,8 @@
         </span><span class="kw">type </span>ProtocolVersion: Get&lt;u8&gt;;
         <span class="attr">#[pallet::constant]
         </span><span class="kw">type </span>ChainId: Get&lt;Felt252Wrapper&gt;;
+        <span class="attr">#[pallet::constant]
+        </span><span class="kw">type </span>MaxRecursionDepth: Get&lt;u32&gt;;
     }
 
     <span class="doccomment">/// The Starknet pallet hooks.
@@ -1779,7 +1777,6 @@
                 <span class="kw-2">&amp;</span>block_context,
                 TxType::Invoke,
                 T::DisableNonceValidation::get(),
-                <span class="prelude-val">None</span>,
             );
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
@@ -1833,7 +1830,7 @@
 
             <span class="kw">let </span>transaction: Transaction = transaction.from_declare(chain_id);
             <span class="comment">// Check that contract class is not None
-            </span><span class="kw">let </span>contract_class = transaction.contract_class.clone().ok_or(Error::&lt;T&gt;::ContractClassMustBeSpecified)<span class="question-mark">?</span>;
+            </span>transaction.contract_class.clone().ok_or(Error::&lt;T&gt;::ContractClassMustBeSpecified)<span class="question-mark">?</span>;
 
             <span class="comment">// Check that the class hash is not None
             </span><span class="kw">let </span>class_hash = transaction.call_entrypoint.class_hash.ok_or(Error::&lt;T&gt;::ClassHashMustBeSpecified)<span class="question-mark">?</span>;
@@ -1853,7 +1850,6 @@
                 <span class="kw-2">&amp;</span>block_context,
                 TxType::Declare,
                 T::DisableNonceValidation::get(),
-                <span class="prelude-val">Some</span>(contract_class),
             );
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
@@ -1925,7 +1921,6 @@
                 <span class="kw-2">&amp;</span>block_context,
                 TxType::DeployAccount,
                 T::DisableNonceValidation::get(),
-                <span class="prelude-val">None</span>,
             );
             <span class="kw">let </span>receipt = <span class="kw">match </span>call_info {
                 <span class="prelude-val">Ok</span>(TransactionExecutionInfoWrapper {
@@ -1989,7 +1984,6 @@
                 <span class="kw-2">&amp;</span>block_context,
                 TxType::L1Handler,
                 <span class="bool-val">true</span>,
-                <span class="prelude-val">None</span>,
             ) {
                 <span class="prelude-val">Ok</span>(v) =&gt; {
                     <span class="macro">log!</span>(debug, <span class="string">&quot;Successfully consumed a message from L1: {:?}&quot;</span>, v);
@@ -2154,7 +2148,7 @@
 
         <span class="kw">let </span>chain_id = <span class="self">Self</span>::chain_id_str();
 
-        <span class="kw">let </span>vm_resource_fee_cost = HashMap::default();
+        <span class="kw">let </span>vm_resource_fee_cost = Default::default();
         <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
         </span><span class="kw">let </span>gas_price = <span class="number">10</span>;
         BlockContext {
@@ -2167,6 +2161,7 @@
             invoke_tx_max_n_steps: T::InvokeTxMaxNSteps::get(),
             validate_max_n_steps: T::ValidateMaxNSteps::get(),
             gas_price,
+            max_recursion_depth: T::MaxRecursionDepth::get() <span class="kw">as </span>usize,
         }
     }
 
@@ -2410,7 +2405,6 @@
             <span class="kw-2">&amp;</span><span class="self">Self</span>::get_block_context(),
             transaction.tx_type.clone(),
             T::DisableNonceValidation::get(),
-            transaction.contract_class.clone(),
         ) {
             <span class="prelude-val">Ok</span>(v) =&gt; {
                 <span class="macro">log!</span>(debug, <span class="string">&quot;Successfully estimated fee: {:?}&quot;</span>, v);

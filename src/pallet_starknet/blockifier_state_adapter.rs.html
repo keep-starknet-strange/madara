@@ -224,6 +224,13 @@
 <a href="#224" id="224">224</a>
 <a href="#225" id="225">225</a>
 <a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -254,6 +261,7 @@
 </span><span class="kw">pub struct </span>BlockifierStateAdapter&lt;T: Config&gt; {
     storage_update: BTreeMap&lt;ContractStorageKey, StarkFelt&gt;,
     class_hash_update: usize,
+    compiled_class_hash_update: usize,
     _phantom: PhantomData&lt;T&gt;,
 }
 
@@ -261,10 +269,10 @@
 <span class="kw">where
     </span>T: Config,
 {
-    <span class="kw">fn </span>count_state_changes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, usize, usize) {
+    <span class="kw">fn </span>count_state_changes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, usize, usize, usize) {
         <span class="kw">let </span>keys = <span class="self">self</span>.storage_update.keys();
         <span class="kw">let </span>n_contract_updated = BTreeSet::from_iter(keys.clone().map(|<span class="kw-2">&amp;</span>(contract_address, <span class="kw">_</span>)| contract_address)).len();
-        (n_contract_updated, keys.len(), <span class="self">self</span>.class_hash_update)
+        (n_contract_updated, keys.len(), <span class="self">self</span>.class_hash_update, <span class="self">self</span>.compiled_class_hash_update)
     }
 }
 
@@ -279,7 +287,12 @@
 
 <span class="kw">impl</span>&lt;T: Config&gt; Default <span class="kw">for </span>BlockifierStateAdapter&lt;T&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ storage_update: BTreeMap::default(), class_hash_update: usize::default(), _phantom: PhantomData }
+        <span class="self">Self </span>{
+            storage_update: BTreeMap::default(),
+            class_hash_update: usize::default(),
+            compiled_class_hash_update: usize::default(),
+            _phantom: PhantomData,
+        }
     }
 }
 
@@ -417,6 +430,7 @@
         class_hash: ClassHash,
         compiled_class_hash: CompiledClassHash,
     ) -&gt; StateResult&lt;()&gt; {
+        <span class="self">self</span>.compiled_class_hash_update += <span class="number">1</span>;
         <span class="comment">// FIXME 708
         </span><span class="kw">let </span>class_hash: ClassHashWrapper = class_hash.<span class="number">0</span>.into();
         <span class="kw">let </span>compiled_class_hash: CompiledClassHashWrapper = compiled_class_hash.<span class="number">0</span>.into();

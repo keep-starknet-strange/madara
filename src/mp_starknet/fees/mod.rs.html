@@ -257,6 +257,11 @@
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
 </pre><pre class="rust"><code><span class="kw">use </span>alloc::collections::{BTreeMap, BTreeSet};
 <span class="kw">use </span>alloc::string::String;
 <span class="kw">use </span>alloc::vec;
@@ -269,6 +274,7 @@
 };
 <span class="kw">use </span>blockifier::fee::gas_usage::calculate_tx_gas_usage;
 <span class="kw">use </span>blockifier::fee::os_usage::get_additional_os_resources;
+<span class="kw">use </span>blockifier::state::cached_state::StateChangesCount;
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
 <span class="kw">use </span>starknet_api::api_core::EntryPointSelector;
@@ -310,7 +316,8 @@
     execution_resources: <span class="kw-2">&amp;mut </span>ExecutionResources,
     tx_type: TxType,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;BTreeMap&lt;String, usize&gt;, TransactionExecutionErrorWrapper&gt; {
-    <span class="kw">let </span>(n_modified_contracts, n_modified_keys, n_class_updates) = state.count_state_changes();
+    <span class="kw">let </span>(n_modified_contracts, n_modified_keys, n_class_hash_updates, n_compiled_class_hash_updates) =
+        state.count_state_changes();
     <span class="kw">let </span>non_optional_call_infos: Vec&lt;<span class="kw-2">&amp;</span>CallInfo&gt; =
         <span class="macro">vec!</span>[execute_call_info, validate_call_info].into_iter().flatten().collect();
     <span class="kw">let </span><span class="kw-2">mut </span>l2_to_l1_payloads_length = <span class="macro">vec!</span>[];
@@ -323,14 +330,17 @@
     }
     <span class="kw">let </span>l1_gas_usage = calculate_tx_gas_usage(
         <span class="kw-2">&amp;</span>l2_to_l1_payloads_length,
-        n_modified_contracts,
-        n_modified_keys + usize::from(FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE),
+        StateChangesCount {
+            n_modified_contracts,
+            n_storage_updates: n_modified_keys + usize::from(FEE_TRANSFER_N_STORAGE_CHANGES_TO_CHARGE),
+            n_class_hash_updates,
+            n_compiled_class_hash_updates,
+        },
         <span class="prelude-val">None</span>,
-        n_class_updates,
     );
     <span class="comment">// Add additional Cairo resources needed for the OS to run the transaction.
     </span><span class="kw">let </span>total_vm_usage = <span class="kw-2">&amp;</span>execution_resources.vm_resources
-        + <span class="kw-2">&amp;</span>get_additional_os_resources(execution_resources.syscall_counter.clone(), tx_type.into())
+        + <span class="kw-2">&amp;</span>get_additional_os_resources(<span class="kw-2">&amp;</span>execution_resources.syscall_counter.clone(), tx_type.into())
             .map_err(|<span class="kw">_</span>| TransactionExecutionErrorWrapper::FeeComputationError)<span class="question-mark">?</span>;
     <span class="kw">let </span>total_vm_usage = total_vm_usage.filter_unused_builtins();
     <span class="kw">let </span><span class="kw-2">mut </span>tx_resources = BTreeMap::from([
@@ -400,7 +410,7 @@
     </span><span class="kw">let </span>msb_amount = StarkFelt::from(<span class="number">0_u64</span>);
 
     <span class="comment">// The fee-token contract is a Cairo 0 contract, hence the initial gas is irrelevant.
-    </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS.into();
+    </span><span class="kw">let </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS;
 
     <span class="kw">let </span>storage_address = block_context.fee_token_address;
     <span class="kw">let </span>fee_transfer_call = CallEntryPoint {
@@ -427,7 +437,7 @@
     };
 
     <span class="kw">let </span>max_steps = block_context.invoke_tx_max_n_steps;
-    <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps);
+    <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(block_context.clone(), account_tx_context, max_steps <span class="kw">as </span>usize);
 
     fee_transfer_call
         .execute(state, <span class="kw-2">&amp;mut </span>ExecutionResources::default(), <span class="kw-2">&amp;mut </span>context)

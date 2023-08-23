@@ -850,6 +850,22 @@
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Starknet transaction related functionality.
 /// Constants related to transactions.
 </span><span class="kw">pub mod </span>constants;
@@ -867,26 +883,22 @@
     CallEntryPoint, CallInfo, CallType, EntryPointExecutionContext, ExecutionResources,
 };
 <span class="kw">use </span>blockifier::execution::errors::EntryPointExecutionError;
-<span class="kw">use </span>blockifier::state::errors::StateError;
 <span class="kw">use </span>blockifier::state::state_api::State;
 <span class="kw">use </span>blockifier::transaction::errors::TransactionExecutionError;
 <span class="kw">use </span>blockifier::transaction::objects::AccountTransactionContext;
 <span class="kw">use </span>blockifier::transaction::transaction_utils::{update_remaining_gas, verify_no_calls_to_other_contracts};
 <span class="kw">use </span>blockifier::transaction::transactions::{
-    DeclareTransaction <span class="kw">as </span>StarknetDeclareTransaction, Executable, L1HandlerTransaction <span class="kw">as </span>StarknetL1HandlerTransaction,
+    DeclareTransaction, DeployAccountTransaction, Executable, InvokeTransaction, L1HandlerTransaction,
 };
-<span class="kw">use </span>cairo_vm::felt::Felt252;
 <span class="kw">use </span>frame_support::BoundedVec;
 <span class="kw">use </span>sp_core::U256;
-<span class="kw">use </span>starknet_api::api_core::{
-    ClassHash, CompiledClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector, Nonce,
-};
+<span class="kw">use </span>starknet_api::api_core::{CompiledClassHash, ContractAddress <span class="kw">as </span>StarknetContractAddress, EntryPointSelector};
 <span class="kw">use </span>starknet_api::deprecated_contract_class::EntryPointType;
 <span class="kw">use </span>starknet_api::hash::{StarkFelt, StarkHash};
 <span class="kw">use </span>starknet_api::transaction::{
-    Calldata, ContractAddressSalt, DeclareTransaction, DeclareTransactionV0V1, DeclareTransactionV2,
-    DeployAccountTransaction, EventContent, Fee, InvokeTransaction, InvokeTransactionV1, L1HandlerTransaction,
-    TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature, TransactionVersion,
+    Calldata, ContractAddressSalt, DeclareTransactionV0V1, DeclareTransactionV2, EventContent, Fee,
+    InvokeTransactionV1, TransactionHash, TransactionOutput, TransactionReceipt, TransactionSignature,
+    TransactionVersion,
 };
 <span class="kw">use </span>starknet_api::{calldata, StarknetApiError};
 
@@ -895,7 +907,7 @@
     TransactionExecutionInfoWrapper, TransactionExecutionResultWrapper, TransactionReceiptWrapper,
     TransactionValidationErrorWrapper, TransactionValidationResultWrapper, TxType,
 };
-<span class="kw">use </span><span class="self">self</span>::utils::{calculate_transaction_version, calculate_transaction_version_from_u8};
+<span class="kw">use </span><span class="self">self</span>::utils::{calculate_transaction_version, calculate_transaction_version_from_u8, felt_to_nonce};
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{CallEntryPointWrapper, ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::fees::{<span class="self">self</span>, charge_fee};
 <span class="kw">use </span><span class="kw">crate</span>::state::{FeeConfig, StateChanges};
@@ -1049,19 +1061,21 @@
         <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(DeployAccountTransaction {
-            transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
-            max_fee: Fee(<span class="self">self</span>.max_fee.try_into().unwrap()),
-            version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
-            signature: TransactionSignature(
-                <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
+            tx_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
+            tx: starknet_api::transaction::DeployAccountTransaction {
+                max_fee: Fee(<span class="self">self</span>.max_fee.try_into().unwrap()),
+                version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
+                signature: TransactionSignature(
+                    <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
+                ),
+                nonce: felt_to_nonce(<span class="self">self</span>.nonce)<span class="question-mark">?</span>,
+                class_hash: entrypoint.class_hash.unwrap_or_default(),
+                constructor_calldata: entrypoint.calldata,
+                contract_address_salt: ContractAddressSalt(StarkFelt::new(
+                    <span class="self">self</span>.contract_address_salt.unwrap_or_default().into(),
+                )<span class="question-mark">?</span>),
+            },
             contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            class_hash: entrypoint.class_hash.unwrap_or_default(),
-            constructor_calldata: entrypoint.calldata,
-            contract_address_salt: ContractAddressSalt(StarkFelt::new(
-                <span class="self">self</span>.contract_address_salt.unwrap_or_default().into(),
-            )<span class="question-mark">?</span>),
         })
     }
 }
@@ -1074,14 +1088,18 @@
         <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
 
         <span class="prelude-val">Ok</span>(L1HandlerTransaction {
-            transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
-            version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
-            nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
-            contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            calldata: entrypoint.calldata,
-            entry_point_selector: EntryPointSelector(StarkHash::new(&lt;[u8; <span class="number">32</span>]&gt;::from(
-                <span class="self">self</span>.call_entrypoint.entrypoint_selector.unwrap_or_default(),
-            ))<span class="question-mark">?</span>),
+            tx_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
+            tx: starknet_api::transaction::L1HandlerTransaction {
+                version: TransactionVersion(StarkFelt::new(U256::from(<span class="self">self</span>.version).into())<span class="question-mark">?</span>),
+                nonce: felt_to_nonce(<span class="self">self</span>.nonce)<span class="question-mark">?</span>,
+                contract_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
+                calldata: entrypoint.calldata,
+                entry_point_selector: EntryPointSelector(StarkHash::new(&lt;[u8; <span class="number">32</span>]&gt;::from(
+                    <span class="self">self</span>.call_entrypoint.entrypoint_selector.unwrap_or_default(),
+                ))<span class="question-mark">?</span>),
+            },
+            <span class="comment">// FIXME 712
+            </span>paid_fee_on_l1: Default::default(),
         })
     }
 }
@@ -1093,16 +1111,18 @@
     <span class="kw">fn </span>try_into(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;InvokeTransaction, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span>entrypoint: CallEntryPoint = <span class="self">self</span>.call_entrypoint.clone().try_into()<span class="question-mark">?</span>;
 
-        <span class="prelude-val">Ok</span>(InvokeTransaction::V1(InvokeTransactionV1 {
-            transaction_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
-            max_fee: Fee(<span class="self">self</span>.max_fee.try_into().unwrap()),
-            signature: TransactionSignature(
-                <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
-            ),
-            nonce: Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>),
-            sender_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
-            calldata: entrypoint.calldata,
-        }))
+        <span class="prelude-val">Ok</span>(InvokeTransaction {
+            tx: starknet_api::transaction::InvokeTransaction::V1(InvokeTransactionV1 {
+                max_fee: Fee(<span class="self">self</span>.max_fee.try_into().unwrap()),
+                signature: TransactionSignature(
+                    <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
+                ),
+                nonce: felt_to_nonce(<span class="self">self</span>.nonce)<span class="question-mark">?</span>,
+                sender_address: StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>,
+                calldata: entrypoint.calldata,
+            }),
+            tx_hash: TransactionHash(StarkFelt::new(<span class="self">self</span>.hash.into())<span class="question-mark">?</span>),
+        })
     }
 }
 
@@ -1117,31 +1137,41 @@
         <span class="kw">let </span>signature = TransactionSignature(
             <span class="self">self</span>.signature.clone().into_inner().iter().map(|x| StarkFelt::new((<span class="kw-2">*</span>x).into()).unwrap()).collect(),
         );
-        <span class="kw">let </span>nonce = Nonce(StarkFelt::new(<span class="self">self</span>.nonce.into())<span class="question-mark">?</span>);
+        <span class="kw">let </span>nonce = felt_to_nonce(<span class="self">self</span>.nonce)<span class="question-mark">?</span>;
         <span class="kw">let </span>sender_address = StarknetContractAddress::try_from(StarkFelt::new(<span class="self">self</span>.sender_address.into())<span class="question-mark">?</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>class_hash = entrypoint.class_hash.unwrap_or_default();
 
-        <span class="kw">if </span><span class="self">self</span>.version &lt;= <span class="number">1_u8 </span>{
-            <span class="kw">let </span>tx = DeclareTransactionV0V1 { transaction_hash, max_fee, signature, nonce, sender_address, class_hash };
-            <span class="kw">if </span><span class="self">self</span>.version == <span class="number">0_u8 </span>{
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(DeclareTransaction::V0(tx));
-            } <span class="kw">else </span>{
-                <span class="kw">return </span><span class="prelude-val">Ok</span>(DeclareTransaction::V1(tx));
+        <span class="kw">let </span>tx = <span class="kw">match </span><span class="self">self</span>.version {
+            <span class="number">0_u8 </span>| <span class="number">1_u8 </span>=&gt; {
+                <span class="kw">let </span>tx = DeclareTransactionV0V1 { max_fee, signature, nonce, sender_address, class_hash };
+                <span class="kw">if </span><span class="self">self</span>.version == <span class="number">0_u8 </span>{
+                    starknet_api::transaction::DeclareTransaction::V0(tx)
+                } <span class="kw">else </span>{
+                    starknet_api::transaction::DeclareTransaction::V1(tx)
+                }
             }
-        } <span class="kw">else if </span><span class="self">self</span>.version == <span class="number">2_u8 </span>{
-            <span class="kw">let </span>tx = DeclareTransactionV2 {
-                transaction_hash,
-                max_fee,
-                signature,
-                nonce,
-                sender_address,
-                class_hash,
-                <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/796
-                </span>compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().<span class="number">0</span>),
-            };
-            <span class="kw">return </span><span class="prelude-val">Ok</span>(DeclareTransaction::V2(tx));
-        }
-        <span class="macro">unimplemented!</span>(<span class="string">&quot;DeclareTransaction version {} is not supported&quot;</span>, <span class="self">self</span>.version)
+            <span class="number">2_u8 </span>=&gt; {
+                <span class="kw">let </span>tx = DeclareTransactionV2 {
+                    max_fee,
+                    signature,
+                    nonce,
+                    sender_address,
+                    class_hash,
+                    <span class="comment">// FIXME:
+                    </span>compiled_class_hash: CompiledClassHash(entrypoint.class_hash.unwrap().<span class="number">0</span>),
+                };
+                starknet_api::transaction::DeclareTransaction::V2(tx)
+            }
+            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;DeclareTransaction version {} is not supported&quot;</span>, <span class="self">self</span>.version),
+        };
+
+        <span class="comment">// FIXME: handle the error case and don&#39;t unwrap directly
+        </span><span class="prelude-val">Ok</span>(DeclareTransaction::new(
+            tx,
+            transaction_hash,
+            <span class="self">self</span>.contract_class.clone().ok_or(<span class="string">&quot;ContractClass is missing&quot;</span>).unwrap(),
+        )
+        .unwrap())
     }
 }
 
@@ -1211,8 +1241,8 @@
                 <span class="kw">let </span>deploy_account_tx: DeployAccountTransaction =
                     <span class="self">self</span>.try_into().map_err(TransactionValidationErrorWrapper::CalldataError)<span class="question-mark">?</span>;
                 <span class="kw">let </span>validate_calldata = <span class="macro">vec!</span>[
-                    <span class="macro">vec!</span>[deploy_account_tx.class_hash.<span class="number">0</span>, deploy_account_tx.contract_address_salt.<span class="number">0</span>],
-                    (<span class="kw-2">*</span>deploy_account_tx.constructor_calldata.<span class="number">0</span>).clone(),
+                    <span class="macro">vec!</span>[deploy_account_tx.class_hash().<span class="number">0</span>, deploy_account_tx.contract_address_salt().<span class="number">0</span>],
+                    (<span class="kw-2">*</span>deploy_account_tx.constructor_calldata().<span class="number">0</span>).clone(),
                 ]
                 .concat();
                 <span class="prelude-val">Ok</span>(Calldata(validate_calldata.into()))
@@ -1266,7 +1296,8 @@
             }
         };
 
-        <span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS.into();
+        <span class="comment">// FIXME 710
+        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS;
 
         <span class="self">self</span>.validate_tx(state, execution_resources, block_context, <span class="kw-2">&amp;</span>account_context, tx_type, <span class="kw-2">&amp;mut </span>initial_gas)
     }
@@ -1288,12 +1319,12 @@
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         account_tx_context: <span class="kw-2">&amp;</span>AccountTransactionContext,
         tx_type: <span class="kw-2">&amp;</span>TxType,
-        remaining_gas: <span class="kw-2">&amp;mut </span>Felt252,
+        remaining_gas: <span class="kw-2">&amp;mut </span>u64,
     ) -&gt; TransactionValidationResultWrapper&lt;<span class="prelude-ty">Option</span>&lt;CallInfo&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
             block_context.clone(),
             account_tx_context.clone(),
-            block_context.validate_max_n_steps,
+            block_context.validate_max_n_steps <span class="kw">as </span>usize,
         );
         <span class="kw">if </span>context.account_tx_context.is_v0() {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -1308,7 +1339,7 @@
             storage_address: account_tx_context.sender_address,
             caller_address: StarknetContractAddress::default(),
             call_type: CallType::Call,
-            initial_gas: remaining_gas.clone(),
+            initial_gas: <span class="kw-2">*</span>remaining_gas,
         };
 
         <span class="kw">let </span>validate_call_info = validate_call
@@ -1385,7 +1416,6 @@
         block_context: <span class="kw-2">&amp;</span>BlockContext,
         tx_type: TxType,
         disable_nonce_validation: bool,
-        contract_class: <span class="prelude-ty">Option</span>&lt;ContractClass&gt;,
     ) -&gt; TransactionExecutionResultWrapper&lt;TransactionExecutionInfoWrapper&gt; {
         <span class="comment">// Initialize the execution resources.
         </span><span class="kw">let </span>execution_resources = <span class="kw-2">&amp;mut </span>ExecutionResources::default();
@@ -1394,7 +1424,7 @@
         </span><span class="self">self</span>.verify_tx_version(<span class="kw-2">&amp;</span>tx_type)<span class="question-mark">?</span>;
 
         <span class="comment">// FIXME 710
-        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas: Felt252 = <span class="kw">super</span>::constants::INITIAL_GAS.into();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>initial_gas = <span class="kw">super</span>::constants::INITIAL_GAS;
 
         <span class="comment">// Going one lower level gives us more flexibility like not validating the tx as we could do
         // it before the tx lands in the mempool.
@@ -1408,7 +1438,7 @@
                 </span><span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
                 );
 
                 <span class="comment">// Update nonce
@@ -1437,14 +1467,12 @@
             TxType::L1Handler =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_l1_handler_transaction_context(<span class="kw-2">&amp;</span>tx);
-                <span class="comment">// FIXME 712
-                </span><span class="kw">let </span>tx = StarknetL1HandlerTransaction { tx, paid_fee_on_l1: Fee::default() };
 
                 <span class="comment">// Create the context.
                 </span><span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
                 );
                 (
                     tx.run_execute(state, execution_resources, <span class="kw-2">&amp;mut </span>context, <span class="kw-2">&amp;mut </span>initial_gas)
@@ -1456,15 +1484,12 @@
             TxType::Declare =&gt; {
                 <span class="kw">let </span>tx = <span class="self">self</span>.try_into().map_err(TransactionExecutionErrorWrapper::StarknetApi)<span class="question-mark">?</span>;
                 <span class="kw">let </span>account_context = <span class="self">self</span>.get_declare_transaction_context(<span class="kw-2">&amp;</span>tx);
-                <span class="kw">let </span>contract_class =
-                    contract_class.ok_or_else(|| StateError::UndeclaredClassHash(ClassHash::default()))<span class="question-mark">?</span>;
-                <span class="kw">let </span>tx = StarknetDeclareTransaction::new(tx, contract_class)<span class="question-mark">?</span>;
 
                 <span class="comment">// Create the context.
                 </span><span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
                 );
 
                 <span class="comment">// Update nonce
@@ -1498,7 +1523,7 @@
                 </span><span class="kw">let </span><span class="kw-2">mut </span>context = EntryPointExecutionContext::new(
                     block_context.clone(),
                     account_context.clone(),
-                    block_context.invoke_tx_max_n_steps,
+                    block_context.invoke_tx_max_n_steps <span class="kw">as </span>usize,
                 );
 
                 <span class="comment">// Update nonce
@@ -1598,14 +1623,14 @@
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    </span><span class="kw">fn </span>get_l1_handler_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>L1HandlerTransaction) -&gt; AccountTransactionContext {
+    </span><span class="kw">fn </span>get_l1_handler_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction: <span class="kw-2">&amp;</span>L1HandlerTransaction) -&gt; AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
+            transaction_hash: transaction.tx_hash,
             max_fee: Fee::default(),
-            version: calculate_transaction_version(<span class="self">self</span>.is_query, tx.version),
+            version: calculate_transaction_version(<span class="self">self</span>.is_query, transaction.tx.version),
             signature: TransactionSignature::default(),
-            nonce: tx.nonce,
-            sender_address: tx.contract_address,
+            nonce: transaction.tx.nonce,
+            sender_address: transaction.tx.contract_address,
         }
     }
 
@@ -1619,14 +1644,18 @@
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    </span><span class="kw">fn </span>get_invoke_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>InvokeTransaction) -&gt; AccountTransactionContext {
+    </span><span class="kw">fn </span>get_invoke_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction: <span class="kw-2">&amp;</span>InvokeTransaction) -&gt; AccountTransactionContext {
+        <span class="kw">let </span>invoke_tx = <span class="kw">match </span>transaction.tx.clone() {
+            starknet_api::transaction::InvokeTransaction::V1(tx) =&gt; tx,
+            <span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(<span class="string">&quot;Unsupported invoke transaction version&quot;</span>),
+        };
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash(),
-            max_fee: tx.max_fee(),
+            transaction_hash: transaction.tx_hash,
+            max_fee: invoke_tx.max_fee,
             version: calculate_transaction_version_from_u8(<span class="self">self</span>.is_query, <span class="number">1_u8</span>),
-            signature: tx.signature(),
-            nonce: tx.nonce(),
-            sender_address: tx.sender_address(),
+            signature: invoke_tx.signature,
+            nonce: invoke_tx.nonce,
+            sender_address: invoke_tx.sender_address,
         }
     }
 
@@ -1640,14 +1669,17 @@
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    </span><span class="kw">fn </span>get_deploy_account_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>DeployAccountTransaction) -&gt; AccountTransactionContext {
+    </span><span class="kw">fn </span>get_deploy_account_transaction_context(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        transaction: <span class="kw-2">&amp;</span>DeployAccountTransaction,
+    ) -&gt; AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash,
-            max_fee: tx.max_fee,
-            version: calculate_transaction_version(<span class="self">self</span>.is_query, tx.version),
-            signature: tx.signature.clone(),
-            nonce: tx.nonce,
-            sender_address: tx.contract_address,
+            transaction_hash: transaction.tx_hash,
+            max_fee: transaction.tx.max_fee,
+            version: calculate_transaction_version(<span class="self">self</span>.is_query, transaction.tx.version),
+            signature: transaction.tx.signature.clone(),
+            nonce: transaction.tx.nonce,
+            sender_address: transaction.contract_address,
         }
     }
 
@@ -1661,14 +1693,14 @@
     /// # Returns
     ///
     /// * `AccountTransactionContext` - The context of the transaction
-    </span><span class="kw">fn </span>get_declare_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, tx: <span class="kw-2">&amp;</span>DeclareTransaction) -&gt; AccountTransactionContext {
+    </span><span class="kw">fn </span>get_declare_transaction_context(<span class="kw-2">&amp;</span><span class="self">self</span>, transaction: <span class="kw-2">&amp;</span>DeclareTransaction) -&gt; AccountTransactionContext {
         AccountTransactionContext {
-            transaction_hash: tx.transaction_hash(),
-            max_fee: tx.max_fee(),
-            version: calculate_transaction_version(<span class="self">self</span>.is_query, tx.version()),
-            signature: tx.signature(),
-            nonce: tx.nonce(),
-            sender_address: tx.sender_address(),
+            transaction_hash: transaction.tx_hash(),
+            max_fee: transaction.tx().max_fee(),
+            version: calculate_transaction_version(<span class="self">self</span>.is_query, transaction.tx().version()),
+            signature: transaction.tx().signature(),
+            nonce: transaction.tx().nonce(),
+            sender_address: transaction.tx().sender_address(),
         }
     }
 }

@@ -125,7 +125,6 @@
 <span class="kw">use </span>starknet_api::api_core::{ChainId, ContractAddress};
 <span class="kw">use </span>starknet_api::block::{BlockNumber, BlockTimestamp};
 <span class="kw">use </span>starknet_api::hash::StarkFelt;
-<span class="kw">use </span>starknet_api::stdlib::collections::HashMap;
 
 <span class="kw">use </span><span class="kw">crate</span>::execution::types::{ContractAddressWrapper, Felt252Wrapper};
 <span class="kw">use </span><span class="kw">crate</span>::traits::hash::HasherT;
@@ -213,12 +212,13 @@
             block_number: BlockNumber(<span class="self">self</span>.block_number),
             block_timestamp: BlockTimestamp(<span class="self">self</span>.block_timestamp),
             sequencer_address,
-            vm_resource_fee_cost: HashMap::default(),
+            vm_resource_fee_cost: Default::default(),
             fee_token_address,
             invoke_tx_max_n_steps: <span class="number">1000000</span>,
             validate_max_n_steps: <span class="number">1000000</span>,
             <span class="comment">// FIXME: https://github.com/keep-starknet-strange/madara/issues/329
             </span>gas_price: <span class="number">10</span>,
+            max_recursion_depth: <span class="number">50</span>,
         }
     }
 
