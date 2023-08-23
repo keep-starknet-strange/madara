@@ -490,8 +490,7 @@ describeDevMadara(
 
         const { suggestedMaxFee } = await account.estimateInvokeFee({
           contractAddress: TEST_CONTRACT_ADDRESS,
-          entrypoint:
-            "test_storage_var",
+          entrypoint: "test_storage_var",
           calldata: ["0x0"],
         });
         console.log("=======================================================");
