@@ -75,7 +75,9 @@ describeDevMadara(
               await providerRPC.getTransactionByBlockIdAndIndex("latest", 0);
             expect(tx).to.not.be.undefined;
             expect(tx.type).to.be.equal("INVOKE");
-            expect(tx.sender_address).to.be.equal(toHex(ARGENT_CONTRACT_ADDRESS));
+            expect(tx.sender_address).to.be.equal(
+              toHex(ARGENT_CONTRACT_ADDRESS),
+            );
             expect(tx.calldata).to.deep.equal(
               [
                 1,
