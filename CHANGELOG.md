@@ -2,6 +2,8 @@
 
 ## Next release
 
+- ci: disable pr close workflow
+- ci: add ci verification for detecting genesis changes and config hashes
 - feat: better management of custom configurations for genesis assets
 - ci: added wasm to test
 - docs: added translation of madara beast article.md to portuguese

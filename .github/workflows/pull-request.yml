@@ -11,15 +11,19 @@ jobs:
     name: Enforce CHANGELOG
     uses: ./.github/workflows/changelog.yml
 
+  configs-verifier:
+    name: Verify configs
+    uses: ./.github/workflows/configs-verifier.yml
+
   linters:
     name: Run linters
     uses: ./.github/workflows/linters.yml
-    needs: changelog
+    needs: [changelog, configs-verifier]
 
   rust_build:
     name: Build Rust project
     uses: ./.github/workflows/rust-build.yml
-    needs: changelog
+    needs: [changelog, configs-verifier]
 
   linters_cargo:
     name: Run Cargo linters
@@ -29,7 +33,7 @@ jobs:
   tests:
     name: Run tests and coverage
     uses: ./.github/workflows/tests-coverage.yml
-    needs: [rust_build]
+    needs: rust_build
 
   # benchmark:
   #   name: Run benchmarks
