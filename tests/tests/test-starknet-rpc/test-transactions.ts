@@ -66,6 +66,9 @@ describeDevMadara(
           ),
         );
 
+        // dirty fix: add this just to elapse some time before checking blockId
+        await providerRPC.getBlock();
+
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         const tx: InvokeTransaction =
