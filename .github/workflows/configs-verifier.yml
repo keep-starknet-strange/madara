@@ -12,6 +12,8 @@ jobs:
     if: ${{ github.event.label.name != 'ignore-docs' }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Ensure docs changes
         run: |
           if [[ -n $(git diff --name-only origin/main origin/${GITHUB_HEAD_REF} | grep configs/genesis-assets/genesis.json) ]]; then
