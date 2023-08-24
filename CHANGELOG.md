@@ -12,6 +12,7 @@
 - ci: fix docker and binaries build
 - ci: don't enforce changelog on PR's with label `dependencies`
 - feat: rebase of core deps and 0.12.1
+- chore: remove global state root
 
 ## v0.1.0
 

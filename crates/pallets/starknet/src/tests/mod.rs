@@ -22,7 +22,6 @@ mod l1_message;
 mod nonce_validation;
 mod query_tx;
 mod sequencer_address;
-mod state_root;
 
 mod block;
 mod constants;

@@ -34,4 +34,4 @@ jobs:
 
       - name: Build the project
         run: |
-          cargo build --release --workspace --features madara-state-root
+          cargo build --release --workspace
